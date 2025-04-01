@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { JobStatus } from '../Job/JobStatus';
 import { StepStatus, useStepStatus } from '../hooks/useStepStatus';
@@ -37,11 +38,14 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
     try {
       const response = await startJob(repositoryName);
       if (!response?.metadata?.name) {
-        throw new Error('Invalid response from operation');
+        throw new Error(t('provisioning.job-step.error-invalid-response', 'Invalid response from operation'));
       }
       setJobName(response.metadata.name);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start operation';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : t('provisioning.job-step.error-failed-to-start', 'Failed to start operation');
       stepStatus.setError(errorMessage);
       throw error; // Re-throw to mark the async operation as failed
     }
@@ -59,7 +63,7 @@ export function JobStep({ onStepUpdate, description, startJob, children }: JobSt
             if (success) {
               stepStatus.setSuccess();
             } else {
-              stepStatus.setError('Job failed');
+              stepStatus.setError(t('provisioning.job-step.error-job-failed', 'Job failed'));
             }
           }}
           onRunningChange={(isRunning) => {

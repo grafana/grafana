@@ -1106,13 +1106,34 @@
       "create-label": "Create",
       "name-label": "Folder name"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "Error creating folder",
+      "alert-folder-created-successfully": "Folder created successfully",
+      "button-create": "Create",
+      "button-creating": "Creating...",
+      "cancel": "Cancel",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "error-invalid-folder-name": "Invalid folder name",
+      "error-required": "Folder name is required",
+      "folder-comment-input-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-folder-name": "Folder name",
+      "label-workflow": "Workflow",
+      "text-pull-request-created": "A pull request has been created with changes to this folder:",
+      "title-pull-request-created": "Pull request created",
+      "title-repository-not-found": "Repository not found",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
     "soft-delete": {
       "success": "Dashboard {{name}} moved to Recently deleted"
-    }
+    },
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "carousel": {
     "close": "Close",
@@ -2599,6 +2620,9 @@
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
+  },
+  "folder-repo": {
+    "badge-text": "Provisioned"
   },
   "forgot-password": {
     "back-button": "Back to login",
@@ -4422,6 +4446,391 @@
       "name": "Name",
       "teams": "Teams",
       "text-loading-teams": "Loading teams..."
+    }
+  },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "Dashboards will be unavailable while running this process",
+      "description-clear-repository-connection": "Add a clear name for this repository connection",
+      "empty": "Empty",
+      "error-field-required": "This field is required.",
+      "files-count_one": "{{count}} files",
+      "files-count_other": "{{count}} files",
+      "grafana": "Grafana",
+      "include-history": "Include history",
+      "include-identifiers": "Include identifiers",
+      "label-display-name": "Display name",
+      "label-migrate-options": "Migrate options",
+      "placeholder-my-repository-connection": "My repository connection",
+      "repository": "Repository",
+      "resources-will-be-added": "The {{count}} resources in grafana will be added to the repository. Grafana will then include both the current resources and anything from the repository when done.",
+      "text-loading-resource-information": "Loading resource information...",
+      "title-files-exist-in-the-target": "Files exist in the target",
+      "title-note": "Note",
+      "tooltip-include-history": "Include complete dashboard version history",
+      "tooltip-include-identifiers": "Include unique identifiers for each dashboard to maintain references"
+    },
+    "check-repository": {
+      "check": "Check"
+    },
+    "config-form": {
+      "alert-repository-settings-saved": "Repository settings saved",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "description-branch": "Create a branch (and pull request) for changes",
+      "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
+      "description-path": "Path to a subdirectory in the Git repository",
+      "description-repository-url": "Enter the GitHub repository URL",
+      "description-title": "A human-readable name for the config",
+      "description-workflows-makes-repository": "No workflows makes the repository read only",
+      "description-write": "Allow writing updates to the remote repository",
+      "error-required": "This field is required.",
+      "error-valid-github-url": "Please enter a valid GitHub repository URL",
+      "label-automatic-pulling": "Automatic pulling",
+      "label-branch": "Branch",
+      "label-enabled": "Enabled",
+      "label-github-token": "GitHub token",
+      "label-interval-seconds": "Interval (seconds)",
+      "label-local-path": "Local path",
+      "label-path": "Path",
+      "label-repository-type": "Repository type",
+      "label-repository-url": "Repository URL",
+      "label-target": "Target",
+      "label-title": "Title",
+      "label-workflows": "Workflows",
+      "option-branch": "Branch",
+      "option-entire-instance": "Entire instance",
+      "option-github": "GitHub",
+      "option-local": "Local",
+      "option-managed-folder": "Managed folder",
+      "option-write": "Write",
+      "placeholder-branch": "main",
+      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
+      "placeholder-github-url": "https://github.com/username/repo-name",
+      "placeholder-interval-seconds": "60",
+      "placeholder-local-path": "/path/to/repo",
+      "placeholder-my-config": "My config",
+      "placeholder-path": "grafana/",
+      "placeholder-readonly-repository": "Readonly repository",
+      "placeholder-select-repository-type": "Select repository type"
+    },
+    "config-form-github-collapse": {
+      "description-attach-dashboard-previews": "Render before/after images and link them to the pull request.<1></1>NOTE: This will render dashboards into an image that can be access by a public URL",
+      "instructions": "Instructions",
+      "label-attach-dashboard-previews": "Attach dashboard previews to pull requests",
+      "label-git-hub-features": "GitHub features",
+      "pull-request-image-previews": "Pull Request image previews",
+      "realtime-feedback": "Realtime feedback",
+      "text-changes-in-git-eventually-pulled": "Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be processed",
+      "text-changes-in-git-quick-pull": "Changes in git will be quickly pulled into grafana. Pull requests can be processed.",
+      "text-when-image-renderer-configured": "When the image renderer is configured, pull requests can see preview images",
+      "title-image-renderer-not-configured": "Image renderer not configured",
+      "title-public-url-not-configured": "Public URL not configured",
+      "title-webhook-will-be-created": "Webhook will be created"
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "Connect to repository",
+      "max-repositories-exist": "Maximum repositories exist ({{count}})",
+      "tooltip-max-repos_one": "Max repositories already created ({{count}})",
+      "tooltip-max-repos_other": "Max repositories already created ({{count}})"
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "Choose the type of storage for your resources",
+      "description-github-path": "Path to a subdirectory in the Git repository",
+      "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
+      "description-repository-url": "Paste the URL of your GitHub repository",
+      "error-field-required": "This field is required.",
+      "error-invalid-github-url": "Please enter a valid GitHub repository URL",
+      "label-access-token": "Enter your access token",
+      "label-branch": "Branch",
+      "label-local-path": "Local path",
+      "label-path": "Path",
+      "label-repository-url": "Enter your Repository URL",
+      "label-storage-type": "Storage type",
+      "placeholder-branch": "main",
+      "placeholder-github-path": "grafana/",
+      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
+      "placeholder-github-url": "https://github.com/username/repo",
+      "placeholder-local-path": "/path/to/repo",
+      "storage-type-github": "GitHub",
+      "storage-type-local": "Local"
+    },
+    "delete-repository-button": {
+      "button-delete": "Delete",
+      "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "success-repository-deleted": "Repository settings queued for deletion",
+      "title-delete-repository": "Delete repository config",
+      "tooltip-delete-this-repository": "Delete this repository"
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "Back to repositories",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+    },
+    "empty-state": {
+      "no-jobs": "No jobs..."
+    },
+    "enhanced-features": {
+      "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
+      "description-visual-previews-dashboard-updates-directly-requests": "See visual previews of dashboard updates directly in pull requests",
+      "set-up-image-rendering": "Set up image rendering",
+      "set-up-public-access": "Set up public access",
+      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks",
+      "title-visual-previews-in-pull-requests": "Visual previews in pull requests",
+      "unlock-enhanced-functionality-for-git-hub": "Unlock enhanced functionality for GitHub"
+    },
+    "expanded-row": {
+      "job-specification": "Job Specification",
+      "summary": "Summary",
+      "title-error": "Error"
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": "Set up required feature toggles"
+      },
+      "automatically-provision-and-update-dashboards": "Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository",
+      "learn-more": "Learn more",
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Manage your dashboards with remote provisioning",
+      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to storage for provisioning",
+      "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking",
+      "visual-previews-in-pull-requests": "Visual previews in pull requests to review your changes before going live"
+    },
+    "file-history-page": {
+      "back-to-repositories": "Back to repositories",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+    },
+    "file-status-page": {
+      "title-error-loading-file": "Error loading file"
+    },
+    "files-view": {
+      "columns": {
+        "history": "History",
+        "view": "View"
+      },
+      "placeholder-search": "Search"
+    },
+    "finish-step": {
+      "description-dashboard-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
+      "description-enable-webhooks": "Enable webhooks to automatically notify Grafana when a change occurs in the repository. This will allow Grafana to pull changes as soon as they are made.",
+      "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
+      "description-select-workflows-allowed-within-repository": "Select the workflows that are allowed within this repository",
+      "error-field-required": "This field is required.",
+      "label-enable-dashboard-previews": "Enable dashboard previews in pull requests",
+      "label-enable-webhooks": "Enable webhooks on changes",
+      "label-update-instance-interval-seconds": "Update instance interval (seconds)",
+      "label-workflows": "Workflows",
+      "link-setup-image-rendering": "Set up image rendering",
+      "placeholder": "60",
+      "placeholder-readonly-repository": "Read-only repository",
+      "text-requires-image-rendering": "(Requires image rendering."
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "No results matching your query",
+      "placeholder-search": "Search"
+    },
+    "getting-started": {
+      "alert-temporary-outage": "When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend warning your users before starting the process.",
+      "engaging-graphic": "Engaging graphic",
+      "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
+      "modal-description-required-features": "Enable required Grafana features for provisioning",
+      "modal-title-set-up-public-access": "Set up public access",
+      "modal-title-set-up-required-features": "Set up required features",
+      "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
+      "step-description-enable-feature-toggles": "Add these settings to your custom.ini file to enable necessary features:",
+      "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
+      "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
+      "step-title-copy-url": "Copy your public URL",
+      "step-title-enable-feature-toggles": "Enable Required Feature Toggles",
+      "step-title-start-ngrok": "Start ngrok for temporary public access",
+      "step-title-update-grafana-config": "Update your Grafana configuration",
+      "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
+    },
+    "getting-started-page": {
+      "subtitle-provisioning-feature": "Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems",
+      "text-remote-provisioning": "Remote provisioning"
+    },
+    "history-view": {
+      "not-found": "Not found"
+    },
+    "home-page": {
+      "button-delete-repositories": "Delete repositories",
+      "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
+      "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
+      "remove-all-configured-repositories": "Remove all configured repositories",
+      "subtitle": "View and manage your configured repositories",
+      "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-files": "Files",
+      "tab-files-title": "The raw file list from the repository",
+      "tab-getting-started": "Getting started",
+      "tab-getting-started-title": "Getting started",
+      "tab-overview": "Overview",
+      "tab-overview-title": "Repository overview",
+      "tab-repositories": "Repositories",
+      "tab-repositories-title": "List of repositories",
+      "tab-resources": "Resources",
+      "tab-resources-title": "Resources saved in Grafana database",
+      "title-delete-all-configured-repositories": "Delete all configured repositories",
+      "title-legacy-storage-detected": "Legacy storage detected"
+    },
+    "job-status": {
+      "error-unknown": "An unknown error occurred",
+      "label-view-details": "View details",
+      "starting": "Starting...",
+      "status": {
+        "title-error-running-job": "error running job",
+        "title-job-completed-successfully": "Job completed successfully"
+      },
+      "summary": "Summary"
+    },
+    "job-step": {
+      "error-failed-to-start": "Failed to start operation",
+      "error-invalid-response": "Invalid response from operation",
+      "error-job-failed": "Job failed"
+    },
+    "migrate-step": {
+      "description-migrating-dashboards": "Migrating all dashboards from this instance to your repository, including their identifiers and complete history. After this one-time migration, all future updates will be automatically saved to the repository."
+    },
+    "pull-step": {
+      "description-pulling-content": "Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
+    },
+    "recent-jobs": {
+      "active-jobs": "active jobs",
+      "column-action": "Action",
+      "column-duration": "Duration",
+      "column-message": "Message",
+      "column-started": "Started",
+      "column-status": "Status",
+      "error-loading": "Error loading {{type}}",
+      "jobs": "Jobs"
+    },
+    "repository-actions": {
+      "settings": "Settings",
+      "source-code": "Source Code"
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": "Webhook"
+      },
+      "settings": "Settings",
+      "view": "View"
+    },
+    "repository-health": {
+      "details": "Details:",
+      "no-errors-found": "No errors found",
+      "title-repository-is-healthy": "Repository is healthy",
+      "title-repository-is-unhealthy": "Repository is unhealthy"
+    },
+    "repository-link": {
+      "grafana-repository": "Grafana and your repository are now in sync.",
+      "view-folder": "View folder",
+      "view-repository": "View repository"
+    },
+    "repository-overview": {
+      "checked": "Checked:",
+      "finished": "Finished:",
+      "health": "Health",
+      "job-id": "Job ID:",
+      "last-ref": "Last Ref:",
+      "messages": "Messages:",
+      "pull-status": "Pull status",
+      "resources": "Resources",
+      "started": "Started:",
+      "status": "Status:",
+      "view-folder": "View Folder",
+      "webhook": "Webhook"
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "History",
+        "view-dashboard": "View",
+        "view-folder": "View"
+      },
+      "placeholder-search": "Search"
+    },
+    "repository-status-page": {
+      "back-to-repositories": "Back to repositories",
+      "cleaning-up-resources": "Cleaning up repository resources",
+      "legacy-storage-message": "Instance is not yet running unified storage -- requires migration wizard",
+      "not-found": "not found",
+      "not-found-message": "Repository not found",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "tab-files": "Files",
+      "tab-files-title": "The raw file list from the repository",
+      "tab-overview": "Overview",
+      "tab-overview-title": "Repository overview",
+      "tab-resources": "Resources",
+      "tab-resources-title": "Resources saved in grafana database",
+      "title": "Repository Status",
+      "title-legacy-storage": "Legacy Storage",
+      "title-queued-for-deletion": "Queued for deletion"
+    },
+    "request-error": {
+      "failed-to-migrate": "Failed to migrate dashboards",
+      "failed-to-save": "Failed to save repository",
+      "failed-to-sync": "Failed to sync dashboards",
+      "operation-failed": "Operation failed"
+    },
+    "resource-view": {
+      "base": "Base",
+      "dashboard-preview": "Dashboard Preview",
+      "existing-dashboard": "Existing dashboard",
+      "history": "History",
+      "repository": "Repository",
+      "title-error-saving-file": "Error saving file"
+    },
+    "setup-modal": {
+      "done": "Done",
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "sidebar-item": {
+      "label-completed-step": "Completed step",
+      "label-current-step": "Current step",
+      "label-pending-step": "Pending step"
+    },
+    "sync-repository": {
+      "body-edit-configuration": "Edit the configuration",
+      "button-edit": "Edit",
+      "error-pulling-resources": "Error pulling resources",
+      "pull": "Pull",
+      "success-pull-started": "Pull started",
+      "title-pull-not-enabled": "Pull is not enabled",
+      "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
+    },
+    "token-permissions-info": {
+      "access": "Access",
+      "contents": "Contents",
+      "github-instructions": "Go to <2>GitHub Personal Access Tokens</2>. Make sure to include these permissions under <4>Repository</4>:",
+      "metadata": "Metadata",
+      "permission": "Permission",
+      "pull-requests": "Pull requests",
+      "read-and-write": "Read and write",
+      "readonly": "Read-only",
+      "webhooks": "Webhooks"
+    },
+    "wizard": {
+      "button-finish": "Finish",
+      "button-next": "Next",
+      "button-start": "Start",
+      "step-bootstrap": "Bootstrap",
+      "step-connect": "Connect",
+      "step-finish": "Finish",
+      "step-resources": "Resources",
+      "title-bootstrap": "Bootstrap repository",
+      "title-connect": "Connect to external storage",
+      "title-finish": "Finish setup",
+      "title-migrate": "Migrate resources",
+      "title-pull": "Pull resources"
+    },
+    "wizard-content": {
+      "button-cancel": "Cancel",
+      "button-cancelling": "Cancelling...",
+      "button-submitting": "Submitting...",
+      "error-failed-to-delete": "Failed to delete repository. Please try again.",
+      "error-instance-repository-exists": "Instance repository already exists",
+      "success-repository-deleted": "Repository deleted",
+      "success-repository-saved": "Repository saved",
+      "title-repository-verification-failed": "Repository verification failed"
     }
   },
   "public-dashboard": {

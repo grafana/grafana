@@ -1,5 +1,6 @@
 import { Repository } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted';
 interface Props {
@@ -11,9 +12,11 @@ export default function GettingStartedPage({ items }: Props) {
     <Page
       navId="provisioning"
       pageNav={{
-        text: 'Remote provisioning',
-        subTitle:
-          'Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems',
+        text: t('provisioning.getting-started-page.text-remote-provisioning', 'Remote provisioning'),
+        subTitle: t(
+          'provisioning.getting-started-page.subtitle-provisioning-feature',
+          'Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems'
+        ),
       }}
     >
       <Page.Contents>

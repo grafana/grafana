@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
+import { t, Trans } from 'app/core/internationalization';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
 
@@ -18,14 +19,22 @@ export function FolderRepositoryList({ items }: Props) {
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
-        <FilterInput placeholder="Search" value={query} onChange={setQuery} />
+        <FilterInput
+          placeholder={t('provisioning.folder-repository-list.placeholder-search', 'Search')}
+          value={query}
+          onChange={setQuery}
+        />
         <ConnectRepositoryButton items={items} />
       </Stack>
       <Stack direction={'column'}>
         {filteredItems.length ? (
           filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
         ) : (
-          <EmptySearchResult>No results matching your query </EmptySearchResult>
+          <EmptySearchResult>
+            <Trans i18nKey="provisioning.folder-repository-list.no-results-matching-your-query">
+              No results matching your query
+            </Trans>
+          </EmptySearchResult>
         )}
       </Stack>
     </Stack>

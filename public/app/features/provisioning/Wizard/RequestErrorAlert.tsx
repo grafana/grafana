@@ -1,4 +1,5 @@
 import { Alert } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 interface RequestErrorAlertProps {
@@ -13,13 +14,13 @@ interface RequestErrorAlertProps {
 function getDefaultTitle(endpointName?: string): string {
   switch (endpointName) {
     case 'createRepositorySync':
-      return 'Failed to sync dashboards';
+      return t('provisioning.request-error.failed-to-sync', 'Failed to sync dashboards');
     case 'createRepositoryMigrate':
-      return 'Failed to migrate dashboards';
+      return t('provisioning.request-error.failed-to-migrate', 'Failed to migrate dashboards');
     case 'createOrUpdateRepository':
-      return 'Failed to save repository';
+      return t('provisioning.request-error.failed-to-save', 'Failed to save repository');
     default:
-      return 'Operation failed';
+      return t('provisioning.request-error.operation-failed', 'Operation failed');
   }
 }
 

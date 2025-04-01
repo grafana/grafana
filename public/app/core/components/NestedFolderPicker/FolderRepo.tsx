@@ -1,4 +1,5 @@
 import { Badge } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { NestedFolderDTO } from 'app/features/search/service/types';
@@ -19,5 +20,5 @@ export function FolderRepo({ folder }: Props) {
     return null;
   }
 
-  return <Badge text={'Provisioned'} color={'darkgrey'} />;
+  return <Badge text={t('folder-repo.badge-text', 'Provisioned')} color={'darkgrey'} />;
 }
