@@ -334,12 +334,12 @@ metadata:
     aa: AAA
 spec:
   title: Azure XYZ Keeper
-  azure:
-    keyVaultName: key-vault-name
-	tenantId: tenant-id
-    clientId: client-id
+  azurekeyvault:
     clientSecret:
-      valueFromConfig: /path/to/file.json`,
+      valueFromConfig: "/path/to/file.json"
+    keyVaultName: key-vault-name
+    tenantId: tenant-id
+    clientId: client-id`,
 									},
 								},
 								"a gcp keeper": {
@@ -369,9 +369,9 @@ metadata:
     aa: AAA
 spec:
   title: Hashicorp XYZ Keeper
-  hashicorp:
-    vaultAddress: vault-address
-    token: 
+  hashivault:
+    address: vault-address
+    token:
       valueFromEnv: VAULT_TOKEN`,
 									},
 								},
@@ -494,7 +494,7 @@ metadata:
     bb: BBB
 spec:
   title: A secret value in aws
-  keeper: {aws-keeper-that-must-already-exist}
+  keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -514,7 +514,7 @@ metadata:
     bb: BBB
 spec:
   title: A secret from aws
-  keeper: {aws-keeper-that-must-already-exist}
+  keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
     - actor_k6`,
