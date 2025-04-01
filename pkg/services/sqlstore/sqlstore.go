@@ -419,7 +419,6 @@ var testSQLStoreCleanup []func()
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
-	DefaultOrgID            int64
 	FeatureFlags            []string
 	Cfg                     *setting.Cfg
 }
