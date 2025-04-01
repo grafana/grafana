@@ -5,10 +5,12 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { PlaylistUI, PlaylistMode } from './types';
+import { Playlist } from '../../api/clients/playlist';
+
+import { PlaylistMode } from './types';
 
 export interface Props {
-  playlist: PlaylistUI;
+  playlist: Playlist;
   onDismiss: () => void;
 }
 
@@ -43,7 +45,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       params['_dash.hideLinks'] = true;
     }
 
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata.name}`, params));
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       mode: mode,

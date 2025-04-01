@@ -10,7 +10,6 @@ import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
-import { PlaylistUI } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -23,9 +22,8 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items }: Partial<PlaylistUI> = {}) {
+function getTestContext() {
   jest.clearAllMocks();
-  const playlist = { name, items, interval } as unknown as PlaylistUI;
   const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() => of(createFetchResponse({})));
   jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
@@ -35,7 +33,7 @@ function getTestContext({ name, interval, items }: Partial<PlaylistUI> = {}) {
     </TestProvider>
   );
 
-  return { playlist, rerender, backendSrvMock };
+  return { rerender, backendSrvMock };
 }
 
 describe('PlaylistNewPage', () => {

@@ -6,22 +6,21 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
+import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { PlaylistUI } from './types';
-import { k8sResourceAsPlaylist, searchPlaylists } from './utils';
+import { searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
   const [searchQuery, setSearchQuery] = useState('');
-  const allPlaylists = useMemo(() => data?.items.map((value) => k8sResourceAsPlaylist(value)) ?? [], [data?.items]);
+  const allPlaylists = useMemo(() => data?.items ?? [], [data?.items]);
   const playlists = useMemo(() => searchPlaylists(allPlaylists, searchQuery), [searchQuery, allPlaylists]);
 
-  const [startPlaylist, setStartPlaylist] = useState<PlaylistUI | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistUI | undefined>();
+  const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -30,7 +29,7 @@ export const PlaylistPage = () => {
       return;
     }
     deletePlaylist({
-      name: playlistToDelete.uid,
+      name: playlistToDelete.metadata.name ?? '',
     }).finally(() => {
       setPlaylistToDelete(undefined);
     });
@@ -85,10 +84,10 @@ export const PlaylistPage = () => {
             )}
             {playlistToDelete && (
               <ConfirmModal
-                title={playlistToDelete.name}
+                title={playlistToDelete.spec.title}
                 confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
                 body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.name,
+                  name: playlistToDelete.spec.title,
                 })}
                 onConfirm={onDeletePlaylist}
                 isOpen={Boolean(playlistToDelete)}

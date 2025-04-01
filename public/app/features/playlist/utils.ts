@@ -9,34 +9,7 @@ import { Playlist } from '../../api/clients/playlist';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { DashboardQueryResult, SearchQuery } from '../search/service/types';
 
-import { PlaylistUI, PlaylistItemUI } from './types';
-
-export const playlistAsK8sResource = (playlist: PlaylistUI): Playlist => {
-  return {
-    metadata: {
-      name: playlist.uid, // uid as k8s name
-    },
-    spec: {
-      title: playlist.name, // name becomes title
-      interval: playlist.interval,
-      items: playlist.items ?? [],
-    },
-    status: {},
-  };
-};
-
-// This converts a saved k8s resource into a playlist object
-// the main difference is that k8s uses metadata.name as the uid
-// to avoid future confusion, the display name is now called "title"
-export function k8sResourceAsPlaylist(r: Playlist): PlaylistUI {
-  const { spec, metadata } = r;
-  return {
-    uid: metadata.name ?? '', // use the k8s name as uid
-    name: spec.title,
-    interval: spec.interval,
-    items: spec.items,
-  };
-}
+import { PlaylistItemUI } from './types';
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
@@ -96,14 +69,24 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
   });
 }
 
-export function getDefaultPlaylist(): PlaylistUI {
-  return { items: [], interval: '5m', name: '', uid: '' };
+export function getDefaultPlaylist(): Playlist {
+  return {
+    spec: {
+      items: [],
+      interval: '5m',
+      title: '',
+    },
+    metadata: {
+      name: '',
+    },
+    status: {},
+  };
 }
 
-export function searchPlaylists(playlists: PlaylistUI[], query?: string): PlaylistUI[] {
+export function searchPlaylists(playlists: Playlist[], query?: string): Playlist[] {
   if (!query?.length) {
     return playlists;
   }
   query = query.toLowerCase();
-  return playlists.filter((v) => v.name.toLowerCase().includes(query!));
+  return playlists.filter((v) => v.spec.title.toLowerCase().includes(query!));
 }

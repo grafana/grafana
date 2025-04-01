@@ -4,10 +4,11 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
+import { Playlist } from '../../api/clients/playlist';
 import { DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
-import { PlaylistUI, PlaylistItemUI } from './types';
+import { PlaylistItemUI } from './types';
 
 jest.mock('./utils', () => ({
   loadDashboards: (items: PlaylistItemUI[]) => {
@@ -20,14 +21,19 @@ jest.mock('./utils', () => ({
   },
 }));
 
-const mockPlaylist: PlaylistUI = {
-  interval: '1s',
-  uid: 'xyz',
-  name: 'The display',
-  items: [
-    { type: 'dashboard_by_uid', value: 'aaa' },
-    { type: 'dashboard_by_uid', value: 'bbb' },
-  ],
+const mockPlaylist: Playlist = {
+  spec: {
+    interval: '1s',
+    title: 'The display',
+    items: [
+      { type: 'dashboard_by_uid', value: 'aaa' },
+      { type: 'dashboard_by_uid', value: 'bbb' },
+    ],
+  },
+  metadata: {
+    name: 'xyz',
+  },
+  status: {},
 };
 
 const mockStore = configureMockStore();

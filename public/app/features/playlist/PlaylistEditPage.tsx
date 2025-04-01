@@ -5,11 +5,9 @@ import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist';
+import { Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist';
 
 import { PlaylistForm } from './PlaylistForm';
-import { PlaylistUI } from './types';
-import { k8sResourceAsPlaylist, playlistAsK8sResource } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -20,10 +18,10 @@ export const PlaylistEditPage = () => {
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
 
-  const onSubmit = async (playlist: PlaylistUI) => {
+  const onSubmit = async (playlist: Playlist) => {
     replacePlaylist({
-      name: playlist.uid,
-      playlist: playlistAsK8sResource(playlist),
+      name: playlist.metadata.name ?? '',
+      playlist,
     });
     locationService.push('/playlists');
   };
@@ -45,7 +43,7 @@ export const PlaylistEditPage = () => {
             {JSON.stringify(error)}
           </div>
         )}
-        {data && <PlaylistForm onSubmit={onSubmit} playlist={k8sResourceAsPlaylist(data)} />}
+        {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
     </Page>
   );
