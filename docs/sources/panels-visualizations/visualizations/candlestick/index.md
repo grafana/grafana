@@ -88,14 +88,14 @@ The data is converted as follows:
 
 The following options let you control which data is displayed and how the visualization appears:
 
-| Option | Description |
-| ------ | ----------- |
-| Mode | **Mode** options let you toggle which dimensions are used for the visualization. Choose from:<ul><li>**Candles** - Uses the open, high, low, and close dimensions.</li><li>**Volume** - Uses only the volume dimension.</li><li>**Both** - The default behavior, which displays both candles and volume values.</li></ul> |
-| Candle style | Controls the appearance of the candle. Choose from:<ul><li>**Candles** - The default display style and creates candle-style visualizations between the open and close dimensions.</li><li>**OHLC Bars** - Displays values for the four core dimensions, open, high, low, and close.</li></ul> |
-| [Color strategy](#color-strategy) | Controls how colors are applied to dimensions. Choose from:<ul><li>**Since Open** - This mode uses the **Up color** if the intra-period price movement is positive.</li><li>**Since Prior Close** - The color of the candle is based on the inter-period price movement or change in value.</li></ul> |
-| Up color/Down color | The **Up color** and **Down color** options set which colors are used when the price movement is up or down. Note that the **Color strategy** selection determines if intra-period or inter-period price movement is used to select the candle or OHLC bar color. |
-| [Open, High, Low, Close, Volume](#open-high-low-close) | The candlestick visualization attempts to map fields from your data to the appropriate dimension. |
-| [Additional fields](#additional-fields) | The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization. |
+| Option                                                 | Description                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mode                                                   | **Mode** options let you toggle which dimensions are used for the visualization. Choose from:<ul><li>**Candles** - Uses the open, high, low, and close dimensions.</li><li>**Volume** - Uses only the volume dimension.</li><li>**Both** - The default behavior, which displays both candles and volume values.</li></ul> |
+| Candle style                                           | Controls the appearance of the candle. Choose from:<ul><li>**Candles** - The default display style and creates candle-style visualizations between the open and close dimensions.</li><li>**OHLC Bars** - Displays values for the four core dimensions, open, high, low, and close.</li></ul>                             |
+| [Color strategy](#color-strategy)                      | Controls how colors are applied to dimensions. Choose from:<ul><li>**Since Open** - This mode uses the **Up color** if the intra-period price movement is positive.</li><li>**Since Prior Close** - The color of the candle is based on the inter-period price movement or change in value.</li></ul>                     |
+| Up color/Down color                                    | The **Up color** and **Down color** options set which colors are used when the price movement is up or down. Note that the **Color strategy** selection determines if intra-period or inter-period price movement is used to select the candle or OHLC bar color.                                                         |
+| [Open, High, Low, Close, Volume](#open-high-low-close) | The candlestick visualization attempts to map fields from your data to the appropriate dimension.                                                                                                                                                                                                                         |
+| [Additional fields](#additional-fields)                | The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.                                                          |
 
 #### Color strategy
 
@@ -133,13 +133,13 @@ The **Include** and **Ignore** options allow it to visualize other included data
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                  | Description                                                                                                                                                                            |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                           |
-| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                                                                                |
-| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.                                                         |
-| Max width                               | Set the maximum width of the tooltip box.                                                                                                                                              |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                                  |
+| Option                                  | Description                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
+| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
+| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
+| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
 
 #### Tooltip mode
 
@@ -177,18 +177,18 @@ The options under the **Graph styles** section let you control the general appea
 
 ### Axis options
 
-| Option                             | Description                                                                                                        |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [Placement](#placement)            | Select the placement of the y-axis.                                                                                |
-| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |
-| Width                              | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis.                   |
-| Show grid lines                    | Set the axis grid line visibility. Choose from: **Auto**, **On**, and **Off**.                                     |
+| Option                             | Description                                                                                                                                    |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                            |
+| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                             |
+| Width                              | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis.                                               |
+| Show grid lines                    | Set the axis grid line visibility. Choose from: **Auto**, **On**, and **Off**.                                                                 |
 | Color                              | Set the color of the axis. Choose from:<ul><li>**Text** - Uses panel text color.</li><li>**Series** - Uses the colors of the series.</li></ul> |
-| Show border                        | Set the axis border visibility.                                                                                    |
-| [Scale](#scale)                    | Set the y-axis values scale. Choose from: **Linear**, **Logarithmic**, and **Symlog**.                             |
-| Centered zero                      | Set the y-axis so it's centered on zero.                                                                           |
-| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits.                                                                |
-| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits.                                                                |
+| Show border                        | Set the axis border visibility.                                                                                                                |
+| [Scale](#scale)                    | Set the y-axis values scale. Choose from: **Linear**, **Logarithmic**, and **Symlog**.                                                         |
+| Centered zero                      | Set the y-axis so it's centered on zero.                                                                                                       |
+| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits.                                                                                            |
+| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits.                                                                                            |
 
 <!-- prettier-ignore-end -->
 
