@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
 
@@ -34,8 +35,10 @@ export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
   return (
     <JobStep
       onStepUpdate={onStepUpdate}
-      description="Migrating all dashboards from this instance to your repository, including their identifiers and complete
-        history. After this one-time migration, all future updates will be automatically saved to the repository."
+      description={t(
+        'provisioning.migrate-step.description-migrating-dashboards',
+        'Migrating all dashboards from this instance to your repository, including their identifiers and complete history. After this one-time migration, all future updates will be automatically saved to the repository.'
+      )}
       startJob={startMigration}
     />
   );

@@ -3,12 +3,7 @@ import { set } from 'lodash';
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import {
-  GrafanaRuleGroupIdentifier,
-  RuleIdentifier,
-  RuleNamespace,
-  RulerDataSourceConfig,
-} from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
@@ -29,6 +24,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } 
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
+import { RulerGroupUpdatedResponse } from './alertRuleModel';
 import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
@@ -89,14 +85,6 @@ interface ExportRulesParams {
   folderUid?: string;
   group?: string;
   ruleUid?: string;
-}
-
-export interface AlertGroupUpdated {
-  message: string;
-  /**
-   * UIDs of rules updated from this request
-   */
-  updated: string[];
 }
 
 export const alertRuleApi = alertingApi.injectEndpoints({
@@ -272,16 +260,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       ],
     }),
 
-    getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, GrafanaRuleGroupIdentifier>({
-      query: ({ namespace, groupName }) => {
-        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(namespace.uid, groupName);
-        return { url: path, params };
-      },
-      providesTags: (_result, _error, { namespace, groupName }) => [
-        { type: 'RuleGroup', id: `grafana/${namespace.uid}/${groupName}` },
-        { type: 'RuleNamespace', id: `grafana/${namespace.uid}` },
-      ],
-    }),
+    getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, { folderUid: string; groupName: string }>(
+      {
+        query: ({ folderUid, groupName }) => {
+          const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(folderUid, groupName);
+          return { url: path, params };
+        },
+        providesTags: (_result, _error, { folderUid, groupName }) => [
+          { type: 'RuleGroup', id: `grafana/${folderUid}/${groupName}` },
+          { type: 'RuleNamespace', id: `grafana/${folderUid}` },
+        ],
+      }
+    ),
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
@@ -313,7 +303,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
 
     upsertRuleGroupForNamespace: build.mutation<
-      AlertGroupUpdated,
+      RulerGroupUpdatedResponse,
       WithNotificationOptions<{
         rulerConfig: RulerDataSourceConfig;
         namespace: string;

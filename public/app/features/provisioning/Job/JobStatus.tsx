@@ -8,6 +8,7 @@ import {
   useGetRepositoryQuery,
   useListJobQuery,
 } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import ProgressBar from '../Shared/ProgressBar';
 import { getRepoHref } from '../utils/git';
@@ -52,7 +53,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
       }
     }
     if (onErrorChange && job?.status?.state === 'error') {
-      onErrorChange(job.status.message ?? 'An unknown error occurred');
+      onErrorChange(job.status.message ?? t('provisioning.job-status.error-unknown', 'An unknown error occurred'));
       if (onRunningChange) {
         onRunningChange(false);
       }
@@ -64,7 +65,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />
         <Text element="h4" weight="bold">
-          Starting...
+          <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
         </Text>
       </Stack>
     );
@@ -73,10 +74,18 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
   const status = () => {
     switch (job.status?.state) {
       case 'success':
-        return <Alert severity="success" title="Job completed successfully" />;
+        return (
+          <Alert
+            severity="success"
+            title={t('provisioning.job-status.status.title-job-completed-successfully', 'Job completed successfully')}
+          />
+        );
       case 'error':
         return (
-          <Alert severity="error" title="error running job">
+          <Alert
+            severity="error"
+            title={t('provisioning.job-status.status.title-error-running-job', 'error running job')}
+          >
             {job.status.message}
           </Alert>
         );
@@ -85,7 +94,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         {!job.status?.progress && <Spinner size={24} />}
         <Text element="h4" color="secondary">
-          {job.status?.message ?? job.status?.state!}
+          {job.status?.message ?? job.status?.state ?? ''}
         </Text>
       </Stack>
     );
@@ -103,14 +112,16 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
 
           {job.status.summary && (
             <Stack direction="column" gap={2}>
-              <Text variant="h3">Summary</Text>
+              <Text variant="h3">
+                <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>
+              </Text>
               <JobSummary summary={job.status.summary} />
             </Stack>
           )}
           {job.status.state === 'success' ? (
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
-            <ControlledCollapse label="View details" isOpen={false}>
+            <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
               <pre>{JSON.stringify(job, null, ' ')}</pre>
             </ControlledCollapse>
           )}
@@ -141,13 +152,17 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Text>Grafana and your repository are now in sync.</Text>
+      <Text>
+        <Trans i18nKey="provisioning.repository-link.grafana-repository">
+          Grafana and your repository are now in sync.
+        </Trans>
+      </Text>
       <Stack direction="row" gap={2}>
         <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
-          View repository
+          <Trans i18nKey="provisioning.repository-link.view-repository">View repository</Trans>
         </LinkButton>
         <LinkButton fill="outline" href={folderHref} icon="folder-open">
-          View folder
+          <Trans i18nKey="provisioning.repository-link.view-folder">View folder</Trans>
         </LinkButton>
       </Stack>
     </Stack>
