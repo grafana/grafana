@@ -10,11 +10,13 @@ import {
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { getRowFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -110,6 +112,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public editModeChanged(isEditing: boolean) {
     this.state.rows.forEach((row) => row.getLayout().editModeChanged?.(isEditing));
+  }
+
+  public pasteRow() {
+    const scene = this.getRoot();
+    if (scene instanceof DashboardScene) {
+      const row = getRowFromClipboard(scene);
+      this.addNewRow(row);
+    } else {
+      throw new Error('Parent scene is not a DashboardScene');
+    }
   }
 
   public activateRepeaters() {

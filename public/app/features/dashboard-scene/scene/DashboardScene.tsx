@@ -19,7 +19,7 @@ import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
-import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -40,8 +40,6 @@ import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTrack
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
-import { deserializeRow } from '../serialization/layoutSerializers/RowsLayoutSerializer';
-import { deserializeTab } from '../serialization/layoutSerializers/TabsLayoutSerializer';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -75,7 +73,13 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
-import { clearClipboard, pasteRowTo, pasteTabTo, RowStore, TabStore } from './layouts-shared/paste';
+import {
+  clearClipboard,
+  getRowFromClipboard,
+  getTabFromClipboard,
+  pasteRowTo,
+  pasteTabTo,
+} from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
@@ -622,22 +626,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pasteTab() {
-    const jsonData = store.get(LS_TAB_COPY_KEY);
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const jsonObj: TabStore = JSON.parse(jsonData) as TabStore;
-    clearClipboard();
-    const panelIdGenerator = ((start: number) => {
-      let id = start;
-      return () => id++;
-    })(dashboardSceneGraph.getNextPanelId(this));
-
-    let tab;
-    try {
-      tab = deserializeTab(jsonObj.tab, jsonObj.elements, false, panelIdGenerator);
-    } catch (error) {
-      throw new Error('Error pasting tab from clipboard, please try to copy again');
-    }
-
+    const tab = getTabFromClipboard(this);
     const selectedObject = this.state.editPane.getSelection();
     if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
       const layout = selectedObject.getLayout();
@@ -648,23 +637,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pasteRow() {
-    const jsonData = store.get(LS_ROW_COPY_KEY);
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const jsonObj: RowStore = JSON.parse(jsonData) as RowStore;
-    clearClipboard();
-    const panelIdGenerator = ((start: number) => {
-      let id = start;
-      return () => id++;
-    })(dashboardSceneGraph.getNextPanelId(this));
-
-    let row;
-    // We don't control the local storage content, so if it's out of sync with the code all bets are off.
-    try {
-      row = deserializeRow(jsonObj.row, jsonObj.elements, false, panelIdGenerator);
-    } catch (error) {
-      throw new Error('Error pasting row from clipboard, please try to copy again');
-    }
+    const row = getRowFromClipboard(this);
 
     const selectedObject = this.state.editPane.getSelection();
     if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {

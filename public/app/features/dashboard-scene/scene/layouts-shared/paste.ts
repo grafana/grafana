@@ -7,6 +7,10 @@ import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/co
 import store from 'app/core/store';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
+import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { DashboardScene } from '../DashboardScene';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
@@ -88,4 +92,46 @@ export function pasteRowTo(layout: DashboardLayoutManager, row: RowItem): RowIte
   const newRow = rowsLayout.state.rows[0];
   layout.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   return pasteRowTo(rowsLayout, row);
+}
+
+export function getRowFromClipboard(scene: DashboardScene): RowItem {
+  const jsonData = store.get(LS_ROW_COPY_KEY);
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const jsonObj: RowStore = JSON.parse(jsonData) as RowStore;
+  clearClipboard();
+  const panelIdGenerator = ((start: number) => {
+    let id = start;
+    return () => id++;
+  })(dashboardSceneGraph.getNextPanelId(scene));
+
+  let row;
+  // We don't control the local storage content, so if it's out of sync with the code all bets are off.
+  try {
+    row = deserializeRow(jsonObj.row, jsonObj.elements, false, panelIdGenerator);
+  } catch (error) {
+    throw new Error('Error pasting row from clipboard, please try to copy again');
+  }
+
+  return row;
+}
+
+export function getTabFromClipboard(scene: DashboardScene): TabItem {
+  const jsonData = store.get(LS_TAB_COPY_KEY);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const jsonObj: TabStore = JSON.parse(jsonData) as TabStore;
+  clearClipboard();
+  const panelIdGenerator = ((start: number) => {
+    let id = start;
+    return () => id++;
+  })(dashboardSceneGraph.getNextPanelId(scene));
+
+  let tab;
+  try {
+    tab = deserializeTab(jsonObj.tab, jsonObj.elements, false, panelIdGenerator);
+  } catch (error) {
+    throw new Error('Error pasting tab from clipboard, please try to copy again');
+  }
+
+  return tab;
 }

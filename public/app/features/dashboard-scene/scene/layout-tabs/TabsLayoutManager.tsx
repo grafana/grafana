@@ -14,10 +14,12 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { getTabFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -141,6 +143,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public editModeChanged(isEditing: boolean) {
     this.state.tabs.forEach((tab) => tab.getLayout().editModeChanged?.(isEditing));
+  }
+
+  public pasteTab() {
+    const scene = this.getRoot();
+    if (scene instanceof DashboardScene) {
+      const tab = getTabFromClipboard(scene);
+      this.addNewTab(tab);
+    } else {
+      throw new Error('Parent scene is not a DashboardScene');
+    }
   }
 
   public activateRepeaters() {
