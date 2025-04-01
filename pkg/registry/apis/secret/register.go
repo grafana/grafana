@@ -161,7 +161,7 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return secretv0alpha1.GetOpenAPIDefinitions
 }
 
-// PostProcessOpenAPI
+// PostProcessOpenAPI modifies the OpenAPI spec by adding examples and descriptions.
 func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana Secrets Management"
 
