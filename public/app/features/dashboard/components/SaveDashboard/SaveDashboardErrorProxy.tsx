@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, FetchError } from '@grafana/runtime';
+import { FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -31,7 +31,7 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
+  const isRestoreDashboardsEnabled = false;
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (

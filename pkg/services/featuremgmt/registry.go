@@ -1138,14 +1138,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "dashboardRestore",
-			Description:       "Enables deleted dashboard restore feature",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			Expression:        "false", // enabled by default
-		},
-		{
 			Name:              "alertingDisableSendAlertsExternal",
 			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:             FeatureStageExperimental,
