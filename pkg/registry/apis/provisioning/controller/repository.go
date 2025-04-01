@@ -260,7 +260,20 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 		return healthAge > time.Minute*5 // when healthy, check every 5 mins
 	}
 
-	return healthAge > time.Minute // otherwise within a minute
+	// Calculate how long we've been in an unhealthy state waiting for webhook to be pinged
+	if obj.Status.Webhook != nil && obj.Status.Webhook.LastPing == 0 {
+		factor := 2
+		// Add 1 to avoid log2(0) and start with base backoff
+		failureLevels := uint(healthAge.Seconds()/float64(factor)) + 1
+		backoffDelay := time.Second * time.Duration(factor) * time.Duration(1<<failureLevels)
+		if backoffDelay > 15*time.Minute {
+			backoffDelay = 15 * time.Minute // Cap at 15 minutes
+		}
+
+		return healthAge > backoffDelay
+	}
+
+	return healthAge > time.Minute
 }
 
 func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository, webhookStatus *provisioning.WebhookStatus) provisioning.HealthStatus {
@@ -272,11 +285,12 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 		webhookStatus = repo.Config().Status.Webhook
 	}
 
+	now := time.Now().UnixMilli()
 	if webhookStatus != nil && webhookStatus.LastPing == 0 {
 		return provisioning.HealthStatus{
 			Healthy: false,
 			Message: []string{"webhook has not been pinged"},
-			Checked: time.Now().UnixMilli(),
+			Checked: now,
 		}
 	}
 
@@ -293,9 +307,10 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 
 	healthStatus := provisioning.HealthStatus{
 		Healthy: res.Success,
-		Checked: time.Now().UnixMilli(),
+		Checked: now,
 		Message: res.Errors,
 	}
+
 	logger.Info("health check completed", "status", healthStatus)
 
 	return healthStatus

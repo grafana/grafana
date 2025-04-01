@@ -162,6 +162,9 @@ type HealthStatus struct {
 	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
+
+	// When the last failure occurred, used for exponential backoff
+	LastFailureTime int64 `json:"lastFailureTime,omitempty"`
 }
 
 type SyncStatus struct {

@@ -138,7 +138,6 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				responder.Error(err)
 				return
 			}
-
 		}
 
 		responder.Object(rsp.Code, rsp)
