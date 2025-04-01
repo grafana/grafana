@@ -450,7 +450,10 @@ export function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spe
   }
 
   // Required properties
-  if (!('title' in dash) || typeof dash.title !== 'string') {
+  if (!('title' in dash)) {
+    throw new Error('title is required');
+  }
+  if (typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
   if (!('timeSettings' in dash) || typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
