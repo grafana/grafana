@@ -70,24 +70,41 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>> | null) => {
     const selectedArray = Array.isArray(selected) ? selected : selected ? [selected] : [];
-
+  
     if (selectedArray.length === 0) {
       buildAndUpdateQuery({ columns: [] });
       return;
     }
-
+  
     const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
-
-    if (includesAll) {
+    const lastSelected = selectedArray[selectedArray.length - 1];
+  
+    if (includesAll && lastSelected.value === '__all_columns__') {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
-    } else {
-      buildAndUpdateQuery({
-        columns: selectedArray.map((opt) => opt.value!),
-      });
+      return;
     }
-  };
+  
+    if (includesAll && selectedArray.length > 1) {
+      const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
+      buildAndUpdateQuery({
+        columns: filtered.map((opt) => opt.value!),
+      });
+      return;
+    }
+  
+    if (includesAll && selectedArray.length === 1) {
+      buildAndUpdateQuery({
+        columns: allColumns.map((col) => col.name),
+      });
+      return;
+    }
+  
+    buildAndUpdateQuery({
+      columns: selectedArray.map((opt) => opt.value!),
+    });
+  };  
 
   const onDeleteAllColumns = () => {
     buildAndUpdateQuery({
@@ -130,7 +147,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               value={columnSelectValue}
               options={selectableOptions}
               placeholder="Select columns"
-              // onChange={handleColumnsChange}
               isDisabled={!builderQuery?.from?.property.name}
               onChange={(e) => {
                 handleColumnsChange(e);

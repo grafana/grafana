@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
-import { BuilderQueryEditorPropertyType, BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
+import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 
 import AggregateItem from './AggregateItem';
@@ -21,8 +21,8 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   buildAndUpdateQuery,
   variableOptionGroup,
 }) => {
-  const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>([]);
   const builderQuery = query.azureLogAnalytics?.builderQuery;
+  const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>(builderQuery?.reduce?.expressions || []);
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedAggregates = useRef(false);
 
@@ -34,18 +34,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       hasLoadedAggregates.current = false;
       prevTable.current = currentTable;
     }
-
-    if (!hasLoadedAggregates.current && builderQuery?.reduce?.expressions?.length && aggregates.length === 0) {
-      const parsed = builderQuery.reduce.expressions.map((agg) => ({
-        property: agg.property ?? { type: BuilderQueryEditorPropertyType.String, name: '' },
-        reduce: agg.reduce ?? { name: '', type: BuilderQueryEditorPropertyType.Function },
-        parameters: agg.parameters,
-        focus: false,
-      }));
-      setAggregates(parsed);
-      hasLoadedAggregates.current = true;
-    }
-  }, [builderQuery, aggregates]);
+  }, [builderQuery]);
 
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
     ? builderQuery.columns.columns.map((col) => ({ label: col, value: col }))

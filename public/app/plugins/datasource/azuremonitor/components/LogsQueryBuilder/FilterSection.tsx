@@ -75,15 +75,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       hasLoadedFilters.current = false;
       prevTable.current = currentTable;
     }
-
-    if (!hasLoadedFilters.current && builderQuery?.where?.expressions) {
-      const safeFilters = builderQuery.where.expressions.map((group) => ({
-        ...group,
-        expressions: group.expressions ?? [],
-      }));
-      setFilters(safeFilters);
-      hasLoadedFilters.current = true;
-    }
   }, [builderQuery]);
 
   const updateFilters = (updated: BuilderQueryEditorWhereExpression[]) => {
