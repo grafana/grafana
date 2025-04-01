@@ -226,7 +226,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -259,7 +259,7 @@ func TestConvertResponses(t *testing.T) {
 				"int":    "100",
 				"float":  "3.14",
 			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -290,11 +290,11 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrameA := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target 1"}),
-		)
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrameB := data.NewFrame("B",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target 2"}),
-		)
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrameA, expectedFrameB}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -321,7 +321,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrame := data.NewFrame("A A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
