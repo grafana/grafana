@@ -23,7 +23,6 @@ export interface Collectable {
 	title: string;
 	origin: string;
 	type: string;
-	// +listType=atomic
 	queries: Query[];
 	timeRange: TimeRange;
 	datasource: DatasourceRef;

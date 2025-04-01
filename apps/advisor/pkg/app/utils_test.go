@@ -92,7 +92,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	err = processCheck(ctx, client, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
-	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
+	r := client.lastValue.(advisorv0alpha1.CheckReport)
 	assert.Equal(t, r.Count, int64(100))
 	assert.Len(t, r.Failures, 50)
 }
