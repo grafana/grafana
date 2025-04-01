@@ -1,47 +1,54 @@
 import { isEqual } from 'lodash';
+import React from 'react';
 
 import {
-  SceneObjectState,
-  VizPanel,
-  SceneObjectBase,
-  sceneGraph,
   CustomVariable,
-  MultiValueVariable,
-  VariableValueSingle,
-  VizPanelState,
-  SceneVariableSet,
   LocalValueVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneVariableSet,
   VariableDependencyConfig,
+  VariableValueSingle,
+  VizPanel,
+  VizPanelState,
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getOptions } from './ResponsiveGridItemEditor';
-import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { AutoGridItemRenderer } from './ResponsiveGridItemRenderer';
+import { AutoGridLayout } from './ResponsiveGridLayout';
 
-export interface ResponsiveGridItemState extends SceneObjectState {
+export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
   repeatedPanels?: VizPanel[];
   variableName?: string;
+  isHidden?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
 
-export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
-  public static Component = ResponsiveGridItemRenderer;
-  private _prevRepeatValues?: VariableValueSingle[];
+export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {
+  public static Component = AutoGridItemRenderer;
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: () => this.performRepeat(),
   });
-  public readonly isDashboardLayoutItem = true;
 
-  public constructor(state: ResponsiveGridItemState) {
+  public readonly isDashboardLayoutItem = true;
+  public containerRef = React.createRef<HTMLDivElement>();
+  private _prevRepeatValues?: VariableValueSingle[];
+
+  public constructor(state: AutoGridItemState) {
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty() });
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -60,12 +67,8 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     };
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getOptions(this);
-  }
-
-  public toggleHideWhenNoData() {
-    this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
   }
 
   public performRepeat() {
@@ -130,7 +133,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   }
 
   public setRepeatByVariable(variableName: string | undefined) {
-    const stateUpdate: Partial<ResponsiveGridItemState> = { variableName };
+    const stateUpdate: Partial<AutoGridItemState> = { variableName };
 
     if (this.state.body.state.$variables) {
       this.state.body.setState({ $variables: undefined });
@@ -140,5 +143,28 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
     this.setState(stateUpdate);
     this.performRepeat();
+  }
+
+  public getParentGrid(): AutoGridLayout {
+    if (!(this.parent instanceof AutoGridLayout)) {
+      throw new Error('Parent is not a ResponsiveGridLayout');
+    }
+
+    return this.parent;
+  }
+
+  public getBoundingBox(): { width: number; height: number; top: number; left: number } {
+    const rect = this.containerRef.current!.getBoundingClientRect();
+
+    return {
+      width: rect.width,
+      height: rect.height,
+      top: this.containerRef.current!.offsetTop,
+      left: this.containerRef.current!.offsetLeft,
+    };
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }

@@ -20,23 +20,6 @@ function initI18n() {
       resources: {},
       returnEmptyString: false,
       lng: 'en-US', // this should be the locale of the phrases in our source JSX
-      postProcess: [
-        // Add pseudo processing even if we aren't necessarily going to use it
-        'pseudo',
-      ],
-    });
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    import('i18next-pseudo').then((module) => {
-      const Pseudo = module.default;
-      i18next.use(
-        new Pseudo({
-          languageToPseudo: 'pseudo',
-          enabled: true,
-          wrapped: true,
-        })
-      );
     });
   }
 }

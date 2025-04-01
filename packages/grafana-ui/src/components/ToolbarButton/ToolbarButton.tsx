@@ -86,6 +86,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         className={buttonStyles}
         aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
         aria-expanded={isOpen}
+        type="button"
         {...rest}
       >
         {renderIcon(icon, iconSize)}

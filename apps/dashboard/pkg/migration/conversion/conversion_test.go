@@ -45,3 +45,20 @@ func TestConversionMatrixExist(t *testing.T) {
 		})
 	}
 }
+
+func TestDeepCopyValid(t *testing.T) {
+	dash1 := &v0alpha1.Dashboard{}
+	meta1, err := utils.MetaAccessor(dash1)
+	require.NoError(t, err)
+	meta1.SetFolder("f1")
+	require.Equal(t, "f1", dash1.Annotations[utils.AnnoKeyFolder])
+
+	dash1Copy := dash1.DeepCopyObject()
+	metaCopy, err := utils.MetaAccessor(dash1Copy)
+	require.NoError(t, err)
+	require.Equal(t, "f1", metaCopy.GetFolder())
+
+	// Changing a property on the copy should not effect the original
+	metaCopy.SetFolder("XYZ")
+	require.Equal(t, "f1", meta1.GetFolder()) // 💣💣💣
+}

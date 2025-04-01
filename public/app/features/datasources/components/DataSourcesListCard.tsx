@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ROUTES } from '../../connections/constants';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
@@ -48,7 +49,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
             });
           }}
         >
-          Build a dashboard
+          <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
         </LinkButton>
 
         {/* Explore */}
@@ -68,7 +69,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
               });
             }}
           >
-            Explore
+            <Trans i18nKey="datasources.data-sources-list-card.explore">Explore</Trans>
           </LinkButton>
         )}
       </Card.Tags>

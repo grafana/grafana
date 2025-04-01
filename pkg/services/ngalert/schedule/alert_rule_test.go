@@ -847,7 +847,11 @@ func TestRuleRoutine(t *testing.T) {
 	})
 
 	t.Run("when there are resolved alerts they should keep sending until retention period is over", func(t *testing.T) {
-		rule := gen.With(withQueryForState(t, eval.Normal), models.RuleMuts.WithInterval(time.Second)).GenerateRef()
+		rule := gen.With(
+			withQueryForState(t, eval.Normal),
+			models.RuleMuts.WithInterval(time.Second),
+			models.RuleMuts.WithKeepFiringFor(0),
+		).GenerateRef()
 
 		evalAppliedChan := make(chan time.Time)
 
