@@ -98,6 +98,7 @@ Following is a list of PostgreSQL configuration options:
   - Unix socket path: `/var/run/postgresql`
 
 {{< admonition type="note" >}}
+Including the username and password in the URL is **not recommended** as they will be stored in plain text in the Grafana database.
 When using a full PostgreSQL URL, the username, password, and database name specified in the URL will be only used if the respective fields below are empty.
 {{< /admonition >}}
 
