@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"dagger.io/dagger"
 )
@@ -48,11 +49,6 @@ func main() {
 	c := RunSuite(d, svc, grafana, yarnCache, *suite)
 	c, err = c.Sync(ctx)
 	if err != nil {
-		// Attempt to export videos first
-		if _, exportErr := c.Directory(videosDir).Export(ctx, "videos"); exportErr != nil {
-			log.Fatalf("could not export videos dir: %s\nError: %s", exportErr, err)
-		}
-
 		log.Fatalf("error running dagger: %s", err)
 	}
 
@@ -69,6 +65,8 @@ func main() {
 	}
 
 	if code != 0 {
-		log.Fatalf("tests failed: exit code %d", code)
+		log.Printf("tests failed: exit code %d", code)
 	}
+
+	os.Exit(code)
 }
