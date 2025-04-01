@@ -59,7 +59,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty } = dashboard.useState();
+  const { meta, isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -71,7 +71,6 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
   } = useForm<FormData>({ defaultValues });
-  const panelEditor = dashboard?.state.editPanel;
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
