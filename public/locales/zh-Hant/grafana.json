@@ -1105,6 +1105,12 @@
       "success": "儀表板「{{name}}」已移至「最近刪除」"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "已複製"
@@ -1119,9 +1125,6 @@
     },
     "custom-value": {
       "description": "使用自訂值"
-    },
-    "group": {
-      "undefined": "無群組"
     },
     "options": {
       "no-found": "沒有找到選項。"
@@ -4766,7 +4769,7 @@
       "loading": "正在載入儀表板",
       "noResultsForFilter": "未找到您的查詢結果",
       "noResultsForFilterClear": "清除搜尋",
-      "noResultsForScopes": "未找到所選範圍的儀表板",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "未選取範圍",
       "search": "搜尋",
       "toggle": {
@@ -5114,7 +5117,8 @@
       "week-start-label": "一週哪一天開始"
     },
     "theme": {
-      "default-label": "預設值"
+      "default-label": "預設值",
+      "experimental": ""
     },
     "title": "偏好設定"
   },

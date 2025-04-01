@@ -1132,6 +1132,12 @@
       "success": "Panel {{name}} przeniesiono do sekcji Ostatnio usunięte"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Skopiowano"
@@ -1146,9 +1152,6 @@
     },
     "custom-value": {
       "description": "Użyj wartości niestandardowej"
-    },
-    "group": {
-      "undefined": "Brak grupy"
     },
     "options": {
       "no-found": "Brak opcji."
@@ -4808,7 +4811,7 @@
       "loading": "Ładowanie pulpitów",
       "noResultsForFilter": "Nie znaleziono wyników dla tego zapytania",
       "noResultsForFilterClear": "Wyczyść wyszukiwanie",
-      "noResultsForScopes": "Nie znaleziono pulpitów dla wybranych zakresów",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nie wybrano zakresów",
       "search": "Szukaj",
       "toggle": {
@@ -5156,7 +5159,8 @@
       "week-start-label": "Początek tygodnia"
     },
     "theme": {
-      "default-label": "Domyślny"
+      "default-label": "Domyślny",
+      "experimental": ""
     },
     "title": "Właściwości"
   },
