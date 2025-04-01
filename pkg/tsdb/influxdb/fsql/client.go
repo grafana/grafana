@@ -41,7 +41,8 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, proxyCli
 }
 
 func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, error) {
-	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
+	secureDialOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	var transport grpc.DialOption
 
 	if secure {
 		pool, err := x509.SystemCertPool()
@@ -72,7 +73,11 @@ func grpcDialOptions(secure bool, proxyClient proxy.Client) ([]grpc.DialOption, 
 	}
 
 	opts := []grpc.DialOption{
-		transport,
+		secureDialOpt,
+	}
+
+	if transport != nil {
+		opts = append(opts, transport)
 	}
 
 	return opts, nil
