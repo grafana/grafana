@@ -152,6 +152,18 @@ func fromError(err error, code int) *provisioning.TestResults {
 
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	// FIXME: how and where we should fail if the webhook is not created or still exists?
+	// Fail fast if webhook wasn't pinged so that we don't hit Github API unnecessarily
+	if r.config.Status.Webhook != nil {
+		if r.config.Status.Webhook.LastPing == 0 {
+			return &provisioning.TestResults{
+				Code:    http.StatusExpectationFailed,
+				Success: false,
+				Errors:  []string{"webhook has not been pinged"},
+			}, nil
+		}
+	}
+
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
 		return fromError(err, http.StatusUnauthorized), nil
 	}
@@ -186,18 +198,6 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 			Success: false,
 			Errors:  []string{"branch does not exist"},
 		}, nil
-	}
-
-	// FIXME: how and where we should fail if the webhook is not created or still exists?
-	// If webhook has been created, check that pinged happened
-	if r.config.Status.Webhook != nil {
-		if r.config.Status.Webhook.LastPing == 0 {
-			return &provisioning.TestResults{
-				Code:    http.StatusBadRequest,
-				Success: false,
-				Errors:  []string{"webhook has not been pinged"},
-			}, nil
-		}
 	}
 
 	return &provisioning.TestResults{

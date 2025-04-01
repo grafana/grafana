@@ -486,16 +486,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
-	healthStatus := obj.Status.Health
-	if shouldCheckHealth {
-		healthStatus = rc.runHealthCheck(ctx, repo)
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/health",
-			"value": healthStatus,
-		})
-	}
-
 	// Run hooks
 	webhookStatus, err := rc.runHooks(ctx, repo, obj)
 	switch {
@@ -506,6 +496,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"op":    "replace",
 			"path":  "/status/webhook",
 			"value": webhookStatus,
+		})
+	}
+
+	healthStatus := obj.Status.Health
+	if shouldCheckHealth {
+		healthStatus = rc.runHealthCheck(ctx, repo)
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
 		})
 	}
 
