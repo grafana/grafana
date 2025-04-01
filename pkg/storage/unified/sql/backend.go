@@ -225,12 +225,13 @@ func (b *backend) initPruner(ctx context.Context) error {
 						Name:      key.name,
 					},
 				})
-
+				if err != nil {
+					return fmt.Errorf("failed to prune history: %w", err)
+				}
 				rows, err := res.RowsAffected()
 				if err != nil {
 					return fmt.Errorf("failed to get rows affected: %w", err)
 				}
-
 				b.log.Debug("pruned history successfully",
 					"namespace", key.namespace,
 					"group", key.group,
