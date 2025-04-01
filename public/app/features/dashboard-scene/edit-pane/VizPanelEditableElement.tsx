@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
@@ -18,7 +17,6 @@ import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
