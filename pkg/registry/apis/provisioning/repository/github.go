@@ -188,6 +188,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 		}, nil
 	}
 
+	// FIXME: how and where we should fail if the webhook is not created or still exists?
 	// If webhook has been created, check that pinged happened
 	if r.config.Status.Webhook != nil {
 		if r.config.Status.Webhook.LastPing == 0 {
