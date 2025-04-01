@@ -445,7 +445,7 @@ export function getDefaultDataSourceRef(): DataSourceRef {
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
 export function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
-  if (typeof dash !== 'object' || dash === null) {
+  if (typeof dash !== 'object' || dash === null || Array.isArray(dash)) {
     throw new Error('Dashboard is not an object or is null');
   }
 
