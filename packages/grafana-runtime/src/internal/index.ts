@@ -16,3 +16,12 @@ export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
 export { ExpressionDatasourceRef } from '../utils/DataSourceWithBackend';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
+
+export {
+  setGetObservablePluginComponents,
+  type GetObservablePluginComponents,
+} from '../services/pluginExtensions/getObservablePluginComponents';
+export {
+  setGetObservablePluginLinks,
+  type GetObservablePluginLinks,
+} from '../services/pluginExtensions/getObservablePluginLinks';

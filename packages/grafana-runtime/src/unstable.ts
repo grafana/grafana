@@ -11,3 +11,6 @@
 
 export { useTranslate, setUseTranslateHook, setTransComponent, Trans } from './utils/i18n';
 export type { TransProps } from './types/i18n';
+
+export { getObservablePluginLinks } from './services/pluginExtensions/getObservablePluginLinks';
+export { getObservablePluginComponents } from './services/pluginExtensions/getObservablePluginComponents';
