@@ -75,7 +75,7 @@ export const LogLine = ({
       <div
         className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
         ref={onOverflow ? logLineRef : undefined}
-        onMouseOver={handleMouseOver}
+        onMouseEnter={handleMouseOver}
       >
         <LogLineMenu styles={styles} log={log} />
         <div
