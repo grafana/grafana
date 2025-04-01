@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -28,13 +27,13 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 
 // This only works for github right now
 type webhookConnector struct {
-	client          client.ProvisioningV0alpha1Interface
+	client          ClientGetter
 	getter          RepoGetter
 	jobs            jobs.Queue
 	webhooksEnabled bool
 }
 
-func NewWebhookConnector(client client.ProvisioningV0alpha1Interface, getter RepoGetter, jobs jobs.Queue, webhooksEnabled bool) *webhookConnector {
+func NewWebhookConnector(client ClientGetter, getter RepoGetter, jobs jobs.Queue, webhooksEnabled bool) *webhookConnector {
 	return &webhookConnector{
 		client:          client,
 		getter:          getter,
@@ -118,8 +117,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
+		client := s.client.ProvisioningV0alpha1()
 		// Update the status if init finalized, and if it's a ping or no previous ping was recorded
-		if repo.Config().Status.Webhook != nil && (rsp.IsPing || repo.Config().Status.Webhook.LastPing == 0) {
+		if client != nil && repo.Config().Status.Webhook != nil && (rsp.IsPing || repo.Config().Status.Webhook.LastPing == 0) {
 			patchOp := map[string]interface{}{
 				"op":    "replace",
 				"path":  "/status/webhook/lastPing",
@@ -132,7 +132,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				return
 			}
 
-			_, err = s.client.Repositories(namespace).
+			_, err = client.Repositories(namespace).
 				Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
 			if err != nil {
 				responder.Error(err)

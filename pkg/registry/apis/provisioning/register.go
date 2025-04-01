@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -92,6 +93,7 @@ type APIBuilder struct {
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	secrets          secrets.Service
+	client           client.ProvisioningV0alpha1Interface
 }
 
 // NewAPIBuilder creates an API builder.
@@ -298,6 +300,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return provisioning.SchemeGroupVersion
+}
+
+func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
+	return b.client
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -549,9 +555,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
+			b.client = c.ProvisioningV0alpha1()
+
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
 			b.tester = &RepositoryTester{
-				client: c.ProvisioningV0alpha1(),
+				client: b.GetClient(),
 			}
 
 			b.repositoryLister = repoInformer.Lister()
@@ -564,7 +572,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 			)
 			syncWorker := sync.NewSyncWorker(
-				c.ProvisioningV0alpha1(),
+				b.GetClient(),
 				b.parsers,
 				b.resourceLister,
 				b.storageStatus,
@@ -593,7 +601,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
-				c.ProvisioningV0alpha1(),
+				b.GetClient(),
 				repoInformer,
 				b, // repoGetter
 				b.resourceLister,
