@@ -88,35 +88,23 @@ The data is converted as follows:
 
 | Option | Description |
 | ------ | ----------- |
-| [Mode](#mode) | The mode options allow you to toggle which dimensions are used for the visualization. |
-| [Candle style](#candle-style) | Choose from:<ul><li>**Candles** - The default display style and creates candle-style visualizations between the open and close dimensions.</li><li>**OHLC Bars** - Displays the four core dimensions open, high, low, and close values.</li></ul> |
-| [Color strategy](#color-strategy) | Choose from:<ul><li>**Since Open** - This mode will utilize the _Up_ color (below) if the intra-period price movement is positive.</li><li>**Since Prior Close** - Based on where the color of the candle is based on the inter-period price movement or change in value.</li></ul> |
-| Up color & Down color | The **Up color** and **Down color** options select which colors are used when the price movement is up or down. Please note that the _Color strategy_ above will determine if intra-period or inter-period price movement is used to select the candle or OHLC bar color. |
-| [Open, High, Low, Close](#open-high-low-close) | The candlestick visualization will attempt to map fields from your data to the appropriate dimension. |
-| Volume | The candlestick visualization will attempt to map fields from your data to a sample count in the given period (for example, number of trades). |
+| Mode | **Mode** options let you toggle which dimensions are used for the visualization. Choose from:<ul><li>**Candles** - Uses the open, high, low, and close dimensions.</li><li>**Volume** - Uses only the volume dimension.</li><li>**Both** - The default behavior, which displays both candles and volume values.</li></ul> |
+| Candle style | Controls the appearance of the candle. Choose from:<ul><li>**Candles** - The default display style and creates candle-style visualizations between the open and close dimensions.</li><li>**OHLC Bars** - Displays values for the four core dimensions, open, high, low, and close.</li></ul> |
+| [Color strategy](#color-strategy) | Controls how colors are applied to dimensions. Choose from:<ul><li>**Since Open** - This mode uses the **Up color** if the intra-period price movement is positive.</li><li>**Since Prior Close** - The color of the candle is based on the inter-period price movement or change in value.</li></ul> |
+| Up color & Down color | The **Up color** and **Down color** options set which colors are used when the price movement is up or down. Note that the **Color strategy** selection determines if intra-period or inter-period price movement is used to select the candle or OHLC bar color. |
+| [Open, High, Low, Close, Volume](#open-high-low-close) | The candlestick visualization attempts to map fields from your data to the appropriate dimension. |
 | [Additional fields](#additional-fields) | The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization. |
-
-#### Mode
-
-The mode options allow you to toggle which dimensions are used for the visualization.
-
-- **Candles** - Limits the panel dimensions to the open, high, low, and close dimensions used by candlestick visualizations.
-- **Volume** - Limits the panel dimension to the volume dimension.
-- **Both** - The default behavior for the candlestick visualization. It includes both candlestick and volume visualizations.
-
-#### Candle style
-
-- **Candles** - The default display style and creates candle-style visualizations between the open and close dimensions.
-- **OHLC Bars** - Displays the four core dimensions open, high, low, and close values.
 
 #### Color strategy
 
 - **Since Open** - The default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the _Up_ color is used.
-- **Since Prior Close** - An alternative display method based on where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used. _This option also triggers the hollow candlestick visualization mode_. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). To learn more, see the [explanation of the differences](https://thetradingbible.com/how-to-read-hollow-candlesticks).
+- **Since Prior Close** - An alternative display method based on where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used.
 
-#### Open, High, Low, Close
+  This option also triggers the _hollow candlestick_ visualization mode. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). To learn more, see the [explanation of the differences](https://thetradingbible.com/how-to-read-hollow-candlesticks).
 
-The candlestick visualization will attempt to map fields from your data to the appropriate dimension:
+#### Open, High, Low, Close, Volume {#open-high-low-close}
+
+The candlestick visualization attempts to map fields from your data to the appropriate dimension:
 
 - **Open** - Starting value of the given period.
 - **High** - Highest value of the given period.
@@ -134,7 +122,7 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 #### Additional fields
 
-The candlestick visualization is based on the time series visualization, but it can visualize additional data dimensions beyond open, high, low, close, and volume.
+The candlestick visualization is based on the time series visualization, and it can visualize additional data dimensions beyond open, high, low, close, and volume.
 The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
 ### Tooltip options
