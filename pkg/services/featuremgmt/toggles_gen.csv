@@ -241,4 +241,5 @@ unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false
 localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
+xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
