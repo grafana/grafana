@@ -42,6 +42,13 @@
       "format": "int64",
       "description": "created timestamp",
       "priority": 0
+    },
+    {
+      "name": "grafana.app/deprecatedInternalID",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the resource",
+      "priority": 0
     }
   ],
   "rows": [
@@ -49,6 +56,7 @@
       "cells": [
         "ns/folder.grafana.app/folders/yyy",
         "yyy (folder)",
+        null,
         null,
         null,
         null,
@@ -68,6 +76,7 @@
       "cells": [
         "ns/folder.grafana.app/folders/zzz",
         "zzz (folder)",
+        null,
         null,
         null,
         null,
