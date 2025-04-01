@@ -82,7 +82,9 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
+
       if (workflow === 'branch' && ref !== '' && path !== '') {
+        dashboard.closeModal();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
@@ -124,7 +126,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
