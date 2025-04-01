@@ -40,7 +40,7 @@ User provisioning requires `user_sync_enabled = true` in the SCIM configuration.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
-Once a user is provisioned through SCIM, they cannot be deleted from Grafana - they can only be deactivated through the identity provider. This is important to consider when planning your user management strategy, especially for compliance and data retention requirements.
+After a user is provisioned through SCIM, they cannot be deleted from Grafana - they can only be deactivated through the identity provider. This is important to consider when planning your user management strategy, especially for compliance and data retention requirements.
 {{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:
