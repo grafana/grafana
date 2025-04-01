@@ -255,6 +255,7 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
   return dimensions;
 };
 
+// 2/3 of the viewport height
 export const TRUNCATION_LINE_COUNT = Math.round(window.innerHeight / getLineHeight() / 1.5);
 export function getTruncationLength(container: HTMLDivElement | null) {
   const availableWidth = container ? getLogContainerWidth(container) : window.innerWidth;

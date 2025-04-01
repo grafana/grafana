@@ -108,10 +108,10 @@ export class LogListModel implements LogRowModel {
     return field ? field.values.toString() : '';
   }
 
-  checkCollapsedState(displayedFields: string[]) {
+  checkCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
     const lineLength =
       displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length + this.raw.length;
-    const collapsed = lineLength >= getTruncationLength() ? true : undefined;
+    const collapsed = lineLength >= getTruncationLength(container) ? true : undefined;
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
     }
