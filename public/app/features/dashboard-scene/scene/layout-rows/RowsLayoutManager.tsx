@@ -37,7 +37,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     get description() {
       return t('dashboard.rows-layout.description', 'Collapsable panel groups with headings');
     },
-    id: 'rows-layout',
+    id: 'RowsLayout',
     createFromLayout: RowsLayoutManager.createFromLayout,
     isGridLayout: false,
   };

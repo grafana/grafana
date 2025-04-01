@@ -527,7 +527,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as AutoGridLayoutManager;
-        expect(layoutManager.descriptor.id).toBe('auto-grid');
+        expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
         expect(layoutManager.state.maxColumnCount).toBe(4);
         expect(layoutManager.state.columnWidth).toBe(100);
         expect(layoutManager.state.rowHeight).toBe('standard');
@@ -572,7 +572,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as TabsLayoutManager;
-        expect(layoutManager.descriptor.id).toBe('tabs-layout');
+        expect(layoutManager.descriptor.id).toBe('TabsLayout');
         expect(layoutManager.state.tabs.length).toBe(1);
         expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
         const gridLayoutManager = layoutManager.state.tabs[0].state.layout as AutoGridLayoutManager;
@@ -648,10 +648,10 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as RowsLayoutManager;
-        expect(layoutManager.descriptor.id).toBe('rows-layout');
+        expect(layoutManager.descriptor.id).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
         const row1Manager = layoutManager.state.rows[0].state.layout as AutoGridLayoutManager;
-        expect(row1Manager.descriptor.id).toBe('auto-grid');
+        expect(row1Manager.descriptor.id).toBe('AutoGridLayout');
         expect(row1Manager.state.maxColumnCount).toBe(4);
         expect(row1Manager.state.columnWidth).toBe('standard');
         expect(row1Manager.state.rowHeight).toBe('standard');
@@ -659,7 +659,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(row1GridItem.state.body.state.key).toBe('panel-1');
 
         const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
-        expect(row2Manager.descriptor.id).toBe('default-grid');
+        expect(row2Manager.descriptor.id).toBe('GridLayout');
         const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
         expect(row2GridItem.state.body!.state.key).toBe('panel-2');
       });
