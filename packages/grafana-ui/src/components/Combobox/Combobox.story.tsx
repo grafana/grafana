@@ -1,14 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
 
 import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
-import { fakeSearchAPI, generateOptions } from './storyUtils';
+import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
@@ -64,7 +63,6 @@ const meta: Meta<PropsAndCustomArgs> = {
     ],
     value: 'banana',
   },
-  decorators: [InDevDecorator],
 };
 export default meta;
 
@@ -105,6 +103,34 @@ export const AutoSize: Story = {
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,
+  },
+  render: BaseCombobox,
+};
+
+export const GroupsWithMixedLabels: Story = {
+  args: {
+    options: [
+      { label: 'One', value: 'one', group: 'Group 1' },
+      { label: 'Two', value: 'two', group: 'Group 1' },
+      { label: 'Three', value: 'three', group: 'Group 3' },
+      { label: 'Four', value: 'four', group: 'Group 1' },
+      { label: 'Five', value: 'five' },
+      { label: 'Six', value: 'six' },
+      { label: 'Seven', value: 'seven', group: 'Group 2' },
+      { label: 'Eight', value: 'eight', group: 'Group 3' },
+      { label: 'Nine', value: 'nine', group: 'Group 3' },
+      { label: 'Ten', value: 'ten', group: 'Group 3' },
+      { label: 'Eleven', value: 'eleven' },
+    ],
+    value: '',
+  },
+  render: BaseCombobox,
+};
+
+export const Groups: Story = {
+  args: {
+    options: await generateGroupingOptions(500),
+    value: '34',
   },
   render: BaseCombobox,
 };
@@ -257,17 +283,3 @@ export const PositioningTest: Story = {
     );
   },
 };
-
-function InDevDecorator(Story: React.ElementType) {
-  return (
-    <div>
-      <Alert title="This component is still in development!" severity="info">
-        Combobox is still in development and not able to be used externally.
-        <br />
-        Within the Grafana repo, it can be used by importing it from{' '}
-        <span style={{ fontFamily: 'monospace' }}>@grafana/ui/src/unstable</span>
-      </Alert>
-      <Story />
-    </div>
-  );
-}

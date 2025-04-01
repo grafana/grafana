@@ -37,23 +37,39 @@ export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
 export const AnnoKeyFolder = 'grafana.app/folder';
-export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
-export const AnnoKeyFolderId = 'grafana.app/folderId';
-export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
-export const AnnoKeySlug = 'grafana.app/slug';
 
-// Identify where values came from
-export const AnnoKeyRepoName = 'grafana.app/repoName';
-export const AnnoKeyRepoPath = 'grafana.app/repoPath';
-export const AnnoKeyRepoHash = 'grafana.app/repoHash';
-export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
+export enum ManagerKind {
+  Repo = 'repo',
+  Terraform = 'terraform',
+  Kubectl = 'kubectl',
+  Plugin = 'plugin',
+}
 
+export const AnnoKeyManagerKind = 'grafana.app/managedBy';
+export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
+export const AnnoKeySourcePath = 'grafana.app/sourcePath';
+export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
+export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
+
+// for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
-export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
+
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeySlug = 'grafana.app/slug';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
+
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderId = 'grafana.app/folderId';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -64,17 +80,19 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedTimestamp]?: string;
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
-  [AnnoKeySlug]?: string;
 
-  [AnnoKeyRepoName]?: string;
-  [AnnoKeyRepoPath]?: string;
-  [AnnoKeyRepoHash]?: string;
-  [AnnoKeyRepoTimestamp]?: string;
+  [AnnoKeyManagerKind]?: ManagerKind;
+  [AnnoKeyManagerIdentity]?: string;
+  [AnnoKeySourcePath]?: string;
+  [AnnoKeySourceChecksum]?: string;
+  [AnnoKeySourceTimestamp]?: string;
 };
 
 // Annotations provided by the front-end client
 type GrafanaClientAnnotations = {
   [AnnoKeyMessage]?: string;
+
+  [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeyFolderId]?: number;
@@ -92,6 +110,18 @@ type GrafanaClientAnnotations = {
 type GrafanaLabels = {
   [DeprecatedInternalId]?: string;
 };
+
+export interface GroupVersionResource {
+  group: string;
+  version: string;
+  resource: string;
+}
+
+export interface GroupVersionKind {
+  group: string;
+  version: string;
+  kind: string;
+}
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {
   metadata: ObjectMeta;
@@ -209,7 +239,7 @@ export interface ResourceClient<T = object, S = object, K = string> {
   subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
-  delete(name: string): Promise<MetaStatus>;
+  delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
 }
 
 export interface K8sAPIGroup {

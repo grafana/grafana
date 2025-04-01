@@ -9,9 +9,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v70/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/cmd/util"
 )
 
 type githubPublishTestCases struct {
@@ -158,7 +160,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 	testApp := cli.NewApp()
 	testApp.Action = PublishGithub
 	testApp.Flags = []cli.Flag{
-		&dryRunFlag,
+		&util.DryRunFlag,
 		&cli.StringFlag{
 			Name:     "path",
 			Required: true,

@@ -1,12 +1,21 @@
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { ProcessedLogModel } from './processing';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+
+import { getDisplayedFieldValue } from './LogLine';
+import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
-let paddingBottom = gridSize * 0.5;
+let paddingBottom = gridSize * 0.75;
 let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
+const iconWidth = 24;
+
+// Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
+export const FIELD_GAP_MULTIPLIER = 1.5;
+
+export const getLineHeight = () => lineHeight;
 
 export function init(theme: GrafanaTheme2) {
   const font = `${theme.typography.fontSize}px ${theme.typography.fontFamilyMonospace}`;
@@ -16,7 +25,7 @@ export function init(theme: GrafanaTheme2) {
   initCanvasMeasurement(font, letterSpacing);
 
   gridSize = theme.spacing.gridSize;
-  paddingBottom = gridSize * 0.5;
+  paddingBottom = gridSize * 0.75;
   lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
 
   widthMap = new Map<number, number>();
@@ -111,12 +120,12 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
     };
   }
 
+  const availableWidth = maxWidth - beforeWidth;
   for (const textLine of textLines) {
     for (let start = 0; start < textLine.length; ) {
       let testLogLine: string;
       let width = 0;
       let delta = 0;
-      let availableWidth = maxWidth - beforeWidth;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
         width = measureTextWidth(testLogLine);
@@ -144,39 +153,102 @@ interface DisplayOptions {
 }
 
 export function getLogLineSize(
-  logs: ProcessedLogModel[],
+  logs: LogListModel[],
   container: HTMLDivElement | null,
+  displayedFields: string[],
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
   if (!container) {
     return 0;
   }
-  if (!wrap) {
+  // !logs[index] means the line is not yet loaded by infinite scrolling
+  if (!wrap || !logs[index]) {
     return lineHeight + paddingBottom;
   }
   const storedSize = retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
     return storedSize;
   }
-  const gap = gridSize;
+
+  let textToMeasure = '';
+  const gap = gridSize * FIELD_GAP_MULTIPLIER;
   let optionsWidth = 0;
   if (showTime) {
-    optionsWidth += logs[index].dimensions.timestampWidth + gap;
+    optionsWidth += gap;
+    textToMeasure += logs[index].timestamp;
   }
-  if (logs[index].logLevel) {
-    optionsWidth += logs[index].dimensions.levelWidth + gap;
+  // When logs are unwrapped, we want an empty column space to align with other log lines.
+  if (logs[index].displayLevel || !wrap) {
+    optionsWidth += gap;
+    textToMeasure += logs[index].displayLevel ?? '';
   }
-  const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
+  for (const field of displayedFields) {
+    textToMeasure = getDisplayedFieldValue(field, logs[index]) + textToMeasure;
+  }
+  if (!displayedFields.length) {
+    textToMeasure += logs[index].body;
+  }
+
+  const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   return height;
 }
+
+export interface LogFieldDimension {
+  field: string;
+  width: number;
+}
+
+export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
+  if (!logs.length) {
+    return [];
+  }
+  let timestampWidth = 0;
+  let levelWidth = 0;
+  const fieldWidths: Record<string, number> = {};
+  for (let i = 0; i < logs.length; i++) {
+    let width = measureTextWidth(logs[i].timestamp);
+    if (width > timestampWidth) {
+      timestampWidth = Math.round(width);
+    }
+    width = measureTextWidth(logs[i].displayLevel);
+    if (width > levelWidth) {
+      levelWidth = Math.round(width);
+    }
+    for (const field of displayedFields) {
+      width = measureTextWidth(getDisplayedFieldValue(field, logs[i]));
+      fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
+    }
+  }
+  const dimensions: LogFieldDimension[] = [
+    {
+      field: 'timestamp',
+      width: timestampWidth,
+    },
+    {
+      field: 'level',
+      width: levelWidth,
+    },
+  ];
+  for (const field in fieldWidths) {
+    // Skip the log line when it's a displayed field
+    if (field === LOG_LINE_BODY_FIELD_NAME) {
+      continue;
+    }
+    dimensions.push({
+      field,
+      width: fieldWidths[field],
+    });
+  }
+  return dimensions;
+};
 
 export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
   const height = calculatedHeight ?? element.clientHeight;
   if (element.scrollHeight > height) {
     return element.scrollHeight;
   }
-  const child = element.firstChild;
+  const child = element.children[1];
   if (child instanceof HTMLDivElement && child.clientHeight < height) {
     return child.clientHeight;
   }
@@ -186,7 +258,7 @@ export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: n
 const scrollBarWidth = getScrollbarWidth();
 
 export function getLogContainerWidth(container: HTMLDivElement) {
-  return container.clientWidth - scrollBarWidth;
+  return container.clientWidth - scrollBarWidth - iconWidth;
 }
 
 export function getScrollbarWidth() {

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import { CSSProperties } from 'react';
 
-import { LinkModel, OneClickMode } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
@@ -80,7 +80,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

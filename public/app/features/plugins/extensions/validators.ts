@@ -1,12 +1,14 @@
-import type {
-  PluginExtensionAddedLinkConfig,
-  PluginExtension,
-  PluginExtensionLink,
-  PluginContextType,
-  PluginExtensionAddedComponentConfig,
-  PluginExtensionExposedComponentConfig,
+import {
+  type PluginExtensionAddedLinkConfig,
+  type PluginExtension,
+  type PluginExtensionLink,
+  type PluginContextType,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedFunctionConfig,
+  PluginExtensionPoints,
 } from '@grafana/data';
-import { PluginAddedLinksConfigureFunc, PluginExtensionPoints } from '@grafana/data/src/types/pluginExtensions';
+import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
 import { config, isPluginExtensionLink } from '@grafana/runtime';
 
 import * as errors from './errors';
@@ -144,6 +146,38 @@ export const isAddedLinkMetaInfoMissing = (
 
   if (!pluginJsonMetaInfo) {
     log.error(`${logPrefix} ${errors.ADDED_LINK_META_INFO_MISSING}`);
+    return true;
+  }
+
+  const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+    log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+    log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
+  }
+
+  return false;
+};
+
+export const isAddedFunctionMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedFunctionConfig,
+  log: ExtensionsLog
+) => {
+  const logPrefix = 'Could not register function extension. Reason:';
+  const app = config.apps[pluginId];
+  const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.find(({ title }) => title === metaInfo.title) : null;
+
+  if (!app) {
+    log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
+    return true;
+  }
+
+  if (!pluginJsonMetaInfo) {
+    log.error(`${logPrefix} ${errors.ADDED_FUNCTION_META_INFO_MISSING}`);
     return true;
   }
 

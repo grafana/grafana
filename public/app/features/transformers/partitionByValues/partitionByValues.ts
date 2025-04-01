@@ -8,8 +8,7 @@ import {
   DataTransformContext,
   FieldMatcher,
 } from '@grafana/data';
-import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
-import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
+import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
 
 import { partition } from './partition';
 
@@ -75,7 +74,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
-    const matcherConfig = getMatcherConfig(ctx, { names: options.fields });
+    const matcherConfig = getMatcherConfig({ names: options.fields });
 
     if (!matcherConfig) {
       return noopTransformer.transformer({}, ctx);

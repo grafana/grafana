@@ -26,13 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const folderSearchLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
@@ -172,7 +173,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
@@ -215,32 +216,17 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	}
 
 	hitList := make([]*model.Hit, len(parsedResults.Hits))
-	foldersMap := map[string]*folder.Folder{}
 	for i, item := range parsedResults.Hits {
-		f, ok := foldersMap[item.Folder]
-		if !ok {
-			f, err = s.Get(ctx, &folder.GetFolderQuery{
-				UID:          &item.Folder,
-				OrgID:        query.OrgID,
-				SignedInUser: query.SignedInUser,
-			})
-			if err != nil {
-				return nil, err
-			}
-			foldersMap[item.Folder] = f
-		}
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:          item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-			UID:         item.Name,
-			OrgID:       query.OrgID,
-			Title:       item.Title,
-			URI:         "db/" + slug,
-			URL:         dashboards.GetFolderURL(item.Name, slug),
-			Type:        model.DashHitFolder,
-			FolderUID:   item.Folder,
-			FolderTitle: f.Title,
-			FolderID:    f.ID, // nolint:staticcheck
+			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			UID:       item.Name,
+			OrgID:     query.OrgID,
+			Title:     item.Title,
+			URI:       "db/" + slug,
+			URL:       dashboards.GetFolderURL(item.Name, slug),
+			Type:      model.DashHitFolder,
+			FolderUID: item.Folder,
 		}
 	}
 
@@ -270,7 +256,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 				},
 			},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
@@ -313,17 +299,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: folderkey,
-			Fields: []*resource.Requirement{
-				{
-					Key:      resource.SEARCH_FIELD_TITLE_PHRASE,
-					Operator: string(selection.In),
-					Values:   []string{title},
-				},
-			},
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Query: title,
+		Limit: folderSearchLimit}
 
 	if parentUID != nil {
 		req := []*resource.Requirement{{
@@ -636,10 +617,12 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return err
 	}
 
-	folders := []string{cmd.UID}
+	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
+	// must delete children first, then the parent folder
+	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
@@ -659,70 +642,42 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
-		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards
-			var dashboardUIDs []string
-			// we cannot use the dashboard service directly due to circular dependencies,
-			// so either use the search client if the feature is enabled or use the dashboard store
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-				request := &resource.ResourceSearchRequest{
-					Options: &resource.ListOptions{
-						Labels: []*resource.Requirement{},
-						Fields: []*resource.Requirement{
-							{
-								Key:      resource.SEARCH_FIELD_FOLDER,
-								Operator: string(selection.In),
-								Values:   folders,
-							},
-						},
+		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
+		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
+		request := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Labels: []*resource.Requirement{},
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   folders,
 					},
-					Limit: 100000}
+				},
+			},
+			Limit: folderSearchLimit}
 
-				res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
+		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
 
-				hits, err := dashboardsearch.ParseResults(res, 0)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-				dashboardUIDs = make([]string, len(hits.Hits))
-				for i, dashboard := range hits.Hits {
-					dashboardUIDs[i] = dashboard.Name
-					err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
-					if err != nil {
-						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-					}
-				}
-			} else {
-				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-					SignedInUser: cmd.SignedInUser,
-					FolderUIDs:   folders,
-					OrgId:        cmd.OrgID,
-					Type:         searchstore.TypeDashboard,
-				})
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-				dashboardUIDs = make([]string, len(dashes))
-				for i, dashboard := range dashes {
-					dashboardUIDs[i] = dashboard.UID
-					err = s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
-						UID:   dashboard.UID,
-						OrgID: cmd.OrgID,
-					})
-					if err != nil {
-						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-					}
-				}
-			}
-			// Delete all public dashboards in the folders
-			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		hits, err := dashboardsearch.ParseResults(res, 0)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
+		dashboardUIDs := make([]string, len(hits.Hits))
+		for i, dashboard := range hits.Hits {
+			dashboardUIDs[i] = dashboard.Name
+			err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
 			if err != nil {
-				return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 			}
+		}
+		// Delete all public dashboards in the folders
+		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
 	}
 
@@ -872,12 +827,6 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))

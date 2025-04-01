@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/core"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -61,7 +62,7 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
+	s, err := newStore(cfg, nil, features, migrations, bus, tracer, false)
 	if err != nil {
 		return nil, err
 	}
@@ -87,24 +88,20 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	return newSQLStore(cfg, nil, features, nil, bus, tracer)
+	return newStore(cfg, nil, features, nil, bus, tracer, true)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
+	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: false,
+		skipEnsureDefaultOrgAndUser: skipEnsureDefaultOrgAndUser,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
 		features:                    features,
-	}
-	for _, opt := range opts {
-		if !opt.EnsureDefaultOrgAndUser {
-			ss.skipEnsureDefaultOrgAndUser = true
-		}
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -376,6 +373,11 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		return *ss.recursiveQueriesAreSupported, nil
 	}
 	recursiveQueriesAreSupported := func() (bool, error) {
+		if ss.GetDBType() == migrator.Spanner {
+			// no need to try...
+			return false, nil
+		}
+
 		var result []int
 		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 			recQry := `WITH RECURSIVE cte (n) AS
@@ -412,6 +414,7 @@ var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 var testSQLStoreCleanup []func()
+var testSQLStoreSkipTestsOnBackend string // When not empty and matches DB type, test is skipped.
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
@@ -454,6 +457,12 @@ func SetupTestDB() {
 		os.Exit(1)
 	}
 	testSQLStoreSetup = true
+}
+
+func SkipTestsOnSpanner() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	testSQLStoreSkipTestsOnBackend = "spanner"
 }
 
 func CleanupTestDB() {
@@ -540,6 +549,10 @@ func TestMain(m *testing.M) {
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
 
+		if testSQLStoreSkipTestsOnBackend != "" && testSQLStoreSkipTestsOnBackend == dbType {
+			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
+		}
+
 		// set test db config
 		cfg := setting.NewCfg()
 		// nolint:staticcheck
@@ -600,9 +613,17 @@ func TestMain(m *testing.M) {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
+		skipEnsureDefaultOrgAndUser := false
+		for _, opt := range opts {
+			if !opt.EnsureDefaultOrgAndUser {
+				skipEnsureDefaultOrgAndUser = true
+				break
+			}
+		}
+
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
+		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}
@@ -618,6 +639,8 @@ func TestMain(m *testing.M) {
 	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
+	testSQLStore.engine.ResetSequenceGenerator()
+
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err
 	}

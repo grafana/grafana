@@ -16,7 +16,7 @@ export interface OptionsPaneCategoryProps {
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
   itemsCount?: number;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   children: ReactNode;
@@ -42,40 +42,27 @@ export const OptionsPaneCategory = React.memo(
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
-    const manualClickTime = useRef(0);
+    const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
+    // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if (manualClickTime.current) {
-        // ignore changes since the click handled the expected behavior
-        if (Date.now() - manualClickTime.current < 200) {
-          return;
-        }
-      }
-      if (isOpenFromUrl || forceOpen) {
-        if (!isExpanded) {
-          setIsExpanded(true);
-        }
-        if (isOpenFromUrl) {
+      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
+        setIsExpanded(true);
+        setTimeout(() => {
           ref.current?.scrollIntoView();
-        }
+        }, 200);
       }
-    }, [forceOpen, isExpanded, isOpenFromUrl]);
+    }, [isExpanded, isOpenFromUrl, forceOpen]);
 
     const onToggle = useCallback(() => {
-      manualClickTime.current = Date.now();
-      updateQueryParams(
-        {
-          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-        },
-        true
-      );
+      updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
+    }, [updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -120,9 +107,10 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={styles.title}>
+          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
           </h6>
+
           <Button
             data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
@@ -161,15 +149,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    color: theme.colors.text.secondary,
+  }),
+  titleExpanded: css({
+    color: theme.colors.text.primary,
   }),
   header: css({
     display: 'flex',
-    cursor: 'pointer',
     alignItems: 'center',
     padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
-
+    cursor: 'pointer',
     '&:hover': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
     },

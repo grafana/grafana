@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { withErrorBoundary } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -11,6 +10,7 @@ import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRu
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
+import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -47,7 +47,7 @@ const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['ty
 
 const RuleEditor = () => {
   const { identifier, type } = useRuleEditorPathParams();
-  const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
+  const { copyFromIdentifier, queryDefaults, isManualRestore } = useRuleEditorQueryParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
@@ -61,15 +61,23 @@ const RuleEditor = () => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} />;
+      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} prefill={queryDefaults} />;
     }
 
     if (copyFromIdentifier) {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
     // new alert rule
-    return <AlertRuleForm prefill={queryDefaults} />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
+    return <AlertRuleForm prefill={queryDefaults} isManualRestore={isManualRestore} />;
+  }, [
+    canCreateCloudRules,
+    canCreateGrafanaRules,
+    canEditRules,
+    copyFromIdentifier,
+    identifier,
+    queryDefaults,
+    isManualRestore,
+  ]);
 
   return (
     <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
@@ -78,7 +86,9 @@ const RuleEditor = () => {
   );
 };
 
-export default withErrorBoundary(RuleEditor, { style: 'page' });
+// The pageNav property makes it difficult to only rely on AlertingPageWrapper
+// to catch errors.
+export default withPageErrorBoundary(RuleEditor);
 
 function useRuleEditorPathParams() {
   const params = useParams<RuleEditorPathParams>();
@@ -95,6 +105,7 @@ function useRuleEditorQueryParams() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
   const copyFromIdentifier = ruleId.tryParse(copyFromId);
+  const isManualRestore = searchParams.has('isManualRestore');
 
   const ruleType = translateRouteParamToRuleType(type);
 
@@ -102,5 +113,5 @@ function useRuleEditorQueryParams() {
     ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
     : undefined;
 
-  return { copyFromIdentifier, queryDefaults };
+  return { copyFromIdentifier, queryDefaults, isManualRestore };
 }

@@ -141,8 +141,7 @@ describe('Prometheus query editor', () => {
 
       getResources();
 
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
-
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click().type('metric1');
       selectOption('metric1');
 
       e2e.components.DataSource.Prometheus.queryEditor.builder.hints().contains('hint: add rate');
@@ -153,28 +152,11 @@ describe('Prometheus query editor', () => {
 
       getResources();
 
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
-
-      selectOption('Metrics explorer');
-
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
+      cy.get(`[aria-label="Open metrics explorer"]`).should('exist');
     });
-
-    // NEED TO COMPLETE QUEY ADVISOR WORK OR FIGURE OUT HOW TO ENABLE EXPERIMENTAL FEATURE TOGGLES
-    // it('should have a query advisor when enabled with feature toggle', () => {
-    //   cy.window().then((win) => {
-    //     win.localStorage.setItem('grafana.featureToggles', 'prometheusPromQAIL=0');
-
-    //     navigateToEditor('Builder', 'prometheusBuilder');
-
-    //     getResources();
-
-    //     e2e.components.DataSource.Prometheus.queryEditor.builder.queryAdvisor().should('exist');
-    //   });
-    // });
   });
 });
 
 function selectOption(option: string) {
-  e2e.components.Select.option().contains(option).should('be.visible').click();
+  cy.get('[role="option"]').filter(`:contains("${option}")`).should('be.visible').click();
 }

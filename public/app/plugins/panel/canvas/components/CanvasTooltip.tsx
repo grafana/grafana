@@ -12,14 +12,16 @@ import {
   getFieldDisplayName,
   ScopedVars,
   ValueLinkConfig,
-} from '@grafana/data/src';
-import { ActionModel } from '@grafana/data/src/types/action';
+  ActionModel,
+} from '@grafana/data';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
-import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
+import {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipItem,
+  CloseButton,
+} from '@grafana/ui/internal';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -49,7 +51,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   }
 
   // Retrieve timestamp of the last data point if available
-  const timeField = scene.data?.series[0].fields?.find((field) => field.type === FieldType.time);
+  const timeField = scene.data?.series[0]?.fields?.find((field) => field.type === FieldType.time);
   const lastTimeValue = timeField?.values[timeField.values.length - 1];
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
@@ -88,7 +90,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
-  // ---------
 
   if (scene.data?.series) {
     getElementFields(scene.data?.series, element.options).forEach((field) => {

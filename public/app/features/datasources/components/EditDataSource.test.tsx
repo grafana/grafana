@@ -1,8 +1,9 @@
 import { screen, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
-import { PluginExtensionTypes, PluginState } from '@grafana/data';
-import { setAngularLoader, setPluginExtensionsHook } from '@grafana/runtime';
+import { PluginState } from '@grafana/data';
+import { setAngularLoader, setPluginComponentsHook } from '@grafana/runtime';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
@@ -58,7 +59,7 @@ describe('<EditDataSource>', () => {
   });
 
   beforeEach(() => {
-    setPluginExtensionsHook(jest.fn().mockReturnValue({ extensions: [] }));
+    setPluginComponentsHook(jest.fn().mockReturnValue({ isLoading: false, components: [] }));
   });
 
   describe('On loading errors', () => {
@@ -268,17 +269,19 @@ describe('<EditDataSource>', () => {
     it('should be possible to extend the form with a "component" extension in case the plugin ID is whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionsHook(
+      setPluginComponentsHook(
         jest.fn().mockReturnValue({
-          extensions: [
-            {
-              id: '1',
-              pluginId: 'grafana-pdc-app',
-              type: PluginExtensionTypes.component,
-              title: 'Example component',
-              description: 'Example description',
-              component: () => <div>{message}</div>,
-            },
+          isLoading: false,
+          components: [
+            createComponentWithMeta(
+              {
+                pluginId: 'grafana-pdc-app',
+                title: 'Example component',
+                description: 'Example description',
+                component: () => <div>{message}</div>,
+              },
+              '1'
+            ),
           ],
         })
       );
@@ -297,17 +300,19 @@ describe('<EditDataSource>', () => {
     it('should NOT be possible to extend the form with a "component" extension in case the plugin ID is NOT whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionsHook(
+      setPluginComponentsHook(
         jest.fn().mockReturnValue({
-          extensions: [
-            {
-              id: '1',
-              pluginId: 'myorg-basic-app',
-              type: PluginExtensionTypes.component,
-              title: 'Example component',
-              description: 'Example description',
-              component: () => <div>{message}</div>,
-            },
+          isLoading: false,
+          components: [
+            createComponentWithMeta(
+              {
+                pluginId: 'myorg-basic-app',
+                title: 'Example component',
+                description: 'Example description',
+                component: () => <div>{message}</div>,
+              },
+              '1'
+            ),
           ],
         })
       );
@@ -327,17 +332,19 @@ describe('<EditDataSource>', () => {
       const message = "I'm a UI extension component!";
       const component = jest.fn().mockReturnValue(<div>{message}</div>);
 
-      setPluginExtensionsHook(
+      setPluginComponentsHook(
         jest.fn().mockReturnValue({
-          extensions: [
-            {
-              id: '1',
-              pluginId: 'grafana-pdc-app',
-              type: PluginExtensionTypes.component,
-              title: 'Example component',
-              description: 'Example description',
-              component,
-            },
+          isLoading: false,
+          components: [
+            createComponentWithMeta(
+              {
+                pluginId: 'grafana-pdc-app',
+                title: 'Example component',
+                description: 'Example description',
+                component,
+              },
+              '1'
+            ),
           ],
         })
       );
@@ -358,6 +365,7 @@ describe('<EditDataSource>', () => {
       expect(props.context.dataSource).toBeDefined();
       expect(props.context.dataSourceMeta).toBeDefined();
       expect(props.context.setJsonData).toBeDefined();
+      expect(props.context.setSecureJsonData).toBeDefined();
       expect(props.context.testingStatus).toBeDefined();
     });
   });

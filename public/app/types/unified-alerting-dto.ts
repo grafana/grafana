@@ -122,6 +122,7 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
+  uid?: string;
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
@@ -242,6 +243,11 @@ export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
   simplified_notifications_section: boolean;
 }
+
+export interface UpdatedBy {
+  uid: string;
+  name: string;
+}
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
@@ -257,20 +263,29 @@ export interface PostableGrafanaRuleDefinition {
   record?: {
     metric: string;
     from: string;
+    target_datasource_uid?: string;
   };
+  intervalSeconds?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
+  guid?: string;
   namespace_uid: string;
   rule_group: string;
   provenance?: string;
-  updated_by?: {
-    uid: string;
-    name?: string;
-  };
+  // TODO: For updated_by, updated, and version, fix types so these aren't optional, and
+  // are not conflated with test fixtures
   updated?: string;
+  updated_by?: UpdatedBy | null;
+  version?: number;
 }
+
+// types for Grafana-managed recording and alerting rules
+export type GrafanaAlertingRuleDefinition = Omit<GrafanaRuleDefinition, 'record'>;
+export type GrafanaRecordingRuleDefinition = GrafanaRuleDefinition & {
+  record: GrafanaRuleDefinition['record'];
+};
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
@@ -278,6 +293,9 @@ export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   annotations: Annotations;
   labels: Labels;
 }
+
+export type TopLevelGrafanaRuleDTOField = keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;
+export type GrafanaAlertRuleDTOField = keyof GrafanaRuleDefinition;
 
 export type PostableRuleGrafanaRuleDTO = RulerGrafanaRuleDTO<PostableGrafanaRuleDefinition>;
 
@@ -295,4 +313,8 @@ export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
 
 export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
+export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
+
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
+
+export type RulerGrafanaRulesConfigDTO = { [namespace: string]: RulerGrafanaRuleGroupDTO[] };

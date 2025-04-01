@@ -1,6 +1,4 @@
-import { ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
-import { DataFrame } from '@grafana/data/';
-import { config } from '@grafana/runtime';
+import { DataFrame, ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import { getActions } from 'app/features/actions/utils';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {
@@ -32,10 +30,6 @@ export const getFieldActions = (
   replaceVars: InterpolateFunction,
   rowIndex: number
 ) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
-  }
-
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
 

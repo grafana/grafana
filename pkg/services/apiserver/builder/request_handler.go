@@ -28,42 +28,43 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 			continue
 		}
 
-		gv := builder.GetGroupVersion()
-		prefix := "/apis/" + gv.String()
+		for _, gv := range GetGroupVersions(builder) {
+			prefix := "/apis/" + gv.String()
 
-		// Root handlers
-		var sub *mux.Router
-		for _, route := range routes.Root {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+			// Root handlers
+			var sub *mux.Router
+			for _, route := range routes.Root {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
-		}
+			// Namespace handlers
+			sub = nil
+			prefix += "/namespaces/{namespace}"
+			for _, route := range routes.Namespace {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
 
-		// Namespace handlers
-		sub = nil
-		prefix += "/namespaces/{namespace}"
-		for _, route := range routes.Namespace {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
-
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
 		}
 	}
 

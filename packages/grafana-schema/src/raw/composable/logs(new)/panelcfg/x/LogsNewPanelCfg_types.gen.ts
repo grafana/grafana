@@ -16,6 +16,7 @@ export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  onNewLogsReceived?: unknown;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,6 +22,7 @@ func TestRun(t *testing.T) {
 		pluginArchives     map[string]*repo.PluginArchiveInfo
 		pluginPreinstalled []string
 		pluginManaged      []string
+		pluginProvisioned  []string
 		expectedFailures   []advisor.CheckReportFailure
 	}{
 		{
@@ -42,10 +44,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityHigh,
-					Reason:   "Plugin deprecated: plugin1",
-					Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 					StepID:   "deprecation",
-					ItemID:   "plugin1",
+					Item:     "plugin1",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin1",
+							Message: "Admin",
+						},
+					},
 				},
 			},
 		},
@@ -63,10 +69,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
-					Reason:   "New version available for plugin2",
-					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
-					ItemID:   "plugin2",
+					Item:     "plugin2",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin2?page=version-history",
+							Message: "Upgrade",
+						},
+					},
 				},
 			},
 		},
@@ -84,10 +94,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
-					Reason:   "New version available for plugin2",
-					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
-					ItemID:   "plugin2",
+					Item:     "plugin2",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin2?page=version-history",
+							Message: "Upgrade",
+						},
+					},
 				},
 			},
 		},
@@ -119,6 +133,20 @@ func TestRun(t *testing.T) {
 			pluginManaged:    []string{"plugin4"},
 			expectedFailures: []advisor.CheckReportFailure{},
 		},
+		{
+			name: "Provisioned plugin",
+			plugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin5", Info: plugins.Info{Version: "1.0.0"}}},
+			},
+			pluginInfo: map[string]*repo.PluginInfo{
+				"plugin5": {Status: "active"},
+			},
+			pluginArchives: map[string]*repo.PluginArchiveInfo{
+				"plugin5": {Version: "1.1.0"},
+			},
+			pluginProvisioned: []string{"plugin5"},
+			expectedFailures:  []advisor.CheckReportFailure{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -130,7 +158,8 @@ func TestRun(t *testing.T) {
 			}
 			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
-			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins)
+			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
+			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins, provisionedPlugins)
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
@@ -195,4 +224,13 @@ type mockManagedPlugins struct {
 
 func (m *mockManagedPlugins) ManagedPlugins(ctx context.Context) []string {
 	return m.managed
+}
+
+type mockProvisionedPlugins struct {
+	provisionedplugins.Manager
+	provisioned []string
+}
+
+func (m *mockProvisionedPlugins) ProvisionedPlugins(ctx context.Context) ([]string, error) {
+	return m.provisioned, nil
 }

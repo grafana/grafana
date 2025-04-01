@@ -58,6 +58,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
+			var userUIDs []string
 			const testOrgID int64 = 1
 			var team1, team2 team.Team
 			var usr *user.User
@@ -74,6 +75,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					usr, err = userSvc.Create(context.Background(), &userCmd)
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
+					userUIDs = append(userUIDs, usr.UID)
 				}
 				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
 				require.NoError(t, err)
@@ -108,9 +110,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 2, len(q1Result))
 				require.Equal(t, q1Result[0].TeamID, team1.ID)
+				require.Contains(t, userIds[:2], q1Result[0].UserID)
+				require.Contains(t, userUIDs[:2], q1Result[0].UserUID)
 				require.Equal(t, q1Result[0].Login, "loginuser0")
 				require.Equal(t, q1Result[0].OrgID, testOrgID)
 				require.Equal(t, q1Result[1].TeamID, team1.ID)
+				require.Contains(t, userIds[:2], q1Result[1].UserID)
+				require.Contains(t, userUIDs[:2], q1Result[1].UserUID)
 				require.Equal(t, q1Result[1].Login, "loginuser1")
 				require.Equal(t, q1Result[1].OrgID, testOrgID)
 				require.Equal(t, q1Result[1].External, true)

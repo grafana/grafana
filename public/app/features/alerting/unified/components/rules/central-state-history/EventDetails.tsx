@@ -220,19 +220,17 @@ const Annotations = ({ rule }: AnnotationsProps) => {
     return null;
   }
   return (
-    <>
-      <div className={styles.metadataWrapper}>
-        {Object.entries(annotations).map(([name, value]) => {
-          const capitalizedName = capitalize(name);
-          return (
-            <MetaText direction="column" key={capitalizedName}>
-              {capitalizedName}
-              <AnnotationValue value={value} />
-            </MetaText>
-          );
-        })}
-      </div>
-    </>
+    <div className={styles.metadataWrapper}>
+      {Object.entries(annotations).map(([name, value]) => {
+        const capitalizedName = capitalize(name);
+        return (
+          <MetaText direction="column" key={capitalizedName}>
+            {capitalizedName}
+            <AnnotationValue value={value} />
+          </MetaText>
+        );
+      })}
+    </div>
   );
 };
 interface ValueInTransitionProps {

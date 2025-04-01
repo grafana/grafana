@@ -1,7 +1,9 @@
+import { SceneObject } from '@grafana/scenes';
+
 const CLONE_KEY = '-clone-';
 const CLONE_SEPARATOR = '/';
 
-const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9]+$`);
+const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9][0-9]*$`);
 const ORIGINAL_REGEX = new RegExp(`${CLONE_KEY}\\d+$`);
 
 /**
@@ -70,4 +72,13 @@ export function joinCloneKeys(...keys: string[]): string {
  */
 export function containsCloneKey(key: string): boolean {
   return key.includes(CLONE_KEY);
+}
+
+/**
+ * Useful hook for checking of a scene is a clone
+ * @param scene
+ */
+export function useIsClone(scene: SceneObject): boolean {
+  const { key } = scene.useState();
+  return isClonedKey(key!);
 }

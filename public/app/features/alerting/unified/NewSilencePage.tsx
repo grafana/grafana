@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { withErrorBoundary } from '@grafana/ui';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
@@ -12,6 +11,7 @@ import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { SilencesEditor } from './components/silences/SilencesEditor';
 import { useAlertmanager } from './state/AlertmanagerContext';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const SilencesEditorComponent = () => {
   const location = useLocation();
@@ -48,4 +48,5 @@ function NewSilencePage() {
     </AlertmanagerPageWrapper>
   );
 }
-export default withErrorBoundary(NewSilencePage, { style: 'page' });
+
+export default withPageErrorBoundary(NewSilencePage);

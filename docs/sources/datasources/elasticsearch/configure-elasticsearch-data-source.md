@@ -160,7 +160,7 @@ For example, set this to `1m` if Elasticsearch writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options. The default is `10s`.
 
-- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
+- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor](../query-editor/) with additional aggregations, such as `Rate` and `Top Metrics`.
 
 - **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 

@@ -18,8 +18,8 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -44,6 +45,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -85,6 +88,10 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
+	resourceClient resource.ResourceClient,
+	dual dualwrite.Service,
+	sorter sort.Service,
+	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -107,14 +114,16 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		k8sHandler := client.NewK8sHandler(
-			cfg,
+			dual,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.FolderResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
+			resourceClient,
+			sorter,
 		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
@@ -123,14 +132,16 @@ func ProvideService(
 		srv.k8sclient = k8sHandler
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashHandler := client.NewK8sHandler(
-			cfg,
+			dual,
 			request.GetNamespaceMapper(cfg),
 			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
-			apiserver.GetRestConfig,
+			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
+			resourceClient,
+			sorter,
 		)
 		srv.dashboardK8sClient = dashHandler
 	}
@@ -144,6 +155,7 @@ func (s *Service) DBMigration(db db.DB) {
 	ctx := context.Background()
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
+		deleteOldFolders := true
 		if db.GetDialect().DriverName() == migrator.SQLite {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -158,6 +170,10 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
+		} else if db.GetDialect().DriverName() == migrator.Spanner {
+			// We may eventually make this migration work with Spanner, but for now don't do anything.
+			// We intend to store dashboards and folders only in unified storage when using spanner.
+			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -170,11 +186,13 @@ func (s *Service) DBMigration(db db.DB) {
 			return err
 		}
 
-		// covered by UQE_folder_org_id_uid
-		_, err = sess.Exec(`
+		if deleteOldFolders {
+			// covered by UQE_folder_org_id_uid
+			_, err = sess.Exec(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
 		`)
+		}
 		return err
 	})
 	if err != nil {
@@ -184,8 +202,16 @@ func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
+func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return s.unifiedStore.CountInOrg(ctx, orgID)
+	}
+
+	return s.store.CountInOrg(ctx, orgID)
+}
+
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// TODO:
 		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
 		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
@@ -196,7 +222,7 @@ func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getFoldersFromApiServer(ctx, q)
 	}
 	return s.GetFoldersLegacy(ctx, q)
@@ -255,7 +281,7 @@ func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getFromApiServer(ctx, q)
 	}
 	return s.GetLegacy(ctx, q)
@@ -349,6 +375,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
+	f.CreatedBy = dashFolder.CreatedBy
+	f.UpdatedBy = dashFolder.UpdatedBy
+
 	return f, err
 }
 
@@ -396,7 +425,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getChildrenFromApiServer(ctx, q)
 	}
 	return s.GetChildrenLegacy(ctx, q)
@@ -666,7 +695,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getParentsFromApiServer(ctx, q)
 	}
 	return s.GetParentsLegacy(ctx, q)
@@ -699,7 +728,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.createOnApiServer(ctx, cmd)
 	}
 	return s.CreateLegacy(ctx, cmd)
@@ -818,7 +847,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.updateOnApiServer(ctx, cmd)
 	}
 	return s.UpdateLegacy(ctx, cmd)
@@ -957,7 +986,7 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.deleteFromApiServer(ctx, cmd)
 	}
 	return s.DeleteLegacy(ctx, cmd)
@@ -1080,7 +1109,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.moveOnApiServer(ctx, cmd)
 	}
 	return s.MoveLegacy(ctx, cmd)
@@ -1231,12 +1260,6 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	var evaluators []accesscontrol.Evaluator
 	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
 	for action, scopes := range permissions {
-		// Skip unexpanded action sets - they have no impact if action sets are not enabled
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			if action == "folders:view" || action == "folders:edit" || action == "folders:admin" {
-				continue
-			}
-		}
 		for _, scope := range newFolderAndParentUIDs {
 			if slices.Contains(scopes, scope) {
 				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))
@@ -1307,7 +1330,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getDescendantCountsFromApiServer(ctx, q)
 	}
 

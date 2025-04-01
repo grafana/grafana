@@ -37,7 +37,9 @@ func newStreamDecoder(client resource.ResourceStore_WatchClient, newFunc func() 
 	}
 }
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
-	obj, _, err := d.codec.Decode(w.Value, nil, d.newFunc())
+	var obj runtime.Object
+	var err error
+	obj, _, err = d.codec.Decode(w.Value, nil, d.newFunc())
 	if err == nil {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {

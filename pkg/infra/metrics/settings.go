@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
 )
 
@@ -40,7 +38,7 @@ func (im *InternalMetricsService) parseGraphiteSettings() error {
 		URL:             address,
 		Prefix:          graphiteSection.Key("prefix").MustString("prod.grafana.%(instance_name)s"),
 		CountersAsDelta: true,
-		Gatherer:        prometheus.DefaultGatherer,
+		Gatherer:        im.gatherer,
 		Interval:        time.Duration(im.intervalSeconds) * time.Second,
 		Timeout:         10 * time.Second,
 		Logger:          &logWrapper{logger: metricsLogger},

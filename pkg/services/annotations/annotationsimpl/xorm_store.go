@@ -267,10 +267,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
-				alert.name as alert_name
+				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
-			LEFT OUTER JOIN alert on alert.id = annotation.alert_id
+			LEFT OUTER JOIN alert_rule as r on r.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
 			`)
@@ -279,7 +279,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		params = append(params, query.OrgID)
 
 		if query.AnnotationID != 0 {
-			// fmt.Print("annotation query")
+			// fmt.Println("annotation query")
 			sql.WriteString(` AND a.id = ?`)
 			params = append(params, query.AnnotationID)
 		}
@@ -287,6 +287,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		if query.AlertID != 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
 			params = append(params, query.AlertID)
+		} else if query.AlertUID != "" {
+			sql.WriteString(` AND a.alert_id = (SELECT id FROM alert_rule WHERE uid = ? and org_id = ?)`)
+			params = append(params, query.AlertUID, query.OrgID)
 		}
 
 		if query.DashboardID != 0 {
@@ -330,10 +333,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 
 			if len(tags) > 0 {
+				// "at" is a keyword in Spanner and needs to be quoted.
 				tagsSubQuery := fmt.Sprintf(`
-			SELECT SUM(1) FROM annotation_tag at
-			INNER JOIN tag on tag.id = at.tag_id
-			WHERE at.annotation_id = a.id
+			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
+			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
+			WHERE `+r.db.Quote("at")+`.annotation_id = a.id
 				AND (
 				%s
 				)

@@ -46,7 +46,8 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            }
+            },
+            "labels": {}
           },
           {
             "name": "yMin",
@@ -61,21 +62,24 @@
             "type": "number",
             "typeInfo": {
               "frame": "float64"
-            }
+            },
+            "labels": {}
           },
           {
             "name": "count",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
-            }
+            },
+            "labels": {}
           },
           {
             "name": "yLayout",
             "type": "number",
             "typeInfo": {
               "frame": "int8"
-            }
+            },
+            "labels": {}
           }
         ]
       },

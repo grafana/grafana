@@ -1,4 +1,5 @@
 import { UrlQueryMap } from '@grafana/data';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { Resource } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
@@ -15,7 +16,7 @@ export interface DashboardAPI<G, T> {
 }
 
 // Implemented using /api/dashboards/*
-export interface DashboardWithAccessInfo<T> extends Resource<T, 'DashboardWithAccessInfo'> {
+export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'DashboardWithAccessInfo'> {
   access: {
     url?: string;
     slug?: string;
@@ -27,4 +28,26 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, 'DashboardWithAc
     canAdmin?: boolean;
     annotationsPermissions?: AnnotationsPermissions;
   }; // TODO...
+}
+
+export interface DashboardVersionError extends Error {
+  status: number;
+  data: {
+    // The version which was stored when the dashboard was created / updated.
+    // Currently known versions are: 'v2alpha1' | 'v1alpha1' | 'v0alpha1'
+    storedVersion: string;
+    message: string;
+  };
+}
+
+export class DashboardVersionError extends Error {
+  constructor(storedVersion: string, message = 'Dashboard version mismatch') {
+    super(message);
+    this.name = 'DashboardVersionError';
+    this.status = 200;
+    this.data = {
+      storedVersion,
+      message,
+    };
+  }
 }

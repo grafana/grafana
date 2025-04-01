@@ -24,7 +24,7 @@ MS SQL Server can be installed on Windows or Linux operating systems and also on
 
 You can install MS SQL Server on the host running Grafana or on a remote server. To install the software from the [downloads page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), follow their setup prompts.
 
-If you are on a Windows host but want to use Grafana and MS SQL data source on a Linux environment, refer to the [WSL to set up your Grafana development environment](/blog/2021/03/03/.how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl). This will allow you to leverage the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository. Here you will find a collection of supported data sources, including MS SQL Server, along with test data and pre-configured dashboards for use.
+If you are on a Windows host but want to use Grafana and MS SQL data source on a Linux environment, refer to the [WSL to set up your Grafana development environment](/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl) blog post. This will allow you to leverage the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository. Here you will find a collection of supported data sources, including MS SQL Server, along with test data and pre-configured dashboards for use.
 
 #### Add the MS SQL data source
 
@@ -99,6 +99,6 @@ Optionally, play around this dashboard and customize it to:
 
 Now that you have gained some idea of using the pre-packaged MS SQL data source and some test data, the next step is to setup your own instance of MS SQL Server database and data your development or sandbox area.
 
-To fetch data from your own instance of MS SQL Server, add the data source using instructions in Step 4 of this topic. In Grafana [Explore]({{< relref "../explore" >}}) build queries to experiment with the metrics you want to monitor.
+To fetch data from your own instance of MS SQL Server, add the data source using instructions in Step 4 of this topic. In Grafana [Explore](../../explore/) build queries to experiment with the metrics you want to monitor.
 
-Once you have a curated list of queries, create [dashboards]({{< relref "../dashboards" >}}) to render metrics from the SQL Server database. For troubleshooting, user permissions, known issues, and query examples, refer to [Using Microsoft SQL Server in Grafana]({{< relref "../datasources/mssql" >}}).
+Once you have a curated list of queries, create [dashboards](../../dashboards/) to render metrics from the SQL Server database. For troubleshooting, user permissions, known issues, and query examples, refer to [Using Microsoft SQL Server in Grafana](../../datasources/mssql/).

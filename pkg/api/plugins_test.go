@@ -73,7 +73,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusOK, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: globalOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},

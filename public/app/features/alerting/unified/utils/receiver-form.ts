@@ -105,10 +105,13 @@ export function formValuesToCloudReceiver(
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
-    const channel = omitEmptyValues({
+    const channelWithOmmitedIdentifiers = omitEmptyValues({
       ...omitTemporaryIdentifiers(settings),
       send_resolved: sendResolved ?? defaults.sendResolved,
     });
+
+    const channel =
+      type === 'jira' ? convertJiraFieldToJson(channelWithOmmitedIdentifiers) : channelWithOmmitedIdentifiers;
 
     if (!(`${type}_configs` in recv)) {
       recv[`${type}_configs`] = [channel];
@@ -117,6 +120,49 @@ export function formValuesToCloudReceiver(
     }
   });
   return recv;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function convertJiraFieldToJson(object: Record<string, any>) {
+  // Only for cloud alert manager. Jira fields option can be a nested object. We need to convert it to JSON.
+
+  const objectCopy = structuredClone(object);
+
+  if (typeof objectCopy.fields === 'object') {
+    for (const [optionName, optionValue] of Object.entries(objectCopy.fields)) {
+      let valueForField;
+      try {
+        // eslint-disable-next-line
+        valueForField = JSON.parse(optionValue as string); // is a stringified object
+      } catch {
+        valueForField = optionValue; // is not a stringified object
+      }
+      objectCopy.fields[optionName] = valueForField;
+    }
+  }
+
+  return objectCopy;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function convertJsonToJiraField(object: Record<string, any>) {
+  // Only for cloud alert manager. Convert JSON back to nested Jira fields option.
+
+  const objectCopy = structuredClone(object);
+
+  if (typeof objectCopy.fields === 'object') {
+    for (const [optionName, optionValue] of Object.entries(objectCopy.fields)) {
+      let valueForField;
+      if (typeof optionValue === 'object') {
+        valueForField = JSON.stringify(optionValue);
+      } else {
+        valueForField = optionValue;
+      }
+      objectCopy.fields[optionName] = valueForField;
+    }
+  }
+
+  return objectCopy;
 }
 
 function cloudChannelConfigToFormChannelValues(
@@ -128,7 +174,7 @@ function cloudChannelConfigToFormChannelValues(
     __id: id,
     type,
     settings: {
-      ...channel,
+      ...(type === 'jira' ? convertJsonToJiraField(channel) : channel),
     },
     secureFields: {},
     secureSettings: {},

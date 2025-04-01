@@ -26,7 +26,7 @@ func TestSQLService(t *testing.T) {
 	}
 
 	newABSQLQueries := func(q string) []Query {
-		q, err := jsonEscape(q)
+		escaped, err := json.Marshal(q)
 		require.NoError(t, err)
 		return []Query{
 			{
@@ -45,7 +45,7 @@ func TestSQLService(t *testing.T) {
 			{
 				RefID:      "B",
 				DataSource: dataSourceModel(),
-				JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "%s" }`, q)),
+				JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
 				TimeRange: AbsoluteTimeRange{
 					From: time.Time{},
 					To:   time.Time{},
@@ -92,13 +92,21 @@ func TestSQLService(t *testing.T) {
 		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
 		require.ErrorContains(t, rsp.Responses["B"].Error, "blocked function load_file")
 	})
-}
 
-func jsonEscape(input string) (string, error) {
-	escaped, err := json.Marshal(input)
-	if err != nil {
-		return "", err
-	}
-	// json.Marshal returns the escaped string with quotes, so we need to trim them
-	return string(escaped[1 : len(escaped)-1]), nil
+	t.Run("parse error should be returned", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT * FROM A LIMIT sloth`),
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.Error(t, rsp.Responses["B"].Error, "should return sql error on parsing")
+		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
+	})
 }

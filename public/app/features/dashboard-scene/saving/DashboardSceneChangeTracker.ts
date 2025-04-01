@@ -22,7 +22,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';
@@ -122,7 +121,7 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const changedDashboard = this._dashboard.getSaveModel();
     const initialDashboard = this._dashboard.getInitialSaveModel();
 
     // Objects must be stringify to ensure they are clonable, so they don't contain functions
@@ -138,9 +137,7 @@ export class DashboardSceneChangeTracker {
     return this._dashboard.state.meta.folderUid !== this._dashboard.getInitialState()?.meta.folderUid;
   }
 
-  private updateIsDirty(result: DashboardChangeInfo) {
-    const { hasChanges } = result;
-
+  private updateIsDirty(hasChanges: boolean) {
     if (hasChanges || this.hasMetadataChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
@@ -162,7 +159,7 @@ export class DashboardSceneChangeTracker {
     }
 
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
-      this.updateIsDirty(e.data);
+      this.updateIsDirty(!!e.data.hasChanges);
     };
 
     const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));

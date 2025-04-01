@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`working with dag should throw on references to self 1`] = `
+[
+  {
+    "error": [Error: cannot link A to A since it would create a cycle],
+    "source": "A",
+    "target": "A",
+  },
+]
+`;

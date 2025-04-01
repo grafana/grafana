@@ -32,6 +32,7 @@ composableKinds: PanelCfg: {
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool
+					onNewLogsReceived?:       _
 				} @cuetsy(kind="interface")
 			}
 		}]

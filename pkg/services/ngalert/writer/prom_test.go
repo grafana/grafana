@@ -191,7 +191,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("ignores client error when status code is 400 and message contains duplicate timestamp error", func(t *testing.T) {
-		for _, msg := range DuplicateTimestampErrors {
+		for _, msg := range IgnoredErrors {
 			t.Run(msg, func(t *testing.T) {
 				clientErr := testClientWriteError{
 					statusCode: http.StatusBadRequest,
@@ -208,7 +208,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("bad labels fit under the client error category", func(t *testing.T) {
-		msg := MimirInvalidLabelError
+		msg := MimirSeriesInvalidLabelError
 		clientErr := testClientWriteError{
 			statusCode: http.StatusBadRequest,
 			msg:        &msg,
@@ -240,7 +240,23 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("too long labels fit under the client error category", func(t *testing.T) {
-		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series' (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too many labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose number of labels exceeds the limit (actual: 50, limit: 40) series: 'some_series' (err-mimir-max-label-names-per-series). To adjust the related per-tenant limit, configure -validation.max-label-names-per-series, or contact your service administrator."
 		clientErr := testClientWriteError{
 			statusCode: http.StatusBadRequest,
 			msg:        &msg,

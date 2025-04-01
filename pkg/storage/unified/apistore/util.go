@@ -6,20 +6,16 @@
 package apistore
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -33,6 +29,27 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 		NextPageToken: predicate.Continue,
 	}
 
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+		req.ResourceVersion = rv
+	}
+
+	switch opts.ResourceVersionMatch {
+	case "":
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+	case metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_NotOlderThan
+	case metav1.ResourceVersionMatchExact:
+		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
+	default:
+		return nil, predicate, apierrors.NewBadRequest(
+			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
+		)
+	}
+
 	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
 		requirements, selectable := opts.Predicate.Label.Requirements()
 		if !selectable {
@@ -43,11 +60,18 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 			v := r.Key()
 
 			// Parse the history request from labels
-			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
+			// TODO: for LabelGetFullpath, we just skip this for unistore. We need a better solution for
+			// getting the full path for folders in unistore, without making a request for each parent folder.
+			// In modes 0-2 we added this label to indicate that the sql query should return that data as
+			// an annotation on the folder. However, this annotation cannot be saved to unified storage, otherwise
+			// we will have to recompute annotations for all descendants of a folder during a folder move.
+			// While we look for a better solution, unified storage will continue to return all folders & the folder
+			// service will get the full path by retrieving each parent folder.
+			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash || v == utils.LabelGetFullpath {
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}
-				if !opts.Predicate.Field.Empty() {
+				if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
 				}
 				if r.Operator() != selection.Equals {
@@ -64,7 +88,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					if vals[0] != "true" {
 						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
 					}
-				} else {
+				} else if v == utils.LabelKeyGetHistory {
 					req.Source = resource.ListRequest_HISTORY
 					req.Options.Key.Name = vals[0]
 				}
@@ -93,76 +117,5 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 		}
 	}
 
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-		req.ResourceVersion = rv
-	}
-
-	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
-	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
-	default:
-		return nil, predicate, apierrors.NewBadRequest(
-			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
-		)
-	}
-
 	return req, predicate, nil
-}
-
-func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
-	buf := new(bytes.Buffer)
-	if err := codec.Encode(obj, buf); err != nil {
-		return false, err
-	}
-
-	newBuf := new(bytes.Buffer)
-	if err := codec.Encode(newObj, newBuf); err != nil {
-		return false, err
-	}
-
-	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
-}
-
-func testKeyParser(val string) (*resource.ResourceKey, error) {
-	k, err := grafanaregistry.ParseKey(val)
-	if err != nil {
-		if strings.HasPrefix(val, "pods/") {
-			parts := strings.Split(val, "/")
-			if len(parts) == 2 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource: parts[0], // pods
-					Name:     parts[1],
-				}
-			} else if len(parts) == 3 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource:  parts[0], // pods
-					Namespace: parts[1],
-					Name:      parts[2],
-				}
-			}
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	if k.Group == "" {
-		k.Group = "example.apiserver.k8s.io"
-	}
-	if k.Resource == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
-	}
-	return &resource.ResourceKey{
-		Namespace: k.Namespace,
-		Group:     k.Group,
-		Resource:  k.Resource,
-		Name:      k.Name,
-	}, err
 }

@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
-import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
+import { optsWithHideZeros } from '@grafana/ui/internal';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
@@ -31,6 +31,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
         },
+      },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
       },
     },
     useCustomConfig: (builder) => {

@@ -12,6 +12,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -147,12 +148,19 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
+    const isSamePath = lastEntry && newEntry.url.split('?')[0] === lastEntry.url.split('?')[0];
 
-    // To avoid adding an entry with the same url twice, we always use the latest one
-    if (isSameUrl) {
+    // To avoid adding an entry with the same path twice, we always use the latest one
+    if (isSamePath) {
       entries[0] = newEntry;
     } else {
+      if (lastEntry && lastEntry.name === newEntry.name) {
+        logDuplicateUnifiedHistoryEntryEvent({
+          entryName: newEntry.name,
+          lastEntryURL: lastEntry.url,
+          newEntryURL: newEntry.url,
+        });
+      }
       entries = [newEntry, ...entries];
     }
 

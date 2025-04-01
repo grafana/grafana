@@ -1,4 +1,4 @@
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -8,7 +8,7 @@ import {
   HeatmapCellLayout,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
-import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
+import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -23,6 +23,13 @@ import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
+    standardOptions: {
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+    },
     useCustomConfig: (builder) => {
       builder.addCustomEditor<void, ScaleDistributionConfig>({
         id: 'scaleDistribution',
@@ -435,7 +442,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
-      showIf: (options) => options.tooltip?.mode === TooltipDisplayMode.Multi,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        options.tooltip?.mode === TooltipDisplayMode.Multi ||
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
 
     category = ['Legend'];
@@ -452,6 +461,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Color',
       defaultValue: defaultOptions.exemplars.color,
       category,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())

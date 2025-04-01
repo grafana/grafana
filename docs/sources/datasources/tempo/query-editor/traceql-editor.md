@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Write TraceQL queries
 title: Write TraceQL queries with the editor
-weight: 300
+weight: 400
 refs:
   explore:
     - pattern: /docs/grafana/
@@ -41,4 +41,4 @@ refs:
 [//]: # 'Shared content for the TraceQL query editor'
 [//]: # 'This content is located in /docs/sources/shared/datasources/tempo-editor-traceql.md'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-editor-traceql.md" version="<GRAFANA VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-editor-traceql.md" version="<GRAFANA_VERSION>" >}}

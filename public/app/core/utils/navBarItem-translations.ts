@@ -61,6 +61,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.scenes.title', 'Scenes');
     case 'explore':
       return t('nav.explore.title', 'Explore');
+    case 'drilldown':
+      return t('nav.drilldown.title', 'Drilldown');
     case 'alerting':
       return t('nav.alerting.title', 'Alerting');
     case 'plugin-page-grafana-oncall-app':
@@ -87,6 +89,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-groups.title', 'Active notifications');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
+    case 'alerts/recently-deleted':
+      return t('nav.alerts-recently-deleted.title', 'Recently deleted');
     case 'cfg':
       return t('nav.config.title', 'Administration');
     case 'cfg/general':
@@ -251,6 +255,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules');
     case 'groups':
       return t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications');
+    case 'alerts/recently-deleted':
+      return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':

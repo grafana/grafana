@@ -7,12 +7,13 @@ import (
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
@@ -44,9 +45,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -56,43 +57,9 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-		&metav1.PartialObjectMetadata{},
-		&metav1.PartialObjectMetadataList{},
-	}
-
-	// internal provider of the package level client Config
-	restConfig RestConfigProvider
-	ready      = make(chan struct{})
 )
 
-func init() {
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
-	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-}
-
-// GetRestConfig return a client Config mounted at package level
-// This resolves circular dependency issues between apiserver, authz,
-// and Folder Service.
-// The client Config gets initialized during the first call to
-// ProvideService.
-// Any call to GetRestConfig will block until we have a restConfig available
-func GetRestConfig(ctx context.Context) *clientrest.Config {
-	<-ready
-	return restConfig.GetRestConfig(ctx)
-}
+const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
 
 type Service interface {
 	services.NamedService
@@ -100,25 +67,13 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
-type RestConfigProvider interface {
-	GetRestConfig(context.Context) *clientrest.Config
-}
-
-type DirectRestConfigProvider interface {
-	// GetDirectRestConfig returns a k8s client configuration that will use the same
-	// logged in user as the current request context.  This is useful when
-	// creating clients that map legacy API handlers to k8s backed services
-	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
-
-	// This can be used to rewrite incoming requests to path now supported under /apis
-	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
-}
-
 type service struct {
 	services.NamedService
 
 	options    *grafanaapiserveroptions.Options
 	restConfig *clientrest.Config
+	scheme     *runtime.Scheme
+	codecs     serializer.CodecFactory
 
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
@@ -137,6 +92,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
+	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient    plugins.Client
@@ -144,13 +100,14 @@ type service struct {
 	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
+
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	orgService org.Service,
 	tracing *tracing.TracingService,
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
@@ -159,26 +116,35 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
+	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
+	scheme := builder.ProvideScheme()
+	codecs := builder.ProvideCodecFactory(scheme)
 	s := &service{
-		log:               log.New(modules.GrafanaAPIServer),
-		cfg:               cfg,
-		features:          features,
-		rr:                rr,
-		stopCh:            make(chan struct{}),
-		builders:          []builder.APIGroupBuilder{},
-		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:           tracing,
-		db:                db, // For Unified storage
-		metrics:           metrics.ProvideRegisterer(),
-		kvStore:           kvStore,
-		pluginClient:      pluginClient,
-		datasources:       datasources,
-		contextProvider:   contextProvider,
-		pluginStore:       pluginStore,
-		serverLockService: serverLockService,
-		unified:           unified,
+		scheme:                            scheme,
+		codecs:                            codecs,
+		log:                               log.New(modules.GrafanaAPIServer),
+		cfg:                               cfg,
+		features:                          features,
+		rr:                                rr,
+		stopCh:                            make(chan struct{}),
+		builders:                          []builder.APIGroupBuilder{},
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
+		tracing:                           tracing,
+		db:                                db, // For Unified storage
+		metrics:                           metrics.ProvideRegisterer(),
+		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
+		serverLockService:                 serverLockService,
+		storageStatus:                     storageStatus,
+		unified:                           unified,
+		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -225,20 +191,17 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	// only set the package level restConfig once
-	if restConfig == nil {
-		restConfig = s
-		close(ready)
-	}
+	eventualRestConfigProvider.cfg = s
+	close(eventualRestConfigProvider.ready)
 
 	return s, nil
 }
 
-func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	if err := s.NamedService.AwaitRunning(ctx); err != nil {
-		return nil
+		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
-	return s.restConfig
+	return s.restConfig, nil
 }
 
 func (s *service) IsDisabled() bool {
@@ -265,28 +228,36 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
 	builders := s.builders
-
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+
 	// Install schemas
-	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
-		if err := b.InstallSchema(Scheme); err != nil {
+		gvs := builder.GetGroupVersions(b)
+		groupVersions = append(groupVersions, gvs...)
+		if len(gvs) == 0 {
+			return fmt.Errorf("no group versions found for builder %T", b)
+		}
+		if err := b.InstallSchema(s.scheme); err != nil {
 			return err
 		}
+		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-			// set the priority for the group+version
-			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
-		}
+		for j, gv := range pvs {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+				// set the priority for the group+version
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
+			}
 
-		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
+			if a, ok := b.(builder.APIGroupAuthorizer); ok {
+				auth := a.GetAuthorizer()
+				if auth != nil {
+					s.authorizer.Register(gv, auth)
+				}
+			}
 		}
 	}
 
-	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
+	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 	err := applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
@@ -305,7 +276,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
@@ -317,6 +288,7 @@ func (s *service) start(ctx context.Context) error {
 	transport := &roundTripperFunc{ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
+	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
 
 	var optsregister apistore.StorageOptionsRegister
 
@@ -337,30 +309,33 @@ func (s *service) start(ctx context.Context) error {
 
 	// Add OpenAPI specs for each group+version
 	err = builder.SetupConfig(
-		Scheme,
+		s.scheme,
 		serverConfig,
 		builders,
 		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
-		nil,
+		s.buildHandlerChainFuncFromBuilders,
 	)
 	if err != nil {
 		return err
 	}
 
+	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
+	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
 		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
+		s.storageStatus,
 		optsregister,
 	)
 	if err != nil {

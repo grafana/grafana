@@ -255,7 +255,7 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store } from './utils/store';
+export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 
 // Tranformations
@@ -403,6 +403,7 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
+  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,
@@ -548,17 +549,22 @@ export {
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
+  type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionConfig,
+  type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedFunctionConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -572,6 +578,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,

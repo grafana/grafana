@@ -1,46 +1,44 @@
-import { dateTimeFormat, LogRowModel, LogsSortOrder } from '@grafana/data';
+import Prism from 'prismjs';
+
+import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
+import { FieldDef, getAllFields } from '../logParser';
 
-import { measureTextWidth } from './virtualization';
+import { GetFieldLinksFn } from './LogList';
+import { generateLogGrammar } from './grammar';
 
-export interface ProcessedLogModel extends LogRowModel {
+export interface LogListModel extends LogRowModel {
   body: string;
+  _highlightedBody: string;
+  highlightedBody: string;
+  displayLevel: string;
+  fields: FieldDef[];
   timestamp: string;
-  dimensions: LogDimensions;
 }
 
-export interface LogDimensions {
-  timestampWidth: number;
-  levelWidth: number;
-}
-
-interface PreProcessOptions {
+export interface PreProcessOptions {
   escape: boolean;
+  getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
   timeZone: string;
-  wrap: boolean;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, order, timeZone, wrap }: PreProcessOptions
-): ProcessedLogModel[] => {
+  { escape, getFieldLinks, order, timeZone }: PreProcessOptions
+): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { wrap, escape, timeZone, expanded: false }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, timeZone }));
 };
 
 interface PreProcessLogOptions {
   escape: boolean;
-  expanded: boolean; // Not yet implemented
+  getFieldLinks?: GetFieldLinksFn;
   timeZone: string;
-  wrap: boolean;
 }
-const preProcessLog = (
-  log: LogRowModel,
-  { escape, expanded, timeZone, wrap }: PreProcessLogOptions
-): ProcessedLogModel => {
-  let body = log.entry;
+const preProcessLog = (log: LogRowModel, { escape, getFieldLinks, timeZone }: PreProcessLogOptions): LogListModel => {
+  let body = log.raw;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
     timeZone,
     defaultWithMS: true,
@@ -49,18 +47,34 @@ const preProcessLog = (
   if (escape && log.hasUnescapedContent) {
     body = escapeUnescapedString(body);
   }
-  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
-  if (!wrap && !expanded) {
-    body = body.replace(/(\r\n|\n|\r)/g, '');
-  }
+  // Turn it into a single-line log entry for the list
+  body = body.replace(/(\r\n|\n|\r)/g, '');
 
   return {
     ...log,
     body,
-    timestamp,
-    dimensions: {
-      timestampWidth: measureTextWidth(timestamp),
-      levelWidth: measureTextWidth(log.logLevel),
+    _highlightedBody: '',
+    get highlightedBody() {
+      if (!this._highlightedBody) {
+        this._highlightedBody = Prism.highlight(body, generateLogGrammar(this), 'lokiql');
+      }
+      return this._highlightedBody;
     },
+    displayLevel: logLevelToDisplayLevel(log.logLevel),
+    fields: getAllFields(log, getFieldLinks),
+    timestamp,
   };
 };
+
+function logLevelToDisplayLevel(level = '') {
+  switch (level) {
+    case LogLevel.critical:
+      return 'crit';
+    case LogLevel.warning:
+      return 'warn';
+    case LogLevel.unknown:
+      return '';
+    default:
+      return level;
+  }
+}

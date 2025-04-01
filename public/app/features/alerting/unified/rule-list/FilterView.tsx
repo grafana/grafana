@@ -1,8 +1,9 @@
-import { take, tap, withAbort } from 'ix/asynciterable/operators';
+import { empty } from 'ix/asynciterable';
+import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
@@ -12,7 +13,7 @@ import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
@@ -75,7 +76,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(async () => {
-    for await (const rule of rulesIterator.current.pipe(take(FRONTENT_PAGE_SIZE))) {
+    for await (const rule of rulesIterator.current.pipe(
+      // grab <FRONTENT_PAGE_SIZE> from the rules iterable
+      take(FRONTENT_PAGE_SIZE),
+      // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
+      catchError(() => empty())
+    )) {
       startTransition(() => {
         // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
         // It's a not trivial computation because it involves hashing the rule
@@ -127,13 +133,20 @@ function FilterViewResults({ filterState }: FilterViewProps) {
             case 'datasource':
               return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
             default:
-              return <UnknownRuleListItem key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return (
+                <UnknownRuleListItem
+                  key={key}
+                  ruleName={t('alerting.rule-list.unknown-rule-type', 'Unknown rule type')}
+                  groupIdentifier={groupIdentifier}
+                  ruleDefinition={rule}
+                />
+              );
           }
         })}
         {loading && (
           <>
-            <AlertRuleListItemLoader />
-            <AlertRuleListItemLoader />
+            <AlertRuleListItemSkeleton />
+            <AlertRuleListItemSkeleton />
           </>
         )}
       </ul>

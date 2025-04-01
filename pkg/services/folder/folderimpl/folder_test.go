@@ -20,13 +20,16 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -44,12 +47,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -67,7 +72,8 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		store := ProvideStore(db)
 		ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			apiserver.WithoutRestConfig)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -495,7 +501,11 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			})
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil,
+				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+				kvstore.NewFakeKVStore(),
+			)
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
@@ -581,7 +591,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService)
+				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+				kvstore.NewFakeKVStore(),
+			)
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
@@ -724,7 +737,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service, tc.service.store, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service,
+					tc.service.store, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
+					dualwrite.ProvideTestService(), sort.ProvideService(),
+					serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+					kvstore.NewFakeKVStore(),
+				)
 				require.NoError(t, err)
 				dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
@@ -1516,6 +1534,11 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		quotaService,
 		nil,
 		nil,
+		nil,
+		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
+		serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -1587,17 +1610,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		require.Len(t, sharedFolders, 1)
 		require.Contains(t, sharedFoldersUIDs, ancestorFoldersWithoutPermissions[1].UID)
 		require.NotContains(t, sharedFoldersUIDs, ancestorFoldersWithPermissions[1].UID)
-
-		sharedDashboards, err := dashboardService.GetDashboardsSharedWithUser(context.Background(), &signedInUser)
-		sharedDashboardsUIDs := make([]string, 0)
-		for _, d := range sharedDashboards {
-			sharedDashboardsUIDs = append(sharedDashboardsUIDs, d.UID)
-		}
-
-		require.NoError(t, err)
-		require.Len(t, sharedDashboards, 1)
-		require.Contains(t, sharedDashboardsUIDs, dash1.UID)
-		require.NotContains(t, sharedDashboardsUIDs, dash2.UID)
 
 		t.Cleanup(func() {
 			//guardian.New = origNewGuardian
@@ -1990,6 +2002,8 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			fldr, err := tc.svc.Get(context.Background(), &q)
 			require.NoError(t, err)
 			require.Equal(t, f.UID, fldr.UID)
+			require.Equal(t, f.CreatedBy, fldr.CreatedBy)
+			require.Equal(t, f.UpdatedBy, fldr.CreatedBy)
 
 			require.Equal(t, tc.expectedFullpath, fldr.Fullpath)
 		})

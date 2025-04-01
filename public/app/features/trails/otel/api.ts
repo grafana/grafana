@@ -56,7 +56,7 @@ export async function totalOtelResources(
   const responseTotal = await getBackendSrv().get<OtelResponse>(
     url,
     paramsTotalTargets,
-    `explore-metrics-otel-check-total-${query}`
+    `metrics-drilldown-otel-check-total-${query}`
   );
 
   let jobs: string[] = [];
@@ -127,7 +127,7 @@ export async function getDeploymentEnvironmentsWithoutScopes(
   const response = await getBackendSrv().get<LabelResponse>(
     url,
     params,
-    'explore-metrics-otel-resources-deployment-env'
+    'metrics-drilldown-otel-resources-deployment-env'
   );
 
   // exclude __name__ or previously chosen filters
@@ -162,7 +162,7 @@ export async function getDeploymentEnvironmentsWithScopes(
     ],
     'deployment_environment',
     undefined,
-    'explore-metrics-otel-resources-deployment-env'
+    'metrics-drilldown-otel-resources-deployment-env'
   );
   // exclude __name__ or previously chosen filters
   return response.data.data;
@@ -230,7 +230,7 @@ export async function getFilteredResourceAttributes(
   const metricResponse = await getBackendSrv().get<LabelResponse>(
     url,
     metricParams,
-    `explore-metrics-otel-resources-metric-job-instance-${metricMatchParam}`
+    `metrics-drilldown-otel-resources-metric-job-instance-${metricMatchParam}`
   );
   // the metric labels here
   const metricLabels = metricResponse.data ?? [];
@@ -249,7 +249,7 @@ export async function getFilteredResourceAttributes(
   const targetInfoResponse = await getBackendSrv().get<LabelResponse>(
     url,
     targetInfoParams,
-    `explore-metrics-otel-resources-metric-job-instance-${targetInfoMatchParam}`
+    `metrics-drilldown-otel-resources-metric-job-instance-${targetInfoMatchParam}`
   );
 
   const targetInfoAttributes = targetInfoResponse.data ?? [];
@@ -294,7 +294,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   const targetInfoResponse = getBackendSrv().get<LabelResponse>(
     url,
     targetInfoParams,
-    `explore-metrics-all-otel-resources-on-target_info`
+    `metrics-drilldown-all-otel-resources-on-target_info`
   );
 
   // all labels in all metrics
@@ -311,7 +311,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   const metricResponse = await getBackendSrv().get<LabelResponse>(
     url,
     metricParams,
-    `explore-metrics-all-metric-labels-not-otel-resource-attributes`
+    `metrics-drilldown-all-metric-labels-not-otel-resource-attributes`
   );
   const promResponses = await Promise.all([targetInfoResponse, metricResponse]);
   // otel resource attributes

@@ -18,6 +18,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   descriptor: Readonly<LayoutRegistryItem>;
 
   /**
+   * Serializer for layout
+   */
+  serialize(): DashboardV2Spec['layout'];
+
+  /**
    * Adds a new panel to the layout
    */
   addPanel(panel: VizPanel): void;
@@ -38,21 +43,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Gets all the viz panels in the layout
    */
   getVizPanels(): VizPanel[];
-
-  /**
-   * Check if the layout has viz panels
-   */
-  hasVizPanels(): boolean;
-
-  /**
-   * Add row
-   */
-  addNewRow(): void;
-
-  /**
-   * Add tab
-   */
-  addNewTab(): void;
 
   /**
    * Notify the layout manager that the edit mode has changed
@@ -80,7 +70,12 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * @param ancestorKey
    * @param isSource
    */
-  cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+  cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+
+  /**
+   * Duplicate, like clone but with new keys
+   */
+  duplicate(): DashboardLayoutManager;
 }
 
 export interface LayoutManagerSerializer {

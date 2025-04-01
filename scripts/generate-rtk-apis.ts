@@ -39,25 +39,30 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../public/app/features/iam/api/endpoints.gen.ts': {
+    '../public/app/api/clients/iam/endpoints.gen.ts': {
       schemaFile: '../data/openapi/iam.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/iam/api/api.ts',
-      apiImport: 'iamApi',
+      apiFile: '../public/app/api/clients/iam/baseAPI.ts',
       filterEndpoints: ['getDisplayMapping'],
-      exportName: 'generatedIamApi',
-      flattenArg: false,
       tag: true,
     },
-    '../public/app/features/query-library/api/endpoints.gen.ts': {
-      schemaFile: '../data/openapi/peakq.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/query-library/api/api.ts',
-      apiImport: 'queryLibraryApi',
-      filterEndpoints: ['listQueryTemplate', 'createQueryTemplate', 'deleteQueryTemplate', 'updateQueryTemplate'],
-      exportName: 'generatedQueryLibraryApi',
-      flattenArg: false,
+    '../public/app/api/clients/provisioning/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/provisioning/baseAPI.ts',
+      schemaFile: '../data/openapi/provisioning.grafana.app-v0alpha1.json',
+      filterEndpoints,
+      tag: true,
+      hooks: true,
+    },
+    '../public/app/api/clients/folder/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/folder/baseAPI.ts',
+      schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
+      filterEndpoints: ['getFolder'],
       tag: true,
     },
   },
 };
+
+function filterEndpoints(name: string) {
+  return !name.toLowerCase().includes('getapiresources') && !name.toLowerCase().includes('update');
+}
 
 export default config;

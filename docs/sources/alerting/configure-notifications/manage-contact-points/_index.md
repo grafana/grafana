@@ -96,6 +96,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
+  jira:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
   configure-grafana-alerts:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
@@ -140,13 +145,14 @@ Each contact point integration has its own configuration options and setup proce
 - [Discord](ref:discord)
 - [Email](ref:email)
 - [Google Chat](ref:gchat)
-- [Grafana Oncall](ref:oncall)
+- [Grafana OnCall](ref:oncall)
 - Kafka REST Proxy
+- [Jira](ref:jira)
 - Line
 - [Microsoft Teams](ref:teams)
 - [MQTT](ref:mqtt)
 - [Opsgenie](ref:opsgenie)
-- [Pagerduty](ref:pagerduty)
+- [PagerDuty](ref:pagerduty)
 - Pushover
 - Sensu Go
 - [Slack](ref:slack)

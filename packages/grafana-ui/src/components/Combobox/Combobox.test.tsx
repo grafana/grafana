@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -13,6 +13,14 @@ const options: ComboboxOption[] = [
   { label: 'Option 2', value: '2' },
   { label: 'Option 3', value: '3', description: 'This is option 3' },
   { label: 'Option 4', value: '4' },
+];
+const optionsWithGroups: ComboboxOption[] = [
+  { label: 'Option 1', value: '1', group: 'Group 1' },
+  { label: 'Option 2', value: '2' },
+  { label: 'Option 3', value: '3', group: 'Group 1' },
+  { label: 'Option 4', value: '4' },
+  { label: 'Option 5', value: '5', group: 'Group 2' },
+  { label: 'Option 6', value: '6', group: 'Group 2' },
 ];
 
 describe('Combobox', () => {
@@ -149,6 +157,84 @@ describe('Combobox', () => {
     await userEvent.click(input);
 
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  describe('groups', () => {
+    it('renders group headers', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 1' },
+        { label: 'Option 3', value: '3', group: 'Group 2' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(screen.getByText('Group 1')).toBeInTheDocument();
+      expect(screen.getByText('Group 2')).toBeInTheDocument();
+    });
+
+    it('sorts options within groups', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 2' },
+        { label: 'Option 3', value: '3', group: 'Group 1' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+        { label: 'Option 5', value: '5', group: 'Group 2' },
+        { label: 'Option 6', value: '6', group: 'Group 1' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+      expect(allHeaders).toHaveLength(2);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 6', 'Group 2', 'Option 2', 'Option 4', 'Option 5'].join('')
+      );
+    });
+
+    it('puts ungrouped options relative to first occurrence', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 2', 'Option 4', 'Group 2', 'Option 5', 'Option 6'].join('')
+      );
+    });
+
+    it('does not render group header labels for ungrouped options', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveTextContent('Group 1');
+      expect(allHeaders[1]).toHaveTextContent('');
+    });
+
+    it('does not render a top border for the first group header', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveStyle('border-top: none');
+    });
   });
 
   describe('size support', () => {
@@ -395,7 +481,9 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
 
-      expect(asyncSpy).toHaveBeenCalledTimes(1); // Called on open
+      expect(asyncSpy).not.toHaveBeenCalledTimes(1); // Not called yet
+      act(() => jest.advanceTimersByTime(200)); // Add the debounce time
+      expect(asyncSpy).toHaveBeenCalledTimes(1); // Then check if called on open
       asyncSpy.mockClear();
 
       await user.keyboard('a');
@@ -426,17 +514,15 @@ describe('Combobox', () => {
       });
 
       const customItem = screen.getByRole('option');
-      const customValue = customItem.getElementsByTagName('span')[0].textContent;
-      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
-      expect(customItem).toBeInTheDocument();
-      expect(customValue).toBe('fir');
-      expect(customDescription).toBe('Use custom value');
+
+      expect(customItem).toHaveTextContent('fir');
+      expect(customItem).toHaveTextContent('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {
-      const asyncOptions = jest.fn(() => {
-        throw new Error('Could not retrieve options');
-      });
+      const fetchData = jest.fn();
+      const asyncOptions = fetchData.mockRejectedValue(new Error('Could not retrieve options'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
@@ -445,12 +531,15 @@ describe('Combobox', () => {
       await user.type(input, 'test');
 
       await act(async () => {
-        jest.advanceTimersToNextTimer();
+        jest.advanceTimersByTimeAsync(500);
       });
+      expect(asyncOptions).rejects.toThrow('Could not retrieve options');
+      await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
 
       const emptyMessage = screen.queryByText('An error occurred while loading options.');
-
       expect(emptyMessage).toBeInTheDocument();
+
+      asyncOptions.mockClear();
     });
 
     describe('with a value already selected', () => {
