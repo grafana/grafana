@@ -806,10 +806,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
-  /**
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;

@@ -1381,14 +1381,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:              "unifiedStorageSearch",
-			Description:       "Enable unified storage search",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
 			Stage:             FeatureStageExperimental,

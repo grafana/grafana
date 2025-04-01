@@ -4315,7 +4315,8 @@
       "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
-        "creationTimestamp": "2024-09-30T19:46:14Z"
+        "creationTimestamp": "2024-09-30T19:46:14Z",
+        "deletionTimestamp": "2025-04-01T11:06:18Z"
       },
       "spec": {
         "description": "Enable unified storage search",
