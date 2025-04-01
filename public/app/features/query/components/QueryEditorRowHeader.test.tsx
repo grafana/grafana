@@ -18,15 +18,14 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => mockDS,
+  }),
+}));
 
 describe('QueryEditorRowHeader', () => {
   it('Can edit title', async () => {

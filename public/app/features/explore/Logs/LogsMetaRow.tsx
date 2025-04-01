@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
 import { memo } from 'react';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, map, Observable } from 'rxjs';
 
 import {
   LogsDedupStrategy,
@@ -15,6 +15,9 @@ import {
   CustomTransformOperator,
   Labels,
   DataFrame,
+  Field,
+  getTimeField,
+  dateTime,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
@@ -96,15 +99,18 @@ export const LogsMetaRow = memo(
           });
           dataFrameMap.forEach(async (dataFrame) => {
             const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
-            transforms.push({
-              id: 'organize',
-              options: {
-                excludeByName: {
-                  ['labels']: true,
-                  ['labelTypes']: true,
+            transforms.push(
+              {
+                id: 'organize',
+                options: {
+                  excludeByName: {
+                    ['labels']: true,
+                    ['labelTypes']: true,
+                  },
                 },
               },
-            });
+              addISODateTransformation
+            );
             const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
             downloadDataFrameAsCsv(transformedDataFrame[0], `Explore-logs-${dataFrame.refId}`);
           });
@@ -215,3 +221,23 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
   console.error(`Meta type ${typeof value} ${value} not recognized.`);
   return <></>;
 }
+
+const addISODateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
+  return source.pipe(
+    map((data: DataFrame[]) => {
+      return data.map((frame: DataFrame) => {
+        const timeField = getTimeField(frame);
+        return {
+          ...frame,
+          fields: [
+            {
+              name: 'Date',
+              values: timeField.timeField?.values.map((v) => dateTime(v).toISOString()),
+            } as Field,
+            ...frame.fields,
+          ],
+        };
+      });
+    })
+  );
+};

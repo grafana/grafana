@@ -612,7 +612,7 @@ const (
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagFailWrongDSUID
-	// Throws an error if a datasource has an invalid UIDs
+	// Throws an error if a data source has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
 	// FlagZanzana
@@ -736,12 +736,8 @@ const (
 	FlagTimeRangeProvider = "timeRangeProvider"
 
 	// FlagPrometheusUsesCombobox
-	// Use new combobox component for Prometheus query editor
+	// Use new **Combobox** component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
-
-	// FlagUserStorageAPI
-	// Enables the user storage API
-	FlagUserStorageAPI = "userStorageAPI"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
@@ -844,7 +840,7 @@ const (
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
 	// FlagTemplateVariablesUsesCombobox
-	// Use new combobox component for template variables
+	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
 
 	// FlagABTestFeatureToggleB
@@ -891,6 +887,10 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagUseScopesNavigationEndpoint
+	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
 	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
@@ -923,10 +923,6 @@ const (
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
-	// FlagExtraLanguages
-	// Enables additional languages
-	FlagExtraLanguages = "extraLanguages"
-
 	// FlagNoBackdropBlur
 	// Disables backdrop blur
 	FlagNoBackdropBlur = "noBackdropBlur"
@@ -939,7 +935,19 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagLocaleFormatPreference
+	// Specify the locale so we can show the correct format for numbers and dates
+	FlagLocaleFormatPreference = "localeFormatPreference"
+
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagAlertingRuleRecoverDeleted
+	// Enables the UI functionality to recover and view deleted alert rules
+	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagLocalizationForPlugins
+	// Enables localization for plugins
+	FlagLocalizationForPlugins = "localizationForPlugins"
 )

@@ -44,7 +44,7 @@ export function GrafanaRoute(props: Props) {
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary dependencies={[props.route]}>
       {({ error, errorInfo }) => {
         if (error) {
           return <GrafanaRouteError error={error} errorInfo={errorInfo} />;

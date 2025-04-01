@@ -100,6 +100,9 @@ export interface PluginMeta<T extends KeyValue = {}> {
   loadingStrategy?: PluginLoadingStrategy;
   extensions?: PluginExtensions;
   moduleHash?: string;
+
+  // Paths to the translations for the plugin
+  translations?: Record<string, string>;
 }
 
 interface PluginDependencyInfo {

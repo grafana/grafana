@@ -602,9 +602,6 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		expectedResult := model.HitList{
 			{
 				UID: "uid1",
-				// no parent folder is returned, so the general folder should be set
-				FolderID:    0,
-				FolderTitle: "General",
 				// orgID should be taken from signed in user
 				OrgID: 1,
 				// the rest should be automatically set when parsing the hit results from search
@@ -614,14 +611,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				URL:   "/dashboards/f/uid1/folder0",
 			},
 			{
-				UID:         "uid2",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/uid2/folder1",
+				UID:   "uid2",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/uid2/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -681,14 +676,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		require.NoError(t, err)
 		expectedResult := model.HitList{
 			{
-				UID:         "foo",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/foo/folder1",
+				UID:   "foo",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/foo/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -753,15 +746,13 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 
 		expectedResult := model.HitList{
 			{
-				UID:         "uid",
-				FolderID:    2,
-				FolderTitle: "parent title",
-				FolderUID:   "parent-uid",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/testing-123",
-				Title:       "testing-123",
-				URL:         "/dashboards/f/uid/testing-123",
+				UID:       "uid",
+				FolderUID: "parent-uid",
+				OrgID:     1,
+				Type:      model.DashHitFolder,
+				URI:       "db/testing-123",
+				Title:     "testing-123",
+				URL:       "/dashboards/f/uid/testing-123",
 			},
 		}
 		require.Equal(t, expectedResult, result)

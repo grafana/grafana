@@ -25,7 +25,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     scopesBridge,
     layoutOrchestrator,
   } = model.useState();
-  const { placeholder } = layoutOrchestrator.useState();
   const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -59,7 +58,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (panelSearch || panelsPerRow) {
+    if (!viewPanelScene && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
@@ -68,7 +67,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <>
-      {placeholder && <placeholder.Component model={placeholder} />}
+      {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         {editPanel && <editPanel.Component model={editPanel} />}
