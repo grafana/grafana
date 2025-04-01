@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -23,12 +24,15 @@ export function SyncRepository({ repository }: Props) {
     if (syncQuery.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Pull started'],
+        payload: [t('provisioning.sync-repository.success-pull-started', 'Pull started')],
       });
     } else if (syncQuery.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error pulling resources', syncQuery.error],
+        payload: [
+          t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources'),
+          syncQuery.error,
+        ],
       });
     }
   }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess]);
@@ -48,18 +52,22 @@ export function SyncRepository({ repository }: Props) {
       <Button
         icon="cloud-download"
         variant={'secondary'}
-        tooltip={isHealthy ? undefined : 'Unable to pull an unhealthy repository'}
+        tooltip={
+          isHealthy
+            ? undefined
+            : t('provisioning.sync-repository.tooltip-unhealthy-repository', 'Unable to pull an unhealthy repository')
+        }
         disabled={syncQuery.isLoading || !name || !isHealthy}
         onClick={onClick}
       >
-        Pull
+        <Trans i18nKey="provisioning.sync-repository.pull">Pull</Trans>
       </Button>
       {!repository.spec?.sync.enabled && (
         <ConfirmModal
           isOpen={isModalOpen}
-          title={'Pull is not enabled'}
-          body={`Edit the configuration`}
-          confirmText={'Edit'}
+          title={t('provisioning.sync-repository.title-pull-not-enabled', 'Pull is not enabled')}
+          body={t('provisioning.sync-repository.body-edit-configuration', 'Edit the configuration')}
+          confirmText={t('provisioning.sync-repository.button-edit', 'Edit')}
           onConfirm={() => navigate(`${PROVISIONING_URL}/${name}/edit`)}
           onDismiss={() => setIsModalOpen(false)}
         />

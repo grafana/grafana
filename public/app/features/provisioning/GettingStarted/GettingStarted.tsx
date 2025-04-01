@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { Alert, Stack, Text, Box } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
+import { t, Trans } from 'app/core/internationalization';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -63,35 +64,62 @@ export default function GettingStarted({ items }: Props) {
     switch (setupType) {
       case 'public-access':
         return {
-          title: 'Set up public access',
-          description: 'Set up public access to your Grafana instance to enable GitHub integration',
+          title: t('provisioning.getting-started.modal-title-set-up-public-access', 'Set up public access'),
+          description: t(
+            'provisioning.getting-started.modal-description-public-access',
+            'Set up public access to your Grafana instance to enable GitHub integration'
+          ),
           steps: [
             {
-              title: 'Start ngrok for temporary public access',
-              description: 'Run this command to create a secure tunnel to your local Grafana:',
+              title: t(
+                'provisioning.getting-started.step-title-start-ngrok',
+                'Start ngrok for temporary public access'
+              ),
+              description: t(
+                'provisioning.getting-started.step-description-start-ngrok',
+                'Run this command to create a secure tunnel to your local Grafana:'
+              ),
               code: 'ngrok http 3000',
             },
             {
-              title: 'Copy your public URL',
-              description: 'From the ngrok output, copy the https:// forwarding URL that looks like this:',
+              title: t('provisioning.getting-started.step-title-copy-url', 'Copy your public URL'),
+              description: t(
+                'provisioning.getting-started.step-description-copy-url',
+                'From the ngrok output, copy the https:// forwarding URL that looks like this:'
+              ),
               code: ngrokExample,
               copyCode: false,
             },
             {
-              title: 'Update your Grafana configuration',
-              description: 'Add this to your custom.ini file, replacing the URL with your actual ngrok URL:',
+              title: t(
+                'provisioning.getting-started.step-title-update-grafana-config',
+                'Update your Grafana configuration'
+              ),
+              description: t(
+                'provisioning.getting-started.step-description-update-grafana-config',
+                'Add this to your custom.ini file, replacing the URL with your actual ngrok URL:'
+              ),
               code: rootUrlExample,
             },
           ],
         };
       case 'required-features':
         return {
-          title: 'Set up required features',
-          description: 'Enable required Grafana features for provisioning',
+          title: t('provisioning.getting-started.modal-title-set-up-required-features', 'Set up required features'),
+          description: t(
+            'provisioning.getting-started.modal-description-required-features',
+            'Enable required Grafana features for provisioning'
+          ),
           steps: [
             {
-              title: 'Enable Required Feature Toggles',
-              description: 'Add these settings to your custom.ini file to enable necessary features:',
+              title: t(
+                'provisioning.getting-started.step-title-enable-feature-toggles',
+                'Enable Required Feature Toggles'
+              ),
+              description: t(
+                'provisioning.getting-started.step-description-enable-feature-toggles',
+                'Add these settings to your custom.ini file to enable necessary features:'
+              ),
               code: featureIni,
             },
           ],
@@ -108,9 +136,17 @@ export default function GettingStarted({ items }: Props) {
   return (
     <>
       {legacyStorage && (
-        <Alert severity="info" title="Setting up this connection could cause a temporary outage">
-          When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend
-          warning your users before starting the process.
+        <Alert
+          severity="info"
+          title={t(
+            'provisioning.getting-started.title-setting-connection-could-cause-temporary-outage',
+            'Setting up this connection could cause a temporary outage'
+          )}
+        >
+          <Trans i18nKey="provisioning.getting-started.alert-temporary-outage">
+            When you connect your whole instance, dashboards will be unavailable while running the migration. We
+            recommend warning your users before starting the process.
+          </Trans>
         </Alert>
       )}
       <Stack direction="row" gap={2}>
@@ -138,7 +174,9 @@ export default function GettingStarted({ items }: Props) {
               justifyContent: `center`,
             })}
           >
-            <Text variant="h2">Engaging graphic</Text>
+            <Text variant="h2">
+              <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
+            </Text>
           </div>
         </Box>
       </Stack>
