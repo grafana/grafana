@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
-import { hashRule } from '../utils/rule-id';
+import { groups } from '../utils/navigation';
 
-import { DataSourceRuleLoader } from './DataSourceRuleLoader';
+import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
@@ -20,9 +20,10 @@ const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
 }
+
 export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
   const { uid, name } = rulesSourceIdentifier;
-  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
 
   const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE));
 
@@ -85,24 +86,27 @@ interface RuleGroupListItemProps {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   namespaceName: string;
 }
+
 function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: RuleGroupListItemProps) {
-  const rulesWithGroupId = useMemo(() => {
-    return group.rules.map((rule) => {
-      const groupIdentifier: DataSourceRuleGroupIdentifier = {
-        rulesSource: rulesSourceIdentifier,
-        namespace: { name: namespaceName },
-        groupName: group.name,
-        groupOrigin: 'datasource',
-      };
-      return { rule, groupIdentifier };
-    });
-  }, [group, namespaceName, rulesSourceIdentifier]);
+  const groupIdentifier: DataSourceRuleGroupIdentifier = useMemo(
+    () => ({
+      rulesSource: rulesSourceIdentifier,
+      namespace: { name: namespaceName },
+      groupName: group.name,
+      groupOrigin: 'datasource',
+    }),
+    [rulesSourceIdentifier, namespaceName, group.name]
+  );
 
   return (
-    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
-      {rulesWithGroupId.map(({ rule, groupIdentifier }) => (
-        <DataSourceRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />
-      ))}
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
+      isOpen={false}
+      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+    >
+      <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>
   );
 }

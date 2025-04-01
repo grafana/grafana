@@ -114,6 +114,7 @@ export const availableIconsIndex = {
   'file-copy-alt': true,
   'file-download': true,
   'file-edit-alt': true,
+  'file-export': true,
   'file-landscape-alt': true,
   filter: true,
   flip: true,

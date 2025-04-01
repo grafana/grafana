@@ -2073,19 +2073,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
-    "public/app/features/alerting/unified/components/rules/EditRuleGroupModal.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"]
-    ],
     "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -2127,9 +2114,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
-    ],
-    "public/app/features/alerting/unified/components/rules/ReorderRuleGroupModal.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleActionsButtons.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],

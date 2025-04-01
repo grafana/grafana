@@ -10,25 +10,14 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { AlertGroupUpdated } from '../../../api/alertRuleApi';
-import {
-  getHistoryResponse,
-  grafanaRulerRule,
-  namespaceByUid,
-  namespaces,
-  time_0,
-  time_plus_30,
-} from '../../grafanaRulerApi';
+import { GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
+import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
-export const rulerRulesHandler = () => {
-  return http.get(`/api/ruler/grafana/api/v1/rules`, () => {
-    const response = Object.entries(namespaces).reduce<RulerRulesConfigDTO>((acc, [namespaceUid, groups]) => {
-      acc[namespaceByUid[namespaceUid].name] = groups;
-      return acc;
-    }, {});
 
-    return HttpResponse.json<RulerRulesConfigDTO>(response);
-  });
+export const rulerRulesHandler = () => {
+  return http.get(`/api/ruler/grafana/api/v1/rules`, () =>
+    HttpResponse.json<RulerRulesConfigDTO>(rulerTestDb.getRulerConfig())
+  );
 };
 
 export const prometheusRulesHandler = () => {
@@ -40,14 +29,12 @@ export const prometheusRulesHandler = () => {
 export const getRulerRuleNamespaceHandler = () =>
   http.get<{ folderUid: string }>(`/api/ruler/grafana/api/v1/rules/:folderUid`, ({ params: { folderUid } }) => {
     // This mimic API response as closely as possible - Invalid folderUid returns 403
-    const namespace = namespaces[folderUid];
+    const namespace = rulerTestDb.getNamespace(folderUid);
     if (!namespace) {
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<RulerRulesConfigDTO>({
-      [namespaceByUid[folderUid].name]: namespaces[folderUid],
-    });
+    return HttpResponse.json<RulerRulesConfigDTO>(namespace);
   });
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
@@ -65,12 +52,12 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
 
     // This mimic API response as closely as possible.
     // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
-    const namespace = namespaces[folderUid];
+    const namespace = rulerTestDb.getNamespace(folderUid);
     if (!namespace) {
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<AlertGroupUpdated>({
+    return HttpResponse.json<GrafanaGroupUpdatedResponse>({
       message: 'updated',
       updated: [],
     });
@@ -86,12 +73,13 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
 
       // This mimic API response as closely as possible.
       // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
-      const namespace = namespaces[folderUid];
+      // This should be fixed soon to return 404 instead of 202
+      const namespace = rulerTestDb.getNamespace(folderUid);
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
       }
 
-      const matchingGroup = namespace.find((group) => group.name === groupName);
+      const matchingGroup = rulerTestDb.getGroup(folderUid, groupName);
       return HttpResponse.json<RulerRuleGroupDTO>({
         name: groupName,
         interval: matchingGroup?.interval,
@@ -109,7 +97,7 @@ export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
         return options.response;
       }
 
-      const namespace = namespaces[folderUid];
+      const namespace = rulerTestDb.getNamespace(folderUid);
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
       }

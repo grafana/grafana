@@ -1,24 +1,45 @@
 import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  LinkButton,
+  LoadingBar,
+  Stack,
+  TabContent,
+  Text,
+  TextLink,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
+import {
+  AlertInstanceTotalState,
+  CombinedRule,
+  RuleGroupIdentifierV2,
+  RuleHealth,
+  RuleIdentifier,
+} from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
-import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { usePrometheusCreationConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { isError, useAsync } from '../../hooks/useAsync';
+import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useHasRulerV2 } from '../../hooks/useHasRuler';
+import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
+import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import {
@@ -57,6 +78,9 @@ export enum ActiveTab {
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+const alertingListViewV2 = shouldUseAlertingListViewV2();
+
+const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
@@ -118,7 +142,7 @@ const RuleViewer = () => {
         </Stack>
       }
     >
-      {prometheusRulesPrimary && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
+      {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <Stack direction="column" gap={2}>
         {/* tabs and tab content */}
         <TabContent>
@@ -267,41 +291,64 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
   );
 };
 
+interface PrometheusConsistencyCheckProps {
+  ruleIdentifier: RuleIdentifier;
+}
 /**
  * This component displays an Alert warning component if discovers inconsistencies between Prometheus and Ruler rules
  * It will show loading indicator until the Prometheus and Ruler rule is consistent
  * It will not show the warning if the rule is Grafana managed
  */
-function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
-  const [ref, { width }] = useMeasure<HTMLDivElement>();
-  const { isConsistent, error } = usePrometheusCreationConsistencyCheck(ruleIdentifier);
+const PrometheusConsistencyCheck = withErrorBoundary(
+  ({ ruleIdentifier }: PrometheusConsistencyCheckProps) => {
+    const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-  if (isConsistent) {
+    const { hasRuler } = useHasRulerV2(ruleIdentifierToRuleSourceIdentifier(ruleIdentifier));
+    const { result: ruleLocation } = useRuleLocation(ruleIdentifier);
+
+    const { waitForGroupConsistency, groupConsistent } = useRuleGroupConsistencyCheck();
+
+    const [waitAction, waitState] = useAsync((groupIdentifier: RuleGroupIdentifierV2) => {
+      return waitForGroupConsistency(groupIdentifier);
+    });
+
+    useEffect(() => {
+      if (ruleLocation && hasRuler) {
+        waitAction.execute(ruleLocation.groupIdentifier);
+      }
+    }, [ruleLocation, hasRuler, waitAction]);
+
+    if (isError(waitState)) {
+      return (
+        <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+          {stringifyErrorLike(waitState.error)}
+        </Alert>
+      );
+    }
+
+    // If groupConsistent is undefined, it means that the rule is still being checked and we don't know if it's consistent or not
+    // To prevent the inconsistency banner from blinking, we only show it if groupConsistent is false
+    if (groupConsistent === false) {
+      return (
+        <Stack direction="column" gap={0} ref={ref}>
+          <LoadingBar width={width} />
+          <Alert
+            title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
+            severity="info"
+          >
+            <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
+              Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list
+              view.
+            </Trans>
+          </Alert>
+        </Stack>
+      );
+    }
+
     return null;
-  }
-
-  if (error) {
-    return (
-      <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
-        {stringifyErrorLike(error)}
-      </Alert>
-    );
-  }
-
-  return (
-    <Stack direction="column" gap={0} ref={ref}>
-      <LoadingBar width={width} />
-      <Alert
-        title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
-        severity="info"
-      >
-        <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
-          Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.
-        </Trans>
-      </Alert>
-    </Stack>
-  );
-}
+  },
+  { errorLogger: logError }
+);
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 

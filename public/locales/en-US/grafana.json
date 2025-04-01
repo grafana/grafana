@@ -503,6 +503,10 @@
       "recording": "Recording",
       "rule-name": "Rule name"
     },
+    "ds-group-loader": {
+      "group-deleting": "The group is being deleted",
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
@@ -521,10 +525,12 @@
     },
     "group-actions": {
       "actions-trigger": "Rule group actions",
-      "delete": "Delete",
-      "edit": "Edit",
-      "export": "Export",
-      "reorder": "Re-order rules"
+      "details": "Details",
+      "edit": "Edit"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "Failed to load group details",
+      "unknown-error": "Unknown error"
     },
     "group-details": {
       "ds-features-error": "Error loading data source details",
@@ -564,6 +570,9 @@
       "page-title": "Edit rule group",
       "rule-group-error": "Error loading rule group",
       "title": "Edit evaluation group"
+    },
+    "group-loader": {
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
@@ -820,6 +829,7 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "draft-new-rule": "Draft a new rule",
       "ds-error-boundary": {
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
@@ -828,15 +838,20 @@
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
+      "more": "More",
       "new-alert-rule": "New alert rule",
+      "new-datasource-recording-rule": "New Data source recording rule",
+      "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
         "next-page": "next page",
         "previous-page": "previous page"
       },
+      "recording-rules": "Recording rules",
       "return-button": {
         "title": "Alert rules"
       },
-      "rulerrule-loading-error": "Failed to load the rule"
+      "rulerrule-loading-error": "Failed to load the rule",
+      "unknown-rule-type": "Unknown rule type"
     },
     "rule-state": {
       "creating": "Creating",
@@ -855,7 +870,7 @@
     "rule-viewer": {
       "error-loading": "Something went wrong loading the rule",
       "prometheus-consistency-check": {
-        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
+        "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
       }
     },
