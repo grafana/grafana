@@ -60,6 +60,15 @@ LIMIT 10`;
     return () => resizeObserver.disconnect();
   }, []);
 
+  useEffect(() => {
+    // Call the onChange method once so we have access to the initial query in consuming components
+    // But only if expression is empty
+    if (!query.expression) {
+      onEditorChange(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div ref={containerRef} className={styles.editorContainer}>
       <SQLEditor
