@@ -2,18 +2,22 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -24,9 +28,19 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 
 // This only works for github right now
 type webhookConnector struct {
+	client          client.ProvisioningV0alpha1Interface
 	getter          RepoGetter
 	jobs            jobs.Queue
 	webhooksEnabled bool
+}
+
+func NewWebhookConnector(client client.ProvisioningV0alpha1Interface, getter RepoGetter, jobs jobs.Queue, webhooksEnabled bool) *webhookConnector {
+	return &webhookConnector{
+		client:          client,
+		getter:          getter,
+		jobs:            jobs,
+		webhooksEnabled: webhooksEnabled,
+	}
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -103,6 +117,30 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Object(rsp.Code, job)
 			return
 		}
+
+		// Update the status if init finalized, and if it's a ping or no previous ping was recorded
+		if repo.Config().Status.Webhook != nil && (rsp.IsPing || repo.Config().Status.Webhook.LastPing == 0) {
+			patchOp := map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/webhook/lastPing",
+				"value": time.Now().UnixMilli(),
+			}
+
+			patch, err := json.Marshal(patchOp)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			_, err = s.client.Repositories(namespace).
+				Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+		}
+
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
 }

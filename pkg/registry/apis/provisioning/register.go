@@ -356,6 +356,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
+		// TODO: Inject client
 		getter:          b,
 		jobs:            b.jobs,
 		webhooksEnabled: b.isPublic,
@@ -552,6 +553,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.tester = &RepositoryTester{
 				client: c.ProvisioningV0alpha1(),
 			}
+
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(

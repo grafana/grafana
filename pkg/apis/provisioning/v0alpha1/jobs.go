@@ -199,4 +199,7 @@ type WebhookResponse struct {
 	// Jobs to be processed
 	// When the response is 202 (Accepted) the queued jobs will be returned
 	Job *JobSpec `json:"job,omitempty"`
+
+	// IsPing is true if the webhook is a ping from the webhook
+	IsPing bool `json:"isPing,omitempty"`
 }

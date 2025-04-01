@@ -188,6 +188,17 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 		}, nil
 	}
 
+	// If webhook has been created, check that pinged happened
+	if r.config.Status.Webhook != nil {
+		if r.config.Status.Webhook.LastPing == 0 {
+			return &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors:  []string{"webhook has not been pinged"},
+			}, nil
+		}
+	}
+
 	return &provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
@@ -548,6 +559,7 @@ func (r *githubRepository) parseWebhook(messageType string, payload []byte) (*pr
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: "ping received",
+			IsPing:  true,
 		}, nil
 	}
 
