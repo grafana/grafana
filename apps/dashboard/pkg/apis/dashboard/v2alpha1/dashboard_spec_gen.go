@@ -32,6 +32,7 @@ type DashboardAnnotationQuerySpec struct {
 	Name       string                          `json:"name"`
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	Options    map[string]interface{}          `json:"options,omitempty"` // Catch-all field for datasource-specific properties
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
@@ -243,7 +244,7 @@ func NewDashboardDataTransformerConfig() *DashboardDataTransformerConfig {
 }
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+// It comes with in id ( to resolve implementation from registry) and a configuration that's specific to a particular matcher type.
 // +k8s:openapi-gen=true
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.

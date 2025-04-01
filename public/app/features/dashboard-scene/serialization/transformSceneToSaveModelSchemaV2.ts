@@ -443,13 +443,18 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       'iconColor',
       'enable',
       'hide',
-      'filter'
+      'filter',
+      'query'
     );
 
-    result.spec = {
-      ...result.spec,
-      ...otherProps,
-    };
+    // Store extra properties in the options field instead of directly in the spec
+    if (Object.keys(otherProps).length > 0) {
+      // Extract options property and get the rest of the properties
+      const { options, ...restProps } = otherProps;
+
+      // Merge options with the rest of the properties
+      result.spec.options = { ...options, ...restProps };
+    }
 
     // If filter is an empty array, don't save it
     if (layer.state.query.filter?.ids?.length) {

@@ -103,6 +103,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     this.props.onChange({
       ...this.props.annotation,
       target,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
     });
   };
 
@@ -202,7 +204,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   onAnnotationChange = (annotation: AnnotationQuery) => {
-    this.props.onChange(annotation);
+    // Also preserve any options field that might exist when migrating from V2 to V1
+    this.props.onChange({
+      ...annotation,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
+    });
   };
 
   render() {
@@ -215,14 +222,37 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    // HERE. we are relying on target, however when we are dealing a v2 dashboard, the an
+    // Here we are relying on target, however when we are dealing a v2 dashboard, the an
     // annotation target is not available, only the query
     // if we are dealing with a v2 dashboard, we need to use the query
-    const target = annotation.query ? annotation.query.spec : annotation.target;
-    const query = {
+    let target = annotation.target;
+
+    // For v2 dashboards, use query.spec and merge with options (for datasource-specific properties)
+    if (annotation.query) {
+      // Step 1: Start with the query.spec
+      target = {
+        ...annotation.query.spec,
+      };
+    }
+
+    let query = {
       ...datasource.annotations?.getDefaultQuery?.(),
       ...(target ?? { refId: 'Anno' }),
     };
+
+    // Create an annotation object with all properties properly placed, respecting annotations API
+    // Some datasources like Prometheus read properties directly from annotation
+    let editorAnnotation = annotation;
+
+    // Only for V2 dashboards: If we have options, propagate them to the root level
+    // This allows datasource editors that expect properties at the top level to find them
+    if (annotation.query && annotation.options) {
+      editorAnnotation = { ...annotation };
+      Object.assign(editorAnnotation, annotation.options);
+      console.log('V2 dashboard: Enhanced annotation object for editor:', editorAnnotation);
+    }
+
+    console.log('Annotation object provided to editor:', editorAnnotation);
 
     return (
       <>
@@ -235,7 +265,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             onRunQuery={this.onRunQuery}
             data={response?.panelData}
             range={getTimeSrv().timeRange()}
-            annotation={annotation}
+            annotation={editorAnnotation}
             onAnnotationChange={this.onAnnotationChange}
           />
         </DataSourcePluginContextProvider>
