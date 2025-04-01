@@ -373,11 +373,14 @@ export const convertRGBAToHex = (backgroundColor: string, rgbaColor: string): st
 /**
  * @internal
  */
-export const getCellLinks = (field: Field, rowIdx: number) => {
+export const getCellLinks = (field: Field, rowIdx: number, sortedRows?: TableRow[]) => {
   let links: Array<LinkModel<unknown>> | undefined;
+  // @TODO fix this
+  const rowIndexOriginal = sortedRows ? sortedRows[rowIdx].__index : rowIdx;
+
   if (field.getLinks) {
     links = field.getLinks({
-      valueRowIndex: rowIdx,
+      valueRowIndex: rowIndexOriginal,
     });
   }
 
@@ -395,7 +398,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
           event.preventDefault();
           origOnClick!(event, {
             field,
-            rowIndex: rowIdx,
+            rowIndex: rowIndexOriginal ?? rowIdx,
           });
         }
       };
@@ -495,6 +498,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
 
 /* ----------------------------- Data grid comparator ---------------------------- */
 const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:

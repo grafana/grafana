@@ -742,6 +742,7 @@ export function mapFrameToDataGrid({
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
             rowIdx={rowIdx}
+            sortedRows={sortedRows}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,

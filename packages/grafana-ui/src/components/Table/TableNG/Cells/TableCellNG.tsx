@@ -34,6 +34,7 @@ export function TableCellNG(props: TableCellNGProps) {
     cellInspect,
     getActions,
     rowBg,
+    sortedRows,
   } = props;
 
   const { config: fieldConfig } = field;
@@ -129,6 +130,7 @@ export function TableCellNG(props: TableCellNGProps) {
           justifyContent={justifyContent}
           rowIdx={rowIdx}
           cellOptions={cellOptions}
+          sortedRows={sortedRows}
         />
       );
   }
