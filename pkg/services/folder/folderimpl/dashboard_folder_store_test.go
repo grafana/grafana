@@ -214,7 +214,7 @@ func TestIntegrationGetDashFolderStore(t *testing.T) {
 		assert.NotEmpty(t, ff.URL)
 	})
 
-	t.Run("get folder by title should succeed", func(t *testing.T) {
+	t.Run("get folder by UID should succeed", func(t *testing.T) {
 		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
 			UID:   &f.UID,
 			OrgID: orgID,
