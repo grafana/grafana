@@ -159,7 +159,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	// Add generation column so we can use it for more aggressive pruning
 	mg.AddMigration("Add generation to resource history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
-		Name: "generation", Type: migrator.DB_BigInt, Nullable: true,
+		Name: "generation", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
 	}))
 	mg.AddMigration("Add generation index to resource history", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
 		Cols: []string{"namespace", "group", "resource", "name", "generation"},

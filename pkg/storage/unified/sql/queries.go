@@ -306,9 +306,9 @@ func (r sqlGetHistoryRequest) Validate() error {
 // prune resource history
 type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key          *resource.ResourceKey
-	Generation   bool // partion by generation
-	HistoryLimit int64
+	Key                   *resource.ResourceKey
+	PartitionByGeneration bool // include generation in the partition
+	HistoryLimit          int64
 }
 
 func (r *sqlPruneHistoryRequest) Validate() error {
