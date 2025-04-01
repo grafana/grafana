@@ -261,8 +261,17 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.NoError(t, err)
 
 	// Make sure the repo can see the file
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
 	require.NoError(t, err, "valid path should be fine")
+
+	resource, _, err := unstructured.NestedMap(obj.Object, "resource")
+	require.NoError(t, err, "missing resource")
+	action, _, err := unstructured.NestedString(resource, "action")
+	require.NoError(t, err, "invalid action")
+
+	require.NotNil(t, resource["file"], "the raw file")
+	require.NotNil(t, resource["dryRun"], "dryRun result")
+	require.Equal(t, "create", action)
 
 	// But the dashboard shouldn't exist yet
 	const allPanels = "n1jR8vnnz"
