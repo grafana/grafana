@@ -5,6 +5,7 @@ package sql
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -14,7 +15,10 @@ import (
 )
 
 // DB is a database that can execute SQL queries against a set of Frames.
-type DB struct{}
+type DB struct {
+	// Now is the current time to use for queries which impacts functions like NOW()
+	Now time.Time
+}
 
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
 type GoMySQLServerError struct {
@@ -71,6 +75,7 @@ func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames
 
 	// Select the database in the context
 	mCtx.SetCurrentDatabase(dbName)
+	mCtx.SetQueryTime(db.Now)
 
 	// Empty dir does not disable secure_file_priv
 	//ctx.SetSessionVariable(ctx, "secure_file_priv", "")
