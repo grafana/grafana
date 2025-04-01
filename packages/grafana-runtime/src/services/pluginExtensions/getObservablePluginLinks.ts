@@ -23,7 +23,7 @@ export function setGetObservablePluginLinks(fn: GetObservablePluginLinks): void 
 
 export function getObservablePluginLinks(options: GetObservablePluginLinksOptions): Observable<PluginExtensionLink[]> {
   if (!singleton) {
-    throw new Error('setGetObservablePluginLinks() can only be used after the Grafana instance has started.');
+    throw new Error('getObservablePluginLinks() can only be used after the Grafana instance has started.');
   }
 
   return singleton(options);

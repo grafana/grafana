@@ -29,7 +29,7 @@ export function getObservablePluginComponents(
   options: GetObservablePluginComponentsOptions
 ): Observable<PluginExtensionComponent[]> {
   if (!singleton) {
-    throw new Error('setGetObservablePluginComponents() can only be used after the Grafana instance has started.');
+    throw new Error('getObservablePluginComponents() can only be used after the Grafana instance has started.');
   }
 
   return singleton(options);
