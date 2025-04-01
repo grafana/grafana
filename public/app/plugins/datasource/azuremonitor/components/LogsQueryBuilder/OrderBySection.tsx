@@ -25,9 +25,9 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
 
-  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(() => {
-    return builderQuery?.orderBy?.expressions || [];
-  });
+  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(
+    builderQuery?.orderBy?.expressions || []
+  );
 
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;
@@ -37,11 +37,7 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
       hasLoadedOrderBy.current = false;
       prevTable.current = currentTable;
     }
-    if (!hasLoadedOrderBy.current && builderQuery?.orderBy?.expressions && orderBy.length === 0) {
-      setOrderBy(builderQuery.orderBy.expressions);
-      hasLoadedOrderBy.current = true;
-    }
-  }, [builderQuery, orderBy]);
+  }, [builderQuery]);
 
   const groupByColumns = builderQuery?.groupBy?.expressions?.map((g) => g.property?.name) || [];
   const aggregateColumns = builderQuery?.reduce?.expressions?.map((r) => r.property?.name) || [];

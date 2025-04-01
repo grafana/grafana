@@ -80,16 +80,33 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     }
 
     const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
+    const lastSelected = selectedArray[selectedArray.length - 1];
 
-    if (includesAll) {
+    if (includesAll && lastSelected.value === '__all_columns__') {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
-    } else {
-      buildAndUpdateQuery({
-        columns: selectedArray.map((opt) => opt.value!),
-      });
+      return;
     }
+
+    if (includesAll && selectedArray.length > 1) {
+      const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
+      buildAndUpdateQuery({
+        columns: filtered.map((opt) => opt.value!),
+      });
+      return;
+    }
+
+    if (includesAll && selectedArray.length === 1) {
+      buildAndUpdateQuery({
+        columns: allColumns.map((col) => col.name),
+      });
+      return;
+    }
+
+    buildAndUpdateQuery({
+      columns: selectedArray.map((opt) => opt.value!),
+    });
   };
 
   const onDeleteAllColumns = () => {
