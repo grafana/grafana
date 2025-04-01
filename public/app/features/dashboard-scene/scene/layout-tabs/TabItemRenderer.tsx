@@ -1,9 +1,13 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { Draggable } from '@hello-pangea/dnd';
+import { useRef } from 'react';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Tab, useElementSelection } from '@grafana/ui';
+import { Tab, useElementSelection, useStyles2 } from '@grafana/ui';
+
+import { useDashboardState } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
 
@@ -13,30 +17,65 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { tabs, currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const myIndex = tabs.findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
+  const styles = useStyles2(getStyles);
+  const pointerDownPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   return (
-    <Tab
-      ref={model.containerRef}
-      truncate
-      className={cx(
-        isSelected && 'dashboard-selected-element',
-        isSelectable && !isSelected && 'dashboard-selectable-element',
-        isDropTarget && 'dashboard-drop-target'
+    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isEditing}>
+      {(dragProvided, dragSnapshot) => (
+        <div
+          ref={(ref) => dragProvided.innerRef(ref)}
+          className={cx(dragSnapshot.isDragging && styles.dragging)}
+          {...dragProvided.draggableProps}
+          {...dragProvided.dragHandleProps}
+        >
+          <Tab
+            ref={model.containerRef}
+            truncate
+            className={cx(
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
+              isDropTarget && 'dashboard-drop-target'
+            )}
+            active={isActive}
+            role="presentation"
+            title={titleInterpolated}
+            href={href}
+            aria-selected={isActive}
+            onPointerDown={(evt) => {
+              evt.stopPropagation();
+              pointerDownPos.current = { x: evt.clientX, y: evt.clientY };
+            }}
+            onPointerUp={(evt) => {
+              evt.stopPropagation();
+
+              if (
+                !isSelectable ||
+                Math.hypot(pointerDownPos.current.x - evt.clientX, pointerDownPos.current.y - evt.clientY) > 10
+              ) {
+                return;
+              }
+
+              onSelect?.(evt);
+            }}
+            label={titleInterpolated}
+            data-dashboard-drop-target-key={model.state.key}
+          />
+        </div>
       )}
-      active={isActive}
-      role="presentation"
-      title={titleInterpolated}
-      href={href}
-      aria-selected={isActive}
-      onPointerDown={onSelect}
-      label={titleInterpolated}
-      data-dashboard-drop-target-key={model.state.key}
-    />
+    </Draggable>
   );
 }
+
+const getStyles = () => ({
+  dragging: css({
+    cursor: 'move',
+  }),
+});

@@ -108,6 +108,23 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.setState({ showAddPane: !this.state.showAddPane });
   }
 
+  public forceSelectObject(obj: SceneObject, id: string) {
+    if (!this.state.selection?.isMultiSelection && this.state.selection?.getFirstObject() === obj) {
+      return;
+    }
+
+    const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
+    const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, false);
+    this.setState({
+      selection: new ElementSelection(selection),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected,
+      },
+      showAddPane: false,
+    });
+  }
+
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
     const prevItem = this.state.selection?.getFirstObject();
     if (prevItem === obj && !multi) {
