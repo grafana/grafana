@@ -37,7 +37,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     <div role="radiogroup" className={styles.radioGroup}>
       {options.map((opt) => {
         switch (opt.id) {
-          case 'rows-layout':
+          case 'RowsLayout':
             return (
               <LayoutRadioButton
                 item={opt}
@@ -59,7 +59,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 </div>
               </LayoutRadioButton>
             );
-          case 'tabs-layout':
+          case 'TabsLayout':
             return (
               <LayoutRadioButton
                 item={opt}
@@ -83,7 +83,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 </Stack>
               </LayoutRadioButton>
             );
-          case 'responsive-grid':
+          case 'AutoGridLayout':
             return (
               <LayoutRadioButton
                 item={opt}
@@ -99,7 +99,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
                 </div>
               </LayoutRadioButton>
             );
-          case 'custom-grid':
+          case 'GridLayout':
           default:
             return (
               <LayoutRadioButton
