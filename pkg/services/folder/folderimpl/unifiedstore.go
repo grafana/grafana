@@ -15,6 +15,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -236,6 +237,25 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			continue
 		}
 
+		// TODO:  Remove this once we migrate the alerting use case.
+		// This is a temporary flag, and will be removed once we migrate the alerting use case to
+		// expect a folder ref too for children folders.
+		if q.RefOnly { // nolint:staticcheck
+			f := &folder.Folder{
+				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				UID:       item.Name,
+				Title:     item.Title,
+				ParentUID: item.Folder,
+			}
+
+			if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+				f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
+			}
+
+			hits = append(hits, f)
+			continue
+		}
+
 		// search only returns a subset of info, get all info of the folder
 		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &item.Name, OrgID: q.OrgID})
 		if err != nil {
@@ -430,6 +450,19 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 
 	res, err := toFolderLegacyCounts(counts)
 	return *res, err
+}
+
+func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	resp, err := ss.k8sclient.GetStats(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(resp.Stats) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	}
+
+	return resp.Stats[0].Count, nil
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {

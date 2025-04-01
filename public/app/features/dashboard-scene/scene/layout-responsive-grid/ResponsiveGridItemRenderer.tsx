@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
 
 import { AutoGridItem } from './ResponsiveGridItem';
-import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './ResponsiveGridLayout';
+import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels, key } = model.useState();

@@ -7985,6 +7985,9 @@
           "language": {
             "type": "string"
           },
+          "locale": {
+            "type": "string"
+          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
@@ -8602,6 +8605,10 @@
           },
           "language": {
             "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "locale": {
+            "description": "Selected locale (beta)",
             "type": "string"
           },
           "navbar": {
@@ -12052,6 +12059,9 @@
             "type": "string"
           },
           "language": {
+            "type": "string"
+          },
+          "locale": {
             "type": "string"
           },
           "navbar": {
@@ -16007,6 +16017,33 @@
               "default": 100,
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"name\", \"resource_type\", and \"status\".",
+            "in": "query",
+            "name": "resultSortColumn",
+            "schema": {
+              "default": "default",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.",
+            "in": "query",
+            "name": "resultSortOrder",
+            "schema": {
+              "default": "ASC",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ErrorsOnly is used to only return resources with error statuses",
+            "in": "query",
+            "name": "errorsOnly",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           },
           {

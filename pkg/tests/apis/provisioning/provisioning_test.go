@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	gh "github.com/google/go-github/v69/github"
+	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -306,12 +306,14 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
-		SubResource("export").
+		SubResource("jobs").
 		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.ExportJobOptions{
-			Folder:     "",   // export entire instance
-			Path:       "",   // no prefix necessary for testing
-			Identifier: true, // doesn't _really_ matter, but handy for debugging.
+		Body(asJSON(&provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Folder:     "",   // export entire instance
+				Path:       "",   // no prefix necessary for testing
+				Identifier: true, // doesn't _really_ matter, but handy for debugging.
+			},
 		})).
 		Do(ctx)
 	require.NoError(t, result.Error())

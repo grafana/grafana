@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -142,29 +145,105 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	return info.client, info.gvk, nil
 }
 
-func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
+// ForEachResource applies the function to each resource in the discovery client
+func (c *ResourceClients) ForEachResource(ctx context.Context, kind schema.GroupVersionResource, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	client, _, err := c.ForResource(kind)
+	if err != nil {
+		return err
+	}
+
+	return ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
+		return fn(client, item)
 	})
-	return v, err
+}
+
+// ForEachResource applies the function to each resource in the discovery client
+func ForEachResource(ctx context.Context, client dynamic.ResourceInterface, fn func(item *unstructured.Unstructured) error) error {
+	var continueToken string
+	for ctx.Err() == nil {
+		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		if err != nil {
+			return fmt.Errorf("error executing list: %w", err)
+		}
+
+		for _, item := range list.Items {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			if err := fn(&item); err != nil {
+				return err
+			}
+		}
+
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	return nil
+}
+
+// ForEachUnmanagedResource applies the function to each unprovisioned supported resource
+func (c *ResourceClients) ForEachUnmanagedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	return c.ForEachSupportedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
+
+		// Skip if managed
+		_, ok := meta.GetManagerProperties()
+		if ok {
+			return nil
+		}
+
+		return fn(client, item)
+	})
+}
+
+// ForEachSupportedResource applies the function to each supported resource
+func (c *ResourceClients) ForEachSupportedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	for _, kind := range SupportedResources {
+		if err := c.ForEachResource(ctx, kind, fn); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
+	client, _, err := c.ForResource(FolderResource)
+	return client, err
+}
+
+func (c *ResourceClients) ForEachFolder(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
+	return c.ForEachResource(ctx, FolderResource, fn)
 }
 
 func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    iam.GROUP,
-		Version:  iam.VERSION,
-		Resource: iam.UserResourceInfo.GroupResource().Resource,
-	})
+	v, _, err := c.ForResource(UserResource)
 	return v, err
 }
 
-func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    dashboard.GROUP,
-		Version:  dashboard.VERSION,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	})
-	return v, err
+var UserResource = schema.GroupVersionResource{
+	Group:    iam.GROUP,
+	Version:  iam.VERSION,
+	Resource: iam.UserResourceInfo.GroupResource().Resource,
 }
+
+var FolderResource = schema.GroupVersionResource{
+	Group:    folders.GROUP,
+	Version:  folders.VERSION,
+	Resource: folders.RESOURCE,
+}
+
+var DashboardResource = schema.GroupVersionResource{
+	Group:    dashboard.GROUP,
+	Version:  dashboard.VERSION,
+	Resource: dashboard.DASHBOARD_RESOURCE,
+}
+
+// SupportedResources is the list of resources that are supported by provisioning
+var SupportedResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
