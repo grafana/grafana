@@ -42,7 +42,13 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
 } from '@grafana/runtime';
-import { setPanelDataErrorView, setPanelRenderer, setPluginPage } from '@grafana/runtime/internal';
+import {
+  setGetObservablePluginComponents,
+  setGetObservablePluginLinks,
+  setPanelDataErrorView,
+  setPanelRenderer,
+  setPluginPage,
+} from '@grafana/runtime/internal';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -76,7 +82,11 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import {
+  createPluginExtensionsGetter,
+  getObservablePluginComponents,
+  getObservablePluginLinks,
+} from './features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
@@ -222,6 +232,8 @@ export class GrafanaApp {
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
       setPluginFunctionsHook(usePluginFunctions);
+      setGetObservablePluginLinks(getObservablePluginLinks);
+      setGetObservablePluginComponents(getObservablePluginComponents);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
