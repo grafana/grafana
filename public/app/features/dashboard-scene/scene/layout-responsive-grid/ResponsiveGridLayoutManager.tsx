@@ -52,7 +52,7 @@ export class AutoGridLayoutManager
     get description() {
       return t('dashboard.auto-grid.description', 'Panels resize to fit and form uniform grids');
     },
-    id: 'auto-grid',
+    id: 'AutoGridLayout',
     createFromLayout: AutoGridLayoutManager.createFromLayout,
     isGridLayout: true,
   };
