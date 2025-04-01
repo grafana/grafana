@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
@@ -88,7 +89,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				}
 			}
 
-			response.AddMetricDataResult(r)
+			response.AddMetricDataResult(&r)
 			responseByID[id] = response
 		}
 	}
@@ -228,16 +229,9 @@ func buildDataFrames(ctx context.Context, aggregatedResponse models.QueryRowResp
 		} else {
 			labels = getLabels(label, query, false)
 		}
-		timestamps := []*time.Time{}
-		points := []*float64{}
-		for j, t := range metric.Timestamps {
-			val := metric.Values[j]
-			timestamps = append(timestamps, t)
-			points = append(points, val)
-		}
 
-		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
-		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
+		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, metric.Timestamps)
+		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, metric.Values)
 
 		// CloudWatch appends the dimensions to the returned label if the query label is not dynamic, so static labels need to be set
 		if hasStaticLabel {
