@@ -85,7 +85,7 @@ COPY apps/playlist apps/playlist
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
-COPY pkg/infra/log/go.* pkg/infra/log
+COPY pkg/infra/log pkg/infra/log
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications

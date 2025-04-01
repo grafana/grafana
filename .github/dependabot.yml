@@ -16,7 +16,7 @@ updates:
       - "/pkg/apiserver"
       - "/pkg/build"
       - "/pkg/build/wire"
-      - "pkg/infra/log"
+      - "/pkg/infra/log"
       - "/pkg/promlib"
       - "/pkg/semconv"
       - "/pkg/storage/unified/apistore"
