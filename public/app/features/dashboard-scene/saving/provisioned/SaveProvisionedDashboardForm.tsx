@@ -71,7 +71,7 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
   } = useForm<FormData>({ defaultValues });
-
+  const panelEditor = dashboard?.state.editPanel;
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
@@ -85,6 +85,7 @@ export function SaveProvisionedDashboardForm({
 
       if (workflow === 'branch' && ref !== '' && path !== '') {
         dashboard.closeModal();
+        panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
