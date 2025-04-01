@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -66,21 +65,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				if err != nil {
 					responder.Error(err)
 					return
-				}
-
-				// TODO: Explore how to better support synchronous validation for the UI (and likely remove this hack)
-				if name != "new" {
-					repo, err = s.getter.AsRepository(ctx, &cfg)
-					if err != nil {
-						responder.Error(err)
-						return
-					}
-
-					// Make sure we are OK with the changes
-					if cfg.Spec.Type != repo.Config().Spec.Type {
-						responder.Error(apierrors.NewBadRequest("test config must be the same type"))
-						return
-					}
 				}
 				repo = tmp
 			}
