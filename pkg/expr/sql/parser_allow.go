@@ -216,6 +216,10 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		"json_length", "json_search", "json_type":
 		return
 
+	// our custom functions
+	case "time_from", "time_to":
+		return
+
 	default:
 		return false
 	}
