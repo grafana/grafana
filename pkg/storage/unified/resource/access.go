@@ -218,3 +218,9 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 }
 
 var _ claims.AccessClient = &authzLimitedClient{}
+
+type contextFallbackKey struct{}
+
+func WithFallback(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextFallbackKey{}, true)
+}
