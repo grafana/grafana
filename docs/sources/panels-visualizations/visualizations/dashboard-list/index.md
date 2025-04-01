@@ -35,7 +35,7 @@ refs:
 
 Dashboard lists allow you to display dynamic links to other dashboards. You can configure the list to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
 
-{{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px" alt="A dashboard list visualization" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-dashboard-list-v11.6.png" max-width="750px" alt="A dashboard list visualization" >}}
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 
