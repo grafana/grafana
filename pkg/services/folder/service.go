@@ -64,11 +64,8 @@ type Service interface {
 //
 //go:generate mockery --name FolderStore --structname FakeFolderStore --outpkg foldertest --output foldertest --filename folder_store_mock.go
 type FolderStore interface {
-	// GetFolderByTitle retrieves a folder by its title
-	// It expects a parentUID as last argument.
-	// If parentUID is empty then the folder will be fetched from the root level
-	// otherwise it will be fetched from the subfolder under the folder with the given UID.
-	GetFolderByTitle(ctx context.Context, orgID int64, title string, parentUID *string) (*Folder, error)
+	// Get joins on the dashboard and folder table to return all information needed for a folder
+	Get(ctx context.Context, q GetFolderQuery) (*Folder, error)
 	// GetFolderByUID retrieves a folder by its UID
 	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*Folder, error)
 	// GetFolderByID retrieves a folder by its ID
