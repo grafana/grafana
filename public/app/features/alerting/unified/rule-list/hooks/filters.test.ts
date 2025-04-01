@@ -192,7 +192,7 @@ describe('ruleFilter', () => {
     it('should match rules that use the filtered datasource', () => {
       // Create a Grafana rule with matching datasource
       const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({
-        queriedDatasources: ['datasource-uid-1'],
+        queriedDatasourceUIDs: ['datasource-uid-1'],
       });
 
       // 'prometheus' resolves to 'datasource-uid-1' which is in the rule
@@ -202,7 +202,7 @@ describe('ruleFilter', () => {
     it("should filter out rules that don't use the filtered datasource", () => {
       // Create a Grafana rule without the target datasource
       const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
-        queriedDatasources: ['datasource-uid-1', 'datasource-uid-2'],
+        queriedDatasourceUIDs: ['datasource-uid-1', 'datasource-uid-2'],
       });
 
       // 'loki' resolves to 'datasource-uid-3' which is not in the rule

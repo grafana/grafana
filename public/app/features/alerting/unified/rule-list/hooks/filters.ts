@@ -111,7 +111,7 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     if (isGrafanaRule) {
       try {
         const filterDatasourceUids = mapDataSourceNamesToUids(filterState.dataSourceNames);
-        const queriedDatasourceUids = rule.queriedDatasources || [];
+        const queriedDatasourceUids = rule.queriedDatasourceUIDs || [];
 
         const queryIncludesDataSource = queriedDatasourceUids.some((uid) => filterDatasourceUids.includes(uid));
         if (!queryIncludesDataSource) {
