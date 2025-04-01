@@ -110,7 +110,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          Start {playlist.name}
+          Start {playlist.spec.title}
         </Button>
       </Modal.ButtonRow>
     </Modal>
