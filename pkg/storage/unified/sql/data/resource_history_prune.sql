@@ -9,7 +9,7 @@ WHERE {{ .Ident "guid" }} IN (
         , {{ .Ident "group" }}
         , {{ .Ident "resource" }}
         , {{ .Ident "name" }}
-        {{ if .Generation }}
+        {{ if .PartitionByGeneration }}
         , {{ .Ident "generation" }}
         {{ end }}
       ORDER BY {{ .Ident "resource_version" }} DESC
@@ -19,7 +19,7 @@ WHERE {{ .Ident "guid" }} IN (
     AND {{ .Ident "group" }} = {{ .Arg .Key.Group }}
     AND {{ .Ident "resource" }} = {{ .Arg .Key.Resource }}
     AND {{ .Ident "name" }} = {{ .Arg .Key.Name }}
-    {{ if .Generation }}
+    {{ if .PartitionByGeneration }}
     AND {{ .Ident "generation" }} > 0
     {{ end }}
   ) AS {{ .Ident "ranked" }}
