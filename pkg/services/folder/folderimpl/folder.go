@@ -300,41 +300,25 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
-	var dashFolder *folder.Folder
-	var err error
-	switch {
-	case q.UID != nil:
-		if *q.UID == "" {
-			return &folder.GeneralFolder, nil
-		}
-		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
-		if err != nil {
-			return nil, err
-		}
 	// nolint:staticcheck
-	case q.ID != nil:
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		dashFolder, err = s.getFolderByID(ctx, *q.ID, q.OrgID)
-		if err != nil {
-			return nil, err
-		}
-	case q.Title != nil:
-		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
-		if err != nil {
-			return nil, err
-		}
-	default:
+	if q.ID == nil && q.Title == nil && q.UID == nil {
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
 
-	if dashFolder.IsGeneral() {
-		return dashFolder, nil
+	// nolint:staticcheck
+	if (q.UID != nil && *q.UID == "") || (q.ID != nil && *q.ID == folder.GeneralFolder.ID) {
+		return &folder.GeneralFolder, nil
+	}
+
+	f, err := s.dashboardFolderStore.Get(ctx, *q)
+	if err != nil {
+		return nil, err
 	}
 
 	// do not get guardian by the folder ID because it differs from the nested folder ID
 	// and the legacy folder ID has been associated with the permissions:
 	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, q.SignedInUser)
+	g, err := guardian.NewByFolder(ctx, f, f.OrgID, q.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
@@ -346,37 +330,14 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		dashFolder.Fullpath = dashFolder.Title
-		dashFolder.FullpathUIDs = dashFolder.UID
-		return dashFolder, nil
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-	// nolint:staticcheck
-	if q.ID != nil {
-		q.ID = nil
-		q.UID = &dashFolder.UID
-	}
-
-	f, err := s.store.Get(ctx, *q)
-	if err != nil {
-		return nil, err
-	}
-
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
-	f.ID = dashFolder.ID
-	f.Version = dashFolder.Version
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
-
-	f.CreatedBy = dashFolder.CreatedBy
-	f.UpdatedBy = dashFolder.UpdatedBy
 
 	return f, err
 }
@@ -711,20 +672,8 @@ func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery
 	return s.store.GetParents(ctx, q)
 }
 
-func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
-	if id == 0 {
-		return &folder.GeneralFolder, nil
-	}
-
-	return s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
-}
-
 func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
 	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
-}
-
-func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, parentUID)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
