@@ -231,7 +231,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/apis v0.0.0-20250327091030-e216c2f29dcc // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250327091030-e216c2f29dcc // @grafana/grafana-app-platform-squad
 )
 
 require github.com/aws/smithy-go v1.22.2 // @grafana/aws-datasources

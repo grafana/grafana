@@ -19,7 +19,7 @@ use (
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
-	./pkg/apis
+	./pkg/apis/folder
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build
