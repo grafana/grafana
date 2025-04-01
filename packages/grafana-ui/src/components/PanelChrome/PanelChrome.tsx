@@ -230,6 +230,19 @@ export function PanelChrome({
     [onDragStart]
   );
 
+  const onContentPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+        return;
+      }
+
+      onSelect?.(evt);
+    },
+    [onSelect]
+  );
+
   const headerContent = (
     <>
       {/* Non collapsible title */}
@@ -386,6 +399,7 @@ export function PanelChrome({
           data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
+          onPointerDown={onContentPointerDown}
         >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>
