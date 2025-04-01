@@ -49,7 +49,7 @@ func NewJaegerTracingConfig(address string, propagation string) (*TracingConfig,
 	return cfg, nil
 }
 
-func NewOTLPTracingConfig(address string, propagation string) (*TracingConfig, error) {
+func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*TracingConfig, error) {
 	if address == "" {
 		return nil, fmt.Errorf("address cannot be empty")
 	}
@@ -58,6 +58,7 @@ func NewOTLPTracingConfig(address string, propagation string) (*TracingConfig, e
 	cfg.enabled = otlpExporter
 	cfg.Address = address
 	cfg.Propagation = propagation
+	cfg.Insecure = insecure
 	return cfg, nil
 }
 
