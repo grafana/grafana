@@ -561,8 +561,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.parsers.ClientFactory,
 				b.storageStatus,
-				b.secrets,
-				b.clonedir,
 				b.parsers,
 			)
 			syncWorker := sync.NewSyncWorker(
@@ -576,10 +574,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				b.storageStatus,
 				b.unified,
-				b.secrets,
 				exportWorker,
 				syncWorker,
-				b.clonedir,
 			)
 
 			// Pull request worker
@@ -1121,7 +1117,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			)
 		}
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, r, opts, b.secrets)
+			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)

@@ -45,7 +45,7 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	wrap, err := Clone(ctx, &v0alpha1.Repository{
+	wrap, err := Clone(ctx, "testdata/clone", &v0alpha1.Repository{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "ns",
 			Name:      "unit-tester",
@@ -58,7 +58,6 @@ func TestGoGitWrapper(t *testing.T) {
 		},
 	},
 		repository.CloneOptions{
-			Root:                   "testdata/clone", // where things are cloned,
 			SingleCommitBeforePush: true,
 			CreateIfNotExists:      true,
 			Progress:               os.Stdout,

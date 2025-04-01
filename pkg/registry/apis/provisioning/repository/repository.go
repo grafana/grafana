@@ -49,8 +49,6 @@ type FileInfo struct {
 type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
 
 type CloneOptions struct {
-	Root string // tempdir (when empty, memory??)
-
 	// If the branch does not exist, create it
 	CreateIfNotExists bool
 

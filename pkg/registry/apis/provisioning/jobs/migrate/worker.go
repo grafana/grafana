@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,9 +24,6 @@ import (
 )
 
 type MigrationWorker struct {
-	// Tempdir for repo clones
-	clonedir string
-
 	// temporary... while we still do an import
 	parsers *resources.ParserFactory
 
@@ -39,9 +35,6 @@ type MigrationWorker struct {
 
 	// Direct access to unified storage... use carefully!
 	bulk resource.BulkStoreClient
-
-	// Decrypt secret from config object
-	secrets secrets.Service
 
 	// Delegate the export to the export worker
 	exportWorker *export.ExportWorker
@@ -55,18 +48,14 @@ func NewMigrationWorker(
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
-	secrets secrets.Service,
 	exportWorker *export.ExportWorker,
 	syncWorker *sync.SyncWorker,
-	clonedir string,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		clonedir,
 		parsers,
 		storageStatus,
 		legacyMigrator,
 		batch,
-		secrets,
 		exportWorker,
 		syncWorker,
 	}
@@ -120,7 +109,6 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		}()
 
 		clone, err = clonable.Clone(ctx, repository.CloneOptions{
-			Root:                   w.clonedir,
 			SingleCommitBeforePush: !options.History,
 			// TODO: make this configurable
 			Timeout:  10 * time.Minute,

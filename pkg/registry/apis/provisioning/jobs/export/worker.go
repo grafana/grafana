@@ -12,39 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
 
 type ExportWorker struct {
-	// Tempdir for repo clones
-	clonedir string
-
 	// required to create clients
 	clientFactory *resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
-	// Decrypt secrets in config
-	secrets secrets.Service
-
 	parsers *resources.ParserFactory
 }
 
 func NewExportWorker(clientFactory *resources.ClientFactory,
 	storageStatus dualwrite.Service,
-	secrets secrets.Service,
-	clonedir string,
 	parsers *resources.ParserFactory,
 ) *ExportWorker {
 	return &ExportWorker{
-		clonedir,
 		clientFactory,
 		storageStatus,
-		secrets,
 		parsers,
 	}
 }
@@ -67,12 +56,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	var clone repository.ClonedRepository
-
-	clonable, ok := repo.(repository.ClonableRepository)
-	if ok {
+	if clonable, ok := repo.(repository.ClonableRepository); ok {
 		progress.SetMessage(ctx, "clone target")
 		clone, err = clonable.Clone(ctx, repository.CloneOptions{
-			Root:                   r.clonedir,
 			SingleCommitBeforePush: true,
 			// TODO: make this configurable
 			Timeout: 10 * time.Minute,

@@ -59,11 +59,12 @@ type GoGitRepo struct {
 // As structured, it is valid for one context and should not be shared across multiple requests
 func Clone(
 	ctx context.Context,
+	root string,
 	config *provisioning.Repository,
 	opts repository.CloneOptions,
 	secrets secrets.Service,
 ) (repository.ClonedRepository, error) {
-	if opts.Root == "" {
+	if root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
 
@@ -80,11 +81,11 @@ func Clone(
 		return nil, fmt.Errorf("error decrypting token: %w", err)
 	}
 
-	if err := os.MkdirAll(opts.Root, 0700); err != nil {
+	if err := os.MkdirAll(root, 0700); err != nil {
 		return nil, fmt.Errorf("create root dir: %w", err)
 	}
 
-	dir, err := mkdirTempClone(opts.Root, config)
+	dir, err := mkdirTempClone(root, config)
 	if err != nil {
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
