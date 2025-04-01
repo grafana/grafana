@@ -169,7 +169,7 @@ export function getLogLineSize(
   }
 
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
-  logs[index].checkCollapsedState(displayedFields, container);
+  logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
     return (TRUNCATION_LINE_COUNT + 1) * lineHeight;
   }

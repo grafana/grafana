@@ -80,7 +80,7 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
-      let body = this.collapsed ? this.raw.substring(0, getTruncationLength()) : this.raw;
+      let body = this.collapsed ? this.raw.substring(0, getTruncationLength(null)) : this.raw;
       // Turn it into a single-line log entry for the list
       this._body = body.replace(/(\r\n|\n|\r)/g, '');
     }
@@ -108,7 +108,7 @@ export class LogListModel implements LogRowModel {
     return field ? field.values.toString() : '';
   }
 
-  checkCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
+  updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
     const lineLength =
       displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length + this.raw.length;
     const collapsed = lineLength >= getTruncationLength(container) ? true : undefined;
