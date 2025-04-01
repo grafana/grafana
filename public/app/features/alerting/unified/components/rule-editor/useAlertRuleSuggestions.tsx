@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
 import { RuleNamespace } from 'app/types/unified-alerting';
@@ -47,8 +48,12 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
   return { labels, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
 }
 
-export function useGetNameSpacesByDatasourceName(rulesSourceName: string) {
-  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+export function useGetNameSpacesByDatasourceName(rulesSourceName?: string) {
+  debugger;
+  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery(
+    rulesSourceName ? { rulesSourceName } : skipToken,
+    { skip: !rulesSourceName }
+  );
 
   // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time
   // rulerRules = {} creates a new object and triggers useMemo to recalculate labels
@@ -56,8 +61,7 @@ export function useGetNameSpacesByDatasourceName(rulesSourceName: string) {
     useLazyRulerRulesQuery();
 
   const { data: promNamespaces = [], isLoading: isPrometheusRulesLoading } = usePrometheusRuleNamespacesQuery(
-    { ruleSourceName: rulesSourceName },
-    { skip: !prometheusRulesPrimary }
+    rulesSourceName && prometheusRulesPrimary ? { ruleSourceName: rulesSourceName } : skipToken
   );
 
   useEffect(() => {

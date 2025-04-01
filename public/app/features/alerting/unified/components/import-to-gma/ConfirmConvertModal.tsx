@@ -32,6 +32,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     pauseAlertingRules,
     namespace,
     ruleGroup,
+    targetDatasourceUID,
   ] = watch([
     'targetFolder',
     'selectedDatasourceName',
@@ -40,8 +41,9 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'pauseAlertingRules',
     'namespace',
     'ruleGroup',
+    'targetDatasourceUID',
   ]);
-  const { rulerRules } = useGetNameSpacesByDatasourceName(selectedDatasourceName ?? '');
+  const { rulerRules } = useGetNameSpacesByDatasourceName(selectedDatasourceName || undefined);
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
   const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, namespace, ruleGroup);
@@ -54,6 +56,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         pauseRecordingRules: pauseRecordingRules,
         pauseAlerts: pauseAlertingRules,
         payload: rulerRulesToPayload,
+        targetDatasourceUID,
       }).unwrap();
 
       const isRootFolder = isEmpty(targetFolder?.uid);
@@ -110,7 +113,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   );
 };
 
-export function filterRulerRulesConfig(
+function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
