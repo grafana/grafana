@@ -63,6 +63,8 @@ refs:
 
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
+A service account is not the same as a Grafana [user](/docs/grafana/latest/administration/user-management/). The role of a service account is primarily to automate work using the Grafana API.
+
 {{< admonition type="note" >}}
 Service accounts replace [API keys](ref:migrate-api-keys) as the primary way to authenticate applications that interact with Grafana.
 {{< /admonition >}}

@@ -55,6 +55,42 @@ Only users with the organization administrator role can add data sources.
 
 Once you've added the Google Cloud Monitoring data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) and apply [annotations](#annotations) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
+## Before you begin
+
+Complete the following before you configure the data source.
+
+### Configure Google authentication
+
+Before you can request data from Google Cloud Monitoring, you must configure authentication.
+All requests to Google APIs are performed on the server-side by the Grafana backend.
+
+For authentication options and configuration details, refer to [Google authentication](google-authentication/).
+
+When configuring Google authentication, keep in mind the following additional steps related to Google Cloud Monitoring.
+
+#### Configure a GCP Service Account
+
+When you [create a Google Cloud Platform (GCP) Service Account and key file](google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+
+{{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
+
+#### Grant the GCE Default Service Account scope
+
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [Configure a GCE Default Service Account](google-authentication/#configure-a-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+
+### Enable necessary Google Cloud Platform APIs
+
+Before you can request data from Google Cloud Monitoring, you must first enable necessary APIs on the Google end.
+
+1. Open the Monitoring and Cloud Resource Manager API pages:
+
+   - [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
+   - [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
+
+1. On each page, click the `Enable` button.
+
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+
 ## Configure the data source
 
 To configure basic settings for the data source, complete the following steps:
@@ -73,41 +109,9 @@ To configure basic settings for the data source, complete the following steps:
    | **Name**    | Sets the name you use to refer to the data source in panels and queries. |
    | **Default** | Sets whether the data source is pre-selected for new panels.             |
 
-### Configure Google authentication
-
-Before you can request data from Google Cloud Monitoring, you must configure authentication.
-All requests to Google APIs are performed on the server-side by the Grafana backend.
-
-For authentication options and configuration details, refer to [Google authentication](google-authentication/).
-
-When configuring Google authentication, note these additional Google Cloud Monitoring-specific steps:
-
-#### Configure a GCP Service Account
-
-When you [create a Google Cloud Platform (GCP) Service Account and key file](google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
-
-{{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
-
-#### Grant the GCE Default Service Account scope
-
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, then when you [Configure a GCE Default Service Account](google-authentication/#configure-a-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
-
-### Enable necessary Google Cloud Platform APIs
-
-Before you can request data from Google Cloud Monitoring, you must first enable necessary APIs on the Google end.
-
-1. Open the Monitoring and Cloud Resource Manager API pages:
-
-   - [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
-   - [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
-
-1. On each page, click the `Enable` button.
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
-
 ### Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 #### Provisioning examples

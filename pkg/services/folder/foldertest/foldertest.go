@@ -13,6 +13,7 @@ type FakeService struct {
 	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
+	LastQuery                folder.GetFoldersQuery
 }
 
 func NewFakeService() *FakeService {
@@ -90,5 +91,10 @@ func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQ
 }
 
 func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	s.LastQuery = q
 	return s.ExpectedFolders, s.ExpectedError
+}
+
+func (s *FakeService) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	return int64(len(s.ExpectedFolders)), s.ExpectedError
 }

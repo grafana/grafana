@@ -1,11 +1,13 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/influxdata/influxql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -328,4 +330,76 @@ func TestRemoveRegexWrappers(t *testing.T) {
 
 		require.Equal(t, expected, result)
 	})
+}
+
+func TestRawQueryWithAdhocFilters(t *testing.T) {
+	noAdhocFilters := []*Tag{}
+	adhocFilter := &Tag{
+		Key:   "lol",
+		Value: "sob",
+	}
+
+	cases := []struct {
+		Name          string
+		RawQuery      string
+		ExpectedQuery string
+		AdhocFilters  []*Tag
+	}{
+		{
+			Name:          "no filters",
+			RawQuery:      `SELECT "gauge" FROM "a"."b" WHERE time >= 123456780 and time <= 123456789`,
+			ExpectedQuery: `SELECT "gauge" FROM "a"."b" WHERE time >= 123456780 and time <= 123456789`,
+			AdhocFilters:  noAdhocFilters,
+		},
+		{
+			Name:          "multi-byte chars, single filter",
+			RawQuery:      `SELECT "gauge" as "世界" FROM "a"."b"`,
+			ExpectedQuery: `SELECT "gauge" as "世界" FROM "a"."b" WHERE "lol" = 'sob'`,
+			AdhocFilters:  []*Tag{adhocFilter},
+		},
+		{
+			Name:          "multi-byte chars, single filter, existing where condition",
+			RawQuery:      `SELECT "gauge" as "世界" FROM "a"."b" WHERE time >= 123456780 AND time <= 123456789`,
+			ExpectedQuery: `SELECT "gauge" as "世界" FROM "a"."b" WHERE "lol" = 'sob' AND time >= 123456780 AND time <= 123456789`,
+			AdhocFilters:  []*Tag{adhocFilter},
+		},
+		{
+			Name:          "quoted where, single filter",
+			RawQuery:      `SELECT "gauge" as "where is my thing" FROM "a"."b"`,
+			ExpectedQuery: `SELECT "gauge" as "where is my thing" FROM "a"."b" WHERE "lol" = 'sob'`,
+			AdhocFilters:  []*Tag{adhocFilter},
+		},
+		{
+			Name:          "quoted where, single filter, existing where condition",
+			RawQuery:      `SELECT "gauge" as "where is my thing" FROM "a"."b" WHERE time >= 123456780 AND time <= 123456789`,
+			ExpectedQuery: `SELECT "gauge" as "where is my thing" FROM "a"."b" WHERE "lol" = 'sob' AND time >= 123456780 AND time <= 123456789`,
+			AdhocFilters:  []*Tag{adhocFilter},
+		},
+		{
+			Name:          "multiple filters",
+			RawQuery:      `SELECT "gauge" FROM "a"."b"`,
+			ExpectedQuery: `SELECT "gauge" FROM "a"."b" WHERE "lol" = 'sob' AND "lol" = 'sob'`,
+			AdhocFilters:  []*Tag{adhocFilter, adhocFilter},
+		},
+		{
+			Name:          "multiple filters, existing where condition",
+			RawQuery:      `SELECT "gauge" FROM "a"."b" WHERE time >= 123456780 AND time <= 123456789`,
+			ExpectedQuery: `SELECT "gauge" FROM "a"."b" WHERE "lol" = 'sob' AND "lol" = 'sob' AND time >= 123456780 AND time <= 123456789`,
+			AdhocFilters:  []*Tag{adhocFilter, adhocFilter},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("raw query + adhoc filters: %s", c.Name), func(t *testing.T) {
+			query := &Query{
+				RawQuery:     c.RawQuery,
+				UseRawQuery:  true,
+				AdhocFilters: c.AdhocFilters,
+			}
+			actualQuery := query.getRawQueryWithAdhocFilters()
+			require.Equal(t, c.ExpectedQuery, actualQuery)
+			_, err := influxql.ParseStatement(actualQuery)
+			require.NoError(t, err)
+		})
+	}
 }

@@ -90,6 +90,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.themeOptions = themes.map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
+      group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
     }));
 
     // Add default option
@@ -120,6 +121,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     if (confirmationResult) {
       const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      reportInteraction('grafana_preferences_save_button_clicked', {
+        preferenceType: this.props.preferenceType,
+        theme,
+        language,
+      });
       await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
       window.location.reload();
     }

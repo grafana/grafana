@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 
 import { DataSourcePicker } from './DataSourcePicker';
 
-jest.mock('../services/dataSourceSrv');
+jest.mock('../services/dataSourceSrv', () => ({
+  getDataSourceSrv: () => ({
+    getList: () => [],
+    getInstanceSettings: () => undefined,
+    get: () => undefined,
+  }),
+}));
 
 describe('DataSourcePicker', () => {
   describe('onClear', () => {
@@ -11,7 +17,7 @@ describe('DataSourcePicker', () => {
       const onClear = jest.fn();
       const select = render(<DataSourcePicker onClear={onClear} />);
 
-      const clearButton = select.getByLabelText('select-clear-value');
+      const clearButton = select.getByLabelText('Clear value');
       await userEvent.click(clearButton);
       expect(onClear).toHaveBeenCalled();
     });
@@ -20,7 +26,7 @@ describe('DataSourcePicker', () => {
       const select = render(<DataSourcePicker />);
 
       expect(() => {
-        select.getByLabelText('select-clear-value');
+        select.getByLabelText('Clear value');
       }).toThrowError();
     });
 
