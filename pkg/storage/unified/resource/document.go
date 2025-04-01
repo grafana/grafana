@@ -272,10 +272,10 @@ func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefini
 }
 
 const SEARCH_FIELD_PREFIX = "fields."
-const SEARCH_FIELD_ID = "_id"              // {namespace}/{group}/{resource}/{name}
+const SEARCH_FIELD_ID = "_id" // {namespace}/{group}/{resource}/{name}
 const SEARCH_FIELD_LEGACY_ID = utils.LabelKeyDeprecatedInternalID
-const SEARCH_FIELD_KIND = "kind"           // resource ( for federated index filtering )
-const SEARCH_FIELD_GROUP_RESOURCE = "gr"   // group/resource
+const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
+const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
 const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
