@@ -43,7 +43,7 @@ type AnnotationBackend struct {
 
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
-	GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.FolderReference, error)
+	GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error)
 }
 
 type AnnotationStore interface {

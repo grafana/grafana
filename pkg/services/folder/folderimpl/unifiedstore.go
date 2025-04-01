@@ -237,32 +237,18 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			continue
 		}
 
-		// TODO:  Remove this once we migrate the alerting use case.
-		// This is a temporary flag, and will be removed once we migrate the alerting use case to
-		// expect a folder ref too for children folders.
-		if q.RefOnly { // nolint:staticcheck
-			f := &folder.FolderReference{
-				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-				UID:       item.Name,
-				Title:     item.Title,
-				ParentUID: item.Folder,
-			}
-
-			if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
-				f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
-			}
-
-			hits = append(hits, f)
-			continue
+		f := &folder.FolderReference{
+			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			UID:       item.Name,
+			Title:     item.Title,
+			ParentUID: item.Folder,
 		}
 
-		// search only returns a subset of info, get all info of the folder
-		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &item.Name, OrgID: q.OrgID})
-		if err != nil {
-			return nil, err
+		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
 		}
 
-		hits = append(hits, f.ToFolderReference())
+		hits = append(hits, f)
 	}
 
 	return hits, nil

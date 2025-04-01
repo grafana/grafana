@@ -65,12 +65,10 @@ type Folder struct {
 
 type FolderReference struct {
 	// Deprecated: use UID instead
-	ID           int64  `xorm:"pk autoincr 'id'"`
-	UID          string `xorm:"uid"`
-	Title        string
-	ParentUID    string `xorm:"parent_uid"`
-	Fullpath     string `xorm:"fullpath"`
-	FullpathUIDs string `xorm:"fullpath_uids"`
+	ID        int64  `xorm:"pk autoincr 'id'"`
+	UID       string `xorm:"uid"`
+	Title     string
+	ParentUID string `xorm:"parent_uid"`
 
 	// When the folder belongs to a repository
 	// NOTE: this is only populated when folders are managed by unified storage
@@ -105,13 +103,11 @@ func (f *Folder) WithURL() *Folder {
 
 func (f *Folder) ToFolderReference() *FolderReference {
 	return &FolderReference{
-		ID:           f.ID,
-		UID:          f.UID,
-		Title:        f.Title,
-		ParentUID:    f.ParentUID,
-		Fullpath:     f.Fullpath,
-		FullpathUIDs: f.FullpathUIDs,
-		ManagedBy:    f.ManagedBy,
+		ID:        f.ID,
+		UID:       f.UID,
+		Title:     f.Title,
+		ParentUID: f.ParentUID,
+		ManagedBy: f.ManagedBy,
 	}
 }
 
@@ -247,9 +243,6 @@ type GetChildrenQuery struct {
 
 	// array of folder uids to filter by
 	FolderUIDs []string `json:"-"`
-
-	// Deprecated: this is a temporary flag, and will be removed once we migrate the alerting use case
-	RefOnly bool
 }
 
 type HasEditPermissionInFoldersQuery struct {

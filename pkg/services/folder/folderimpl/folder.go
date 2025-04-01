@@ -591,12 +591,12 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
+	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
-	return availableNonRootFolders, nil
+	return dedupAvailableNonRootFolders, nil
 }
 
-func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.FolderReference, error) {
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.Folder, error) {
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -611,7 +611,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 		return nil, nil
 	}
 
-	nonRootFolders := make([]*folder.FolderReference, 0)
+	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
 		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
@@ -650,15 +650,20 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 
 	for _, f := range dashFolders {
 		if f.ParentUID != "" {
-			nonRootFolders = append(nonRootFolders, f.ToFolderReference())
+			nonRootFolders = append(nonRootFolders, f)
 		}
 	}
 
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.FolderReference, rootFolders []*folder.FolderReference, orgID int64) []*folder.FolderReference {
-	allFolders := append(folders, rootFolders...)
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference, orgID int64) []*folder.FolderReference {
+	foldersRef := make([]*folder.FolderReference, len(folders))
+	for i, f := range folders {
+		foldersRef[i] = f.ToFolderReference()
+	}
+
+	allFolders := append(foldersRef, rootFolders...)
 	foldersDedup := make([]*folder.FolderReference, 0)
 
 	for _, f := range folders {
@@ -688,7 +693,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		}
 
 		if !isSubfolder {
-			foldersDedup = append(foldersDedup, f)
+			foldersDedup = append(foldersDedup, f.ToFolderReference())
 		}
 	}
 	return foldersDedup

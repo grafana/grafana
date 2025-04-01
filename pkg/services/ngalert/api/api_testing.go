@@ -38,7 +38,7 @@ import (
 )
 
 type folderService interface {
-	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.FolderReference, error)
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 }
 
 type TestingApiSrv struct {

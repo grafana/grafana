@@ -235,11 +235,11 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return ruleList, nil
 }
 
-func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.FolderReference, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	namespacesMap := map[string]*folder.FolderReference{}
+	namespacesMap := map[string]*folder.Folder{}
 
 	_, ok := f.Rules[orgID]
 	if !ok {
@@ -247,12 +247,12 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ i
 	}
 
 	for _, folder := range f.Folders[orgID] {
-		namespacesMap[folder.UID] = folder.ToFolderReference()
+		namespacesMap[folder.UID] = folder
 	}
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, user identity.Requester) (*folder.FolderReference, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
 	q := GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []any{orgID, uid, user},
@@ -267,7 +267,7 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.UID == uid {
-			return folder.ToFolderReference(), nil
+			return folder, nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
