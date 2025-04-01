@@ -197,7 +197,7 @@ type WebhookStatus struct {
 	Secret           string   `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-	LastPing         int64    `json:"lastPing,omitempty"`
+	LastPing         int64    `json:"lastPing"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
