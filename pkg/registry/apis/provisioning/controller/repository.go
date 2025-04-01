@@ -361,15 +361,10 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
-	job, err := rc.jobs.Insert(ctx, &provisioning.Job{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: obj.Namespace,
-		},
-		Spec: provisioning.JobSpec{
-			Repository: obj.GetName(),
-			Action:     provisioning.JobActionPull,
-			Pull:       syncOptions,
-		},
+	job, err := rc.jobs.Insert(ctx, obj.Namespace, provisioning.JobSpec{
+		Repository: obj.GetName(),
+		Action:     provisioning.JobActionPull,
+		Pull:       syncOptions,
 	})
 	if apierrors.IsAlreadyExists(err) {
 		logging.FromContext(ctx).Info("sync job already exists, nothing triggered")

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -95,17 +94,8 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Job != nil {
-			// Add the job to the job queue
-			job := &provisioning.Job{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: namespace,
-					Labels: map[string]string{
-						"repository": name,
-					},
-				},
-				Spec: *rsp.Job,
-			}
-			job, err := s.jobs.Insert(ctx, job)
+			rsp.Job.Repository = name
+			job, err := s.jobs.Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				responder.Error(err)
 				return
