@@ -20,9 +20,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -216,35 +215,17 @@ func (b *backend) initPruner(ctx context.Context) error {
 		MaxWait:    time.Minute * 5,
 		ProcessHandler: func(ctx context.Context, key pruningKey) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-				req := &sqlPruneHistoryRequest{
-					SQLTemplate: sqltemplate.New(b.dialect),
+				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
+					SQLTemplate:  sqltemplate.New(b.dialect),
+					HistoryLimit: defaultPrunerHistoryLimit,
 					Key: &resource.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
 						Resource:  key.resource,
 						Name:      key.name,
 					},
-					Generation:   true,
-					HistoryLimit: 1, // Only one version for each generation
-				}
+				})
 
-				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, req)
-				if err != nil {
-					return fmt.Errorf("failed to prune history: %w", err)
-				}
-				generationRows, err := res.RowsAffected()
-				if err != nil {
-					return fmt.Errorf("failed to get rows affected: %w", err)
-				}
-
-				// Run the query again... this time skipping generations
-				req.Reset()
-				req.HistoryLimit = defaultPrunerHistoryLimit
-				req.Generation = false
-				res, err = dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, req)
-				if err != nil {
-					return fmt.Errorf("failed to prune history: %w", err)
-				}
 				rows, err := res.RowsAffected()
 				if err != nil {
 					return fmt.Errorf("failed to get rows affected: %w", err)
@@ -255,7 +236,6 @@ func (b *backend) initPruner(ctx context.Context) error {
 					"group", key.group,
 					"resource", key.resource,
 					"name", key.name,
-					"generations", generationRows,
 					"rows", rows)
 				return nil
 			})
