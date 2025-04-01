@@ -61,7 +61,7 @@ export class DefaultGridLayoutManager
     get description() {
       return t('dashboard.default-layout.description', 'Position and size each panel individually');
     },
-    id: 'default-grid',
+    id: 'GridLayout',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     isGridLayout: true,
   };

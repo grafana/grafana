@@ -1114,6 +1114,12 @@
       "success": "A(z) {{name}} irányítópult áthelyezve a Nemrég töröltek közé"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Másolva"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Egyéni érték használata"
-    },
-    "group": {
-      "undefined": "Nincs csoport"
     },
     "options": {
       "no-found": "Nem találhatók opciók."
@@ -4780,7 +4783,7 @@
       "loading": "Irányítópultok betöltése",
       "noResultsForFilter": "Nincs találat a lekérdezésre",
       "noResultsForFilterClear": "Keresés törlése",
-      "noResultsForScopes": "Nem található irányítópult a kijelölt hatókörökhöz",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nincsenek kijelölt hatókörök",
       "search": "Keresés",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Hét kezdete"
     },
     "theme": {
-      "default-label": "Alapértelmezett"
+      "default-label": "Alapértelmezett",
+      "experimental": ""
     },
     "title": "Preferenciák"
   },
