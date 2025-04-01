@@ -215,6 +215,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "insert into resource_history",
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Generation:  789,
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",
@@ -271,16 +272,30 @@ func TestUnifiedStorageQueries(t *testing.T) {
 
 			sqlResourceHistoryPrune: {
 				{
-					Name: "simple",
+					Name: "max-versions",
 					Data: &sqlPruneHistoryRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Key: &resource.ResourceKey{
-							Namespace: "nn",
-							Group:     "gg",
-							Resource:  "rr",
-							Name:      "na",
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
 						},
-						HistoryLimit: 100,
+						HistoryLimit: 10,
+					},
+				},
+				{
+					Name: "collapse-generations",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
+						},
+						PartitionByGeneration: true,
+						HistoryLimit:          1,
 					},
 				},
 			},

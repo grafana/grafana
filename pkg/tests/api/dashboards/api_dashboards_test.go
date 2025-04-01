@@ -236,7 +236,7 @@ providers:
 				return retryer.FuncFailure, nil
 			}
 			return retryer.FuncComplete, nil
-		}, retries, time.Millisecond*time.Duration(10), time.Second)
+		}, retries, time.Millisecond*time.Duration(25), time.Second)
 		require.NoError(t, err)
 
 		var dashboardUID string
