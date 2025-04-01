@@ -310,7 +310,6 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return &folder.GeneralFolder, nil
 	}
 
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	f, err := s.dashboardFolderStore.Get(ctx, *q)
 	if err != nil {
 		return nil, err
