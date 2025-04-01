@@ -80,11 +80,14 @@ func NewDashboard(title string) *Dashboard {
 }
 
 // NewDashboardFolder creates a new dashboard folder
-func NewDashboardFolder(title string) *Dashboard {
+func NewDashboardFolder(title string, description string) *Dashboard {
 	folder := NewDashboard(title)
 	folder.IsFolder = true
-	folder.Data.Set("schemaVersion", 17)
+	folder.Data.Set("schemaVersion", 18) // v17 has no description
 	folder.Data.Set("version", 0)
+	if description != "" {
+		folder.Data.Set("description", description)
+	}
 	folder.IsFolder = true
 	return folder
 }

@@ -197,7 +197,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			service.features = featuremgmt.WithFeatures()
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
-				dash := dashboards.NewDashboardFolder("Test-Folder")
+				dash := dashboards.NewDashboardFolder("Test-Folder", "")
 				dash.ID = rand.Int63()
 				dash.UID = util.GenerateShortUID()
 				f := dashboards.FromDashboard(dash)
@@ -216,7 +216,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				dash := dashboards.NewDashboardFolder("Test-Folder")
+				dash := dashboards.NewDashboardFolder("Test-Folder", "")
 				dash.ID = rand.Int63()
 
 				_, err := service.Create(context.Background(), &folder.CreateFolderCommand{
@@ -930,7 +930,7 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			// dash is needed here because folderSvc.Create expects SaveDashboard to return it
-			dash := dashboards.NewDashboardFolder("myFolder")
+			dash := dashboards.NewDashboardFolder("myFolder", "")
 			dash.ID = rand.Int63()
 			dash.UID = "some_uid"
 
@@ -969,7 +969,7 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
-			dash := dashboards.NewDashboardFolder("myFolder")
+			dash := dashboards.NewDashboardFolder("myFolder", "")
 			dash.ID = rand.Int63()
 			dash.UID = "some_uid"
 
@@ -1033,7 +1033,7 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
-			dash := dashboards.NewDashboardFolder("Test-Folder")
+			dash := dashboards.NewDashboardFolder("Test-Folder", "")
 			dash.ID = rand.Int63()
 			dash.UID = "some_uid"
 
@@ -1064,7 +1064,7 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
-			dash := dashboards.NewDashboardFolder("Test-Folder")
+			dash := dashboards.NewDashboardFolder("Test-Folder", "")
 			dash.ID = rand.Int63()
 			dash.UID = "some_uid"
 
@@ -1144,7 +1144,7 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
-			dashboardFolder := dashboards.NewDashboardFolder("myFolder")
+			dashboardFolder := dashboards.NewDashboardFolder("myFolder", "")
 			dashboardFolder.ID = rand.Int63()
 			dashboardFolder.UID = "myFolder"
 			f := dashboards.FromDashboard(dashboardFolder)

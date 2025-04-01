@@ -739,7 +739,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
+	dashFolder := dashboards.NewDashboardFolder(cmd.Title, cmd.Description)
 	dashFolder.OrgID = cmd.OrgID
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
