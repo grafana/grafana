@@ -447,11 +447,13 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 			}
 			total += orgDashboards
 
-			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
-			if err != nil {
-				return nil, err
+			if scopeParams != nil && scopeParams.OrgID == org.ID {
+				tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+				if err != nil {
+					return nil, err
+				}
+				u.Set(tag, orgDashboards)
 			}
-			u.Set(tag, orgDashboards)
 		}
 
 		tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
@@ -1391,10 +1393,6 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	}
 
 	return dr.dashboardStore.GetDashboards(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
-	return dr.getDashboardsSharedWithUser(ctx, user)
 }
 
 func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
