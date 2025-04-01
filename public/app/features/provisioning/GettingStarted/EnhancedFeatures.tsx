@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, Text, LinkButton, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureCard } from './FeatureCard';
 
 interface IconCircleProps {
-  icon: string;
+  icon: IconName;
   color: string;
   background: string;
 }
@@ -20,7 +21,7 @@ const IconCircle = ({ icon, color, background }: IconCircleProps) => (
       width: `fit-content`,
     })}
   >
-    <Icon name={icon as IconName} size="xxl" color={color} />
+    <Icon name={icon} size="xxl" color={color} />
   </div>
 );
 
@@ -35,17 +36,27 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
 
   return (
     <Box marginTop={2}>
-      <Text variant="h2">Unlock enhanced functionality for GitHub</Text>
+      <Text variant="h2">
+        <Trans i18nKey="provisioning.enhanced-features.unlock-enhanced-functionality-for-git-hub">
+          Unlock enhanced functionality for GitHub
+        </Trans>
+      </Text>
       <Box marginTop={4}>
         <Stack direction="row" gap={2}>
           <FeatureCard
-            title="Instant updates and pull requests with webhooks"
-            description="Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live."
+            title={t(
+              'provisioning.enhanced-features.title-instant-updates-requests-webhooks',
+              'Instant updates and pull requests with webhooks'
+            )}
+            description={t(
+              'provisioning.enhanced-features.description-instant-updates',
+              'Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.'
+            )}
             icon={<IconCircle icon="sync" color="primary" background="rgba(24, 121, 219, 0.12)" />}
             action={
               !hasPublicAccess && (
                 <LinkButton fill="outline" onClick={onSetupPublicAccess}>
-                  Set up public access
+                  <Trans i18nKey="provisioning.enhanced-features.set-up-public-access">Set up public access</Trans>
                 </LinkButton>
               )
             }
@@ -54,8 +65,14 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
           <div className={style.separator} />
 
           <FeatureCard
-            title="Visual previews in pull requests"
-            description="See visual previews of dashboard updates directly in pull requests"
+            title={t(
+              'provisioning.enhanced-features.title-visual-previews-in-pull-requests',
+              'Visual previews in pull requests'
+            )}
+            description={t(
+              'provisioning.enhanced-features.description-visual-previews-dashboard-updates-directly-requests',
+              'See visual previews of dashboard updates directly in pull requests'
+            )}
             icon={
               <Stack direction="row" gap={2}>
                 <IconCircle icon="camera" color="orange" background="rgba(255, 120, 10, 0.12)" />
@@ -69,7 +86,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
                   href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
                   icon="external-link-alt"
                 >
-                  Set up image rendering
+                  <Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">Set up image rendering</Trans>
                 </LinkButton>
               )
             }

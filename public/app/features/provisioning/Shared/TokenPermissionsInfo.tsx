@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export function TokenPermissionsInfo() {
   const styles = useStyles2(getStyles);
@@ -9,34 +10,56 @@ export function TokenPermissionsInfo() {
   return (
     <div className={styles.container}>
       <div>
-        Go to{' '}
-        <TextLink external href="https://github.com/settings/personal-access-tokens/new">
-          GitHub Personal Access Tokens
-        </TextLink>
-        . Make sure to include these permissions under <b>Repository</b>:
+        <Trans i18nKey="provisioning.token-permissions-info.github-instructions">
+          Go to{' '}
+          <TextLink external href="https://github.com/settings/personal-access-tokens/new">
+            GitHub Personal Access Tokens
+          </TextLink>
+          . Make sure to include these permissions under <b>Repository</b>:
+        </Trans>
       </div>
 
       <table className={styles.permissionTable}>
         <tbody>
           <tr className={styles.headerSeparator}>
-            <th>Permission</th>
-            <th>Access</th>
+            <th>
+              <Trans i18nKey="provisioning.token-permissions-info.permission">Permission</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="provisioning.token-permissions-info.access">Access</Trans>
+            </th>
           </tr>
           <tr>
-            <td>Contents</td>
-            <td>Read and write</td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.contents">Contents</Trans>
+            </td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.read-and-write">Read and write</Trans>
+            </td>
           </tr>
           <tr>
-            <td>Metadata</td>
-            <td>Read-only</td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.metadata">Metadata</Trans>
+            </td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.readonly">Read-only</Trans>
+            </td>
           </tr>
           <tr>
-            <td>Pull requests</td>
-            <td>Read and write</td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.pull-requests">Pull requests</Trans>
+            </td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.read-and-write">Read and write</Trans>
+            </td>
           </tr>
           <tr>
-            <td>Webhooks</td>
-            <td>Read and write</td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.webhooks">Webhooks</Trans>
+            </td>
+            <td>
+              <Trans i18nKey="provisioning.token-permissions-info.read-and-write">Read and write</Trans>
+            </td>
           </tr>
         </tbody>
       </table>

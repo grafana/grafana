@@ -14,6 +14,7 @@ import {
 } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { t, Trans } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -35,7 +36,11 @@ export default function FileStatusPage() {
     >
       <Page.Contents isLoading={file.isLoading}>
         <>
-          {isFetchError(file.error) && <Alert title="Error loading file">{file.error.message}</Alert>}
+          {isFetchError(file.error) && (
+            <Alert title={t('provisioning.file-status-page.title-error-loading-file', 'Error loading file')}>
+              {file.error.message}
+            </Alert>
+          )}
           {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
         </>
       </Page.Contents>
@@ -91,24 +96,24 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
       <Stack>
         {isDashboard && (
           <LinkButton target={'_blank'} href={`${PROVISIONING_URL}/${repo}/dashboard/preview/${wrap.path}`}>
-            Dashboard Preview
+            <Trans i18nKey="provisioning.resource-view.dashboard-preview">Dashboard Preview</Trans>
           </LinkButton>
         )}
         {isDashboard && existingName && (
           <LinkButton target={'_blank'} href={`d/${wrap.resource.existing?.metadata.name}`} variant="secondary">
-            Existing dashboard
+            <Trans i18nKey="provisioning.resource-view.existing-dashboard">Existing dashboard</Trans>
           </LinkButton>
         )}
         <LinkButton href={`${PROVISIONING_URL}/${repo}`} variant="secondary">
-          Repository
+          <Trans i18nKey="provisioning.resource-view.repository">Repository</Trans>
         </LinkButton>
         {repoRef && (
           <LinkButton href={`${PROVISIONING_URL}/${repo}/file/${wrap.path}`} variant="secondary">
-            Base
+            <Trans i18nKey="provisioning.resource-view.base">Base</Trans>
           </LinkButton>
         )}
         <LinkButton href={`${PROVISIONING_URL}/${repo}/history/${wrap.path}`} variant="secondary">
-          History
+          <Trans i18nKey="provisioning.resource-view.history">History</Trans>
         </LinkButton>
       </Stack>
 
@@ -171,7 +176,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
             />
           </Stack>
           {replaceFileStatus.isError && (
-            <Alert title="Error saving file">
+            <Alert title={t('provisioning.resource-view.title-error-saving-file', 'Error saving file')}>
               <pre>{JSON.stringify(replaceFileStatus.error)}</pre>
             </Alert>
           )}

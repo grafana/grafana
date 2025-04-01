@@ -12,6 +12,7 @@ import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -291,34 +292,6 @@ export function SaveProvisionedDashboardForm({
     </form>
   );
 }
-
-const BranchValidationError = () => (
-  <>
-    <Trans i18nKey="dashboard-scene.branch-validation-error.invalid-branch-name">Invalid branch name.</Trans>
-    <ul style={{ padding: '0 20px' }}>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-start-with">
-          It cannot start with '/' or end with '/', '.', or whitespace.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">
-          It cannot contain '//' or '..'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
-          It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.least-valid-character">
-          It must have at least one valid character.
-        </Trans>
-      </li>
-    </ul>
-  </>
-);
 
 /**
  * Dashboard title validation to ensure it's not the same as the folder name

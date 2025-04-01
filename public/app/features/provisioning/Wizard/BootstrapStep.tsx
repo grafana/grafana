@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
+import { t, Trans } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
 
@@ -76,7 +77,9 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
   if (resourceStats.isLoading || filesQuery.isLoading) {
     return (
       <Box padding={4}>
-        <LoadingPlaceholder text="Loading resource information..." />
+        <LoadingPlaceholder
+          text={t('provisioning.bootstrap-step.text-loading-resource-information', 'Loading resource information...')}
+        />
       </Box>
     );
   }
@@ -88,19 +91,27 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
           <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
             <Stack direction="column" gap={1} alignItems="center">
               <Text variant="h4" color="secondary">
-                Grafana
+                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana</Trans>
               </Text>
               <Stack direction="row" gap={2}>
                 <Text variant="h3">
-                  <Text variant="h3">{state.resourceCount > 0 ? state.resourceCountString : 'Empty'}</Text>
+                  <Text variant="h3">
+                    {state.resourceCount > 0
+                      ? state.resourceCountString
+                      : t('provisioning.bootstrap-step.empty', 'Empty')}
+                  </Text>
                 </Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
               <Text variant="h4" color="secondary">
-                Repository
+                <Trans i18nKey="provisioning.bootstrap-step.repository">Repository</Trans>
               </Text>
-              <Text variant="h3">{state.fileCount > 0 ? `${state.fileCount} files` : 'Empty'}</Text>
+              <Text variant="h3">
+                {state.fileCount > 0
+                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: state.fileCount })
+                  : t('provisioning.bootstrap-step.empty', 'Empty')}
+              </Text>
             </Stack>
           </Stack>
         </Box>
@@ -131,23 +142,36 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         {selectedOption?.operation === 'migrate' && (
           <>
             {Boolean(state.resourceCount) && (
-              <Alert severity="info" title="Note">
-                Dashboards will be unavailable while running this process
+              <Alert severity="info" title={t('provisioning.bootstrap-step.title-note', 'Note')}>
+                <Trans i18nKey="provisioning.bootstrap-step.dashboards-unavailable-while-running-process">
+                  Dashboards will be unavailable while running this process
+                </Trans>
               </Alert>
             )}
             {Boolean(state.fileCount) && Boolean(state.resourceCount) && (
-              <Alert title="Files exist in the target" severity="info">
-                The {state.resourceCount} resources in grafana will be added to the repository. Grafana will then
-                include both the current resources and anything from the repository when done.
+              <Alert
+                title={t('provisioning.bootstrap-step.title-files-exist-in-the-target', 'Files exist in the target')}
+                severity="info"
+              >
+                <Trans
+                  i18nKey="provisioning.bootstrap-step.resources-will-be-added"
+                  defaults="The {{count}} resources in grafana will be added to the repository. Grafana will then include both the current resources and anything from the repository when done."
+                  values={{ count: state.resourceCount }}
+                />
               </Alert>
             )}
-            <FieldSet label="Migrate options">
+            <FieldSet label={t('provisioning.bootstrap-step.label-migrate-options', 'Migrate options')}>
               <Stack direction="column" gap={2}>
                 <Stack direction="row" gap={2} alignItems="center">
                   <Switch {...register('migrate.identifier')} defaultChecked={true} />
-                  <Text>Include identifiers</Text>
+                  <Text>
+                    <Trans i18nKey="provisioning.bootstrap-step.include-identifiers">Include identifiers</Trans>
+                  </Text>
                   <Tooltip
-                    content="Include unique identifiers for each dashboard to maintain references"
+                    content={t(
+                      'provisioning.bootstrap-step.tooltip-include-identifiers',
+                      'Include unique identifiers for each dashboard to maintain references'
+                    )}
                     placement="top"
                   >
                     <Icon name="info-circle" />
@@ -156,8 +180,16 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 {repoType === 'github' && settingsData?.legacyStorage && (
                   <Stack direction="row" gap={2} alignItems="center">
                     <Switch {...register('migrate.history')} defaultChecked={true} />
-                    <Text>Include history</Text>
-                    <Tooltip content="Include complete dashboard version history" placement="top">
+                    <Text>
+                      <Trans i18nKey="provisioning.bootstrap-step.include-history">Include history</Trans>
+                    </Text>
+                    <Tooltip
+                      content={t(
+                        'provisioning.bootstrap-step.tooltip-include-history',
+                        'Include complete dashboard version history'
+                      )}
+                      placement="top"
+                    >
                       <Icon name="info-circle" />
                     </Tooltip>
                   </Stack>
@@ -170,14 +202,22 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         {/* Only show title field if folder sync */}
         {selectedTarget === 'folder' && (
           <Field
-            label="Display name"
-            description="Add a clear name for this repository connection"
+            label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
+            description={t(
+              'provisioning.bootstrap-step.description-clear-repository-connection',
+              'Add a clear name for this repository connection'
+            )}
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}
           >
             <Input
-              {...register('repository.title', { required: 'This field is required.' })}
-              placeholder="My repository connection"
+              {...register('repository.title', {
+                required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
+              })}
+              placeholder={t(
+                'provisioning.bootstrap-step.placeholder-my-repository-connection',
+                'My repository connection'
+              )}
               // Auto-focus the title field if it's the only available option
               autoFocus={state.actions.length === 1 && state.actions[0].target === 'folder'}
             />

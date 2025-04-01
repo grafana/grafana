@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { ConfirmModal, IconButton } from '@grafana/ui';
 import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 const appEvents = getAppEvents();
 
@@ -22,7 +23,12 @@ export function DeleteRepositoryButton({ name, redirectTo }: Props) {
     if (request.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings queued for deletion'],
+        payload: [
+          t(
+            'provisioning.delete-repository-button.success-repository-deleted',
+            'Repository settings queued for deletion'
+          ),
+        ],
       });
       setShowModal(false);
       if (redirectTo) {
@@ -39,7 +45,7 @@ export function DeleteRepositoryButton({ name, redirectTo }: Props) {
     <>
       <IconButton
         name="trash-alt"
-        tooltip="Delete this repository"
+        tooltip={t('provisioning.delete-repository-button.tooltip-delete-this-repository', 'Delete this repository')}
         disabled={request.isLoading}
         onClick={() => {
           setShowModal(true);
@@ -47,9 +53,12 @@ export function DeleteRepositoryButton({ name, redirectTo }: Props) {
       />
       <ConfirmModal
         isOpen={showModal}
-        title={'Delete repository config'}
-        body={'Are you sure you want to delete the repository config?'}
-        confirmText={'Delete'}
+        title={t('provisioning.delete-repository-button.title-delete-repository', 'Delete repository config')}
+        body={t(
+          'provisioning.delete-repository-button.confirm-delete-repository',
+          'Are you sure you want to delete the repository config?'
+        )}
+        confirmText={t('provisioning.delete-repository-button.button-delete', 'Delete')}
         onConfirm={onConfirm}
         onDismiss={() => setShowModal(false)}
       />

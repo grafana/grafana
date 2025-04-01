@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 import { getDefaultValues } from '../Config/ConfigForm';
 import { PROVISIONING_URL } from '../constants';
@@ -10,14 +11,6 @@ import { PROVISIONING_URL } from '../constants';
 import { Step } from './Stepper';
 import { WizardContent } from './WizardContent';
 import { WizardFormData, WizardStep } from './types';
-
-const steps: Array<Step<WizardStep>> = [
-  { id: 'connection', name: 'Connect', title: 'Connect to external storage', submitOnNext: true },
-  { id: 'bootstrap', name: 'Bootstrap', title: 'Bootstrap repository', submitOnNext: true },
-  { id: 'migrate', name: 'Resources', title: 'Migrate resources', submitOnNext: false },
-  { id: 'pull', name: 'Resources', title: 'Pull resources', submitOnNext: false },
-  { id: 'finish', name: 'Finish', title: 'Finish setup', submitOnNext: true },
-];
 
 export function ProvisioningWizard() {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
@@ -27,6 +20,42 @@ export function ProvisioningWizard() {
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
   const values = getDefaultValues();
+
+  const steps = useMemo<Array<Step<WizardStep>>>(
+    () => [
+      {
+        id: 'connection',
+        name: t('provisioning.wizard.step-connect', 'Connect'),
+        title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
+        submitOnNext: true,
+      },
+      {
+        id: 'bootstrap',
+        name: t('provisioning.wizard.step-bootstrap', 'Bootstrap'),
+        title: t('provisioning.wizard.title-bootstrap', 'Bootstrap repository'),
+        submitOnNext: true,
+      },
+      {
+        id: 'migrate',
+        name: t('provisioning.wizard.step-resources', 'Resources'),
+        title: t('provisioning.wizard.title-migrate', 'Migrate resources'),
+        submitOnNext: false,
+      },
+      {
+        id: 'pull',
+        name: t('provisioning.wizard.step-resources', 'Resources'),
+        title: t('provisioning.wizard.title-pull', 'Pull resources'),
+        submitOnNext: false,
+      },
+      {
+        id: 'finish',
+        name: t('provisioning.wizard.step-finish', 'Finish'),
+        title: t('provisioning.wizard.title-finish', 'Finish setup'),
+        submitOnNext: true,
+      },
+    ],
+    []
+  );
 
   const methods = useForm<WizardFormData>({
     defaultValues: {
@@ -53,16 +82,21 @@ export function ProvisioningWizard() {
     return requiresMigration
       ? steps.filter((step) => step.id !== 'pull')
       : steps.filter((step) => step.id !== 'migrate');
-  }, [requiresMigration]);
+  }, [requiresMigration, steps]);
 
   // Calculate button text based on current step position
-  const getNextButtonText = (currentStep: WizardStep) => {
-    const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
-    if (currentStep === 'bootstrap') {
-      return 'Start';
-    }
-    return stepIndex === availableSteps.length - 1 ? 'Finish' : 'Next';
-  };
+  const getNextButtonText = useCallback(
+    (currentStep: WizardStep) => {
+      const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
+      if (currentStep === 'bootstrap') {
+        return t('provisioning.wizard.button-start', 'Start');
+      }
+      return stepIndex === availableSteps.length - 1
+        ? t('provisioning.wizard.button-finish', 'Finish')
+        : t('provisioning.wizard.button-next', 'Next');
+    },
+    [availableSteps]
+  );
 
   const handleNext = async () => {
     const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
