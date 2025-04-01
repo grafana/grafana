@@ -1,4 +1,4 @@
-import { useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
+import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
 import { t } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
@@ -10,12 +10,16 @@ interface PullStepProps {
 }
 
 export function PullStep({ onStepUpdate }: PullStepProps) {
-  const [syncRepo] = useCreateRepositorySyncMutation();
+  const [createJob] = useCreateRepositoryJobsMutation();
 
   const startSync = async (repositoryName: string) => {
-    const response = await syncRepo({
+    const response = await createJob({
       name: repositoryName,
-      body: { incremental: false },
+      jobSpec: {
+        pull: {
+          incremental: false, // will queue a full resync job
+        },
+      },
     }).unwrap();
     return response;
   };

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { HistoricJob, Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
 import { Trans, t } from 'app/core/internationalization';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
@@ -17,7 +17,7 @@ interface Props {
 
 type JobCell = {
   row: {
-    original: Job | HistoricJob;
+    original: Job;
   };
 };
 
@@ -184,9 +184,7 @@ export function RecentJobs({ repo }: Props) {
   // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
   //   Gut feeling is that current jobs are far more important to show than historic ones.
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
-    repositoryName: repo.metadata?.name,
-    watch: true,
-    sort: 'active-first',
+    repositoryName: repo.metadata?.name ?? 'x',
   });
   const jobColumns = useMemo(() => getJobColumns(), []);
 

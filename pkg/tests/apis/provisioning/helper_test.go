@@ -45,7 +45,6 @@ type provisioningTestHelper struct {
 
 	Repositories *apis.K8sResourceClient
 	Jobs         *apis.K8sResourceClient
-	HistoricJobs *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
@@ -55,17 +54,19 @@ type provisioningTestHelper struct {
 func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
 	t.Helper()
 
-	var opts provisioning.SyncJobOptions
-	if options != nil {
-		opts = *options
+	if options == nil {
+		options = &provisioning.SyncJobOptions{}
 	}
-	body := asJSON(opts)
+	body := asJSON(&provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   options,
+	})
 
 	result := h.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
-		SubResource("sync").
+		SubResource("jobs").
 		Body(body).
 		SetHeader("Content-Type", "application/json").
 		Do(t.Context())
@@ -84,30 +85,33 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), name)
+	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
-func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, jobName string) {
+func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
 	t.Helper()
-	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
-		jobs, err := h.HistoricJobs.Resource.List(ctx, metav1.ListOptions{
-			LabelSelector: jobs.LabelJobOriginalName + "=" + jobName,
-		})
-		if assert.NoError(collect, err) && assert.NotEmpty(collect, jobs.Items, "no historic jobs found yet") {
-			for _, job := range jobs.Items {
-				state := mustNestedString(job.Object, "status", "state")
-				if state == "" {
-					// The job hasn't gotten its state yet. We do two requests: one to insert the job, one to set the status.
-					assert.Fail(collect, "job '%s' has no state yet", jobName)
-				}
 
-				// We can fail fast once the job is here: HistoricJobs are immutable.
-				require.Equal(t, string(provisioning.JobStateSuccess), state, "historic job '%s' was not successful", jobName)
-			}
+	repo := job.GetLabels()[jobs.LabelRepository]
+	require.NotEmpty(t, repo)
+	if !assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
+			"jobs", string(job.GetUID()))
+
+		if apierrors.IsNotFound(err) {
+			assert.Fail(collect, "job '%s' not found yet yet", job.GetName())
+			return // continue trying
 		}
+
+		// Can fail fast here -- the jobs are immutable
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		state := mustNestedString(result.Object, "status", "state")
+		require.Equal(t, string(provisioning.JobStateSuccess), state,
+			"historic job '%s' was not successful", job.GetName())
 	}, time.Second*5, time.Millisecond*20) {
 		// We also want to add the job details to the error when it fails.
-		job, err := h.Jobs.Resource.Get(ctx, jobName, metav1.GetOptions{})
+		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
 		if err != nil {
 			t.Logf("failed to get job details for further help: %v", err)
 		} else {
@@ -135,14 +139,18 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	}, time.Second*5, time.Millisecond*20)
 
 	// Then, as all jobs are now historic jobs, we make sure they are successful.
-	list, err := h.HistoricJobs.Resource.List(context.Background(), metav1.ListOptions{})
+	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
 	require.NoError(t, err, "failed to list historic jobs")
 
+	list, err := result.ToList()
+	require.NoError(t, err, "results should be a list")
+	require.NotEmpty(t, list.Items, "expect at least one job")
+
 	for _, elem := range list.Items {
-		// TODO: Use the spec field of the job.
-		if elem.GetLabels()["repository"] == repoName {
-			require.Equal(t, string(provisioning.JobStateSuccess), mustNestedString(elem.Object, "status", "state"), "job %s failed: %+v", elem.GetName(), elem.Object)
-		}
+		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+		state := mustNestedString(elem.Object, "status", "state")
+		require.Equal(t, string(provisioning.JobStateSuccess), state, "job %s failed: %+v", elem.GetName(), elem.Object)
 	}
 }
 
@@ -238,11 +246,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
 	})
-	historicJobs := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
-		GVR:       provisioning.HistoricJobResourceInfo.GroupVersionResource(),
-	})
 	folders := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
@@ -289,7 +292,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AdminREST:    restClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
-		HistoricJobs: historicJobs,
 		Folders:      folders,
 		Dashboards:   dashboards,
 	}

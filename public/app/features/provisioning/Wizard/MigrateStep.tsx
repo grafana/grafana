@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { useCreateRepositoryMigrateMutation } from 'app/api/clients/provisioning';
+import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
 import { t } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
@@ -13,15 +13,20 @@ export interface MigrateStepProps {
 }
 
 export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
-  const [migrateRepo] = useCreateRepositoryMigrateMutation();
+  const [createJob] = useCreateRepositoryJobsMutation();
   const { watch } = useFormContext<WizardFormData>();
   const identifier = watch('migrate.identifier');
   const history = watch('migrate.history');
 
   const startMigration = async (repositoryName: string) => {
-    const response = await migrateRepo({
+    const response = await createJob({
       name: repositoryName,
-      body: { identifier, history },
+      jobSpec: {
+        migrate: {
+          identifier,
+          history,
+        },
+      },
     }).unwrap();
 
     return response;

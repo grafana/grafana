@@ -306,12 +306,14 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
-		SubResource("export").
+		SubResource("jobs").
 		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.ExportJobOptions{
-			Folder:     "",   // export entire instance
-			Path:       "",   // no prefix necessary for testing
-			Identifier: true, // doesn't _really_ matter, but handy for debugging.
+		Body(asJSON(&provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Folder:     "",   // export entire instance
+				Path:       "",   // no prefix necessary for testing
+				Identifier: true, // doesn't _really_ matter, but handy for debugging.
+			},
 		})).
 		Do(ctx)
 	require.NoError(t, result.Error())
