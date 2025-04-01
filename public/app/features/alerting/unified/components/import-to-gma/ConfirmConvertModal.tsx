@@ -13,7 +13,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { createListFilterLink } from '../../utils/navigation';
-import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
+import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ImportFormValues } from './ImportFromDSRules';
 
@@ -43,7 +43,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'ruleGroup',
     'targetDatasourceUID',
   ]);
-  const { rulerRules } = useGetNameSpacesByDatasourceName(selectedDatasourceName || undefined);
+  const { rulerRules } = useGetRulerRules(selectedDatasourceName || undefined);
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
   const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, namespace, ruleGroup);

@@ -8,7 +8,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 
-const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
+const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery, useRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
@@ -49,7 +49,6 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
 }
 
 export function useGetNameSpacesByDatasourceName(rulesSourceName?: string) {
-  debugger;
   const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery(
     rulesSourceName ? { rulesSourceName } : skipToken,
     { skip: !rulesSourceName }
@@ -85,8 +84,25 @@ export function useGetNameSpacesByDatasourceName(rulesSourceName?: string) {
   return {
     namespaceGroups,
     isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading,
-    rulerRules,
     promNamespaces,
+  };
+}
+
+export function useGetRulerRules(
+  /** Rules source name to fetch namespaces from */
+  rulesSourceName?: string
+) {
+  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery(
+    rulesSourceName ? { rulesSourceName } : skipToken
+  );
+
+  const { data: rulerRules = emptyRulerConfig, isLoading: isRulerRulesLoading } = useRulerRulesQuery(
+    features?.rulerConfig ? { rulerConfig: features.rulerConfig } : skipToken
+  );
+
+  return {
+    isLoading: isRulerRulesLoading || isFeaturesLoading,
+    rulerRules,
   };
 }
 
