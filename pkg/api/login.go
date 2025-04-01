@@ -424,7 +424,7 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oa
 }
 
 // isGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
-// Grafana admin role sync is available for JWT, OAuth providers and LDAP.
+// Grafana admin role sync is available for SAML, JWT, OAuth providers and LDAP.
 // For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
 func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
 	if !hs.isExternallySynced(cfg, authModule, oauthInfo) {
@@ -458,8 +458,4 @@ func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string, oau
 		return oauthInfo.Enabled
 	}
 	return false
-}
-
-func oauthModuleToAuthnClient(authModule string) string {
-	return authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
 }

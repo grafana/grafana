@@ -3,10 +3,8 @@ package api
 import (
 	"context"
 	"errors"
-	"net/http"
 	"net/mail"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -24,17 +22,6 @@ func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 	return redirectURL
-}
-
-func (hs *HTTPServer) errOnExternalUser(ctx context.Context, userID int64) response.Response {
-	isExternal, err := hs.isExternalUser(ctx, userID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
-	}
-	if isExternal {
-		return response.Error(http.StatusForbidden, "Cannot update external User", nil)
-	}
-	return nil
 }
 
 func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
