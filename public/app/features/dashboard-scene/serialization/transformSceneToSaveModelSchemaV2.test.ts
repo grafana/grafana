@@ -412,8 +412,9 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
-    // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
+    // check annotation layer 3 with no datasource has undefined datasource defined, as this is relevant for the
+    // as-code dashboards
+    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
   });
 
   describe('getPersistedDSFor query', () => {
