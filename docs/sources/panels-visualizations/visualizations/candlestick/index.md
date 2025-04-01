@@ -171,27 +171,31 @@ Set the hover proximity (in pixels) to control how close the cursor must be to a
 
 ### Graph styles options
 
-The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
+The options under the **Graph styles** section let you control the general appearance of [additional fields](#additional-fields) in the visualization, excluding [color](#standard-options).
 
-| Option                                      | Description                                                                                                                                                                                                                           |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Style](#style)                             | Choose whether to display your time-series data as lines, bars, or points.                                                                                                                                                            |
-| [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
-| Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
-| [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
-| [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color.                                                                                                                                              |
-| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style.                                                                                                                                                                                         |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
-| [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
-| [Show points](#show-points)                 | Set whether to show data points to lines or bars.                                                                                                                                                                                     |
-| Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter.                                                                                                                                                                          |
-| [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other.                                                                                                                                                                             |
-| [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point.                                                                                                                                                                                 |
+<!-- prettier-start-ignore -->
+
+| Option                                      | Description                                     |
+| ------------------------------------------- | ----------------------------------------------- |
+| [Style](#style)                             | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. |
+| [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line. |
+| Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider. |
+| [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider. |
+| [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color. |
+| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
+| [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
+| Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
+| [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
+| [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
 | Bar width factor                            | Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space. |
+
+<!-- prettier-end-ignore -->
 
 #### Style
 
-Choose whether to display your time-series data as lines, bars, or points. You can use overrides to combine multiple styles in the same graph. Choose from the following:
+Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. Choose from the following:
 
 ![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
