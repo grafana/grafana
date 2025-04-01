@@ -11,19 +11,17 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/go-jose/go-jose/v3/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
-	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-
-	"github.com/go-jose/go-jose/v3/jwt"
-	"github.com/grafana/authlib/grpcutils"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
@@ -106,7 +104,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
@@ -167,23 +165,23 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-func ProvideInProcExchanger() authn.StaticTokenExchanger {
+func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
 	token, err := createInProcToken()
 	if err != nil {
 		panic(err)
 	}
 
-	return authn.NewStaticTokenExchanger(token)
+	return authnlib.NewStaticTokenExchanger(token)
 }
 
 func createInProcToken() (string, error) {
-	claims := authn.Claims[authn.AccessTokenClaims]{
+	claims := authnlib.Claims[authnlib.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Issuer:   "grafana",
 			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 			Audience: []string{"resourceStore"},
 		},
-		Rest: authn.AccessTokenClaims{
+		Rest: authnlib.AccessTokenClaims{
 			Namespace:            "*",
 			Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
 			DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
@@ -192,7 +190,7 @@ func createInProcToken() (string, error) {
 
 	header, err := json.Marshal(map[string]string{
 		"alg": "none",
-		"typ": authn.TokenTypeAccess,
+		"typ": authnlib.TokenTypeAccess,
 	})
 	if err != nil {
 		return "", err
