@@ -10,18 +10,18 @@ import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
 import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions, sortedRows }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const hasLinks = Boolean(getCellLinks(field, rowIdx, sortedRows)?.length);
+  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div className={styles.cell}>
       {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx, sortedRows) || []}>
+        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
           {(api) => {
             if (api.openMenu) {
               return (

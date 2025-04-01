@@ -373,14 +373,12 @@ export const convertRGBAToHex = (backgroundColor: string, rgbaColor: string): st
 /**
  * @internal
  */
-export const getCellLinks = (field: Field, rowIdx: number, sortedRows?: TableRow[]) => {
+export const getCellLinks = (field: Field, rowIdx: number) => {
   let links: Array<LinkModel<unknown>> | undefined;
-  // @TODO fix this
-  const rowIndexOriginal = sortedRows ? sortedRows[rowIdx].__index : rowIdx;
 
   if (field.getLinks) {
     links = field.getLinks({
-      valueRowIndex: rowIndexOriginal,
+      valueRowIndex: rowIdx,
     });
   }
 
@@ -398,7 +396,7 @@ export const getCellLinks = (field: Field, rowIdx: number, sortedRows?: TableRow
           event.preventDefault();
           origOnClick!(event, {
             field,
-            rowIndex: rowIndexOriginal ?? rowIdx,
+            rowIndex: rowIdx,
           });
         }
       };
