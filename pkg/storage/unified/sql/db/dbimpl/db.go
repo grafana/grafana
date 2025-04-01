@@ -42,7 +42,7 @@ func (d sqlDB) QueryRowContext(ctx context.Context, query string, args ...any) d
 	stm, err := d.DB.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Printf("Could not prepare query row statement %v\n", err)
-		return nil
+		return &sql.Row{}
 	}
 	defer stm.Close()
 	return stm.QueryRowContext(ctx, args...)
