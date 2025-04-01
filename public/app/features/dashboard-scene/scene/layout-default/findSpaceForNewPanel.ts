@@ -85,19 +85,45 @@ function fillEmptySpace(occupied: Set<string>, cell: GridCell, maxY: number) {
     return cell;
   }
 
-  for (let y = cell.y + cell.height; y <= maxY; y++) {
-    for (let x = cell.x + cell.width; x <= cell.x + GRID_COLUMN_COUNT; x++) {
-      if (x > GRID_COLUMN_COUNT || y > maxY) {
-        break;
-      }
-
+  // Expand width
+  for (let x = cell.x + cell.width + 1; x <= GRID_COLUMN_COUNT; x++) {
+    let fits = true;
+    for (let y = cell.y; y <= cell.y + cell.height; y++) {
       const key = `${x},${y}`;
       if (occupied.has(key)) {
+        fits = false;
         break;
-      } else {
-        cell.width = x - cell.x;
-        cell.height = y - cell.y;
       }
+    }
+
+    if (fits) {
+      cell.width = x - cell.x;
+    } else {
+      break;
+    }
+  }
+
+  // try to expand y
+  for (let y = cell.y + cell.height + 1; y <= maxY; y++) {
+    let fits = true;
+
+    // Some max panel height
+    if (cell.height >= 20) {
+      break;
+    }
+
+    for (let x = cell.x; x <= cell.x + cell.width; x++) {
+      const key = `${x},${y}`;
+      if (occupied.has(key)) {
+        fits = false;
+        break;
+      }
+    }
+
+    if (fits) {
+      cell.height = y - cell.y;
+    } else {
+      break;
     }
   }
 
