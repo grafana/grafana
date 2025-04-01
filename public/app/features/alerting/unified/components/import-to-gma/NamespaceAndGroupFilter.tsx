@@ -9,7 +9,7 @@ import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSug
 import { ImportFormValues } from './ImportFromDSRules';
 
 interface Props {
-  rulesSourceName: string;
+  rulesSourceName?: string;
 }
 
 export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
@@ -66,7 +66,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
               options={namespaceOptions}
               width={42}
               loading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || !rulesSourceName}
             />
           )}
           name="namespace"
@@ -77,10 +77,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
         htmlFor="group-picker"
         data-testid="group-picker"
         label={t('alerting.import-to-gma.group.label', 'Group')}
-        description={t(
-          'alerting.import-to-gma.group.description',
-          'Type to search for an existing group or create a new one'
-        )}
+        description={t('alerting.import-to-gma.group.description', 'Type to search for an existing group')}
         error={errors.ruleGroup?.message}
         invalid={!!errors.ruleGroup?.message}
       >
@@ -96,7 +93,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
               id="group-picker"
               placeholder={t('alerting.namespace-and-group-filter.select-group', 'Select group')}
               loading={isLoading}
-              disabled={isLoading || !namespace}
+              disabled={isLoading || !namespace || !rulesSourceName}
             />
           )}
           name="ruleGroup"

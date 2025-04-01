@@ -565,22 +565,26 @@
       "rule-group-error": "Error loading rule group",
       "title": "Edit evaluation group"
     },
+    "import-from-dsrules": {
+      "description-folder-import-rules": "The folder to import the rules to"
+    },
     "import-to-gma": {
       "action-button": "Import",
+      "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
         "title": "Confirm import"
       },
       "datasource": {
-        "label": "Datasource",
+        "label": "Data source",
         "required-message": "Please select a datasource"
       },
       "error": "Failed to import alert rules: {{error}}",
-      "filters": "Filters",
       "group": {
-        "description": "Type to search for an existing group or create a new one",
+        "description": "Type to search for an existing group",
         "label": "Group"
       },
+      "import-location-and-filters": "Import location and filters",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -588,16 +592,15 @@
       "optional-settings": "Optional settings",
       "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
       "pause": {
-        "label": "Pause alerting rules",
-        "tooltip": "Imported alerting rules will be paused."
+        "label": "Pause imported alerting rules"
       },
       "pause-recording": {
-        "label": "Pause recording rules",
-        "tooltip": "Imported recording rules will be paused."
+        "label": "Pause imported recording rules"
       },
+      "recording-rules": "Recording rules",
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
-        "label": "Target Folder (optional)"
+        "label": "Target folder"
       }
     },
     "irm-integration": {
@@ -756,7 +759,7 @@
       "previewCondition": "Preview alert rule condition"
     },
     "recording-rules": {
-      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source"
     },
     "rule-form": {
