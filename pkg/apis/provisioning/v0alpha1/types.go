@@ -162,9 +162,6 @@ type HealthStatus struct {
 	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
-
-	// When the last failure occurred, used for exponential backoff
-	LastFailureTime int64 `json:"lastFailureTime,omitempty"`
 }
 
 type SyncStatus struct {
@@ -200,7 +197,7 @@ type WebhookStatus struct {
 	Secret           string   `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-	LastPing         int64    `json:"lastPing"`
+	LastPing         int64    `json:"lastPing,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

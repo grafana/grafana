@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,6 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
+
+var webhookNotPingedMessage = []string{"webhook has not been pinged"}
 
 type RepoGetter interface {
 	// Given a repository configuration, return it as a repository instance
@@ -260,36 +263,27 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 		return healthAge > time.Minute*5 // when healthy, check every 5 mins
 	}
 
-	// Calculate how long we've been in an unhealthy state waiting for webhook to be pinged
-	if obj.Status.Webhook != nil && obj.Status.Webhook.LastPing == 0 {
-		factor := 2
-		// Add 1 to avoid log2(0) and start with base backoff
-		failureLevels := uint(healthAge.Seconds()/float64(factor)) + 1
-		backoffDelay := time.Second * time.Duration(factor) * time.Duration(1<<failureLevels)
-		if backoffDelay > 15*time.Minute {
-			backoffDelay = 15 * time.Minute // Cap at 15 minutes
-		}
-
-		return healthAge > backoffDelay
+	if obj.Status.Webhook != nil && obj.Status.Webhook.LastPing != 0 && slices.Equal(obj.Status.Health.Message, webhookNotPingedMessage) {
+		return true
 	}
 
 	return healthAge > time.Minute
 }
 
-func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository, webhookStatus *provisioning.WebhookStatus) provisioning.HealthStatus {
+func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository, webhookStatus *provisioning.WebhookStatus, obj *provisioning.Repository) provisioning.HealthStatus {
 	logger := logging.FromContext(ctx)
 	logger.Info("running health check")
 
 	// check first if webhook is healthy
 	if webhookStatus == nil {
-		webhookStatus = repo.Config().Status.Webhook
+		webhookStatus = obj.Status.Webhook
 	}
 
 	now := time.Now().UnixMilli()
 	if webhookStatus != nil && webhookStatus.LastPing == 0 {
 		return provisioning.HealthStatus{
 			Healthy: false,
-			Message: []string{"webhook has not been pinged"},
+			Message: webhookNotPingedMessage,
 			Checked: now,
 		}
 	}
@@ -526,7 +520,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	healthStatus := obj.Status.Health
 	if shouldCheckHealth {
-		healthStatus = rc.runHealthCheck(ctx, repo, webhookStatus)
+		healthStatus = rc.runHealthCheck(ctx, repo, webhookStatus, obj)
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
