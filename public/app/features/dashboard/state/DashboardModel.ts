@@ -140,7 +140,7 @@ export class DashboardModel implements TimeModel {
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
-    this.uid = data.uid || null;
+    this.uid = data.uid || meta?.uid || null;
     this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;

@@ -22,6 +22,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
@@ -549,6 +550,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    ...getProvisioningRoutes(),
     {
       path: '/goto/*',
       component: HandleGoToRedirect,

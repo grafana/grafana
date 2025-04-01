@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -90,14 +92,28 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	// List must return all folders
-	hits, err := s.service.GetFoldersLegacy(ctx, folder.GetFoldersQuery{
+	query := folder.GetFoldersQuery{
 		SignedInUser: user,
 		OrgID:        orgId,
-		// TODO: enable pagination
-		// Limit:        paging.page,
-		// Page:         paging.limit,
-	})
+	}
+	if options.Continue != "" {
+		query.Page = paging.page
+		query.Limit = paging.limit
+	} else if options.Limit > 0 {
+		query.Limit = options.Limit
+		query.Page = 1
+		// also need to update the paging token so the continue token is correct
+		paging.limit = options.Limit
+		paging.page = 1
+	}
+
+	// only admins can add this to the query, otherwise we may return parent folder names that are not visible to the user
+	if user.GetOrgRole() == org.RoleAdmin && options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
+		query.WithFullpath = true
+		query.WithFullpathUIDs = true
+	}
+
+	hits, err := s.service.GetFoldersLegacy(ctx, query)
 	if err != nil {
 		return nil, err
 	}

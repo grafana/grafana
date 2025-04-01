@@ -61,8 +61,8 @@ interface DashboardCacheEntry<T> {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
-  type?: string;
   slug?: string;
+  type?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -314,6 +314,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
 
           break;
+        case DashboardRoutes.Provisioning: {
+          return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
+        }
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
@@ -454,12 +457,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   ): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    // TODO[schema v2]: Dashboard scene state is incorrectly save, it must use the resourceVersion
-    if (
-      fromCache &&
-      rsp?.metadata.resourceVersion &&
-      fromCache.state.version === parseInt(rsp?.metadata.resourceVersion, 10)
-    ) {
+    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
       return fromCache;
     }
 

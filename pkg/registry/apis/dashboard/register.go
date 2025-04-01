@@ -118,10 +118,9 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 		}
 	}
 
-	// TODO (@radiohead): should we switch to v1alpha1 by default?
 	return []schema.GroupVersion{
-		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v1alpha1.DashboardResourceInfo.GroupVersion(),
+		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
@@ -174,7 +173,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			}
 
 			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 			}
 		}
 	}
@@ -184,6 +183,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}
 
@@ -278,11 +278,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage[dashboards.StoragePath()], err = opts.DualWriteBuilder(gr, legacyStore, store)
 	if err != nil {
 		return err
-	}
-
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

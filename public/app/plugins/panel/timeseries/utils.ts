@@ -7,10 +7,10 @@ import {
   isBooleanUnit,
   TimeRange,
   cacheFieldDisplayNames,
+  applyNullInsertThreshold,
+  nullToValue,
 } from '@grafana/data';
-import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
-import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
+import { convertFieldType } from '@grafana/data/internal';
 import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/internal';
 

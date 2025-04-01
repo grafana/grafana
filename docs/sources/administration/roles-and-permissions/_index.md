@@ -29,6 +29,10 @@ You can assign a user one of three types of permissions:
 If you are running Grafana Enterprise, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
 {{% /admonition %}}
 
+{{< admonition type="note" >}}
+For Grafana Cloud users, Grafana Support is not authorised to make org role changes. Instead, contact your org administrator.
+{{< /admonition >}}
+
 ## Grafana server administrators
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.

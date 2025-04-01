@@ -14,6 +14,7 @@ import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/fe
 import { DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
@@ -23,6 +24,8 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
+  // User by /admin/provisioning/:slug/dashboard/preview/* to load dashboards based on their file path in a remote repository
+  const path = params['*'];
   const prevMatch = usePrevious({ params });
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
@@ -34,9 +37,9 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
+        uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
         type,
         slug,
-        uid: uid ?? '',
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
       });
@@ -45,7 +48,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type]);
+  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type, path]);
 
   if (!dashboard) {
     let errorElement;
@@ -74,6 +77,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>
