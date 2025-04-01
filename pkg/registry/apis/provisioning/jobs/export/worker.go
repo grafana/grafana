@@ -59,7 +59,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if clonable, ok := repo.(repository.ClonableRepository); ok {
 		progress.SetMessage(ctx, "clone target")
 		clone, err = clonable.Clone(ctx, repository.CloneOptions{
-			SingleCommitBeforePush: true,
+			PushOnWrites: false,
 			// TODO: make this configurable
 			Timeout: 10 * time.Minute,
 		})

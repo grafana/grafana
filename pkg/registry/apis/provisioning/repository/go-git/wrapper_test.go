@@ -58,9 +58,9 @@ func TestGoGitWrapper(t *testing.T) {
 		},
 	},
 		repository.CloneOptions{
-			SingleCommitBeforePush: true,
-			CreateIfNotExists:      true,
-			Progress:               os.Stdout,
+			PushOnWrites:      false,
+			CreateIfNotExists: true,
+			Progress:          os.Stdout,
 		},
 		&dummySecret{},
 	)

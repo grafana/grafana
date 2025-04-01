@@ -109,7 +109,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		}()
 
 		clone, err = clonable.Clone(ctx, repository.CloneOptions{
-			SingleCommitBeforePush: !options.History,
+			PushOnWrites: options.History,
 			// TODO: make this configurable
 			Timeout:  10 * time.Minute,
 			Progress: writer,

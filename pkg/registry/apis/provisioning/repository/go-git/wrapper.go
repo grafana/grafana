@@ -198,7 +198,7 @@ func (g *GoGitRepo) Push(ctx context.Context, opts repository.PushOptions) error
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	if g.opts.SingleCommitBeforePush {
+	if !g.opts.PushOnWrites {
 		_, err := g.tree.Commit("exported from grafana", &git.CommitOptions{
 			All: true, // Add everything that changed
 		})
@@ -326,7 +326,7 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	}
 
 	// Skip commit for each file
-	if g.opts.SingleCommitBeforePush {
+	if !g.opts.PushOnWrites {
 		return nil
 	}
 

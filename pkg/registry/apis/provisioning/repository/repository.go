@@ -52,8 +52,8 @@ type CloneOptions struct {
 	// If the branch does not exist, create it
 	CreateIfNotExists bool
 
-	// Skip intermediate commits and commit all before push
-	SingleCommitBeforePush bool
+	// Push on every write
+	PushOnWrites bool
 
 	// Maximum allowed size for repository clone in bytes (0 means no limit)
 	MaxSize int64
