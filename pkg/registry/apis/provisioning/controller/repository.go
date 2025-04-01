@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -500,8 +501,25 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	healthStatus := obj.Status.Health
+	var patchHealth bool
 	if shouldCheckHealth {
 		healthStatus = rc.runHealthCheck(ctx, repo)
+		patchHealth = true
+	}
+
+	// Fail health check if webhook is not pinged so that the repositoy doesn't get marked as healthy too early
+	if webhookStatus == nil {
+		webhookStatus = obj.Status.Webhook
+	}
+
+	notPingedMsg := []string{"webhook has not been pinged"}
+	if webhookStatus != nil && webhookStatus.LastPing == 0 && healthStatus.Healthy && !slices.Equal(healthStatus.Message, notPingedMsg) {
+		healthStatus.Message = notPingedMsg
+		healthStatus.Checked = time.Now().UnixMilli()
+		patchHealth = true
+	}
+
+	if patchHealth {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
