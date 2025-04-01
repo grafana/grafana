@@ -80,9 +80,13 @@ The data is converted as follows:
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+### Panel options
 
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Mode
+### Candlestick options
+
+#### Mode
 
 The mode options allow you to toggle which dimensions are used for the visualization.
 
@@ -90,21 +94,21 @@ The mode options allow you to toggle which dimensions are used for the visualiza
 - **Volume** limits the panel dimension to the volume dimension.
 - **Both** is the default behavior for the candlestick visualization. It includes both candlestick and volume visualizations.
 
-### Candle style
+#### Candle style
 
 - **Candles** is the default display style and creates candle-style visualizations between the open and close dimensions.
 - **OHLC Bars** displays the four core dimensions open, high, low, and close values.
 
-### Color strategy
+#### Color strategy
 
 - **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the _Up_ color is used.
 - **Since Prior Close** is an alternative display method based where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used. _This option also triggers the hollow candlestick visualization mode_. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). To learn more, see the [explanation of the differences](https://thetradingbible.com/how-to-read-hollow-candlesticks).
 
-### Up & Down Colors
+#### Up & Down Colors
 
 The **Up color** and **Down color** options select which colors are used when the price movement is up or down. Please note that the _Color strategy_ above will determine if intra-period or inter-period price movement is used to select the candle or OHLC bar color.
 
-### Open, High, Low, Close
+#### Open, High, Low, Close
 
 The candlestick visualization will attempt to map fields from your data to the appropriate dimension:
 
@@ -122,17 +126,9 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 ![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
 
-#### Additional fields
+##### Additional fields
 
 The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
-
-### Panel options
-
-{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Candlestick options
-
-TBA
 
 ### Tooltip options
 
