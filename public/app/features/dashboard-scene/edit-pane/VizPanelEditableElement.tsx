@@ -12,11 +12,11 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
@@ -96,6 +96,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
     return new MultiSelectedVizPanelsEditableElement(items);
   }
+
+  public scrollIntoView() {
+    if (this.panel.parent instanceof AutoGridItem) {
+      this.panel.parent.scrollIntoView();
+    }
+  }
 }
 
 type OpenPanelEditVizProps = {
@@ -107,7 +113,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.push(getEditPanelUrl(getPanelIdForVizPanel(panel)));
+          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
         }}
         icon="sliders-v-alt"
         fullWidth

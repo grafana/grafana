@@ -189,7 +189,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring":
+	case "substring", "substring_index":
 		return
 
 	// Date functions
@@ -208,6 +208,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 
 	// Type conversion
 	case "cast":
+		return
+
+	// JSON functions
+	case "json_extract", "json_unquote", "json_contains",
+		"json_object", "json_array", "json_set", "json_remove",
+		"json_length", "json_search", "json_type":
 		return
 
 	default:

@@ -1,22 +1,43 @@
 import { Registry, RegistryItem } from '@grafana/data';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
-import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
+import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
-import { DefaultGridLayoutManagerSerializer } from './DefaultGridLayoutSerializer';
-import { AutoGridLayoutSerializer } from './ResponsiveGridLayoutSerializer';
-import { RowsLayoutSerializer } from './RowsLayoutSerializer';
-import { TabsLayoutSerializer } from './TabsLayoutSerializer';
+import { deserializeDefaultGridLayout } from './DefaultGridLayoutSerializer';
+import { deserializeAutoGridLayout } from './ResponsiveGridLayoutSerializer';
+import { deserializeRowsLayout } from './RowsLayoutSerializer';
+import { deserializeTabsLayout } from './TabsLayoutSerializer';
 
 interface LayoutSerializerRegistryItem extends RegistryItem {
-  serializer: LayoutManagerSerializer;
+  deserialize: (
+    layout: DashboardV2Spec['layout'],
+    elements: DashboardV2Spec['elements'],
+    preload: boolean
+  ) => DashboardLayoutManager;
 }
 
-export const layoutSerializerRegistry: Registry<LayoutSerializerRegistryItem> =
+export const layoutDeserializerRegistry: Registry<LayoutSerializerRegistryItem> =
   new Registry<LayoutSerializerRegistryItem>(() => {
     return [
-      { id: 'GridLayout', name: 'Grid Layout', serializer: new DefaultGridLayoutManagerSerializer() },
-      { id: 'AutoGridLayout', name: 'Auto Grid Layout', serializer: new AutoGridLayoutSerializer() },
-      { id: 'RowsLayout', name: 'Rows Layout', serializer: new RowsLayoutSerializer() },
-      { id: 'TabsLayout', name: 'Tabs Layout', serializer: new TabsLayoutSerializer() },
+      {
+        id: 'GridLayout',
+        name: 'Grid Layout',
+        deserialize: deserializeDefaultGridLayout,
+      },
+      {
+        id: 'AutoGridLayout',
+        name: 'Auto Grid Layout',
+        deserialize: deserializeAutoGridLayout,
+      },
+      {
+        id: 'RowsLayout',
+        name: 'Rows Layout',
+        deserialize: deserializeRowsLayout,
+      },
+      {
+        id: 'TabsLayout',
+        name: 'Tabs Layout',
+        deserialize: deserializeTabsLayout,
+      },
     ];
   });

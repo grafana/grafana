@@ -344,6 +344,7 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   /**
   * Allow core plugins to be loaded as external
+  * @default true
   */
   externalCorePlugins?: boolean;
   /**
@@ -686,6 +687,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
@@ -702,7 +704,8 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a datasource has an invalid UIDs
+  * Throws an error if a data source has an invalid UIDs
+  * @default true
   */
   failWrongDSUID?: boolean;
   /**
@@ -835,7 +838,8 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new combobox component for Prometheus query editor
+  * Use new **Combobox** component for Prometheus query editor
+  * @default true
   */
   prometheusUsesCombobox?: boolean;
   /**
@@ -950,7 +954,7 @@ export interface FeatureToggles {
   */
   ABTestFeatureToggleA?: boolean;
   /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
   /**
@@ -999,6 +1003,10 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
+  /**
   * Enables the alert rule version history restore feature
   * @default true
   */
@@ -1045,7 +1053,24 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Specify the locale so we can show the correct format for numbers and dates
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
 }
