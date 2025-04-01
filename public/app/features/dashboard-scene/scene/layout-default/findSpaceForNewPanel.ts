@@ -88,7 +88,8 @@ function fillEmptySpace(occupied: Set<string>, cell: GridCell, maxY: number) {
   // Expand width
   for (let x = cell.x + cell.width + 1; x <= GRID_COLUMN_COUNT; x++) {
     let fits = true;
-    for (let y = cell.y; y <= cell.y + cell.height; y++) {
+
+    for (let y = cell.y; y < cell.y + cell.height; y++) {
       const key = `${x},${y}`;
       if (occupied.has(key)) {
         fits = false;
@@ -112,7 +113,7 @@ function fillEmptySpace(occupied: Set<string>, cell: GridCell, maxY: number) {
       break;
     }
 
-    for (let x = cell.x; x <= cell.x + cell.width; x++) {
+    for (let x = cell.x; x < cell.x + cell.width; x++) {
       const key = `${x},${y}`;
       if (occupied.has(key)) {
         fits = false;
