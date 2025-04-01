@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -352,6 +353,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
+			Generation:  event.Object.GetGeneration(),
 			GUID:        guid,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
@@ -397,6 +399,12 @@ func isRowAlreadyExistsError(err error) bool {
 		return pg.Code == "23505" // unique_violation
 	}
 
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		return pqerr.Code == "23505" // unique_violation
+	}
+
 	var mysqlerr *mysql.MySQLError
 	if errors.As(err, &mysqlerr) {
 		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
@@ -434,6 +442,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -487,6 +496,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  0, // object does not exist
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}

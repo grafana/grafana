@@ -1,4 +1,5 @@
-import { useCreateRepositorySyncMutation } from 'app/api/clients/provisioning';
+import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
 
@@ -9,12 +10,16 @@ interface PullStepProps {
 }
 
 export function PullStep({ onStepUpdate }: PullStepProps) {
-  const [syncRepo] = useCreateRepositorySyncMutation();
+  const [createJob] = useCreateRepositoryJobsMutation();
 
   const startSync = async (repositoryName: string) => {
-    const response = await syncRepo({
+    const response = await createJob({
       name: repositoryName,
-      body: { incremental: false },
+      jobSpec: {
+        pull: {
+          incremental: false, // will queue a full resync job
+        },
+      },
     }).unwrap();
     return response;
   };
@@ -22,7 +27,10 @@ export function PullStep({ onStepUpdate }: PullStepProps) {
   return (
     <JobStep
       onStepUpdate={onStepUpdate}
-      description="Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
+      description={t(
+        'provisioning.pull-step.description-pulling-content',
+        'Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository.'
+      )}
       startJob={startSync}
     />
   );
