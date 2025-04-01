@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DualReadWriter is a wrapper around a repository that can read and write resources
@@ -36,7 +37,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, err
 	}
 
-	parsed, err := r.parser.Parse(ctx, info, false)
+	parsed, err := r.parser.Parse(ctx, info, true)
 	if err != nil {
 		return nil, err
 	}
