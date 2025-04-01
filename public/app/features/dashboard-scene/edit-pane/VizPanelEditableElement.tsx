@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
@@ -114,7 +115,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.push(getEditPanelUrl(getPanelIdForVizPanel(panel)));
+          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
         }}
         icon="sliders-v-alt"
         fullWidth
