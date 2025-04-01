@@ -1114,6 +1114,12 @@
       "success": "Painel de controlo {{name}} movido para Eliminados recentemente"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Utilizar valor personalizado"
-    },
-    "group": {
-      "undefined": "Sem grupo"
     },
     "options": {
       "no-found": "Nenhuma opção encontrada."
@@ -4780,7 +4783,7 @@
       "loading": "A carregar painéis de controlo",
       "noResultsForFilter": "Não foram encontrados resultados para a sua consulta",
       "noResultsForFilterClear": "Limpar a pesquisa",
-      "noResultsForScopes": "Não foram encontrados painéis de controlo para os âmbitos selecionados",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nenhum âmbito selecionado",
       "search": "Pesquisar",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Início da semana"
     },
     "theme": {
-      "default-label": "Predefinição"
+      "default-label": "Predefinição",
+      "experimental": ""
     },
     "title": "Preferências"
   },

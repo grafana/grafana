@@ -1105,6 +1105,12 @@
       "success": "数据面板 {{name}} 已移至“最近删除”"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "已复制"
@@ -1119,9 +1125,6 @@
     },
     "custom-value": {
       "description": "使用自定义值"
-    },
-    "group": {
-      "undefined": "没有组"
     },
     "options": {
       "no-found": "未找到任何选项。"
@@ -4766,7 +4769,7 @@
       "loading": "正在加载数据面板",
       "noResultsForFilter": "未找到与您的查询相关的结果",
       "noResultsForFilterClear": "清除搜索",
-      "noResultsForScopes": "未找到所选范围的数据面板",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "未选择范围",
       "search": "",
       "toggle": {
@@ -5114,7 +5117,8 @@
       "week-start-label": "每周开始日"
     },
     "theme": {
-      "default-label": "默认"
+      "default-label": "默认",
+      "experimental": ""
     },
     "title": "首选项"
   },

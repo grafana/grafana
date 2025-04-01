@@ -12,6 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -415,6 +416,12 @@ func isRowAlreadyExistsError(err error) bool {
 	if errors.As(err, &pg) {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pg.Code == "23505" // unique_violation
+	}
+
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		return pqerr.Code == "23505" // unique_violation
 	}
 
 	var mysqlerr *mysql.MySQLError
