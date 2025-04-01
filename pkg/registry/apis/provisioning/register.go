@@ -335,15 +335,20 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create historic job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, historicJobStore, time.Second*30)
+	jobHistory, err := jobs.NewStorageBackedHistory(historicJobStore)
+	if err != nil {
+		return fmt.Errorf("failed to create historic job wrapper: %w", err)
+	}
+
+	b.jobs, err = jobs.NewStore(realJobStore, jobHistory, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
 
 	storage := map[string]rest.Storage{}
-	// Although we never interact with these resources via the API, we want them to be readable from the API.
+
+	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
 
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
@@ -369,18 +374,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("migrate")] = &migrateConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-		dual:       b.storageStatus,
+		historic:   jobHistory,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
 		blob: b.unified,
@@ -628,6 +625,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
+	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
@@ -804,66 +802,71 @@ spec:
 		sub.Put.RequestBody = sub.Post.RequestBody
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/sync"]
+	sub = oas.Paths.Paths[repoprefix+"/jobs"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"SyncJobOptions"].Schema
-		sub.Post.Description = "Sync from repository into Grafana"
+		sub.Post.Description = "Register a job for this repository"
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.SyncJobOptions{
-								Incremental: false,
+							Schema: &spec.Schema{
+								SchemaProps: spec.SchemaProps{
+									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobSpec"),
+								},
+							},
+							Examples: map[string]*spec3.Example{
+								"incremental": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Pull (incremental)",
+										Description: "look for changes since the last sync",
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: true,
+											},
+										},
+									},
+								},
+								"pull": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Pull from repository",
+										Description: "pull all files",
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: false,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 		}
+
+		sub.Get.Description = "List recent jobs"
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "JobList")
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/export"]
+	sub = oas.Paths.Paths[repoprefix+"/jobs/{path}"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"ExportJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.ExportJobOptions{
-								Folder: "grafan-folder-ref",
-								Branch: "target-branch",
-								Path:   "path/in/tree",
-							},
-						},
-					},
-				},
-			},
-		}
-	}
+		sub.Post = nil
+		sub.Get.Description = "Get job by UID"
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 
-	sub = oas.Paths.Paths[repoprefix+"/migrate"]
-	if sub != nil {
-		optionsSchema := defs[defsBase+"MigrateJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.MigrateJobOptions{
-								History: true,
-							},
-						},
-					},
-				},
-			},
+		// Replace {path} with {uid} (it is a UID query, but all k8s sub-resources are called path)
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "uid"
+				v.Description = "Original Job UID"
+				break
+			}
 		}
+
+		delete(oas.Paths.Paths, repoprefix+"/jobs/{path}")
+		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
 	delete(oas.Paths.Paths, repoprefix+"/render")
@@ -884,6 +887,18 @@ spec:
 				},
 			},
 		}
+
+		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "guid"
+				v.Description = "Image GUID"
+				break
+			}
+		}
+
+		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
+		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
 	}
 
 	// Add any missing definitions
@@ -1122,5 +1137,30 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
+	}
+}
+
+func getJSONResponse(ref string) *spec3.Responses {
+	return &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: spec.MustCreateRef(ref),
+										},
+									},
+								},
+							},
+						},
+						Description: "OK",
+					},
+				},
+			},
+		},
 	}
 }
