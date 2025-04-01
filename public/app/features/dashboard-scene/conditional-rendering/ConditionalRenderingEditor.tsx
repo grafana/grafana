@@ -1,3 +1,4 @@
+import { Icon, Stack, Tooltip } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -16,6 +17,16 @@ export function useConditionalRenderingEditor(
   return new OptionsPaneCategoryDescriptor({
     title,
     id: 'conditional-rendering-options',
+    renderTitle: () => {
+      return (
+        <Stack direction="row" gap={1} alignItems="center">
+          <div>{title}</div>
+          <Tooltip content={conditionalRendering.info}>
+            <Icon name="info-circle" />
+          </Tooltip>
+        </Stack>
+      );
+    },
     isOpenDefault: true,
   }).addItem(
     new OptionsPaneItemDescriptor({

@@ -27,6 +27,34 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
     return t('dashboard.conditional-rendering.time-range-size.label', 'Dashboard time range less than');
   }
 
+  public get info(): string {
+    switch (this.getItemType()) {
+      case 'auto-grid-item':
+        return t(
+          'dashboard.conditional-rendering.time-range-size.info.panel',
+          'Show or hide the panel based if the dashboard time range is less than the selected time frame.'
+        );
+
+      case 'row':
+        return t(
+          'dashboard.conditional-rendering.time-range-size.info.row',
+          'Show or hide the row if the dashboard time range is less than the selected time frame.'
+        );
+
+      case 'tab':
+        return t(
+          'dashboard.conditional-rendering.time-range-size.info.tab',
+          'Show or hide the tab if the dashboard time range is less than the selected time frame.'
+        );
+
+      default:
+        return t(
+          'dashboard.conditional-rendering.time-range-size.info.element',
+          'Show or hide the element if the dashboard time range is less than the selected time frame.'
+        );
+    }
+  }
+
   public constructor(state: ConditionalRenderingTimeRangeSizeState) {
     super(state);
 

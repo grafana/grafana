@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { ReactElement } from 'react';
 
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from './ConditionalRendering';
-import { ConditionalRenderingKindTypes, ConditionValues } from './types';
+import { ConditionalRenderingKindTypes, ConditionValues, ItemsWithConditionalRendering } from './types';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
@@ -34,6 +34,8 @@ export abstract class ConditionalRenderingBase<
 
   public abstract readonly title: string;
 
+  public abstract get info(): string | undefined;
+
   public abstract serialize(): ConditionalRenderingKindTypes;
 
   public abstract evaluate(): boolean;
@@ -47,7 +49,11 @@ export abstract class ConditionalRenderingBase<
   }
 
   public getItem(): SceneObject {
-    return this._getConditionalLogicRoot().parent!;
+    return this._getConditionalLogicRoot().getItem();
+  }
+
+  public getItemType(): ItemsWithConditionalRendering {
+    return this._getConditionalLogicRoot().getItemType();
   }
 
   public notifyChange() {
@@ -78,7 +84,15 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
 
   return (
     <Stack direction="column" key={model.state.key}>
-      <Text variant="bodySmall">{model.title}</Text>
+      <Stack direction="row" gap={1}>
+        <Text variant="bodySmall">{model.title}</Text>
+        {model.info && (
+          <Tooltip content={model.info}>
+            <Icon name="info-circle" />
+          </Tooltip>
+        )}
+      </Stack>
+
       <Stack direction="row" gap={1} justifyContent="stretch" alignItems="baseline">
         <div className={styles.body}>{comp}</div>
 

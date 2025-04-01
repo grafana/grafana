@@ -27,6 +27,34 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     return t('dashboard.conditional-rendering.data.label', 'Query result');
   }
 
+  public get info(): string {
+    switch (this.getItemType()) {
+      case 'auto-grid-item':
+        return t(
+          'dashboard.conditional-rendering.data.info.panel',
+          'Show or hide the panel based if the query returns data or not.'
+        );
+
+      case 'row':
+        return t(
+          'dashboard.conditional-rendering.data.info.row',
+          'Show or hide the row based if the query returns data or not.'
+        );
+
+      case 'tab':
+        return t(
+          'dashboard.conditional-rendering.data.info.tab',
+          'Show or hide the tab based if the query returns data or not.'
+        );
+
+      default:
+        return t(
+          'dashboard.conditional-rendering.data.info.element',
+          'Show or hide the element based if the query returns data or not.'
+        );
+    }
+  }
+
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
 

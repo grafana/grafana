@@ -27,6 +27,34 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     return t('dashboard.conditional-rendering.variable.label', 'Template variable');
   }
 
+  public get info(): string {
+    switch (this.getItemType()) {
+      case 'auto-grid-item':
+        return t(
+          'dashboard.conditional-rendering.variable.info.panel',
+          'Select a variable value based on which to show or hide the panel.'
+        );
+
+      case 'row':
+        return t(
+          'dashboard.conditional-rendering.variable.info.row',
+          'Select a variable value based on which to show or hide the row.'
+        );
+
+      case 'tab':
+        return t(
+          'dashboard.conditional-rendering.variable.info.tab',
+          'Select a variable value based on which to show or hide the tab.'
+        );
+
+      default:
+        return t(
+          'dashboard.conditional-rendering.variable.info.element',
+          'Select a variable value based on which to show or hide the element.'
+        );
+    }
+  }
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {

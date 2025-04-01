@@ -1426,6 +1426,12 @@
       "data": {
         "disable": "No data",
         "enable": "Has data",
+        "info": {
+          "element": "Show or hide the element based if the query returns data or not.",
+          "panel": "Show or hide the panel based if the query returns data or not.",
+          "row": "Show or hide the row based if the query returns data or not.",
+          "tab": "Show or hide the tab based if the query returns data or not."
+        },
         "label": "Query result"
       },
       "group": {
@@ -1452,10 +1458,22 @@
           "show": "Show"
         }
       },
+      "info": {
+        "element": "Show or hide the element based on certain conditions by matching all or any rules.",
+        "panel": "Show or hide the panel based on certain conditions by matching all or any rules.",
+        "row": "Show or hide the row based on certain conditions by matching all or any rules.",
+        "tab": "Show or hide the panel based on certain conditions by matching all or any rules."
+      },
       "shared": {
         "delete-condition": "Delete Condition"
       },
       "time-range-size": {
+        "info": {
+          "element": "Show or hide the element if the dashboard time range is less than the selected time frame.",
+          "panel": "Show or hide the panel based if the dashboard time range is less than the selected time frame.",
+          "row": "Show or hide the row if the dashboard time range is less than the selected time frame.",
+          "tab": "Show or hide the tab if the dashboard time range is less than the selected time frame."
+        },
         "invalid-message": "Invalid interval",
         "label": "Dashboard time range less than",
         "values": {
@@ -1470,6 +1488,12 @@
       },
       "title": "Show / hide rules",
       "variable": {
+        "info": {
+          "element": "Select a variable value based on which to show or hide the element.",
+          "panel": "Select a variable value based on which to show or hide the panel.",
+          "row": "Select a variable value based on which to show or hide the row.",
+          "tab": "Select a variable value based on which to show or hide the tab."
+        },
         "label": "Template variable",
         "name": "Name",
         "operator": {

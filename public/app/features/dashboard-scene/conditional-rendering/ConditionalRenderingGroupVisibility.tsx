@@ -2,26 +2,21 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
-
-import { GroupConditionVisibility } from './types';
+import { GroupConditionVisibility, ItemsWithConditionalRendering } from './types';
 
 interface Props {
-  item: SceneObject;
+  itemType: ItemsWithConditionalRendering;
   value: GroupConditionVisibility;
   onChange: (value: GroupConditionVisibility) => void;
 }
 
-export const ConditionalRenderingGroupVisibility = ({ item, value, onChange }: Props) => {
+export const ConditionalRenderingGroupVisibility = ({ itemType, value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const label = useMemo(() => getItemLabel(item), [item]);
+  const label = useMemo(() => getItemLabel(itemType), [itemType]);
 
   const options: Array<SelectableValue<GroupConditionVisibility>> = useMemo(
     () => [
@@ -44,14 +39,15 @@ const getStyles = () => ({
   }),
 });
 
-const getItemLabel = (item: SceneObject) => {
-  if (item instanceof AutoGridItem) {
-    return t('dashboard.conditional-rendering.group.visibility.label.panel', 'Panel visibility');
-  } else if (item instanceof RowItem) {
-    return t('dashboard.conditional-rendering.group.visibility.label.row', 'Row visibility');
-  } else if (item instanceof TabItem) {
-    return t('dashboard.conditional-rendering.group.visibility.label.tab', 'Tab visibility');
-  } else {
-    return t('dashboard.conditional-rendering.group.visibility.label.other', 'Element visibility');
+const getItemLabel = (itemType: ItemsWithConditionalRendering) => {
+  switch (itemType) {
+    case 'auto-grid-item':
+      return t('dashboard.conditional-rendering.group.visibility.label.panel', 'Panel visibility');
+    case 'row':
+      return t('dashboard.conditional-rendering.group.visibility.label.row', 'Row visibility');
+    case 'tab':
+      return t('dashboard.conditional-rendering.group.visibility.label.tab', 'Tab visibility');
+    default:
+      return t('dashboard.conditional-rendering.group.visibility.label.other', 'Element visibility');
   }
 };

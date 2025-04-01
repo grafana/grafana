@@ -38,6 +38,10 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return t('dashboard.conditional-rendering.group.label', 'Group');
   }
 
+  public get info(): undefined {
+    return undefined;
+  }
+
   public evaluate(): boolean {
     if (this.state.value.length === 0) {
       return true;
@@ -127,7 +131,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
   return (
     <Stack direction="column" gap={2}>
       <ConditionalRenderingGroupVisibility
-        item={model.getItem()}
+        itemType={model.getItemType()}
         value={visibility}
         onChange={(value) => model.changeVisibility(value)}
       />

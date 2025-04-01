@@ -11,6 +11,8 @@ import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 
+export type ItemsWithConditionalRendering = 'auto-grid-item' | 'row' | 'tab' | 'unknown';
+
 export type DataConditionValue = boolean;
 
 export type GroupConditionVisibility = 'show' | 'hide';
