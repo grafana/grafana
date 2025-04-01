@@ -31,14 +31,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
-  const isPreview = route.routeName === DashboardRoutes.Provisioning;
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
-        uid: (isPreview ? path : uid) ?? '',
+        uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
         type,
         slug,
         route: route.routeName as DashboardRoutes,
@@ -49,7 +48,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type, path, isPreview]);
+  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type, path]);
 
   if (!dashboard) {
     let errorElement;
