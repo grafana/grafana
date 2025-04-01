@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { useGetPlaylistQuery } from '../../api/clients/playlist';
@@ -8,11 +7,9 @@ import { playlistSrv } from './PlaylistSrv';
 // This is a react page that just redirects to new URLs
 export default function PlaylistStartPage() {
   const { uid = '' } = useParams();
-  const { data } = useGetPlaylistQuery({ name: uid });
-  useEffect(() => {
-    if (data) {
-      playlistSrv.start(data);
-    }
-  }, [data]);
+  const { data, isLoading } = useGetPlaylistQuery({ name: uid });
+  if (!isLoading && data) {
+    playlistSrv.start(data);
+  }
   return null;
 }
