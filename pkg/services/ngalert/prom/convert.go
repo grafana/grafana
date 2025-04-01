@@ -26,7 +26,14 @@ const (
 )
 
 var (
-	ErrInvalidDatasourceType = errutil.ValidationFailed("alerting.invalidDatasourceType")
+	ErrInvalidDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidDatasourceType",
+		errutil.WithPublicMessage("Datasource type must be Prometheus or Loki to import rules."),
+	)
+	ErrInvalidTargetDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidTargetDatasourceType",
+		errutil.WithPublicMessage("Target datasource type must be Prometheus for recording rules."),
+	)
 )
 
 // Config defines the configuration options for the Prometheus to Grafana rules converter.
@@ -109,9 +116,6 @@ func NewConverter(cfg Config) (*Converter, error) {
 	}
 	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
 		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
-	}
-	if cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
-		return nil, ErrInvalidDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", cfg.TargetDatasourceType)
 	}
 
 	return &Converter{
@@ -203,7 +207,12 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+
 	if isRecordingRule {
+		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
+			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
+		}
+
 		record = &models.Record{
 			From:                queryRefID,
 			Metric:              rule.Record,
