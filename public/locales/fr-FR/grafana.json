@@ -1114,6 +1114,12 @@
       "success": "Le tableau de bord {{name}} a été déplacé vers Récemment supprimé"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copié"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Utiliser une valeur personnalisée"
-    },
-    "group": {
-      "undefined": "Aucun groupe"
     },
     "options": {
       "no-found": "Aucune option trouvée."
@@ -4780,7 +4783,7 @@
       "loading": "Chargement des tableaux de bord",
       "noResultsForFilter": "Aucun résultat n'a été trouvé pour votre requête",
       "noResultsForFilterClear": "Effacer la recherche",
-      "noResultsForScopes": "Aucun tableau de bord trouvé pour les portées sélectionnées",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Aucune portée sélectionnée",
       "search": "Rechercher",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Début de la semaine"
     },
     "theme": {
-      "default-label": "Par défaut"
+      "default-label": "Par défaut",
+      "experimental": ""
     },
     "title": "Préférences"
   },

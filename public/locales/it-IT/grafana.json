@@ -1114,6 +1114,12 @@
       "success": "Dashboard {{name}} spostato in Eliminati di recente"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiato"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Usa il valore personalizzato"
-    },
-    "group": {
-      "undefined": "Nessun gruppo"
     },
     "options": {
       "no-found": "Nessuna opzione trovata."
@@ -4780,7 +4783,7 @@
       "loading": "Caricamento dashboard",
       "noResultsForFilter": "Nessun risultato trovato per la ricerca",
       "noResultsForFilterClear": "Azzera ricerca",
-      "noResultsForScopes": "Nessun dashboard trovato per gli ambiti selezionati",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nessun ambito selezionato",
       "search": "Cerca",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Inizio settimana"
     },
     "theme": {
-      "default-label": "Predefinito"
+      "default-label": "Predefinito",
+      "experimental": ""
     },
     "title": "Preferenze"
   },

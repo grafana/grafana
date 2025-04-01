@@ -1114,6 +1114,12 @@
       "success": "Dashboard {{name}} is verplaatst naar Onlangs verwijderd"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Gekopieerd"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Aangepaste waarde gebruiken"
-    },
-    "group": {
-      "undefined": "Geen groep"
     },
     "options": {
       "no-found": "Geen opties gevonden."
@@ -4780,7 +4783,7 @@
       "loading": "Dashboards laden",
       "noResultsForFilter": "Geen resultaten gevonden voor je zoekopdracht",
       "noResultsForFilterClear": "Zoekopdracht wissen",
-      "noResultsForScopes": "Geen dashboards gevonden voor de geselecteerde scopes",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Geen scopes geselecteerd",
       "search": "Zoeken",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Begin van de week"
     },
     "theme": {
-      "default-label": "Standaard"
+      "default-label": "Standaard",
+      "experimental": ""
     },
     "title": "Voorkeuren"
   },
