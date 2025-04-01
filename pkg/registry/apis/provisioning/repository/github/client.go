@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
