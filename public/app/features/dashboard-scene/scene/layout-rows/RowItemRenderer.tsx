@@ -88,7 +88,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               className={cx(
                 styles.rowTitle,
                 isHeaderHidden && styles.rowTitleHidden,
-                !isTopLevel && styles.rowTitleNested
+                !isTopLevel && styles.rowTitleNested,
+                isCollapsed && styles.rowTitleCollapsed
               )}
               role="heading"
             >
@@ -147,6 +148,9 @@ function getStyles(theme: GrafanaTheme2) {
     rowTitleNested: css({
       fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightRegular,
+    }),
+    rowTitleCollapsed: css({
+      color: theme.colors.text.secondary,
     }),
     wrapper: css({
       display: 'flex',
