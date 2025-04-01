@@ -13,7 +13,9 @@ import {
   DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
   GrafanaRulesSourceIdentifier,
   GrafanaRulesSourceSymbol,
+  RuleIdentifier,
   RulesSource,
+  RulesSourceIdentifier,
   RulesSourceUid,
 } from 'app/types/unified-alerting';
 
@@ -25,6 +27,7 @@ import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
 import { getAllDataSources } from './config';
+import { isGrafanaRuleIdentifier } from './rules';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
@@ -340,4 +343,16 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}
+
+export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
+  if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+    return { uid: GrafanaRulesSourceSymbol, name: GRAFANA_RULES_SOURCE_NAME, ruleSourceType: 'grafana' };
+  }
+
+  return {
+    uid: getDatasourceAPIUid(ruleIdentifier.ruleSourceName),
+    name: ruleIdentifier.ruleSourceName,
+    ruleSourceType: 'datasource',
+  };
 }

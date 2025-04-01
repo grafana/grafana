@@ -1,6 +1,6 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { filter, flatMap, map } from 'ix/asynciterable/operators';
+import { catchError, filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -65,12 +65,16 @@ export function useFilteredRulesIteratorProvider() {
       filter((group) => groupFilter(group, normalizedFilterState)),
       flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
       filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
-      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule)),
+      catchError(() => empty())
     );
 
     const sourceIterables = ruleSourcesToFetchFrom.map((ds) => {
       const generator = prometheusGroupsGenerator(ds, groupLimit);
-      return from(generator).pipe(map((group) => [ds, group] as const));
+      return from(generator).pipe(
+        map((group) => [ds, group] as const),
+        catchError(() => empty())
+      );
     });
 
     // if we have no prometheus data sources, use an empty async iterable

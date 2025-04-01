@@ -93,7 +93,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
     );
   }
 
-  if (!rule.promRule) {
+  if (!rule.promRule && !rule.rulerRule) {
     return null;
   }
 

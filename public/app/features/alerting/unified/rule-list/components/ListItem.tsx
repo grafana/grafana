@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import React, { AriaAttributes, ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-interface ListItemProps {
+interface ListItemProps extends AriaAttributes {
   icon?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
@@ -17,10 +17,16 @@ interface ListItemProps {
 
 export const ListItem = (props: ListItemProps) => {
   const styles = useStyles2(getStyles);
-  const { icon = null, title, description, meta, metaRight, actions, 'data-testid': testId } = props;
+  const { icon = null, title, description, meta, metaRight, actions, 'data-testid': testId, ...ariaAttributes } = props;
 
   return (
-    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false" data-testid={testId}>
+    <li
+      className={styles.alertListItemContainer}
+      role="treeitem"
+      aria-selected="false"
+      data-testid={testId}
+      {...ariaAttributes}
+    >
       <Stack direction="row" alignItems="start" gap={1} wrap={false}>
         {/* icon */}
         {icon}
