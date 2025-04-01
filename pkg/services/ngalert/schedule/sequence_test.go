@@ -150,10 +150,3 @@ func TestSequence(t *testing.T) {
 		require.Equal(t, []string{"3", "4"}, prevByGroup["rg2"])
 	})
 }
-
-func addPrometheusMetadata(rule *models.AlertRule) *models.AlertRule {
-	rule.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{
-		OriginalRuleDefinition: "test",
-	}
-	return rule
-}

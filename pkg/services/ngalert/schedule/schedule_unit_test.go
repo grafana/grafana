@@ -543,7 +543,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("sequence should be evaluated in the correct order", func(t *testing.T) {
-		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
+		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithPrometheusOriginalRuleDefinition("def")).GenerateManyRef(10, 20)
 		ruleStore.rules = map[string]*models.AlertRule{}
 		ruleStore.PutRule(context.Background(), rules...)
 
