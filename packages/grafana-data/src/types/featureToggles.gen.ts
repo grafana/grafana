@@ -836,7 +836,8 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new combobox component for Prometheus query editor
+  * Use new **Combobox** component for Prometheus query editor
+  * @default true
   */
   prometheusUsesCombobox?: boolean;
   /**
@@ -951,7 +952,7 @@ export interface FeatureToggles {
   */
   ABTestFeatureToggleA?: boolean;
   /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
   /**
@@ -1000,6 +1001,10 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
+  /**
   * Enables the alert rule version history restore feature
   * @default true
   */
@@ -1046,6 +1051,10 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Specify the locale so we can show the correct format for numbers and dates
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
@@ -1054,4 +1063,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
 }
