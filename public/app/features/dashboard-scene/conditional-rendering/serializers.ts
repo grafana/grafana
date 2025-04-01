@@ -2,7 +2,7 @@ import { Registry } from '@grafana/data';
 
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
-import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
+import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { ConditionalRenderingSerializerRegistryItem } from './types';
 
@@ -11,6 +11,6 @@ export const conditionalRenderingSerializerRegistry = new Registry<ConditionalRe
     ConditionalRenderingGroup.serializer,
     ConditionalRenderingVariable.serializer,
     ConditionalRenderingData.serializer,
-    ConditionalRenderingInterval.serializer,
+    ConditionalRenderingTimeRangeSize.serializer,
   ];
 });

@@ -7,8 +7,8 @@ import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './Condi
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
-import { ConditionalRenderingGroupOutcome } from './ConditionalRenderingGroupOutcome';
-import { ConditionalRenderingInterval } from './ConditionalRenderingInterval';
+import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
+import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from './serializers';
 import {
@@ -16,12 +16,12 @@ import {
   ConditionalRenderingSerializerRegistryItem,
   GroupConditionCondition,
   GroupConditionItemType,
-  GroupConditionOutcome,
+  GroupConditionVisibility,
   GroupConditionValue,
 } from './types';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
-  outcome: GroupConditionOutcome;
+  visibility: GroupConditionVisibility;
   condition: GroupConditionCondition;
 }
 
@@ -48,11 +48,11 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
         ? this.state.value.every((entry) => entry.evaluate())
         : this.state.value.some((entry) => entry.evaluate());
 
-    return this.state.outcome === 'show' ? value : !value;
+    return this.state.visibility === 'show' ? value : !value;
   }
 
-  public changeOutcome(outcome: GroupConditionOutcome) {
-    this.setStateAndNotify({ outcome });
+  public changeVisibility(visibility: GroupConditionVisibility) {
+    this.setStateAndNotify({ visibility });
   }
 
   public changeCondition(condition: GroupConditionCondition) {
@@ -65,7 +65,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
         ? ConditionalRenderingData.createEmpty()
         : itemType === 'variable'
           ? ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name)
-          : ConditionalRenderingInterval.createEmpty();
+          : ConditionalRenderingTimeRangeSize.createEmpty();
 
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
@@ -90,7 +90,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return {
       kind: 'ConditionalRenderingGroup',
       spec: {
-        outcome: this.state.outcome,
+        visibility: this.state.visibility,
         condition: this.state.condition,
         items: this.state.value
           .map((condition) => condition.serialize())
@@ -102,7 +102,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   public static deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {
     return new ConditionalRenderingGroup({
       condition: model.spec.condition,
-      outcome: model.spec.outcome,
+      visibility: model.spec.visibility,
       value: model.spec.items.map((item: ConditionalRenderingKindTypes) => {
         const serializerRegistryItem = conditionalRenderingSerializerRegistry.getIfExists(item.kind);
 
@@ -116,27 +116,24 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public static createEmpty(): ConditionalRenderingGroup {
-    return new ConditionalRenderingGroup({ condition: 'and', outcome: 'show', value: [] });
+    return new ConditionalRenderingGroup({ condition: 'and', visibility: 'show', value: [] });
   }
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
-  const { condition, outcome, value } = model.useState();
+  const { condition, visibility, value } = model.useState();
   const { variables } = sceneGraph.getVariables(model).useState();
 
   return (
     <Stack direction="column" gap={2}>
-      <ConditionalRenderingGroupOutcome value={outcome} onChange={(value) => model.changeOutcome(value)} />
-
-      <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
-
-      {value.map((entry) => entry.render())}
-
-      <ConditionalRenderingGroupAdd
-        allConditions={value}
-        hasVariables={variables.length > 0}
-        onAdd={(itemType) => model.addItem(itemType)}
+      <ConditionalRenderingGroupVisibility
+        item={model.getItem()}
+        value={visibility}
+        onChange={(value) => model.changeVisibility(value)}
       />
+      <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
+      {value.map((entry) => entry.render())}
+      <ConditionalRenderingGroupAdd hasVariables={variables.length > 0} onAdd={(itemType) => model.addItem(itemType)} />
     </Stack>
   );
 }

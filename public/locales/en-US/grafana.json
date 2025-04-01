@@ -1432,30 +1432,43 @@
         "add": {
           "button": "Add rule",
           "data": "Query result",
-          "interval": "Dashboard time range less than",
-          "placeholder": "Select rule type",
+          "time-range-size": "Dashboard time range less than",
           "variable": "Template variable"
         },
         "condition": {
-          "all": "And",
-          "any": "Or",
+          "all": "AND",
+          "any": "OR",
           "label": "Match rules"
         },
         "label": "Group",
-        "outcome": {
+        "visibility": {
           "hide": "Hide",
-          "label": "Rules outcome",
+          "label": {
+            "other": "Element visibility",
+            "panel": "Panel visibility",
+            "row": "Row visibility",
+            "tab": "Tab visibility"
+          },
           "show": "Show"
         }
-      },
-      "interval": {
-        "invalid-message": "Invalid interval",
-        "label": "Dashboard time range less than"
       },
       "shared": {
         "delete-condition": "Delete Condition"
       },
-      "title": "Show/Hide Rules",
+      "time-range-size": {
+        "invalid-message": "Invalid interval",
+        "label": "Dashboard time range less than",
+        "values": {
+          "days": "{{value}} days",
+          "hour": "{{value}} hour",
+          "hours": "{{value}} hours",
+          "minutes": "{{value}} minutes",
+          "months": "{{value}} months",
+          "year": "{{value}} year",
+          "years": "{{value}} years"
+        }
+      },
+      "title": "Show / hide rules",
       "variable": {
         "label": "Template variable",
         "name": "Name",

@@ -17,8 +17,8 @@ export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) =
 
   const options: Array<SelectableValue<GroupConditionCondition>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.group.condition.all', 'And'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.group.condition.any', 'Or'), value: 'or' },
+      { label: t('dashboard.conditional-rendering.group.condition.all', 'AND'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.group.condition.any', 'OR'), value: 'or' },
     ],
     []
   );

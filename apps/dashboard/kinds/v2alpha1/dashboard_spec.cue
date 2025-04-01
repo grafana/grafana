@@ -924,9 +924,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
-	outcome: "show" | "hide"
+	visibility: "show" | "hide"
 	condition: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -949,11 +949,11 @@ ConditionalRenderingDataSpec: {
 	value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-	kind: "ConditionalRenderingTimeInterval"
-	spec: ConditionalRenderingTimeIntervalSpec
+ConditionalRenderingTimeRangeSizeKind: {
+	kind: "ConditionalRenderingTimeRangeSize"
+	spec: ConditionalRenderingTimeRangeSizeSpec
 }
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
 }

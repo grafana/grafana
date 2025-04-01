@@ -11,7 +11,7 @@ export function useConditionalRenderingEditor(
     return null;
   }
 
-  const title = t('dashboard.conditional-rendering.title', 'Show/Hide Rules');
+  const title = t('dashboard.conditional-rendering.title', 'Show / hide rules');
 
   return new OptionsPaneCategoryDescriptor({
     title,
