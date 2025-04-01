@@ -15,7 +15,7 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 | Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |
 | Width                              | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis.                   |
 | Show grid lines                    | Set the axis grid line visibility. Choose from: **Auto**, **On**, and **Off**.                                     |
-| Color                              | Set the color of the axis. Choose from:<ul>**Text** - Uses panel text color.<li></li><li>**Series** - Uses the colors of the series.</li></ul> |
+| Color                              | Set the color of the axis. Choose from:<ul><li>**Text** - Uses panel text color.</li><li>**Series** - Uses the colors of the series.</li></ul> |
 | Show border                        | Set the axis border visibility.                                                                                    |
 | [Scale](#scale)                    | Set the y-axis values scale. Choose from: **Linear**, **Logarithmic**, and **Symlog**.                             |
 | Centered zero                      | Set the y-axis so it's centered on zero.                                                                           |
