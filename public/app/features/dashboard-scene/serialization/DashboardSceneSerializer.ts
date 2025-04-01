@@ -290,7 +290,6 @@ export class V2DashboardSerializer
         }
       }
     }
-
   }
 
   getDSReferencesMapping() {
