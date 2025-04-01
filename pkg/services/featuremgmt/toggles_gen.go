@@ -975,6 +975,10 @@ const (
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 
+	// FlagXrayApplicationSignals
+	// Support Application Signals queries in the X-Ray datasource
+	FlagXrayApplicationSignals = "xrayApplicationSignals"
+
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"

@@ -4514,6 +4514,21 @@
     },
     {
       "metadata": {
+        "name": "xrayApplicationSignals",
+        "resourceVersion": "1743178672620",
+        "creationTimestamp": "2025-03-28T16:17:52Z"
+      },
+      "spec": {
+        "description": "Support Application Signals queries in the X-Ray datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzana",
         "resourceVersion": "1718787304727",
         "creationTimestamp": "2024-06-19T13:59:47Z"
