@@ -43,6 +43,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.4.4-0.20250319135056-b82baf10b205 // @grafana/grafana-search-and-storage
 	github.com/blevesearch/bleve_index_api v1.2.3 // @grafana/grafana-search-and-storage
 	github.com/blugelabs/bluge v0.2.2 // @grafana/grafana-backend-group
+	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad

@@ -1090,8 +1090,6 @@ github.com/grafana/cog v0.0.23 h1:/0CCJ24Z8XXM2DnboSd2FzoIswUroqIZzVr8oJWmMQs=
 github.com/grafana/cog v0.0.23/go.mod h1:jrS9indvWuDs60RHEZpLaAkmZdgyoLKMOEUT0jiB1t0=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
-github.com/grafana/grafana-aws-sdk v0.34.0 h1:NzX5NFECFfopc/1tdGL7zBUmTVo0FSJViOa9BiXeIL4=
-github.com/grafana/grafana-aws-sdk v0.34.0/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
 github.com/grafana/grafana-plugin-sdk-go v0.263.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana-plugin-sdk-go v0.266.0/go.mod h1:bxkXrBQ4QSmOncsWdIOcpgP+M6wajQNMAPXlbWrqAWY=
 github.com/grafana/grafana-plugin-sdk-go v0.267.0/go.mod h1:OuwS4c/JYgn0rr/w5zhJBpLo4gKm/vw15RsfpYAvK9Q=
@@ -1109,8 +1107,6 @@ github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3 h1:6D2gGAwyQBElSrp3E+9lSr7k8gLuP3Aiy20rweLWeBw=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3/go.mod h1:YeND+6FDA7OuFgDzYODN8kfPhXLCehcpxe4T9mdnpCY=
-github.com/grafana/sqlds/v4 v4.2.0 h1:7qZmuTzLMZFtszX14NyefU3R6WVtx27i7WduRDLKKOE=
-github.com/grafana/sqlds/v4 v4.2.0/go.mod h1:OyEREvYCd2U/qXiIK/iprQ/4VUF2TTemIixFdUeGsOc=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
 github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 h1:+ngKgrYPPJrOjhax5N+uePQ0Fh1Z7PheYoUI/0nzkPA=
@@ -1542,6 +1538,8 @@ github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3k
 github.com/spf13/jwalterweatherman v1.1.0 h1:ue6voC5bR5F8YxI5S67j9i582FU4Qvo2bmqnqMYADFk=
 github.com/spf13/pflag v1.0.1/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJGQTUpVfEMJJd4nRFXogbc=
+github.com/spyzhov/ajson v0.9.6 h1:iJRDaLa+GjhCDAt1yFtU/LKMtLtsNVKkxqlpvrHHlpQ=
+github.com/spyzhov/ajson v0.9.6/go.mod h1:a6oSw0MMb7Z5aD2tPoPO+jq11ETKgXUr2XktHdT8Wt8=
 github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980 h1:lIOOHPEbXzO3vnmx2gok1Tfs31Q8GQqKLc8vVqyQq/I=
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
 github.com/stoewer/parquet-cli v0.0.7 h1:rhdZODIbyMS3twr4OM3am8BPPT5pbfMcHLH93whDM5o=
