@@ -148,7 +148,6 @@ export interface TableCellNGProps {
   timeRange: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
-  sortedRows: TableRow[];
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */

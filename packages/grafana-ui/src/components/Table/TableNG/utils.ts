@@ -375,7 +375,6 @@ export const convertRGBAToHex = (backgroundColor: string, rgbaColor: string): st
  */
 export const getCellLinks = (field: Field, rowIdx: number) => {
   let links: Array<LinkModel<unknown>> | undefined;
-
   if (field.getLinks) {
     links = field.getLinks({
       valueRowIndex: rowIdx,
@@ -496,7 +495,6 @@ export interface MapFrameToGridOptions extends TableNGProps {
 
 /* ----------------------------- Data grid comparator ---------------------------- */
 const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
-
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:
