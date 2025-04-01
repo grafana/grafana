@@ -81,6 +81,11 @@ function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerC
 function isCloudRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
   return typeof rule === 'object' && 'record' in rule;
 }
+export function isCloudRulerGroup(
+  rulerRuleGroup: RulerRuleGroupDTO
+): rulerRuleGroup is RulerRuleGroupDTO<RulerCloudRuleDTO> {
+  return rulerRuleGroup.rules.every((r) => isCloudRulerRule(r));
+}
 
 /* Prometheus rules */
 
@@ -222,6 +227,10 @@ export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigi
 
 function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
+}
+
+export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isPluginProvidedRule(rule));
 }
 
 export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {

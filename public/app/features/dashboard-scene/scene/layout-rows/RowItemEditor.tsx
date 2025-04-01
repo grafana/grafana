@@ -79,8 +79,8 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 }
 
 function RowTitleInput({ row }: { row: RowItem }) {
-  const { title } = row.useState();
-  const ref = useEditPaneInputAutoFocus();
+  const { title, isNew } = row.useState();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
 
   return (
     <Input
