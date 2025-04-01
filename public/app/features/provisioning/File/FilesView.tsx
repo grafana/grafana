@@ -1,21 +1,8 @@
 import { useState } from 'react';
 
-import {
-  Button,
-  CellProps,
-  Column,
-  ConfirmModal,
-  FilterInput,
-  InteractiveTable,
-  LinkButton,
-  Spinner,
-  Stack,
-} from '@grafana/ui';
-import {
-  Repository,
-  useGetRepositoryFilesQuery,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning';
+import { CellProps, Column, FilterInput, InteractiveTable, LinkButton, Spinner, Stack } from '@grafana/ui';
+import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 import { FileDetails } from '../types';
@@ -29,10 +16,7 @@ type FileCell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileD
 export function FilesView({ repo }: FilesViewProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryFilesQuery({ name });
-  const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [pathToDelete, setPathToDelete] = useState<string>();
   const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -69,12 +53,13 @@ export function FilesView({ repo }: FilesViewProps) {
         return (
           <Stack>
             {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
-              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>
+                <Trans i18nKey="provisioning.files-view.columns.view">View</Trans>
+              </LinkButton>
             )}
-            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
-            <Button variant="destructive" onClick={() => setPathToDelete(path)}>
-              Delete
-            </Button>
+            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>
+              <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
+            </LinkButton>
           </Stack>
         );
       },
@@ -91,24 +76,13 @@ export function FilesView({ repo }: FilesViewProps) {
 
   return (
     <Stack grow={1} direction={'column'} gap={2}>
-      <ConfirmModal
-        isOpen={Boolean(pathToDelete?.length) || deleteFileStatus.isLoading}
-        title="Delete file in repository?"
-        body={deleteFileStatus.isLoading ? 'Deleting file...' : pathToDelete}
-        confirmText="Delete"
-        icon={deleteFileStatus.isLoading ? `spinner` : `exclamation-triangle`}
-        onConfirm={() => {
-          deleteFile({
-            name: name,
-            path: pathToDelete!,
-            message: `Deleted from repo test UI`,
-          });
-          setPathToDelete('');
-        }}
-        onDismiss={() => setPathToDelete('')}
-      />
       <Stack gap={2}>
-        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+        <FilterInput
+          placeholder={t('provisioning.files-view.placeholder-search', 'Search')}
+          autoFocus={true}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
       </Stack>
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>

@@ -28,7 +28,12 @@ interface Props {
 
 export const SqlExpr = ({ onChange, refIds, query }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
-  const initialQuery = `select * from ${vars[0]} limit 1`;
+  const initialQuery = `-- Run MySQL-dialect SQL against the tables returned from your data sources.
+-- Data source queries (ie "${vars[0]}") are available as tables and referenced by query-name 
+-- Fields are available as columns, as returned from the data source.
+SELECT *
+FROM ${vars[0]}
+LIMIT 10`;
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });

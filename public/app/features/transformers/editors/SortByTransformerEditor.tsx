@@ -10,6 +10,7 @@ import {
 import { SortByField, SortByTransformerOptions } from '@grafana/data/internal';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -34,17 +35,21 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
       {sorts.map((s, index) => {
         return (
           <InlineFieldRow key={`${s.field}/${index}`}>
-            <InlineField label="Field" labelWidth={10} grow={true}>
+            <InlineField
+              label={t('transformers.sort-by-transformer-editor.label-field', 'Field')}
+              labelWidth={10}
+              grow={true}
+            >
               <Select
                 options={[...fieldNames, ...variables]}
                 value={s.field}
-                placeholder="Select field"
+                placeholder={t('transformers.sort-by-transformer-editor.placeholder-select-field', 'Select field')}
                 onChange={(v) => {
                   onSortChange(index, { ...s, field: v.value! });
                 }}
               />
             </InlineField>
-            <InlineField label="Reverse">
+            <InlineField label={t('transformers.sort-by-transformer-editor.label-reverse', 'Reverse')}>
               <InlineSwitch
                 value={!!s.desc}
                 onChange={() => {

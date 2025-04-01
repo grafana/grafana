@@ -15,6 +15,7 @@ import {
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 import { findField } from 'app/features/dimensions';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -150,7 +151,7 @@ export const ConvertFieldTypeTransformerEditor = ({
               </InlineField>
               {c.destinationType === FieldType.time && (
                 <InlineField
-                  label="Input format"
+                  label={t('transformers.convert-field-type-transformer-editor.label-input-format', 'Input format')}
                   tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
                 >
                   <Input
@@ -164,13 +165,25 @@ export const ConvertFieldTypeTransformerEditor = ({
               {c.destinationType === FieldType.string && (
                 <>
                   {(c.joinWith?.length || targetField?.type === FieldType.other) && (
-                    <InlineField label="Join with" tooltip="Use an explicit separator when joining array values">
+                    <InlineField
+                      label={t('transformers.convert-field-type-transformer-editor.label-join-with', 'Join with')}
+                      tooltip={t(
+                        'transformers.convert-field-type-transformer-editor.tooltip-explicit-separator-joining-array-values',
+                        'Use an explicit separator when joining array values'
+                      )}
+                    >
                       <Input value={c.joinWith} placeholder={'JSON'} onChange={onJoinWithChange(idx)} width={9} />
                     </InlineField>
                   )}
                   {targetField?.type === FieldType.time && (
                     <>
-                      <InlineField label="Date format" tooltip="Specify the output format.">
+                      <InlineField
+                        label={t('transformers.convert-field-type-transformer-editor.label-date-format', 'Date format')}
+                        tooltip={t(
+                          'transformers.convert-field-type-transformer-editor.tooltip-specify-the-output-format',
+                          'Specify the output format.'
+                        )}
+                      >
                         <Input
                           value={c.dateFormat}
                           placeholder={'e.g. YYYY-MM-DD'}
@@ -178,7 +191,16 @@ export const ConvertFieldTypeTransformerEditor = ({
                           width={24}
                         />
                       </InlineField>
-                      <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
+                      <InlineField
+                        label={t(
+                          'transformers.convert-field-type-transformer-editor.label-set-timezone',
+                          'Set timezone'
+                        )}
+                        tooltip={t(
+                          'transformers.convert-field-type-transformer-editor.tooltip-timezone-manually',
+                          'Set the timezone of the date manually'
+                        )}
+                      >
                         <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
                       </InlineField>
                     </>
