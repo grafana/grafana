@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,9 +16,9 @@ import {
   SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Button, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { t, Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
@@ -38,13 +38,14 @@ import {
   getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
-  getDefaultVizPanel,
 } from '../../utils/utils';
+import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
@@ -107,18 +108,29 @@ export class DefaultGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: getGridItemKeyForPanelId(panelId),
-    });
+    // With new edit mode we add panels to the bottom of the grid
+    if (config.featureToggles.dashboardNewLayouts) {
+      const emptySpace = findSpaceForNewPanel(this.state.grid);
+      console.log('found empty space', emptySpace);
+      const newGridItem = new DashboardGridItem({
+        ...emptySpace,
+        body: vizPanel,
+        key: getGridItemKeyForPanelId(panelId),
+      });
 
-    this.state.grid.setState({
-      children: [newGridItem, ...this.state.grid.state.children],
-    });
+      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+    } else {
+      const newGridItem = new DashboardGridItem({
+        height: NEW_PANEL_HEIGHT,
+        width: NEW_PANEL_WIDTH,
+        x: 0,
+        y: 0,
+        body: vizPanel,
+        key: getGridItemKeyForPanelId(panelId),
+      });
+
+      this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
+    }
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
@@ -524,10 +536,8 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
     <div className={styles.container}>
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {isEditing && (
-        <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
-          <Button variant="primary" fill="text" icon="plus" onClick={() => model.addPanel(getDefaultVizPanel())}>
-            <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
-          </Button>
+        <div className={styles.actionsWrapper}>
+          <CanvasGridAddActions layoutManager={model} />
         </div>
       )}
     </div>
@@ -552,8 +562,9 @@ function getStyles(theme: GrafanaTheme2) {
         },
       },
     }),
-    addAction: css({
-      padding: theme.spacing(1, 0),
+    actionsWrapper: css({
+      position: 'relative',
+      top: theme.spacing(5),
     }),
   };
 }
