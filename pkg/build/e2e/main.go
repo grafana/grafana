@@ -43,13 +43,13 @@ func main() {
 		panic(err)
 	}
 
+	videosDir := fmt.Sprintf("/src/e2e/%s/videos", *suite)
 	// *spec.ts.mp4
 	c := RunSuite(d, svc, grafana, yarnCache, *suite)
 	c, err = c.Sync(ctx)
-	videos := c.Directory(fmt.Sprintf("/src/e2e/%s/videos", *suite))
 	if err != nil {
 		// Attempt to export videos first
-		if _, exportErr := videos.Export(ctx, "videos"); exportErr != nil {
+		if _, exportErr := c.Directory(videosDir).Export(ctx, "videos"); exportErr != nil {
 			log.Fatalf("could not export videos dir: %s\nError: %s", exportErr, err)
 		}
 
@@ -64,7 +64,7 @@ func main() {
 	log.Println("exit code:", code)
 
 	// No sync error; export the videos dir
-	if _, err := videos.Export(ctx, "videos"); err != nil {
+	if _, err := c.Directory(videosDir).Export(ctx, "videos"); err != nil {
 		log.Fatalf("error getting videos: %s", err)
 	}
 
