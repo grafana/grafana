@@ -13,7 +13,7 @@ import (
 	"text/template"
 	"time"
 
-	gh "github.com/google/go-github/v69/github"
+	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
