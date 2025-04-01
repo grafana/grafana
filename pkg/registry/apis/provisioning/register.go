@@ -361,12 +361,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		client:          b,
-		getter:          b,
-		jobs:            b.jobs,
-		webhooksEnabled: b.isPublic,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = NewWebhookConnector(b, b, b.jobs, b.isPublic)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
