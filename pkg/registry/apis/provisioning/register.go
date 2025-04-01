@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -1119,7 +1120,11 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 				r.GetName(),
 			)
 		}
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
+		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+			return gogit.Clone(ctx, r, opts, b.secrets)
+		}
+
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

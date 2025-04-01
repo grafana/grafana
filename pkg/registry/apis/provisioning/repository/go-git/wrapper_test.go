@@ -57,14 +57,14 @@ func TestGoGitWrapper(t *testing.T) {
 			},
 		},
 	},
-		GoGitCloneOptions{
-			Root: "testdata/clone", // where things are cloned,
-			// one commit (not 11)
+		repository.CloneOptions{
+			Root:                   "testdata/clone", // where things are cloned,
 			SingleCommitBeforePush: true,
 			CreateIfNotExists:      true,
+			Progress:               os.Stdout,
 		},
 		&dummySecret{},
-		os.Stdout)
+	)
 	require.NoError(t, err)
 
 	tree, err := wrap.ReadTree(ctx, "")
@@ -89,9 +89,10 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	fmt.Printf("push...\n")
-	err = wrap.Push(ctx, GoGitPushOptions{
-		Timeout: 10,
-	}, os.Stdout)
+	err = wrap.Push(ctx, repository.PushOptions{
+		Timeout:  10,
+		Progress: os.Stdout,
+	})
 	require.NoError(t, err)
 }
 

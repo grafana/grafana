@@ -45,30 +45,10 @@ func init() {
 
 var _ repository.Repository = (*GoGitRepo)(nil)
 
-type GoGitCloneOptions struct {
-	Root string // tempdir (when empty, memory??)
-
-	// If the branch does not exist, create it
-	CreateIfNotExists bool
-
-	// Skip intermediate commits and commit all before push
-	SingleCommitBeforePush bool
-
-	// Maximum allowed size for repository clone in bytes (0 means no limit)
-	MaxSize int64
-
-	// Maximum time allowed for clone operation in seconds (0 means no limit)
-	Timeout time.Duration
-}
-
-type GoGitPushOptions struct {
-	Timeout time.Duration
-}
-
 type GoGitRepo struct {
 	config            *provisioning.Repository
-	opts              GoGitCloneOptions
 	decryptedPassword string
+	opts              repository.CloneOptions
 
 	repo *git.Repository
 	tree *git.Worktree
@@ -80,10 +60,9 @@ type GoGitRepo struct {
 func Clone(
 	ctx context.Context,
 	config *provisioning.Repository,
-	opts GoGitCloneOptions,
+	opts repository.CloneOptions,
 	secrets secrets.Service,
-	progress io.Writer, // os.Stdout
-) (*GoGitRepo, error) {
+) (repository.ClonedRepository, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
@@ -110,6 +89,11 @@ func Clone(
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
 
+	progress := opts.Progress
+	if progress == nil {
+		progress = io.Discard
+	}
+
 	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progress)
 	if err != nil {
 		if err := os.RemoveAll(dir); err != nil {
@@ -121,15 +105,15 @@ func Clone(
 
 	return &GoGitRepo{
 		config:            config,
-		opts:              opts,
 		tree:              worktree,
+		opts:              opts,
 		decryptedPassword: string(decrypted),
 		repo:              repo,
 		dir:               dir,
 	}, nil
 }
 
-func clone(ctx context.Context, config *provisioning.Repository, opts GoGitCloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
+func clone(ctx context.Context, config *provisioning.Repository, opts repository.CloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
 	gitcfg := config.Spec.GitHub
 	url := fmt.Sprintf("%s.git", gitcfg.URL)
 
@@ -198,11 +182,16 @@ func mkdirTempClone(root string, config *provisioning.Repository) (string, error
 	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
-// Affer making changes to the worktree, push changes
-func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io.Writer) error {
+// After making changes to the worktree, push changes
+func (g *GoGitRepo) Push(ctx context.Context, opts repository.PushOptions) error {
 	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
 		timeout = opts.Timeout
+	}
+
+	progress := opts.Progress
+	if progress == nil {
+		progress = io.Discard
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)

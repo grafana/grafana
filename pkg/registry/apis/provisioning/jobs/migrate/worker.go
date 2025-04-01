@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -104,11 +103,13 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
 func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	var (
-		err      error
-		buffered *gogit.GoGitRepo
+		err   error
+		clone repository.ClonedRepository
 	)
 
-	if rw.Config().Spec.GitHub != nil {
+	clonable, ok := rw.(repository.ClonableRepository)
+	if ok {
+
 		progress.SetMessage(ctx, "clone "+rw.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
 		go func() {
@@ -118,19 +119,20 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			}
 		}()
 
-		buffered, err = gogit.Clone(ctx, rw.Config(), gogit.GoGitCloneOptions{
+		clone, err = clonable.Clone(ctx, repository.CloneOptions{
 			Root:                   w.clonedir,
 			SingleCommitBeforePush: !options.History,
 			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, w.secrets, writer)
+			Timeout:  10 * time.Minute,
+			Progress: writer,
+		})
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
 
-		rw = buffered // send all writes to the buffered repo
+		rw = clone // send all writes to the buffered repo
 		defer func() {
-			if err := buffered.Remove(ctx); err != nil {
+			if err := clone.Remove(ctx); err != nil {
 				logging.FromContext(ctx).Error("failed to remove cloned repository after migrate", "err", err)
 			}
 		}()
@@ -193,7 +195,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		}
 	}
 
-	if buffered != nil {
+	if clone != nil {
 		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
@@ -203,10 +205,11 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			}
 		}()
 
-		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+		if err := clone.Push(ctx, repository.PushOptions{
 			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, writer); err != nil {
+			Timeout:  10 * time.Minute,
+			Progress: writer,
+		}); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
