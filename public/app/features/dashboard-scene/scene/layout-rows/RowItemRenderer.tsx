@@ -42,12 +42,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
 
+  const isDraggable = !isClone && isEditing;
+
   if (isHidden) {
     return null;
   }
 
   return (
-    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isEditing || isClone}>
+    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
           ref={(ref) => {
@@ -67,28 +69,23 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
             isDropTarget && 'dashboard-drop-target'
           )}
-          onPointerDown={(e) => {
-            // If we selected and are clicking a button inside row header then don't de-select row
-            if (isSelected && e.target instanceof Element && e.target.closest('button')) {
-              // Stop propagation otherwise dashboaed level onPointerDown will de-select row
-              e.stopPropagation();
-              pointerDownPos.current = { x: 0, y: 0 };
-              return;
-            }
-
-            pointerDownPos.current = { x: e.clientX, y: e.clientY };
+          onPointerDown={(evt) => {
+            evt.stopPropagation();
+            pointerDownPos.current = { x: evt.clientX, y: evt.clientY };
           }}
           onPointerUp={(evt) => {
-            evt.stopPropagation();
-
-            if (
-              !isSelectable ||
-              Math.hypot(pointerDownPos.current.x - evt.clientX, pointerDownPos.current.y - evt.clientY) > 10
-            ) {
+            // If we selected and are clicking a button inside row header then don't de-select row
+            if (isSelected && evt.target instanceof Element && evt.target.closest('button')) {
+              // Stop propagation otherwise dashboaed level onPointerDown will de-select row
+              evt.stopPropagation();
               return;
             }
 
-            onSelect?.(evt);
+            if (Math.hypot(pointerDownPos.current.x - evt.clientX, pointerDownPos.current.y - evt.clientY) > 10) {
+              return;
+            }
+
+            setTimeout(() => onSelect?.(evt));
           }}
           {...dragProvided.draggableProps}
         >
@@ -133,6 +130,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                 </span>
               </button>
+              {isDraggable && <Icon name="draggabledots" />}
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
@@ -150,6 +148,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
+      justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
     }),
     rowTitleButton: css({
