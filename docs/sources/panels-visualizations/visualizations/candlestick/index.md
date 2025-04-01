@@ -86,6 +86,8 @@ The data is converted as follows:
 
 ### Candlestick options
 
+The following options let you control which data is displayed and how the visualization appears:
+
 | Option | Description |
 | ------ | ----------- |
 | Mode | **Mode** options let you toggle which dimensions are used for the visualization. Choose from:<ul><li>**Candles** - Uses the open, high, low, and close dimensions.</li><li>**Volume** - Uses only the volume dimension.</li><li>**Both** - The default behavior, which displays both candles and volume values.</li></ul> |
@@ -96,6 +98,8 @@ The data is converted as follows:
 | [Additional fields](#additional-fields) | The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization. |
 
 #### Color strategy
+
+The **Color strategy** option controls how colors are applied to dimensions. Choose from:
 
 - **Since Open** - The default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the _Up_ color is used.
 - **Since Prior Close** - An alternative display method based on where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used.
