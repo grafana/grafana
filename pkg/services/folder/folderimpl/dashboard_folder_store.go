@@ -68,24 +68,6 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	return dashboards.FromDashboard(&dashboard), nil
 }
 
-// If WithFullpath is true it computes also the full path of a folder.
-// The full path is a string that contains the titles of all parent folders separated by a slash.
-// For example, if the folder structure is:
-//
-//	A
-//	└── B
-//	    └── C
-//
-// The full path of C is "A/B/C".
-// The full path of B is "A/B".
-// The full path of A is "A".
-// If a folder contains a slash in its title, it is escaped with a backslash.
-// For example, if the folder structure is:
-//
-//	A
-//	└── B/C
-//
-// The full path of C is "A/B\/C".
 func (d *DashboardFolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
@@ -118,18 +100,16 @@ func (d *DashboardFolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQu
 		}
 		switch {
 		case q.UID != nil:
-			// covered UQE_folder_uid_org_id
 			s.WriteString(" WHERE f0.uid = ? AND f0.org_id = ?")
 			exists, err = sess.SQL(s.String(), q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
-			// main difference from sqlstore.Get is that we use d.id instead of f0.id here
+			// main difference from sqlstore.Get is that we join to use d.id instead of f0.id here
 			s.WriteString(" WHERE d.id = ?")
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			// covered by primary key
+			// nolint:staticcheck
 			exists, err = sess.SQL(s.String(), q.ID).Get(foldr)
 		case q.Title != nil:
-			// covered by UQE_folder_org_id_parent_uid_title
 			s.WriteString(" WHERE f0.title = ? AND f0.org_id = ?")
 			args := []any{*q.Title, q.OrgID}
 			if q.ParentUID != nil {

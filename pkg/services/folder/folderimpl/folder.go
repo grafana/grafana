@@ -305,18 +305,8 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
 
-	var err error
-	switch {
-	case q.UID != nil:
-		if *q.UID == "" {
-			return &folder.GeneralFolder, nil
-		}
-	// nolint:staticcheck
-	case q.ID != nil:
-		// nolint:staticcheck
-		if *q.ID == folder.GeneralFolder.ID {
-			return &folder.GeneralFolder, nil
-		}
+	if (q.UID != nil && *q.UID == "") || (q.ID != nil && *q.ID == folder.GeneralFolder.ID) {
+		return &folder.GeneralFolder, nil
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
