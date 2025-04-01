@@ -86,7 +86,7 @@ export function useGetNameSpacesByDatasourceName(rulesSourceName: string) {
   };
 }
 
-export function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
+function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
   const groups = new Map<string, string[]>();
   promNamespaces.forEach((namespace) => {
     groups.set(
