@@ -36,7 +36,7 @@ import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
-export function buildVizPanel(panel: PanelKind): VizPanel {
+export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
 
   if (config.featureToggles.angularDeprecationUI) {
@@ -56,7 +56,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
@@ -90,7 +90,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
   return new VizPanel(vizPanelState);
 }
 
-export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
 
   if (config.featureToggles.angularDeprecationUI) {
@@ -107,7 +107,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
   titleItems.push(new PanelNotices());
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
     $behaviors: [
       new LibraryPanelBehavior({

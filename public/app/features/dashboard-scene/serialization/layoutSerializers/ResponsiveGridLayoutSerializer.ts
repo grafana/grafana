@@ -69,7 +69,9 @@ export function serializeAutoGridLayout(layoutManager: AutoGridLayoutManager): D
 
 export function deserializeAutoGridLayout(
   layout: DashboardV2Spec['layout'],
-  elements: DashboardV2Spec['elements']
+  elements: DashboardV2Spec['elements'],
+  preload: boolean,
+  panelIdGenerator?: () => number
 ): AutoGridLayoutManager {
   if (layout.kind !== 'AutoGridLayout') {
     throw new Error('Invalid layout kind');
@@ -83,9 +85,13 @@ export function deserializeAutoGridLayout(
     if (!panel) {
       throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
     }
+    let id: number | undefined;
+    if (panelIdGenerator) {
+      id = panelIdGenerator();
+    }
     return new AutoGridItem({
-      key: getGridItemKeyForPanelId(panel.spec.id),
-      body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
+      key: getGridItemKeyForPanelId(id ?? panel.spec.id),
+      body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel, id) : buildVizPanel(panel, id),
       variableName: item.spec.repeat?.value,
       conditionalRendering: getConditionalRendering(item),
     });

@@ -8,14 +8,21 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
+import { createElements, vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { getDefaultVizPanel } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
@@ -114,6 +121,26 @@ export class RowItem
 
   public duplicate(): RowItem {
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  }
+
+  public serialize(): RowsLayoutRowKind {
+    return serializeRow(this);
+  }
+
+  public onCopy() {
+    const panels = this.state.layout.getVizPanels();
+    const scene = this.getRoot();
+    if (!(scene instanceof DashboardScene)) {
+      throw new Error('Scene is not a DashboardScene');
+    }
+    const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
+    const panelsArray = panels.map((vizPanel) => {
+      return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+    });
+    const elements = createElements(panelsArray, scene);
+
+    clearClipboard();
+    store.set(LS_ROW_COPY_KEY, JSON.stringify({ elements, row: this.serialize() }));
   }
 
   public onAddPanel(panel = getDefaultVizPanel()) {

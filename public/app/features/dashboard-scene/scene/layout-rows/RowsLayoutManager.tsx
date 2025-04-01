@@ -13,6 +13,7 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -85,17 +86,26 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return this.clone({ rows: newRows, key: undefined });
   }
 
+  public isEmpty(): boolean {
+    const layout = this.state.rows[0].state.layout;
+    return (
+      this.state.rows.length <= 1 &&
+      (layout instanceof DefaultGridLayoutManager || layout instanceof AutoGridLayoutManager) &&
+      layout.isEmpty()
+    );
+  }
+
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
     this.setState({ rows: [...this.state.rows, newRow] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   }
 
-  public addNewRow(): RowItem {
-    const row = new RowItem({ isNew: true });
-    this.setState({ rows: [...this.state.rows, row] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
-    return row;
+  public addNewRow(row?: RowItem): RowItem {
+    const newRow = row ?? new RowItem();
+    this.setState({ rows: [...this.state.rows, newRow] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    return newRow;
   }
 
   public editModeChanged(isEditing: boolean) {

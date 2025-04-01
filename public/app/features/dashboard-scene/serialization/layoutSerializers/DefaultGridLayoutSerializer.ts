@@ -38,7 +38,8 @@ export function serializeDefaultGridLayout(
 export function deserializeDefaultGridLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
-  preload: boolean
+  preload: boolean,
+  panelIdGenerator?: () => number
 ): DefaultGridLayoutManager {
   if (layout.kind !== 'GridLayout') {
     throw new Error('Invalid layout kind');
@@ -46,7 +47,7 @@ export function deserializeDefaultGridLayout(
   return new DefaultGridLayoutManager({
     grid: new SceneGridLayout({
       isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
-      children: createSceneGridLayoutForItems(layout, elements),
+      children: createSceneGridLayoutForItems(layout, elements, panelIdGenerator),
     }),
   });
 }
@@ -223,7 +224,11 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
   }
 }
 
-function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<string, Element>): SceneGridItemLike[] {
+function createSceneGridLayoutForItems(
+  layout: GridLayoutKind,
+  elements: Record<string, Element>,
+  panelIdGenerator?: () => number
+): SceneGridItemLike[] {
   const gridElements = layout.spec.items;
 
   return gridElements.map((element) => {
@@ -233,12 +238,21 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
       if (!panel) {
         throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
       }
-      return buildGridItem(element.spec, panel);
+
+      let id: number | undefined;
+      if (panelIdGenerator) {
+        id = panelIdGenerator();
+      }
+      return buildGridItem(element.spec, panel, undefined, id);
     } else if (element.kind === 'GridLayoutRow') {
       const children = element.spec.elements.map((gridElement) => {
         const panel = elements[getOriginalKey(gridElement.spec.element.name)];
         if (panel.kind === 'Panel' || panel.kind === 'LibraryPanel') {
-          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
+          let id: number | undefined;
+          if (panelIdGenerator) {
+            id = panelIdGenerator();
+          }
+          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y, id);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
@@ -266,16 +280,17 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
 function buildGridItem(
   gridItem: GridLayoutItemSpec,
   panel: PanelKind | LibraryPanelKind,
-  yOverride?: number
+  yOverride?: number,
+  id?: number
 ): DashboardGridItem {
   let vizPanel: VizPanel;
   if (panel.kind === 'Panel') {
-    vizPanel = buildVizPanel(panel);
+    vizPanel = buildVizPanel(panel, id);
   } else {
-    vizPanel = buildLibraryPanel(panel);
+    vizPanel = buildLibraryPanel(panel, id);
   }
   return new DashboardGridItem({
-    key: `grid-item-${panel.spec.id}`,
+    key: `grid-item-${id ?? panel.spec.id}`,
     x: gridItem.x,
     y: yOverride ?? gridItem.y,
     width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,

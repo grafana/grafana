@@ -14,6 +14,8 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -106,6 +108,15 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.getCurrentTab().getLayout().addPanel(vizPanel);
   }
 
+  public isEmpty(): boolean {
+    const layout = this.state.tabs[0].state.layout;
+    return (
+      this.state.tabs.length <= 1 &&
+      (layout instanceof DefaultGridLayoutManager || layout instanceof AutoGridLayoutManager) &&
+      layout.isEmpty()
+    );
+  }
+
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -121,8 +132,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
-  public addNewTab() {
-    const newTab = new TabItem({ isNew: true });
+  public addNewTab(tab?: TabItem) {
+    const newTab = tab ?? new TabItem({ isNew: true });
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;

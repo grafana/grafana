@@ -76,6 +76,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Duplicate, like clone but with new keys
    */
   duplicate(): DashboardLayoutManager;
+
+  /**
+   * Check if the layout is empty
+   */
+  isEmpty(): boolean;
 }
 
 export interface LayoutManagerSerializer {

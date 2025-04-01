@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Card, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 
@@ -30,13 +30,28 @@ export function DashboardAddPane({ editPane }: Props) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(editPane);
   const [hasCopiedPanel, setHasCopiedPanel] = useState(store.exists(LS_PANEL_COPY_KEY));
+  const [hasCopiedRow, setHasCopiedRow] = useState(store.exists(LS_ROW_COPY_KEY));
+  const [hasCopiedTab, setHasCopiedTab] = useState(store.exists(LS_TAB_COPY_KEY));
 
   useEffect(() => {
+    // TODO: make this a hook
     const unsubscribe = store.subscribe(LS_PANEL_COPY_KEY, () => {
       setHasCopiedPanel(store.exists(LS_PANEL_COPY_KEY));
     });
 
-    return () => unsubscribe();
+    const unsubscribeRow = store.subscribe(LS_ROW_COPY_KEY, () => {
+      setHasCopiedRow(store.exists(LS_ROW_COPY_KEY));
+    });
+
+    const unsubscribeTab = store.subscribe(LS_TAB_COPY_KEY, () => {
+      setHasCopiedTab(store.exists(LS_TAB_COPY_KEY));
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeRow();
+      unsubscribeTab();
+    };
   }, []);
 
   const cards: CardConfig[] = [
@@ -81,6 +96,22 @@ export function DashboardAddPane({ editPane }: Props) {
       title: t('dashboard.edit-pane.add.paste-panel.title', 'Paste a panel from the clipboard'),
       testId: selectors.components.PageToolbar.itemButton('paste_panel'),
       onClick: () => dashboard.pastePanel(),
+    },
+    {
+      hide: !hasCopiedRow,
+      icon: 'clipboard-alt',
+      heading: t('dashboard.edit-pane.add.paste-row.heading', 'Paste row'),
+      title: t('dashboard.edit-pane.add.paste-row.title', 'Paste a row from the clipboard'),
+      testId: selectors.components.PageToolbar.itemButton('paste_row'),
+      onClick: () => dashboard.pasteRow(),
+    },
+    {
+      hide: !hasCopiedTab,
+      icon: 'clipboard-alt',
+      heading: t('dashboard.edit-pane.add.paste-tab.heading', 'Paste tab'),
+      title: t('dashboard.edit-pane.add.paste-tab.title', 'Paste a tab from the clipboard'),
+      testId: selectors.components.PageToolbar.itemButton('paste_tab'),
+      onClick: () => dashboard.pasteTab(),
     },
   ];
 
