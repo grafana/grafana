@@ -98,7 +98,6 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 	clonable, ok := rw.(repository.ClonableRepository)
 	if ok {
-
 		progress.SetMessage(ctx, "clone "+rw.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
 		go func() {
