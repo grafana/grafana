@@ -10,7 +10,7 @@ import { getStyles } from './styles';
 interface RoleMenuOptionProps {
   data: Role;
   onChange: (value: Role) => void;
-  isFiltered?: boolean;
+  useFilteredDisplayName?: boolean;
   isSelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
@@ -19,7 +19,7 @@ interface RoleMenuOptionProps {
 }
 
 export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
-  ({ data, isFocused, isSelected, isFiltered, disabled, mapped, onChange, hideDescription }, ref) => {
+  ({ data, isFocused, isSelected, useFilteredDisplayName, disabled, mapped, onChange, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
@@ -58,7 +58,7 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
           disabled={disabled}
         />
         <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-          <span>{(isFiltered && data.filteredDisplayName) || data.displayName || data.name}</span>
+          <span>{(useFilteredDisplayName && data.filteredDisplayName) || data.displayName || data.name}</span>
           {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
         </div>
         {disabledMessage && (

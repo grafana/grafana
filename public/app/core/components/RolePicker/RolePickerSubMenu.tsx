@@ -12,7 +12,6 @@ import { isNotDelegatable } from './utils';
 
 interface RolePickerSubMenuProps {
   options: Role[];
-  isFiltered?: boolean;
   selectedOptions: Role[];
   disabledOptions?: Role[];
   onSelect: (option: Role) => void;
@@ -22,7 +21,6 @@ interface RolePickerSubMenuProps {
 
 export const RolePickerSubMenu = ({
   options,
-  isFiltered,
   selectedOptions,
   disabledOptions,
   onSelect,
@@ -49,7 +47,7 @@ export const RolePickerSubMenu = ({
           {options.map((option, i) => (
             <RoleMenuOption
               data={option}
-              isFiltered={isFiltered}
+              useFilteredDisplayName={false}
               key={i}
               isSelected={
                 !!(
