@@ -81,15 +81,20 @@ Use the following options to refine your dashboard list visualization.
 
 #### Query
 
-Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted. For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" returns both results. This option is only applied when the **Search** switch is toggled on.
+Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted.
+For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" returns both results.
+This option is only applied when the **Search** switch is toggled on.
 
 #### Folder
 
-Only dashboards from the selected folder are included in search results and displayed in the dashboard list. To include all dashboards in search results, select the top-level **Dashboards** folder. This option is only applied when the **Search** switch is toggled on.
+Only dashboards from the selected folder are included in search results and displayed in the dashboard list.
+To include all dashboards in search results, select the top-level **Dashboards** folder.
+This option is only applied when the **Search** switch is toggled on.
 
 #### Tags
 
-Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive. Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
+Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive.
+Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
 
 When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
 
