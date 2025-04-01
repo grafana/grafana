@@ -1105,6 +1105,12 @@
       "success": "Dasbor {{name}} dipindahkan ke Baru dihapus"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Disalin"
@@ -1119,9 +1125,6 @@
     },
     "custom-value": {
       "description": "Gunakan nilai kustom"
-    },
-    "group": {
-      "undefined": "Tidak ada grup"
     },
     "options": {
       "no-found": "Opsi tidak ditemukan."
@@ -4766,7 +4769,7 @@
       "loading": "Memuat dasbor",
       "noResultsForFilter": "Hasil untuk kueri Anda tidak ditemukan",
       "noResultsForFilterClear": "Hapus pencarian",
-      "noResultsForScopes": "Tidak ada dasbor yang ditemukan untuk cakupan yang dipilih",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Tidak ada cakupan yang dipilih",
       "search": "Cari",
       "toggle": {
@@ -5114,7 +5117,8 @@
       "week-start-label": "Minggu mulai"
     },
     "theme": {
-      "default-label": "Default"
+      "default-label": "Default",
+      "experimental": ""
     },
     "title": "Preferensi"
   },

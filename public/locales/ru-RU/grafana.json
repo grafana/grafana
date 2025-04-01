@@ -1132,6 +1132,12 @@
       "success": "Дашборд {{name}} перемещен в последние удаленные"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Скопировано"
@@ -1146,9 +1152,6 @@
     },
     "custom-value": {
       "description": "Использовать пользовательское значение"
-    },
-    "group": {
-      "undefined": "Нет групп"
     },
     "options": {
       "no-found": "Параметры не найдены."
@@ -4808,7 +4811,7 @@
       "loading": "Загрузка дашбордов",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
       "noResultsForFilterClear": "Очистить поиск",
-      "noResultsForScopes": "Не найдено дашбордов для выбранных областей",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Нет выбранных областей",
       "search": "Поиск",
       "toggle": {
@@ -5156,7 +5159,8 @@
       "week-start-label": "Начало недели"
     },
     "theme": {
-      "default-label": "По умолчанию"
+      "default-label": "По умолчанию",
+      "experimental": ""
     },
     "title": "Настройки"
   },

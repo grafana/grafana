@@ -1105,6 +1105,12 @@
       "success": "ダッシュボード、{{name}}が最近削除されたに移動しました"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "コピー済み"
@@ -1119,9 +1125,6 @@
     },
     "custom-value": {
       "description": "カスタム値の利用"
-    },
-    "group": {
-      "undefined": "グループなし"
     },
     "options": {
       "no-found": "オプションが見つかりません"
@@ -4766,7 +4769,7 @@
       "loading": "ダッシュボードを読み込んでいます",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
       "noResultsForFilterClear": "検索結果をクリア",
-      "noResultsForScopes": "選択したスコープのダッシュボードが見つかりません",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "スコープが選択されていません",
       "search": "検索",
       "toggle": {
@@ -5114,7 +5117,8 @@
       "week-start-label": "週のはじまり"
     },
     "theme": {
-      "default-label": "初期設定"
+      "default-label": "初期設定",
+      "experimental": ""
     },
     "title": "環境設定"
   },

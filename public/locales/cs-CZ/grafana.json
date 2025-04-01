@@ -1132,6 +1132,12 @@
       "success": "Nástěnka {{name}} byla přesunuta do Nedávno odstraněné"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Zkopírováno"
@@ -1146,9 +1152,6 @@
     },
     "custom-value": {
       "description": "Použít vlastní hodnotu"
-    },
-    "group": {
-      "undefined": "Žádná skupina"
     },
     "options": {
       "no-found": "Nebyly nalezeny žádné možnosti."
@@ -4808,7 +4811,7 @@
       "loading": "Načítání nástěnek",
       "noResultsForFilter": "Nebyly nalezeny žádné výsledky pro váš dotaz",
       "noResultsForFilterClear": "Vymazat vyhledávání",
-      "noResultsForScopes": "Nebyly nalezeny žádné nástěnky pro vybrané rozsahy",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nejsou vybrány žádné rozsahy",
       "search": "Hledat",
       "toggle": {
@@ -5156,7 +5159,8 @@
       "week-start-label": "Začátek týdne"
     },
     "theme": {
-      "default-label": "Výchozí"
+      "default-label": "Výchozí",
+      "experimental": ""
     },
     "title": "Preference"
   },

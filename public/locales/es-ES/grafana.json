@@ -1114,6 +1114,12 @@
       "success": "El panel de control {{name}} se ha movido a Eliminados recientemente"
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Usar valor personalizado"
-    },
-    "group": {
-      "undefined": "Sin grupo"
     },
     "options": {
       "no-found": "No se han encontrado opciones."
@@ -4780,7 +4783,7 @@
       "loading": "Cargando paneles de control",
       "noResultsForFilter": "No se han encontrado resultados para tu consulta",
       "noResultsForFilterClear": "Borrar búsqueda",
-      "noResultsForScopes": "No se han encontrado paneles de control para los ámbitos seleccionados",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "No se han seleccionado ámbitos",
       "search": "",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Inicio de la semana"
     },
     "theme": {
-      "default-label": "Por defecto"
+      "default-label": "Por defecto",
+      "experimental": ""
     },
     "title": "Preferencias"
   },

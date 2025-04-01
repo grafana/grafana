@@ -1114,6 +1114,12 @@
       "success": "Painel de controle {{name}} movido para a seção \"Excluídos recentemente\""
     }
   },
+  "carousel": {
+    "close": "",
+    "error": "",
+    "next": "",
+    "previous": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -1128,9 +1134,6 @@
     },
     "custom-value": {
       "description": "Usar valor personalizado"
-    },
-    "group": {
-      "undefined": "Nenhum grupo"
     },
     "options": {
       "no-found": "Nenhuma opção encontrada."
@@ -4780,7 +4783,7 @@
       "loading": "Carregando painéis de controle",
       "noResultsForFilter": "Nenhum resultado encontrado para sua consulta",
       "noResultsForFilterClear": "Limpar pesquisa",
-      "noResultsForScopes": "Nenhum painel de controle encontrado para os escopos selecionados",
+      "noResultsForScopes": "",
       "noResultsNoScopes": "Nenhum escopo selecionado",
       "search": "Pesquisar",
       "toggle": {
@@ -5128,7 +5131,8 @@
       "week-start-label": "Início da semana"
     },
     "theme": {
-      "default-label": "Padrão"
+      "default-label": "Padrão",
+      "experimental": ""
     },
     "title": "Preferências"
   },
