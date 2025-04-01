@@ -6,10 +6,10 @@ on:
 jobs:
   test:
     name: Run UI tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
     timeout-minutes: 50
 
     steps:
