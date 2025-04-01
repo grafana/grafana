@@ -211,6 +211,7 @@ export const RolePicker = ({
             <div onClick={(e) => e.stopPropagation()}>
               <RolePickerMenu
                 options={getOptions()}
+                isFiltered={query.trim() !== ''}
                 basicRole={selectedBuiltInRole}
                 appliedRoles={appliedRoles}
                 onBasicRoleSelect={onBasicRoleSelect}
