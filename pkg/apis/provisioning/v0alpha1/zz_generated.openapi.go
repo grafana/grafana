@@ -724,8 +724,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL > Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
-							Default:     "",
+							Description: "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"migrate", "pr", "pull", "push"},
@@ -733,8 +732,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					},
 					"repository": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The the repository reference (for now also in labels)",
-							Default:     "",
+							Description: "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -764,7 +762,6 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"action", "repository"},
 			},
 		},
 		Dependencies: []string{

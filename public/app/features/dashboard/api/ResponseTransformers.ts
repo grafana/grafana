@@ -204,7 +204,7 @@ export function ensureV1Response(
         isFolder: false,
         uid: dashboard.metadata.name,
         k8s: dashboard.metadata,
-        version: parseInt(dashboard.metadata.resourceVersion, 10),
+        version: dashboard.metadata.generation,
       },
       dashboard: spec,
     };
@@ -256,7 +256,7 @@ export function ensureV1Response(
         },
         fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
         weekStart: spec.timeSettings.weekStart,
-        version: parseInt(dashboard.metadata.resourceVersion, 10),
+        version: dashboard.metadata.generation,
         links: spec.links,
         annotations: { list: annotations },
         panels,
@@ -530,8 +530,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             includeAll: Boolean(v.includeAll),
             ...(v.allValue && { allValue: v.allValue }),
             current: {
-              value: v.current.value,
-              text: v.current.text,
+              value: v.current?.value,
+              text: v.current?.text,
             },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),

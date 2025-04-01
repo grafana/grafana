@@ -12,7 +12,7 @@ import {
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   DashboardV2Spec,
-  ResponsiveGridLayoutItemKind,
+  AutoGridLayoutItemKind,
   RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
@@ -36,8 +36,6 @@ import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
-import { layoutSerializerRegistry } from './layoutSerializerRegistry';
-
 export function buildVizPanel(panel: PanelKind): VizPanel {
   const titleItems: SceneObject[] = [];
 
@@ -59,7 +57,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.spec.id),
-    title: panel.spec.title,
+    title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
@@ -227,14 +225,10 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
 }
 
 export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  const registryItem = layoutSerializerRegistry.get(sceneState.descriptor.kind ?? '');
-  if (!registryItem) {
-    throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
-  }
-  return registryItem.serializer.serialize(sceneState);
+  return sceneState.serialize();
 }
 
-export function getConditionalRendering(item: RowsLayoutRowKind | ResponsiveGridLayoutItemKind): ConditionalRendering {
+export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }

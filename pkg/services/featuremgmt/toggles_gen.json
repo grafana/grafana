@@ -165,7 +165,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStage",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
@@ -180,7 +181,8 @@
       "metadata": {
         "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
         "resourceVersion": "1738251165994",
-        "creationTimestamp": "2025-01-30T15:32:45Z"
+        "creationTimestamp": "2025-01-30T15:32:45Z",
+        "deletionTimestamp": "2025-03-25T16:57:43Z"
       },
       "spec": {
         "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
@@ -433,6 +435,25 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleRecoverDeleted",
+        "resourceVersion": "1741351039908",
+        "creationTimestamp": "2025-03-07T09:25:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-07 12:37:19.908258 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the UI functionality to recover and view deleted alert rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -883,16 +904,17 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1723028568258",
+        "resourceVersion": "1739465911959",
         "creationTimestamp": "2024-06-06T16:53:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-13 16:58:31.95981 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "preview",
-        "codeowner": "@grafana/partner-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
       }
     },
     {
@@ -1677,17 +1699,16 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1741883352541",
+        "resourceVersion": "1743019185639",
         "creationTimestamp": "2025-01-21T23:24:50Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-03-13 16:29:12.541156 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-03-26 19:59:45.639604 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
         "stage": "preview",
         "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
         "requiresRestart": true
       }
     },
@@ -1707,13 +1728,17 @@
     {
       "metadata": {
         "name": "externalCorePlugins",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "resourceVersion": "1741964095787",
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 14:54:55.787758 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -1733,7 +1758,8 @@
       "metadata": {
         "name": "extraLanguages",
         "resourceVersion": "1741626708204",
-        "creationTimestamp": "2025-03-10T17:11:48Z"
+        "creationTimestamp": "2025-03-10T17:11:48Z",
+        "deletionTimestamp": "2025-03-27T09:58:35Z"
       },
       "spec": {
         "description": "Enables additional languages",
@@ -1771,13 +1797,17 @@
     {
       "metadata": {
         "name": "failWrongDSUID",
-        "resourceVersion": "1718721033692",
-        "creationTimestamp": "2024-06-20T10:56:39Z"
+        "resourceVersion": "1741956585324",
+        "creationTimestamp": "2024-06-20T10:56:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 12:49:45.324676 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Throws an error if a datasource has an invalid UIDs",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "description": "Throws an error if a data source has an invalid UIDs",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -2444,6 +2474,30 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "localeFormatPreference",
+        "resourceVersion": "1742397804851",
+        "creationTimestamp": "2025-03-19T15:23:24Z"
+      },
+      "spec": {
+        "description": "Specify the locale so we can show the correct format for numbers and dates",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "localizationForPlugins",
+        "resourceVersion": "1742561476144",
+        "creationTimestamp": "2025-03-21T12:51:16Z"
+      },
+      "spec": {
+        "description": "Enables localization for plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {
@@ -3470,16 +3524,17 @@
     {
       "metadata": {
         "name": "prometheusUsesCombobox",
-        "resourceVersion": "1735845919509",
+        "resourceVersion": "1740072685161",
         "creationTimestamp": "2024-10-23T11:18:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-20 17:31:25.161842198 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use new combobox component for Prometheus query editor",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
+        "description": "Use new **Combobox** component for Prometheus query editor",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     },
     {
@@ -4037,23 +4092,30 @@
     {
       "metadata": {
         "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1736763800062",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "resourceVersion": "1742208227420",
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-17 10:43:47.420599 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
       }
     },
     {
       "metadata": {
         "name": "templateVariablesUsesCombobox",
-        "resourceVersion": "1738141787383",
-        "creationTimestamp": "2025-01-29T09:09:47Z"
+        "resourceVersion": "1740072685161",
+        "creationTimestamp": "2025-01-29T09:09:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 17:31:25.161842198 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use new combobox component for template variables",
+        "description": "Use new **Combobox** component for template variables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
@@ -4337,6 +4399,20 @@
     },
     {
       "metadata": {
+        "name": "useScopesNavigationEndpoint",
+        "resourceVersion": "1743087365203",
+        "creationTimestamp": "2025-03-27T14:56:05Z"
+      },
+      "spec": {
+        "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",
@@ -4383,6 +4459,7 @@
         "name": "userStorageAPI",
         "resourceVersion": "1736438999910",
         "creationTimestamp": "2024-11-12T11:56:41Z",
+        "deletionTimestamp": "2025-03-26T14:33:40Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
         }
@@ -4433,6 +4510,21 @@
         "description": "Placeholder feature flag for internal testing",
         "stage": "experimental",
         "codeowner": "@grafana/hosted-grafana-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "xrayApplicationSignals",
+        "resourceVersion": "1743178672620",
+        "creationTimestamp": "2025-03-28T16:17:52Z"
+      },
+      "spec": {
+        "description": "Support Application Signals queries in the X-Ray datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
