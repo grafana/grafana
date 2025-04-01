@@ -362,7 +362,7 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title: "yyy (folder)",
 				Labels: map[string]string{
-					"region": "west",
+					"region":                           "west",
 					utils.LabelKeyDeprecatedInternalID: "321",
 				},
 			})
