@@ -97,6 +97,12 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		addr += ":443"
 	}
 
+	// If the user has specified an address with no scheme it can still be valid
+	// So we use the raw URL value
+	if u.Host == "" {
+		addr = dsInfo.URL
+	}
+
 	md := metadata.MD{}
 	if dsInfo.DbName != "" {
 		md.Set("database", dsInfo.DbName)
