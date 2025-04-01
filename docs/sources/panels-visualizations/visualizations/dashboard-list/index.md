@@ -71,7 +71,6 @@ Use the following options to refine your dashboard list visualization.
 | Recently viewed | Display recently viewed dashboards in alphabetical order. |
 | Search | Display dashboards returned by search. You must enter at least one value in the search fields, **Query** or **Tags**. Variable interpolation is supported for both fields. For example, `$my_var` or `${my_var}`. |
 | Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred**</li><li>**Recently viewed**</li><li>**Search**</li> |
-| Show folder names | Display the name of the folder where the dashboard is located. |
 | Max items | Set the maximum number of items to list per section. If you enter "10" and enable **Starred** and **Recently viewed** dashboards, the panel displays up to 20 total dashboards, 10 in each section. |
 | [Query](#query) | Search by dashboard name. This option is only applied when the **Search** switch is toggled on. |
 | [Folder](#folder) | Only dashboards from the selected folder are displayed in the dashboard list. This option is only applied when the **Search** switch is toggled on. |
