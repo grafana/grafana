@@ -794,9 +794,11 @@ func TestIsExternallySynced(t *testing.T) {
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "saml").Return(true).Maybe()
 
-			cfg := tc.cfg
+			cfg := setting.NewCfg()
 			if tc.rawCfg != nil {
 				tc.rawCfg(t, cfg)
+			} else {
+				cfg = tc.cfg
 			}
 
 			hs := &HTTPServer{

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -348,13 +349,25 @@ func Test_GetUserByID(t *testing.T) {
 				cfg.JWTAuth.Enabled = tc.authEnabled
 				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
 				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+			case login.SAMLAuthModule:
+				saml, err := cfg.Raw.NewSection("auth.saml")
+				require.NoError(t, err)
+				_, err = saml.NewKey("enabled", fmt.Sprintf("%t", tc.authEnabled))
+				require.NoError(t, err)
+				_, err = saml.NewKey("skip_org_role_sync", fmt.Sprintf("%t", tc.skipOrgRoleSync))
+				require.NoError(t, err)
 			}
 
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "saml").Return(true).Maybe()
+
 			hs := &HTTPServer{
-				Cfg:             cfg,
-				authInfoService: authInfoService,
-				SocialService:   socialService,
-				userService:     userService,
+				Cfg:              cfg,
+				authInfoService:  authInfoService,
+				SocialService:    socialService,
+				userService:      userService,
+				SettingsProvider: setting.ProvideProvider(cfg),
+				License:          license,
 			}
 
 			sc := setupScenarioContext(t, "/api/users/1")
