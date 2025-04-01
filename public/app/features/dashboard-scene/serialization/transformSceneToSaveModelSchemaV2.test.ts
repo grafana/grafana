@@ -939,22 +939,37 @@ describe('validateDashboardSchemaV2', () => {
   });
 
   it('should validate required properties', () => {
-    const requiredProps = ['title', 'timeSettings', 'variables', 'elements', 'annotations', 'layout'] as const;
+    const requiredProps = {
+      title: 'Title is not a string',
+      timeSettings: 'TimeSettings is not an object or is null',
+      variables: 'Variables is not an array',
+      elements: 'Elements is not an object or is null',
+      annotations: 'Annotations is not an array',
+      layout: 'Layout is not an object or is null',
+    };
 
-    for (const prop of requiredProps) {
+    for (const [prop, message] of Object.entries(requiredProps)) {
       const invalidDashboard = { ...validDashboard };
-      delete invalidDashboard[prop];
-      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(`${prop} is required`);
+      delete invalidDashboard[prop as keyof typeof invalidDashboard];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
     }
   });
 
   it('should validate timeSettings required properties', () => {
-    const requiredTimeSettings = ['from', 'to', 'autoRefresh', 'hideTimepicker'] as const;
+    const timeSettingsErrors = {
+      from: 'From is not a string',
+      to: 'To is not a string',
+      autoRefresh: 'AutoRefresh is not a string',
+      hideTimepicker: 'HideTimepicker is not a boolean',
+    } as const;
 
-    for (const prop of requiredTimeSettings) {
-      const invalidDashboard = { ...validDashboard };
-      delete invalidDashboard.timeSettings[prop];
-      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(`${prop} is required in timeSettings`);
+    for (const [prop, message] of Object.entries(timeSettingsErrors)) {
+      const invalidDashboard = {
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings },
+      };
+      delete invalidDashboard.timeSettings[prop as keyof typeof invalidDashboard.timeSettings];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
     }
   });
 
