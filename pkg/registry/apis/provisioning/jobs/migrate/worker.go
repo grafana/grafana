@@ -15,9 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,9 +24,6 @@ import (
 )
 
 type MigrationWorker struct {
-	// Tempdir for repo clones
-	clonedir string
-
 	// temporary... while we still do an import
 	parsers *resources.ParserFactory
 
@@ -40,9 +35,6 @@ type MigrationWorker struct {
 
 	// Direct access to unified storage... use carefully!
 	bulk resource.BulkStoreClient
-
-	// Decrypt secret from config object
-	secrets secrets.Service
 
 	// Delegate the export to the export worker
 	exportWorker *export.ExportWorker
@@ -56,18 +48,14 @@ func NewMigrationWorker(
 	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
-	secrets secrets.Service,
 	exportWorker *export.ExportWorker,
 	syncWorker *sync.SyncWorker,
-	clonedir string,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		clonedir,
 		parsers,
 		storageStatus,
 		legacyMigrator,
 		batch,
-		secrets,
 		exportWorker,
 		syncWorker,
 	}
@@ -84,17 +72,33 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("missing migrate settings")
 	}
 
+	progress.SetTotal(ctx, 10) // will show a progress bar
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
+	}
+	parser, err := w.parsers.GetParser(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("error getting parser: %w", err)
+	}
+
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+		return w.migrateFromLegacy(ctx, rw, parser, *options, progress)
+	}
+
+	return w.migrateFromAPIServer(ctx, rw, parser, *options, progress)
+}
+
+// migrateFromLegacy will export the resources from legacy storage and import them into the target repository
+func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	var (
-		err      error
-		buffered *gogit.GoGitRepo
+		err   error
+		clone repository.ClonedRepository
 	)
 
-	isFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus)
-	progress.SetTotal(ctx, 10) // will show a progress bar
-
-	// TODO: we should fail fast if migration is not possible and not always clone the repository.
-	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage(ctx, "clone "+repo.Config().Spec.GitHub.URL)
+	clonable, ok := rw.(repository.ClonableRepository)
+	if ok {
+		progress.SetMessage(ctx, "clone "+rw.Config().Spec.GitHub.URL)
 		reader, writer := io.Pipe()
 		go func() {
 			scanner := bufio.NewScanner(reader)
@@ -103,41 +107,22 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 			}
 		}()
 
-		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
-			Root:                   w.clonedir,
-			SingleCommitBeforePush: !(options.History && isFromLegacy),
+		clone, err = clonable.Clone(ctx, repository.CloneOptions{
+			PushOnWrites: options.History,
 			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, w.secrets, writer)
+			Timeout:  10 * time.Minute,
+			Progress: writer,
+		})
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
 
-		repo = buffered // send all writes to the buffered repo
+		rw = clone // send all writes to the buffered repo
 		defer func() {
-			if err := buffered.Remove(ctx); err != nil {
+			if err := clone.Remove(ctx); err != nil {
 				logging.FromContext(ctx).Error("failed to remove cloned repository after migrate", "err", err)
 			}
 		}()
-	}
-
-	rw, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
-	}
-
-	if isFromLegacy {
-		return w.migrateFromLegacy(ctx, rw, buffered, *options, progress)
-	}
-
-	return w.migrateFromAPIServer(ctx, rw, *options, progress)
-}
-
-// migrateFromLegacy will export the resources from legacy storage and import them into the target repository
-func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, buffered *gogit.GoGitRepo, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	parser, err := w.parsers.GetParser(ctx, rw)
-	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
 	}
 
 	var userInfo map[string]repository.CommitSignature
@@ -197,7 +182,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		}
 	}
 
-	if buffered != nil {
+	if clone != nil {
 		progress.SetMessage(ctx, "pushing changes")
 		reader, writer := io.Pipe()
 		go func() {
@@ -207,10 +192,11 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			}
 		}()
 
-		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+		if err := clone.Push(ctx, repository.PushOptions{
 			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, writer); err != nil {
+			Timeout:  10 * time.Minute,
+			Progress: writer,
+		}); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
@@ -244,7 +230,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 }
 
 // migrateFromAPIServer will export the resources from unified storage and import them into the target repository
-func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -259,6 +245,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
+
 	progress.SetMessage(ctx, "pulling resources")
 	syncJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -273,11 +260,6 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 	}
 
 	progress.SetMessage(ctx, "removing unprovisioned resources")
-	parser, err := w.parsers.GetParser(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
-	}
-
 	return parser.Clients().ForEachUnmanagedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
@@ -286,7 +268,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 			Action:   repository.FileActionDeleted,
 		}
 
-		if err = client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
 			result.Error = fmt.Errorf("failed to delete folder: %w", err)
 			progress.Record(ctx, result)
 			return result.Error

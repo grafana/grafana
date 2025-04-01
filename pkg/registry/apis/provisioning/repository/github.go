@@ -36,6 +36,8 @@ type githubRepository struct {
 
 	owner string
 	repo  string
+
+	cloneFn CloneFn
 }
 
 var (
@@ -45,6 +47,7 @@ var (
 	_ Writer             = (*githubRepository)(nil)
 	_ Reader             = (*githubRepository)(nil)
 	_ RepositoryWithURLs = (*githubRepository)(nil)
+	_ ClonableRepository = (*githubRepository)(nil)
 )
 
 func NewGitHub(
@@ -53,6 +56,7 @@ func NewGitHub(
 	factory *pgh.Factory,
 	secrets secrets.Service,
 	webhookURL string,
+	cloneFn CloneFn,
 ) (*githubRepository, error) {
 	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
 	if err != nil {
@@ -73,6 +77,7 @@ func NewGitHub(
 		webhookURL: webhookURL,
 		owner:      owner,
 		repo:       repo,
+		cloneFn:    cloneFn,
 	}, nil
 }
 
@@ -894,6 +899,10 @@ func (r *githubRepository) OnDelete(ctx context.Context) error {
 	}
 	ctx, _ = r.logger(ctx, "")
 	return r.deleteWebhook(ctx)
+}
+
+func (r *githubRepository) Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
+	return r.cloneFn(ctx, opts)
 }
 
 func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

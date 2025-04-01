@@ -11,41 +11,29 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
 
 type ExportWorker struct {
-	// Tempdir for repo clones
-	clonedir string
-
 	// required to create clients
 	clientFactory *resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
-	// Decrypt secrets in config
-	secrets secrets.Service
-
 	parsers *resources.ParserFactory
 }
 
 func NewExportWorker(clientFactory *resources.ClientFactory,
 	storageStatus dualwrite.Service,
-	secrets secrets.Service,
-	clonedir string,
 	parsers *resources.ParserFactory,
 ) *ExportWorker {
 	return &ExportWorker{
-		clonedir,
 		clientFactory,
 		storageStatus,
-		secrets,
 		parsers,
 	}
 }
@@ -67,27 +55,25 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	// Use the existing clone if already checked out
-	buffered, ok := repo.(*gogit.GoGitRepo)
-	if !ok && repo.Config().Spec.GitHub != nil {
+	var clone repository.ClonedRepository
+	if clonable, ok := repo.(repository.ClonableRepository); ok {
 		progress.SetMessage(ctx, "clone target")
-		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
-			Root:                   r.clonedir,
-			SingleCommitBeforePush: true,
+		clone, err = clonable.Clone(ctx, repository.CloneOptions{
+			PushOnWrites: false,
 			// TODO: make this configurable
 			Timeout: 10 * time.Minute,
-		}, r.secrets, os.Stdout)
+		})
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
-
-		repo = buffered // send all writes to the buffered repo
 		defer func() {
-			if err := buffered.Remove(ctx); err != nil {
+			if err := clone.Remove(ctx); err != nil {
 				logging.FromContext(ctx).Error("failed to remove cloned repository after export", "err", err)
 			}
 		}()
 
+		// Use the cloned repo for all operations
+		repo = clone
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 
@@ -180,12 +166,13 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 	}
 
-	if buffered != nil {
+	if clone != nil {
 		progress.SetMessage(ctx, "push changes")
-		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
+		if err := clone.Push(ctx, repository.PushOptions{
 			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, os.Stdout); err != nil {
+			Timeout:  10 * time.Minute,
+			Progress: os.Stdout,
+		}); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
