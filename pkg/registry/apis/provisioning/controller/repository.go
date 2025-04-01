@@ -256,6 +256,10 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 	}
 
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
+	if obj.Status.Webhook != nil && obj.Status.Webhook.LastPing == 0 && healthAge > 30*time.Second {
+		return true
+	}
+
 	if obj.Status.Health.Healthy {
 		return healthAge > time.Minute*5 // when healthy, check every 5 mins
 	}
