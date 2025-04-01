@@ -1728,13 +1728,17 @@
     {
       "metadata": {
         "name": "externalCorePlugins",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "resourceVersion": "1741964095787",
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 14:54:55.787758 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -4506,6 +4510,21 @@
         "description": "Placeholder feature flag for internal testing",
         "stage": "experimental",
         "codeowner": "@grafana/hosted-grafana-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "xrayApplicationSignals",
+        "resourceVersion": "1743178672620",
+        "creationTimestamp": "2025-03-28T16:17:52Z"
+      },
+      "spec": {
+        "description": "Support Application Signals queries in the X-Ray datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
