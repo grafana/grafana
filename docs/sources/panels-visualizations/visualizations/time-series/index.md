@@ -211,25 +211,6 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/axis-options-all.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-#### Placement
-
-Select the placement of the y-axis. Choose from the following:
-
-- **Auto** - Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
-- **Left** - Display all y-axes on the left side.
-- **Right** - Display all y-axes on the right side.
-- **Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
-
-#### Soft min and soft max
-
-Set a **Soft min** or **soft max** option for better control of y-axis limits. By default, Grafana sets the range for the y-axis automatically based on the dataset.
-
-**Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
-
-To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
-
-![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
-
 ### Graph styles options
 
 The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
