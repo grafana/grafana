@@ -118,8 +118,11 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		client := s.client.GetClient()
-		// Update the status if init finalized, and if it's a ping or no previous ping was recorded
-		if client != nil && repo.Config().Status.Webhook != nil && (rsp.IsPing || repo.Config().Status.Webhook.LastPing == 0) {
+		lastPing := time.UnixMilli(repo.Config().Status.Webhook.LastPing)
+		pingAge := time.Since(lastPing)
+
+		// Update the status if init finalized, and if it's a ping or no ping in a while
+		if client != nil && repo.Config().Status.Webhook != nil && (rsp.IsPing || pingAge > time.Minute) {
 			patchOp := map[string]interface{}{
 				"op":    "replace",
 				"path":  "/status/webhook/lastPing",
