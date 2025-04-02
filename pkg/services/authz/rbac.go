@@ -47,6 +47,7 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	zanzanaClient zanzana.Client,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -55,14 +56,6 @@ func ProvideAuthZClient(
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
-	}
-
-	var zanzanaClient zanzana.Client
-	if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		zanzanaClient, err = ProvideZanzana(cfg, db, tracer, features)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create zanzana client: %w", err)
-		}
 	}
 
 	switch authCfg.mode {

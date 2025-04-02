@@ -3,11 +3,11 @@ package client
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
-
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,13 +22,15 @@ type Client struct {
 	logger   log.Logger
 	authz    authzv1.AuthzServiceClient
 	authzext authzextv1.AuthzExtentionServiceClient
+	metrics  *metrics
 }
 
-func New(cc grpc.ClientConnInterface) (*Client, error) {
+func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error) {
 	c := &Client{
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
 		logger:   log.New("zanzana-client"),
+		metrics:  newMetrics(reg),
 	}
 
 	return c, nil
