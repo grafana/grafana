@@ -269,6 +269,10 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			Path: strings.TrimLeft(path[rootlen:], "/"),
 			Size: info.Size(),
 		}
+		if entry.Path == "" {
+			return nil // skip the root file
+		}
+
 		if !info.IsDir() {
 			entry.Blob = true
 			entry.Hash, _, err = r.calculateFileHash(path)
