@@ -156,9 +156,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     critical: '#B877D9',
     error: theme.colors.error.text,
     warning: '#FBAD37',
-    debug: '#6CCF8E',
+    debug: '#6E9FFF',
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: '#6CCF8E',
     metadata: theme.colors.text.primary,
     parsedField: theme.colors.text.primary,
   };
