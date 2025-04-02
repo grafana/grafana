@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -708,7 +707,6 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				Labels: []*resource.Requirement{},
 			},
 			Query:  "*test*",
-			Fields: dashboardsearch.IncludeFields,
 			Limit:  folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
