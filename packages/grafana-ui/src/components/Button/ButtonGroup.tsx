@@ -7,13 +7,19 @@ import { useStyles2 } from '../../themes';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;
+  /**
+   * Set to true if button group wraps solid colored buttons
+   * Since solid buttons have transparent borders they need a 1px gap to get
+   * a visible separator line.
+   */
+  solid?: boolean;
 }
 
-export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ className, children, ...rest }, ref) => {
+export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ className, children, solid, ...rest }, ref) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div ref={ref} className={cx('button-group', styles.wrapper, className)} {...rest}>
+    <div ref={ref} className={cx('button-group', styles.wrapper, solid && styles.solid, className)} {...rest}>
       {children}
     </div>
   );
@@ -35,5 +41,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderBottomRightRadius: 0,
       borderRightWidth: 0,
     },
+  }),
+  solid: css({
+    gap: 1,
   }),
 });
