@@ -18,7 +18,12 @@ interface DatasourceModelPreviewProps {
 }
 
 function DatasourceModelPreview({ model, dataSource: datasource }: DatasourceModelPreviewProps): React.ReactNode {
-  if (datasource.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
+  if (
+    (datasource.type === DataSourceType.Prometheus ||
+      datasource.type === DataSourceType.AmazonPrometheus ||
+      datasource.type === DataSourceType.AzurePrometheus) &&
+    isPromOrLokiQuery(model)
+  ) {
     return <PrometheusQueryPreview query={model.expr} />;
   }
 

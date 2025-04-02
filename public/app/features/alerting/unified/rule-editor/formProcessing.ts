@@ -50,7 +50,9 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
       // data query
       const defaultToInstant =
         query.model.datasource?.type === DataSourceType.Loki ||
-        query.model.datasource?.type === DataSourceType.Prometheus;
+        query.model.datasource?.type === DataSourceType.Prometheus ||
+        query.model.datasource?.type === DataSourceType.AmazonPrometheus ||
+        query.model.datasource?.type === DataSourceType.AzurePrometheus;
       const isInstant =
         'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
       return {
