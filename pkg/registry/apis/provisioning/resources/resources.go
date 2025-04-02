@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -20,9 +21,8 @@ import (
 var ErrAlreadyInRepository = errors.New("already in repository")
 
 type WriteOptions struct {
-	Identifier bool
-	Path       string
-	Ref        string
+	Path string
+	Ref  string
 }
 
 type resourceID struct {
@@ -102,8 +102,12 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if options.Identifier {
-		meta.SetName(name) // keep the identifier in the metadata
+	// Always write the identifier
+	meta.SetName(name)
+
+	if name == "" {
+		return "", field.Required(field.NewPath("name", "metadata", "name"),
+			"An explicit name must be saved in the resource")
 	}
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
