@@ -1080,6 +1080,10 @@ export interface FeatureToggles {
   */
   xrayApplicationSignals?: boolean;
   /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
+  /**
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;

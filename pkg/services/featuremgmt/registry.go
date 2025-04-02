@@ -1859,6 +1859,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:         "multiTenantTempCredentials",
+			Description:  "use multi-tenant path for awsTempCredentials",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        awsDatasourcesSquad,
+		},
+		{
 			Name:         "localizationForPlugins",
 			Description:  "Enables localization for plugins",
 			Stage:        FeatureStageExperimental,
