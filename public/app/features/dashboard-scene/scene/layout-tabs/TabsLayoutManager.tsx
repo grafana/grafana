@@ -166,56 +166,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
   }
 
-  public addTabBefore(tab: TabItem): TabItem {
-    const newTab = new TabItem({ isNew: true });
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab), 0, newTab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
-
-    return newTab;
-  }
-
-  public addTabAfter(tab: TabItem): TabItem {
-    const newTab = new TabItem({ isNew: true });
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
-
-    return newTab;
-  }
-
-  public moveTabLeft(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    if (currentIndex <= 0) {
-      return;
-    }
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex - 1, 0, tab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex - 1 });
+  public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
+    const tabs = [...this.state.tabs];
+    const [removed] = tabs.splice(fromIndex, 1);
+    tabs.splice(toIndex, 0, removed);
+    this.setState({ tabs, currentTabIndex: toIndex });
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
-  public moveTabRight(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    if (currentIndex >= this.state.tabs.length - 1) {
+  public forceSelectTab(tabKey: string) {
+    const tabIndex = this.state.tabs.findIndex((tab) => tab.state.key === tabKey);
+    const tab = this.state.tabs[tabIndex];
+
+    if (!tab) {
       return;
     }
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex + 1, 0, tab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
-  }
 
-  public isFirstTab(tab: TabItem): boolean {
-    return this.state.tabs[0] === tab;
-  }
-
-  public isLastTab(tab: TabItem): boolean {
-    return this.state.tabs[this.state.tabs.length - 1] === tab;
+    const editPane = getDashboardSceneFor(this).state.editPane;
+    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
+    this.setState({ currentTabIndex: tabIndex });
   }
 
   public static createEmpty(): TabsLayoutManager {
@@ -238,9 +207,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return new TabsLayoutManager({ tabs });
   }
 
-  getUrlKey(): string {
+  public getUrlKey(): string {
     let parent = this.parent;
-    // Panel edit uses tab key already so we are using dtab here to not conflict
+    // Panel edit uses `tab` key already so we are using `dtab` here to not conflict
     let key = 'dtab';
 
     while (parent) {
