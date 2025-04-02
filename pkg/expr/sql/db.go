@@ -5,6 +5,7 @@ package sql
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -14,7 +15,9 @@ import (
 )
 
 // DB is a database that can execute SQL queries against a set of Frames.
-type DB struct{}
+type DB struct {
+	Now time.Time
+}
 
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
 type GoMySQLServerError struct {
@@ -81,6 +84,17 @@ func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames
 	engine := sqle.New(a, &sqle.Config{
 		IsReadOnly: true,
 	})
+
+	engine.Analyzer.Catalog.RegisterFunction(mCtx,
+		mysql.FunctionN{
+			Name: "time_from",
+			Fn:   NewTimeFromFunction(),
+		},
+		mysql.FunctionN{
+			Name: "time_to",
+			Fn:   NewTimeToFunction(),
+		},
+	)
 
 	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {

@@ -30,10 +30,11 @@ type SQLCommand struct {
 	varsToQuery []string
 	refID       string
 	limit       int64
+	TimeRange   TimeRange
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
+func NewSQLCommand(refID, rawSQL string, tr TimeRange, limit int64) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, ErrMissingSQLQuery
 	}
@@ -62,6 +63,7 @@ func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
 		varsToQuery: tables,
 		refID:       refID,
 		limit:       limit,
+		TimeRange:   tr,
 	}, nil
 }
 
@@ -83,7 +85,7 @@ func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	return NewSQLCommand(rn.RefID, expression, limit)
+	return NewSQLCommand(rn.RefID, expression, rn.TimeRange, limit)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -121,6 +123,12 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+
+	// Include time in context for our custom functions
+	abs := gr.TimeRange.AbsoluteTime(now)
+	from := abs.From
+	to := abs.To
+	ctx = sql.WithTimeRange(ctx, from, to)
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
