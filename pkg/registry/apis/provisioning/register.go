@@ -488,48 +488,6 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
 
-	// For *create* we do a synchronous test... this can be expensive!
-	// For *update* we only do a test if the generation has changed
-	var shouldTest bool
-	switch a.GetOperation() {
-	case admission.Delete, admission.Connect:
-	case admission.Create:
-		shouldTest = true
-	case admission.Update:
-		oldRepo, err := b.asRepository(ctx, a.GetObject())
-		if err != nil {
-			return fmt.Errorf("get old repository for update: %w", err)
-		}
-		oldCfg := oldRepo.Config()
-
-		shouldTest = cfg.Generation != oldCfg.Generation
-	}
-
-	logger := logging.FromContext(ctx).With("name", a.GetName()).With("namespace", a.GetNamespace())
-	if !shouldTest {
-		logger.Debug("skipping repository test")
-		return nil
-	}
-
-	logger.Debug("running repository test")
-	testResults, err := repository.TestRepository(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("repository test failed: %w", err)
-	}
-
-	if testResults.Success {
-		return nil
-	}
-
-	for _, err := range testResults.Errors {
-		list = append(list, field.Invalid(field.NewPath("spec"),
-			"Repository test failed", err))
-	}
-
-	if len(list) > 0 {
-		return invalidRepositoryError(a.GetName(), list)
-	}
-
 	return nil
 }
 
