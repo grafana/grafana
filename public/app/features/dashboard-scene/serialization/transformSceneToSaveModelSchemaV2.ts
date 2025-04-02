@@ -18,8 +18,8 @@ import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
   PanelKind,
   PanelQueryKind,
@@ -44,7 +44,7 @@ import {
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';

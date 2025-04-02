@@ -4,7 +4,7 @@ import {
   ConditionalRenderingVariableKind,
   ConditionalRenderingDataKind,
   ConditionalRenderingTimeIntervalKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';

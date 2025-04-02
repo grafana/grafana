@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingTimeIntervalKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { ConditionalRenderingTimeIntervalKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Field, Input, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 

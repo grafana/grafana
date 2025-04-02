@@ -1,6 +1,6 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
 import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutKind,
   GridLayoutRowKind,
@@ -9,7 +9,7 @@ import {
   GridLayoutItemSpec,
   PanelKind,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { contextSrv } from 'app/core/core';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';

@@ -1,8 +1,8 @@
 import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   defaultAutoGridLayoutSpec,
   AutoGridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
