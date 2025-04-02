@@ -99,7 +99,7 @@ To change the color, use the standard [color scheme](ref:color-scheme) field opt
 Set whether to show data points as lines or bars. Choose from the following:
 
 - **Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.
-- **Always** - Show the points regardless of how dense the data set is.
+- **Always** - Show the points regardless of how dense the dataset is.
 - **Never** - Don't show points.
 
 #### Stack series
