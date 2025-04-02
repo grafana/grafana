@@ -482,9 +482,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		list = append(list, targetError)
 	}
 
+	hasGenerationChanged := cfg.Generation != oldCfg.Generation
+
 	// For *create* we do a synchronous test... this can be expensive!
+	// For *update* we only do a test if the generation has changed
 	// it is the same as a full healthcheck, so should not be run on every update
-	if len(list) == 0 && a.GetOperation() == admission.Create {
+	if len(list) == 0 && (a.GetOperation() == admission.Create || (a.GetOperation() == admission.Update && hasGenerationChanged)) {
 		testResults, err := repository.TestRepository(ctx, repo)
 		if err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec"),
