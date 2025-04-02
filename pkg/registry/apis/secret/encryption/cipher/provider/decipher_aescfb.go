@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
+const cfbSaltLength = 8
+
 var _ cipher.Decrypter = aesCfbDecipher{}
 
 type aesCfbDecipher struct{}
@@ -21,13 +23,13 @@ func (aesCfbDecipher) Decrypt(_ context.Context, payload []byte, secret string) 
 	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
 	//    +-----------------------+
 
-	if len(payload) < cipher.SaltLength+aes.BlockSize {
+	if len(payload) < cfbSaltLength+aes.BlockSize {
 		return nil, ErrPayloadTooShort
 	}
 
-	salt := payload[:cipher.SaltLength]
+	salt := payload[:cfbSaltLength]
 
-	key, err := cipher.KeyToBytes([]byte(secret), salt)
+	key, err := aes256CipherKey(secret, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +39,7 @@ func (aesCfbDecipher) Decrypt(_ context.Context, payload []byte, secret string) 
 		return nil, err
 	}
 
-	iv, payload := payload[cipher.SaltLength:][:aes.BlockSize], payload[cipher.SaltLength+aes.BlockSize:]
+	iv, payload := payload[cfbSaltLength:][:aes.BlockSize], payload[cfbSaltLength+aes.BlockSize:]
 	payloadDst := make([]byte, len(payload))
 
 	//nolint:staticcheck // We need to support CFB _decryption_, though we don't support it for future encryption.

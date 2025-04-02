@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
+const gcmSaltLength = 8
+
 var (
 	_ cipher.Encrypter = (*aesGcmCipher)(nil)
 	_ cipher.Decrypter = (*aesGcmCipher)(nil)
@@ -33,7 +35,7 @@ func (c aesGcmCipher) Encrypt(_ context.Context, payload []byte, secret string) 
 		return nil, err
 	}
 
-	key, err := cipher.KeyToBytes([]byte(secret), salt)
+	key, err := aes256CipherKey(secret, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +77,14 @@ func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) 
 	// |  +---------v-------------+  |
 	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
 	//    +-----------------------+
-	if len(payload) < cipher.SaltLength {
+	if len(payload) < gcmSaltLength {
 		return nil, ErrPayloadTooShort
 	}
 
-	salt, payload := payload[:cipher.SaltLength], payload[cipher.SaltLength:]
+	salt, payload := payload[:gcmSaltLength], payload[gcmSaltLength:]
 	// Can't get nonce until we get a size from the AEAD interface.
 
-	key, err := cipher.KeyToBytes([]byte(secret), salt)
+	key, err := aes256CipherKey(secret, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +105,7 @@ func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) 
 }
 
 func (c aesGcmCipher) generateSalt() ([]byte, error) {
-	salt := make([]byte, cipher.SaltLength)
+	salt := make([]byte, gcmSaltLength)
 	if _, err := io.ReadFull(c.randReader, salt); err != nil {
 		return nil, err
 	}

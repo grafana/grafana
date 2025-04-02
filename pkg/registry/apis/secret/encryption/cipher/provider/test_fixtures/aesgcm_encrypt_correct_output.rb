@@ -12,7 +12,7 @@ nonce = "123456789012"
 secret = "secret here"
 plaintext = "grafana unit test"
 
-# reimpl of cipher.KeyToBytes
+# reimpl of aes256CipherKey
 # the key is always the same value given the inputs
 iterations = 10_000
 len = 32
