@@ -37,6 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.200.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.15.13 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.25.13 // @grafana/aws-datasources
+	github.com/aws/smithy-go v1.22.2 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
@@ -233,8 +234,6 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
 )
-
-require github.com/aws/smithy-go v1.22.2 // @grafana/aws-datasources
 
 require (
 	cel.dev/expr v0.19.1 // indirect
