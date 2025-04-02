@@ -563,6 +563,11 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			Type:           rule.Type().String(),
 			LastEvaluation: status.EvaluationTimestamp,
 			EvaluationTime: status.EvaluationDuration.Seconds(),
+			IsPaused:       rule.IsPaused,
+		}
+
+		if len(rule.NotificationSettings) > 0 {
+			newRule.NotificationSettings = (*apimodels.AlertRuleNotificationSettings)(&rule.NotificationSettings[0])
 		}
 
 		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
