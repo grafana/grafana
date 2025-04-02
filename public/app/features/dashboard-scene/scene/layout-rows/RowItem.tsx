@@ -59,7 +59,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
-  public containerRef = React.createRef<HTMLDivElement>();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -107,7 +107,7 @@ export class RowItem
   }
 
   public onDelete() {
-    this._getParentLayout().removeRow(this);
+    this.getParentLayout().removeRow(this);
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
@@ -115,7 +115,7 @@ export class RowItem
   }
 
   public onDuplicate() {
-    this._getParentLayout().duplicateRow(this);
+    this.getParentLayout().duplicateRow(this);
   }
 
   public duplicate(): RowItem {
@@ -191,7 +191,7 @@ export class RowItem
     this.setState({ collapse: !this.state.collapse });
   }
 
-  private _getParentLayout(): RowsLayoutManager {
+  public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
   }
 
