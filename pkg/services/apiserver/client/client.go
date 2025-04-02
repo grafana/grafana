@@ -29,8 +29,8 @@ import (
 type K8sHandler interface {
 	GetNamespace(orgID int64) string
 	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)
-	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
-	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
+	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error)
+	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error)
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, orgID int64) error
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
@@ -85,7 +85,9 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options 
 	return client.Get(newCtx, name, options, subresource...)
 }
 
-func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
+func (h *k8sHandler) Create(
+	ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions,
+) (*unstructured.Unstructured, error) {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := h.getK8sContext(ctx)
@@ -100,10 +102,12 @@ func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured,
 		return nil, err
 	}
 
-	return client.Create(newCtx, obj, v1.CreateOptions{})
+	return client.Create(newCtx, obj, opts)
 }
 
-func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
+func (h *k8sHandler) Update(
+	ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions,
+) (*unstructured.Unstructured, error) {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := h.getK8sContext(ctx)
@@ -118,7 +122,7 @@ func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured,
 		return nil, err
 	}
 
-	return client.Update(newCtx, obj, v1.UpdateOptions{})
+	return client.Update(newCtx, obj, opts)
 }
 
 func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error {

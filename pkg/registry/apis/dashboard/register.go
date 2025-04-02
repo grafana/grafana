@@ -1,25 +1,18 @@
 package dashboard
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"maps"
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/kube-openapi/pkg/common"
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	claims "github.com/grafana/authlib/types"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
@@ -145,42 +138,6 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
-// Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
-func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	op := a.GetOperation()
-	if op == admission.Delete {
-		obj := a.GetOperationOptions()
-		deleteOptions, ok := obj.(*metav1.DeleteOptions)
-		if !ok {
-			return fmt.Errorf("expected v1.DeleteOptions")
-		}
-
-		if deleteOptions.GracePeriodSeconds == nil || *deleteOptions.GracePeriodSeconds != 0 {
-			nsInfo, err := claims.ParseNamespace(a.GetNamespace())
-			if err != nil {
-				return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-			}
-
-			provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
-			if err != nil {
-				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-					errors.Is(err, dashboards.ErrDashboardNotFound) ||
-					apierrors.IsNotFound(err) {
-					return nil
-				}
-
-				return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
-			}
-
-			if provisioningData != nil {
-				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
-			}
-		}
-	}
-
-	return nil
-}
-
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
 		EnableFolderSupport:         true,
@@ -303,8 +260,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
+	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref)
 		maps.Copy(defs, v1alpha1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, v2alpha1.GetOpenAPIDefinitions(ref))
