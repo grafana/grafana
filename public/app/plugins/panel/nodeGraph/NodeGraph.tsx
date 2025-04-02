@@ -115,7 +115,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // interactions will be without any lag for most users.
 const defaultNodeCountLimit = 200;
 
-const layeredLayoutNodeWarningThreshold = 500;
+export const layeredLayoutThreshold = 500;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -248,7 +248,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
         </div>
       ) : null}
 
-      {!layoutAlgorithm && (
+      {!panelId && (
         <div className={styles.layoutAlgorithm}>
           <RadioButtonGroup
             size="sm"
@@ -341,24 +341,23 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
       {hiddenNodesCount > 0 && (
         <div
           className={styles.alert}
-          style={{ top: layoutAlgorithm ? '0px' : '40px' }}
+          style={{ top: panelId ? '0px' : '40px' }} // panelId is undefined in Explore
           aria-label={'Nodes hidden warning'}
         >
           <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
         </div>
       )}
 
-      {config.layoutAlgorithm === LayoutAlgorithm.Layered &&
-        processed.nodes.length > layeredLayoutNodeWarningThreshold && (
-          <div
-            className={styles.alert}
-            style={{ top: layoutAlgorithm ? '30px' : '70px' }}
-            aria-label={'Layered layout performance warning'}
-          >
-            <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {processed.nodes.length}{' '}
-            nodes.
-          </div>
-        )}
+      {config.layoutAlgorithm === LayoutAlgorithm.Layered && processed.nodes.length > layeredLayoutThreshold && (
+        <div
+          className={styles.alert}
+          style={{ top: panelId ? '30px' : '70px' }}
+          aria-label={'Layered layout performance warning'}
+        >
+          <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {processed.nodes.length}{' '}
+          nodes.
+        </div>
+      )}
 
       {MenuComponent}
     </div>
