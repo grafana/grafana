@@ -1478,6 +1478,9 @@
           "value": "Value"
         }
       },
+      "overlay": {
+        "tooltip": "Element is hidden due to conditional rendering."
+      },
       "root": {
         "info": "Set rules to control {{type}} visibility by matching any or all rules.",
         "title": "Show / hide rules"
