@@ -112,6 +112,9 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	}
 
 	u, err := ParseURL(dsInfo.URL)
+	if err != nil {
+		return nil, err
+	}
 
 	md := metadata.MD{}
 	if dsInfo.DbName != "" {
