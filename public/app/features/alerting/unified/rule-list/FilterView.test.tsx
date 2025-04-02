@@ -44,10 +44,10 @@ describe('RuleList - FilterView', () => {
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(2);
+    expect(await screen.findAllByRole('treeitem')).toHaveLength(100);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(4);
+    expect(await screen.findAllByRole('treeitem')).toHaveLength(200);
   });
 
   it('should filter results by group and rule name ', async () => {
