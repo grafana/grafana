@@ -24,6 +24,7 @@ ButtonGroup.displayName = 'ButtonGroup';
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
+    gap: 1,
 
     '> .button-group:not(:first-child) > button, > button:not(:first-child)': {
       borderTopLeftRadius: 0,
