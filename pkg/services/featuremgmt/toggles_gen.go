@@ -987,6 +987,10 @@ const (
 	// Support Application Signals queries in the X-Ray datasource
 	FlagXrayApplicationSignals = "xrayApplicationSignals"
 
+	// FlagMultiTenantTempCredentials
+	// use multi-tenant path for awsTempCredentials
+	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
+
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
