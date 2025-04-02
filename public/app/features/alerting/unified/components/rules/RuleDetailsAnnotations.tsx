@@ -5,10 +5,20 @@ import { useStyles2 } from '@grafana/ui';
 
 import { useAnnotationLinks } from '../../utils/annotations';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
+import { DetailsField } from '../DetailsField';
 
 type Props = {
   annotations: Array<[string, string]>;
 };
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
+const RcaAnnotionRow: React.FC = () => {
+  return (
+    <DetailsField label="RCA Annotations" horizontal={true}>
+    on
+    </DetailsField>
+  );
+}
 
 export function RuleDetailsAnnotations(props: Props): JSX.Element | null {
   const styles = useStyles2(getStyles);
@@ -22,8 +32,8 @@ export function RuleDetailsAnnotations(props: Props): JSX.Element | null {
 
   return (
     <div className={styles.annotations}>
-      {annotations.map(([key, value]) => (
-        <AnnotationDetailsField key={key} annotationKey={key} value={value} valueLink={annotationLinks.get(key)} />
+      {annotations.map(([key, value]) => ( // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
+          key === '__logzioAlertRCA__' ? <RcaAnnotionRow key={key} /> : (<AnnotationDetailsField key={key} annotationKey={key} value={value} valueLink={annotationLinks.get(key)} />)
       ))}
     </div>
   );

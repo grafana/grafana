@@ -19,6 +19,7 @@ export enum Annotation {
   alertId = '__alertId__',
   dashboardUID = '__dashboardUid__',
   panelID = '__panelId__',
+  logzioRCA = '__logzioRCA__', // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
 }
 
 export const annotationLabels: Record<Annotation, string> = {
@@ -28,6 +29,7 @@ export const annotationLabels: Record<Annotation, string> = {
   [Annotation.dashboardUID]: 'Dashboard UID',
   [Annotation.panelID]: 'Panel ID',
   [Annotation.alertId]: 'Alert ID',
+  [Annotation.logzioRCA]: 'AI Agent Analysis',
 };
 
 export const annotationDescriptions: Record<Annotation, string> = {
@@ -37,10 +39,12 @@ export const annotationDescriptions: Record<Annotation, string> = {
   [Annotation.dashboardUID]: '',
   [Annotation.panelID]: '',
   [Annotation.alertId]: '',
+  [Annotation.logzioRCA]: '',
 };
 
 export const defaultAnnotations = [
   { key: Annotation.summary, value: '' },
   { key: Annotation.description, value: '' },
   { key: Annotation.runbookURL, value: '' },
+  { key: Annotation.logzioRCA, value: 'off' }, // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
 ];

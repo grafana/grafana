@@ -5,7 +5,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Input, Text, TextArea, useStyles2, Stack, Checkbox } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
@@ -40,6 +40,21 @@ const AnnotationsStep = () => {
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
   const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
+  const handleChangeRCA = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.checked ? 'on' : '';
+    const updatedAnnotations = produce(annotations, (draft) => {
+      const rcaAnnotation = draft.find((a) => a.key === Annotation.logzioRCA);
+      if (rcaAnnotation) {
+        rcaAnnotation.value = value;
+      } else {
+        draft.push({ key: Annotation.logzioRCA, value });
+      }
+    });
+    setValue('annotations', updatedAnnotations);
+  }
+// LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
 
   useEffect(() => {
     if (isDashboardFetching || !dashboardModel) {
@@ -113,6 +128,10 @@ const AnnotationsStep = () => {
     <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
+          const isRcaEnabled = (window as any).logzio.configs.featureFlags.AlertsRca;
+          if (annotationField.key === Annotation.logzioRCA && !isRcaEnabled) {
+            return null;
+          }
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
           // eslint-disable-next-line
@@ -147,6 +166,13 @@ const AnnotationsStep = () => {
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
                     >
+                      {annotationField.key === Annotation.logzioRCA ? ( // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
+                        <Checkbox
+                          data-testid={`annotation-value-${index}`}
+                          {...register(`annotations.${index}.value`, {onChange: handleChangeRCA })}
+                          label="Activate Automatic AI RCA"
+                        />
+                      ) : (
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
@@ -159,6 +185,7 @@ const AnnotationsStep = () => {
                         }
                         defaultValue={annotationField.value}
                       />
+                      )}
                     </Field>
                     {!annotationLabels[annotation] && (
                       <Button
