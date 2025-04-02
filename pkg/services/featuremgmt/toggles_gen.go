@@ -500,7 +500,7 @@ const (
 	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRulesWithinGroups
-	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
