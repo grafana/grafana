@@ -131,10 +131,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositoryExport: build.mutation<CreateRepositoryExportApiResponse, CreateRepositoryExportApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/export`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['Repository'],
-      }),
       getRepositoryFiles: build.query<GetRepositoryFilesApiResponse, GetRepositoryFilesApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/`,
@@ -218,15 +214,23 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateApiResponse, CreateRepositoryMigrateApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
+      getRepositoryJobs: build.query<GetRepositoryJobsApiResponse, GetRepositoryJobsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs` }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryJobs: build.mutation<CreateRepositoryJobsApiResponse, CreateRepositoryJobsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs`, method: 'POST', body: queryArg.jobSpec }),
         invalidatesTags: ['Repository'],
+      }),
+      getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
         GetRepositoryRenderWithPathApiResponse,
         GetRepositoryRenderWithPathApiArg
       >({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.guid}` }),
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
@@ -254,10 +258,6 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['Repository'],
-      }),
-      createRepositorySync: build.mutation<CreateRepositorySyncApiResponse, CreateRepositorySyncApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/sync`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
       createRepositoryTest: build.mutation<CreateRepositoryTestApiResponse, CreateRepositoryTestApiArg>({
@@ -485,21 +485,6 @@ export type DeleteRepositoryApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type CreateRepositoryExportApiResponse = /** status 200 OK */ Job;
-export type CreateRepositoryExportApiArg = {
-  /** name of the Job */
-  name: string;
-  body: {
-    /** Target branch for export (only git) */
-    branch?: string;
-    /** The source folder (or empty) to export */
-    folder?: string;
-    /** Include the identifier in the exported metadata */
-    identifier: boolean;
-    /** Prefix in target file system */
-    path?: string;
-  };
-};
 export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -578,23 +563,30 @@ export type GetRepositoryHistoryWithPathApiArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type CreateRepositoryMigrateApiResponse = /** status 200 OK */ Job;
-export type CreateRepositoryMigrateApiArg = {
-  /** name of the Job */
+export type GetRepositoryJobsApiResponse = /** status 200 OK */ JobList;
+export type GetRepositoryJobsApiArg = {
+  /** name of the Repository */
   name: string;
-  body: {
-    /** Preserve history (if possible) */
-    history?: boolean;
-    /** Include the identifier in the exported metadata */
-    identifier: boolean;
-  };
+};
+export type CreateRepositoryJobsApiResponse = /** status 200 OK */ Job;
+export type CreateRepositoryJobsApiArg = {
+  /** name of the Repository */
+  name: string;
+  jobSpec: JobSpec;
+};
+export type GetRepositoryJobsWithPathApiResponse = /** status 200 OK */ Job;
+export type GetRepositoryJobsWithPathApiArg = {
+  /** name of the Repository */
+  name: string;
+  /** Original Job UID */
+  uid: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
   /** name of the Repository */
   name: string;
-  /** path to the resource */
-  path: string;
+  /** Image GUID */
+  guid: string;
 };
 export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
@@ -621,15 +613,6 @@ export type ReplaceRepositoryStatusApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   repository: Repository;
-};
-export type CreateRepositorySyncApiResponse = /** status 200 OK */ Job;
-export type CreateRepositorySyncApiArg = {
-  /** name of the Job */
-  name: string;
-  body: {
-    /** Incremental synchronization for versioned repositories */
-    incremental: boolean;
-  };
 };
 export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
@@ -772,11 +755,11 @@ export type ExportJobOptions = {
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Process a pull request -- apply comments with preview images, links etc
-     - `"pull"` Sync the remote branch with the grafana instance
-     - `"push"` Export from grafana into the remote repository */
-  action: 'migrate' | 'pr' | 'pull' | 'push';
+     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
+     - `"pull"` replicates the remote branch in the local copy of the repository.
+     - `"push"` replicates the local copy of the repository in the remote branch. */
+  action?: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
@@ -785,8 +768,8 @@ export type JobSpec = {
   pull?: SyncJobOptions;
   /** Required when the action is `push` */
   push?: ExportJobOptions;
-  /** The the repository reference (for now also in labels) */
-  repository: string;
+  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
+  repository?: string;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -1198,7 +1181,6 @@ export const {
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
-  useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
   useReplaceRepositoryFilesWithPathMutation,
@@ -1206,12 +1188,13 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
-  useCreateRepositoryMigrateMutation,
+  useGetRepositoryJobsQuery,
+  useCreateRepositoryJobsMutation,
+  useGetRepositoryJobsWithPathQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
-  useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,

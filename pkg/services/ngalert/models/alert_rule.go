@@ -320,7 +320,7 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.Folder
+type Namespace folder.FolderReference
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
@@ -973,6 +973,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	}
 	if !ruleToPatch.HasEditorSettings {
 		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
+	}
+	if ruleToPatch.MissingSeriesEvalsToResolve != nil && *ruleToPatch.MissingSeriesEvalsToResolve == -1 {
+		ruleToPatch.MissingSeriesEvalsToResolve = existingRule.MissingSeriesEvalsToResolve
 	}
 
 	if ruleToPatch.GUID == "" {

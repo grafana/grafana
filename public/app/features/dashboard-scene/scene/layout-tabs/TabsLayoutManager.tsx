@@ -5,6 +5,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { t } from 'app/core/internationalization';
 
 import {
@@ -12,6 +13,8 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
+import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -36,15 +39,18 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     get description() {
       return t('dashboard.tabs-layout.description', 'Organize panels into horizontal tabs');
     },
-    id: 'tabs-layout',
+    id: 'TabsLayout',
     createFromLayout: TabsLayoutManager.createFromLayout,
-    kind: 'TabsLayout',
     isGridLayout: false,
   };
 
+  public serialize(): DashboardV2Spec['layout'] {
+    return serializeTabsLayout(this);
+  }
+
   public readonly descriptor = TabsLayoutManager.descriptor;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: () => [this.getUrlKey()] });
 
   public constructor(state: Partial<TabsLayoutManagerState>) {
     super({
@@ -65,21 +71,29 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getUrlState() {
-    return { tab: this.state.currentTabIndex.toString() };
+    const key = this.getUrlKey();
+    return { [key]: this.getCurrentTab().getSlug() };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!values.tab) {
+    const key = this.getUrlKey();
+    const urlValue = values[key];
+
+    if (!urlValue) {
       return;
     }
-    if (typeof values.tab === 'string') {
-      const tabIndex = parseInt(values.tab, 10);
-      if (this.state.tabs[tabIndex]) {
-        this.setState({ currentTabIndex: tabIndex });
-      } else {
-        this.setState({ currentTabIndex: 0 });
+
+    if (typeof values[key] === 'string') {
+      // find tab with matching slug
+      const matchIndex = this.state.tabs.findIndex((tab) => tab.getSlug() === urlValue);
+      if (matchIndex !== -1) {
+        this.setState({ currentTabIndex: matchIndex });
       }
     }
+  }
+
+  public switchToTab(tab: TabItem) {
+    this.setState({ currentTabIndex: this.state.tabs.indexOf(tab) });
   }
 
   public getCurrentTab(): TabItem {
@@ -108,7 +122,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;
@@ -145,7 +159,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabBefore(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
@@ -155,7 +169,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addTabAfter(tab: TabItem): TabItem {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ isNew: true });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
@@ -205,11 +219,34 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     let tabs: TabItem[] = [];
 
     if (layout instanceof RowsLayoutManager) {
-      tabs = layout.state.rows.map((row) => new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+      for (const row of layout.state.rows) {
+        tabs.push(new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+      }
     } else {
-      tabs.push(new TabItem({ layout: layout.clone() }));
+      layout.clearParent();
+      tabs.push(new TabItem({ layout: layout }));
     }
 
     return new TabsLayoutManager({ tabs });
+  }
+
+  getUrlKey(): string {
+    let parent = this.parent;
+    // Panel edit uses tab key already so we are using dtab here to not conflict
+    let key = 'dtab';
+
+    while (parent) {
+      if (parent instanceof TabItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      if (parent instanceof RowItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      parent = parent.parent;
+    }
+
+    return key;
   }
 }

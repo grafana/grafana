@@ -44,6 +44,11 @@ export interface EditableDashboardElement {
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(elements: this[]): EditableDashboardElement;
+
+  /**
+   * scroll element into view (when selected from outline)
+   */
+  scrollIntoView?(): void;
 }
 
 export interface EditableDashboardElementInfo {

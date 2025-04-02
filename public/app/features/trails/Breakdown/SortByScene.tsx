@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { BusEventBase, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, Select, Field, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Trans } from '../../../core/internationalization';
 import { getSortByPreference, setSortByPreference } from '../services/store';
@@ -79,7 +80,10 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
               name={'info-circle'}
               size="sm"
               variant={'secondary'}
-              tooltip="Sorts values using standard or smart time series calculations."
+              tooltip={t(
+                'trails.sort-by-scene.tooltip-sorts-values-using-standard-smart-series',
+                'Sorts values using standard or smart time series calculations.'
+              )}
             />
           </div>
         }

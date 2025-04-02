@@ -22,7 +22,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   const onChange = (theme: ThemeRegistryItem) => {
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: theme.id,
-      preferenceType: 'user',
+      preferenceType: 'theme_drawer',
     });
     changeTheme(theme.id, false);
   };

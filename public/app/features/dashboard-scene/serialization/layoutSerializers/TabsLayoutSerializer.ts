@@ -2,45 +2,41 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
-import { layoutSerializerRegistry } from './layoutSerializerRegistry';
-import { getLayout } from './utils';
+import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 
-export class TabsLayoutSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
-    return {
-      kind: 'TabsLayout',
-      spec: {
-        tabs: layoutManager.state.tabs.map((tab) => {
-          const layout = getLayout(tab.state.layout);
-          return {
-            kind: 'TabsLayoutTab',
-            spec: {
-              title: tab.state.title,
-              layout: layout,
-            },
-          };
-        }),
-      },
-    };
+export function serializeTabsLayout(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
+  return {
+    kind: 'TabsLayout',
+    spec: {
+      tabs: layoutManager.state.tabs.map((tab) => {
+        const layout = tab.state.layout.serialize();
+        return {
+          kind: 'TabsLayoutTab',
+          spec: {
+            title: tab.state.title,
+            layout: layout,
+          },
+        };
+      }),
+    },
+  };
+}
+
+export function deserializeTabsLayout(
+  layout: DashboardV2Spec['layout'],
+  elements: DashboardV2Spec['elements'],
+  preload: boolean
+): TabsLayoutManager {
+  if (layout.kind !== 'TabsLayout') {
+    throw new Error('Invalid layout kind');
   }
-
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): TabsLayoutManager {
-    if (layout.kind !== 'TabsLayout') {
-      throw new Error('Invalid layout kind');
-    }
-    const tabs = layout.spec.tabs.map((tab) => {
-      const layout = tab.spec.layout;
-      return new TabItem({
-        title: tab.spec.title,
-        layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
-      });
+  const tabs = layout.spec.tabs.map((tab) => {
+    const layout = tab.spec.layout;
+    return new TabItem({
+      title: tab.spec.title,
+      layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload),
     });
-    return new TabsLayoutManager({ tabs });
-  }
+  });
+  return new TabsLayoutManager({ tabs });
 }

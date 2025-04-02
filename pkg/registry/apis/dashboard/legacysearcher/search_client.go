@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -400,7 +400,15 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.Reso
 		return nil, fmt.Errorf("invalid kind")
 	}
 
-	count, err := c.dashboardStore.CountInOrg(ctx, info.OrgID)
+	var count int64
+	switch parts[0] {
+	case dashboard.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, false)
+	case folderv0alpha1.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, true)
+	default:
+		return nil, fmt.Errorf("invalid group")
+	}
 	if err != nil {
 		return nil, err
 	}
