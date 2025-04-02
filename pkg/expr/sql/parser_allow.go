@@ -60,7 +60,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
 		return
 
-	case sqlparser.BoolVal:
+	case sqlparser.BoolVal, *sqlparser.NullVal:
 		return
 
 	case *sqlparser.CaseExpr, *sqlparser.When:
@@ -81,6 +81,15 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
 		return
 
+	case *sqlparser.CollateExpr:
+		return
+
+	case sqlparser.Exprs:
+		return
+
+	case *sqlparser.GroupConcatExpr:
+		return
+
 	case sqlparser.GroupBy:
 		return
 
@@ -93,10 +102,13 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Into:
 		return
 
+	case *sqlparser.IsExpr:
+		return
+
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
 		return
 
-	case *sqlparser.Select, sqlparser.SelectExprs:
+	case *sqlparser.Select, sqlparser.SelectExprs, *sqlparser.ParenSelect:
 		return
 
 	case *sqlparser.SetOp:
@@ -120,6 +132,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ParenExpr:
 		return
 
+	case *sqlparser.RangeCond:
+		return
+
 	case *sqlparser.Subquery:
 		return
 
@@ -127,6 +142,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.TrimExpr:
+		return
+
+	case sqlparser.ValTuple:
 		return
 
 	case *sqlparser.With:
@@ -174,7 +192,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring":
+	case "substring", "substring_index":
 		return
 
 	// Date functions
@@ -193,6 +211,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 
 	// Type conversion
 	case "cast":
+		return
+
+	// JSON functions
+	case "json_extract", "json_unquote", "json_contains",
+		"json_object", "json_array", "json_set", "json_remove",
+		"json_length", "json_search", "json_type":
 		return
 
 	default:

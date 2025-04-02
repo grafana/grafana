@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.23.7
+go 1.24.1
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -15,7 +15,6 @@ require (
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v69 v69.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
@@ -30,7 +29,7 @@ require (
 	golang.org/x/mod v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.36.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
+	golang.org/x/sync v0.12.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.22.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.220.0 // @grafana/grafana-backend-group
@@ -75,11 +74,14 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250212204824-5a70512c5d8b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require dagger.io/dagger v0.11.8-rc.2
+require (
+	dagger.io/dagger v0.11.8-rc.2
+	github.com/google/go-github/v70 v70.0.0
+)
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -103,15 +105,16 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.20 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.34.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.0.0-20240518090000-14441aefdf88 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.4.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.34.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.34.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.35.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.35.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.35.0 // indirect
 	go.opentelemetry.io/otel/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.35.0 // indirect

@@ -18,11 +18,12 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
+import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -49,6 +50,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
     };
+
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
@@ -67,7 +69,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         options,
         query: variable.state.query,
         definition: variable.state.definition,
-        datasource: variable.state.datasource,
+        datasource: getElementDatasource(set, variable, 'variable'),
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
@@ -224,7 +226,8 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
 
 export function sceneVariablesSetToSchemaV2Variables(
   set: SceneVariables,
-  keepQueryOptions?: boolean
+  keepQueryOptions?: boolean,
+  dsReferencesMapping?: DSReferencesMapping
 ): Array<
   | QueryVariableKind
   | TextVariableKind
@@ -293,7 +296,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: variable.state.datasource || {},
+          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,

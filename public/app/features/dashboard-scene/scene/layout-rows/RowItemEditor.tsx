@@ -79,8 +79,8 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 }
 
 function RowTitleInput({ row }: { row: RowItem }) {
-  const { title } = row.useState();
-  const ref = useEditPaneInputAutoFocus();
+  const { title, isNew } = row.useState();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
 
   return (
     <Input
@@ -93,7 +93,7 @@ function RowTitleInput({ row }: { row: RowItem }) {
 }
 
 function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden = false } = row.useState();
+  const { hideHeader: isHeaderHidden = false } = row.useState();
 
   return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }
