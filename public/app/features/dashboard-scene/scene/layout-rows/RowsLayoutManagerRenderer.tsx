@@ -6,6 +6,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { useDashboardState } from '../../utils/utils';
+import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -13,6 +14,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { rows } = model.useState();
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
+  const { hasCopiedRow } = useClipboardState();
 
   return (
     <div className={styles.wrapper}>
@@ -24,6 +26,11 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
           <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewRow()}>
             <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
           </Button>
+          {hasCopiedRow && (
+            <Button icon="plus" variant="primary" fill="text" onClick={() => model.pasteRow()}>
+              <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
+            </Button>
+          )}
         </div>
       )}
     </div>

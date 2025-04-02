@@ -15,6 +15,7 @@ import {
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
+import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -52,7 +53,7 @@ export class AutoGridLayoutManager
     get description() {
       return t('dashboard.auto-grid.description', 'Panels resize to fit and form uniform grids');
     },
-    id: 'auto-grid',
+    id: 'AutoGridLayout',
     createFromLayout: AutoGridLayoutManager.createFromLayout,
     isGridLayout: true,
   };
@@ -96,6 +97,13 @@ export class AutoGridLayoutManager
     });
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
+  }
+
+  public pastePanel() {
+    const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    this.state.layout.setState({ children: [...this.state.layout.state.children, panel] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    clearClipboard();
   }
 
   public removePanel(panel: VizPanel) {

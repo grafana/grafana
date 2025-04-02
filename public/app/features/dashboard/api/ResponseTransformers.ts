@@ -530,8 +530,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             includeAll: Boolean(v.includeAll),
             ...(v.allValue && { allValue: v.allValue }),
             current: {
-              value: v.current.value,
-              text: v.current.text,
+              value: v.current?.value,
+              text: v.current?.text,
             },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),

@@ -104,6 +104,8 @@ type ParsedResource struct {
 	Errors []error
 }
 
+// FIXME: eliminate clients from parser
+
 func (r *Parser) Clients() *ResourceClients {
 	return r.clients
 }
@@ -117,10 +119,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	if err := IsPathSupported(info.Path); err != nil {
 		return parsed, err
-	}
-
-	if info.Path == "" {
-		return parsed, errors.New("path is required")
 	}
 
 	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
