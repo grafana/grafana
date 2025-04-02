@@ -6,7 +6,6 @@ import (
 	"go/format"
 	"strings"
 
-	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
 )
 
@@ -21,7 +20,7 @@ func (jenny *K8ResourcesJenny) JennyName() string {
 func (jenny *K8ResourcesJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files, error) {
 	files := make(codejen.Files, 0)
 	for _, val := range cueFiles {
-		resource, err := jenny.genResource(val.Name, val.CueFile)
+		resource, err := jenny.genResource(val.Name, val.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -44,12 +43,7 @@ func (jenny *K8ResourcesJenny) Generate(cueFiles ...SchemaForGen) (codejen.Files
 	return files, nil
 }
 
-func (jenny *K8ResourcesJenny) genResource(pkg string, val cue.Value) (codejen.File, error) {
-	version, err := getVersion(val)
-	if err != nil {
-		return codejen.File{}, err
-	}
-
+func (jenny *K8ResourcesJenny) genResource(pkg string, version string) (codejen.File, error) {
 	pkgName := strings.ToLower(pkg)
 
 	buf := new(bytes.Buffer)
@@ -93,24 +87,4 @@ func (jenny *K8ResourcesJenny) genStatus(pkg string) (codejen.File, error) {
 	}
 
 	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_status_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
-}
-
-func getVersion(val cue.Value) (string, error) {
-	val = val.LookupPath(cue.ParsePath("lineage.schemas[0].version"))
-	versionValues, err := val.List()
-	if err != nil {
-		return "", fmt.Errorf("missing version in schema: %s", err)
-	}
-
-	version := make([]int64, 0)
-	for versionValues.Next() {
-		v, err := versionValues.Value().Int64()
-		if err != nil {
-			return "", fmt.Errorf("version should be a list of two elements: %s", err)
-		}
-
-		version = append(version, v)
-	}
-
-	return fmt.Sprintf("%d-%d", version[0], version[1]), nil
 }

@@ -3,17 +3,17 @@ import { useMemo, useRef, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { ScaleDistributionConfig } from '@grafana/schema';
+import { LegendPlacement, ScaleDistributionConfig } from '@grafana/schema';
 import {
+  EventBusPlugin,
   ScaleDistribution,
-  TooltipPlugin2,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
-  EventBusPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -145,7 +145,7 @@ export const HeatmapPanel = ({
     // }
 
     return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
+      <VizLayout.Legend placement={LegendPlacement.Bottom} maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
             hoverValue={hoverValue}

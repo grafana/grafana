@@ -3,6 +3,7 @@ import { isNil, omitBy } from 'lodash';
 import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
 import {
   LegendDisplayMode,
+  LegendPlacement,
   SortOrder,
   StackingMode,
   TooltipDisplayMode,
@@ -47,7 +48,7 @@ function graphToHistogramOptions(graphOptions: GraphOptions): {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
-      placement: 'bottom',
+      placement: LegendPlacement.Bottom,
       calcs: [],
     },
     tooltip: {

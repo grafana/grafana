@@ -140,9 +140,9 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (isTime) {
         return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
       } else {
-        if (dataRef.current?.xLayout === HeatmapCellLayout.le) {
+        if (dataRef.current?.xLayout === HeatmapCellLayout.Le) {
           return [dataMin - dataRef.current?.xBucketSize!, dataMax];
-        } else if (dataRef.current?.xLayout === HeatmapCellLayout.ge) {
+        } else if (dataRef.current?.xLayout === HeatmapCellLayout.Ge) {
           return [dataMin, dataMax + dataRef.current?.xBucketSize!];
         } else {
           let offset = dataRef.current?.xBucketSize! / 2;
@@ -265,11 +265,11 @@ export function prepConfig(opts: PrepConfigOpts) {
                 }
               }
 
-              if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
+              if (dataRef.current?.yLayout === HeatmapCellLayout.Le) {
                 if (!minExpanded) {
                   scaleMin /= yExp;
                 }
-              } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
+              } else if (dataRef.current?.yLayout === HeatmapCellLayout.Ge) {
                 if (!maxExpanded) {
                   scaleMax *= yExp;
                 }
@@ -301,9 +301,9 @@ export function prepConfig(opts: PrepConfigOpts) {
               }
 
               if (bucketSize) {
-                if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
+                if (dataRef.current?.yLayout === HeatmapCellLayout.Le) {
                   scaleMin -= bucketSize!;
-                } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
+                } else if (dataRef.current?.yLayout === HeatmapCellLayout.Ge) {
                   scaleMax += bucketSize!;
                 } else {
                   scaleMin -= bucketSize! / 2;
@@ -342,10 +342,10 @@ export function prepConfig(opts: PrepConfigOpts) {
           let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
 
           switch (dataRef.current?.yLayout) {
-            case HeatmapCellLayout.le:
+            case HeatmapCellLayout.Le:
               splits.unshift(-1);
               break;
-            case HeatmapCellLayout.ge:
+            case HeatmapCellLayout.Ge:
               splits.push(splits.length);
               break;
           }
@@ -406,14 +406,14 @@ export function prepConfig(opts: PrepConfigOpts) {
       hideLE,
       hideGE,
       xAlign:
-        dataRef.current?.xLayout === HeatmapCellLayout.le
+        dataRef.current?.xLayout === HeatmapCellLayout.Le
           ? -1
-          : dataRef.current?.xLayout === HeatmapCellLayout.ge
+          : dataRef.current?.xLayout === HeatmapCellLayout.Ge
             ? 1
             : 0,
-      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
+      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.Le
         ? -1
-        : dataRef.current?.yLayout === HeatmapCellLayout.ge
+        : dataRef.current?.yLayout === HeatmapCellLayout.Ge
           ? 1
           : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       ySizeDivisor,
@@ -655,7 +655,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
         let fillPaths = [points];
         let fillPalette = [exemplarColor ?? 'rgba(255,0,255,0.7)'];
 
-        let yShift = yLayout === HeatmapCellLayout.le ? -0.5 : yLayout === HeatmapCellLayout.ge ? 0.5 : 0;
+        let yShift = yLayout === HeatmapCellLayout.Le ? -0.5 : yLayout === HeatmapCellLayout.Ge ? 0.5 : 0;
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;

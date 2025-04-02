@@ -23,7 +23,7 @@ jest.mock('file-saver', () => jest.fn());
 type LogsMetaRowProps = ComponentProps<typeof LogsMetaRow>;
 const defaultProps: LogsMetaRowProps = {
   meta: [],
-  dedupStrategy: LogsDedupStrategy.none,
+  dedupStrategy: LogsDedupStrategy.None,
   dedupCount: 0,
   displayedFields: [],
   hasUnescapedContent: false,
@@ -45,7 +45,7 @@ const setup = (propOverrides?: object, disableDownload = false) => {
 
 describe('LogsMetaRow', () => {
   it('renders the dedupe number', async () => {
-    setup({ dedupStrategy: LogsDedupStrategy.numbers, dedupCount: 1234 });
+    setup({ dedupStrategy: LogsDedupStrategy.Numbers, dedupCount: 1234 });
     expect(await screen.findByText('1234')).toBeInTheDocument();
   });
 

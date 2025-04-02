@@ -11,6 +11,7 @@ import {
   GrafanaTheme2,
   MappingType,
 } from '@grafana/data';
+import { FieldTextAlignment } from '@grafana/schema';
 import {
   IconButton,
   Table,
@@ -239,7 +240,7 @@ function buildTableDataFrame(
 function createNumberField(name: string, unit?: string): Field {
   const tableFieldOptions: TableFieldOptions = {
     width: TOP_TABLE_COLUMN_WIDTH,
-    align: 'auto',
+    align: FieldTextAlignment.Auto,
     inspect: false,
     cellOptions: { type: TableCellDisplayMode.Auto },
   };
@@ -284,7 +285,7 @@ function createActionField(
     width: actionColumnWidth,
     hideHeader: true,
     inspect: false,
-    align: 'auto',
+    align: FieldTextAlignment.Auto,
     cellOptions: options,
   };
 

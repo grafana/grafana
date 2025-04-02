@@ -1,6 +1,6 @@
 import { identity, isEqual, sortBy } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -22,6 +22,7 @@ import {
   GraphDrawStyle,
   GraphThresholdsStyleConfig,
   LegendDisplayMode,
+  LegendPlacement,
   SortOrder,
   TimeZone,
   TooltipDisplayMode,
@@ -188,7 +189,7 @@ export function ExploreGraph({
       legend: {
         displayMode: LegendDisplayMode.List,
         showLegend: true,
-        placement: 'bottom',
+        placement: LegendPlacement.Bottom,
         calcs: [],
         ...vizLegendOverrides,
       },

@@ -71,14 +71,14 @@ const DAY = 24 * HOUR;
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDedupStrategy): boolean {
   switch (strategy) {
-    case LogsDedupStrategy.exact:
+    case LogsDedupStrategy.Exact:
       // Exact still strips dates
       return row.entry.replace(isoDateRegexp, '') === other.entry.replace(isoDateRegexp, '');
 
-    case LogsDedupStrategy.numbers:
+    case LogsDedupStrategy.Numbers:
       return row.entry.replace(/\d/g, '') === other.entry.replace(/\d/g, '');
 
-    case LogsDedupStrategy.signature:
+    case LogsDedupStrategy.Signature:
       return row.entry.replace(/\w/g, '') === other.entry.replace(/\w/g, '');
 
     default:
@@ -87,7 +87,7 @@ function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDed
 }
 
 export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy): LogRowModel[] {
-  if (strategy === LogsDedupStrategy.none) {
+  if (strategy === LogsDedupStrategy.None) {
     return rows;
   }
 

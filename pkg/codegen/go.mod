@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/codegen
 go 1.24.1
 
 require (
-	cuelang.org/go v0.11.1
+	cuelang.org/go v0.12.0
 	github.com/dave/dst v0.27.3
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d
 	github.com/grafana/cog v0.0.28
@@ -15,7 +15,7 @@ require (
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/dave/jennifer v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emicklei/proto v1.13.2 // indirect
+	github.com/emicklei/proto v1.13.4 // indirect
 	github.com/expr-lang/expr v1.17.0 // indirect
 	github.com/getkin/kin-openapi v0.131.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect

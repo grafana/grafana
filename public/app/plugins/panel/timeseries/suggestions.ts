@@ -1,14 +1,15 @@
 import {
-  FieldColorModeId,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
   DataTransformerID,
+  FieldColorModeId,
+  VisualizationSuggestion,
+  VisualizationSuggestionsBuilder,
 } from '@grafana/data';
 import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LegendDisplayMode,
+  LegendPlacement,
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
@@ -32,7 +33,7 @@ export class TimeSeriesSuggestionsSupplier {
         legend: {
           calcs: [],
           displayMode: LegendDisplayMode.Hidden,
-          placement: 'right',
+          placement: LegendPlacement.Right,
           showLegend: false,
         },
       },

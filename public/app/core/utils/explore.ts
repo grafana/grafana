@@ -30,7 +30,7 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
 export const DEFAULT_UI_STATE = {
-  dedupStrategy: LogsDedupStrategy.none,
+  dedupStrategy: LogsDedupStrategy.None,
 };
 
 export const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';

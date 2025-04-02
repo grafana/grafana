@@ -541,7 +541,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={context.above.rows}
-                  dedupStrategy={LogsDedupStrategy.none}
+                  dedupStrategy={LogsDedupStrategy.None}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
                   wrapLogMessage={wrapLines}
@@ -560,7 +560,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={[row]}
-                  dedupStrategy={LogsDedupStrategy.none}
+                  dedupStrategy={LogsDedupStrategy.None}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
                   wrapLogMessage={wrapLines}
@@ -583,7 +583,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 <>
                   <LogRows
                     logRows={context.below.rows}
-                    dedupStrategy={LogsDedupStrategy.none}
+                    dedupStrategy={LogsDedupStrategy.None}
                     showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                     showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
                     wrapLogMessage={wrapLines}

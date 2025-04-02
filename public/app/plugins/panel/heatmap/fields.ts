@@ -368,9 +368,9 @@ const getDenseHeatmapData = (
 
     // TODO: improve heuristic
     xLayout:
-      xName === 'xMax' ? HeatmapCellLayout.le : xName === 'xMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
+      xName === 'xMax' ? HeatmapCellLayout.Le : xName === 'xMin' ? HeatmapCellLayout.Ge : HeatmapCellLayout.Unknown,
     yLayout:
-      yName === 'yMax' ? HeatmapCellLayout.le : yName === 'yMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
+      yName === 'yMax' ? HeatmapCellLayout.Le : yName === 'yMin' ? HeatmapCellLayout.Ge : HeatmapCellLayout.Unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };

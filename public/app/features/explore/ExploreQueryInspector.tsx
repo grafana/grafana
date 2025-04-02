@@ -49,7 +49,7 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Stats',
     value: 'stats',
     icon: 'chart-line',
-    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
+    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone()} />,
   };
 
   const jsonTab: TabConfig = {
