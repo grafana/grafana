@@ -366,7 +366,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
           })
           .addTextInput({
             path: 'config.groupBy',
-            name: 'Group By',
+            name: 'Group by',
             description: 'Field to group routes by',
             defaultValue: defaultOptions.groupBy,
           })
