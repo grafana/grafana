@@ -396,7 +396,7 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_MANAGER_KIND,
 				Type:        ResourceTableColumnDefinition_STRING,
-				Description: "The kind of resource managing the object. IE repository",
+				Description: "Type of manager, which is responsible for managing the resource",
 			},
 		})
 		if err != nil {
