@@ -5,7 +5,6 @@ go 1.24.1
 replace (
 	github.com/grafana/grafana => ../../../..
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
-	github.com/grafana/grafana/pkg/apis/folder => ../../../apis/folder
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 	github.com/grafana/grafana/pkg/storage/unified/resource => ../resource
 )
