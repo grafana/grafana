@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	a "github.com/mattn/go-sqlite3"
+	sqlite "github.com/mattn/go-sqlite3"
 	"xorm.io/core"
 )
 
@@ -476,8 +476,8 @@ func (db *sqlite3) Filters() []core.Filter {
 }
 
 func (db *sqlite3) RetryOnError(err error) bool {
-	var sqlError a.Error
-	if errors.As(err, &sqlError) && (sqlError.Code == a.ErrLocked || sqlError.Code == a.ErrBusy) {
+	var sqlError sqlite.Error
+	if errors.As(err, &sqlError) && (sqlError.Code == sqlite.ErrLocked || sqlError.Code == sqlite.ErrBusy) {
 		return true
 	}
 	return false

@@ -62,8 +62,7 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 	}
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
-	r, ok := engine.Dialect().(xorm.DialectWithRetryableErrors)
-	if ok {
+	if r, ok := engine.Dialect().(xorm.DialectWithRetryableErrors); ok {
 		if retry < ss.dbCfg.TransactionRetries && r.RetryOnError(err) {
 			if rollErr := sess.Rollback(); rollErr != nil {
 				return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
