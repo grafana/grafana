@@ -122,6 +122,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                          |
 | `exploreMetricsUseExternalAppPlugin`  | Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin                                                                                                |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
+| `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                                                              |
 
 ## Experimental feature toggles
 

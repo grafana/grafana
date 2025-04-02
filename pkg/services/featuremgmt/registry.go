@@ -1819,6 +1819,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:        "azureMonitorLogsBuilderEditor",
+			Description: "Enables the logs builder mode for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "localeFormatPreference",
 			Description: "Specify the locale so we can show the correct format for numbers and dates",
 			Stage:       FeatureStageExperimental,
