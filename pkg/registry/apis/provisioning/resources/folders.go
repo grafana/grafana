@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -154,7 +153,7 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 		if path != "" {
 			p = safepath.Join(path, p)
 		}
-		if !strings.HasSuffix(p, "/") {
+		if !safepath.IsDir(p) {
 			p = p + "/" // trailing slash indicates folder
 		}
 
