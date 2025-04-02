@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var ErrAlreadyInRepository = errors.New("already in repository")
@@ -34,12 +35,12 @@ type ResourcesManager struct {
 	repo            repository.ReaderWriter
 	folders         *FolderManager
 	parser          *Parser
-	clients         *ResourceClients
+	clients         ResourceClients
 	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,

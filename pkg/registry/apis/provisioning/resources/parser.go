@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -59,7 +60,7 @@ type Parser struct {
 	urls repository.RepositoryWithURLs
 
 	// ResourceClients give access to k8s apis
-	clients *ResourceClients
+	clients ResourceClients
 }
 
 type ParsedResource struct {
@@ -106,7 +107,7 @@ type ParsedResource struct {
 
 // FIXME: eliminate clients from parser
 
-func (r *Parser) Clients() *ResourceClients {
+func (r *Parser) Clients() ResourceClients {
 	return r.clients
 }
 
@@ -166,6 +167,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
 		Checksum: info.Hash,
 	})
+
+	if obj.GetName() == "" {
+		parsed.Errors = append(parsed.Errors,
+			field.Required(field.NewPath("name", "metadata", "name"),
+				"An explicit name must be saved in the resource"))
+	}
 
 	// Calculate name+folder from the file path
 	if info.Path != "" {
