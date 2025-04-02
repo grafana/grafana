@@ -14,7 +14,7 @@ import { grantPermissionsHelper, testWithFeatureToggles } from '../../../test/te
 import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
-testWithFeatureToggles(['alertingDeletePermanently', 'alertingRuleRecoverDeleted', 'alertRuleRestore']);
+testWithFeatureToggles(['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted', 'alertRuleRestore']);
 beforeEach(() => {
   grantUserRole('Admin');
   grantPermissionsHelper([
@@ -53,6 +53,7 @@ describe('render Deleted rules page', () => {
     renderDeletedRules();
     expect(screen.getByText('Grafana-rule')).toBeInTheDocument();
   });
+
   it('should render restore button', async () => {
     const { user } = renderDeletedRules();
     const restoreButtons = screen.getAllByRole('button', { name: /restore/i });
@@ -64,15 +65,16 @@ describe('render Deleted rules page', () => {
     await user.click(screen.getByText(/yes, restore deleted rule/i));
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
   });
-  it('should render delete permanently button', async () => {
+
+  it('should render permanently delete button', async () => {
     const { user } = renderDeletedRules();
-    const restoreButtons = screen.getAllByRole('button', { name: /delete permanently/i });
+    const restoreButtons = screen.getAllByRole('button', { name: /permanently delete/i });
     await user.click(restoreButtons[0]);
     expect(
-      screen.getByText(/are you sure you want to delete permanently this alert rule\? this action cannot be undone./i)
+      screen.getByText(/are you sure you want to permanently delete this alert rule\? this action cannot be undone./i)
     ).toBeInTheDocument();
 
-    await user.click(screen.getByText(/yes, delete permanently/i));
-    expect(await screen.findByRole('status')).toHaveTextContent('Alert rule deleted permanently');
+    await user.click(screen.getByText(/yes, permanently delete/i));
+    expect(await screen.findByRole('status')).toHaveTextContent('Alert rule permanently deleted');
   });
 });
