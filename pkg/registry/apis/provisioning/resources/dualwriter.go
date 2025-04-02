@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -194,6 +195,12 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
 	if ref == "" {
+		// Use the provisioning identity to update the grafana database
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+		if err != nil {
+			return nil, err
+		}
+
 		// FIXME: we are not creating the folder path
 		// TODO: will existing also be present here? for update?
 		if parsed.Existing == nil {

@@ -87,6 +87,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should keep manager info", func(t *testing.T) {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+		require.NoError(t, err)
+
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
