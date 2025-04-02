@@ -538,7 +538,16 @@ func (b *bleveIndex) Search(
 		if err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = f
+		if len(f) > 0 {
+			searchrequest.Fields = f
+		} else {
+			searchrequest.Fields = []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+				resource.SEARCH_FIELD_MANAGED_BY,
+			}
+		}
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
