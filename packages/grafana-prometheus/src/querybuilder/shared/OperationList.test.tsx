@@ -13,6 +13,7 @@ import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
 import { OperationList } from './OperationList';
+import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -78,6 +79,7 @@ function setup(query: PromVisualQuery = defaultQuery) {
     onRunQuery: () => {},
     onChange: jest.fn(),
     queryModeller: promQueryModeller,
+    timeRange: getMockTimeRange(),
   };
 
   render(<OperationList {...props} query={query} />);

@@ -44,7 +44,11 @@ export function LabelParamEditor({
   );
 }
 
-async function loadGroupByLabels(timeRange: TimeRange, query: PromVisualQuery, datasource: DataSourceApi): Promise<SelectableValue[]> {
+async function loadGroupByLabels(
+  timeRange: TimeRange,
+  query: PromVisualQuery,
+  datasource: DataSourceApi
+): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   // This function is used by both Prometheus and Loki and this the only difference.
