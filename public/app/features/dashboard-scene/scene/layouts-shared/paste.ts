@@ -41,6 +41,21 @@ export interface PanelStore {
   gridItem: GridLayoutItemKind | AutoGridLayoutItemKind;
 }
 
+export type ClipboardType = 'panel' | 'row' | 'tab';
+
+export function whatIsInClipboard(): ClipboardType | null {
+  if (store.exists(LS_PANEL_COPY_KEY)) {
+    return 'panel';
+  }
+  if (store.exists(LS_ROW_COPY_KEY)) {
+    return 'row';
+  }
+  if (store.exists(LS_TAB_COPY_KEY)) {
+    return 'tab';
+  }
+  return null;
+}
+
 export function getRowFromClipboard(scene: DashboardScene): RowItem {
   const jsonData = store.get(LS_ROW_COPY_KEY);
 

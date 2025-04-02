@@ -56,7 +56,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         <Button
           variant="primary"
           fill="text"
-          icon="layers"
+          icon="clipboard-alt"
           onClick={() => {
             layoutManager.pastePanel?.();
           }}

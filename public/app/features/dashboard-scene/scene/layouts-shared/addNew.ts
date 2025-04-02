@@ -10,14 +10,14 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
-export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
+export function addNewTabTo(layout: DashboardLayoutManager, tab?: TabItem): TabItem {
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
   if (layout instanceof TabsLayoutManager) {
-    return layout.addNewTab();
+    return layout.addNewTab(tab);
   }
 
   // Create new tabs layout and wrap the current layout in the first tab
@@ -26,13 +26,15 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
 
   layoutParent.switchLayout(tabsLayout);
 
-  const tab = tabsLayout.state.tabs[0];
-  layout.publishEvent(new NewObjectAddedToCanvasEvent(tab), true);
+  const newTab = tabsLayout.state.tabs[0];
+  layout.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
 
-  return tab;
+  tabsLayout.addNewTab(tab);
+
+  return newTab;
 }
 
-export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGridRow {
+export function addNewRowTo(layout: DashboardLayoutManager, row?: RowItem): RowItem | SceneGridRow {
   /**
    * If new layouts feature is disabled we add old school rows to the custom grid layout
    */
@@ -45,12 +47,12 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   }
 
   if (layout instanceof RowsLayoutManager) {
-    return layout.addNewRow();
+    return layout.addNewRow(row);
   }
 
   if (layout instanceof TabsLayoutManager) {
     const currentTab = layout.getCurrentTab();
-    return addNewRowTo(currentTab.state.layout);
+    return addNewRowTo(currentTab.state.layout, row);
   }
 
   const layoutParent = layout.parent!;
@@ -64,8 +66,10 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
   layoutParent.switchLayout(rowsLayout);
 
-  const row = rowsLayout.state.rows[0];
-  layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
+  const newRow = rowsLayout.state.rows[0];
+  layout.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
 
-  return row;
+  rowsLayout.addNewRow(row);
+
+  return newRow;
 }

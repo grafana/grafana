@@ -75,9 +75,14 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { AutoGridItem } from './layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayoutManager } from './layout-responsive-grid/ResponsiveGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
-import { clearClipboard } from './layouts-shared/paste';
+import { clearClipboard, whatIsInClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
@@ -525,6 +530,61 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public duplicatePanel(vizPanel: VizPanel) {
     getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
+  }
+
+  public pasteFromClipboardTo(target: VizPanel | TabItem | RowItem) {
+    const clipboardType = whatIsInClipboard();
+    if (!clipboardType) {
+      return;
+    }
+
+    if (target instanceof VizPanel) {
+      const layoutManager = target.parent?.parent?.parent;
+      if (!(layoutManager instanceof DefaultGridLayoutManager || layoutManager instanceof AutoGridLayoutManager)) {
+        return;
+      }
+      if (clipboardType === 'panel') {
+        layoutManager.pastePanel();
+      }
+    }
+
+    if (target instanceof TabItem) {
+      if (clipboardType === 'panel') {
+        const layoutManager = target.getLayout();
+        if (layoutManager instanceof DefaultGridLayoutManager || layoutManager instanceof AutoGridLayoutManager) {
+          layoutManager.pastePanel();
+        }
+      }
+      if (clipboardType === 'tab' && target.parent instanceof TabsLayoutManager) {
+        target.parent.pasteTab();
+      }
+      if (clipboardType === 'row') {
+        const layout = target.getLayout();
+        if (layout instanceof RowsLayoutManager) {
+          layout.pasteRow();
+        }
+      }
+    }
+
+    if (target instanceof RowItem) {
+      if (clipboardType === 'panel') {
+        const layoutManager = target.getLayout();
+        if (layoutManager instanceof DefaultGridLayoutManager || layoutManager instanceof AutoGridLayoutManager) {
+          layoutManager.pastePanel();
+        }
+      }
+
+      if (clipboardType === 'row' && target.parent instanceof RowsLayoutManager) {
+        target.parent.pasteRow();
+      }
+
+      if (clipboardType === 'tab') {
+        const layout = target.getLayout();
+        if (layout instanceof TabsLayoutManager) {
+          layout.pasteTab();
+        }
+      }
+    }
   }
 
   public copyPanel(vizPanel: VizPanel) {

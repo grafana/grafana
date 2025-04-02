@@ -16,6 +16,8 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
+import { TabItem } from './layout-tabs/TabItem';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -138,6 +140,40 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p l',
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
+  });
+
+  // Copy selected object
+  keybindings.addBinding({
+    key: 'mod+c',
+    onTrigger: () => {
+      const selectedObject = scene.state.editPane.getSelection();
+      if (!selectedObject) {
+        return;
+      }
+      if (selectedObject instanceof TabItem || selectedObject instanceof RowItem) {
+        selectedObject.onCopy();
+      } else if (selectedObject instanceof VizPanel) {
+        scene.copyPanel(selectedObject);
+      }
+    },
+  });
+
+  // Paste selected object
+  keybindings.addBinding({
+    key: 'mod+v',
+    onTrigger: () => {
+      const selectedObject = scene.state.editPane.getSelection();
+      if (!selectedObject) {
+        return;
+      }
+      if (
+        selectedObject instanceof TabItem ||
+        selectedObject instanceof RowItem ||
+        selectedObject instanceof VizPanel
+      ) {
+        scene.pasteFromClipboardTo(selectedObject);
+      }
+    },
   });
 
   // Refresh
