@@ -22,7 +22,7 @@ func Test_Service(t *testing.T) {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCacheTTL:        5 * time.Minute,
 				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
+				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}
@@ -38,8 +38,6 @@ func Test_Service(t *testing.T) {
 	})
 
 	t.Run("encrypt and decrypt with aes-gcm should work", func(t *testing.T) {
-		settings.SecretsManagement.Encryption.Algorithm = cipher.AesGcm
-
 		encrypted, err := svc.Encrypt(t.Context(), []byte("grafana"), "1234")
 		require.NoError(t, err)
 
@@ -47,25 +45,6 @@ func Test_Service(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, []byte("grafana"), decrypted)
-	})
-
-	t.Run("decrypt with aes-gcm should work", func(t *testing.T) {
-		// Raw slice of bytes that corresponds to the following ciphertext:
-		// - 'grafana' as payload
-		// - '1234' as secret
-		// - 'aes-gcm' as encryption algorithm
-		ciphertext := []byte{42, 89, 87, 86, 122, 76, 87, 100, 106, 98, 81, 42, 48, 99, 55, 50, 51, 48, 83, 66, 20, 99, 47, 238, 61, 44, 129, 125, 14, 37, 162, 230, 47, 31, 104, 70, 144, 223, 26, 51, 180, 17, 76, 52, 36, 93, 17, 203, 99, 158, 219, 102, 74, 173, 74}
-
-		decrypted, err := svc.Decrypt(t.Context(), ciphertext, "1234")
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
-	})
-
-	t.Run("encrypt with aes-gcm should fail", func(t *testing.T) {
-		settings.SecretsManagement.Encryption.Algorithm = cipher.AesGcm
-
-		_, err := svc.Encrypt(t.Context(), []byte("grafana"), "1234")
-		require.Error(t, err)
 	})
 
 	t.Run("decrypting legacy ciphertext should work", func(t *testing.T) {

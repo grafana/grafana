@@ -264,7 +264,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 			Encryption: setting.EncryptionSettings{
 				DataKeysCacheTTL:        5 * time.Minute,
 				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
+				Algorithm:               "aes-gcm",
 			},
 		},
 	}

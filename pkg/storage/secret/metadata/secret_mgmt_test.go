@@ -197,7 +197,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCacheTTL:        5 * time.Minute,
 				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
+				Algorithm:               "aes-gcm",
 			},
 		},
 	}
