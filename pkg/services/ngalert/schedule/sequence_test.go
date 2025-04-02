@@ -69,6 +69,8 @@ func TestSequence(t *testing.T) {
 				next.ruleRoutine.Eval(&next.Evaluation)
 			}
 		}
+		// rg1 : 1, 2
+		// rg2 : 3, 4 (prometheus), 5 (prometheus)
 		items := []readyToRunItem{
 			{
 				ruleRoutine: &fakeSequenceRule{UID: "3", Group: "rg2"},
@@ -77,7 +79,6 @@ func TestSequence(t *testing.T) {
 						models.RuleGen.WithUID("3"),
 						models.RuleGen.WithGroupIndex(1),
 						models.RuleGen.WithGroupName("rg2"),
-						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},

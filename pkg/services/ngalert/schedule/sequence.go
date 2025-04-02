@@ -82,6 +82,10 @@ func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next r
 }
 
 func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) sequence {
+	if len(groupItems) < 2 {
+		return sequence(groupItems[0])
+	}
+
 	slices.SortFunc(groupItems, func(a, b readyToRunItem) int {
 		return models.RulesGroupComparer(a.rule, b.rule)
 	})
@@ -112,8 +116,10 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 	}
 
 	// only evaluate rules in imported groups sequentially
-	if groupItems[0].rule.ImportedFromPrometheus() {
-		return true
+	for _, item := range groupItems {
+		if item.rule.ImportedFromPrometheus() {
+			return true
+		}
 	}
 
 	// default to false
