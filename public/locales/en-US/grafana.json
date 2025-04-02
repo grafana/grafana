@@ -1428,9 +1428,7 @@
         "enable": "Has data",
         "info": {
           "element": "Show or hide the element based on query results.",
-          "panel": "Show or hide the panel based on query results.",
-          "row": "Show or hide the row based on query results.",
-          "tab": "Show or hide the tab based on query results."
+          "panel": "Show or hide the panel based on query results."
         },
         "label": "Query result"
       },
@@ -1487,6 +1485,7 @@
         }
       },
       "title": "Show / hide rules",
+      "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored.",
       "variable": {
         "info": {
           "element": "Show or hide the element dynamically based on the variable value.",
