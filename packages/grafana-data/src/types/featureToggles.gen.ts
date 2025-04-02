@@ -236,6 +236,7 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
+  * @default true
   */
   pluginsDetailsRightPanel?: boolean;
   /**
