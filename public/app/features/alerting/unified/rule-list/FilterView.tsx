@@ -1,11 +1,11 @@
-import { empty } from 'ix/asynciterable';
+import { AsyncIterableX, empty } from 'ix/asynciterable';
 import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { withPerformanceLogging } from '../Analytics';
+import { logError, withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
@@ -56,29 +56,41 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
+  const iteration = useRef<{
+    rulesIterator: AsyncIterableX<RuleWithOrigin>;
+    abortController: AbortController;
+  } | null>(null);
 
-  /* this is the abort controller that allows us to stop an AsyncIterable */
-  const controller = useRef(new AbortController());
-
-  /**
-   * This an iterator that we can use to populate the search results.
-   * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
-   * callback function to detect when we've exhausted the source.
-   * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-  const rulesIterator = useRef(
-    getFilteredRulesIterator(filterState, API_PAGE_SIZE).pipe(
-      withAbort(controller.current.signal),
+  // To call getFilteredRulesIterator only once we need to check if the iterator has already been created
+  // If not, we create it and store it in the iteration ref
+  // Using getFilteredRulesIterator as init value for the useRef would call it on every render
+  if (iteration.current === null) {
+    /* this is the abort controller that allows us to stop an AsyncIterable */
+    const abortController = new AbortController();
+    /**
+     * This an iterator that we can use to populate the search results.
+     * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
+     * callback function to detect when we've exhausted the source.
+     * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
+    const rulesIterator = getFilteredRulesIterator(filterState, API_PAGE_SIZE).pipe(
+      withAbort(abortController.signal),
       onFinished(() => setDoneSearching(true))
-    )
-  );
-
+    );
+    iteration.current = { rulesIterator, abortController };
+  }
   const [rules, setRules] = useState<KeyedRuleWithOrigin[]>([]);
   const [doneSearching, setDoneSearching] = useState(false);
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(
     withPerformanceLogging(async () => {
-      for await (const rule of rulesIterator.current.pipe(
+      const rulesIterator = iteration.current?.rulesIterator;
+      if (!rulesIterator) {
+        logError(new Error('Filtered rules iterator has not been initialized'));
+        return;
+      }
+
+      for await (const rule of rulesIterator.pipe(
         // grab <FRONTENT_PAGE_SIZE> from the rules iterable
         take(FRONTENT_PAGE_SIZE),
         // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
@@ -95,12 +107,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* When we unmount the component we make sure to abort all iterables */
   useEffect(() => {
-    const currentAbortController = controller.current;
+    const currentAbortController = iteration.current?.abortController;
 
     return () => {
-      currentAbortController.abort();
+      currentAbortController?.abort();
     };
-  }, [controller]);
+  }, []);
 
   const loading = isLoading(state) || transitionPending;
   const numberOfRules = rules.length;

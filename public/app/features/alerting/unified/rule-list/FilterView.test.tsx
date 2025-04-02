@@ -40,17 +40,14 @@ beforeEach(() => {
 const io = mockIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
-  jest.setTimeout(60 * 1000);
-  jest.retryTimes(2);
-
   it('should render multiple pages of results', async () => {
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(100);
+    expect(await screen.findAllByRole('treeitem')).toHaveLength(2);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(200);
+    expect(await screen.findAllByRole('treeitem')).toHaveLength(4);
   });
 
   it('should filter results by group and rule name ', async () => {
