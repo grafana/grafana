@@ -170,7 +170,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	// the general folder is saved as an empty string in the database
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
@@ -229,17 +229,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.Folder, 0)
+	hits := make([]*folder.FolderReference, 0)
 	for _, item := range res.Hits {
 		// filter out k6 folders if request is not from a service account
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
 			continue
 		}
 
-		// search only returns a subset of info, get all info of the folder
-		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &item.Name, OrgID: q.OrgID})
-		if err != nil {
-			return nil, err
+		f := &folder.FolderReference{
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:       item.Name,
+			Title:     item.Title,
+			ParentUID: item.Folder,
+		}
+
+		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
 		}
 
 		hits = append(hits, f)
@@ -430,6 +435,19 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 
 	res, err := toFolderLegacyCounts(counts)
 	return *res, err
+}
+
+func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	resp, err := ss.k8sclient.GetStats(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(resp.Stats) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	}
+
+	return resp.Stats[0].Count, nil
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {

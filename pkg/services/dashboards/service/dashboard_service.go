@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"go.opentelemetry.io/otel/attribute"
@@ -320,8 +319,14 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 	var errs []error
 	itemsProcessed := 0
 
+	// get users ahead of time to do just one db call, rather than 2 per item in the list
+	users, err := dr.getUsersForList(ctx, items, orgID)
+	if err != nil {
+		return 0, append(errs, err)
+	}
+
 	for _, item := range items {
-		dash, err := dr.UnstructuredToLegacyDashboard(ctx, &item, orgID)
+		dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to convert dashboard: %w", err))
 			continue
@@ -441,11 +446,13 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 			}
 			total += orgDashboards
 
-			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
-			if err != nil {
-				return nil, err
+			if scopeParams != nil && scopeParams.OrgID == org.ID {
+				tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+				if err != nil {
+					return nil, err
+				}
+				u.Set(tag, orgDashboards)
 			}
-			u.Set(tag, orgDashboards)
 		}
 
 		tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
@@ -474,7 +481,7 @@ func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID 
 		return resp.Stats[0].Count, nil
 	}
 
-	return dr.dashboardStore.CountInOrg(ctx, orgID)
+	return dr.dashboardStore.CountInOrg(ctx, orgID, false)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
@@ -1387,10 +1394,6 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
-	return dr.getDashboardsSharedWithUser(ctx, user)
-}
-
 func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.getDashboardsSharedWithUser")
 	defer span.End()
@@ -1537,7 +1540,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			result := dashboards.DashboardSearchProjection{
-				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				ID:          hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 				UID:         hit.Name,
 				OrgID:       query.OrgId,
 				Title:       hit.Title,
@@ -1924,9 +1927,15 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
+	// get users ahead of time to do just one db call, rather than 2 per item in the list
+	users, err := dr.getUsersForList(ctx, out.Items, orgID)
+	if err != nil {
+		return nil, err
+	}
+
 	dashboards := make([]*dashboards.Dashboard, 0)
 	for _, item := range out.Items {
-		dash, err := dr.UnstructuredToLegacyDashboard(ctx, &item, orgID)
+		dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
 		if err != nil {
 			return nil, err
 		}
@@ -2204,7 +2213,38 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	return result, nil
 }
 
+func (dr *DashboardServiceImpl) getUsersForList(ctx context.Context, items []unstructured.Unstructured, orgID int64) (map[string]*user.User, error) {
+	userMeta := []string{}
+	for _, item := range items {
+		obj, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, err
+		}
+		if obj.GetCreatedBy() != "" {
+			userMeta = append(userMeta, obj.GetCreatedBy())
+		}
+		if obj.GetUpdatedBy() != "" {
+			userMeta = append(userMeta, obj.GetUpdatedBy())
+		}
+	}
+
+	return dr.k8sclient.GetUsersFromMeta(ctx, userMeta)
+}
+
 func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := dr.k8sclient.GetUsersFromMeta(ctx, []string{obj.GetCreatedBy(), obj.GetUpdatedBy()})
+	if err != nil {
+		return nil, err
+	}
+	return dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+}
+
+func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {
 	spec, ok := item.Object["spec"].(map[string]any)
 	if !ok {
 		return nil, errors.New("error parsing dashboard from k8s response")
@@ -2247,17 +2287,12 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 
 	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
 
-	creator, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
-	if err != nil {
-		return nil, err
+	if creator, ok := users[obj.GetCreatedBy()]; ok {
+		out.CreatedBy = creator.ID
 	}
-	out.CreatedBy = creator.ID
-
-	updater, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
-	if err != nil {
-		return nil, err
+	if updater, ok := users[obj.GetUpdatedBy()]; ok {
+		out.UpdatedBy = updater.ID
 	}
-	out.UpdatedBy = updater.ID
 
 	// any dashboards that have already been synced to unified storage will have the id in the spec
 	// and not as a label. We will need to support this conversion until they have all been updated
