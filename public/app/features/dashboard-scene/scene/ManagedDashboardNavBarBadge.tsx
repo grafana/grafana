@@ -14,10 +14,13 @@ export default function ManagedDashboardNavBarBadge({ meta }: { meta: DashboardM
   switch (kind) {
     case ManagerKind.Terraform:
       text = 'Terraform';
+      break;
     case ManagerKind.Kubectl:
       text = 'Kubectl';
+      break;
     case ManagerKind.Plugin:
       text = `Plugin: ${id}`;
+      break;
   }
   return <Badge color="darkgrey" icon="exchange-alt" text={text} key="provisioned-dashboard-button-badge" />;
 }
