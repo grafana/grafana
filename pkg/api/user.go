@@ -79,8 +79,8 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsExternal = true
 
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
-		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
+		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
+		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
@@ -376,20 +376,6 @@ func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Respo
 	return response.Redirect(hs.Cfg.AppSubURL + "/profile")
 }
 
-func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
-	var err error
-	if _, err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
-		return true, nil
-	}
-
-	if errors.Is(err, user.ErrUserNotFound) {
-		return false, nil
-	}
-
-	return false, err
-}
-
 // swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
 //
 // Organizations of the actual User.
@@ -624,7 +610,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+		if hs.isProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
 			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
 		}
 	}

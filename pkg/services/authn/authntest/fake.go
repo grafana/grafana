@@ -18,6 +18,7 @@ type FakeService struct {
 	ExpectedErrs       []error
 	ExpectedIdentities []*authn.Identity
 	CurrentIndex       int
+	EnabledClients     []string
 }
 
 func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {

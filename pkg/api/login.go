@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -22,6 +23,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -348,6 +350,14 @@ func (hs *HTTPServer) samlAutoLoginEnabled() bool {
 	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "auto_login").MustBool(false)
 }
 
+func (hs *HTTPServer) samlSkipOrgRoleSyncEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "skip_org_role_sync").MustBool(false)
+}
+
+func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "role_values_grafana_admin").MustString("") != ""
+}
+
 func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
@@ -376,4 +386,76 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+}
+
+// isExternalySynced is used to tell if the user roles are externally synced
+// true means that the org role sync is handled by Grafana
+// Note: currently the users authinfo is overridden each time the user logs in
+// https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
+// this means that if the user has multiple auth providers and one of them is set to sync org roles
+// then isExternallySynced will be true for this one provider and false for the others
+func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+	// provider enabled in config
+	if !hs.isProviderEnabled(cfg, authModule, oauthInfo) {
+		return false
+	}
+	// first check SAML, LDAP and JWT
+	switch authModule {
+	case loginservice.SAMLAuthModule:
+		return !hs.samlSkipOrgRoleSyncEnabled()
+	case loginservice.LDAPAuthModule:
+		return !cfg.LDAPSkipOrgRoleSync
+	case loginservice.JWTModule:
+		return !cfg.JWTAuth.SkipOrgRoleSync
+	}
+
+	if cfg.OAuthSkipOrgRoleUpdateSync {
+		return false
+	}
+
+	switch authModule {
+	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return !oauthInfo.SkipOrgRoleSync
+	}
+	return true
+}
+
+// isGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
+// Grafana admin role sync is available for SAML, JWT, OAuth providers and LDAP.
+// For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
+func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+	if !hs.isExternallySynced(cfg, authModule, oauthInfo) {
+		return false
+	}
+
+	switch authModule {
+	case loginservice.JWTModule:
+		return cfg.JWTAuth.AllowAssignGrafanaAdmin
+	case loginservice.SAMLAuthModule:
+		return hs.samlAllowAssignGrafanaAdminEnabled()
+	case loginservice.LDAPAuthModule:
+		return true
+	default:
+		return oauthInfo != nil && oauthInfo.AllowAssignGrafanaAdmin
+	}
+}
+
+func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+	switch authModule {
+	case loginservice.SAMLAuthModule:
+		return hs.samlEnabled()
+	case loginservice.LDAPAuthModule:
+		return cfg.LDAPAuthEnabled
+	case loginservice.JWTModule:
+		return cfg.JWTAuth.Enabled
+	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return oauthInfo.Enabled
+	}
+	return false
 }

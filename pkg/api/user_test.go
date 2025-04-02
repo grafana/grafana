@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -234,6 +235,7 @@ func Test_GetUserByID(t *testing.T) {
 		authEnabled                  bool
 		skipOrgRoleSync              bool
 		expectedIsGrafanaAdminSynced bool
+		expectedIsExternallySynced   bool
 	}{
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if Grafana Admin role is not synced",
@@ -242,6 +244,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      false,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   true,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if OAuth provider is not enabled",
@@ -250,6 +253,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if org roles are not being synced",
@@ -258,6 +262,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              true,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced OAuth user",
@@ -266,6 +271,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: true,
+			expectedIsExternallySynced:   true,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if Grafana Admin role is not synced",
@@ -274,6 +280,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      false,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   true,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if JWT provider is not enabled",
@@ -282,6 +289,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if org roles are not being synced",
@@ -290,6 +298,7 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              true,
 			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
 		},
 		{
 			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced JWT user",
@@ -298,6 +307,31 @@ func Test_GetUserByID(t *testing.T) {
 			allowAssignGrafanaAdmin:      true,
 			skipOrgRoleSync:              false,
 			expectedIsGrafanaAdminSynced: true,
+			expectedIsExternallySynced:   true,
+		},
+		{
+			name:                         "Should return IsExternallySynced = true for an externally synced SAML user",
+			authModule:                   login.SAMLAuthModule,
+			authEnabled:                  true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   true,
+		},
+		{
+			name:                         "Should return IsExternallySynced = false for an externally synced SAML user if SAML provider is not enabled",
+			authModule:                   login.SAMLAuthModule,
+			authEnabled:                  false,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
+		},
+		{
+			name:                         "Should return IsExternallySynced = false for an externally synced SAML user if  if org roles are not being synced",
+			authModule:                   login.SAMLAuthModule,
+			authEnabled:                  true,
+			skipOrgRoleSync:              true,
+			expectedIsGrafanaAdminSynced: false,
+			expectedIsExternallySynced:   false,
 		},
 	}
 	for _, tc := range testcases {
@@ -315,13 +349,25 @@ func Test_GetUserByID(t *testing.T) {
 				cfg.JWTAuth.Enabled = tc.authEnabled
 				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
 				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+			case login.SAMLAuthModule:
+				saml, err := cfg.Raw.NewSection("auth.saml")
+				require.NoError(t, err)
+				_, err = saml.NewKey("enabled", fmt.Sprintf("%t", tc.authEnabled))
+				require.NoError(t, err)
+				_, err = saml.NewKey("skip_org_role_sync", fmt.Sprintf("%t", tc.skipOrgRoleSync))
+				require.NoError(t, err)
 			}
 
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "saml").Return(true).Maybe()
+
 			hs := &HTTPServer{
-				Cfg:             cfg,
-				authInfoService: authInfoService,
-				SocialService:   socialService,
-				userService:     userService,
+				Cfg:              cfg,
+				authInfoService:  authInfoService,
+				SocialService:    socialService,
+				userService:      userService,
+				SettingsProvider: setting.ProvideProvider(cfg),
+				License:          license,
 			}
 
 			sc := setupScenarioContext(t, "/api/users/1")
@@ -339,6 +385,7 @@ func Test_GetUserByID(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedIsGrafanaAdminSynced, resp.IsGrafanaAdminExternallySynced)
+			assert.Equal(t, tc.expectedIsExternallySynced, resp.IsExternallySynced)
 		})
 	}
 }
