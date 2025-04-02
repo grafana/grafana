@@ -136,7 +136,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.35.0 // indirect
-	github.com/grafana/grafana-aws-sdk v0.34.0 // indirect
+	github.com/grafana/grafana-aws-sdk v0.36.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
