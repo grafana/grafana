@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 PERMISSIONS_OK=0
 
