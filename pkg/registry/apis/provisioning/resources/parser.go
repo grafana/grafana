@@ -229,16 +229,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	obj := make(map[string]any)
-	for k, v := range f.Obj.Object {
-		obj[k] = v
-	}
-	if f.Obj.GetName() == "" {
+	obj := f.Obj.DeepCopy().Object
+	delete(obj, "status")
+	name := f.Obj.GetName()
+	if name == "" {
 		delete(obj, "metadata")
 	} else {
-		obj["metadata"] = map[string]any{
-			"name": f.Obj.GetName(), // keep the name property when it exists
-		}
+		obj["metadata"] = map[string]any{"name": name}
 	}
 
 	switch path.Ext(f.Info.Path) {
