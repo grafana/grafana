@@ -379,6 +379,7 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
+	ctx = request.WithNamespace(ctx, job.GetNamespace())
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
@@ -408,7 +409,7 @@ func (s *persistentStore) InsertNotifications() chan struct{} {
 // generateJobName creates and updates the job's name to one that fits it.
 func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
-	case provisioning.JobActionMigrate, provisioning.JobActionSync:
+	case provisioning.JobActionMigrate, provisioning.JobActionPull:
 		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
 		job.Name = job.Spec.Repository + "-syncmigrate"
 	case provisioning.JobActionPullRequest:

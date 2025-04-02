@@ -32,6 +32,12 @@ const (
 	teamGroup    = "iam.grafana.app"
 	teamResource = "teams"
 
+	userGroup    = "iam.grafana.app"
+	userResource = "users"
+
+	serviceAccountGroup    = "iam.grafana.app"
+	serviceAccountResource = "serviceaccounts"
+
 	statusSubresource = "status"
 )
 
@@ -107,7 +113,9 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 			common.NewGroupResourceTuple("user:11", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource),
 			common.NewFolderResourceTuple("user:12", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "5"),
 			common.NewFolderResourceTuple("user:13", common.RelationGet, folderGroup, folderResource, statusSubresource, "5"),
-			common.NewTeamResourceTuple("user:14", common.RelationGet, teamGroup, teamResource, statusSubresource, "1"),
+			common.NewTypedResourceTuple("user:14", common.RelationGet, common.TypeTeam, teamGroup, teamResource, statusSubresource, "1"),
+			common.NewTypedResourceTuple("user:15", common.RelationGet, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
+			common.NewTypedResourceTuple("user:16", common.RelationGet, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
 		},
 	}
 	for _, w := range writes.TupleKeys {

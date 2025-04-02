@@ -686,6 +686,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
@@ -746,6 +747,10 @@ export interface FeatureToggles {
   * @default true
   */
   newFiltersUI?: boolean;
+  /**
+  * Allows access to the new react-data-grid based table component.
+  */
+  tableNextGen?: boolean;
   /**
   * Send dashboard and panel names to Loki when querying
   */
@@ -831,14 +836,10 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new combobox component for Prometheus query editor
-  */
-  prometheusUsesCombobox?: boolean;
-  /**
-  * Enables the user storage API
+  * Use new **Combobox** component for Prometheus query editor
   * @default true
   */
-  userStorageAPI?: boolean;
+  prometheusUsesCombobox?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -951,7 +952,7 @@ export interface FeatureToggles {
   */
   ABTestFeatureToggleA?: boolean;
   /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
   /**
@@ -984,14 +985,6 @@ export interface FeatureToggles {
   */
   alertingConversionAPI?: boolean;
   /**
-  * enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-  */
-  alertingAlertmanagerExtraDedupStage?: boolean;
-  /**
-  * works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-  */
-  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -1007,6 +1000,10 @@ export interface FeatureToggles {
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
   /**
   * Enables the alert rule version history restore feature
   * @default true
@@ -1042,10 +1039,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
-  /**
   * Disables backdrop blur
   */
   noBackdropBlur?: boolean;
@@ -1058,7 +1051,20 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Specify the locale so we can show the correct format for numbers and dates
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
 }

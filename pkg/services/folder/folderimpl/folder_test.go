@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -71,7 +72,8 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		store := ProvideStore(db)
 		ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			apiserver.WithoutRestConfig)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -1608,17 +1610,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		require.Len(t, sharedFolders, 1)
 		require.Contains(t, sharedFoldersUIDs, ancestorFoldersWithoutPermissions[1].UID)
 		require.NotContains(t, sharedFoldersUIDs, ancestorFoldersWithPermissions[1].UID)
-
-		sharedDashboards, err := dashboardService.GetDashboardsSharedWithUser(context.Background(), &signedInUser)
-		sharedDashboardsUIDs := make([]string, 0)
-		for _, d := range sharedDashboards {
-			sharedDashboardsUIDs = append(sharedDashboardsUIDs, d.UID)
-		}
-
-		require.NoError(t, err)
-		require.Len(t, sharedDashboards, 1)
-		require.Contains(t, sharedDashboardsUIDs, dash1.UID)
-		require.NotContains(t, sharedDashboardsUIDs, dash2.UID)
 
 		t.Cleanup(func() {
 			//guardian.New = origNewGuardian

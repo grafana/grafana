@@ -7,7 +7,7 @@ import { ListItem } from './ListItem';
 import { RuleActionsSkeleton } from './RuleActionsSkeleton';
 import { RuleListIcon } from './RuleListIcon';
 
-export function AlertRuleListItemLoader() {
+export function AlertRuleListItemSkeleton() {
   return (
     <ListItem
       title={<Skeleton width={64} />}
