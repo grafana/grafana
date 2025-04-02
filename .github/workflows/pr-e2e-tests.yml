@@ -1,0 +1,48 @@
+name: End-to-end tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-grafana:
+    name: Build & Package Grafana
+    runs-on: ubuntu-latest-16-cores
+    outputs:
+      artifact: ${{ steps.artifact.outputs.artifact }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'grafana/grafana-build'
+          ref: 'main'
+      - uses: actions/checkout@v4
+        with:
+          path: ./grafana
+      - run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
+      - uses: dagger/dagger-for-github@8.0.0
+        with:
+          verb: run
+          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION} > out.txt
+      - run: mv $(cat out.txt) grafana.tar.gz
+      - run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
+        id: artifact
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          retention-days: 1
+          name: ${{ steps.artifact.outputs.artifact }}
+          path: grafana.tar.gz
+  misc-suite:
+    needs:
+      - build-grafana
+    uses: ./.github/workflows/e2e-suite-various.yml
+    name: Various Suite
+    with:
+      package: ${{ needs.build-grafana.outputs.artifact }}
