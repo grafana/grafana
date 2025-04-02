@@ -105,8 +105,7 @@ type ParsedResource struct {
 	Errors []error
 }
 
-// FIXME: eliminate clients from parser
-
+// FIXME: eliminate clients from parser (but be careful that we can use the same cache/resolved GVK+GVR)
 func (r *Parser) Clients() ResourceClients {
 	return r.clients
 }
