@@ -57,7 +57,7 @@ import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
-import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { getLogLevel, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { getState } from 'app/store/store';
@@ -201,7 +201,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
-  const [hiddenLogLevels, setHiddenLogLevels] = useState<LogLevel[]>([]);
+  const [hiddenLogLevels, setHiddenLogLevels] = useState<string[]>([]);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
     store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
   );
@@ -224,6 +224,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
+  const logLevelsRef = useRef<string[] | null>(null);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -264,38 +265,37 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
 
     // check if we have dataFrames that return the same level
-    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
+    const logLevelsArray: LogLevel[] = [];
     logVolumeDataFrames.forEach((dataFrame) => {
       const { level } = getLogLevelInfo(dataFrame, logsVolumeData?.data ?? []);
-      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
+      logLevelsArray.push(getLogLevel(level));
     });
 
-    const sortedLLArray = logLevelsArray.sort(
-      (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
-        return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
-      }
+    const sortedLLArray = logLevelsArray.sort((a: string, b: string) =>
+      levelsArr.indexOf(a) > levelsArr.indexOf(b) ? 1 : -1
     );
 
     const logLevels = new Set(sortedLLArray);
+    logLevelsRef.current = Array.from(logLevels);
 
     if (logLevels.size > 1 && logsVolumeEnabled && numberOfLogVolumes === 1) {
       logLevels.forEach((level) => {
         const allLevelsSelected = hiddenLogLevels.length === 0;
-        const currentLevelSelected = !hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level.levelStr);
+        const currentLevelSelected = !hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level);
         if (register) {
           register({
-            title: level.levelStr,
+            title: level,
             icon: 'gf-logs',
             panelId: PINNED_LOGS_PANELID,
             level: 'child',
             type: 'filter',
             highlight: currentLevelSelected && !allLevelsSelected,
             onClick: (e: React.MouseEvent) => {
-              toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
+              toggleLegendRef.current?.(level, mapMouseEventToMode(e));
               contentOutlineTrackLevelFilter(level);
             },
             ref: null,
-            color: LogLevelColor[level.logLevel],
+            color: LogLevelColor[level],
           });
         }
       });
@@ -567,9 +567,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   }, []);
 
-  const onToggleLogLevel = useCallback((hiddenRawLevels: string[]) => {
-    const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
-    setHiddenLogLevels(hiddenLogLevels);
+  const onToggleLogLevel = useCallback((hiddenLevels: string[]) => {
+    setHiddenLogLevels(hiddenLevels);
   }, []);
 
   const onToggleLogsVolumeCollapse = useCallback(
@@ -776,9 +775,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && (value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending)) {
         sortOrderChanged(value);
+      } else if (option === 'filterLevels' && Array.isArray(value)) {
+        if (value.length === 0) {
+          setHiddenLogLevels([]);
+          return;
+        }
+        const allLevels = logLevelsRef.current ?? Object.keys(LogLevelColor);
+        if (hiddenLogLevels.length === 0) {
+          toggleLegendRef.current?.(value[0], SeriesVisibilityChangeMode.ToggleSelection);
+          setHiddenLogLevels(allLevels.filter((level) => level !== value[0]));
+          return;
+        }
+        const appendsLevel = value.find((level) => hiddenLogLevels.includes(level));
+        const removesLevel = allLevels.find((level) => !value.includes(level) && !hiddenLogLevels.includes(level));
+        if (appendsLevel) {
+          toggleLegendRef.current?.(appendsLevel, SeriesVisibilityChangeMode.AppendToSelection);
+          setHiddenLogLevels(hiddenLogLevels.filter((hiddenLevel) => hiddenLevel === appendsLevel));
+          return;
+        } else if (removesLevel) {
+          toggleLegendRef.current?.(removesLevel, SeriesVisibilityChangeMode.AppendToSelection);
+          setHiddenLogLevels([...hiddenLogLevels, removesLevel]);
+        }
       }
     },
-    [sortOrderChanged]
+    [hiddenLogLevels, sortOrderChanged]
   );
 
   return (
@@ -1207,7 +1227,7 @@ const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => 
   return { dedupedRows, dedupCount };
 };
 
-const filterRows = (logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
+const filterRows = (logRows: LogRowModel[], hiddenLogLevels: string[]) => {
   return filterLogLevels(logRows, new Set(hiddenLogLevels));
 };
 
