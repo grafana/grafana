@@ -1517,25 +1517,6 @@
       }
     },
     "edit-pane": {
-      "add": {
-        "lib-panel": {
-          "heading": "Library panel",
-          "title": "Library panels allow you share and reuse panels between dashboards"
-        },
-        "panel": {
-          "heading": "Panel",
-          "title": "A container for visualizations and other content"
-        },
-        "row": {
-          "heading": "Row",
-          "title": "A group of panels with an optional header"
-        },
-        "tab": {
-          "heading": "Tab",
-          "title": "Break up your dashboard into different horizontal tabs"
-        },
-        "title": "Add element"
-      },
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
@@ -1695,7 +1676,16 @@
     "toolbar": {
       "add": "Add",
       "add-new": {
-        "tooltip": "Add panels and other elements"
+        "button": {
+          "label": "Add",
+          "tooltip": "Add panels and other elements"
+        },
+        "menu": {
+          "lib-panel": "Library panel",
+          "panel": "Panel",
+          "row": "Row",
+          "tab": "Tab"
+        }
       },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
@@ -1903,9 +1893,6 @@
     "custom-variable-form": {
       "custom-options": "Custom options",
       "selection-options": "Selection options"
-    },
-    "dashboard-add-pane": {
-      "aria-label-close-add-pane": "Close add pane"
     },
     "dashboard-edit-pane-renderer": {
       "outline": "Outline"
