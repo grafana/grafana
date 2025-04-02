@@ -6,7 +6,9 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -51,7 +53,21 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 		logger.Info(fmt.Sprintf("InfluxDB executing SQL: %s", qm.RawSQL))
 		info, err := r.client.Execute(ctx, qm.RawSQL)
 		if err != nil {
-			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+			errStr := fmt.Sprintf("flightsql: %s", err)
+			if grpcStatusErr, ok := status.FromError(err); ok {
+				switch grpcStatusErr.Code() {
+				case codes.InvalidArgument:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, errStr)
+				case codes.PermissionDenied:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusForbidden, backend.ErrorSourceDownstream, errStr)
+				case codes.NotFound:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusNotFound, backend.ErrorSourceDownstream, errStr)
+				default:
+					tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
+				}
+			} else {
+				tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
+			}
 			return tRes, nil
 		}
 		if len(info.Endpoint) != 1 {
