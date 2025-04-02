@@ -1850,6 +1850,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:         "viewersHaveExploreAccess",
+			Description:  "Enables viewers to have explore access when viewers_can_edit is set",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        identityAccessTeam,
+			FrontendOnly: false,
+			Expression:   "true",
+		},
 	}
 )
 

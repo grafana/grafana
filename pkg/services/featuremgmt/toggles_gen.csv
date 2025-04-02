@@ -243,3 +243,4 @@ unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
+viewersHaveExploreAccess,preview,@grafana/identity-access-team,false,false,false

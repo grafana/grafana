@@ -1073,4 +1073,9 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables viewers to have explore access when viewers_can_edit is set
+  * @default true
+  */
+  viewersHaveExploreAccess?: boolean;
 }

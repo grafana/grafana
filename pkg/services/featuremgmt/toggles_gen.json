@@ -4473,6 +4473,22 @@
     },
     {
       "metadata": {
+        "name": "viewersHaveExploreAccess",
+        "resourceVersion": "1743579161766",
+        "creationTimestamp": "2025-04-02T07:32:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-02 07:32:41.76632 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables viewers to have explore access when viewers_can_edit is set",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
         "creationTimestamp": "2024-09-09T14:11:55Z",

@@ -982,4 +982,8 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagViewersHaveExploreAccess
+	// Enables viewers to have explore access when viewers_can_edit is set
+	FlagViewersHaveExploreAccess = "viewersHaveExploreAccess"
 )
