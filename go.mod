@@ -37,6 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.200.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.15.13 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.25.13 // @grafana/aws-datasources
+	github.com/aws/smithy-go v1.22.2 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
@@ -234,8 +235,6 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250327091030-e216c2f29dcc // @grafana/grafana-app-platform-squad
 )
-
-require github.com/aws/smithy-go v1.22.2 // @grafana/aws-datasources
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -581,8 +580,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-require github.com/grafana/grafana/pkg/build v0.0.0-20250401142320-991b016d6319 // @grafana/grafana-developer-enablement-squad
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
