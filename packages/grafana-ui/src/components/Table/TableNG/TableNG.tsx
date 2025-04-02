@@ -1,14 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, {
-  RenderCellProps,
-  RenderRowProps,
-  Row,
-  SortColumn,
-  DataGridHandle,
-  SortDirection,
-} from 'react-data-grid';
+import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -89,7 +82,7 @@ export function TableNG(props: TableNGProps) {
 
       return {
         columnKey,
-        direction: (desc ? 'DESC' : 'ASC') as SortDirection,
+        direction: desc ? ('DESC' as const) : ('ASC' as const),
       };
     });
     return initialSort ?? [];
@@ -220,10 +213,10 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(() => {
-    return props.data.fields.reduce((acc, field) => {
+    return props.data.fields.reduce<ColumnTypes>((acc, field) => {
       acc[field.name] = field.type;
       return acc;
-    }, {} as ColumnTypes);
+    }, {});
   }, [props.data.fields]);
 
   const getDisplayedValue = (row: TableRow, key: string) => {
@@ -454,7 +447,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLDivElement;
+    const target = event.currentTarget;
     scrollPositionRef.current = {
       x: target.scrollLeft,
       y: target.scrollTop,

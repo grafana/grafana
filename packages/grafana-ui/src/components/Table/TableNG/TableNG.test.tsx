@@ -27,7 +27,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -52,7 +52,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -179,7 +179,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -202,7 +202,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -225,7 +225,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
