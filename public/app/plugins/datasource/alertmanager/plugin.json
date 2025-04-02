@@ -39,7 +39,7 @@
     {
       "method": "GET",
       "path": "api/v1/alerts",
-      "reqRole": "Admin"
+      "reqRole": "Editor"
     }
   ],
   "info": {
