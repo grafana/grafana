@@ -277,6 +277,8 @@ To define hard limits of the axes, set standard min/max options. For more inform
 
 #### Transform
 
+<!-- figure out where this goes -->
+
 Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
 
 - **Negative Y transform:** Flip the results to negative values on the Y axis.
