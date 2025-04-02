@@ -2459,6 +2459,27 @@
           },
           {
             "type": "string",
+            "default": "default",
+            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"name\", \"resource_type\", and \"status\".",
+            "name": "resultSortColumn",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "ASC",
+            "description": "ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.",
+            "name": "resultSortOrder",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "ErrorsOnly is used to only return resources with error statuses",
+            "name": "errorsOnly",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "description": "Session UID of a session",
             "name": "uid",
             "in": "path",
@@ -12663,6 +12684,10 @@
             "type": "string"
           }
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "noDataState": {
           "type": "string",
           "enum": [
@@ -16112,6 +16137,10 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -16259,26 +16288,6 @@
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
-        }
-      }
-    },
-    "GettableTimeIntervals": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        },
-        "version": {
-          "type": "string"
         }
       }
     },
@@ -17981,6 +17990,9 @@
         "language": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -18494,6 +18506,12 @@
         "metadata": {
           "$ref": "#/definitions/AlertRuleMetadata"
         },
+        "missing_series_evals_to_resolve": {
+          "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+          "type": "integer",
+          "format": "int64",
+          "example": 3
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18565,23 +18583,6 @@
         }
       }
     },
-    "PostableTimeIntervals": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        },
-        "version": {
-          "type": "string"
-        }
-      }
-    },
     "PostableUserConfig": {
       "type": "object",
       "properties": {
@@ -18609,6 +18610,10 @@
         },
         "language": {
           "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "locale": {
+          "description": "Selected locale (beta)",
           "type": "string"
         },
         "navbar": {
@@ -18839,6 +18844,11 @@
           "example": {
             "team": "sre-team-1"
           }
+        },
+        "missingSeriesEvalsToResolve": {
+          "type": "integer",
+          "format": "int64",
+          "example": 2
         },
         "noDataState": {
           "type": "string",
@@ -21574,55 +21584,6 @@
         }
       }
     },
-    "TimeIntervalItem": {
-      "type": "object",
-      "properties": {
-        "days_of_month": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "location": {
-          "type": "string"
-        },
-        "months": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "times": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalTimeRange"
-          }
-        },
-        "weekdays": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "years": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "TimeIntervalTimeRange": {
-      "type": "object",
-      "properties": {
-        "end_time": {
-          "type": "string"
-        },
-        "start_time": {
-          "type": "string"
-        }
-      }
-    },
     "TimeRange": {
       "description": "Redefining this to avoid an import cycle",
       "type": "object",
@@ -22104,6 +22065,9 @@
           "type": "string"
         },
         "language": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -22905,6 +22869,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -23029,7 +22994,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
@@ -23413,36 +23377,6 @@
     }
   },
   "responses": {
-    "GetAllIntervalsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/GettableTimeIntervals"
-        }
-      }
-    },
-    "GetIntervalsByNameResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/GettableTimeIntervals"
-      }
-    },
-    "GetReceiverResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/GettableApiReceiver"
-      }
-    },
-    "GetReceiversResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/GettableApiReceiver"
-        }
-      }
-    },
     "GettableHistoricUserConfigs": {
       "description": "(empty)",
       "schema": {
