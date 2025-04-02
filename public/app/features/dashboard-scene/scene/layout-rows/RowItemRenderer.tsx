@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useIsClone } from '../../utils/clone';
@@ -25,7 +25,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
-  const pointerDownPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerDistance = usePointerDistance();
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -66,7 +66,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           onPointerDown={(evt) => {
             evt.stopPropagation();
-            pointerDownPos.current = { x: evt.clientX, y: evt.clientY };
+            pointerDistance.set(evt);
           }}
           onPointerUp={(evt) => {
             // If we selected and are clicking a button inside row header then don't de-select row
@@ -76,7 +76,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               return;
             }
 
-            if (Math.hypot(pointerDownPos.current.x - evt.clientX, pointerDownPos.current.y - evt.clientY) > 10) {
+            if (pointerDistance.check(evt)) {
               return;
             }
 

@@ -1,6 +1,7 @@
 import { PointerEvent as ReactPointerEvent } from 'react';
 
 import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { createPointerDistance } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { DashboardDropTarget, isDashboardDropTarget } from './types/DashboardDropTarget';
@@ -12,7 +13,7 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
   private _sourceDropTarget: DashboardDropTarget | null = null;
   private _lastDropTarget: DashboardDropTarget | null = null;
-  private _startSyncLocation: { x: number; y: number } = { x: 0, y: 0 };
+  private _pointerDistance = createPointerDistance();
   private _isSelectedObject = false;
 
   public constructor() {
@@ -32,7 +33,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingSync(evt: ReactPointerEvent, panel: VizPanel): void {
-    this._startSyncLocation = { x: evt.clientX, y: evt.clientY };
+    this._pointerDistance.set(evt);
     this._isSelectedObject = false;
 
     const dropTarget = sceneGraph.findObject(panel, isDashboardDropTarget);
@@ -69,11 +70,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _onPointerMove(evt: PointerEvent) {
-    if (
-      !this._isSelectedObject &&
-      this.state.draggingPanel &&
-      Math.hypot(this._startSyncLocation.x - evt.clientX, this._startSyncLocation.y - evt.clientY) > 10
-    ) {
+    if (!this._isSelectedObject && this.state.draggingPanel && this._pointerDistance.check(evt)) {
       this._isSelectedObject = true;
       const panel = this.state.draggingPanel?.resolve();
       this._getDashboard().state.editPane.selectObject(panel, panel.state.key!, { force: true, multi: false });

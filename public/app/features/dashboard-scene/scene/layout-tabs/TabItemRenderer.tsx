@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useRef } from 'react';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Tab, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useDashboardState } from '../../utils/utils';
 
@@ -25,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
-  const pointerDownPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerDistance = usePointerDistance();
 
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isEditing}>
@@ -51,15 +50,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             aria-selected={isActive}
             onPointerDown={(evt) => {
               evt.stopPropagation();
-              pointerDownPos.current = { x: evt.clientX, y: evt.clientY };
+              pointerDistance.set(evt);
             }}
             onPointerUp={(evt) => {
               evt.stopPropagation();
 
-              if (
-                !isSelectable ||
-                Math.hypot(pointerDownPos.current.x - evt.clientX, pointerDownPos.current.y - evt.clientY) > 10
-              ) {
+              if (!isSelectable || pointerDistance.check(evt)) {
                 return;
               }
 
