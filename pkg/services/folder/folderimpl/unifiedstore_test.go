@@ -430,9 +430,8 @@ func TestGetChildren(t *testing.T) {
 
 		// don't set page or limit - should be automatically added
 		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
-			UID:     "folder1",
-			OrgID:   orgID,
-			RefOnly: true, // nolint:staticcheck
+			UID:   "folder1",
+			OrgID: orgID,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 2)

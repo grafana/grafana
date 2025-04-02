@@ -321,8 +321,8 @@ func (ss *FolderStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQu
 	return util.Reverse(folders[1:]), nil
 }
 
-func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	var folders []*folder.Folder
+func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	var folders []*folder.FolderReference
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
@@ -368,12 +368,6 @@ func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildren
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
-			folders[idx].WithURL()
-			return nil
-		}); err != nil {
-			ss.log.Debug("failed to set URL to folders", "err", err)
-		}
 		return nil
 	})
 	return folders, err

@@ -298,7 +298,7 @@ func (a *AlertRuleMutators) WithNamespaceUID(namespaceUID string) AlertRuleMutat
 	}
 }
 
-func (a *AlertRuleMutators) WithNamespace(namespace *folder.Folder) AlertRuleMutator {
+func (a *AlertRuleMutators) WithNamespace(namespace *folder.FolderReference) AlertRuleMutator {
 	return a.WithNamespaceUID(namespace.UID)
 }
 

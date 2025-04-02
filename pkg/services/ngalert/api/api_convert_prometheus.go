@@ -413,7 +413,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	return successfulResponse()
 }
 
-func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.Folder, response.Response) {
+func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.FolderReference, response.Response) {
 	logger.Debug("Getting or creating a new folder")
 
 	ns, err := srv.ruleStore.GetOrCreateNamespaceByTitle(

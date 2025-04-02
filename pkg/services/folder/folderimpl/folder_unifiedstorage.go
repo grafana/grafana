@@ -343,7 +343,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 	return f, nil
 }
 
-func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -397,7 +397,7 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 	return children, nil
 }
 
-func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -432,7 +432,7 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil

@@ -46,8 +46,8 @@ type Service interface {
 	SearchFolders(ctx context.Context, q SearchFoldersQuery) (model.HitList, error)
 
 	// GetChildren returns an array containing all child folders.
-	GetChildren(ctx context.Context, q *GetChildrenQuery) ([]*Folder, error)
-	GetChildrenLegacy(ctx context.Context, q *GetChildrenQuery) ([]*Folder, error)
+	GetChildren(ctx context.Context, q *GetChildrenQuery) ([]*FolderReference, error)
+	GetChildrenLegacy(ctx context.Context, q *GetChildrenQuery) ([]*FolderReference, error)
 
 	// GetParents returns an array containing add parent folders if nested folders are enabled
 	// otherwise it returns an empty array
