@@ -61,7 +61,7 @@ describe('RuleDetailsMatchingInstances', () => {
   });
 
   describe('Filtering', () => {
-    it('For Grafana Managed rules instances filter should contain five states', () => {
+    it('For Grafana Managed rules instances filter should contain six states', () => {
       const rule = mockCombinedRule();
 
       render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
@@ -71,7 +71,7 @@ describe('RuleDetailsMatchingInstances', () => {
 
       const stateButtons = ui.stateButton.getAll(stateFilter);
 
-      expect(stateButtons).toHaveLength(5);
+      expect(stateButtons).toHaveLength(6);
 
       expect(ui.grafanaStateButton.normal.get(stateFilter)).toBeInTheDocument();
       expect(ui.grafanaStateButton.alerting.get(stateFilter)).toBeInTheDocument();

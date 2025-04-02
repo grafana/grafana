@@ -114,6 +114,7 @@ const expectedModifiedRule2 = (uid: string) => ({
     title: 'Rule2 updated',
     uid: uid,
   },
+  keep_firing_for: '1m',
   labels: {
     newLabel: 'newLabel',
   },
@@ -149,6 +150,7 @@ const expectedModifiedRule4 = (uid: string) => ({
     title: 'Rule4 updated',
     uid: uid,
   },
+  keep_firing_for: '1m',
   labels: {
     newLabel: 'newLabel',
   },
