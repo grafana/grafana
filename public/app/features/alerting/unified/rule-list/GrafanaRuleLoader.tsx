@@ -1,3 +1,4 @@
+import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +16,7 @@ import {
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
-import { Alert } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
@@ -48,8 +49,15 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     }
 
     return (
-      <Alert title={`Cannot load rule details for ${rule.name}`} severity="error">
-        Cannot find rule details for {rule.uid ?? '<empty uid>'}
+      <Alert
+        title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for {{name}}', {
+          name: rule.name,
+        })}
+        severity="error"
+      >
+        <Trans i18nKey="alerting.rule-list.cannot-find-rule-details-for">
+          Cannot find rule details for {{ uid: rule.uid ?? '<empty uid>' }}
+        </Trans>
       </Alert>
     );
   }
