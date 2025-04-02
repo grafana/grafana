@@ -291,6 +291,8 @@ const VariableEditor = (props: Props) => {
             query={query}
             datasource={datasource}
             onChange={onQueryChange}
+            // Not applicable as the builder isn't available in the variable editor yet
+            onQueryChange={onQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
             hideFormatAs={true}

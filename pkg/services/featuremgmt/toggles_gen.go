@@ -967,6 +967,10 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagAzureMonitorLogsBuilderEditor
+	// Enables the logs builder mode for the Azure Monitor data source
+	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
 	// FlagLocaleFormatPreference
 	// Specify the locale so we can show the correct format for numbers and dates
 	FlagLocaleFormatPreference = "localeFormatPreference"
