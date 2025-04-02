@@ -3761,6 +3761,21 @@
     },
     {
       "metadata": {
+        "name": "removeViewersExploreAccess",
+        "resourceVersion": "1743581887130",
+        "creationTimestamp": "2025-04-02T08:18:07Z",
+        "deletionTimestamp": "2025-04-02T09:03:30Z"
+      },
+      "spec": {
+        "description": "Removes viewers from having explore access even when viewers_can_edit is set to true",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -4476,6 +4491,7 @@
         "name": "viewersHaveExploreAccess",
         "resourceVersion": "1743579161766",
         "creationTimestamp": "2025-04-02T07:32:13Z",
+        "deletionTimestamp": "2025-04-02T08:18:07Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-02 07:32:41.76632 +0000 UTC"
         }

@@ -72,10 +72,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagViewersHaveExploreAccess) {
-		if hs.Cfg.ViewersCanEdit {
-			datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
-		}
+	if hs.Cfg.ViewersCanEdit {
+		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
 	datasourcesReaderRole := ac.RoleRegistration{

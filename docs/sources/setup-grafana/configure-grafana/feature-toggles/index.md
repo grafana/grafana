@@ -121,7 +121,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                          |
 | `exploreMetricsUseExternalAppPlugin`  | Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin                                                                                                |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
-| `viewersHaveExploreAccess`            | Enables viewers to have explore access when viewers_can_edit is set                                                                                                                          |
 
 ## Experimental feature toggles
 
