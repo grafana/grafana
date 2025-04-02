@@ -1,13 +1,12 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, matchPluginId, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
 
-import { isPromFlavor } from '../../../../../../packages/grafana-data/src/utils/matchPluginId';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
@@ -134,7 +133,7 @@ export class DashboardExporter {
           let dataSourceName = ds.meta?.name;
           let dataSourceVersion = ds.meta.info.version || '1.0.0';
           // if this is a prom flavored data source (azure prom/ aws prom) it will be treated as a prom data source
-          if (isPromFlavor(ds.meta?.id)) {
+          if (matchPluginId('prometheus', ds.meta)) {
             dataSourceId = 'prometheus';
             dataSourceName = 'Prometheus'
             dataSourceVersion = '1.0.0';

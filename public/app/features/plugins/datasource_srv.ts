@@ -29,8 +29,6 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { isPromFlavor } from '../../../../packages/grafana-data/src/utils/matchPluginId';
-
 import { importDataSourcePlugin } from './plugin_loader';
 
 // TODO: remove once a decision on how to match compatible datasources has been made
@@ -346,7 +344,7 @@ export class DatasourceSrv implements DataSourceService {
 
     if (!filters.pluginId) {
       sorted = sorted.filter((x) => {
-        return isPromFlavor(x.meta.id)
+        return matchPluginId('prometheus', x.meta);
       });
     }
 
