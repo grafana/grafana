@@ -148,7 +148,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 			"value": time.Now().UnixMilli(),
 		}
 
-		patch, err := json.Marshal(patchOp)
+		patch, err := json.Marshal([]map[string]interface{}{patchOp})
 		if err != nil {
 			return fmt.Errorf("marshal patch: %w", err)
 		}
