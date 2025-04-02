@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/url"
 
-	"k8s.io/kube-aggregator/pkg/apiserver"
+	"github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
 
 	servicelistersv0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 )

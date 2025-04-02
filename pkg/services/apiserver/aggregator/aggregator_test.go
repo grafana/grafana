@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -13,9 +12,11 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	clientrest "k8s.io/client-go/rest"
 	utilversion "k8s.io/component-base/version"
-	"k8s.io/kube-aggregator/pkg/apiserver"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
+
+	"github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
+	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
