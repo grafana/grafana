@@ -16,25 +16,11 @@ labels:
 title: Dashboard HTTP API
 ---
 
-# Dashboard API
+# New Dashboard APIs
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
-## Unique identifier (uid) vs identifier (id) 
-
-The unique identifier (uid) of a dashboard can be used to uniquely identify a dashboard within a given org.
-It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
-for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
-
-The uid can have a maximum length of 40 characters.
-
-The identifier (id) of a dashboard is deprecated in favor of the unique identifier (uid).
-
-## Dashboard Schema
-
-TODO: placehold for dashboard squad
-
+> To view more about the new api schema, refer to [API overview]({{< ref "apis" >}}).
 
 ## Create Dashboard
 
@@ -69,20 +55,24 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "metadata": {
     "name": "gdxccn",
     "annotations": {
-      "grafana.app/folder": "fef30w4jaxla8b"
+      "grafana.app/folder": "fef30w4jaxla8b",
+      "grafana.app/message":"testing"
     },
   },
   "spec": {
     "editable": true,
     "schemaVersion": 41,
     "title": "New dashboard",
+    "overwrite": true, // test this
+    "refresh": "1s"
   }
 }
 ```
 
 JSON Body schema:
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName to the prefix you would like for the uid.
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string). 
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
+- **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
 
 **Example Response**:
@@ -187,6 +177,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 JSON Body schema:
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
+- **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
 
 **Example Response**:
@@ -531,8 +522,20 @@ Content-Type: application/json
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
 
 
-## Deprecated APIs
-### [Deprecated] Create / Update dashboard
+## APIs
+
+### Unique identifier (uid) vs identifier (id) 
+
+The unique identifier (uid) of a dashboard can be used to uniquely identify a dashboard within a given org.
+It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
+for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
+
+The uid can have a maximum length of 40 characters.
+
+The identifier (id) of a dashboard is deprecated in favor of the unique identifier (uid).
+
+### Create / Update dashboard
 
 `POST /api/dashboards/db`
 
@@ -656,7 +659,7 @@ Content-Length: 97
 }
 ```
 
-### [Deprecated] Get dashboard by uid
+### Get dashboard by uid
 
 `GET /api/dashboards/uid/:uid`
 
@@ -715,7 +718,7 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not found
 
-### [Deprecated] Delete dashboard by uid
+### Delete dashboard by uid
 
 `DELETE /api/dashboards/uid/:uid`
 
@@ -761,7 +764,7 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not found
 
-### [Deprecated] Hard delete dashboard by uid
+### Hard delete dashboard by uid
 
 {{% admonition type="note" %}}
 This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
@@ -811,7 +814,7 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not found
 
-### [Deprecated] Restore deleted dashboard by uid
+### Restore deleted dashboard by uid
 
 {{% admonition type="note" %}}
 This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
