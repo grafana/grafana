@@ -1423,43 +1423,67 @@
       "paste-tab": "Paste tab"
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "Disable",
-        "enable": "Enable",
-        "label": "Data"
-      },
-      "group": {
-        "add": {
-          "button": "Add condition based on",
-          "data": "Data",
-          "interval": "Interval",
-          "variable": "Variable value"
+      "conditions": {
+        "data": {
+          "disable": "No data",
+          "enable": "Has data",
+          "info": "Show or hide the {{type}} based on query results.",
+          "label": "Query result"
         },
-        "condition": {
-          "label": "Evaluate conditions",
-          "meet-all": "Meet all",
-          "meet-any": "Meet any"
+        "group": {
+          "add": {
+            "button": "Add rule",
+            "data": "Query result",
+            "time-range-size": "Time range less than",
+            "variable": "Template variable"
+          },
+          "condition": {
+            "all": "Match all (AND)",
+            "any": "Match any (OR)",
+            "label": "Match rules"
+          },
+          "label": "Group",
+          "visibility": {
+            "hide": "Hide",
+            "label": "{{type}} visibility",
+            "show": "Show"
+          }
         },
-        "label": "Group"
-      },
-      "interval": {
-        "input-label": "Value",
-        "invalid-message": "Invalid interval",
-        "label": "Time range interval"
-      },
-      "shared": {
-        "delete-condition": "Delete Condition"
-      },
-      "title": "Conditional rendering options",
-      "variable": {
-        "label": "Variable",
-        "operator": {
-          "equals": "Equals",
-          "not-equal": "Not equal"
+        "shared": {
+          "delete-condition": "Delete Condition",
+          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
         },
-        "select-operator": "Operator",
-        "select-variable": "Select variable",
-        "value-input": "Value"
+        "time-range-size": {
+          "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
+          "invalid-message": "Invalid interval",
+          "label": "Time range less than",
+          "values": {
+            "days": "{{value}} days",
+            "hour": "{{value}} hour",
+            "hours": "{{value}} hours",
+            "minutes": "{{value}} minutes",
+            "months": "{{value}} months",
+            "year": "{{value}} year",
+            "years": "{{value}} years"
+          }
+        },
+        "variable": {
+          "info": "Show or hide the {{type}} dynamically based on the variable value.",
+          "label": "Template variable",
+          "name": "Name",
+          "operator": {
+            "equals": "Equals",
+            "not-equals": "Not equals"
+          },
+          "value": "Value"
+        }
+      },
+      "overlay": {
+        "tooltip": "Element is hidden due to conditional rendering."
+      },
+      "root": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
+        "title": "Show / hide rules"
       }
     },
     "default-layout": {
