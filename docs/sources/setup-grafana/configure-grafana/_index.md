@@ -853,6 +853,24 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+### `[dashboard_cleanup]`
+
+Settings related to cleaning up dashboards that were deleted via Kubernetes/apis. This section configures how Grafana handles the cleanup process for dashboards that have been marked for deletion.
+
+#### `interval`
+
+How often to run the job that cleans up dashboards marked for deletion.
+The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
+
+The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
+
+#### `batch_size`
+
+Number of deleted dashboards to process in each batch during the cleanup process.
+Default: `10`, Minimum: `5`, Maximum: `200`.
+
+Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
+
 <hr />
 
 ### `[datasources]`
