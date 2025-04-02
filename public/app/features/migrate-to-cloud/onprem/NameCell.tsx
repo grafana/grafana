@@ -12,6 +12,7 @@ import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDash
 import { LocalPlugin } from '../../plugins/admin/types';
 import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
+import { iconNameForResource } from './resourceInfo';
 import { ResourceTableItem } from './types';
 
 export function NameCell(props: CellProps<ResourceTableItem>) {
@@ -210,39 +211,20 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
   const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.plugin : undefined);
 
-  switch (resource.type) {
-    case 'DASHBOARD':
-      return <Icon size="xl" name="dashboard" />;
-    case 'FOLDER':
-      return <Icon size="xl" name="folder" />;
-    case 'DATASOURCE':
-      if (datasource?.meta?.info?.logos?.small) {
-        return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
-      }
-
-      return <Icon size="xl" name="database" />;
-    case 'LIBRARY_ELEMENT':
-      return <Icon size="xl" name="library-panel" />;
-    case 'MUTE_TIMING':
-      return <Icon size="xl" name="bell" />;
-    case 'NOTIFICATION_TEMPLATE':
-      return <Icon size="xl" name="bell" />;
-    case 'CONTACT_POINT':
-      return <Icon size="xl" name="bell" />;
-    case 'NOTIFICATION_POLICY':
-      return <Icon size="xl" name="bell" />;
-    case 'ALERT_RULE':
-      return <Icon size="xl" name="bell" />;
-    case 'ALERT_RULE_GROUP':
-      return <Icon size="xl" name="bell" />;
-    case 'PLUGIN':
-      if (pluginLogo) {
-        return <img className={styles.icon} src={pluginLogo} alt="" />;
-      }
-      return <Icon size="xl" name="plug" />;
-    default:
-      return undefined;
+  // Handle special cases for icons.
+  if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
+    return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
+  } else if (resource.type === 'PLUGIN' && pluginLogo) {
+    return <img className={styles.icon} src={pluginLogo} alt="" />;
+  } else {
+    // Generic icons for all other resource types.
+    const iconName = iconNameForResource(resource.type);
+    if (iconName) {
+      return <Icon size="xl" name={iconName} />;
+    }
   }
+
+  return undefined;
 }
 
 function getIconStyles() {
