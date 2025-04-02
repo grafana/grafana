@@ -107,7 +107,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		if filePath == "" {
-			responder.Error(apierrors.NewBadRequest("path is required"))
+			responder.Error(apierrors.NewBadRequest("missing request path"))
 			return
 		}
 
