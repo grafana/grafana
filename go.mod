@@ -95,7 +95,7 @@ require (
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.35.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.35.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-aws-sdk v0.34.0 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v0.36.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.2.1 // @grafana/partner-datasources
@@ -580,8 +580,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-require github.com/grafana/grafana/pkg/build v0.0.0-20250401142320-991b016d6319 // @grafana/grafana-developer-enablement-squad
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
