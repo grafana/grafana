@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { useStyles2 } from '@grafana/ui';
 
-import { ExpressionQuery } from '../types';
+import { SqlExpressionQuery } from '../types';
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -22,8 +22,8 @@ const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
 
 interface Props {
   refIds: Array<SelectableValue<string>>;
-  query: ExpressionQuery;
-  onChange: (query: ExpressionQuery) => void;
+  query: SqlExpressionQuery;
+  onChange: (query: SqlExpressionQuery) => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
 }
