@@ -52,7 +52,8 @@ export {
   type UsePluginFunctionsOptions,
   type UsePluginFunctionsResult,
 } from './pluginExtensions/usePluginFunctions';
-
+export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
+export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
 export {
   isPluginExtensionLink,
   isPluginExtensionComponent,
