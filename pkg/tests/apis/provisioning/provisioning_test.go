@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -211,6 +212,7 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Write a file
+	code := 0
 	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
@@ -218,8 +220,19 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 		SubResource("files", "all-panels.json").
 		Body(helper.LoadFile("testdata/all-panels.json")).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(ctx).StatusCode(&code)
 	require.NoError(t, result.Error(), "expecting to be able to create file")
+	wrapper := &provisioning.ResourceWrapper{}
+	raw, err := result.Raw()
+	require.NoError(t, err)
+	err = json.Unmarshal(raw, wrapper)
+	require.NoError(t, err)
+	require.Equal(t, 200, code, "expected 200 response")
+	require.Equal(t, provisioning.ClassicDashboard, wrapper.Resource.Type.Classic)
+	name, _, _ := unstructured.NestedString(wrapper.Resource.File.Object, "metadata", "name")
+	require.Equal(t, "n1jR8vnnz", name, "name from classic UID")
+	name, _, _ = unstructured.NestedString(wrapper.Resource.Upsert.Object, "metadata", "name")
+	require.Equal(t, "n1jR8vnnz", name, "save the name from the request")
 
 	// Write a file with a bad path
 	result = helper.AdminREST.Post().
@@ -233,8 +246,10 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	require.Error(t, result.Error(), "invalid path should return error")
 
 	// Read a file
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+	wrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
 	require.NoError(t, err, "valid path should be fine")
+	name, _, _ = unstructured.NestedString(wrap.Object, "resource", "file", "metadata", "name")
+	require.Equal(t, "n1jR8vnnz", name) // name from UID
 
 	// Read a file with a bad path
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")

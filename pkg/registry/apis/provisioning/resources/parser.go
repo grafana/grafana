@@ -229,11 +229,15 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO? should we use the dryRun (validated) version?
 	obj := make(map[string]any)
 	for k, v := range f.Obj.Object {
-		if k != "metadata" {
-			obj[k] = v
+		obj[k] = v
+	}
+	if f.Obj.GetName() == "" {
+		delete(obj, "metadata")
+	} else {
+		obj["metadata"] = map[string]any{
+			"name": f.Obj.GetName(), // keep the name property when it exists
 		}
 	}
 

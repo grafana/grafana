@@ -39,6 +39,7 @@ spec:
 `),
 		}, false)
 		require.NoError(t, err)
+		require.Equal(t, "test-v0", dash.Obj.GetName())
 		require.Equal(t, "dashboard.grafana.app", dash.GVK.Group)
 		require.Equal(t, "v0alpha1", dash.GVK.Version)
 		require.Equal(t, "dashboard.grafana.app", dash.GVR.Group)
@@ -54,5 +55,13 @@ spec:
 		}, false)
 		require.NoError(t, err) // parsed, but has internal error
 		require.NotEmpty(t, dash.Errors)
+
+		// Read the name from classic grafana format
+		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
+		}, false)
+		require.NoError(t, err)
+		require.Equal(t, v0alpha1.ClassicDashboard, dash.Classic)
+		require.Equal(t, "test", dash.Obj.GetName())
 	})
 }
