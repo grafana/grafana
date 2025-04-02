@@ -46,6 +46,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor
+  default-manage-alerts-ui-toggle:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
 ---
 
 # Configure the Prometheus data source
@@ -55,6 +60,8 @@ This document provides instructions for configuring the Prometheus data source a
 ## Before you begin
 
 - You must have the `Organization administrator` role to add a data source. Administrators can also configure a data source via [YAML with the Grafana provisioning system](https://grafana.com//docs/plugins/grafana-mongodb-datasource/<GRAFANA_VERSION>/#provision-the-mongodb-data-source).
+
+- Know which Prometheus-compatible database you are using.
 
 - Familiarize yourself with your Prometheus security configuration and gather any necessary security certificates and client keys.
 
@@ -141,78 +148,64 @@ Following are optional configuration settings you can configure for more control
 
 **Alerting:**
 
-- **Manage alerts via Alerting UI** - Toggle to enable [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed.
-
-{{< admonition type="note" >}}
-
-The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle](../../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the Grafana configuration file.
-
-{{< /admonition >}}
+- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](../../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the Grafana configuration file.
 
 **Interval behavior:**
 
-- **Scrape interval** - Sets the standard scrape and evaluation interval in Prometheus. The default is `15s`.
-
-- **Query timeout** - Sets the Prometheus query timeout. The default is `60s`.
+- **Scrape interval** - Sets the standard scrape and evaluation interval in Prometheus. The default is `15s`. This interval determines how often Prometheus scrapes targets. Set it to match the typical scrape and evaluation interval in your Prometheus configuration file. If you set a higher value than your Prometheus configuration, Grafana will evaluate data at this interval, resulting in fewer data points.
+- **Query timeout** - Sets the Prometheus query timeout. The default is `60s`. Without a timeout, complex or inefficient queries can run indefinitely, consuming CPU and memory resources.
 
 **Query editor:**
 
-- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. For more details on editor types refer to [Prometheus query editor](ref:prom-query-editor).
-
+- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](ref:prom-query-editor).
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric and label support in the query field's autocomplete. This can improve performance for large Prometheus instances.
 
 **Performance:**
 
 - **Prometheus type** - Select the type of your Prometheus-compatible database, such as Prometheus, Cortex, Mimir, or Thanos. Changing this setting will save your current configuration. Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Refer to your Prometheus documentation to ensure you select the correct type.
-
 - **Cache level** - Sets the browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high cardinality data sources.
-
-- **Incremental querying (beta)** - Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
-
-  - **Query overlap window** - Specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This value is added to the duration of each incremental request.
-
+- **Incremental querying (beta)** - Toggle on to enable incremental querying. Enabling this feature changes the default behavior of relative queries. Instead of always requesting fresh data from the Prometheus instance, Grafana will cache query results and only fetch new records. This helps reduce database and network load.
+  - **Query overlap window** - If you are using incremental querying, specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This is a buffer of time added to incremental queries This value is added to the duration of each incremental request.
 - **Disable recording rules (beta)** - Toggle to disable the recording rules. Enable this option to improve dashboard performance.
 
 **Other settings:**
 
-- **Custom query parameters** - Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.
+- **Custom query parameters** - Add custom parameters to the Prometheus query URL, which allow for more control over how queries are executed. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be joined using `&`. 
+- **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST`is recommended and selected by default, as it supports larger queries. Select `GET` if you're using Prometheus version 2.1 or older, or if your network restricts `POST` requests.
+Toggle on 
+- **Use series endpoint** - Enabling this option makes Grafana use the series endpoint (/api/v1/series) with the match[] parameter instead of the label values endpoint (/api/v1/label/<label_name>/values). While the label values endpoint is generally more performant, some users may prefer the series endpoint because it supports the `POST` method, whereas the label values endpoint only allows `GET` requests.
 
-- **HTTP method** - Use either `POST` or `GET` HTTP method to query your data source. `POST` is the recommended and pre-selected method as it allows bigger queries. Change to `GET` if you have a Prometheus version older than 2.1 or if `POST` requests are restricted in your network.
 
-- **Use series endpoint** -
-
-Checking this option will favor the series endpoint with match[] parameter over the label values endpoint with match[] parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method. Visit docs for more details here.
+ <!-- Checking this option will favor the series endpoint with match[] parameter over the label values endpoint with match[] parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method. Visit docs for more details here. -->
 
 **Exemplars:**
 
-Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars](ref:exemplars). An exemplar is a trace that represents a specific measurement taken within a given time interval.
+Support for exemplars is available only for the Prometheus data source. For more information on exemplars refer to [Introduction to exemplars](ref:exemplars). An exemplar is a trace that represents a specific measurement taken within a given time interval.
 
-- **Internal link** - Toggle on to enable an internal link. When enabled, the data source selector appears, allowing you to choose the backend tracing data store for your exemplar data.
+Click the **+ sign** to add exemplars.
+
+- **Internal link** - Toggle on to enable an internal link. This will display the data source selector, where you can choose the backend tracing data store for your exemplar data.
 - **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](ref:configure-data-links-value-variables).
-- **Data source** - _(Visible if you **enable** `Internal link`)_ The data source the exemplar will navigate to.
+- **Data source** - _(Visible when`Internal link` is enabled.)_ Select the data source that the exemplar will link to from the drop-down.
 - **URL label** - Adds a custom display label to override the value of the `Label name` field.
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
-- **Remove exemplar link** - Click to remove existing links.
+- **Remove exemplar link** - Click the **X** to remove existing links.
 
-## Exemplars
+You can add multiple exemplars.
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
+- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-<!--{{< admonition type="note" >}}
-Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
-{{< /admonition >}} -->
+Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
+Once you have configured your MongDB data source options, click **Save & test** at the bottom to test out your data source connection. 
 
-{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+You should see a confirmation dialog box that says **what's the success message**.
 
-See the Exemplars section in [Configure Prometheus data source](ref:configure-prometheus-data-source).
-
-{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" >}}
+You can also remove a connection by clicking **Delete**.
 
 ## Provision the Prometheus data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 {{< admonition type="note" >}}
@@ -291,10 +284,15 @@ Refer to the following troubleshooting information, as required.
 
 <!-- vale Grafana.Spelling = NO -->
 
-If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source or sent
+<!-- If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source or sent
 metrics to Grafana Cloud, ensure that you've selected the correct data source in the **Data source** drop-down menu. If
 you've used remote_write to send metrics to Grafana Cloud, the data source name follows the convention
-`grafanacloud-stackname-prom`.
+`grafanacloud-stackname-prom`. -->
+
+If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
+
+
+<!-- If metric data doesn't appear in Explore after successfully testing the connection to a Prometheus data source or sending metrics to Grafana Cloud, make sure you've selected the correct data source from the Data Source drop-down menu. When using remote_write to send metrics to Grafana Cloud, the data source name follows the convention grafanacloud-stackname-prom." -->
 
 <!-- vale Grafana.Spelling = YES -->
 

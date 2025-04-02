@@ -105,6 +105,20 @@ Support for exemplars is available only for the Prometheus data source. You exem
 
  If this is your first time working with exemplars see [Introduction to exemplars](ref:exemplars). 
 
+
+Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
+
+<!--{{< admonition type="note" >}}
+Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{< /admonition >}} -->
+ Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
+
+{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+
+See the Exemplars section in [Configure Prometheus data source](ref:configure-prometheus-data-source).
+
+{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ## Prometheus API
 
 The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/).
@@ -157,11 +171,10 @@ If you are using Azure authentication settings do not enable `Forward OAuth iden
 After After installing and configuring Prometheus you can:
 
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/).
-- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/annotations/).
 - Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/variables/).
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels/transformations/).
+- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/annotations/).
 - Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/).
-
-
+- Create [recorded queries](https://grafana.com/docs/grafana/latest/administration/recorded-queries/)
 
 <!-- Once you've added the Prometheus data source, you can [configure it](ref:configure-prometheus-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](ref:annotate-visualizations). -->
