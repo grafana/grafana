@@ -3981,17 +3981,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabKind(ref common.Re
 							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutTabSpec"),
 						},
 					},
-					"conditionalRendering": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind"),
-						},
-					},
 				},
 				Required: []string{"kind", "spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutTabSpec"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutTabSpec"},
 	}
 }
 
@@ -4012,12 +4007,17 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref common.Re
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"),
 						},
 					},
+					"conditionalRendering": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind"),
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"},
 	}
 }
 

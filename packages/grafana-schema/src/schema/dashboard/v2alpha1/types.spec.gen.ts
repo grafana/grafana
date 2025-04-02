@@ -859,7 +859,6 @@ export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
 export interface TabsLayoutTabKind {
 	kind: "TabsLayoutTab";
 	spec: TabsLayoutTabSpec;
-	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
@@ -870,6 +869,7 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({

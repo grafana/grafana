@@ -595,14 +595,14 @@ TabsLayoutSpec: {
 }
 
 TabsLayoutTabKind: {
-	kind:                  "TabsLayoutTab"
-	spec:                  TabsLayoutTabSpec
-	conditionalRendering?: ConditionalRenderingGroupKind
+	kind: "TabsLayoutTab"
+	spec: TabsLayoutTabSpec
 }
 
 TabsLayoutTabSpec: {
-	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	title?:                string
+	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {

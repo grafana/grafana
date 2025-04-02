@@ -1050,9 +1050,8 @@ func NewDashboardTabsLayoutSpec() *DashboardTabsLayoutSpec {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabKind struct {
-	Kind                 string                                  `json:"kind"`
-	Spec                 DashboardTabsLayoutTabSpec              `json:"spec"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
+	Kind string                     `json:"kind"`
+	Spec DashboardTabsLayoutTabSpec `json:"spec"`
 }
 
 // NewDashboardTabsLayoutTabKind creates a new DashboardTabsLayoutTabKind object.
@@ -1065,8 +1064,9 @@ func NewDashboardTabsLayoutTabKind() *DashboardTabsLayoutTabKind {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabSpec struct {
-	Title  *string                                                                     `json:"title,omitempty"`
-	Layout DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title                *string                                                                     `json:"title,omitempty"`
+	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.

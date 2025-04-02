@@ -597,12 +597,12 @@ TabsLayoutSpec: {
 TabsLayoutTabKind: {
   kind: "TabsLayoutTab"
   spec: TabsLayoutTabSpec
-  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 TabsLayoutTabSpec: {
   title?: string
   layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {
