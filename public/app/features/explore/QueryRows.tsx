@@ -50,6 +50,7 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {
+      console.log('newQueries', newQueries, exploreId);
       dispatch(changeQueries({ exploreId, queries: newQueries }));
     },
     [dispatch, exploreId]
@@ -64,6 +65,10 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onQueryCopied = () => {
     reportInteraction('grafana_explore_query_row_copy');
+  };
+
+  const onQueryAddedFromLibrary = () => {
+    reportInteraction('grafana_explore_query_added_from_library');
   };
 
   const onQueryRemoved = () => {
@@ -84,6 +89,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryCopied={onQueryCopied}
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
+      onQueryAddedFromLibrary={onQueryAddedFromLibrary}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}

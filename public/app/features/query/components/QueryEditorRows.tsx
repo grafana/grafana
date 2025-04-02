@@ -35,6 +35,7 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryAddedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
 
@@ -143,6 +144,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryCopied,
       onQueryRemoved,
       onQueryToggled,
+      onQueryAddedFromLibrary,
       queryRowWrapper,
     } = this.props;
 
@@ -174,6 +176,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onQueryCopied={onQueryCopied}
                       onQueryRemoved={onQueryRemoved}
                       onQueryToggled={onQueryToggled}
+                      onQueryAddedFromLibrary={onQueryAddedFromLibrary}
                       queries={queries}
                       app={app}
                       range={getTimeSrv().timeRange()}
