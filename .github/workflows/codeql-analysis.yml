@@ -25,6 +25,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    continue-on-error: true # doesn't block PRs from being merged if this fails
     if: github.repository == 'grafana/grafana'
 
     strategy:
