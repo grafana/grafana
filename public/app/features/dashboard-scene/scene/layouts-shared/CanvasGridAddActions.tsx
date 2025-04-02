@@ -5,7 +5,6 @@ import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { getDefaultVizPanel } from '../../utils/utils';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
@@ -53,20 +52,13 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>
-      {hasCopiedPanel && (
+      {hasCopiedPanel && layoutManager.pastePanel && (
         <Button
           variant="primary"
           fill="text"
           icon="layers"
           onClick={() => {
-            // TODO: Just temporary fix while merging
-            if (layoutManager instanceof AutoGridLayoutManager) {
-              layoutManager.pastePanel();
-            } else {
-              console.error(
-                'Trying to paste panel in a layout that is not a AutoGridLayoutManager or DefaultGridLayoutManager'
-              );
-            }
+            layoutManager.pastePanel?.();
           }}
         >
           <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
