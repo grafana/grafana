@@ -2,7 +2,6 @@
 title: Axis options
 comments: |
   This file is used in the following visualizations: time series.
-  The raw content of this file is used in the candlestick visualization except for the "Time zone" setting.
 ---
 
 Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
