@@ -3284,17 +3284,18 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1741965023728",
+        "resourceVersion": "1743591171870",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-04-02 10:52:51.870249 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -3658,6 +3659,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceFromExplore",
+        "resourceVersion": "1743513714582",
+        "creationTimestamp": "2025-04-01T13:21:54Z"
+      },
+      "spec": {
+        "description": "Routes explore requests to the new query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true
       }
     },
     {
