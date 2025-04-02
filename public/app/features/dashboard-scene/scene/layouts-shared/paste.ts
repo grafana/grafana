@@ -1,15 +1,21 @@
 import {
+  AutoGridLayoutItemKind,
   DashboardV2Spec,
+  GridLayoutItemKind,
   RowsLayoutRowKind,
   TabsLayoutTabKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 
+import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
+import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/ResponsiveGridLayoutSerializer';
 import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardScene } from '../DashboardScene';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { AutoGridItem } from '../layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';
 
@@ -27,6 +33,11 @@ export interface RowStore {
 export interface TabStore {
   elements: DashboardV2Spec['elements'];
   tab: TabsLayoutTabKind;
+}
+
+export interface PanelStore {
+  elements: DashboardV2Spec['elements'];
+  gridItem: GridLayoutItemKind | AutoGridLayoutItemKind;
 }
 
 export function getRowFromClipboard(scene: DashboardScene): RowItem {
@@ -62,6 +73,39 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
   }
 
   return tab;
+}
+
+export function getPanelFromClipboard(scene: DashboardScene): DashboardGridItem | AutoGridItem {
+  const jsonData = store.get(LS_PANEL_COPY_KEY);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const { elements, gridItem }: PanelStore = JSON.parse(jsonData) as PanelStore;
+
+  if (gridItem.kind === 'GridLayoutItem') {
+    return deserializeGridItem(gridItem, elements, getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene)));
+  }
+  return deserializeAutoGridItem(gridItem, elements, getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene)));
+}
+
+export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridItem {
+  const panel = getPanelFromClipboard(scene);
+  if (panel instanceof AutoGridItem) {
+    return panel;
+  }
+  // Convert to AutoGridItem
+  return new AutoGridItem({ body: panel.state.body, key: panel.state.key, variableName: panel.state.variableName });
+}
+
+export function getDashboardGridItemFromClipboard(scene: DashboardScene): DashboardGridItem {
+  const panel = getPanelFromClipboard(scene);
+  if (panel instanceof DashboardGridItem) {
+    return panel;
+  }
+  // Convert to DashboardGridItem
+  return new DashboardGridItem({
+    body: panel.state.body,
+    key: panel.state.key,
+    variableName: panel.state.variableName,
+  });
 }
 
 function getPanelIdGenerator(start: number) {

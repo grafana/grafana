@@ -7,6 +7,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { getDefaultVizPanel, useDashboardState } from '../../utils/utils';
 import { addNewRowTo, addNewTabTo } from '../layouts-shared/addNew';
+import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
 import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
@@ -17,7 +18,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
-
+  const { hasCopiedPanel } = useClipboardState();
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
@@ -75,6 +76,11 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
               <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
             </Button>
           </Dropdown>
+          {hasCopiedPanel && (
+            <Button variant="primary" fill="text" icon="layers" onClick={() => layoutManager.pastePanel()}>
+              <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
+            </Button>
+          )}
         </div>
       )}
     </div>

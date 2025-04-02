@@ -32,6 +32,8 @@ import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBeha
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -252,4 +254,11 @@ export function getElements(layout: DashboardLayoutManager, scene: DashboardScen
     return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
   });
   return createElements(panelsArray, scene);
+}
+
+export function getElement(
+  gridItem: AutoGridItem | DashboardGridItem,
+  scene: DashboardScene
+): DashboardV2Spec['elements'] {
+  return createElements([vizPanelToSchemaV2(gridItem.state.body, scene.serializer.getDSReferencesMapping())], scene);
 }

@@ -109,7 +109,7 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
   };
 }
 
-function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
+export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
   let elementGridItem: GridLayoutItemKind | undefined;
   let x = 0,
     y = 0,
@@ -229,42 +229,32 @@ function createSceneGridLayoutForItems(
   elements: Record<string, Element>,
   panelIdGenerator?: () => number
 ): SceneGridItemLike[] {
-  const gridElements = layout.spec.items;
+  const gridItems = layout.spec.items;
 
-  return gridElements.map((element) => {
-    if (element.kind === 'GridLayoutItem') {
-      const panel = elements[element.spec.element.name];
-
-      if (!panel) {
-        throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
-      }
-
-      let id: number | undefined;
-      if (panelIdGenerator) {
-        id = panelIdGenerator();
-      }
-      return buildGridItem(element.spec, panel, undefined, id);
-    } else if (element.kind === 'GridLayoutRow') {
-      const children = element.spec.elements.map((gridElement) => {
+  return gridItems.map((item) => {
+    if (item.kind === 'GridLayoutItem') {
+      return deserializeGridItem(item, elements, panelIdGenerator);
+    } else if (item.kind === 'GridLayoutRow') {
+      const children = item.spec.elements.map((gridElement) => {
         const panel = elements[getOriginalKey(gridElement.spec.element.name)];
         if (panel.kind === 'Panel' || panel.kind === 'LibraryPanel') {
           let id: number | undefined;
           if (panelIdGenerator) {
             id = panelIdGenerator();
           }
-          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y, id);
+          return buildGridItem(gridElement.spec, panel, item.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y, id);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
       });
       let behaviors: SceneObject[] | undefined;
-      if (element.spec.repeat) {
-        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
+      if (item.spec.repeat) {
+        behaviors = [new RowRepeaterBehavior({ variableName: item.spec.repeat.value })];
       }
       return new SceneGridRow({
-        y: element.spec.y,
-        isCollapsed: element.spec.collapsed,
-        title: element.spec.title,
+        y: item.spec.y,
+        isCollapsed: item.spec.collapsed,
+        title: item.spec.title,
         $behaviors: behaviors,
         actions: new RowActions({}),
         children,
@@ -272,7 +262,7 @@ function createSceneGridLayoutForItems(
     } else {
       // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
       //@ts-expect-error
-      throw new Error(`Unknown layout element kind: ${element.kind}`);
+      throw new Error(`Unknown layout element kind: ${item.kind}`);
     }
   });
 }
@@ -301,4 +291,22 @@ function buildGridItem(
     repeatDirection: gridItem.repeat?.direction,
     maxPerRow: gridItem.repeat?.maxPerRow,
   });
+}
+
+export function deserializeGridItem(
+  item: GridLayoutItemKind,
+  elements: DashboardV2Spec['elements'],
+  panelIdGenerator?: () => number
+): DashboardGridItem {
+  const panel = elements[item.spec.element.name];
+
+  if (!panel) {
+    throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
+  }
+
+  let id: number | undefined;
+  if (panelIdGenerator) {
+    id = panelIdGenerator();
+  }
+  return buildGridItem(item.spec, panel, undefined, id);
 }
