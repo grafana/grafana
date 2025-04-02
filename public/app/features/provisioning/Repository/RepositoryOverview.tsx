@@ -224,6 +224,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     <div className={styles.valueColumn}>
                       <Text variant="body">{status?.webhook?.subscribedEvents?.join(', ') ?? 'N/A'}</Text>
                     </div>
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">
+                        <Trans i18nKey="provisioning.repository-overview.webhook-last-event">Last Event:</Trans>
+                      </Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{formatTimestamp(status?.webhook?.lastEvent)}</Text>
+                    </div>
                   </Grid>
                 </Card.Description>
                 {webhookURL && (
