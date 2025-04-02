@@ -54,7 +54,7 @@
       "name": "manager.kind",
       "type": "string",
       "format": "",
-      "description": "The kind of resource managing the object. IE repository",
+      "description": "Type of manager, which is responsible for managing the resource",
       "priority": 0
     },
     {
