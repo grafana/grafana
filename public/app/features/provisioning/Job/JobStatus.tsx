@@ -28,11 +28,12 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     watch: true,
   });
   const activeJob = activeQuery?.data?.items?.[0];
+  const repoLabel = watch.metadata?.labels?.['provisioning.grafana.app/repository'];
   const finishedQuery = useGetRepositoryJobsWithPathQuery(
-    activeJob
+    activeJob || activeQuery.isUninitialized || activeQuery.isLoading || !repoLabel
       ? skipToken
       : {
-          name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
+          name: repoLabel,
           uid: watch.metadata?.uid!,
         }
   );
@@ -40,7 +41,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
   const job = activeJob || finishedQuery.data;
 
   useEffect(() => {
-    if (!job) {
+    if (!job && !finishedQuery.isUninitialized) {
       finishedQuery.refetch();
     }
   }, [finishedQuery, job]);
@@ -122,7 +123,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
             <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
-              <pre>{JSON.stringify(job, null, ' ')}</pre>
+              <pre>{JSON.stringify(job, null, 2)}</pre>
             </ControlledCollapse>
           )}
         </Stack>
