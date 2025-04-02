@@ -1417,7 +1417,10 @@
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
       "new-row": "New row",
-      "new-tab": "New tab"
+      "new-tab": "New tab",
+      "paste-panel": "Paste panel",
+      "paste-row": "Paste row",
+      "paste-tab": "Paste tab"
     },
     "conditional-rendering": {
       "data": {
@@ -1522,10 +1525,6 @@
         "panel": {
           "heading": "Panel",
           "title": "A container for visualizations and other content"
-        },
-        "paste-panel": {
-          "heading": "Paste panel",
-          "title": "Paste a panel from the clipboard"
         },
         "row": {
           "heading": "Row",
@@ -1632,7 +1631,9 @@
       }
     },
     "new-panel": {
-      "configure-button": "Configure panel"
+      "configure-button": "Configure",
+      "menu-open-panel-editor": "Configure",
+      "menu-use-library-panel": "Use library panel"
     },
     "new-panel-title": "New panel",
     "options": {
@@ -3871,19 +3872,6 @@
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
-    "migrated-counts": {
-      "alert_rule_groups": "alert rule groups",
-      "alert_rules": "alert rules",
-      "contact_points": "contact points",
-      "dashboards": "dashboards",
-      "datasources": "data sources",
-      "folders": "folders",
-      "library_elements": "library elements",
-      "mute_timings": "mute timings",
-      "notification_policies": "notification policies",
-      "notification_templates": "notification templates",
-      "plugins": "plugins"
-    },
     "migration-token": {
       "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
@@ -3982,6 +3970,19 @@
       "notification_template": "Notification Template",
       "plugin": "Plugin",
       "unknown": "Unknown"
+    },
+    "resource-types": {
+      "alert_rule": "Alert Rules",
+      "alert_rule_group": "Alert Rule Groups",
+      "contact_point": "Contact Points",
+      "dashboard": "Dashboards",
+      "datasource": "Data Sources",
+      "folder": "Folders",
+      "library_element": "Library Elements",
+      "mute_timing": "Mute Timings",
+      "notification_policy": "Notification Policies",
+      "notification_template": "Notification Templates",
+      "plugin": "Plugins"
     },
     "summary": {
       "cancel-snapshot": "Cancel snapshot",

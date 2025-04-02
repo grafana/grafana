@@ -35,6 +35,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `prometheusRunQueriesInParallel`       | Enables running Prometheus queries in parallel                                                                                      | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                             | Yes                |
+| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                    | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                           | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                | Yes                |
@@ -121,6 +122,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                          |
 | `exploreMetricsUseExternalAppPlugin`  | Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin                                                                                                |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                                       |
+| `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                                                              |
 
 ## Experimental feature toggles
 

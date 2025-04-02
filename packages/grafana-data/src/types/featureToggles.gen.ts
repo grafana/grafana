@@ -236,6 +236,7 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
+  * @default true
   */
   pluginsDetailsRightPanel?: boolean;
   /**
@@ -1056,6 +1057,11 @@ export interface FeatureToggles {
   * Enables the unified storage history pruner
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default false
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specify the locale so we can show the correct format for numbers and dates
   */
