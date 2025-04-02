@@ -67,13 +67,17 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## XY chart options
+### XY chart options
 
-### Series mapping
+#### Series mapping
 
 Set how series data is mapped in the chart.
 
@@ -82,7 +86,7 @@ Set how series data is mapped in the chart.
 
 Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. The [Auto](#auto-series-mapping-options) and [Manual](#manual-series-mapping-options) series mapping sections describe these different options.
 
-#### Auto series mapping options
+##### Auto series mapping options
 
 When you select **Auto** as your series mapping mode, the following options are preconfigured, but you can also define them yourself:
 
@@ -92,11 +96,11 @@ When you select **Auto** as your series mapping mode, the following options are 
 - [Size field](#size-field)
 - [Color field](#color-field)
 
-##### Frame
+###### Frame
 
 By default, an xy chart displays all data frames. You can filter to select only one frame.
 
-##### X-field
+###### X-field
 
 Select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
@@ -108,7 +112,7 @@ Select which field or fields x represents. By default, this is the first number 
 
 In the resulting chart, the x-field is generated from the values in column "a" unless you define it differently.
 
-##### Y-field
+###### Y-field
 
 After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use this option to explicitly choose which fields to use for y.
 
@@ -124,19 +128,19 @@ You can also use [overrides](ref:configure-field-overrides) to exclude y-fields 
 - Override property: **Series > Hide in area**
 - Area: **Viz**
 
-##### Size field
+###### Size field
 
 Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
 
 When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
 
-##### Color field
+###### Color field
 
 Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field.
 
 Typically, this field is used when you only have one series displayed in the chart.
 
-#### Manual series mapping options
+##### Manual series mapping options
 
 When you select **Manual** as your series mode, you can add, edit, and delete series. To manage a series, click the **Series** field; to rename the series, click the series name.
 
@@ -148,7 +152,7 @@ In **Manual** mode, you must set the following options:
 - **Size field** - Select which field controls the size of the points in the chart.
 - **Color field** - Select which field controls the color of the points in the chart.
 
-### Show
+#### Show
 
 Set how values are represented in the visualization.
 
@@ -156,30 +160,30 @@ Set how values are represented in the visualization.
 - **Lines** - Add a line between values. When you select this option, the [Line style](#line-style) and [Line width](#line-width) options are also displayed.
 - **Both** - Display both points and lines.
 
-### Point size
+#### Point size
 
 Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field).
 
-### Min/Max point size
+#### Min/Max point size
 
 Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series.
 
-### Point shape
+#### Point shape
 
 Set the shape of the points in the chart.
 
 - **Circle** - Display points as circles. This is the default setting.
 - **Square** - Display points as squares.
 
-### Point stroke width
+#### Point stroke width
 
 Set the width of the point stroke in pixels. The default is one pixel.
 
-### Fill opacity
+#### Fill opacity
 
 Set the opacity of the point fill. The default is 50.
 
-### Line style
+#### Line style
 
 Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
 
@@ -189,15 +193,15 @@ Set the style of the lines that connect points. To change the color, use the sta
 - **Dash:** Display a dashed line. When you choose this option, a drop-down list is displayed where you can select the length and gap setting for the line dashes. By default, the length and gap are set to `10, 10`.
 - **Dots:** Display dotted lines. When you choose this option, a drop-down list is displayed where you can select dot spacing. By default, the dot spacing is set to `0, 10` (the first number represents dot length, which is always zero).
 
-### Line width
+#### Line width
 
 Set the width of the lines that connect points, in pixels.
 
-## Tooltip options
+### Tooltip options
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-### Tooltip mode
+#### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
 
@@ -206,23 +210,23 @@ When you hover your cursor over the visualization, Grafana can display tooltips.
 
 Use an override to hide individual series from the tooltip.
 
-### Max width
+#### Max width
 
 Set the maximum width of the tooltip box.
 
-### Max height
+#### Max height
 
 Set the maximum height of the tooltip box. The default is 600 pixels.
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Axis options
+### Axis options
 
 Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
-### Placement (y-axis)
+#### Placement (y-axis)
 
 Select the placement of the y-axis.
 
@@ -233,17 +237,17 @@ Select the placement of the y-axis.
 
 To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
-### Label
+#### Label
 
 Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.
 
-### Width
+#### Width
 
 Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.
 
 By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.
 
-### Show grid lines
+#### Show grid lines
 
 Set the axis grid line visibility.
 
@@ -251,18 +255,18 @@ Set the axis grid line visibility.
 - **On:** Always show grid lines.
 - **Off:** Never show grid lines.
 
-### Color
+#### Color
 
 Set the color of the axis.
 
 - **Text:** Set the color based on theme text color.
 - **Series:** Set the color based on the series color.
 
-### Show border
+#### Show border
 
 Set the axis border visibility.
 
-### Scale
+#### Scale
 
 Set the y-axis values scale.
 
@@ -270,11 +274,11 @@ Set the y-axis values scale.
 - **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
 - **Symlog:** Use a symmetrical logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale. The linear threshold option allows you to set the threshold at which the scale changes from linear to logarithmic.
 
-### Centered zero
+#### Centered zero
 
 Set the y-axis to be centered on zero.
 
-### Soft min and soft max
+#### Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of all axes limits. By default, Grafana sets the range automatically based on the dataset.
 
@@ -284,7 +288,7 @@ To define hard limits of the axes, set standard min/max options. For more inform
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
-### Transform
+#### Transform
 
 Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
 
@@ -297,7 +301,7 @@ The transform option is only available as an override.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
-## Standard options
+### Standard options
 
 **Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
 
@@ -308,10 +312,10 @@ You can customize the following standard options:
 
 To learn more, refer to [Configure standard options](ref:configure-standard-options).
 
-## Data links and actions
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
