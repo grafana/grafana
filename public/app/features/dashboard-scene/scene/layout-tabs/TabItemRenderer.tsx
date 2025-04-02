@@ -6,6 +6,7 @@ import { locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
@@ -25,6 +26,11 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
+  const [isConditionallyHidden] = useIsConditionallyHidden(model);
+
+  if (isConditionallyHidden && !isEditing && !isActive) {
+    return null;
+  }
 
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isEditing}>
@@ -39,6 +45,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             ref={model.containerRef}
             truncate
             className={cx(
+              isConditionallyHidden && styles.hidden,
               isSelected && 'dashboard-selected-element',
               isSelectable && !isSelected && 'dashboard-selectable-element',
               isDropTarget && 'dashboard-drop-target'
@@ -73,5 +80,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 const getStyles = () => ({
   dragging: css({
     cursor: 'move',
+  }),
+  hidden: css({
+    opacity: 0.4,
+
+    '&:hover': css({
+      opacity: 1,
+    }),
   }),
 });

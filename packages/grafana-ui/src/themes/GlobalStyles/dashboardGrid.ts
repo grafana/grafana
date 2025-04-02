@@ -102,11 +102,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-visible-hidden-element': {
-      opacity: 0.6,
-
-      '&:hover': {
-        opacity: 1,
-      },
+      position: 'relative',
     },
 
     // Universal style for marking drop targets when dragging between layouts

@@ -5,6 +5,7 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
@@ -26,7 +27,18 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 
   const layoutCategory = useLayoutCategory(layout);
 
-  return [tabCategory, layoutCategory];
+  const editOptions = [tabCategory, layoutCategory];
+
+  const conditionalRenderingCategory = useMemo(
+    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    [model]
+  );
+
+  if (conditionalRenderingCategory) {
+    editOptions.push(conditionalRenderingCategory);
+  }
+
+  return editOptions;
 }
 
 function TabTitleInput({ tab }: { tab: TabItem }) {

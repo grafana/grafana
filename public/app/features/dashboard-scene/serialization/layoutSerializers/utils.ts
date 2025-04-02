@@ -18,6 +18,7 @@ import {
   PanelKind,
   PanelQueryKind,
   QueryVariableKind,
+  TabsLayoutTabKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -238,13 +239,16 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   return sceneState.serialize();
 }
 
-export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
+export function getConditionalRendering(
+  item: TabsLayoutTabKind | RowsLayoutRowKind | AutoGridLayoutItemKind
+): ConditionalRendering {
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }
+
   const rootGroup = conditionalRenderingSerializerRegistry
     .get(item.spec.conditionalRendering.kind)
-    .serializer.deserialize(item.spec.conditionalRendering);
+    .deserialize(item.spec.conditionalRendering);
 
   if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
     throw new Error(`Conditional rendering must always start with a root group`);
