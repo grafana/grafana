@@ -34,10 +34,8 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, proxyCli
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
 
-	// If the secure socks proxy is enabled, we use the proxy adddress with
-	// the passthrough scheme. Otherwise, we use the processed address.
-	// This ensures the address is passed directly to the transport
-	// rather than trying to resolve via DNS.
+	// If the secure socks proxy is enabled, we add the passthrough scheme. Otherwise, we use the raw address.
+	// This ensures the address is passed directly to the transport rather than trying to resolve via DNS.
 	if proxyClient.SecureSocksProxyEnabled() {
 		addr = fmt.Sprintf("passthrough:///%s", addr)
 	}
