@@ -1,14 +1,22 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export const ConditionalRenderingOverlay = () => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
-      <Icon name="eye-slash" />
+      <Tooltip
+        content={t(
+          'dashboard.conditional-rendering.overlay.tooltip',
+          'Element is hidden due to conditional rendering.'
+        )}
+      >
+        <Icon name="eye-slash" />
+      </Tooltip>
     </div>
   );
 };
@@ -37,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       left: 0,
       backgroundColor: theme.colors.background.canvas,
+      pointerEvents: 'none',
     }),
 
     '& > svg': css({
@@ -53,11 +62,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       left: 'unset',
       right: 0,
       bottom: 0,
-
-      '& > svg': css({
-        height: '24px',
-        width: '24px',
-      }),
     }),
   }),
 });
