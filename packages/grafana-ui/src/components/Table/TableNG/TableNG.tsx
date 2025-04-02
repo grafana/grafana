@@ -741,7 +741,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={rowIdx}
+            rowIdx={sortedRows[rowIdx].__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,

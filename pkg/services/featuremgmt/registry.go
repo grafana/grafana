@@ -574,8 +574,9 @@ var (
 		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "pluginsAPIMetrics",
@@ -682,6 +683,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true, // and can change at startup
+		},
+		{
+			Name:         "queryServiceFromExplore",
+			Description:  "Routes explore requests to the new query service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
@@ -1832,6 +1840,15 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "true", // enabled by default
+		},
+		{
+			Name:              "xrayApplicationSignals",
+			Description:       "Support Application Signals queries in the X-Ray datasource",
+			Stage:             FeatureStageExperimental,
+			Owner:             awsDatasourcesSquad,
+			FrontendOnly:      true,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 		{
 			Name:         "localizationForPlugins",
