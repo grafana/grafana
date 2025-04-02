@@ -505,10 +505,13 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		shouldTest = cfg.Generation != oldCfg.Generation
 	}
 
+	logger := logging.FromContext(ctx).With("name", a.GetName()).With("namespace", a.GetNamespace())
 	if !shouldTest {
+		logger.Debug("skipping repository test")
 		return nil
 	}
 
+	logger.Debug("running repository test")
 	testResults, err := repository.TestRepository(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("repository test failed: %w", err)
