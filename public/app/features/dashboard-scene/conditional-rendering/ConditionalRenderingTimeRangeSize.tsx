@@ -24,7 +24,7 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   };
 
   public get title(): string {
-    return t('dashboard.conditional-rendering.time-range-size.label', 'Dashboard time range less than');
+    return t('dashboard.conditional-rendering.time-range-size.label', 'Time range less than');
   }
 
   public get info(): string {
@@ -32,25 +32,25 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
       case 'auto-grid-item':
         return t(
           'dashboard.conditional-rendering.time-range-size.info.panel',
-          'Show or hide the panel based if the dashboard time range is less than the selected time frame.'
+          'Show or hide the panel if the dashboard time range is shorter than the selected time frame.'
         );
 
       case 'row':
         return t(
           'dashboard.conditional-rendering.time-range-size.info.row',
-          'Show or hide the row if the dashboard time range is less than the selected time frame.'
+          'Show or hide the row if the dashboard time range is shorter than the selected time frame.'
         );
 
       case 'tab':
         return t(
           'dashboard.conditional-rendering.time-range-size.info.tab',
-          'Show or hide the tab if the dashboard time range is less than the selected time frame.'
+          'Show or hide the tab if the dashboard time range is shorter than the selected time frame.'
         );
 
       default:
         return t(
           'dashboard.conditional-rendering.time-range-size.info.element',
-          'Show or hide the element if the dashboard time range is less than the selected time frame.'
+          'Show or hide the element if the dashboard time range is shorter than the selected time frame.'
         );
     }
   }

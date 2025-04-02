@@ -8,8 +8,9 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
-import { useDashboardState, useInterpolatedTitle, useIsConditionallyHidden } from '../../utils/utils';
+import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
@@ -18,11 +19,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = useIsClone(model);
   const { isEditing } = useDashboardState(model);
-  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
+    useIsConditionallyHidden(model);
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
-  const styles = useStyles2(getStyles);
+  const headerVisible = Boolean(!isHeaderHidden || isEditing);
+  const styles = useStyles2(getStyles, headerVisible, !!isCollapsed);
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
@@ -59,7 +62,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             isEditing && isCollapsed && styles.wrapperEditingCollapsed,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
-            isConditionallyHidden && 'dashboard-visible-hidden-element',
+            conditionalRenderingClass,
             !isClone && isSelected && 'dashboard-selected-element',
             !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
             isDropTarget && 'dashboard-drop-target'
@@ -84,7 +87,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           }}
           {...dragProvided.draggableProps}
         >
-          {(!isHeaderHidden || isEditing) && (
+          {headerVisible && (
             <div
               className={cx(
                 isHeaderHidden && 'dashboard-visible-hidden-element',
@@ -129,13 +132,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
+          {conditionalRenderingOverlay}
         </div>
       )}
     </Draggable>
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, isHeaderVisible: boolean, isCollapsed: boolean) {
   return {
     rowHeader: css({
       width: '100%',
@@ -183,19 +187,25 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       width: '100%',
       minHeight: '100px',
-      '> div:nth-child(2)': {
-        marginLeft: theme.spacing(3),
-        position: 'relative',
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: `-8px`,
-          bottom: 0,
-          left: '-16px',
-          width: '1px',
-          backgroundColor: theme.colors.border.weak,
-        },
-      },
+
+      ...(!isCollapsed
+        ? {
+            [`> div:nth-child(${isHeaderVisible ? 2 : 1})`]: {
+              marginLeft: theme.spacing(3),
+              position: 'relative',
+
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                top: `-8px`,
+                bottom: 0,
+                left: '-16px',
+                width: '1px',
+                backgroundColor: theme.colors.border.weak,
+              },
+            },
+          }
+        : {}),
     }),
     dragging: css({
       cursor: 'move',

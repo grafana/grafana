@@ -21,7 +21,7 @@ export const ConditionalRenderingGroupAdd = ({ hasVariables, onAdd }: Props) => 
         isDisabled: !hasVariables,
       },
       {
-        label: t('dashboard.conditional-rendering.group.add.time-range-size', 'Dashboard time range less than'),
+        label: t('dashboard.conditional-rendering.group.add.time-range-size', 'Time range less than'),
         value: 'timeRangeSize',
       },
     ],

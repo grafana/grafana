@@ -2,6 +2,7 @@ import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObj
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -22,25 +23,25 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
       case 'auto-grid-item':
         return t(
           'dashboard.conditional-rendering.info.panel',
-          'Show or hide the panel based on certain conditions by matching all or any rules.'
+          'Set rules to control panel visibility by matching any or all rules.'
         );
 
       case 'row':
         return t(
           'dashboard.conditional-rendering.info.row',
-          'Show or hide the row based on certain conditions by matching all or any rules.'
+          'Set rules to control row visibility by matching any or all rules.'
         );
 
       case 'tab':
         return t(
           'dashboard.conditional-rendering.info.tab',
-          'Show or hide the panel based on certain conditions by matching all or any rules.'
+          'Set rules to control tab visibility by matching any or all rules.'
         );
 
       default:
         return t(
           'dashboard.conditional-rendering.info.element',
-          'Show or hide the element based on certain conditions by matching all or any rules.'
+          'Set rules to control element visibility by matching any or all rules.'
         );
     }
   }
@@ -67,6 +68,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   public notifyChange() {
     this.parent?.forceRender();
+    this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
   }
 
   public deleteItem<T extends ConditionalRenderingBase>(item: T) {

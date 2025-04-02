@@ -17,16 +17,15 @@ export function useConditionalRenderingEditor(
   return new OptionsPaneCategoryDescriptor({
     title,
     id: 'conditional-rendering-options',
-    renderTitle: () => {
-      return (
-        <Stack direction="row" gap={1} alignItems="center">
-          <div>{title}</div>
-          <Tooltip content={conditionalRendering.info}>
-            <Icon name="info-circle" />
-          </Tooltip>
-        </Stack>
-      );
-    },
+    renderTitle: () => (
+      <Stack direction="row" gap={1} alignItems="center">
+        <div>{title}</div>
+        <Icon name={!conditionalRendering.evaluate() ? 'eye-slash' : 'eye'} />
+        <Tooltip content={conditionalRendering.info}>
+          <Icon name="info-circle" />
+        </Tooltip>
+      </Stack>
+    ),
     isOpenDefault: true,
   }).addItem(
     new OptionsPaneItemDescriptor({

@@ -1427,10 +1427,10 @@
         "disable": "No data",
         "enable": "Has data",
         "info": {
-          "element": "Show or hide the element based if the query returns data or not.",
-          "panel": "Show or hide the panel based if the query returns data or not.",
-          "row": "Show or hide the row based if the query returns data or not.",
-          "tab": "Show or hide the tab based if the query returns data or not."
+          "element": "Show or hide the element based on query results.",
+          "panel": "Show or hide the panel based on query results.",
+          "row": "Show or hide the row based on query results.",
+          "tab": "Show or hide the tab based on query results."
         },
         "label": "Query result"
       },
@@ -1438,7 +1438,7 @@
         "add": {
           "button": "Add rule",
           "data": "Query result",
-          "time-range-size": "Dashboard time range less than",
+          "time-range-size": "Time range less than",
           "variable": "Template variable"
         },
         "condition": {
@@ -1459,23 +1459,23 @@
         }
       },
       "info": {
-        "element": "Show or hide the element based on certain conditions by matching all or any rules.",
-        "panel": "Show or hide the panel based on certain conditions by matching all or any rules.",
-        "row": "Show or hide the row based on certain conditions by matching all or any rules.",
-        "tab": "Show or hide the panel based on certain conditions by matching all or any rules."
+        "element": "Set rules to control element visibility by matching any or all rules.",
+        "panel": "Set rules to control panel visibility by matching any or all rules.",
+        "row": "Set rules to control row visibility by matching any or all rules.",
+        "tab": "Set rules to control tab visibility by matching any or all rules."
       },
       "shared": {
         "delete-condition": "Delete Condition"
       },
       "time-range-size": {
         "info": {
-          "element": "Show or hide the element if the dashboard time range is less than the selected time frame.",
-          "panel": "Show or hide the panel based if the dashboard time range is less than the selected time frame.",
-          "row": "Show or hide the row if the dashboard time range is less than the selected time frame.",
-          "tab": "Show or hide the tab if the dashboard time range is less than the selected time frame."
+          "element": "Show or hide the element if the dashboard time range is shorter than the selected time frame.",
+          "panel": "Show or hide the panel if the dashboard time range is shorter than the selected time frame.",
+          "row": "Show or hide the row if the dashboard time range is shorter than the selected time frame.",
+          "tab": "Show or hide the tab if the dashboard time range is shorter than the selected time frame."
         },
         "invalid-message": "Invalid interval",
-        "label": "Dashboard time range less than",
+        "label": "Time range less than",
         "values": {
           "days": "{{value}} days",
           "hour": "{{value}} hour",
@@ -1489,10 +1489,10 @@
       "title": "Show / hide rules",
       "variable": {
         "info": {
-          "element": "Select a variable value based on which to show or hide the element.",
-          "panel": "Select a variable value based on which to show or hide the panel.",
-          "row": "Select a variable value based on which to show or hide the row.",
-          "tab": "Select a variable value based on which to show or hide the tab."
+          "element": "Show or hide the element dynamically based on the variable value.",
+          "panel": "Show or hide the panel dynamically based on the variable value.",
+          "row": "Show or hide the row dynamically based on the variable value.",
+          "tab": "Show or hide the tab dynamically based on the variable value."
         },
         "label": "Template variable",
         "name": "Name",

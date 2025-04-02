@@ -32,25 +32,25 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
       case 'auto-grid-item':
         return t(
           'dashboard.conditional-rendering.variable.info.panel',
-          'Select a variable value based on which to show or hide the panel.'
+          'Show or hide the panel dynamically based on the variable value.'
         );
 
       case 'row':
         return t(
           'dashboard.conditional-rendering.variable.info.row',
-          'Select a variable value based on which to show or hide the row.'
+          'Show or hide the row dynamically based on the variable value.'
         );
 
       case 'tab':
         return t(
           'dashboard.conditional-rendering.variable.info.tab',
-          'Select a variable value based on which to show or hide the tab.'
+          'Show or hide the tab dynamically based on the variable value.'
         );
 
       default:
         return t(
           'dashboard.conditional-rendering.variable.info.element',
-          'Select a variable value based on which to show or hide the element.'
+          'Show or hide the element dynamically based on the variable value.'
         );
     }
   }
