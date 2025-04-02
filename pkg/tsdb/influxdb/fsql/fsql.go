@@ -81,15 +81,14 @@ type runner struct {
 	client *client
 }
 
-// runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
-	if dsInfo.URL == "" {
-		return nil, fmt.Errorf("missing URL from datasource configuration")
+func ParseURL(endpoint string) (string, error) {
+	if endpoint == "" {
+		return "", fmt.Errorf("missing URL from datasource configuration")
 	}
 
-	u, err := url.Parse(dsInfo.URL)
+	u, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("bad URL : %s", err)
+		return "", fmt.Errorf("bad URL : %s", err)
 	}
 
 	addr := u.Host
@@ -100,8 +99,19 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	// If the user has specified an address with no scheme it can still be valid
 	// So we use the raw URL value
 	if u.Host == "" {
-		addr = dsInfo.URL
+		addr = endpoint
 	}
+
+	return addr, nil
+}
+
+// runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
+func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
+	if dsInfo.URL == "" {
+		return nil, fmt.Errorf("missing URL from datasource configuration")
+	}
+
+	u, err := ParseURL(dsInfo.URL)
 
 	md := metadata.MD{}
 	if dsInfo.DbName != "" {
@@ -111,7 +121,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}
 
-	fsqlClient, err := newFlightSQLClient(addr, md, !dsInfo.InsecureGrpc, dsInfo.ProxyClient)
+	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc, dsInfo.ProxyClient)
 	if err != nil {
 		return nil, err
 	}

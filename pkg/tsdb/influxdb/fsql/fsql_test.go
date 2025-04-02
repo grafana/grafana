@@ -154,3 +154,61 @@ func TestInvalidSchema(t *testing.T) {
 	)
 	require.Equal(t, backend.ErrorSourceDownstream, resp.Responses["A"].ErrorSource)
 }
+
+func TestParseURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+		hasError bool
+	}{
+		{
+			name:     "empty URL",
+			input:    "",
+			expected: "",
+			hasError: true,
+		},
+		{
+			name:     "URL without scheme",
+			input:    "example.com",
+			expected: "example.com",
+			hasError: false,
+		},
+		{
+			name:     "URL without scheme and with port",
+			input:    "example.com:8181",
+			expected: "example.com:8181",
+			hasError: false,
+		},
+		{
+			name:     "URL without port",
+			input:    "http://example.com",
+			expected: "example.com:443",
+			hasError: false,
+		},
+		{
+			name:     "URL with http scheme",
+			input:    "http://example.com:8080",
+			expected: "example.com:8080",
+			hasError: false,
+		},
+		{
+			name:     "URL with https scheme",
+			input:    "https://example.com:8443",
+			expected: "example.com:8443",
+			hasError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParseURL(tt.input)
+			if tt.hasError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
