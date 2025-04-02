@@ -4751,8 +4751,11 @@
       "resources": "Resources",
       "started": "Started:",
       "status": "Status:",
+      "webhook": "Webhook",
       "view-folder": "View Folder",
-      "webhook": "Webhook"
+      "webhook-url": "View Webhook",
+      "webhook-id": "ID:",
+      "webhook-events": "Events:"
     },
     "repository-resources": {
       "columns": {
