@@ -212,7 +212,9 @@ class DataSourceWithBackend<
     // Use the new query service for explore
     if (config.featureToggles.queryServiceFromExplore && request.app === CoreApp.Explore) {
       // make sure query-service is enabled on the backend
-      if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
+      const isQueryServiceEnabled = config.featureToggles.queryService;
+      const isExperimentalAPIsEnabled = config.featureToggles.grafanaAPIServerWithExperimentalAPIs;
+      if (!isQueryServiceEnabled && !isExperimentalAPIsEnabled) {
         console.warn('feature toggle queryServiceFromExplore also requires the queryService to be running');
       } else {
         url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
