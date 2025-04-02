@@ -503,6 +503,10 @@
       "recording": "Felvételkészítés",
       "rule-name": "Szabálynév"
     },
+    "ds-group-loader": {
+      "group-deleting": "",
+      "group-load-failed": ""
+    },
     "export": {
       "subtitle": {
         "formats": "Válassza ki a formátumot, és töltse le a fájlt, vagy másolja a tartalmat a vágólapra",
@@ -521,10 +525,12 @@
     },
     "group-actions": {
       "actions-trigger": "Szabálycsoport-műveletek",
-      "delete": "Törlés",
-      "edit": "Szerkesztés",
-      "export": "Exportálás",
-      "reorder": "Szabályok átrendezése"
+      "details": "",
+      "edit": "Szerkesztés"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "",
+      "unknown-error": ""
     },
     "group-details": {
       "ds-features-error": "Hiba történt az adatforrás adatainak betöltésekor",
@@ -564,6 +570,9 @@
       "page-title": "Szabálycsoport szerkesztése",
       "rule-group-error": "Hiba történt a szabálycsoport betöltésekor",
       "title": "Értékelési csoport szerkesztése"
+    },
+    "group-loader": {
+      "group-load-failed": ""
     },
     "irm-integration": {
       "connection-method": "Csatlakozás az IRM-hez",
@@ -820,6 +829,7 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
+      "draft-new-rule": "",
       "ds-error-boundary": {
         "description": "Ellenőrizze az adatforrás konfigurációját. Támogatja az adatforrás a Prometheus API-t?",
         "title": "Nem lehet betölteni a szabályokat ebből az adatforrásból"
@@ -828,15 +838,20 @@
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabály megjelenítése",
         "no-rules-found": "Egyetlen riasztási vagy felvételi szabály sem felelt meg az aktuális szűrőkészletének."
       },
+      "more": "",
       "new-alert-rule": "Új riasztási szabály",
+      "new-datasource-recording-rule": "",
+      "new-grafana-recording-rule": "",
       "pagination": {
         "next-page": "következő oldal",
         "previous-page": "előző oldal"
       },
+      "recording-rules": "",
       "return-button": {
         "title": "Riasztási szabályok"
       },
-      "rulerrule-loading-error": "A szabály betöltése sikertelen volt"
+      "rulerrule-loading-error": "A szabály betöltése sikertelen volt",
+      "unknown-rule-type": ""
     },
     "rule-state": {
       "creating": "Létrehozás",
@@ -855,7 +870,7 @@
     "rule-viewer": {
       "error-loading": "Valami hiba történt a szabály betöltése során",
       "prometheus-consistency-check": {
-        "alert-message": "A riasztási szabály frissítve lett. A módosítások akár egy percig is eltarthatnak, amíg megjelennek a Riasztási szabályok listanézetben.",
+        "alert-message": "",
         "alert-title": "Frissítés folyamatban"
       }
     },
@@ -1106,13 +1121,34 @@
       "create-label": "Létrehozás",
       "name-label": "Mappa neve"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "",
+      "alert-folder-created-successfully": "",
+      "button-create": "",
+      "button-creating": "",
+      "cancel": "",
+      "description-branch-name-in-git-hub": "",
+      "error-invalid-folder-name": "",
+      "error-required": "",
+      "folder-comment-input-placeholder-describe-changes-optional": "",
+      "folder-name-input-placeholder-enter-folder-name": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-folder-name": "",
+      "label-workflow": "",
+      "text-pull-request-created": "",
+      "title-pull-request-created": "",
+      "title-repository-not-found": "",
+      "title-this-repository-is-read-only": ""
+    },
     "no-results": {
       "clear": "Keresés és szűrők törlése",
       "text": "Nincs találat a lekérdezésre"
     },
     "soft-delete": {
       "success": "A(z) {{name}} irányítópult áthelyezve a Nemrég töröltek közé"
-    }
+    },
+    "text-this-repository-is-read-only": ""
   },
   "carousel": {
     "close": "",
@@ -2599,6 +2635,9 @@
   "folder-picker": {
     "create-instructions": "Nyomja le az ENTER billentyűt az új mappa létrehozásához.",
     "loading": "Mappák betöltése..."
+  },
+  "folder-repo": {
+    "badge-text": ""
   },
   "forgot-password": {
     "back-button": "Vissza a bejelentkezéshez",
@@ -4422,6 +4461,391 @@
       "name": "",
       "teams": "",
       "text-loading-teams": ""
+    }
+  },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "",
+      "description-clear-repository-connection": "",
+      "empty": "",
+      "error-field-required": "",
+      "grafana": "",
+      "include-history": "",
+      "include-identifiers": "",
+      "label-display-name": "",
+      "label-migrate-options": "",
+      "placeholder-my-repository-connection": "",
+      "repository": "",
+      "resources-will-be-added": "",
+      "text-loading-resource-information": "",
+      "title-files-exist-in-the-target": "",
+      "title-note": "",
+      "tooltip-include-history": "",
+      "tooltip-include-identifiers": "",
+      "files-count_one": "",
+      "files-count_other": ""
+    },
+    "check-repository": {
+      "check": ""
+    },
+    "config-form": {
+      "alert-repository-settings-saved": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-branch": "",
+      "description-enabled": "",
+      "description-path": "",
+      "description-repository-url": "",
+      "description-title": "",
+      "description-workflows-makes-repository": "",
+      "description-write": "",
+      "error-required": "",
+      "error-valid-github-url": "",
+      "label-automatic-pulling": "",
+      "label-branch": "",
+      "label-enabled": "",
+      "label-github-token": "",
+      "label-interval-seconds": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-type": "",
+      "label-repository-url": "",
+      "label-target": "",
+      "label-title": "",
+      "label-workflows": "",
+      "option-branch": "",
+      "option-entire-instance": "",
+      "option-github": "",
+      "option-local": "",
+      "option-managed-folder": "",
+      "option-write": "",
+      "placeholder-branch": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-interval-seconds": "",
+      "placeholder-local-path": "",
+      "placeholder-my-config": "",
+      "placeholder-path": "",
+      "placeholder-readonly-repository": "",
+      "placeholder-select-repository-type": ""
+    },
+    "config-form-github-collapse": {
+      "description-attach-dashboard-previews": "",
+      "instructions": "",
+      "label-attach-dashboard-previews": "",
+      "label-git-hub-features": "",
+      "pull-request-image-previews": "",
+      "realtime-feedback": "",
+      "text-changes-in-git-eventually-pulled": "",
+      "text-changes-in-git-quick-pull": "",
+      "text-when-image-renderer-configured": "",
+      "title-image-renderer-not-configured": "",
+      "title-public-url-not-configured": "",
+      "title-webhook-will-be-created": ""
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "",
+      "max-repositories-exist": "",
+      "tooltip-max-repos_one": "",
+      "tooltip-max-repos_other": ""
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "",
+      "description-github-path": "",
+      "description-paste-your-git-hub-personal-access-token": "",
+      "description-repository-url": "",
+      "error-field-required": "",
+      "error-invalid-github-url": "",
+      "label-access-token": "",
+      "label-branch": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-url": "",
+      "label-storage-type": "",
+      "placeholder-branch": "",
+      "placeholder-github-path": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-local-path": "",
+      "storage-type-github": "",
+      "storage-type-local": ""
+    },
+    "delete-repository-button": {
+      "button-delete": "",
+      "confirm-delete-repository": "",
+      "success-repository-deleted": "",
+      "title-delete-repository": "",
+      "tooltip-delete-this-repository": ""
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "empty-state": {
+      "no-jobs": ""
+    },
+    "enhanced-features": {
+      "description-instant-updates": "",
+      "description-visual-previews-dashboard-updates-directly-requests": "",
+      "set-up-image-rendering": "",
+      "set-up-public-access": "",
+      "title-instant-updates-requests-webhooks": "",
+      "title-visual-previews-in-pull-requests": "",
+      "unlock-enhanced-functionality-for-git-hub": ""
+    },
+    "expanded-row": {
+      "job-specification": "",
+      "summary": "",
+      "title-error": ""
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": ""
+      },
+      "automatically-provision-and-update-dashboards": "",
+      "learn-more": "",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
+      "migrate-existing-dashboards-storage-provisioning": "",
+      "store-dashboards-in-version-controlled-storage": "",
+      "visual-previews-in-pull-requests": ""
+    },
+    "file-history-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "file-status-page": {
+      "title-error-loading-file": ""
+    },
+    "files-view": {
+      "columns": {
+        "history": "",
+        "view": ""
+      },
+      "placeholder-search": ""
+    },
+    "finish-step": {
+      "description-dashboard-previews": "",
+      "description-enable-webhooks": "",
+      "description-often-shall-instance-updates-git-hub": "",
+      "description-select-workflows-allowed-within-repository": "",
+      "error-field-required": "",
+      "label-enable-dashboard-previews": "",
+      "label-enable-webhooks": "",
+      "label-update-instance-interval-seconds": "",
+      "label-workflows": "",
+      "link-setup-image-rendering": "",
+      "placeholder": "",
+      "placeholder-readonly-repository": "",
+      "text-requires-image-rendering": ""
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "",
+      "placeholder-search": ""
+    },
+    "getting-started": {
+      "alert-temporary-outage": "",
+      "engaging-graphic": "",
+      "modal-description-public-access": "",
+      "modal-description-required-features": "",
+      "modal-title-set-up-public-access": "",
+      "modal-title-set-up-required-features": "",
+      "step-description-copy-url": "",
+      "step-description-enable-feature-toggles": "",
+      "step-description-start-ngrok": "",
+      "step-description-update-grafana-config": "",
+      "step-title-copy-url": "",
+      "step-title-enable-feature-toggles": "",
+      "step-title-start-ngrok": "",
+      "step-title-update-grafana-config": "",
+      "title-setting-connection-could-cause-temporary-outage": ""
+    },
+    "getting-started-page": {
+      "subtitle-provisioning-feature": "",
+      "text-remote-provisioning": ""
+    },
+    "history-view": {
+      "not-found": ""
+    },
+    "home-page": {
+      "button-delete-repositories": "",
+      "configured-repositories-while-running-legacy-storage": "",
+      "confirm-delete-repositories": "",
+      "remove-all-configured-repositories": "",
+      "subtitle": "",
+      "success-all-repositories-deleted": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-getting-started": "",
+      "tab-getting-started-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-repositories": "",
+      "tab-repositories-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title-delete-all-configured-repositories": "",
+      "title-legacy-storage-detected": ""
+    },
+    "job-status": {
+      "error-unknown": "",
+      "label-view-details": "",
+      "starting": "",
+      "status": {
+        "title-error-running-job": "",
+        "title-job-completed-successfully": ""
+      },
+      "summary": ""
+    },
+    "job-step": {
+      "error-failed-to-start": "",
+      "error-invalid-response": "",
+      "error-job-failed": ""
+    },
+    "migrate-step": {
+      "description-migrating-dashboards": ""
+    },
+    "pull-step": {
+      "description-pulling-content": ""
+    },
+    "recent-jobs": {
+      "active-jobs": "",
+      "column-action": "",
+      "column-duration": "",
+      "column-message": "",
+      "column-started": "",
+      "column-status": "",
+      "error-loading": "",
+      "jobs": ""
+    },
+    "repository-actions": {
+      "settings": "",
+      "source-code": ""
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": ""
+      },
+      "settings": "",
+      "view": ""
+    },
+    "repository-health": {
+      "details": "",
+      "no-errors-found": "",
+      "title-repository-is-healthy": "",
+      "title-repository-is-unhealthy": ""
+    },
+    "repository-link": {
+      "grafana-repository": "",
+      "view-folder": "",
+      "view-repository": ""
+    },
+    "repository-overview": {
+      "checked": "",
+      "finished": "",
+      "health": "",
+      "job-id": "",
+      "last-ref": "",
+      "messages": "",
+      "pull-status": "",
+      "resources": "",
+      "started": "",
+      "status": "",
+      "view-folder": "",
+      "webhook": ""
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "",
+        "view-dashboard": "",
+        "view-folder": ""
+      },
+      "placeholder-search": ""
+    },
+    "repository-status-page": {
+      "back-to-repositories": "",
+      "cleaning-up-resources": "",
+      "legacy-storage-message": "",
+      "not-found": "",
+      "not-found-message": "",
+      "repository-config-exists-configuration": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title": "",
+      "title-legacy-storage": "",
+      "title-queued-for-deletion": ""
+    },
+    "request-error": {
+      "failed-to-migrate": "",
+      "failed-to-save": "",
+      "failed-to-sync": "",
+      "operation-failed": ""
+    },
+    "resource-view": {
+      "base": "",
+      "dashboard-preview": "",
+      "existing-dashboard": "",
+      "history": "",
+      "repository": "",
+      "title-error-saving-file": ""
+    },
+    "setup-modal": {
+      "done": "",
+      "next": "",
+      "previous": ""
+    },
+    "sidebar-item": {
+      "label-completed-step": "",
+      "label-current-step": "",
+      "label-pending-step": ""
+    },
+    "sync-repository": {
+      "body-edit-configuration": "",
+      "button-edit": "",
+      "error-pulling-resources": "",
+      "pull": "",
+      "success-pull-started": "",
+      "title-pull-not-enabled": "",
+      "tooltip-unhealthy-repository": ""
+    },
+    "token-permissions-info": {
+      "access": "",
+      "contents": "",
+      "github-instructions": "",
+      "metadata": "",
+      "permission": "",
+      "pull-requests": "",
+      "read-and-write": "",
+      "readonly": "",
+      "webhooks": ""
+    },
+    "wizard": {
+      "button-finish": "",
+      "button-next": "",
+      "button-start": "",
+      "step-bootstrap": "",
+      "step-connect": "",
+      "step-finish": "",
+      "step-resources": "",
+      "title-bootstrap": "",
+      "title-connect": "",
+      "title-finish": "",
+      "title-migrate": "",
+      "title-pull": ""
+    },
+    "wizard-content": {
+      "button-cancel": "",
+      "button-cancelling": "",
+      "button-submitting": "",
+      "error-failed-to-delete": "",
+      "error-instance-repository-exists": "",
+      "success-repository-deleted": "",
+      "success-repository-saved": "",
+      "title-repository-verification-failed": ""
     }
   },
   "public-dashboard": {
