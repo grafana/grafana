@@ -49,7 +49,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   root: css({
     '&.react-colorful': {
-      marginTop: theme.spacing(2),
       width: 'auto',
     },
 
