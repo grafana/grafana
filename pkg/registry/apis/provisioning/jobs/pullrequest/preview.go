@@ -160,7 +160,7 @@ func (p *Previewer) Preview(
 			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
 		}
 		preview.PreviewScreenshotURL = screenshotURL
-		logger.Info("dashboard preview generated", "screenshotURL", screenshotURL)
+		logger.Info("dashboard preview screenshot generated", "screenshotURL", screenshotURL)
 	}
 
 	if preview.OriginalURL != "" {
@@ -169,6 +169,7 @@ func (p *Previewer) Preview(
 			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
 		}
 		preview.OriginalScreenshotURL = screenshotURL
+		logger.Info("original dashboard screenshot generated", "screenshotURL", screenshotURL)
 	}
 
 	return preview, nil
