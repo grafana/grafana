@@ -384,7 +384,7 @@ Additionally, Use Unique Colors can help visually distinguish different routes b
 | Text label | configures a text label for each route. |
 | Arrow | sets the arrow styling to display along route, in order of data. Choose from: **None**, **Forward**, and **Reverse** |
 | Display tooltip | allows you to toggle tooltips for the layer. |
-| Group By | field to group routes by. By default data points are not grouped. |
+| [Group by](#group-by) | Use this field to group routes. By default, data points are not grouped. |
 | Use Unique Colors | assign unique colors to each group. Set to `false` by default. |
 <!-- prettier-ignore-end -->
 
