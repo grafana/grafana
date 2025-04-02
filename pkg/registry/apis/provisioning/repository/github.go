@@ -548,7 +548,6 @@ func (r *githubRepository) parseWebhook(messageType string, payload []byte) (*pr
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: "ping received",
-			IsPing:  true,
 		}, nil
 	}
 

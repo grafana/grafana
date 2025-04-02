@@ -12,7 +12,7 @@ type WebhookStatusApplyConfiguration struct {
 	Secret           *string  `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-	LastPing         *int64   `json:"lastPing,omitempty"`
+	LastEvent        *int64   `json:"lastEvent,omitempty"`
 }
 
 // WebhookStatusApplyConfiguration constructs a declarative configuration of the WebhookStatus type for use with
@@ -65,10 +65,10 @@ func (b *WebhookStatusApplyConfiguration) WithSubscribedEvents(values ...string)
 	return b
 }
 
-// WithLastPing sets the LastPing field in the declarative configuration to the given value
+// WithLastEvent sets the LastEvent field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the LastPing field is set to the value of the last call.
-func (b *WebhookStatusApplyConfiguration) WithLastPing(value int64) *WebhookStatusApplyConfiguration {
-	b.LastPing = &value
+// If called multiple times, the LastEvent field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithLastEvent(value int64) *WebhookStatusApplyConfiguration {
+	b.LastEvent = &value
 	return b
 }

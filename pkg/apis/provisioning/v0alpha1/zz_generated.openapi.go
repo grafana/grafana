@@ -2075,13 +2075,6 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceC
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobSpec"),
 						},
 					},
-					"isPing": {
-						SchemaProps: spec.SchemaProps{
-							Description: "IsPing is true if the webhook is a ping from the webhook",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
 			},
 		},
@@ -2134,15 +2127,13 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 							},
 						},
 					},
-					"lastPing": {
+					"lastEvent": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 				},
-				Required: []string{"lastPing"},
 			},
 		},
 	}
