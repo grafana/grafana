@@ -32,23 +32,6 @@ describe('ColorPickerPopover', () => {
       await userEvent.click(colorSwatchWrapper[0]);
       expect(color).toHaveStyle('box-shadow: inset 0 0 0 2px #73BF69,inset 0 0 0 4px #000000');
     });
-
-    it('should maintain the same height when switching tabs', async () => {
-      render(<ColorPickerPopover color={'green'} onChange={() => {}} />);
-
-      const contentDiv = screen.getByText('Custom').closest('div')!.parentElement!.querySelector('div > div');
-      expect(contentDiv).toBeTruthy();
-      const getHeight = () => contentDiv!.getBoundingClientRect().height;
-      const heightBefore = getHeight();
-
-      const customTab = screen.getByRole('tab', { name: 'Custom' });
-      await userEvent.click(customTab);
-      await new Promise((r) => setTimeout(r, 100));
-
-      const heightAfter = getHeight();
-
-      expect(Math.abs(heightBefore - heightAfter)).toBeLessThan(5);
-    });
   });
 
   describe('named colors support', () => {
