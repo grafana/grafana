@@ -111,7 +111,7 @@ export class TabItem
   }
 
   public onDuplicate(): void {
-    this._getParentLayout().duplicateTab(this);
+    this.getParentLayout().duplicateTab(this);
   }
 
   public duplicate(): TabItem {
@@ -123,7 +123,7 @@ export class TabItem
   }
 
   public onAddTab() {
-    this._getParentLayout().addNewTab();
+    this.getParentLayout().addNewTab();
   }
 
   public onChangeTitle(title: string) {
@@ -154,15 +154,11 @@ export class TabItem
   }
 
   public getParentLayout(): TabsLayoutManager {
-    return this._getParentLayout();
-  }
-
-  private _getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
 
   public scrollIntoView(): void {
-    const tabsLayout = sceneGraph.getAncestor(this, TabsLayoutManager);
+    const tabsLayout = this.getParentLayout();
     if (tabsLayout.getCurrentTab() !== this) {
       tabsLayout.switchToTab(this);
     }
