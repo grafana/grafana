@@ -372,7 +372,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
           })
           .addBooleanSwitch({
             path: 'config.useUniqueColors',
-            name: 'Use Unique Colors',
+            name: 'Use unique colors',
             description: 'Assign unique colors to each group',
             defaultValue: defaultOptions.useUniqueColors,
           });
