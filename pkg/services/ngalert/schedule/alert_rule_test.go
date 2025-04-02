@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -275,6 +276,222 @@ func TestAlertRuleIdentifier(t *testing.T) {
 		key := models.GenerateRuleKeyWithGroup(1)
 		r := blankRuleForTests(context.Background(), key)
 		require.Equal(t, key, r.Identifier())
+	})
+}
+
+func TestAlertRuleAfterEval(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithOrgID(123))
+
+	type testContext struct {
+		rule         *models.AlertRule
+		process      Rule
+		evalDoneChan chan time.Time
+		afterEvalCh  chan struct{}
+		callCount    *atomic.Int32
+		mutex        *sync.Mutex
+		stateManager *state.Manager
+		sender       *SyncAlertsSenderMock
+	}
+
+	// Configuration struct for test setup
+	type setupConfig struct {
+		queryState eval.State
+		isPaused   bool
+	}
+
+	// Default configuration
+	defaultSetupConfig := setupConfig{
+		queryState: eval.Normal,
+		isPaused:   false,
+	}
+
+	setup := func(t *testing.T, cfg setupConfig) *testContext {
+		t.Helper()
+		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
+		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
+		callCount := atomic.NewInt32(0)
+		mutex := &sync.Mutex{}
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
+
+		ruleStore := newFakeRulesStore()
+		instanceStore := &state.FakeInstanceStore{}
+		registry := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, sender, nil, nil)
+
+		// Set up the evaluation callback
+		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+
+		rule := gen.With(withQueryForState(t, cfg.queryState)).GenerateRef()
+		if cfg.isPaused {
+			rule.IsPaused = true
+		}
+		ruleStore.PutRule(context.Background(), rule)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+
+		return &testContext{
+			rule:         rule,
+			process:      process,
+			evalDoneChan: evalDoneChan,
+			afterEvalCh:  afterEvalCh,
+			callCount:    callCount,
+			mutex:        mutex,
+			stateManager: sch.stateManager,
+			sender:       sender,
+		}
+	}
+
+	runTest := func(t *testing.T, ctx *testContext, expectCallbackCalled bool) {
+		t.Helper()
+
+		now := time.Now()
+
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: "test-folder",
+			afterEval: func() {
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+
+		// Start the rule processing goroutine
+		go func() {
+			_ = ctx.process.Run()
+		}()
+
+		// Send the evaluation
+		ctx.process.Eval(eval)
+
+		// Wait for evaluation to complete
+		select {
+		case <-ctx.evalDoneChan:
+			// Evaluation was completed
+		case <-time.After(5 * time.Second):
+			t.Fatal("Evaluation was not completed in time")
+		}
+
+		// Wait for potential afterEval execution
+		waitDuration := 500 * time.Millisecond
+		if expectCallbackCalled {
+			select {
+			case <-ctx.afterEvalCh:
+				// Success - afterEval was called
+			case <-time.After(5 * time.Second):
+				t.Fatal("afterEval callback was not called")
+			}
+		} else {
+			// Just wait a bit to make sure callback isn't called
+			time.Sleep(waitDuration)
+		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		if expectCallbackCalled {
+			require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once")
+		} else {
+			require.Equal(t, int32(0), count, "afterEval callback should not have been called")
+		}
+	}
+
+	t.Run("afterEval callback is called after successful evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called even when evaluation produces errors", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryState: eval.Error,
+			isPaused:   false,
+		})
+
+		// The important part of this test is confirming the callback works
+		// even with an eval.Error state, which is checked by runTest
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called when rule is paused", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryState: eval.Normal,
+			isPaused:   true,
+		})
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called before stopping rule evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+
+		// Start the rule processing goroutine
+		go func() {
+			_ = ctx.process.Run()
+		}()
+
+		// Create a channel to signal when Stop is called
+		stopSignalCh := make(chan struct{})
+
+		// Send an evaluation that will be pending when we stop the rule
+		now := time.Now()
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: "test-folder",
+			afterEval: func() {
+				// Wait until we know Stop has been called
+				select {
+				case <-stopSignalCh:
+					// Stop was called before this callback executed
+				case <-time.After(100 * time.Millisecond):
+					t.Error("afterEval callback executed but Stop signal wasn't received")
+				}
+
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+		ctx.process.Eval(eval)
+
+		// Create a stopChan to verify rule stopping
+		stopChan := make(chan struct{})
+		go func() {
+			// Signal that we're about to call Stop
+			close(stopSignalCh)
+			ctx.process.Stop(nil)
+			close(stopChan)
+		}()
+
+		// Verify afterEval was called during stopping
+		select {
+		case <-ctx.afterEvalCh:
+			// Success - afterEval was called during stopping
+		case <-time.After(5 * time.Second):
+			t.Fatal("afterEval callback was not called during rule stopping")
+		}
+
+		// Verify the rule stopped properly
+		select {
+		case <-stopChan:
+			// Success - the rule stopped
+		case <-time.After(5 * time.Second):
+			t.Fatal("Rule did not stop in time")
+		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once during stopping")
 	})
 }
 
