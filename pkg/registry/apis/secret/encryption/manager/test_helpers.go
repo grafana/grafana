@@ -33,7 +33,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(tb, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}
@@ -47,5 +47,5 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	)
 	require.NoError(tb, err)
 
-	return encMgr
+	return encMgr.(*EncryptionManager)
 }

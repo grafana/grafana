@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -34,7 +35,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, encryption.WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptWithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
@@ -49,7 +50,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, encryption.WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptWithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
@@ -64,7 +65,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, encryption.WithScope("user:100"))
+		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptWithScope("user:100"))
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
@@ -90,19 +91,8 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				DataKeysCacheTTL:        5 * time.Minute,
-				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
-			},
-		},
-	}
-	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+
+	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -210,10 +200,10 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := db.InitTestDB(t)
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 		require.NoError(t, err)
 
-		encryptionManager, err := ProvideEncryptionManager(
+		encMgr, err := ProvideEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
 			cfg,
@@ -221,6 +211,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryption.ProvideThirdPartyProviderMap(),
 		)
 		require.NoError(t, err)
+
+		encryptionManager := encMgr.(*EncryptionManager)
 
 		//override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
@@ -228,13 +220,13 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionManager.currentProviderID = "fakeProvider.v1"
 
 		namespace := "test-namespace"
-		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, encryption.WithoutScope())
+		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, contracts.EncryptWithoutScope())
 		assert.True(t, fake.encryptCalled)
 		assert.False(t, fake.decryptCalled)
 
 		// encryption manager tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
-		svcDecrypt, err := ProvideEncryptionManager(
+		svcDecryptMgr, err := ProvideEncryptionManager(
 			tracing.InitializeTracerForTest(),
 			encryptionStore,
 			cfg,
@@ -242,6 +234,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryption.ProvideThirdPartyProviderMap(),
 		)
 		require.NoError(t, err)
+
+		svcDecrypt := svcDecryptMgr.(*EncryptionManager)
 		svcDecrypt.providers[encryption.ProviderID("fakeProvider.v1")] = fake
 		svcDecrypt.currentProviderID = "fakeProvider.v1"
 
@@ -282,7 +276,7 @@ func TestEncryptionService_Run(t *testing.T) {
 		restoreTimeNowAfterTestExec(t)
 
 		// Encrypt to force data encryption key generation
-		encrypted, err := svc.Encrypt(ctx, namespace, []byte("grafana"), encryption.WithoutScope())
+		encrypted, err := svc.Encrypt(ctx, namespace, []byte("grafana"), contracts.EncryptWithoutScope())
 		require.NoError(t, err)
 
 		// Ten minutes later (after caution period)
@@ -322,8 +316,7 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	namespace := "test-namespace"
 
 	// Encrypt to generate data encryption key
-	withoutScope := encryption.WithoutScope()
-	ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), withoutScope)
+	ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), contracts.EncryptWithoutScope())
 	require.NoError(t, err)
 
 	t.Run("existing key should be re-encrypted", func(t *testing.T) {
@@ -376,7 +369,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
 		svc := setupTestService(t)
-		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), encryption.WithoutScope())
+		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), contracts.EncryptWithoutScope())
 		require.NoError(t, err)
 
 		plaintext, err := svc.Decrypt(ctx, namespace, ciphertext)
@@ -394,36 +387,36 @@ func TestIntegration_SecretsService(t *testing.T) {
 	someData := []byte(`some-data`)
 	namespace := "test-namespace"
 
-	tcs := map[string]func(*testing.T, db.DB, *EncryptionManager){
-		"regular": func(t *testing.T, _ db.DB, svc *EncryptionManager) {
+	tcs := map[string]func(*testing.T, db.DB, contracts.EncryptionManager){
+		"regular": func(t *testing.T, _ db.DB, svc contracts.EncryptionManager) {
 			// We encrypt some data normally, no transactions implied.
-			_, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+			_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 			require.NoError(t, err)
 		},
-		"within successful InTransaction": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within successful InTransaction": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// And the transition succeeds.
 				return nil
 			}))
 		},
-		"within unsuccessful InTransaction": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within unsuccessful InTransaction": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
-		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				encrypted, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				encrypted, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// At this point the data key is not cached yet because
@@ -439,30 +432,30 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return errors.New("error")
 			}))
 		},
-		"within successful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within successful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// And the transition succeeds.
 				return nil
 			}))
 		},
-		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
-		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store db.DB, svc *EncryptionManager) {
+		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				encrypted, err := svc.Encrypt(ctx, namespace, someData, encryption.WithoutScope())
+				encrypted, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptWithoutScope())
 				require.NoError(t, err)
 
 				// At this point the data key is not cached yet because
@@ -497,7 +490,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
@@ -527,11 +520,12 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 			// So, we proceed with an encryption operation:
 			toEncrypt := []byte(`data-to-encrypt`)
-			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt, encryption.WithoutScope())
+			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt, contracts.EncryptWithoutScope())
 			require.NoError(t, err)
 
 			// We simulate an instance restart. So, there's no data in the in-memory cache.
-			svc.dataKeyCache.flush(namespace)
+			encMgr := svc.(*EncryptionManager)
+			encMgr.dataKeyCache.flush(namespace)
 
 			// And then, we MUST still be able to decrypt the previously encrypted data:
 			decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
@@ -562,7 +556,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 		},
 	}
 
-	encMgr, err := ProvideEncryptionManager(
+	svc, err := ProvideEncryptionManager(
 		nil,
 		nil,
 		cfg,
@@ -573,6 +567,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	encMgr := svc.(*EncryptionManager)
 	require.Len(t, encMgr.providers, 2)
 	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
 }

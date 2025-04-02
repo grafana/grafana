@@ -112,6 +112,6 @@ type Keeper interface {
 	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) error
 }
 
-var (
+const (
 	DefaultSQLKeeper = "kp-default-sql"
 )

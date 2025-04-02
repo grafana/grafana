@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -14,13 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
 	db db.DB,
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	keeperService secretkeeper.Service,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -53,7 +50,7 @@ type decryptStorage struct {
 func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
-		return "", fmt.Errorf("missing auth info in context")
+		return "", contracts.ErrDecryptNotAuthorized
 	}
 
 	// The auth token will not necessarily have the permission to read the secure value metadata,
@@ -61,27 +58,27 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// function call happens after this.
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
 	if err != nil {
-		return "", fmt.Errorf("could not get secure value: %w", err)
+		return "", contracts.ErrDecryptNotFound
 	}
 
 	authorized := s.authorize(authInfo, sv.Spec.Decrypters)
 	if !authorized {
-		return "", errors.New("unauthorized to decrypt")
+		return "", contracts.ErrDecryptNotAuthorized
 	}
 
 	keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, namespace.String(), sv.Spec.Keeper)
 	if err != nil {
-		return "", fmt.Errorf("get keeper config: %w", err)
+		return "", contracts.ErrDecryptFailed
 	}
 
 	keeper, ok := s.keepers[keeperType]
 	if !ok {
-		return "", fmt.Errorf("could not find keeper: %s", keeperType)
+		return "", contracts.ErrDecryptFailed
 	}
 
 	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), contracts.ExternalID(sv.Spec.Ref))
 	if err != nil {
-		return "", fmt.Errorf("decrypt from keeper: %w", err)
+		return "", contracts.ErrDecryptFailed
 	}
 
 	return exposedValue, nil

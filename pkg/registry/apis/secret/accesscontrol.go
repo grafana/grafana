@@ -2,6 +2,7 @@ package secret
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -41,7 +42,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	secureValuesWriter := accesscontrol.RoleRegistration{
@@ -69,7 +70,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	// Keepers
@@ -86,7 +87,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	keepersWriter := accesscontrol.RoleRegistration{
@@ -114,7 +115,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	return service.DeclareFixedRoles(

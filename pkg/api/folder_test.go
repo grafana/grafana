@@ -768,3 +768,12 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 		})
 	}
 }
+
+func setUpRBACGuardian(t *testing.T) {
+	origNewGuardian := guardian.New
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
+}

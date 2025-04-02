@@ -7,24 +7,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
 	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 )
 
-type EncryptedValueStorage interface {
-	Create(ctx context.Context, namespace string, encryptedData []byte) (*EncryptedValue, error)
-	Update(ctx context.Context, namespace string, uid string, encryptedData []byte) error
-	Get(ctx context.Context, namespace string, uid string) (*EncryptedValue, error)
-	Delete(ctx context.Context, namespace string, uid string) error
-}
-
-func ProvideEncryptedValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(db db.DB, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
@@ -37,7 +31,7 @@ type encryptedValStorage struct {
 	db db.DB
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (*EncryptedValue, error) {
+func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (*contracts.EncryptedValue, error) {
 	createdTime := time.Now().Unix()
 	encryptedValue := &EncryptedValue{
 		UID:           uuid.New().String(),
@@ -58,7 +52,13 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	return encryptedValue, nil
+	return &contracts.EncryptedValue{
+		UID:           encryptedValue.UID,
+		Namespace:     encryptedValue.Namespace,
+		EncryptedData: encryptedValue.EncryptedData,
+		Created:       encryptedValue.Created,
+		Updated:       encryptedValue.Updated,
+	}, nil
 }
 
 func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid string, encryptedData []byte) error {
@@ -85,7 +85,7 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid 
 	return nil
 }
 
-func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid string) (*EncryptedValue, error) {
+func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid string) (*contracts.EncryptedValue, error) {
 	encryptedValueRow := &EncryptedValue{
 		UID:       uid,
 		Namespace: namespace,
@@ -107,7 +107,13 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	return encryptedValueRow, nil
+	return &contracts.EncryptedValue{
+		UID:           encryptedValueRow.UID,
+		Namespace:     encryptedValueRow.Namespace,
+		EncryptedData: encryptedValueRow.EncryptedData,
+		Created:       encryptedValueRow.Created,
+		Updated:       encryptedValueRow.Updated,
+	}, nil
 }
 
 func (s *encryptedValStorage) Delete(ctx context.Context, namespace string, uid string) error {

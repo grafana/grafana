@@ -5,14 +5,15 @@ import * as React from 'react';
 
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
 import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number;
-  to?: number;
+  from?: number | null;
+  to?: number | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -144,7 +145,10 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 type="text"
                 value={key ?? ''}
                 onChange={onUpdateMatchValue}
-                placeholder="Exact value to match"
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-exact-value-to-match',
+                  'Exact value to match'
+                )}
               />
             )}
             {mapping.type === MappingType.RangeToText && (
@@ -152,16 +156,14 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 <Input
                   type="number"
                   value={mapping.from ?? ''}
-                  placeholder="Range start"
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
-                  prefix="From"
                 />
                 <Input
                   type="number"
                   value={mapping.to ?? ''}
-                  placeholder="Range end"
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}
-                  prefix="To"
                 />
               </div>
             )}
@@ -169,7 +171,10 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
               <Input
                 type="text"
                 value={mapping.pattern ?? ''}
-                placeholder="Regular expression"
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-regular-expression',
+                  'Regular expression'
+                )}
                 onChange={onChangePattern}
               />
             )}
@@ -182,20 +187,33 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
           </td>
           <td>
-            <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Optional display text" />
+            <Input
+              type="text"
+              value={result.text ?? ''}
+              onChange={onChangeText}
+              placeholder={t(
+                'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
+                'Optional display text'
+              )}
+            />
           </td>
           <td className={styles.textAlignCenter}>
             {result.color && (
               <HorizontalGroup spacing="sm" justify="center">
                 <ColorPicker color={result.color} onChange={onChangeColor} enableNamedColors={true} />
-                <IconButton name="times" onClick={onClearColor} tooltip="Remove color" tooltipPlacement="top" />
+                <IconButton
+                  name="times"
+                  onClick={onClearColor}
+                  tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-color', 'Remove color')}
+                  tooltipPlacement="top"
+                />
               </HorizontalGroup>
             )}
             {!result.color && (
               <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
                 {(props) => (
                   <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
-                    Set color
+                    <Trans i18nKey="dimensions.value-mapping-edit-row.set-color">Set color</Trans>
                   </Button>
                 )}
               </ColorPicker>
@@ -214,7 +232,12 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                   color={result.color}
                 />
                 {result.icon && (
-                  <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
+                  <IconButton
+                    name="times"
+                    onClick={onClearIcon}
+                    tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-icon', 'Remove icon')}
+                    tooltipPlacement="top"
+                  />
                 )}
               </HorizontalGroup>
             </td>
@@ -225,15 +248,21 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 name="copy"
                 onClick={() => onDuplicate(index)}
                 data-testid="duplicate-value-mapping"
-                aria-label="Duplicate value mapping"
-                tooltip="Duplicate"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.duplicate-value-mapping-aria-label-duplicate-value-mapping',
+                  'Duplicate value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.duplicate-value-mapping-tooltip-duplicate', 'Duplicate')}
               />
               <IconButton
                 name="trash-alt"
                 onClick={() => onRemove(index)}
                 data-testid="remove-value-mapping"
-                aria-label="Delete value mapping"
-                tooltip="Delete"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.remove-value-mapping-aria-label-delete-value-mapping',
+                  'Delete value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.remove-value-mapping-tooltip-delete', 'Delete')}
               />
             </HorizontalGroup>
           </td>

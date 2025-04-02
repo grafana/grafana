@@ -569,6 +569,9 @@ export const versionedPages = {
     dashboards: {
       '10.2.0': (title: string) => `Dashboard search item ${title}`,
     },
+    toggleView: {
+      [MIN_GRAFANA_VERSION]: 'data-testid radio-button',
+    },
   },
   SaveDashboardAsModal: {
     newName: {
@@ -867,6 +870,9 @@ export const versionedPages = {
       scrollView: {
         '9.0.0': 'data-testid explorer scroll view',
       },
+      addFromQueryLibrary: {
+        '11.5.0': 'data-testid explore add from query library button',
+      },
     },
     QueryHistory: {
       container: {
@@ -940,6 +946,11 @@ export const versionedPages = {
       createButton: {
         '10.2.0': 'data-testid new-folder-create-button',
       },
+    },
+  },
+  SearchDashboards: {
+    table: {
+      '10.2.0': 'Search results table',
     },
   },
   Search: {

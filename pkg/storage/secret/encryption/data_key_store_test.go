@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/require"
 )
@@ -26,8 +25,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	cfg := &setting.Cfg{}
-	store, err := ProvideDataKeyStorageStorage(testDB, cfg, features)
+	store, err := ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
 	ctx := context.Background()

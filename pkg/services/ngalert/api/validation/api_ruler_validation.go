@@ -13,6 +13,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	prommodels "github.com/prometheus/common/model"
 )
 
@@ -65,14 +66,15 @@ func ValidateRuleNode(
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
 
 	newAlertRule := ngmodels.AlertRule{
-		OrgID:           orgId,
-		Title:           ruleNode.GrafanaManagedAlert.Title,
-		Condition:       ruleNode.GrafanaManagedAlert.Condition,
-		Data:            queries,
-		UID:             ruleNode.GrafanaManagedAlert.UID,
-		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespaceUID,
-		RuleGroup:       groupName,
+		OrgID:                       orgId,
+		Title:                       ruleNode.GrafanaManagedAlert.Title,
+		Condition:                   ruleNode.GrafanaManagedAlert.Condition,
+		Data:                        queries,
+		UID:                         ruleNode.GrafanaManagedAlert.UID,
+		IntervalSeconds:             intervalSeconds,
+		NamespaceUID:                namespaceUID,
+		RuleGroup:                   groupName,
+		MissingSeriesEvalsToResolve: ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve,
 	}
 
 	if isRecordingRule {
@@ -152,7 +154,17 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 		}
 	}
 
+	newRule.MissingSeriesEvalsToResolve, err = validateMissingSeriesEvalsToResolve(in)
+	if err != nil {
+		return ngmodels.AlertRule{}, err
+	}
+
 	newRule.For, err = validateForInterval(in)
+	if err != nil {
+		return ngmodels.AlertRule{}, err
+	}
+
+	newRule.KeepFiringFor, err = validateKeepFiringForInterval(in)
 	if err != nil {
 		return ngmodels.AlertRule{}, err
 	}
@@ -185,6 +197,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	newRule.ExecErrState = ""
 	newRule.Condition = ""
 	newRule.For = 0
+	newRule.KeepFiringFor = 0
 	newRule.NotificationSettings = nil
 
 	return newRule, nil
@@ -270,6 +283,44 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
 	}
 	return duration, nil
+}
+
+// validateKeepFiringForInterval validates ApiRuleNode.KeepFiringFor and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
+func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
+	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.KeepFiringFor == nil {
+		if ruleNode.GrafanaManagedAlert.UID != "" {
+			return -1, nil // will be patched later with the real value of the current version of the rule
+		}
+		return 0, nil // if it's a new rule, use the 0 as the default
+	}
+	duration := time.Duration(*ruleNode.ApiRuleNode.KeepFiringFor)
+	if duration < 0 {
+		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.ApiRuleNode.KeepFiringFor)
+	}
+	return duration, nil
+}
+
+// validateMissingSeriesEvalsToResolve validates MissingSeriesEvalsToResolve and converts it to *int.
+// If the ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve is:
+//   - == 0, returns nil (reset to default)
+//   - == nil && UID == "", returns nil (new rule)
+//   - == nil && UID != "", returns -1 (existing rule)
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
+		if ruleNode.GrafanaManagedAlert.UID != "" {
+			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+		}
+		return nil, nil // if it's a new rule, use nil as the default
+	}
+
+	v := ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve
+	if *v == 0 {
+		return nil, nil // allow to reset the value to default when 0 is sent
+	} else if *v < 0 {
+		return nil, fmt.Errorf("field `missing_series_evals_to_resolve` cannot be negative [%v]. 0 or any positive number are allowed", *v)
+	}
+
+	return v, nil
 }
 
 // ValidateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.

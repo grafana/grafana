@@ -30,9 +30,7 @@ type CallbackHandler func(c *contextmodel.ReqContext) response.Response
 func (s *QueryHistoryService) permissionsMiddleware(handler CallbackHandler, errorMessage string) CallbackHandler {
 	return func(c *contextmodel.ReqContext) response.Response {
 		hasAccess := ac.HasAccess(s.accessControl, c)
-		// ViewersCanEdit is deprecated but still used for backward compatibility
-		//nolint:staticcheck
-		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		if c.GetOrgRole() == org.RoleViewer && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 			return response.Error(http.StatusUnauthorized, errorMessage, nil)
 		}
 		return handler(c)

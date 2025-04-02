@@ -158,7 +158,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the encryption manager
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -173,7 +173,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
 	require.NoError(t, err)
 
 	// Initialize the SQLKeeper

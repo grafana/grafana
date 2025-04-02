@@ -7,18 +7,7 @@ import (
 	"time"
 )
 
-// Service is an envelope encryption service in charge of encrypting/decrypting secrets.
-type Service interface {
-	// Encrypt MUST NOT be used within database transactions, it may cause database locks.
-	// For those specific use cases where the encryption operation cannot be moved outside
-	// the database transaction, look at database-specific methods present at the specific
-	// implementation present at manager.EncryptionService.
-	Encrypt(ctx context.Context, namespace string, payload []byte, opt EncryptionOptions) ([]byte, error)
-	Decrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error)
-
-	RotateDataKeys(ctx context.Context, namespace string) error
-	ReEncryptDataKeys(ctx context.Context, namespace string) error
-}
+const UsageInsightsPrefix = "secrets_manager"
 
 // Provider is a key encryption key provider for envelope encryption
 type Provider interface {

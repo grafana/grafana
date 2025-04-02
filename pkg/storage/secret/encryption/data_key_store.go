@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
 
@@ -37,13 +36,15 @@ type encryptionStoreImpl struct {
 	log log.Logger
 }
 
-func ProvideDataKeyStorageStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (DataKeyStorage, error) {
+func ProvideDataKeyStorage(db db.DB, features featuremgmt.FeatureToggles) (DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
 	}
 
-	if err := migrator.MigrateSecretSQL(db.GetEngine(), cfg); err != nil {
+	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
+	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
+	if err := migrator.MigrateSecretSQL(db.GetEngine(), nil); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { ReactNode, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
-import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange, rangeUtil } from '@grafana/data';
+// import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
@@ -98,6 +98,7 @@ export const InfiniteScroll = ({
       } else if (scrollDirection === ScrollDirection.Bottom) {
         scrollBottom();
       }
+      lastEvent.current = null;
     }
 
     function scrollTop() {
@@ -140,8 +141,8 @@ export const InfiniteScroll = ({
   }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone, topScrollEnabled]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
-  const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
-  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && isRelativeTime(range.raw.to);
+  const hideTopMessage = sortOrder === LogsSortOrder.Descending && rangeUtil.isRelativeTime(range.raw.to);
+  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && rangeUtil.isRelativeTime(range.raw.to);
 
   const loadOlderLogs = useCallback(() => {
     //If we are not on the last page, use next page's range
@@ -210,7 +211,7 @@ const styles = {
 
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
-    End of the selected time range.
+    <Trans i18nKey="logs.out-of-range-message.end-of-the-selected-time-range">End of the selected time range.</Trans>
   </div>
 );
 
@@ -245,7 +246,7 @@ export function shouldLoadMore(
     return ScrollDirection.NoScroll;
   }
 
-  if (lastEvent && shouldIgnoreChainOfEvents(event, lastEvent, countRef)) {
+  if (!lastEvent || shouldIgnoreChainOfEvents(event, lastEvent, countRef)) {
     return ScrollDirection.NoScroll;
   }
 
@@ -344,5 +345,7 @@ export function canScrollBottom(
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
-  return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
+  return rangeUtil.isRelativeTimeRange(timeRange.raw)
+    ? rangeUtil.convertRawToRange(timeRange.raw, timeZone)
+    : timeRange;
 }

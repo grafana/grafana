@@ -37,6 +37,6 @@ var WireSet = wire.NewSet(
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	notifications.RegisterAPIService,
-	userstorage.RegisterAPIService,
 	secret.RegisterAPIService,
+	userstorage.RegisterAPIService,
 )

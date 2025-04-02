@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -61,7 +62,7 @@ func ProvideEncryptionManager(
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	thirdPartyKMS encryption.ProviderMap,
-) (*EncryptionManager, error) {
+) (contracts.EncryptionManager, error) {
 	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
@@ -89,8 +90,7 @@ func ProvideEncryptionManager(
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	//TODO: how to register metrics in api server
-	// s.registerUsageMetrics()
+	s.registerUsageMetrics()
 
 	return s, nil
 }
@@ -119,39 +119,39 @@ func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap)
 	return
 }
 
-// func (s *EncryptionManager) registerUsageMetrics() {
-// 	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
-// 		usageMetrics := make(map[string]any)
+func (s *EncryptionManager) registerUsageMetrics() {
+	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
+		usageMetrics := make(map[string]any)
 
-// 		// Current provider
-// 		kind, err := s.currentProviderID.Kind()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+		// Current provider
+		kind, err := s.currentProviderID.Kind()
+		if err != nil {
+			return nil, fmt.Errorf("encryptionManager.registerUsageMetrics: %w", err)
+		}
+		usageMetrics[fmt.Sprintf("stats.%s.encryption.current_provider.%s.count", encryption.UsageInsightsPrefix, kind)] = 1
 
-// 		// Count by kind
-// 		countByKind := make(map[string]int)
-// 		for id := range s.providers {
-// 			kind, err := id.Kind()
-// 			if err != nil {
-// 				return nil, err
-// 			}
+		// Count by kind
+		countByKind := make(map[string]int, len(s.providers))
+		for id := range s.providers {
+			kind, err := id.Kind()
+			if err != nil {
+				return nil, fmt.Errorf("encryptionManager.registerUsageMetrics: %w", err)
+			}
 
-// 			countByKind[kind]++
-// 		}
+			countByKind[kind]++
+		}
 
-// 		for kind, count := range countByKind {
-// 			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
-// 		}
+		for kind, count := range countByKind {
+			usageMetrics[fmt.Sprintf("stats.%s.encryption.providers.%s.count", encryption.UsageInsightsPrefix, kind)] = count
+		}
 
-// 		return usageMetrics, nil
-// 	})
-// }
+		return usageMetrics, nil
+	})
+}
 
 var b64 = base64.RawStdEncoding
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt encryption.EncryptionOptions) ([]byte, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt contracts.EncryptionOptions) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
 
