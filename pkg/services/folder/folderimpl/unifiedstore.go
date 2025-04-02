@@ -15,7 +15,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -238,7 +237,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 
 		f := &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
 			Title:     item.Title,
 			ParentUID: item.Folder,

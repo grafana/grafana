@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"go.opentelemetry.io/otel/attribute"
@@ -1541,7 +1540,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			result := dashboards.DashboardSearchProjection{
-				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				ID:          hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 				UID:         hit.Name,
 				OrgID:       query.OrgId,
 				Title:       hit.Title,
