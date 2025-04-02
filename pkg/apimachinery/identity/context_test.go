@@ -2,6 +2,7 @@ package identity_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,11 +36,15 @@ func TestServiceIdentityInContext(t *testing.T) {
 		require.Equal(t, identity.GetName(), "service")
 	})
 
-	t.Run("has permission to all namespaces", func(t *testing.T) {
-		ctx := t.Context()
-		ctx, _ = identity.WithServiceIdentity(ctx, 1)
-		identity, err := identity.GetRequester(ctx)
-		require.NoError(t, err)
-		require.True(t, types.NamespaceMatches(identity.GetNamespace(), "unit-test"), "namespace of identity and an arbitrary example should match")
-	})
+	for i := range 2 {
+		i += 1 // We start from 1
+		t.Run(fmt.Sprintf("orgID=%d has permission to its namespace", i), func(t *testing.T) {
+			ctx := t.Context()
+			ctx, _ = identity.WithServiceIdentity(ctx, int64(i))
+			identity, err := identity.GetRequester(ctx)
+			require.NoError(t, err)
+			ns := types.OrgNamespaceFormatter(int64(i))
+			require.True(t, types.NamespaceMatches(identity.GetNamespace(), ns), "namespace of identity and an arbitrary example should match")
+		})
+	}
 }
