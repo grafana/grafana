@@ -50,7 +50,6 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {
-      console.log('newQueries', newQueries, exploreId);
       dispatch(changeQueries({ exploreId, queries: newQueries }));
     },
     [dispatch, exploreId]
