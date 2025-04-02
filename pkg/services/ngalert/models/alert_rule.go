@@ -320,7 +320,7 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.Folder
+type Namespace folder.FolderReference
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
