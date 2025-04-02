@@ -34,5 +34,5 @@ type Provider interface {
 
 // KeyToBytes key length needs to be 32 bytes
 func KeyToBytes(secret, salt []byte) ([]byte, error) {
-	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil
+	return pbkdf2.Key(secret, salt, 10000, 32, sha256.New), nil
 }
