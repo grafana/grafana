@@ -61,7 +61,7 @@ refs:
 
 XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble:
 
-![An xy chart showing height weight distribution](/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.6.png" max-width="750px" alt="An xy chart showing height weight distribution" >}}
 
 ## Supported data formats
 
@@ -190,7 +190,7 @@ Set how values are represented in the visualization. Choose from:
 
 Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
 
-![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-line-style-options-v11.6.png" max-width="400px" alt="Line style options" >}}
 
 - **Solid** - Display a solid line. This is the default setting.
 - **Dash** - Display a dashed line. When you choose this option, a drop-down list is displayed where you can select the length and gap setting for the line dashes. By default, the length and gap are set to `10, 10`.
@@ -211,7 +211,7 @@ Tooltip options control the information overlay that appears when you hover over
 
 ### Axis options
 
-<!-- These are the same as candlestick and a shared file needs to be created -->
+<!-- To be replaced by shared file when candlestick PR is merged -->
 
 Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
@@ -299,9 +299,7 @@ The transform option is only available as an override.
 You can customize the following standard options:
 
 - **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
-- **Color scheme** - Set single or multiple colors for your entire visualization.
-
-To learn more, refer to [Configure standard options](ref:configure-standard-options).
+- **Color scheme** - Set single or multiple colors for your entire visualization. To learn more about color schemes, refer to [Configure standard options](ref:configure-standard-options).
 
 ### Data links and actions
 
