@@ -433,7 +433,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
       providesTags: ['DeletedRules'],
     }),
-    removePermanentlyDeletedRule: build.mutation<void, { guid: string }>({
+    permanentlyDeleteRule: build.mutation<void, { guid: string }>({
       query: ({ guid }) => ({
         url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/trash/rule/guid/${guid}`,
         method: 'DELETE',

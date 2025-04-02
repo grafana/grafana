@@ -13,25 +13,25 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 };
 
 export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: ModalProps) => {
-  const [remove] = alertRuleApi.endpoints.removePermanentlyDeletedRule.useMutation();
-  const title = t('alerting.deleted-rules.delete-modal.title', 'Delete permanently an alert rule');
-  const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, delete permanently');
+  const [remove] = alertRuleApi.endpoints.permanentlyDeleteRule.useMutation();
+  const title = t('alerting.deleted-rules.delete-modal.title', 'Permanently delete alert rule');
+  const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, permanently delete');
   const appNotification = useAppNotification();
 
   const styles = useStyles2(getStyles);
 
-  async function ondDeleteConfirm() {
+  async function onDeleteConfirm() {
     if (!guid) {
       return;
     }
     return remove({ guid })
       .then(() => {
         onDismiss();
-        appNotification.success(t('alerting.deleted-rules.delete-modal.success', 'Alert rule deleted permanently'));
+        appNotification.success(t('alerting.deleted-rules.delete-modal.success', 'Alert rule permanently deleted'));
       })
       .catch((err) => {
         appNotification.error(
-          t('alerting.deleted-rules.delete-modal.error', 'Could not delete alert rule permanently')
+          t('alerting.deleted-rules.delete-modal.error', 'Could not permanently delete alert rule')
         );
       });
   }
@@ -42,15 +42,15 @@ export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: Moda
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmButtonVariant={'destructive'}
+      confirmButtonVariant="destructive"
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.delete-modal.body">
-            Are you sure you want to delete permanently this alert rule? This action cannot be undone.
+            Are you sure you want to permanently delete this alert rule? This action cannot be undone.
           </Trans>
         </Stack>
       }
-      onConfirm={ondDeleteConfirm}
+      onConfirm={onDeleteConfirm}
       onDismiss={onDismiss}
     />
   );
