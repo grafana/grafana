@@ -209,7 +209,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Axis options
 
-{{< docs/shared lookup="visualizations/axis-options-all.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Graph styles options
 
