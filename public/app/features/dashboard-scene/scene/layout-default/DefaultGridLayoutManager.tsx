@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -111,7 +111,6 @@ export class DefaultGridLayoutManager
     // With new edit mode we add panels to the bottom of the grid
     if (config.featureToggles.dashboardNewLayouts) {
       const emptySpace = findSpaceForNewPanel(this.state.grid);
-      console.log('found empty space', emptySpace);
       const newGridItem = new DashboardGridItem({
         ...emptySpace,
         body: vizPanel,
@@ -533,7 +532,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   }
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, isEditing && styles.containerEditing)}>
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {isEditing && (
         <div className={styles.actionsWrapper}>
@@ -551,6 +550,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexGrow: 1,
       flexDirection: 'column',
+    }),
+    containerEditing: css({
+      // In editing the add actions should live at the bottom of the grid so we have to
+      // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {
         flexGrow: `0 !important`,
         minHeight: '250px',
