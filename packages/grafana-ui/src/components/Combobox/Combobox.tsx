@@ -9,9 +9,8 @@ import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { AsyncError, NotFoundError } from './MessageRows';
+import { ComboboxList } from './ComboboxList';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
@@ -375,82 +374,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-              {!asyncError && (
-                <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-                  {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
-                    const item = filteredOptions[virtualRow.index];
-                    const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
-
-                    // Find the item that renders the group header. It can be this same item if this is rendering it.
-                    const groupHeaderIndex = allVirtualRows.find((row) => {
-                      const rowItem = filteredOptions[row.index];
-                      return rowItem.group === item.group;
-                    });
-                    const groupHeaderItem = groupHeaderIndex && filteredOptions[groupHeaderIndex.index];
-
-                    const itemId = `${baseId}-option-${item.value}`;
-                    // If we're rendering the group header, this is the ID for it. Otherwise its used on
-                    // the option for aria-describedby.
-                    const groupHeaderId = groupHeaderItem
-                      ? `${baseId}-option-group-${groupHeaderItem.value}`
-                      : undefined;
-
-                    return (
-                      // Wrapping div should have no styling other than virtual list positioning.
-                      // It's children (header and option) should appear as flat list items.
-                      <div
-                        key={item.value}
-                        className={styles.listItem}
-                        style={{
-                          height: virtualRow.size,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                      >
-                        {startingNewGroup && (
-                          <div
-                            role="presentation"
-                            id={groupHeaderId}
-                            className={cx(
-                              styles.newOptionGroup,
-                              item.group && styles.newOptionGroupLabel,
-                              virtualRow.index === 0 && styles.newOptionGroupNoBorder
-                            )}
-                          >
-                            {item.group}
-                          </div>
-                        )}
-
-                        <div
-                          className={cx(
-                            styles.option,
-                            styles.optionBasic,
-                            selectedItem && item.value === selectedItem.value && styles.optionSelected,
-                            highlightedIndex === virtualRow.index && styles.optionFocused
-                          )}
-                          {...getItemProps({
-                            item: item,
-                            index: virtualRow.index,
-                            id: itemId,
-                            'aria-describedby': groupHeaderId,
-                          })}
-                        >
-                          <div className={styles.optionBody}>
-                            <span className={styles.optionLabel}>{item.label ?? item.value}</span>
-                            {item.description && <span className={styles.optionDescription}>{item.description}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div aria-live="polite">
-                {asyncError && <AsyncError />}
-                {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
-              </div>
-            </ScrollContainer>
+            <ComboboxList
+              options={filteredOptions}
+              highlightedIndex={highlightedIndex}
+              selectedItems={selectedItem ? [selectedItem] : []}
+              scrollRef={scrollRef}
+              getItemProps={getItemProps}
+              error={asyncError}
+            />
           )}
         </div>
       </Portal>

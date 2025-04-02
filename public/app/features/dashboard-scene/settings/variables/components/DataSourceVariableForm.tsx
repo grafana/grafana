@@ -2,6 +2,7 @@ import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from 'app/core/internationalization';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -45,7 +46,9 @@ export function DataSourceVariableForm({
 
   return (
     <>
-      <VariableLegend>Data source options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.data-source-variable-form.data-source-options">Data source options</Trans>
+      </VariableLegend>
       <VariableSelectField
         name="Type"
         value={typeValue}
@@ -69,7 +72,9 @@ export function DataSourceVariableForm({
         }
       />
 
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.data-source-variable-form.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}

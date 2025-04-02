@@ -344,6 +344,7 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   /**
   * Allow core plugins to be loaded as external
+  * @default true
   */
   externalCorePlugins?: boolean;
   /**
@@ -405,6 +406,10 @@ export interface FeatureToggles {
   * Routes requests to the new query service
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Routes explore requests to the new query service
+  */
+  queryServiceFromExplore?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   */
@@ -703,7 +708,8 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a datasource has an invalid UIDs
+  * Throws an error if a data source has an invalid UIDs
+  * @default true
   */
   failWrongDSUID?: boolean;
   /**
@@ -1001,6 +1007,10 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
+  /**
   * Enables the alert rule version history restore feature
   * @default true
   */
@@ -1047,6 +1057,10 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Specify the locale so we can show the correct format for numbers and dates
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
@@ -1055,6 +1069,10 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
   /**
   * Enables localization for plugins
   */

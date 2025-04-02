@@ -39,7 +39,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     get description() {
       return t('dashboard.tabs-layout.description', 'Organize panels into horizontal tabs');
     },
-    id: 'tabs-layout',
+    id: 'TabsLayout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     isGridLayout: false,
   };
