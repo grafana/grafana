@@ -383,8 +383,9 @@ var (
 		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true",
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
@@ -683,6 +684,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true, // and can change at startup
+		},
+		{
+			Name:         "queryServiceFromExplore",
+			Description:  "Routes explore requests to the new query service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
