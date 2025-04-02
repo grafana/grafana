@@ -16,6 +16,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
+
   if (isHidden || !layoutOrchestrator) {
     return null;
   }

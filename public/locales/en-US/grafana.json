@@ -1418,6 +1418,7 @@
       "group-panels": "Group panels",
       "new-row": "New row",
       "new-tab": "New tab",
+      "paste-panel": "Paste panel",
       "paste-row": "Paste row",
       "paste-tab": "Paste tab"
     },
@@ -1524,18 +1525,6 @@
         "panel": {
           "heading": "Panel",
           "title": "A container for visualizations and other content"
-        },
-        "paste-panel": {
-          "heading": "Paste panel",
-          "title": "Paste a panel from the clipboard"
-        },
-        "paste-row": {
-          "heading": "Paste row",
-          "title": "Paste a row from the clipboard"
-        },
-        "paste-tab": {
-          "heading": "Paste tab",
-          "title": "Paste a tab from the clipboard"
         },
         "row": {
           "heading": "Row",
