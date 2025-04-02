@@ -477,37 +477,63 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
-	targetError := b.verifyAgaintsExistingRepositories(cfg)
-	if targetError != nil {
-		list = append(list, targetError)
+	// Early exit to avoid more expensive checks if we have already found errors
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	hasGenerationChanged := cfg.Generation != oldCfg.Generation
+	// Exit early if we have already found errors
+	targetError := b.verifyAgaintsExistingRepositories(cfg)
+	if targetError != nil {
+		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
+	}
 
 	// For *create* we do a synchronous test... this can be expensive!
 	// For *update* we only do a test if the generation has changed
-	// it is the same as a full healthcheck, so should not be run on every update
-	if len(list) == 0 && (a.GetOperation() == admission.Create || (a.GetOperation() == admission.Update && hasGenerationChanged)) {
-		testResults, err := repository.TestRepository(ctx, repo)
+	var shouldTest bool
+	switch a.GetOperation() {
+	case admission.Delete, admission.Connect:
+	case admission.Create:
+		shouldTest = true
+	case admission.Update:
+		oldRepo, err := b.asRepository(ctx, a.GetObject())
 		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec"),
-				"Repository test failed", "Unable to verify repository: "+err.Error()))
+			return fmt.Errorf("get old repository for update: %w", err)
 		}
+		oldCfg := oldRepo.Config()
 
-		if !testResults.Success {
-			for _, err := range testResults.Errors {
-				list = append(list, field.Invalid(field.NewPath("spec"),
-					"Repository test failed", err))
-			}
-		}
+		shouldTest = cfg.Generation != oldCfg.Generation
+	}
+
+	if !shouldTest {
+		return nil
+	}
+
+	testResults, err := repository.TestRepository(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("repository test failed: %w", err)
+	}
+
+	if testResults.Success {
+		return nil
+	}
+
+	for _, err := range testResults.Errors {
+		list = append(list, field.Invalid(field.NewPath("spec"),
+			"Repository test failed", err))
 	}
 
 	if len(list) > 0 {
-		return apierrors.NewInvalid(
-			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
-			a.GetName(), list)
+		return invalidRepositoryError(a.GetName(), list)
 	}
+
 	return nil
+}
+
+func invalidRepositoryError(name string, list field.ErrorList) error {
+	return apierrors.NewInvalid(
+		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+		name, list)
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go
