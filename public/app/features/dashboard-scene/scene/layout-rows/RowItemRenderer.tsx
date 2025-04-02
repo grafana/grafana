@@ -24,8 +24,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
-  const headerVisible = Boolean(!isHeaderHidden || isEditing);
-  const styles = useStyles2(getStyles, headerVisible, !!isCollapsed);
+  const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
@@ -57,6 +56,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           data-dashboard-drop-target-key={model.state.key}
           className={cx(
             styles.wrapper,
+            !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
             isEditing && !isCollapsed && styles.wrapperEditing,
             isEditing && isCollapsed && styles.wrapperEditingCollapsed,
@@ -87,13 +87,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           }}
           {...dragProvided.draggableProps}
         >
-          {headerVisible && (
+          {(!isHeaderHidden || isEditing) && (
             <div
-              className={cx(
-                isHeaderHidden && 'dashboard-visible-hidden-element',
-                styles.rowHeader,
-                'dashboard-row-header'
-              )}
+              className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               {...dragProvided.dragHandleProps}
@@ -139,7 +135,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2, isHeaderVisible: boolean, isCollapsed: boolean) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
       width: '100%',
@@ -174,6 +170,11 @@ function getStyles(theme: GrafanaTheme2, isHeaderVisible: boolean, isCollapsed: 
     }),
     rowTitleHidden: css({
       textDecoration: 'line-through',
+      opacity: 0.6,
+
+      '&:hover': css({
+        opacity: 1,
+      }),
     }),
     rowTitleNested: css({
       fontSize: theme.typography.body.fontSize,
@@ -187,25 +188,22 @@ function getStyles(theme: GrafanaTheme2, isHeaderVisible: boolean, isCollapsed: 
       flexDirection: 'column',
       width: '100%',
       minHeight: '100px',
+    }),
+    wrapperNotCollapsed: css({
+      '> div:nth-child(2)': {
+        marginLeft: theme.spacing(3),
+        position: 'relative',
 
-      ...(!isCollapsed
-        ? {
-            [`> div:nth-child(${isHeaderVisible ? 2 : 1})`]: {
-              marginLeft: theme.spacing(3),
-              position: 'relative',
-
-              '&:before': {
-                content: '""',
-                position: 'absolute',
-                top: `-8px`,
-                bottom: 0,
-                left: '-16px',
-                width: '1px',
-                backgroundColor: theme.colors.border.weak,
-              },
-            },
-          }
-        : {}),
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: `-8px`,
+          bottom: 0,
+          left: '-16px',
+          width: '1px',
+          backgroundColor: theme.colors.border.weak,
+        },
+      },
     }),
     dragging: css({
       cursor: 'move',

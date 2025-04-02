@@ -13,8 +13,8 @@ export const ConditionalRenderingOverlay = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const container = css({
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -59,16 +59,5 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: '24px',
       }),
     }),
-  });
-
-  return {
-    container,
-    icon: css({
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'all 0.2s ease',
-      },
-
-      [`.dashboard-visible-hidden-element:hover > .${container} > &`]: css({}),
-    }),
-  };
-};
+  }),
+});

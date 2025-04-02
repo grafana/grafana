@@ -28,7 +28,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
 
-  if (isConditionallyHidden && !isEditing) {
+  if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
   }
 
@@ -45,6 +45,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             ref={model.containerRef}
             truncate
             className={cx(
+              isConditionallyHidden && styles.hidden,
               isSelected && 'dashboard-selected-element',
               isSelectable && !isSelected && 'dashboard-selectable-element',
               isDropTarget && 'dashboard-drop-target'
@@ -79,5 +80,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 const getStyles = () => ({
   dragging: css({
     cursor: 'move',
+  }),
+  hidden: css({
+    opacity: 0.4,
+
+    '&:hover': css({
+      opacity: 1,
+    }),
   }),
 });

@@ -216,4 +216,4 @@ const getStyles = () => ({
   }),
 });
 
-const validateIntervalRegex = /^(\d+(?:\.\d+)?)(ms|[Mwdhmsy])?$/;
+const validateIntervalRegex = /^(\d+(?:\.\d+)?)[Mwdhmsy]$/;
