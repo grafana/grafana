@@ -1,6 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from 'app/core/internationalization';
 
 import { VariableLegend } from '../components/VariableLegend';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -36,18 +37,23 @@ export function CustomVariableForm({
 }: CustomVariableFormProps) {
   return (
     <>
-      <VariableLegend>Custom options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.custom-variable-form.custom-options">Custom options</Trans>
+      </VariableLegend>
 
       <VariableTextAreaField
         name="Values separated by comma"
         defaultValue={query}
+        // eslint-disable-next-line @grafana/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
         required
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
       />
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.custom-variable-form.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}

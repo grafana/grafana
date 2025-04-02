@@ -47,7 +47,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
-          aria-label="share-dropdown-menu"
+          aria-label={t('dashboard-scene.share-button.aria-label-sharedropdownmenu', 'Toggle share menu')}
           data-testid={newShareButtonSelector.arrowMenu}
           size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
