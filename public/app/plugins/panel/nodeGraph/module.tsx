@@ -2,8 +2,8 @@ import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
+import { LayoutAlgorithm, Options as NodeGraphOptions } from './panelcfg.gen';
 import { NodeGraphSuggestionsSupplier } from './suggestions';
-import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
   .useFieldConfig({
@@ -18,6 +18,18 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
         options: [
           { value: 'cooperative', label: 'Cooperative', description: 'Lets you scroll the page normally' },
           { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
+        ],
+      },
+    });
+    builder.addSelect({
+      name: 'Layout algorithm',
+      path: 'layoutAlgorithm',
+      defaultValue: LayoutAlgorithm.Layered,
+      settings: {
+        options: [
+          { label: 'Layered', value: LayoutAlgorithm.Layered, description: 'Use a layered layout' },
+          { label: 'Force', value: LayoutAlgorithm.Force, description: 'Use a force-directed layout' },
+          { label: 'Grid', value: LayoutAlgorithm.Grid, description: 'Use a grid layout' },
         ],
       },
     });
