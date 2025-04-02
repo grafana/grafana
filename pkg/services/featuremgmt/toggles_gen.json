@@ -3662,6 +3662,19 @@
     },
     {
       "metadata": {
+        "name": "queryServiceFromExplore",
+        "resourceVersion": "1743513714582",
+        "creationTimestamp": "2025-04-01T13:21:54Z"
+      },
+      "spec": {
+        "description": "Routes explore requests to the new query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "queryServiceFromUI",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-19T09:26:21Z"
