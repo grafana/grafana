@@ -1,18 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import {
-  CellProps,
-  Stack,
-  Box,
-  Text,
-  LinkButton,
-  Card,
-  TextLink,
-  InteractiveTable,
-  Grid,
-  useStyles2,
-} from '@grafana/ui';
+import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
 import { Trans } from 'app/core/internationalization';
 
@@ -25,10 +14,15 @@ import { SyncRepository } from './SyncRepository';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
+function getColumnCount(hasWebhook: boolean): 3 | 4 {
+  return hasWebhook ? 4 : 3;
+}
+
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
+  const columns = getColumnCount(Boolean(repo.status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -54,7 +48,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        <Grid columns={3} gap={2}>
+        <Grid columns={columns} gap={2}>
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
               <Card.Heading>
@@ -203,14 +197,53 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <SyncRepository repository={repo} />
-                {webhookURL && (
-                  <TextLink external href={webhookURL} icon="link">
-                    <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
-                  </TextLink>
-                )}
               </Card.Actions>
             </Card>
           </div>
+          {repo.status?.webhook && (
+            <div className={styles.cardContainer}>
+              <Card className={styles.card}>
+                <Card.Heading>
+                  <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
+                </Card.Heading>
+                <Card.Description>
+                  <Grid columns={12} gap={1} alignItems="baseline">
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">
+                        <Trans i18nKey="provisioning.repository-overview.webhook-id">ID:</Trans>
+                      </Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{status?.webhook?.id ?? 'N/A'}</Text>
+                    </div>
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">
+                        <Trans i18nKey="provisioning.repository-overview.webhook-events">Events:</Trans>
+                      </Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{status?.webhook?.subscribedEvents?.join(', ') ?? 'N/A'}</Text>
+                    </div>
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">
+                        <Trans i18nKey="provisioning.repository-overview.webhook-last-event">Last Event:</Trans>
+                      </Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{formatTimestamp(status?.webhook?.lastEvent)}</Text>
+                    </div>
+                  </Grid>
+                </Card.Description>
+                {webhookURL && (
+                  <Card.Actions className={styles.actions}>
+                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt">
+                      <Trans i18nKey="provisioning.repository-overview.webhook-url">View Webhook</Trans>
+                    </LinkButton>
+                  </Card.Actions>
+                )}
+              </Card>
+            </div>
+          )}
         </Grid>
         <div className={styles.cardContainer}>
           <RecentJobs repo={repo} />

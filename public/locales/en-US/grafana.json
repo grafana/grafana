@@ -4752,7 +4752,11 @@
       "started": "Started:",
       "status": "Status:",
       "view-folder": "View Folder",
-      "webhook": "Webhook"
+      "webhook": "Webhook",
+      "webhook-events": "Events:",
+      "webhook-id": "ID:",
+      "webhook-last-event": "Last Event:",
+      "webhook-url": "View Webhook"
     },
     "repository-resources": {
       "columns": {
