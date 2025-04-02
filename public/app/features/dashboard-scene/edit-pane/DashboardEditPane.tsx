@@ -15,7 +15,7 @@ import {
   Text,
   Icon,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -289,7 +289,9 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={styles.outlineCollapseButton}
           >
-            <Text weight="medium">Outline</Text>
+            <Text weight="medium">
+              <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
+            </Text>
             <Icon name="angle-up" />
           </div>
           {!outlineCollapsed && (

@@ -157,7 +157,6 @@ describe('Variables - Query - Add variable', () => {
     });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().within((input) => {
-      expect(input.attr('placeholder')).equals('blank = auto');
       expect(input.val()).equals('');
     });
 

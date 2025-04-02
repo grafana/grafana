@@ -1849,12 +1849,88 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "Ad-hoc options",
+      "description-enables-users-custom-values": "Enables users to add custom values to the list",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
+      "label-data-source": "Data source",
+      "label-use-static-key-dimensions": "Use static key dimensions"
+    },
+    "add-to-dashboard-form": {
+      "cancel": "Cancel",
+      "description-choose-where-to-add-the-panel": "Choose where to add the panel.",
+      "description-select-which-dashboard-panel-created": "Select in which dashboard the panel will be created.",
+      "label-dashboard": "Dashboard",
+      "label-target-dashboard": "Target dashboard",
+      "open-dashboard": "Open dashboard",
+      "open-in-new-tab": "Open in new tab",
+      "title-error-adding-the-panel": "Error adding the panel"
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "Back to list",
+      "delete": "Delete",
+      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
+      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "label-color": "Color",
+      "label-data-source": "Data source",
+      "label-enabled": "Enabled",
+      "label-hidden": "Hidden",
+      "label-name": "Name",
+      "label-show-in": "Show in",
+      "placeholder-choose-panels": "Choose panels",
+      "query": "Query",
+      "title-annotation-support-source": "No annotation support for this data source"
+    },
+    "annotation-settings-list": {
+      "data-source": "Data source",
+      "new-query": "New query",
+      "query-name": "Query name",
+      "tooltip-move-down": "Move down",
+      "tooltip-move-up": "Move up"
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
       "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
       "invalid-branch-name": "Invalid branch name.",
       "it-cannot-contain-or": "It cannot contain '//' or '..'.",
       "least-valid-character": "It must have at least one valid character."
+    },
+    "constant-variable-form": {
+      "constant-options": "Constant options",
+      "placeholder-your-metric-prefix": "Your metric prefix"
+    },
+    "custom-variable-form": {
+      "custom-options": "Custom options",
+      "selection-options": "Selection options"
+    },
+    "dashboard-add-pane": {
+      "aria-label-close-add-pane": "Close add pane"
+    },
+    "dashboard-edit-pane-renderer": {
+      "outline": "Outline"
+    },
+    "dashboard-link-form": {
+      "back-to-list": "Back to list",
+      "label-icon": "Icon",
+      "label-include-current-template-variable-values": "Include current template variable values",
+      "label-include-current-time-range": "Include current time range",
+      "label-open-link-in-new-tab": "Open link in new tab",
+      "label-options": "Options",
+      "label-show-as-dropdown": "Show as dropdown",
+      "label-title": "Title",
+      "label-tooltip": "Tooltip",
+      "label-type": "Type",
+      "label-url": "URL",
+      "label-with-tags": "With tags",
+      "placeholder-open-dashboard": "Open dashboard"
+    },
+    "dashboard-link-list": {
+      "info": "Info",
+      "new-link": "New link",
+      "tooltip-copy-link": "Copy link",
+      "tooltip-move-link-down": "Move link down",
+      "tooltip-move-link-up": "Move link up",
+      "type": "Type"
     },
     "dashboard-preview-banner": {
       "not-saved": "The value is not yet saved in the Grafana database",
@@ -1867,17 +1943,160 @@
       "value-not-saved": "The value is not yet saved in the Grafana database",
       "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
+    "data-source-variable-form": {
+      "data-source-options": "Data source options",
+      "selection-options": "Selection options"
+    },
+    "description-label": {
+      "description": "Description"
+    },
+    "email-list": {
+      "aria-label-emailmenu": "Toggle email menu"
+    },
+    "empty-transformations-message": {
+      "add-transformation": "Add transformation"
+    },
+    "group-by-variable-form": {
+      "description-enables-users-custom-values": "Enables users to add custom values to the list",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
+      "group-by-options": "Group by options",
+      "label-data-source": "Data source",
+      "label-use-static-group-by-dimensions": "Use static group dimensions"
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Copy to clipboard",
+      "label-randomize-data": "Randomize data",
+      "label-support-snapshot": "Support snapshot",
+      "label-template": "Template",
+      "randomize-field-names-label-field-names": "Field names",
+      "randomize-labels-label-labels": "Labels",
+      "randomize-string-values-label-string-values": "String values",
+      "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard",
+      "title-get-help-with-this-panel": "Get help with this panel"
+    },
+    "inspect-data-tab": {
+      "no-data-found": "No data found"
+    },
+    "inspect-json-tab": {
+      "apply": "Apply"
+    },
+    "interval-variable-form": {
+      "description-calculated-value-below-threshold": "The calculated value will not go below this threshold",
+      "interval-options": "Interval options"
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": "Cancel"
+      },
+      "render-save-button-and-error": {
+        "title-failed-to-save-dashboard": "Failed to save dashboard",
+        "title-plugin-dashboard": "Plugin dashboard",
+        "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
+        "would-still-dashboard": "Would you still like to save this dashboard?"
+      }
+    },
+    "name-already-exists-error": {
+      "title-name-already-exists": "Name already exists"
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": "Errors loading rules"
+      },
+      "text-loading-rules": "Loading rules...",
+      "title-dashboard-not-saved": "Dashboard not saved"
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": "Add query"
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "Add another transformation",
+      "delete-all-transformations": "Delete all transformations",
+      "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-controls": {
+      "table-view-aria-label-toggletableview": "Toggle table view",
+      "table-view-label-table-view": "Table view"
+    },
+    "panel-inspect-renderer": {
+      "title-panel-plugin-not-loaded": "Panel plugin not loaded"
+    },
+    "panel-options-pane": {
+      "placeholder-search-options": "Search options"
+    },
+    "panel-viz-type-picker": {
+      "placeholder-search-for": "Search for...",
+      "title-close": "Close"
+    },
+    "provisioned-delete-modal": {
+      "ok": "OK",
+      "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
+    },
     "provisioned-resource-delete-modal": {
       "file-path": "File path:",
       "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
     },
+    "query-editor": {
+      "query": "Query"
+    },
+    "query-variable-editor-form": {
+      "label-data-source": "Data source",
+      "query-options": "Query options",
+      "selection-options": "Selection options"
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": "Restore version"
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "Save dashboard description field",
+      "aria-label-save-dashboard-title-field": "Save dashboard title field",
+      "cancel-button": {
+        "cancel": "Cancel"
+      },
+      "label-copy-tags": "Copy tags",
+      "label-folder": "Folder",
+      "render-footer": {
+        "title-failed-to-save-dashboard": "Failed to save dashboard"
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "message",
+      "cancel-button": {
+        "cancel": "Cancel"
+      },
+      "label-message": "Message",
+      "placeholder-describe-changes-optional": "Add a note to describe your changes (optional).",
+      "render-footer": {
+        "no-changes-to-save": "No changes to save",
+        "title-failed-to-save-dashboard": "Failed to save dashboard",
+        "title-plugin-dashboard": "Plugin dashboard",
+        "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
+        "would-still-dashboard": "Would you still like to save this dashboard?"
+      },
+      "title-dashboard-drastically-changed": "Dashboard drastically changed"
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
+      "save-refresh-label-update-default-refresh-value": "Update default refresh value",
+      "save-timerange-label-update-default-time-range": "Update default time range",
+      "save-variables-description-current-values-default": "Will make the current values the new default",
+      "save-variables-label-update-default-variable-values": "Update default variable values"
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "Cancel",
+      "dashboard-name": "Dashboard name",
+      "discard": "Discard",
+      "loading-connected-dashboards": "Loading connected dashboards...",
+      "placeholder-search-affected-dashboards": "Search affected dashboards",
+      "update-all": "Update all"
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
       "api-success": "Dashboard changes saved",
       "cancel": "Cancel",
       "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
+      "copy-json-to-clipboard": "Copy JSON to clipboard",
       "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "description-branch-name-in-git-hub": "Branch name in GitHub",
       "description-inside-repository": "File path inside the repository (.json or .yaml)",
@@ -1889,11 +2108,107 @@
       "label-title": "Title",
       "label-workflow": "Workflow",
       "save": "Save",
+      "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-this-repository-is-read-only": "This repository is read only",
       "title-validation-failed": "Dashboard title validation failed."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "new-alert-rule": "New alert rule",
+      "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
+      "description-enables-option-include-variables": "Enables an option to include all variables",
+      "description-enables-users-custom-values": "Enables users to add custom values to the list"
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "(optional)",
+      "text-options": "Text options"
+    },
+    "title-field-label": {
+      "title": "Title"
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": "Clear search"
+      }
+    },
+    "unlink-modal": {
+      "title-really-unlink-panel": "Do you really want to unlink this panel?"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Cancel",
+      "changes": "Do you want to save your changes?",
+      "discard": "Discard",
+      "save-dashboard": "Save dashboard",
+      "title-unsaved-changes": "Unsaved changes"
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
+      "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "Variable editor form",
+      "back-to-list": "Back to list",
+      "delete": "Delete",
+      "description-optional-display-name": "Optional display name",
+      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
+      "general": "General",
+      "placeholder-descriptive-text": "Descriptive text",
+      "placeholder-label-name": "Label name",
+      "placeholder-variable-name": "Variable name",
+      "text-running-query": "Running query..."
+    },
+    "variable-editor-list": {
+      "definition": "Definition",
+      "new-variable": "New variable",
+      "variable": "Variable"
+    },
+    "variable-editor-list-row": {
+      "title-delete-variable": "Delete variable",
+      "tooltip-duplicate-variable": "Duplicate variable",
+      "tooltip-remove-variable": "Remove variable"
+    },
+    "variable-hide-select": {
+      "label-show-on-dashboard": "Show on dashboard"
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": "Show usages"
+    },
+    "variable-values-preview": {
+      "preview-of-values": "Preview of values",
+      "show-more": "Show more"
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": "View JSON diff"
+    },
+    "version-history-header": {
+      "latest": "(Latest)",
+      "tooltip-reset-version": "Reset version"
+    },
+    "version-history-table": {
+      "date": "Date",
+      "notes": "Notes",
+      "restore": "Restore",
+      "updated-by": "Updated by",
+      "version": "Version"
+    },
+    "versions-history-buttons": {
+      "compare-versions": "Compare versions",
+      "show-more-versions": "Show more versions"
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Change visualization",
+      "tooltip-click-to-change-visualization": "Click to change visualization"
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": "Panel links"
     }
   },
   "dashboard-settings": {

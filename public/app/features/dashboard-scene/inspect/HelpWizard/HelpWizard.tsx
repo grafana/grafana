@@ -22,6 +22,7 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
@@ -69,7 +70,7 @@ export function HelpWizard({ panel, onClose }: Props) {
 
   return (
     <Drawer
-      title="Get help with this panel"
+      title={t('dashboard-scene.help-wizard.title-get-help-with-this-panel', 'Get help with this panel')}
       size="lg"
       onClose={onClose}
       subtitle={
@@ -116,13 +117,13 @@ export function HelpWizard({ panel, onClose }: Props) {
       {currentTab === SnapshotTab.Data && (
         <div className={styles.code}>
           <div className={styles.opts}>
-            <Field label="Template" className={styles.field}>
+            <Field label={t('dashboard-scene.help-wizard.label-template', 'Template')} className={styles.field}>
               <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
             </Field>
 
             {showMessage === ShowMessage.GithubComment ? (
               <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
-                Copy to clipboard
+                <Trans i18nKey="dashboard-scene.help-wizard.copy-to-clipboard">Copy to clipboard</Trans>
               </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
@@ -149,26 +150,26 @@ export function HelpWizard({ panel, onClose }: Props) {
       {currentTab === SnapshotTab.Support && (
         <>
           <Field
-            label="Randomize data"
+            label={t('dashboard-scene.help-wizard.label-randomize-data', 'Randomize data')}
             description="Modify the original data to hide sensitive information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
             <Stack>
               <InlineSwitch
-                label="Labels"
+                label={t('dashboard-scene.help-wizard.randomize-labels-label-labels', 'Labels')}
                 id="randomize-labels"
                 showLabel={true}
                 value={Boolean(randomize.labels)}
                 onChange={() => service.onToggleRandomize('labels')}
               />
               <InlineSwitch
-                label="Field names"
+                label={t('dashboard-scene.help-wizard.randomize-field-names-label-field-names', 'Field names')}
                 id="randomize-field-names"
                 showLabel={true}
                 value={Boolean(randomize.names)}
                 onChange={() => service.onToggleRandomize('names')}
               />
               <InlineSwitch
-                label="String values"
+                label={t('dashboard-scene.help-wizard.randomize-string-values-label-string-values', 'String values')}
                 id="randomize-string-values"
                 showLabel={true}
                 value={Boolean(randomize.values)}
@@ -177,7 +178,10 @@ export function HelpWizard({ panel, onClose }: Props) {
             </Stack>
           </Field>
 
-          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
+          <Field
+            label={t('dashboard-scene.help-wizard.label-support-snapshot', 'Support snapshot')}
+            description={`Panel: ${panelTitle}`}
+          >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                 Dashboard ({snapshotSize})
@@ -185,9 +189,12 @@ export function HelpWizard({ panel, onClose }: Props) {
               <ClipboardButton
                 icon="github"
                 getText={service.onGetMarkdownForClipboard}
-                title="Copy a complete GitHub comment to the clipboard"
+                title={t(
+                  'dashboard-scene.help-wizard.title-complete-git-hub-comment-clipboard',
+                  'Copy a complete GitHub comment to the clipboard'
+                )}
               >
-                Copy to clipboard
+                <Trans i18nKey="dashboard-scene.help-wizard.copy-to-clipboard">Copy to clipboard</Trans>
               </ClipboardButton>
             </Stack>
           </Field>

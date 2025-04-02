@@ -56,7 +56,10 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
       </p>
     </Alert>
   ) : (
-    <Alert title="Name already exists" severity="error">
+    <Alert
+      title={t('dashboard-scene.name-already-exists-error.title-name-already-exists', 'Name already exists')}
+      severity="error"
+    >
       <p>
         A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
       </p>

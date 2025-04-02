@@ -1,5 +1,6 @@
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -29,7 +30,7 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
   return (
     <ConfirmModal
       isOpen={true}
-      title="Restore Version"
+      title={t('dashboard-scene.revert-dashboard-modal.title-restore-version', 'Restore version')}
       icon="history"
       onDismiss={hideModal}
       onConfirm={onRestoreDashboard}
