@@ -4550,24 +4550,6 @@
     }
   },
   "plugins": {
-    "angular-deprecation-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "try-migration": "Try migration"
-    },
-    "angular-deprecation-plugin-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "title-angular-plugin": "Angular plugin",
-      "view-plugin-details": "View plugin details"
-    },
-    "angular-migration-notice": {
-      "report-issue": "Report issue",
-      "revert-migration": "Revert migration"
-    },
-    "app-config-ctrl-wrapper": {
-      "disable": "Disable",
-      "enable": "Enable",
-      "update": "Update"
-    },
     "app-root-page": {
       "access-denied": {
         "permission": "You do not have permission to see this page.",
