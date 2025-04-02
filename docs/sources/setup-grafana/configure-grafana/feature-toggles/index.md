@@ -35,6 +35,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `prometheusRunQueriesInParallel`       | Enables running Prometheus queries in parallel                                                                                      | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                             | Yes                |
+| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                    | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                           | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                | Yes                |
