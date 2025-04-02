@@ -211,6 +211,8 @@ Tooltip options control the information overlay that appears when you hover over
 
 ### Axis options
 
+<!-- These are the same as candlestick and a shared file needs to be created -->
+
 Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
 #### Placement (y-axis)
