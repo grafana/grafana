@@ -1438,8 +1438,8 @@
             "variable": "Template variable"
           },
           "condition": {
-            "all": "Match any (AND)",
-            "any": "Match all (OR)",
+            "all": "Match all (AND)",
+            "any": "Match any (OR)",
             "label": "Match rules"
           },
           "label": "Group",
