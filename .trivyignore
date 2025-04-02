@@ -1,1 +1,5 @@
 # See https://aquasecurity.github.io/trivy/v0.48/docs/configuration/filtering/#trivyignore
+
+# Adding CVE in grafana-plugin-sdk-go to exclusions as it does not have direct impact on the product
+# and updating library version requires complex changes in the codebase
+CVE-2024-8986
