@@ -29,7 +29,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
   });
   const activeJob = activeQuery?.data?.items?.[0];
   const finishedQuery = useGetRepositoryJobsWithPathQuery(
-    activeJob
+    activeJob || activeQuery.isUninitialized || activeQuery.isLoading
       ? skipToken
       : {
           name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
@@ -40,7 +40,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
   const job = activeJob || finishedQuery.data;
 
   useEffect(() => {
-    if (!job) {
+    if (!job && !finishedQuery.isUninitialized) {
       finishedQuery.refetch();
     }
   }, [finishedQuery, job]);
