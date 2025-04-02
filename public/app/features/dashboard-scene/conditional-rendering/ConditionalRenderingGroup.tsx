@@ -135,7 +135,9 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         value={visibility}
         onChange={(value) => model.changeVisibility(value)}
       />
-      <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
+      {value.length > 1 && (
+        <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
+      )}
       {value.map((entry) => entry.render())}
       <ConditionalRenderingGroupAdd
         itemType={model.getItemType()}
