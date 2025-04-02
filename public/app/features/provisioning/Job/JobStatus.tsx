@@ -122,7 +122,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
             <RepositoryLink name={job.metadata?.labels?.repository} />
           ) : (
             <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
-              <pre>{JSON.stringify(job, null, ' ')}</pre>
+              <pre>{JSON.stringify(job, null, 2)}</pre>
             </ControlledCollapse>
           )}
         </Stack>
