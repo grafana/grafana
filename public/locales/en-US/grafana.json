@@ -5074,6 +5074,7 @@
   },
   "query-operation": {
     "header": {
+      "add-query-from-library": "Add query from library",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
