@@ -39,13 +39,14 @@ Grafana spotted some changes in your dashboard.
 {{- else if .PreviewScreenshotURL}}
 ### Preview of {{.Filename}}
 ![Preview]({{.PreviewScreenshotURL}})
-{{- end}}
-{{- if and .OriginalURL .PreviewURL}}
-See the [original]({{.OriginalURL}}) and [preview]({{.PreviewURL}}) of {{.Filename}}
+{{ end}}
+
+{{ if and .OriginalURL .PreviewURL}}
+See the [original]({{.OriginalURL}}) and [preview]({{.PreviewURL}}) of {{.Filename}}.
 {{- else if .OriginalURL}}
-See the [original]({{.OriginalURL}}) of {{.Filename}}
+See the [original]({{.OriginalURL}}) of {{.Filename}}.
 {{- else if .PreviewURL}}
-See the [preview]({{.PreviewURL}}) of {{.Filename}}
+See the [preview]({{.PreviewURL}}) of {{.Filename}}.
 {{- end}}`
 
 // PreviewRenderer is an interface for rendering a preview of a file
@@ -164,7 +165,12 @@ func (p *Previewer) Preview(
 	}
 
 	if preview.OriginalURL != "" {
-		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.PreviousPath, base)
+		originalPath := f.PreviousPath
+		if originalPath == "" {
+			originalPath = f.Path
+		}
+
+		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, originalPath, base)
 		if err != nil {
 			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
 		}
