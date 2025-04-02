@@ -12,7 +12,6 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { useElementSelection, UseElementSelectionResult } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
@@ -461,12 +460,6 @@ export function useIsConditionallyHidden(scene: RowItem | AutoGridItem): boolean
   const { conditionalRendering } = scene.useState();
 
   return !(conditionalRendering?.evaluate() ?? true);
-}
-
-export function useElementSelectionScene(scene: SceneObject): UseElementSelectionResult {
-  const { key } = scene.useState();
-
-  return useElementSelection(key);
 }
 
 export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
