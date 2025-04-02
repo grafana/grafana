@@ -102,10 +102,17 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Error(err)
 			return
 		}
+
 		if rsp == nil {
 			responder.Error(fmt.Errorf("expecting a response"))
 			return
 		}
+
+		if err := s.updateLastEvent(ctx, repo, name, namespace); err != nil {
+			// Continue processing as this is non-critical; the update is purely informational
+			logger.Error("failed to update last event", "error", err)
+		}
+
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
 			job, err := s.jobs.Insert(ctx, namespace, *rsp.Job)
@@ -117,34 +124,42 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
-		client := s.client.GetClient()
-		lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
-		eventAge := time.Since(lastEvent)
-
-		// Update if it's been a while since the last event
-		if client != nil && repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-			patchOp := map[string]interface{}{
-				"op":    "replace",
-				"path":  "/status/webhook/lastEvent",
-				"value": time.Now().UnixMilli(),
-			}
-
-			patch, err := json.Marshal(patchOp)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			_, err = client.Repositories(namespace).
-				Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-		}
-
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
+}
+
+// updateLastEvent updates the last event time for the webhook
+// This is to provide some visibility that the webhook is still active and working
+// It's not a good idea to update the webhook status too often, so we only update it if it's been a while
+func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.Repository, name, namespace string) error {
+	client := s.client.GetClient()
+	if client == nil {
+		// This would only happen if we wired things up incorrectly
+		return fmt.Errorf("client is nil")
+	}
+
+	lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
+	eventAge := time.Since(lastEvent)
+
+	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
+		patchOp := map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/webhook/lastEvent",
+			"value": time.Now().UnixMilli(),
+		}
+
+		patch, err := json.Marshal(patchOp)
+		if err != nil {
+			return fmt.Errorf("marshal patch: %w", err)
+		}
+
+		if _, err = client.Repositories(namespace).
+			Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status"); err != nil {
+			return fmt.Errorf("patch status: %w", err)
+		}
+	}
+
+	return nil
 }
 
 var (
