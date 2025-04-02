@@ -88,7 +88,10 @@ Set how series data is mapped in the chart. Choose from:
 
 Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. The [Auto](#auto-series-mapping-options) and [Manual](#manual-series-mapping-options) series mapping sections describe these different options.
 
-##### Auto series mapping options
+{{< tabs >}}
+{{< tab-content name="Auto series mapping options" >}}
+
+#### Auto series mapping options
 
 When you select **Auto** as your series mapping mode, the following options are preconfigured, but you can also define them yourself:
 
@@ -101,10 +104,18 @@ When you select **Auto** as your series mapping mode, the following options are 
 | [Y field](#y-field) | After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use this option to explicitly choose which fields to use for y. |
 | Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. |
 | Color field | Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. |
+| [Show](#show) | SSet how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. |
+| Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field). |
+| Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series. |
+| Point shape | Set the shape of the points in the chart. Choose from:<ul><li>**Circle** - Display points as circles. This is the default setting.</li><li>**Square** - Display points as squares.</li></ul> |
+| Point stroke width | Set the width of the point stroke in pixels. The default is one pixel. |
+| Fill opacity | Set the opacity of the point fill. The default is 50. |
+| [Line style](#line-style) | Set the style of the lines that connect points. Choose from: **Solid**, **Dash**, or **Dots**. |
+| Line width | Set the width of the lines that connect points, in pixels. |
 
 <!-- prettier-ignore-end -->
 
-###### X-field
+##### X-field
 
 Select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
@@ -116,7 +127,7 @@ Select which field or fields x represents. By default, this is the first number 
 
 In the resulting chart, the x-field is generated from the values in column "a" unless you define it differently.
 
-###### Y-field
+##### Y-field
 
 After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use this option to explicitly choose which fields to use for y.
 
@@ -132,30 +143,40 @@ You can also use [overrides](ref:configure-field-overrides) to exclude y-fields 
 - Override property: **Series > Hide in area**
 - Area: **Viz**
 
-##### Manual series mapping options
+##### Show
+
+Set how values are represented in the visualization. Choose from:
+
+- **Points** - Display values as points. When you select this option, the **Point size** option is also displayed.
+- **Lines** - Add a line between values. When you select this option, the [Line style](#line-style) and **Line width** options are also displayed.
+- **Both** - Display both points and lines.
+
+##### Line style
+
+Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
+
+![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
+
+- **Solid** - Display a solid line. This is the default setting.
+- **Dash** - Display a dashed line. When you choose this option, a drop-down list is displayed where you can select the length and gap setting for the line dashes. By default, the length and gap are set to `10, 10`.
+- **Dots** - Display dotted lines. When you choose this option, a drop-down list is displayed where you can select dot spacing. By default, the dot spacing is set to `0, 10` (the first number represents dot length, which is always zero).
+
+{{< /tab-content >}}
+{{< tab-content name="Manual series mapping options" >}}
+
+#### Manual series mapping options
 
 When you select **Manual** as your series mode, you can add, edit, and delete series. To manage a series, click the **Series** field; to rename the series, click the series name.
 
-In **Manual** mode, you must set the following options:
-
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| Frame | Select your data frame or dataset. You can add as many frames as you want. |
-| X field | Select which field x represents. |
-| Y-field | Select which field y represents. |
-| Size field | Select which field controls the size of the points in the chart. |
-| Color field| Select which field controls the color of the points in the chart. |
-
-<!-- prettier-ignore-end -->
-
-##### Other xy chart option fields
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
+| Frame | Select your data frame or dataset. You can add as many frames as you want. Required. |
+| X field | Select which field x represents. Required. |
+| Y-field | Select which field y represents. Required. |
+| Size field | Select which field controls the size of the points in the chart. Required. |
+| Color field| Select which field controls the color of the points in the chart. Required. |
 | [Show](#show) | SSet how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. |
 | Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field). |
 | Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series. |
@@ -167,7 +188,7 @@ In **Manual** mode, you must set the following options:
 
 <!-- prettier-ignore-end -->
 
-###### Show
+##### Show
 
 Set how values are represented in the visualization. Choose from:
 
@@ -175,7 +196,7 @@ Set how values are represented in the visualization. Choose from:
 - **Lines** - Add a line between values. When you select this option, the [Line style](#line-style) and **Line width** options are also displayed.
 - **Both** - Display both points and lines.
 
-###### Line style
+##### Line style
 
 Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
 
@@ -184,6 +205,9 @@ Set the style of the lines that connect points. To change the color, use the sta
 - **Solid** - Display a solid line. This is the default setting.
 - **Dash** - Display a dashed line. When you choose this option, a drop-down list is displayed where you can select the length and gap setting for the line dashes. By default, the length and gap are set to `10, 10`.
 - **Dots** - Display dotted lines. When you choose this option, a drop-down list is displayed where you can select dot spacing. By default, the dot spacing is set to `0, 10` (the first number represents dot length, which is always zero).
+
+{{< /tab-content >}}
+{{< /tabs >}}
 
 ### Tooltip options
 
