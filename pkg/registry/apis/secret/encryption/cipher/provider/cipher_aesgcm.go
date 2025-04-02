@@ -77,10 +77,11 @@ func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) 
 	// |  +---------v-------------+  |
 	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
 	//    +-----------------------+
+
 	if len(payload) < gcmSaltLength {
+		// If we don't return here, we'd panic.
 		return nil, ErrPayloadTooShort
 	}
-
 	salt, payload := payload[:gcmSaltLength], payload[gcmSaltLength:]
 	// Can't get nonce until we get a size from the AEAD interface.
 
@@ -99,6 +100,10 @@ func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) 
 		return nil, err
 	}
 
+	if len(payload) < gcm.NonceSize() {
+		// If we don't return here, we'd panic.
+		return nil, ErrPayloadTooShort
+	}
 	nonce, payload := payload[:gcm.NonceSize()], payload[gcm.NonceSize():]
 
 	return gcm.Open(nil, nonce, payload, nil)

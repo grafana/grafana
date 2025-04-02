@@ -49,6 +49,22 @@ func TestGcmEncryption(t *testing.T) {
 		_, err := cipher.Encrypt(t.Context(), payload, secret)
 		require.Error(t, err, "expected error when random source is empty")
 	})
+
+	t.Run("fails if random source does not provide nonce", func(t *testing.T) {
+		t.Parallel()
+
+		// Scenario: the random source has enough entropy for the salt, but not for the nonce.
+		// In this case, we should fail with an error.
+
+		cipher := newAesGcmCipher()
+		cipher.randReader = bytes.NewReader([]byte("abcdefgh")) // 8 bytes for salt, but not enough for nonce
+
+		payload := []byte("grafana unit test")
+		secret := "secret here"
+
+		_, err := cipher.Encrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected error when random source does not provide nonce")
+	})
 }
 
 func TestGcmDecryption(t *testing.T) {
@@ -82,5 +98,47 @@ func TestGcmDecryption(t *testing.T) {
 
 		_, err := cipher.Decrypt(t.Context(), payload, secret)
 		require.Error(t, err, "expected error when payload is shorter than salt")
+	})
+
+	t.Run("fails if payload has length of salt but no nonce", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := newAesGcmCipher()
+		cipher.randReader = bytes.NewReader([]byte{}) // should not be used
+
+		payload := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} // salt and a little more
+		secret := "secret here"
+
+		_, err := cipher.Decrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected error when payload has length of salt but no nonce")
+	})
+
+	t.Run("fails when authentication tag is wrong", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := newAesGcmCipher()
+		cipher.randReader = bytes.NewReader([]byte{}) // should not be used
+
+		// Removed 2 bytes from the end of the payload to simulate a wrong authentication tag.
+		payload, err := hex.DecodeString("61626364656667683132333435363738393031328123655291d1f5eebe34c54ba55900f68a2700818a8fda9e2921190b67271d")
+		require.NoError(t, err, "failed to decode pre-computed encrypted payload")
+		secret := "secret here"
+
+		_, err = cipher.Decrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected to fail validation")
+	})
+
+	t.Run("fails if secret does not match", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := newAesGcmCipher()
+		cipher.randReader = bytes.NewReader([]byte{}) // should not be used
+
+		payload, err := hex.DecodeString("61626364656667683132333435363738393031328123655291d1f5eebe34c54ba55900f68a2700818a8fda9e2921190b67271d97ce")
+		require.NoError(t, err, "failed to decode pre-computed encrypted payload")
+		secret := "should have been 'secret here'"
+
+		_, err = cipher.Decrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected to fail decryption")
 	})
 }

@@ -24,6 +24,7 @@ func (aesCfbDecipher) Decrypt(_ context.Context, payload []byte, secret string) 
 	//    +-----------------------+
 
 	if len(payload) < cfbSaltLength+aes.BlockSize {
+		// If we don't return here, we'd panic.
 		return nil, ErrPayloadTooShort
 	}
 

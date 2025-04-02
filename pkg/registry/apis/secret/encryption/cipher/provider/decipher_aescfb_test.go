@@ -37,4 +37,34 @@ func TestCfbDecryption(t *testing.T) {
 		_, err := cipher.Decrypt(t.Context(), payload, secret)
 		require.Error(t, err, "expected error when payload is shorter than salt")
 	})
+
+	t.Run("fails if payload is not an AES-encrypted value", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := aesCfbDecipher{}
+
+		payload, err := hex.DecodeString("616263646566676831323334353637383930313234353637f1114227cb")
+		require.NoError(t, err, "failed to decode hex string")
+		secret := "secret here"
+
+		// We don't have any authentication tag, so we can't return an error in this case.
+		decrypted, err := cipher.Decrypt(t.Context(), payload, secret)
+		require.NoError(t, err, "expected no error")
+		require.NotEqual(t, "grafana unit test", string(decrypted), "decrypted payload should not match real exposed secret")
+	})
+
+	t.Run("fails if secret is wrong", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := aesCfbDecipher{}
+
+		payload, err := hex.DecodeString("616263646566676831323334353637383930313234353637f1114227cb6af678cad6ee35f67f25f40b")
+		require.NoError(t, err, "failed to decode hex string")
+		secret := "should've been 'secret here'"
+
+		// We don't have any authentication tag, so we can't return an error in this case.
+		decrypted, err := cipher.Decrypt(t.Context(), payload, secret)
+		require.NoError(t, err, "expected no error")
+		require.NotEqual(t, "grafana unit test", string(decrypted), "decrypted payload should not match real exposed secret")
+	})
 }
