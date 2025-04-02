@@ -101,9 +101,14 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[titleIDX]),
 			Field:    fields,
 		}
+		if titleIDX >= 0 {
+			hit.Title = string(row.Cells[titleIDX])
+		} else {
+			hit.Title = "(no title)"
+		}
+
 		if folderIDX > 0 && row.Cells[folderIDX] != nil {
 			hit.Folder = string(row.Cells[folderIDX])
 		}
