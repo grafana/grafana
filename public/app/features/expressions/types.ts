@@ -149,6 +149,8 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+  /** Format `alerting` is expected when using SQL expressions in alert rules */
+  format?: '' | 'alerting';
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {
