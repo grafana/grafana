@@ -371,6 +371,10 @@ const (
 	// Routes requests to the new query service
 	FlagQueryServiceFromUI = "queryServiceFromUI"
 
+	// FlagQueryServiceFromExplore
+	// Routes explore requests to the new query service
+	FlagQueryServiceFromExplore = "queryServiceFromExplore"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
