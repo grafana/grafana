@@ -46,7 +46,6 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     flexGrow: 1,
-    height: '275px',
   }),
   root: css({
     '&.react-colorful': {

@@ -151,9 +151,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       width: '246px',
       fontSize: theme.typography.bodySmall.fontSize,
       minHeight: '184px',
+      height: '290px',
       padding: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
+      overflowY: 'auto',
     }),
     colorPickerPopoverTabs: css({
       display: 'flex',
