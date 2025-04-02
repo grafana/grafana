@@ -12,6 +12,8 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
   private _sourceDropTarget: DashboardDropTarget | null = null;
   private _lastDropTarget: DashboardDropTarget | null = null;
+  private _startSyncLocation: { x: number; y: number } = { x: 0, y: 0 };
+  private _isSelectedObject = false;
 
   public constructor() {
     super({});
@@ -29,7 +31,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     };
   }
 
-  public startDraggingSync(_evt: ReactPointerEvent, panel: VizPanel): void {
+  public startDraggingSync(evt: ReactPointerEvent, panel: VizPanel): void {
+    this._startSyncLocation = { x: evt.clientX, y: evt.clientY };
+    this._isSelectedObject = false;
+
     const dropTarget = sceneGraph.findObject(panel, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
@@ -64,6 +69,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _onPointerMove(evt: PointerEvent) {
+    if (
+      !this._isSelectedObject &&
+      this.state.draggingPanel &&
+      Math.hypot(this._startSyncLocation.x - evt.clientX, this._startSyncLocation.y - evt.clientY) > 10
+    ) {
+      this._isSelectedObject = true;
+      const panel = this.state.draggingPanel?.resolve();
+      this._getDashboard().state.editPane.selectObject(panel, panel.state.key!, { force: true, multi: false });
+    }
+
     const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
 
     if (!dropTarget) {

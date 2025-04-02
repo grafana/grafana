@@ -183,7 +183,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.forceSelectObject(tab!, tabKey);
+    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
     this.setState({ currentTabIndex: tabIndex });
   }
 

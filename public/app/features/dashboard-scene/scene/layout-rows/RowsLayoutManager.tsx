@@ -149,7 +149,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.forceSelectObject(row!, rowKey);
+    editPane.selectObject(row!, rowKey, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {

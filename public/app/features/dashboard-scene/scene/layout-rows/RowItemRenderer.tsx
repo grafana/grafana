@@ -5,16 +5,11 @@ import { useCallback, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useIsClone } from '../../utils/clone';
-import {
-  useDashboardState,
-  useElementSelectionScene,
-  useInterpolatedTitle,
-  useIsConditionallyHidden,
-} from '../../utils/utils';
+import { useDashboardState, useInterpolatedTitle, useIsConditionallyHidden } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
@@ -24,7 +19,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isClone = useIsClone(model);
   const { isEditing } = useDashboardState(model);
   const isConditionallyHidden = useIsConditionallyHidden(model);
-  const { isSelected, onSelect, isSelectable } = useElementSelectionScene(model);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
