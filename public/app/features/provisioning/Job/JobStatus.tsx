@@ -28,11 +28,12 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     watch: true,
   });
   const activeJob = activeQuery?.data?.items?.[0];
+  const repoLabel = watch.metadata?.labels?.['provisioning.grafana.app/repository'];
   const finishedQuery = useGetRepositoryJobsWithPathQuery(
-    activeJob || activeQuery.isUninitialized || activeQuery.isLoading
+    activeJob || activeQuery.isUninitialized || activeQuery.isLoading || !repoLabel
       ? skipToken
       : {
-          name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
+          name: repoLabel,
           uid: watch.metadata?.uid!,
         }
   );
