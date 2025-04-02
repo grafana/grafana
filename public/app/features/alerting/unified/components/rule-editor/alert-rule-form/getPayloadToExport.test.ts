@@ -41,7 +41,7 @@ const rule4 = mockRulerGrafanaRecordingRule(
   {
     labels: { severity: 'notcritical4', region: 'region4' },
     annotations: { [Annotation.summary]: 'This grafana rule4' },
-    keep_firing_for: "1m",
+    keep_firing_for: '1m',
   },
   { uid: 'uid-rule-4', title: 'Rule4', data: [] }
 );
