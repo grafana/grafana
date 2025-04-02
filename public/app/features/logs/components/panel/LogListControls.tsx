@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { MouseEvent, useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -109,12 +109,16 @@ export const LogListControls = ({ eventBus }: Props) => {
     setSyntaxHighlighting(!syntaxHighlighting);
   }, [setSyntaxHighlighting, syntaxHighlighting]);
 
-  const onWrapLogMessageClick = useCallback(() => {
-    reportInteraction('logs_log_list_controls_wrap_clicked', {
-      state: !wrapLogMessage,
-    });
-    setWrapLogMessage(!wrapLogMessage);
-  }, [setWrapLogMessage, wrapLogMessage]);
+  const onWrapLogMessageClick = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      reportInteraction('logs_log_list_controls_wrap_clicked', {
+        state: !wrapLogMessage,
+      });
+      setWrapLogMessage(!wrapLogMessage);
+    },
+    [setWrapLogMessage, wrapLogMessage]
+  );
 
   const deduplicationMenu = useMemo(
     () => (
@@ -267,7 +271,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: theme.spacing(3),
       paddingTop: theme.spacing(0.5),
       paddingLeft: theme.spacing(0.5),
-      borderLeft: `solid 1px ${theme.colors.border.medium}`
+      borderLeft: `solid 1px ${theme.colors.border.medium}`,
     }),
     scrollToTopButton: css({
       margin: 0,
