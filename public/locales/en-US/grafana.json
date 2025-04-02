@@ -286,6 +286,7 @@
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
+      "keep-firing-for": "Keep firing for",
       "last-evaluated": "Last evaluated",
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
@@ -390,7 +391,8 @@
           "error": "Error",
           "no-data": "No data",
           "normal": "Normal",
-          "pending": "Pending"
+          "pending": "Pending",
+          "recovering": "Recovering"
         },
         "state-transitions": "State transition",
         "unknown-event-state": "Unknown",
@@ -755,6 +757,7 @@
         "info-help": {
           "text": "Define the alert behavior when the evaluation fails or the query returns no data."
         },
+        "keep-firing-for": "Keep firing for",
         "pending-period": "Pending period"
       },
       "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
