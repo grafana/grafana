@@ -11,6 +11,7 @@ import { UserState } from '../profile/state/reducers';
 
 import { QueryRows } from './QueryRows';
 import { makeExplorePaneState } from './state/utils';
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -91,5 +92,38 @@ describe('Explore QueryRows', () => {
 
     // We should have another row with refId B
     expect(await screen.findByLabelText('Query editor row title B')).toBeInTheDocument();
+  });
+
+  it('Should contain a select query from library button when query library is enabled', async () => {
+    const { store } = setup([{ refId: 'A' }]);
+
+    render(
+      <Provider store={store}>
+        <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+          <QueryRows exploreId={'left'} />
+        </QueryLibraryContextProviderMock>
+      </Provider>
+    );
+
+    // waiting for the component to fully render.
+    await screen.findAllByText('someDs query editor');
+
+    expect(await screen.getByLabelText(/Add query from library/i)).toBeInTheDocument();
+  });
+
+  it('Should not contain a select query from library button when query library is disabled', async () => {
+    const { store } = setup([{ refId: 'A' }]);
+
+    render(
+      <Provider store={store}>
+        <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
+          <QueryRows exploreId={'left'} />
+        </QueryLibraryContextProviderMock>
+      </Provider>
+    );
+
+    await screen.findAllByText('someDs query editor');
+
+    expect(screen.queryByLabelText(/Add query from library/i)).not.toBeInTheDocument();
   });
 });
