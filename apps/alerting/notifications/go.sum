@@ -69,8 +69,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/grafana-app-sdk v0.35.1 h1:zEXubzsQrxGBOzXJJMBwhEClC/tvPi0sfK7NGmlX3RI=
 github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979 h1:B7kt2We4CVCWRJGgaIyx8lhZqTeDAk6bspOkGYWoB/I=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979/go.mod h1:A/SJ9CiAWNOdeD/IezNwRaDZusLKq0z6dTfhKDgZw5Y=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0 h1:/MtKK3BUWqLJVkoFQViNvD5BmblGlVwpOScEtLLpexU=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0/go.mod h1:uju5OyW1BopywSF1jjIHei0L0/QIi4vn/EQ1ys+E6aI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 h1:uGoIog/wiQHI9GAxXO5TJbT0wWKH3O9HhOJW1F9c3fY=

@@ -87,7 +87,12 @@ export function DashboardAddPane({ editPane }: Props) {
   return (
     <>
       <div className={styles.header}>
-        <IconButton name="arrow-left" size="lg" onClick={() => editPane.toggleAddPane()} aria-label="Close add pane" />
+        <IconButton
+          name="arrow-left"
+          size="lg"
+          onClick={() => editPane.toggleAddPane()}
+          aria-label={t('dashboard-scene.dashboard-add-pane.aria-label-close-add-pane', 'Close add pane')}
+        />
         {t('dashboard.edit-pane.add.title', 'Add element')}
       </div>
       <Box display="flex" direction="column" gap={1} padding={2}>
