@@ -37,12 +37,13 @@ import (
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
+
+	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
 
 	"github.com/prometheus/client_golang/prometheus"
 
