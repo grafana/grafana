@@ -1,7 +1,6 @@
 package options
 
 import (
-	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,10 +10,12 @@ import (
 	"k8s.io/apiserver/pkg/server/resourceconfig"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+
+	"github.com/spf13/pflag"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	aggregatorapiserver "github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
+	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 

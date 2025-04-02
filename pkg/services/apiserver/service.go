@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,7 +16,8 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	aggregatorapiserver "github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"

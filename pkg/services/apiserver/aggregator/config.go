@@ -3,13 +3,13 @@ package aggregator
 import (
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
 
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	aggregatorapiserver "github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
