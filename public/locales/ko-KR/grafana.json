@@ -501,6 +501,10 @@
       "recording": "기록",
       "rule-name": "규칙 이름"
     },
+    "ds-group-loader": {
+      "group-deleting": "",
+      "group-load-failed": ""
+    },
     "export": {
       "subtitle": {
         "formats": "형식을 선택하고 파일을 다운로드하거나 클립보드에 콘텐츠를 복사하세요.",
@@ -519,10 +523,12 @@
     },
     "group-actions": {
       "actions-trigger": "규칙 그룹 작업",
-      "delete": "삭제",
-      "edit": "편집",
-      "export": "내보내기",
-      "reorder": "규칙 순서 변경"
+      "details": "",
+      "edit": "편집"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "",
+      "unknown-error": ""
     },
     "group-details": {
       "ds-features-error": "데이터 소스 세부 정보 로딩 중 오류 발생",
@@ -562,6 +568,9 @@
       "page-title": "규칙 그룹 편집",
       "rule-group-error": "규칙 그룹 로딩 중 오류 발생",
       "title": "평가 그룹 편집"
+    },
+    "group-loader": {
+      "group-load-failed": ""
     },
     "irm-integration": {
       "connection-method": "IRM에 연결하는 방법",
@@ -816,6 +825,7 @@
     },
     "rule-list": {
       "configure-datasource": "구성",
+      "draft-new-rule": "",
       "ds-error-boundary": {
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
@@ -824,15 +834,20 @@
         "no-more-results": "더 이상 결과 없음 - {{numberOfRules}}개의 규칙 표시 중",
         "no-rules-found": "현재 필터 조건과 일치하는 경고 또는 기록 규칙이 없습니다."
       },
+      "more": "",
       "new-alert-rule": "새 경고 규칙",
+      "new-datasource-recording-rule": "",
+      "new-grafana-recording-rule": "",
       "pagination": {
         "next-page": "다음 페이지",
         "previous-page": "이전 페이지"
       },
+      "recording-rules": "",
       "return-button": {
         "title": "경고 규칙"
       },
-      "rulerrule-loading-error": "규칙 로딩 실패"
+      "rulerrule-loading-error": "규칙 로딩 실패",
+      "unknown-rule-type": ""
     },
     "rule-state": {
       "creating": "생성 중",
@@ -851,7 +866,7 @@
     "rule-viewer": {
       "error-loading": "규칙 로딩 중 문제 발생",
       "prometheus-consistency-check": {
-        "alert-message": "경고 규칙이 업데이트되었습니다. 경고 규칙 목록 보기에 변경 사항이 표시되기까지 최대 1분이 소요될 수 있습니다.",
+        "alert-message": "",
         "alert-title": "업데이트 진행 중"
       }
     },
@@ -1097,13 +1112,34 @@
       "create-label": "생성",
       "name-label": "폴더 이름"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "",
+      "alert-folder-created-successfully": "",
+      "button-create": "",
+      "button-creating": "",
+      "cancel": "",
+      "description-branch-name-in-git-hub": "",
+      "error-invalid-folder-name": "",
+      "error-required": "",
+      "folder-comment-input-placeholder-describe-changes-optional": "",
+      "folder-name-input-placeholder-enter-folder-name": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-folder-name": "",
+      "label-workflow": "",
+      "text-pull-request-created": "",
+      "title-pull-request-created": "",
+      "title-repository-not-found": "",
+      "title-this-repository-is-read-only": ""
+    },
     "no-results": {
       "clear": "검색 및 필터 초기화",
       "text": "쿼리에 대해 찾은 결과 없음"
     },
     "soft-delete": {
       "success": "{{name}} 대시보드를 '최근 삭제됨'으로 이동함"
-    }
+    },
+    "text-this-repository-is-read-only": ""
   },
   "carousel": {
     "close": "",
@@ -2590,6 +2626,9 @@
   "folder-picker": {
     "create-instructions": "새 폴더를 만들려면 엔터 키를 누르세요.",
     "loading": "폴더 로딩 중..."
+  },
+  "folder-repo": {
+    "badge-text": ""
   },
   "forgot-password": {
     "back-button": "로그인으로 돌아가기",
@@ -4412,6 +4451,389 @@
       "name": "",
       "teams": "",
       "text-loading-teams": ""
+    }
+  },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "",
+      "description-clear-repository-connection": "",
+      "empty": "",
+      "error-field-required": "",
+      "grafana": "",
+      "include-history": "",
+      "include-identifiers": "",
+      "label-display-name": "",
+      "label-migrate-options": "",
+      "placeholder-my-repository-connection": "",
+      "repository": "",
+      "resources-will-be-added": "",
+      "text-loading-resource-information": "",
+      "title-files-exist-in-the-target": "",
+      "title-note": "",
+      "tooltip-include-history": "",
+      "tooltip-include-identifiers": "",
+      "files-count_other": ""
+    },
+    "check-repository": {
+      "check": ""
+    },
+    "config-form": {
+      "alert-repository-settings-saved": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-branch": "",
+      "description-enabled": "",
+      "description-path": "",
+      "description-repository-url": "",
+      "description-title": "",
+      "description-workflows-makes-repository": "",
+      "description-write": "",
+      "error-required": "",
+      "error-valid-github-url": "",
+      "label-automatic-pulling": "",
+      "label-branch": "",
+      "label-enabled": "",
+      "label-github-token": "",
+      "label-interval-seconds": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-type": "",
+      "label-repository-url": "",
+      "label-target": "",
+      "label-title": "",
+      "label-workflows": "",
+      "option-branch": "",
+      "option-entire-instance": "",
+      "option-github": "",
+      "option-local": "",
+      "option-managed-folder": "",
+      "option-write": "",
+      "placeholder-branch": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-interval-seconds": "",
+      "placeholder-local-path": "",
+      "placeholder-my-config": "",
+      "placeholder-path": "",
+      "placeholder-readonly-repository": "",
+      "placeholder-select-repository-type": ""
+    },
+    "config-form-github-collapse": {
+      "description-attach-dashboard-previews": "",
+      "instructions": "",
+      "label-attach-dashboard-previews": "",
+      "label-git-hub-features": "",
+      "pull-request-image-previews": "",
+      "realtime-feedback": "",
+      "text-changes-in-git-eventually-pulled": "",
+      "text-changes-in-git-quick-pull": "",
+      "text-when-image-renderer-configured": "",
+      "title-image-renderer-not-configured": "",
+      "title-public-url-not-configured": "",
+      "title-webhook-will-be-created": ""
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "",
+      "max-repositories-exist": "",
+      "tooltip-max-repos_other": ""
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "",
+      "description-github-path": "",
+      "description-paste-your-git-hub-personal-access-token": "",
+      "description-repository-url": "",
+      "error-field-required": "",
+      "error-invalid-github-url": "",
+      "label-access-token": "",
+      "label-branch": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-url": "",
+      "label-storage-type": "",
+      "placeholder-branch": "",
+      "placeholder-github-path": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-local-path": "",
+      "storage-type-github": "",
+      "storage-type-local": ""
+    },
+    "delete-repository-button": {
+      "button-delete": "",
+      "confirm-delete-repository": "",
+      "success-repository-deleted": "",
+      "title-delete-repository": "",
+      "tooltip-delete-this-repository": ""
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "empty-state": {
+      "no-jobs": ""
+    },
+    "enhanced-features": {
+      "description-instant-updates": "",
+      "description-visual-previews-dashboard-updates-directly-requests": "",
+      "set-up-image-rendering": "",
+      "set-up-public-access": "",
+      "title-instant-updates-requests-webhooks": "",
+      "title-visual-previews-in-pull-requests": "",
+      "unlock-enhanced-functionality-for-git-hub": ""
+    },
+    "expanded-row": {
+      "job-specification": "",
+      "summary": "",
+      "title-error": ""
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": ""
+      },
+      "automatically-provision-and-update-dashboards": "",
+      "learn-more": "",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
+      "migrate-existing-dashboards-storage-provisioning": "",
+      "store-dashboards-in-version-controlled-storage": "",
+      "visual-previews-in-pull-requests": ""
+    },
+    "file-history-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "file-status-page": {
+      "title-error-loading-file": ""
+    },
+    "files-view": {
+      "columns": {
+        "history": "",
+        "view": ""
+      },
+      "placeholder-search": ""
+    },
+    "finish-step": {
+      "description-dashboard-previews": "",
+      "description-enable-webhooks": "",
+      "description-often-shall-instance-updates-git-hub": "",
+      "description-select-workflows-allowed-within-repository": "",
+      "error-field-required": "",
+      "label-enable-dashboard-previews": "",
+      "label-enable-webhooks": "",
+      "label-update-instance-interval-seconds": "",
+      "label-workflows": "",
+      "link-setup-image-rendering": "",
+      "placeholder": "",
+      "placeholder-readonly-repository": "",
+      "text-requires-image-rendering": ""
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "",
+      "placeholder-search": ""
+    },
+    "getting-started": {
+      "alert-temporary-outage": "",
+      "engaging-graphic": "",
+      "modal-description-public-access": "",
+      "modal-description-required-features": "",
+      "modal-title-set-up-public-access": "",
+      "modal-title-set-up-required-features": "",
+      "step-description-copy-url": "",
+      "step-description-enable-feature-toggles": "",
+      "step-description-start-ngrok": "",
+      "step-description-update-grafana-config": "",
+      "step-title-copy-url": "",
+      "step-title-enable-feature-toggles": "",
+      "step-title-start-ngrok": "",
+      "step-title-update-grafana-config": "",
+      "title-setting-connection-could-cause-temporary-outage": ""
+    },
+    "getting-started-page": {
+      "subtitle-provisioning-feature": "",
+      "text-remote-provisioning": ""
+    },
+    "history-view": {
+      "not-found": ""
+    },
+    "home-page": {
+      "button-delete-repositories": "",
+      "configured-repositories-while-running-legacy-storage": "",
+      "confirm-delete-repositories": "",
+      "remove-all-configured-repositories": "",
+      "subtitle": "",
+      "success-all-repositories-deleted": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-getting-started": "",
+      "tab-getting-started-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-repositories": "",
+      "tab-repositories-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title-delete-all-configured-repositories": "",
+      "title-legacy-storage-detected": ""
+    },
+    "job-status": {
+      "error-unknown": "",
+      "label-view-details": "",
+      "starting": "",
+      "status": {
+        "title-error-running-job": "",
+        "title-job-completed-successfully": ""
+      },
+      "summary": ""
+    },
+    "job-step": {
+      "error-failed-to-start": "",
+      "error-invalid-response": "",
+      "error-job-failed": ""
+    },
+    "migrate-step": {
+      "description-migrating-dashboards": ""
+    },
+    "pull-step": {
+      "description-pulling-content": ""
+    },
+    "recent-jobs": {
+      "active-jobs": "",
+      "column-action": "",
+      "column-duration": "",
+      "column-message": "",
+      "column-started": "",
+      "column-status": "",
+      "error-loading": "",
+      "jobs": ""
+    },
+    "repository-actions": {
+      "settings": "",
+      "source-code": ""
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": ""
+      },
+      "settings": "",
+      "view": ""
+    },
+    "repository-health": {
+      "details": "",
+      "no-errors-found": "",
+      "title-repository-is-healthy": "",
+      "title-repository-is-unhealthy": ""
+    },
+    "repository-link": {
+      "grafana-repository": "",
+      "view-folder": "",
+      "view-repository": ""
+    },
+    "repository-overview": {
+      "checked": "",
+      "finished": "",
+      "health": "",
+      "job-id": "",
+      "last-ref": "",
+      "messages": "",
+      "pull-status": "",
+      "resources": "",
+      "started": "",
+      "status": "",
+      "view-folder": "",
+      "webhook": ""
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "",
+        "view-dashboard": "",
+        "view-folder": ""
+      },
+      "placeholder-search": ""
+    },
+    "repository-status-page": {
+      "back-to-repositories": "",
+      "cleaning-up-resources": "",
+      "legacy-storage-message": "",
+      "not-found": "",
+      "not-found-message": "",
+      "repository-config-exists-configuration": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title": "",
+      "title-legacy-storage": "",
+      "title-queued-for-deletion": ""
+    },
+    "request-error": {
+      "failed-to-migrate": "",
+      "failed-to-save": "",
+      "failed-to-sync": "",
+      "operation-failed": ""
+    },
+    "resource-view": {
+      "base": "",
+      "dashboard-preview": "",
+      "existing-dashboard": "",
+      "history": "",
+      "repository": "",
+      "title-error-saving-file": ""
+    },
+    "setup-modal": {
+      "done": "",
+      "next": "",
+      "previous": ""
+    },
+    "sidebar-item": {
+      "label-completed-step": "",
+      "label-current-step": "",
+      "label-pending-step": ""
+    },
+    "sync-repository": {
+      "body-edit-configuration": "",
+      "button-edit": "",
+      "error-pulling-resources": "",
+      "pull": "",
+      "success-pull-started": "",
+      "title-pull-not-enabled": "",
+      "tooltip-unhealthy-repository": ""
+    },
+    "token-permissions-info": {
+      "access": "",
+      "contents": "",
+      "github-instructions": "",
+      "metadata": "",
+      "permission": "",
+      "pull-requests": "",
+      "read-and-write": "",
+      "readonly": "",
+      "webhooks": ""
+    },
+    "wizard": {
+      "button-finish": "",
+      "button-next": "",
+      "button-start": "",
+      "step-bootstrap": "",
+      "step-connect": "",
+      "step-finish": "",
+      "step-resources": "",
+      "title-bootstrap": "",
+      "title-connect": "",
+      "title-finish": "",
+      "title-migrate": "",
+      "title-pull": ""
+    },
+    "wizard-content": {
+      "button-cancel": "",
+      "button-cancelling": "",
+      "button-submitting": "",
+      "error-failed-to-delete": "",
+      "error-instance-repository-exists": "",
+      "success-repository-deleted": "",
+      "success-repository-saved": "",
+      "title-repository-verification-failed": ""
     }
   },
   "public-dashboard": {
