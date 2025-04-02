@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -219,7 +218,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	for i, item := range parsedResults.Hits {
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
 			OrgID:     query.OrgID,
 			Title:     item.Title,
