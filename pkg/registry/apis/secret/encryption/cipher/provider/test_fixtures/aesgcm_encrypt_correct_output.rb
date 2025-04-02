@@ -29,10 +29,10 @@ def to_hex(s)
   s.unpack('H*').first
 end
 
-# Salt         Nonce          Encrypted
-# │              │             Payload
-# │              V               │
-# │  ┌───────────────────────┐   │
-# └►│SSSSSSSNNNNNNNEEEEEEEEE│◄─┘
-#    └───────────────────────┘
+# Salt       Nonce          Encrypted
+# |            |             Payload 
+# |            |                |    
+# |  +---------v-------------+  |    
+# +-->SSSSSSSNNNNNNNEEEEEEEEE<--+    
+#    +-----------------------+       
 printf("%s%s%s%s%s\n", to_hex(salt), to_hex(nonce), cipher.final, to_hex(encrypted), to_hex(cipher.auth_tag))

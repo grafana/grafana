@@ -13,6 +13,14 @@ var _ cipher.Decrypter = aesCfbDecipher{}
 type aesCfbDecipher struct{}
 
 func (aesCfbDecipher) Decrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
+	// payload is formatted:
+	// Salt       Nonce          Encrypted
+	// |            |             Payload
+	// |            |                |
+	// |  +---------v-------------+  |
+	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
+	//    +-----------------------+
+
 	if len(payload) < cipher.SaltLength+aes.BlockSize {
 		return nil, ErrPayloadTooShort
 	}

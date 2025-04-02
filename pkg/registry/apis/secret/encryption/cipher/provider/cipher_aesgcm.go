@@ -55,12 +55,12 @@ func (c aesGcmCipher) Encrypt(_ context.Context, payload []byte, secret string) 
 
 	ciphertext := gcm.Seal(nil, nonce, payload, nil)
 
-	// Salt         Nonce          Encrypted
-	// │              │             Payload
-	// │              V               │
-	// │  ┌───────────────────────┐   │
-	// └►│SSSSSSSNNNNNNNEEEEEEEEE│◄─┘
-	//    └───────────────────────┘
+	// Salt       Nonce          Encrypted
+	// |            |             Payload
+	// |            |                |
+	// |  +---------v-------------+  |
+	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
+	//    +-----------------------+
 	prefix := append(salt, nonce...)
 	ciphertext = append(prefix, ciphertext...)
 
@@ -69,12 +69,12 @@ func (c aesGcmCipher) Encrypt(_ context.Context, payload []byte, secret string) 
 
 func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
 	// The input payload looks like:
-	// Salt         Nonce          Encrypted
-	// │              │             Payload
-	// │              V               │
-	// │  ┌───────────────────────┐   │
-	// └►│SSSSSSSNNNNNNNEEEEEEEEE│◄─┘
-	//    └───────────────────────┘
+	// Salt       Nonce          Encrypted
+	// |            |             Payload
+	// |            |                |
+	// |  +---------v-------------+  |
+	// +-->SSSSSSSNNNNNNNEEEEEEEEE<--+
+	//    +-----------------------+
 	if len(payload) < cipher.SaltLength {
 		return nil, ErrPayloadTooShort
 	}
