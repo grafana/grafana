@@ -84,7 +84,6 @@ interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   getDashboardFromCache(cacheKey: string): T | null;
   loadDashboard(options: LoadDashboardOptions): Promise<void>;
-  loadHomeDashboard(options: LoadDashboardOptions): Promise<DashboardScene | null>;
   transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
   loadSnapshot(slug: string): Promise<void>;
