@@ -188,9 +188,15 @@ export function doTempoMetricsStreaming(
 function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): DataQueryResponse {
   const result = combineResponses(cloneQueryResponse(acc), newResult);
 
-  // Remove duplicate time field values for all frames
+  // Remove duplicate time field values for all frames except exemplar frames
   result.data = result.data.map((frame: DataFrame) => {
     let newFrame = frame;
+
+    // Skip deduplication for exemplar frames to preserve their structure
+    if (frame.name === 'exemplar' && frame.meta?.dataTopic === 'annotations') {
+      return newFrame;
+    }
+
     const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
     if (timeFieldIndex >= 0) {
       removeDuplicateTimeFieldValues(frame, timeFieldIndex);
@@ -207,6 +213,11 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): Data
  * Remove duplicate time field values from the DataFrame. This is necessary because Tempo sends partial results to Grafana
  * that we append to an existing DataFrame. This can result in duplicate values for the same timestamp so this function removes
  * older values and keeps the latest value.
+ *
+ * Note: This function should NOT be used for exemplar frames, as exemplars with identical timestamps can have different
+ * trace IDs and metadata. For exemplar frames, this function would break the relationship between time fields and
+ * trace data, resulting in data loss and incorrect visualizations.
+ *
  * @param accFrame
  * @param timeFieldIndex
  */
