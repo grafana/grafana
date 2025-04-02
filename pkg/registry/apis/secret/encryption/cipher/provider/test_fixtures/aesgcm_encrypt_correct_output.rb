@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # Used by ../cipher_aesgcm_test.go
 # Why Ruby? It has a mostly available OpenSSL library that can be easily fetched (and most who have Ruby already have it!). And it is easy to read for this purpose.
 
