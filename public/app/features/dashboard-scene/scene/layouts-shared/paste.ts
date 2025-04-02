@@ -15,6 +15,7 @@ import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayout
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { GridCell } from '../layout-default/findSpaceForNewPanel';
 import { AutoGridItem } from '../layout-responsive-grid/ResponsiveGridItem';
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';
@@ -95,13 +96,14 @@ export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridIte
   return new AutoGridItem({ body: panel.state.body, key: panel.state.key, variableName: panel.state.variableName });
 }
 
-export function getDashboardGridItemFromClipboard(scene: DashboardScene): DashboardGridItem {
+export function getDashboardGridItemFromClipboard(scene: DashboardScene, gridCell: GridCell | null): DashboardGridItem {
   const panel = getPanelFromClipboard(scene);
   if (panel instanceof DashboardGridItem) {
     return panel;
   }
   // Convert to DashboardGridItem
   return new DashboardGridItem({
+    ...gridCell,
     body: panel.state.body,
     key: panel.state.key,
     variableName: panel.state.variableName,

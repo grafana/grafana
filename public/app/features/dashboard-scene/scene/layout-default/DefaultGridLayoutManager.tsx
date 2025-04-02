@@ -137,7 +137,8 @@ export class DefaultGridLayoutManager
   }
 
   public pastePanel() {
-    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this));
+    const emptySpace = findSpaceForNewPanel(this.state.grid);
+    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
     this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
     clearClipboard();
