@@ -606,5 +606,5 @@ exclude github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
 
-// k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.32.3 is released.
+// k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.33.x is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
