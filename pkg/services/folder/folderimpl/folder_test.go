@@ -233,7 +233,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
-				dashboardFolder := dashboards.NewDashboardFolder("Folder")
+				dashboardFolder := dashboards.NewDashboardFolder("Folder", "descr")
 				dashboardFolder.ID = rand.Int63()
 				dashboardFolder.UID = util.GenerateShortUID()
 				dashboardFolder.OrgID = orgID
@@ -246,6 +246,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 				require.NoError(t, err)
 				assert.Equal(t, "Folder", f.Title)
+				assert.Equal(t, "descr", f.Description)
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				title := "TEST-Folder"
