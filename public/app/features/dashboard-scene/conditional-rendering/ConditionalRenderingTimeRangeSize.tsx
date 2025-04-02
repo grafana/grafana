@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { rangeUtil, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
