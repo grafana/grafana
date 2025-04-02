@@ -3903,6 +3903,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "lastEvent": {
+            "type": "integer",
+            "format": "int64"
+          },
           "secret": {
             "type": "string"
           },
