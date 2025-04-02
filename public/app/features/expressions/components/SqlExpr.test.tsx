@@ -47,4 +47,15 @@ describe('SqlExpr', () => {
     // The SQLEditor should receive the existing expression
     expect(query.expression).toBe(existingExpression);
   });
+
+  it('adds alerting format when alerting prop is true', () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const query = { refId: 'expr1', type: 'sql' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting />);
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.format).toBe('alerting');
+  });
 });

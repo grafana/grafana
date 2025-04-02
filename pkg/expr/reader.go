@@ -136,7 +136,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Properties = q
 			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
 			cellLimit := 0 // zero means no limit
-			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, int64(cellLimit))
+			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, int64(cellLimit))
 		}
 
 	case QueryTypeThreshold:
