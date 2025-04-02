@@ -72,5 +72,11 @@ export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
         marginRight: theme.v1.spacing.sm,
       },
     }),
+    buttonGroup: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.v1.spacing.md,
+      marginBottom: theme.v1.spacing.md,
+    }),
   };
 };
