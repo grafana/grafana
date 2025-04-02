@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { useStyles2 } from '@grafana/ui';
 
-import { ExpressionQuery } from '../types';
+import { SqlExpressionQuery } from '../types';
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -22,14 +22,16 @@ const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
 
 interface Props {
   refIds: Array<SelectableValue<string>>;
-  query: ExpressionQuery;
-  onChange: (query: ExpressionQuery) => void;
+  query: SqlExpressionQuery;
+  onChange: (query: SqlExpressionQuery) => void;
+  /** Should the `format` property be set to `alerting`? */
+  alerting?: boolean;
 }
 
-export const SqlExpr = ({ onChange, refIds, query }: Props) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `-- Run MySQL-dialect SQL against the tables returned from your data sources.
--- Data source queries (ie "${vars[0]}") are available as tables and referenced by query-name 
+-- Data source queries (ie "${vars[0]}") are available as tables and referenced by query-name
 -- Fields are available as columns, as returned from the data source.
 SELECT *
 FROM ${vars[0]}
@@ -42,6 +44,7 @@ LIMIT 10`;
     onChange({
       ...query,
       expression,
+      format: alerting ? 'alerting' : undefined,
     });
   };
 

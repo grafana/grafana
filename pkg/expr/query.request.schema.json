@@ -942,6 +942,7 @@
             "type": "object",
             "required": [
               "expression",
+              "format",
               "type",
               "refId"
             ],
@@ -975,6 +976,9 @@
                 "examples": [
                   "SELECT * FROM A LIMIT 1"
                 ]
+              },
+              "format": {
+                "type": "string"
               },
               "hide": {
                 "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
