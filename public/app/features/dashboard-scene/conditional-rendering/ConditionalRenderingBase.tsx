@@ -57,6 +57,14 @@ export abstract class ConditionalRenderingBase<
     return this._getConditionalLogicRoot().getItemType();
   }
 
+  public isItemSupported(): boolean {
+    if (!this.supportedItemTypes) {
+      return true;
+    }
+
+    return this.supportedItemTypes.includes(this.getItemType());
+  }
+
   public notifyChange() {
     this._getConditionalLogicRoot().notifyChange();
   }
@@ -64,14 +72,6 @@ export abstract class ConditionalRenderingBase<
   public setStateAndNotify(state: Partial<S>) {
     this.setState(state);
     this.notifyChange();
-  }
-
-  public isItemSupported(): boolean {
-    if (!this.supportedItemTypes) {
-      return true;
-    }
-
-    return this.supportedItemTypes.includes(this.getItemType());
   }
 
   private _getConditionalLogicRoot(): ConditionalRendering {

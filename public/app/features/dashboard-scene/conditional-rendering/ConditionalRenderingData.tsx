@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
-import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
@@ -33,9 +32,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     return t(
       'dashboard.conditional-rendering.conditions.data.info',
       'Show or hide the {{type}} based on query results.',
-      {
-        type: this.getItemType(),
-      }
+      { type: this.getItemType() }
     );
   }
 
@@ -46,31 +43,21 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   private _activationHandler() {
-    let panelDataProviders: SceneDataProvider[] = [];
+    if (!this.isItemSupported()) {
+      return;
+    }
 
     const item = this.getItem();
 
     if (item instanceof AutoGridItem) {
-      const panelData = sceneGraph.getData(item.state.body);
+      const dataProvider = sceneGraph.getData(item.state.body);
 
-      if (panelData) {
-        panelDataProviders.push(panelData);
+      if (!dataProvider) {
+        return;
       }
-    } else if (item instanceof RowItem) {
-      const panels = item.getLayout().getVizPanels();
 
-      for (const panel of panels) {
-        const panelData = sceneGraph.getData(panel);
-
-        if (panelData) {
-          panelDataProviders.push(panelData);
-        }
-      }
-    }
-
-    panelDataProviders.forEach((dataProvider) => {
       this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
-    });
+    }
   }
 
   public evaluate(): boolean {
@@ -78,42 +65,36 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       return true;
     }
 
-    const { value } = this.state;
-
-    if (!value) {
-      return true;
-    }
-
-    let data: PanelData[] = [];
-
-    const item = this.getItem();
-
-    if (item instanceof AutoGridItem) {
-      const panelData = sceneGraph.getData(item.state.body).state.data;
-      if (panelData) {
-        data.push(panelData);
-      }
-    }
-
-    if (!data.length) {
-      return false;
-    }
-
-    for (let panelDataIdx = 0; panelDataIdx < data.length; panelDataIdx++) {
-      const series = data[panelDataIdx]?.series ?? [];
-
-      for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
-        if (series[seriesIdx].length > 0) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    const hasData = this._hasData();
+    return (this.state.value && hasData) || (!this.state.value && !hasData);
   }
 
   public serialize(): ConditionalRenderingDataKind {
     return { kind: 'ConditionalRenderingData', spec: { value: this.state.value } };
+  }
+
+  private _hasData(): boolean {
+    const item = this.getItem();
+
+    let data: PanelData | undefined;
+
+    if (item instanceof AutoGridItem) {
+      data = sceneGraph.getData(item.state.body).state.data;
+    }
+
+    if (!data) {
+      return false;
+    }
+
+    const series = data?.series ?? [];
+
+    for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
+      if (series[seriesIdx].length > 0) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
