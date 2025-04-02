@@ -3,6 +3,8 @@ package models
 import (
 	"net/http"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 )
 
 type DatasourceInfo struct {
@@ -22,4 +24,6 @@ type DatasourceInfo struct {
 
 	// FlightSQL grpc connection
 	InsecureGrpc bool `json:"insecureGrpc"`
+
+	ProxyClient proxy.Client
 }
