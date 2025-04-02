@@ -127,6 +127,8 @@ export function useQueryMappers(dataSourceName: string): QueryMappers {
     switch (settings?.type) {
       case 'loki':
       case 'prometheus':
+      case 'grafana-amazonprometheus-datasource':
+      case 'grafana-azureprometheus-datasource':
         return {
           mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
           mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),

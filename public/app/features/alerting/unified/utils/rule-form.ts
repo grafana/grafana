@@ -468,7 +468,11 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
+  const isLokiOrPrometheus =
+    dataSource?.type === DataSourceType.Prometheus ||
+    dataSource?.type === DataSourceType.AmazonPrometheus ||
+    dataSource?.type === DataSourceType.AzurePrometheus ||
+    dataSource?.type === DataSourceType.Loki;
   return [
     {
       refId: 'A',
@@ -864,7 +868,12 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
 
   // if the datasource is not prometheus or loki, return "undefined"
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+  if (
+    type !== DataSourceType.Prometheus &&
+    type !== DataSourceType.AmazonPrometheus &&
+    type !== DataSourceType.AzurePrometheus &&
+    type !== DataSourceType.Loki
+  ) {
     return undefined;
   }
 
@@ -874,6 +883,10 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
 
-  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  const isInstant =
+    type ===
+    (DataSourceType.Prometheus || type === DataSourceType.AmazonPrometheus || type === DataSourceType.AzurePrometheus)
+      ? isInstantForPrometheus
+      : isInstantForLoki;
   return isInstant;
 }

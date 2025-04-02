@@ -101,7 +101,11 @@ export const AlertRuleNameAndMetric = () => {
                   current={field.value}
                   noDefault
                   // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
-                  filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+                  filter={(ds: DataSourceInstanceSettings) =>
+                    ds.type === 'prometheus' ||
+                    ds.type === 'grafana-amazonprometheus-datasource' ||
+                    ds.type === 'grafana-azureprometheus-datasource'
+                  }
                   onChange={(ds: DataSourceInstanceSettings) => {
                     setValue('targetDatasourceUid', ds.uid);
                   }}
