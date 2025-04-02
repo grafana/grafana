@@ -43,8 +43,6 @@ describe('InstallControlsButton', () => {
         <InstallControlsButton plugin={{ ...plugin, angularDetected: true }} pluginStatus={PluginStatus.INSTALL} />
       </TestProvider>
     );
-    // setup({ angularDetected: true });
-
     const el = screen.getByRole('button');
     expect(el).toHaveTextContent(/install/i);
     expect(el).toBeVisible();
@@ -57,7 +55,6 @@ describe('InstallControlsButton', () => {
         <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.UNINSTALL} />
       </TestProvider>
     );
-    // screen.debug();
     const el = screen.getByRole('button');
     expect(el).toHaveTextContent(/uninstall/i);
     expect(el).toBeVisible();
