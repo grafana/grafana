@@ -84,7 +84,6 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 			UID:          c.Query("parentUid"),
 			Permission:   permission,
 			SignedInUser: c.SignedInUser,
-			RefOnly:      true, // nolint:staticcheck
 		}
 
 		folders, err := hs.folderService.GetChildren(c.Req.Context(), q)

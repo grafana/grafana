@@ -385,14 +385,14 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 	return f, nil
 }
 
-func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.getChildrenFromApiServer(ctx, q)
 	}
 	return s.GetChildrenLegacy(ctx, q)
 }
 
-func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -465,7 +465,7 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 	return children, nil
 }
 
-func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -513,7 +513,7 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
 		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", f.OrgID, "uid", f.UID)
+			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", q.OrgID, "uid", f.UID)
 		}
 		// always expose the dashboard store sequential ID
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
@@ -527,21 +527,21 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil
 }
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
-func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.Folder, error) {
+func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.FolderReference, error) {
 	start := time.Now()
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, q, forceLegacy)
 	if err != nil {
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
-	var rootFolders []*folder.Folder
+	var rootFolders []*folder.FolderReference
 	if forceLegacy {
 		rootFolders, err = s.GetChildrenLegacy(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
 	} else {
@@ -552,9 +552,9 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
+	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
-	return availableNonRootFolders, nil
+	return dedupAvailableNonRootFolders, nil
 }
 
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.Folder, error) {
@@ -618,12 +618,17 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder, orgID int64) []*folder.Folder {
-	allFolders := append(folders, rootFolders...)
-	foldersDedup := make([]*folder.Folder, 0)
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference, orgID int64) []*folder.FolderReference {
+	foldersRef := make([]*folder.FolderReference, len(folders))
+	for i, f := range folders {
+		foldersRef[i] = f.ToFolderReference()
+	}
+
+	allFolders := append(foldersRef, rootFolders...)
+	foldersDedup := make([]*folder.FolderReference, 0)
 
 	for _, f := range folders {
-		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
+		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.FolderReference) bool {
 			return f.ParentUID == folder.UID
 		})
 
@@ -638,7 +643,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 			}
 
 			for _, parentUID := range parentUIDs {
-				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
+				contains := slices.ContainsFunc(allFolders, func(f *folder.FolderReference) bool {
 					return f.UID == parentUID
 				})
 				if contains {
@@ -649,7 +654,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		}
 
 		if !isSubfolder {
-			foldersDedup = append(foldersDedup, f)
+			foldersDedup = append(foldersDedup, f.ToFolderReference())
 		}
 	}
 	return foldersDedup

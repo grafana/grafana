@@ -5,7 +5,7 @@ import (
 )
 
 type fakeStore struct {
-	ExpectedChildFolders  []*Folder
+	ExpectedChildFolders  []*FolderReference
 	ExpectedParentFolders []*Folder
 	ExpectedFolders       []*Folder
 	ExpectedFolder        *Folder
@@ -47,7 +47,7 @@ func (f *fakeStore) GetParents(ctx context.Context, q GetParentsQuery) ([]*Folde
 	return f.ExpectedParentFolders, f.ExpectedError
 }
 
-func (f *fakeStore) GetChildren(ctx context.Context, cmd GetChildrenQuery) ([]*Folder, error) {
+func (f *fakeStore) GetChildren(ctx context.Context, cmd GetChildrenQuery) ([]*FolderReference, error) {
 	return f.ExpectedChildFolders, f.ExpectedError
 }
 
