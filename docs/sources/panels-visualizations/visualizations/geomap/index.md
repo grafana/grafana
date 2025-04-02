@@ -370,9 +370,6 @@ The layer can also render a route with arrows.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" alt="Geomap panel Route arrows with size" >}}
 
-By using Group by, you can ensure that data points are only connected within groups sharing the same value, preventing unintended connections between unrelated points.
-Additionally, Use Unique Colors can help visually distinguish different routes by assigning a unique color to each group.
-
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
