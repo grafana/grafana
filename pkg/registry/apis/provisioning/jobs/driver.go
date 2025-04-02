@@ -5,11 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
-	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // Store is an abstraction for the storage API.
@@ -152,12 +153,21 @@ func (d *jobDriver) drive(ctx context.Context) error {
 
 	// Process the job.
 	start := time.Now()
+	job.Status.Started = start.UnixMilli()
 	err = d.processJob(ctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
 
+	// Mark the job as failed and remove from queue
 	if err != nil {
-		return apifmt.Errorf("failed to process job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		job.Status.State = provisioning.JobStateError
+		job.Status.Errors = append(job.Status.Errors, err.Error())
+	}
+
+	job.Status.Progress = 0 // clear progressbar
+	job.Status.Finished = end.UnixMilli()
+	if !job.Status.State.Finished() {
+		job.Status.State = provisioning.JobStateSuccess // no error
 	}
 
 	// Mark the job as completed.

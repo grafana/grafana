@@ -522,7 +522,7 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	uids := make([]string, 0, len(folders))
 	// now keep only UIDs of folder in which user can read rules.
 	for _, f := range folders {
-		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace(*f))
+		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace(*f.ToFolderReference()))
 		if err != nil {
 			return nil, err
 		}

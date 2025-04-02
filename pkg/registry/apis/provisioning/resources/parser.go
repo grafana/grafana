@@ -121,10 +121,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return parsed, err
 	}
 
-	if info.Path == "" {
-		return parsed, errors.New("path is required")
-	}
-
 	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.Debug("failed to find GVK of the input data", "error", err)
