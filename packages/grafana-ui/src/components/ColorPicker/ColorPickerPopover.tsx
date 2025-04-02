@@ -155,7 +155,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
-      overflowY: 'auto',
     }),
     colorPickerPopoverTabs: css({
       display: 'flex',
