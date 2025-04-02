@@ -10,10 +10,12 @@ import {
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { getRowFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -91,15 +93,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
   }
 
-  public addNewRow(): RowItem {
-    const row = new RowItem({ isNew: true });
-    this.setState({ rows: [...this.state.rows, row] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
-    return row;
+  public addNewRow(row?: RowItem): RowItem {
+    const newRow = row ?? new RowItem({ isNew: true });
+    this.setState({ rows: [...this.state.rows, newRow] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    return newRow;
   }
 
   public editModeChanged(isEditing: boolean) {
     this.state.rows.forEach((row) => row.getLayout().editModeChanged?.(isEditing));
+  }
+
+  public pasteRow() {
+    const scene = getDashboardSceneFor(this);
+    const row = getRowFromClipboard(scene);
+    this.addNewRow(row);
   }
 
   public activateRepeaters() {

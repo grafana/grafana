@@ -8,13 +8,19 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { getDefaultVizPanel } from '../../utils/utils';
+import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
@@ -88,6 +94,16 @@ export class TabItem
   public onDelete() {
     const layout = sceneGraph.getAncestor(this, TabsLayoutManager);
     layout.removeTab(this);
+  }
+
+  public serialize(): TabsLayoutTabKind {
+    return serializeTab(this);
+  }
+
+  public onCopy() {
+    const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
+    clearClipboard();
+    store.set(LS_TAB_COPY_KEY, JSON.stringify({ elements, tab: this.serialize() }));
   }
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {

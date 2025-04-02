@@ -76,6 +76,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Duplicate, like clone but with new keys
    */
   duplicate(): DashboardLayoutManager;
+
+  /**
+   * Paste a panel from the clipboard
+   */
+  pastePanel?(): void;
 }
 
 export interface LayoutManagerSerializer {

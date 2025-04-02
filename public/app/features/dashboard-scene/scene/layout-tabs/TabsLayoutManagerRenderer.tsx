@@ -7,6 +7,7 @@ import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
+import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -17,6 +18,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
+  const { hasCopiedTab } = useClipboardState();
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -34,6 +36,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewTab()}>
                 <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
               </Button>
+              {hasCopiedTab && (
+                <Button icon="plus" variant="primary" fill="text" onClick={() => model.pasteTab()}>
+                  <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
+                </Button>
+              )}
             </div>
           )}
         </div>

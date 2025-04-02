@@ -12,7 +12,8 @@ interface LayoutSerializerRegistryItem extends RegistryItem {
   deserialize: (
     layout: DashboardV2Spec['layout'],
     elements: DashboardV2Spec['elements'],
-    preload: boolean
+    preload: boolean,
+    panelIdGenerator?: () => number
   ) => DashboardLayoutManager;
 }
 

@@ -1,12 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Card, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
-import store from 'app/core/store';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -29,15 +26,6 @@ interface CardConfig {
 export function DashboardAddPane({ editPane }: Props) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(editPane);
-  const [hasCopiedPanel, setHasCopiedPanel] = useState(store.exists(LS_PANEL_COPY_KEY));
-
-  useEffect(() => {
-    const unsubscribe = store.subscribe(LS_PANEL_COPY_KEY, () => {
-      setHasCopiedPanel(store.exists(LS_PANEL_COPY_KEY));
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const cards: CardConfig[] = [
     {
@@ -73,14 +61,6 @@ export function DashboardAddPane({ editPane }: Props) {
       title: t('dashboard.edit-pane.add.tab.title', 'Break up your dashboard into different horizontal tabs'),
       testId: selectors.components.PageToolbar.itemButton('add_tab'),
       onClick: () => dashboard.onCreateNewTab(),
-    },
-    {
-      hide: !hasCopiedPanel,
-      icon: 'clipboard-alt',
-      heading: t('dashboard.edit-pane.add.paste-panel.heading', 'Paste panel'),
-      title: t('dashboard.edit-pane.add.paste-panel.title', 'Paste a panel from the clipboard'),
-      testId: selectors.components.PageToolbar.itemButton('paste_panel'),
-      onClick: () => dashboard.pastePanel(),
     },
   ];
 
