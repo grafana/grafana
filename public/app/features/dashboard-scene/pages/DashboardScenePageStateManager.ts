@@ -113,7 +113,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     return this.cache;
   }
 
-  private async loadHomeDashboard(): Promise<DashboardScene | null> {
+  protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
     const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
@@ -138,7 +138,16 @@ abstract class DashboardScenePageStateManagerBase<T>
       rsp.meta.canStar = false;
     }
 
-    return transformSaveModelToScene(rsp);
+    return rsp;
+  }
+
+  private async loadHomeDashboard(): Promise<DashboardScene | null> {
+    const rsp = await this.fetchHomeDashboard();
+    if (rsp) {
+      return transformSaveModelToScene(rsp);
+    }
+
+    return null;
   }
 
   public async loadSnapshot(slug: string) {
@@ -323,6 +332,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     try {
       switch (route) {
+        case DashboardRoutes.Home:
+          // For legacy dashboarding we keep this logic here, as dashboard can be loaded through state manager's fetchDashboard method directly
+          // See DashboardPageProxy.
+          const homeDashboard = await this.fetchHomeDashboard();
+
+          if (!homeDashboard) {
+            return null;
+          }
+
+          rsp = homeDashboard;
+          break;
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
