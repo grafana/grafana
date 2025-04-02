@@ -706,8 +706,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{},
 			},
-			Query:  "*test*",
-			Limit:  folderSearchLimit}).Return(&resource.ResourceSearchResponse{
+			Query: "*test*",
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
