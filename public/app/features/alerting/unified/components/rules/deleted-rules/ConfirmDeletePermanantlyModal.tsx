@@ -13,9 +13,9 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 };
 
 export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: ModalProps) => {
-  const [remove] = alertRuleApi.endpoints.removePermanentlyDeletedRule.useMutation();
   const title = t('alerting.deleted-rules.delete-modal.title', 'Delete permanently an alert rule');
   const confirmText = t('alerting.deleted-rules.delete-modal.confirm', 'Yes, delete permanently');
+  const [remove] = alertRuleApi.endpoints.permanentlyDeleteRule.useMutation();
   const appNotification = useAppNotification();
 
   const styles = useStyles2(getStyles);
