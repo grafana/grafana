@@ -97,7 +97,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     alignItems: 'center',
     position: 'absolute',
-    top: 0,
     right: 0,
     background: theme.colors.warning.main,
     color: theme.colors.warning.contrastText,
@@ -111,12 +110,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT = 500;
-
 // Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible by expanding
 // parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
 // interactions will be without any lag for most users.
 const defaultNodeCountLimit = 200;
+
+const layeredLayoutNodeWarningThreshold = 500;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -254,9 +253,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           <RadioButtonGroup
             size="sm"
             options={[
-              ...(processed.nodes.length <= NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT
-                ? [{ label: 'Layered', value: LayoutAlgorithm.Layered }]
-                : []),
+              { label: 'Layered', value: LayoutAlgorithm.Layered },
               { label: 'Force', value: LayoutAlgorithm.Force },
               { label: 'Grid', value: LayoutAlgorithm.Grid },
             ]}
@@ -342,10 +339,26 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
       </div>
 
       {hiddenNodesCount > 0 && (
-        <div className={styles.alert} aria-label={'Nodes hidden warning'}>
+        <div
+          className={styles.alert}
+          style={{ top: layoutAlgorithm ? '0px' : '40px' }}
+          aria-label={'Nodes hidden warning'}
+        >
           <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
         </div>
       )}
+
+      {config.layoutAlgorithm === LayoutAlgorithm.Layered &&
+        processed.nodes.length > layeredLayoutNodeWarningThreshold && (
+          <div
+            className={styles.alert}
+            style={{ top: layoutAlgorithm ? '30px' : '70px' }}
+            aria-label={'Layered layout performance warning'}
+          >
+            <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {processed.nodes.length}{' '}
+            nodes.
+          </div>
+        )}
 
       {MenuComponent}
     </div>

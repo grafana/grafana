@@ -5,7 +5,6 @@ import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
 
-import { NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT } from './NodeGraph';
 import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { LayoutAlgorithm } from './panelcfg.gen';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
@@ -116,15 +115,13 @@ export function useLayout(
       return;
     }
 
-    // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
+    // Layered layout is better but also more expensive.
     let layoutType: 'force' | 'layered' = 'force';
     let algorithmType = LayoutAlgorithm.Force;
 
-    if (rawNodes.length <= NODE_LIMIT_TO_SHOW_LAYERED_LAYOUT) {
-      if (config.layoutAlgorithm === LayoutAlgorithm.Layered) {
-        layoutType = 'layered';
-        algorithmType = LayoutAlgorithm.Layered;
-      }
+    if (config.layoutAlgorithm === LayoutAlgorithm.Layered) {
+      layoutType = 'layered';
+      algorithmType = LayoutAlgorithm.Layered;
     }
 
     // Check if data has changed since last render
