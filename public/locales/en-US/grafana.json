@@ -1631,7 +1631,9 @@
       }
     },
     "new-panel": {
-      "configure-button": "Configure panel"
+      "configure-button": "Configure",
+      "menu-open-panel-editor": "Configure",
+      "menu-use-library-panel": "Use library panel"
     },
     "new-panel-title": "New panel",
     "options": {

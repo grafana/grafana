@@ -1058,6 +1058,11 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default false
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
+  /**
   * Specify the locale so we can show the correct format for numbers and dates
   */
   localeFormatPreference?: boolean;
