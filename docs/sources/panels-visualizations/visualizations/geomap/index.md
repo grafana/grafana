@@ -388,6 +388,10 @@ Additionally, Use Unique Colors can help visually distinguish different routes b
 | Use Unique Colors | assign unique colors to each group. Set to `false` by default. |
 <!-- prettier-ignore-end -->
 
+##### Group by
+
+Using the **Group by** option you can ensure that data points are only connected within groups sharing the same value, preventing unintended connections between unrelated points. Use it with the **Use unique colors** option to help visually distinguish different routes by assigning a unique color to each group.
+
 [Extensions for OpenLayers - Flow Line Style](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
 #### Photos layer (Beta)
