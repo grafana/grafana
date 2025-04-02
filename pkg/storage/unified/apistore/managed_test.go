@@ -67,8 +67,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			if tt.old == nil {
 				err = checkManagerPropertiesOnCreate(tt.auth, obj)
 			} else {
-				old, err := utils.MetaAccessor(tt.old)
-				require.NoError(t, err)
+				old, _ := utils.MetaAccessor(tt.old)
 				err = checkManagerPropertiesOnUpdate(tt.auth, obj, old)
 			}
 

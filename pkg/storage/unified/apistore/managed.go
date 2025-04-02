@@ -11,14 +11,19 @@ import (
 )
 
 func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	manager, ok := obj.GetManagerProperties()
-	if !ok {
+	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
+	if kind == "" {
 		return nil
 	}
 
-	switch manager.Kind {
+	isSA := auth.GetIdentityType() == authtypes.TypeAccessPolicy || auth.GetIdentityType() == authtypes.TypeServiceAccount
+
+	switch utils.ParseManagerKindString(kind) {
+	case utils.ManagerKindUnknown:
+		return nil // not managed
+
 	case utils.ManagerKindRepo:
-		if "access-policy:provisioning" == auth.GetUID() {
+		if auth.GetUID() == "access-policy:provisioning" {
 			return nil // OK!
 		}
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
@@ -27,25 +32,25 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 			Reason:  metav1.StatusReasonForbidden,
 			Message: "Provisioned resources must be manaaged by the provisioing servie account",
 		}}
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP:
+
+	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
-		return nil // not right
-	}
+		return nil // no error
 
-	// Make sure the request is from
-	if !manager.AllowsEdits {
-		switch auth.GetIdentityType() {
-		case authtypes.TypeAccessPolicy, authtypes.TypeServiceAccount:
-			return nil // OK
+	case utils.ManagerKindTerraform, utils.ManagerKindKubectl:
+		manager, _ := obj.GetManagerProperties()
+		if manager.AllowsEdits {
+			return nil // no error anyone can do it
 		}
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "Resource is not configured to allow editing",
-		}}
+		if !isSA {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: "Resource is not configured to allow editing",
+			}}
+		}
 	}
-
 	return nil
 }
 
