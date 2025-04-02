@@ -103,9 +103,13 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
 }
 
 export function parseLogsFrame(frame: DataFrame): LogsFrame | null {
-  if (frame.meta?.type === DataFrameType.LogLines) {
-    return parseDataplaneLogsFrame(frame);
-  } else {
-    return parseLegacyLogsFrame(frame);
+  if (frame.__parsed == null) {
+    if (frame.meta?.type === DataFrameType.LogLines) {
+      frame.__parsed = parseDataplaneLogsFrame(frame);
+    } else {
+      frame.__parsed = parseLegacyLogsFrame(frame)
+    }
   }
+
+  return frame.__parsed;
 }
