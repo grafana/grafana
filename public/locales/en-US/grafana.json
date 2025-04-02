@@ -3871,19 +3871,6 @@
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
-    "migrated-counts": {
-      "alert_rule_groups": "alert rule groups",
-      "alert_rules": "alert rules",
-      "contact_points": "contact points",
-      "dashboards": "dashboards",
-      "datasources": "data sources",
-      "folders": "folders",
-      "library_elements": "library elements",
-      "mute_timings": "mute timings",
-      "notification_policies": "notification policies",
-      "notification_templates": "notification templates",
-      "plugins": "plugins"
-    },
     "migration-token": {
       "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
@@ -3982,6 +3969,19 @@
       "notification_template": "Notification Template",
       "plugin": "Plugin",
       "unknown": "Unknown"
+    },
+    "resource-types": {
+      "alert_rule": "Alert Rules",
+      "alert_rule_group": "Alert Rule Groups",
+      "contact_point": "Contact Points",
+      "dashboard": "Dashboards",
+      "datasource": "Data Sources",
+      "folder": "Folders",
+      "library_element": "Library Elements",
+      "mute_timing": "Mute Timings",
+      "notification_policy": "Notification Policies",
+      "notification_template": "Notification Templates",
+      "plugin": "Plugins"
     },
     "summary": {
       "cancel-snapshot": "Cancel snapshot",
