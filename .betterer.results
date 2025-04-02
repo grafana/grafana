@@ -3472,8 +3472,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/Logs/Logs.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/explore/Logs/LogsColumnSearch.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -3826,8 +3825,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/features/manage-dashboards/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3858,9 +3856,6 @@ exports[`better eslint`] = {
     "public/app/features/org/UserInvitePage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/org/state/actions.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/org/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3877,9 +3872,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/panel/panellinks/linkSuppliers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/panel/panellinks/link_srv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/playlist/PlaylistForm.tsx:5381": [
@@ -3986,10 +3978,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/plugins/extensions/usePluginComponents.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4078,9 +4067,6 @@ exports[`better eslint`] = {
     "public/app/features/query/state/DashboardQueryRunner/AnnotationsQueryRunner.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -4105,13 +4091,7 @@ exports[`better eslint`] = {
     "public/app/features/query/state/updateQueries.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -4122,9 +4102,6 @@ exports[`better eslint`] = {
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/search/service/sql.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/search/service/unified.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4187,9 +4164,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/teams/TeamList.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
