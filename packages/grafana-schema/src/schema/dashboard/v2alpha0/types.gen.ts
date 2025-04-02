@@ -904,6 +904,7 @@ export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
 export interface TabsLayoutTabKind {
 	kind: "TabsLayoutTab";
 	spec: TabsLayoutTabSpec;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({

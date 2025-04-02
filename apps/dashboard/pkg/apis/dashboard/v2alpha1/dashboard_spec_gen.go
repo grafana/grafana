@@ -1050,8 +1050,9 @@ func NewDashboardTabsLayoutSpec() *DashboardTabsLayoutSpec {
 
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardTabsLayoutTabSpec `json:"spec"`
+	Kind                 string                                  `json:"kind"`
+	Spec                 DashboardTabsLayoutTabSpec              `json:"spec"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabKind creates a new DashboardTabsLayoutTabKind object.

@@ -10,7 +10,7 @@ import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem
 import { RowItem } from '../scene/layout-rows/RowItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, DataConditionValue } from './types';
+import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
@@ -23,6 +23,8 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     deserialize: this.deserialize,
   };
 
+  public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['auto-grid-item'];
+
   public get title(): string {
     return t('dashboard.conditional-rendering.data.label', 'Query result');
   }
@@ -31,12 +33,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     switch (this.getItemType()) {
       case 'auto-grid-item':
         return t('dashboard.conditional-rendering.data.info.panel', 'Show or hide the panel based on query results.');
-
-      case 'row':
-        return t('dashboard.conditional-rendering.data.info.row', 'Show or hide the row based on query results.');
-
-      case 'tab':
-        return t('dashboard.conditional-rendering.data.info.tab', 'Show or hide the tab based on query results.');
 
       default:
         return t(
@@ -81,6 +77,10 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   public evaluate(): boolean {
+    if (!this.isItemSupported()) {
+      return true;
+    }
+
     const { value } = this.state;
 
     if (!value) {
@@ -95,14 +95,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       const panelData = sceneGraph.getData(item.state.body).state.data;
       if (panelData) {
         data.push(panelData);
-      }
-    } else if (item instanceof RowItem) {
-      const panels = item.getLayout().getVizPanels();
-      for (const panel of panels) {
-        const panelData = sceneGraph.getData(panel).state.data;
-        if (panelData) {
-          data.push(panelData);
-        }
       }
     }
 

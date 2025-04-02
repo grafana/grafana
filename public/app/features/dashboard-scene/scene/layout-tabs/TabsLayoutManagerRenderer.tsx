@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,6 +6,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -18,6 +19,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
+  const [, conditionalRenderingClass, conditionalRenderingPlaceholder] = useIsConditionallyHidden(currentTab);
   const { hasCopiedTab } = useClipboardState();
 
   return (
@@ -64,8 +66,9 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
           </div>
         </DragDropContext>
       </TabsBar>
-      <TabContent className={styles.tabContentContainer}>
+      <TabContent className={cx(conditionalRenderingClass, styles.tabContentContainer)}>
         {currentTab && <layout.Component model={layout} />}
+        {conditionalRenderingPlaceholder}
       </TabContent>
     </div>
   );

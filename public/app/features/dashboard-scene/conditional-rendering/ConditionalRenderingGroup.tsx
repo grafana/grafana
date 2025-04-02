@@ -137,7 +137,11 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
       />
       <ConditionalRenderingGroupCondition value={condition} onChange={(value) => model.changeCondition(value)} />
       {value.map((entry) => entry.render())}
-      <ConditionalRenderingGroupAdd hasVariables={variables.length > 0} onAdd={(itemType) => model.addItem(itemType)} />
+      <ConditionalRenderingGroupAdd
+        itemType={model.getItemType()}
+        hasVariables={variables.length > 0}
+        onAdd={(itemType) => model.addItem(itemType)}
+      />
     </Stack>
   );
 }

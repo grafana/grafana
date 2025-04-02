@@ -3,13 +3,11 @@ import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/d
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
 
 import { ConditionalRenderingBase } from './ConditionalRenderingBase';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import { ItemsWithConditionalRendering } from './types';
+import { getItemType } from './utils';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
@@ -84,17 +82,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   }
 
   public getItemType(): ItemsWithConditionalRendering {
-    const item = this.getItem();
-
-    if (item instanceof AutoGridItem) {
-      return 'auto-grid-item';
-    } else if (item instanceof RowItem) {
-      return 'row';
-    } else if (item instanceof TabItem) {
-      return 'tab';
-    }
-
-    return 'unknown';
+    return getItemType(this.getItem());
   }
 
   public static createEmpty(): ConditionalRendering {

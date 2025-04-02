@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import { ReactElement } from 'react';
 
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingKindTypes, ConditionValues, ItemsWithConditionalRendering } from './types';
@@ -31,6 +30,8 @@ export abstract class ConditionalRenderingBase<
       }
     });
   }
+
+  public readonly supportedItemTypes: ItemsWithConditionalRendering[] | undefined = undefined;
 
   public abstract readonly title: string;
 
@@ -65,6 +66,14 @@ export abstract class ConditionalRenderingBase<
     this.notifyChange();
   }
 
+  public isItemSupported(): boolean {
+    if (!this.supportedItemTypes) {
+      return true;
+    }
+
+    return this.supportedItemTypes.includes(this.getItemType());
+  }
+
   private _getConditionalLogicRoot(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
   }
@@ -74,8 +83,6 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
   model,
   withWrapper,
 }: SceneComponentProps<T> & { withWrapper: boolean }) {
-  const styles = useStyles2(getStyles);
-
   const comp = <model.Component model={model} key={model.state.key} />;
 
   if (!withWrapper) {
@@ -94,7 +101,16 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
       </Stack>
 
       <Stack direction="row" gap={1} justifyContent="stretch" alignItems="baseline">
-        <div className={styles.body}>{comp}</div>
+        <Stack flex={1} direction="column" gap={1}>
+          {comp}
+          {!model.isItemSupported() && (
+            <Alert severity="error" title="">
+              <Trans i18nKey="dashboard.conditional-rendering.unsupported-item-type">
+                This condition is not supported by the element, hence it will be ignored.
+              </Trans>
+            </Alert>
+          )}
+        </Stack>
 
         <IconButton
           aria-label={t('dashboard.conditional-rendering.shared.delete-condition', 'Delete Condition')}
@@ -105,9 +121,3 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
     </Stack>
   );
 }
-
-const getStyles = () => ({
-  body: css({
-    flex: 1,
-  }),
-});

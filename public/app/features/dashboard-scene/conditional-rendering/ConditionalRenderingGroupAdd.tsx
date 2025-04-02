@@ -4,16 +4,17 @@ import { SelectableValue } from '@grafana/data';
 import { ValuePicker } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { GroupConditionItemType } from './types';
+import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
 
 interface Props {
+  itemType: ItemsWithConditionalRendering;
   hasVariables: boolean;
   onAdd: (itemType: GroupConditionItemType) => void;
 }
 
-export const ConditionalRenderingGroupAdd = ({ hasVariables, onAdd }: Props) => {
-  const options: Array<SelectableValue<GroupConditionItemType>> = useMemo(
-    () => [
+export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: Props) => {
+  const options = useMemo<Array<SelectableValue<GroupConditionItemType>>>(() => {
+    const allOptions: Array<SelectableValue<GroupConditionItemType>> = [
       { label: t('dashboard.conditional-rendering.group.add.data', 'Query result'), value: 'data' },
       {
         label: t('dashboard.conditional-rendering.group.add.variable', 'Template variable'),
@@ -24,9 +25,14 @@ export const ConditionalRenderingGroupAdd = ({ hasVariables, onAdd }: Props) => 
         label: t('dashboard.conditional-rendering.group.add.time-range-size', 'Time range less than'),
         value: 'timeRangeSize',
       },
-    ],
-    [hasVariables]
-  );
+    ];
+
+    if (itemType !== 'auto-grid-item') {
+      allOptions.shift();
+    }
+
+    return allOptions;
+  }, [itemType, hasVariables]);
 
   return (
     <ValuePicker

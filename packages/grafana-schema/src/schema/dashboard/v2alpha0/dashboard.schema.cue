@@ -597,6 +597,7 @@ TabsLayoutSpec: {
 TabsLayoutTabKind: {
   kind: "TabsLayoutTab"
   spec: TabsLayoutTabSpec
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 TabsLayoutTabSpec: {
