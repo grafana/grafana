@@ -177,6 +177,10 @@ The options under the **Graph styles** section let you control the general appea
 
 ### Axis options
 
+<!-- The raw content of the file docs/sources/shared/visualizations/axis-options-all.md is used in for this section except for the "Time zone" setting. Do not update this section directly. Update that file and copy and paste the content here. -->
+
+<!-- prettier-ignore-start -->
+
 | Option                             | Description                                                                                                                                    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Placement](#placement)            | Select the placement of the y-axis.                                                                                                            |
