@@ -236,6 +236,7 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
+  * @default true
   */
   pluginsDetailsRightPanel?: boolean;
   /**
@@ -344,6 +345,7 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   /**
   * Allow core plugins to be loaded as external
+  * @default true
   */
   externalCorePlugins?: boolean;
   /**
@@ -405,6 +407,10 @@ export interface FeatureToggles {
   * Routes requests to the new query service
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Routes explore requests to the new query service
+  */
+  queryServiceFromExplore?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   */
@@ -703,7 +709,8 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a datasource has an invalid UIDs
+  * Throws an error if a data source has an invalid UIDs
+  * @default true
   */
   failWrongDSUID?: boolean;
   /**
@@ -1068,6 +1075,10 @@ export interface FeatureToggles {
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
   /**
   * Enables localization for plugins
   */

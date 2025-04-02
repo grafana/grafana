@@ -1744,13 +1744,17 @@
     {
       "metadata": {
         "name": "externalCorePlugins",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "resourceVersion": "1741964095787",
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 14:54:55.787758 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -1809,13 +1813,17 @@
     {
       "metadata": {
         "name": "failWrongDSUID",
-        "resourceVersion": "1718721033692",
-        "creationTimestamp": "2024-06-20T10:56:39Z"
+        "resourceVersion": "1741956585324",
+        "creationTimestamp": "2024-06-20T10:56:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-14 12:49:45.324676 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Throws an error if a datasource has an invalid UIDs",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "description": "Throws an error if a data source has an invalid UIDs",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -3292,17 +3300,18 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1741965023728",
+        "resourceVersion": "1743591171870",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-04-02 10:52:51.870249 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -3666,6 +3675,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceFromExplore",
+        "resourceVersion": "1743513714582",
+        "creationTimestamp": "2025-04-01T13:21:54Z"
+      },
+      "spec": {
+        "description": "Routes explore requests to the new query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true
       }
     },
     {
@@ -4518,6 +4540,21 @@
         "description": "Placeholder feature flag for internal testing",
         "stage": "experimental",
         "codeowner": "@grafana/hosted-grafana-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "xrayApplicationSignals",
+        "resourceVersion": "1743178672620",
+        "creationTimestamp": "2025-03-28T16:17:52Z"
+      },
+      "spec": {
+        "description": "Support Application Signals queries in the X-Ray datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

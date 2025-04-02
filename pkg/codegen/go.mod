@@ -38,16 +38,17 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
-	golang.org/x/mod v0.23.0 // indirect
-	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/mod v0.24.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/tools v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/tools v0.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

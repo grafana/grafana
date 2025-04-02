@@ -5,51 +5,37 @@ import {
   BuilderQueryExpression,
 } from '../../dataquery.gen';
 
-const isExpressionGroup = (
+const isNestedExpression = (
   exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
-): exp is BuilderQueryEditorWhereExpression => {
-  return 'expressions' in exp && Array.isArray(exp.expressions);
-};
-
-const isFilterExpression = (
-  exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
-): exp is BuilderQueryEditorWhereExpressionItems => {
-  return 'operator' in exp && 'property' in exp;
-};
+): exp is BuilderQueryEditorWhereExpressionItems =>
+  'operator' in exp &&
+  'property' in exp &&
+  typeof exp.operator?.name === 'string' &&
+  typeof exp.property?.name === 'string';
 
 const buildCondition = (
   exp: BuilderQueryEditorWhereExpression | BuilderQueryEditorWhereExpressionItems
 ): string | undefined => {
-  if (isExpressionGroup(exp)) {
-    const joiner = exp.type === 'or' ? ' or ' : ' and ';
+  if ('expressions' in exp && Array.isArray(exp.expressions)) {
+    const isGroupOfFilters = exp.expressions.every((e) => 'operator' in e && 'property' in e);
+
     const nested = exp.expressions.map(buildCondition).filter((c): c is string => Boolean(c));
+
     if (nested.length === 0) {
       return;
     }
-    return nested.length > 1 ? `(${nested.join(joiner)})` : nested[0];
+
+    const joiner = isGroupOfFilters ? ' or ' : ' and ';
+    const joined = nested.join(joiner);
+
+    return nested.length > 1 ? `(${joined})` : joined;
   }
 
-  if (isFilterExpression(exp)) {
+  if (isNestedExpression(exp)) {
     const { name: op, value } = exp.operator;
     const { name: prop } = exp.property;
-    const isTemplateVariable = typeof value === 'string' && value.startsWith('$');
-
-    if (op === '$__timeFilter') {
-      return `$__timeFilter(${prop})`;
-    }
-
-    if (isTemplateVariable) {
-      if (op === '==') {
-        return `${prop} in (${value})`;
-      } else if (op === '!=') {
-        return `${prop} !in (${value})`;
-      } else {
-        return `${prop} ${op} ${value}`;
-      }
-    }
-
     const escapedValue = String(value).replace(/'/g, "''");
-    return `${prop} ${op} '${escapedValue}'`;
+    return op === '$__timeFilter' ? `$__timeFilter(${prop})` : `${prop} ${op} '${escapedValue}'`;
   }
 
   return;

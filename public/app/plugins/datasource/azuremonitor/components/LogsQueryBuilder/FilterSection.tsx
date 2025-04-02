@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, Label, useStyles2 } from '@grafana/ui';
+import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
@@ -191,12 +191,12 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
-      const selectable = values.toArray().map((v: any) => ({
-        label: String(v),
-        value: String(v),
-      }));
-
-      return [...variableOptionGroup.options, ...selectable];
+      return values.toArray().map(
+        (v: any): ComboboxOption<string> => ({
+          label: String(v),
+          value: String(v),
+        })
+      );
     }
 
     return [];
@@ -207,7 +207,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       <EditorFieldGroup>
         <EditorField label="Filters" optional tooltip="Narrow results by applying conditions to specific columns.">
           <div className={styles.filters}>
-            {filters.length === 0 ? (
+            {filters.length === 0 || filters.every((g) => g.expressions.length === 0) ? (
               <InputGroup>
                 <Button variant="secondary" onClick={onAddAndFilters} icon="plus" />
               </InputGroup>

@@ -17,7 +17,6 @@ import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
@@ -114,14 +113,14 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.push(getEditPanelUrl(getPanelIdForVizPanel(panel)));
+          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
         }}
         icon="sliders-v-alt"
         fullWidth
         size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
       >
-        <Trans i18nKey="dashboard.new-panel.configure-button">Configure panel</Trans>
+        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>
     </Stack>
   );

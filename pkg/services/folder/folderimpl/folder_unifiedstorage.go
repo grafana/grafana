@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -219,7 +218,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	for i, item := range parsedResults.Hits {
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
 			OrgID:     query.OrgID,
 			Title:     item.Title,
@@ -343,7 +342,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 	return f, nil
 }
 
-func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -397,7 +396,7 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 	return children, nil
 }
 
-func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -432,7 +431,7 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil
