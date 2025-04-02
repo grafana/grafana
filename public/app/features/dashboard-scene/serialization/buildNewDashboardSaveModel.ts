@@ -108,7 +108,7 @@ export async function buildNewDashboardSaveModelV2(
   }
 
   const data: DashboardWithAccessInfo<DashboardV2Spec> = {
-    apiVersion: 'v2alpha0',
+    apiVersion: 'v2alpha1',
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),

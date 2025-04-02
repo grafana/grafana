@@ -8,7 +8,7 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';

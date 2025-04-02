@@ -26,13 +26,13 @@ import {
   VariableHide as VariableHideV1,
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
-
 import {
   GridLayoutSpec,
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
