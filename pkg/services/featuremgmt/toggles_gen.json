@@ -2880,6 +2880,19 @@
     },
     {
       "metadata": {
+        "name": "multiTenantTempCredentials",
+        "resourceVersion": "1743614635650",
+        "creationTimestamp": "2025-04-02T17:23:55Z"
+      },
+      "spec": {
+        "description": "use multi-tenant path for awsTempCredentials",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-10-12T11:43:35Z"

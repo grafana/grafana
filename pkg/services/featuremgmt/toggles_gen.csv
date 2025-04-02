@@ -244,4 +244,5 @@ localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,fal
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
+multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
