@@ -234,9 +234,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{
-				Identifier: options.Identifier,
-			},
+			Push: &provisioning.ExportJobOptions{},
 		},
 	}
 	if err := w.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {

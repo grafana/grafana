@@ -150,9 +150,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}
 
 			fileName, err := resourceManager.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-				Path:       options.Path,
-				Ref:        options.Branch,
-				Identifier: options.Identifier,
+				Path: options.Path,
+				Ref:  options.Branch,
 			})
 			if errors.Is(err, resources.ErrAlreadyInRepository) {
 				result.Action = repository.FileActionIgnored
