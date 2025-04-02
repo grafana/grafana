@@ -10,6 +10,7 @@ import { getPayloadToExport } from './ModifyExportRuleForm';
 const rule1 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'critical', region: 'region1' },
     annotations: { [Annotation.summary]: 'This grafana rule1' },
   },
@@ -19,6 +20,7 @@ const rule1 = mockRulerGrafanaRule(
 const rule2 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'notcritical', region: 'region2' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -28,6 +30,7 @@ const rule2 = mockRulerGrafanaRule(
 const rule3 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'notcritical3', region: 'region3' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -38,6 +41,7 @@ const rule4 = mockRulerGrafanaRecordingRule(
   {
     labels: { severity: 'notcritical4', region: 'region4' },
     annotations: { [Annotation.summary]: 'This grafana rule4' },
+    keep_firing_for: "1m",
   },
   { uid: 'uid-rule-4', title: 'Rule4', data: [] }
 );
@@ -142,7 +146,6 @@ const expectedModifiedRule4 = (uid: string) => ({
       },
     ],
     is_paused: false,
-    notification_settings: undefined,
     record: {
       metric: 'Rule4 updated',
       from: 'A',
@@ -150,7 +153,6 @@ const expectedModifiedRule4 = (uid: string) => ({
     title: 'Rule4 updated',
     uid: uid,
   },
-  keep_firing_for: '1m',
   labels: {
     newLabel: 'newLabel',
   },
