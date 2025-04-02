@@ -200,22 +200,10 @@ Set the style of the lines that connect points. To change the color, use the sta
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-#### Tooltip mode
-
-When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
-
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
-- **Hidden -** Do not display the tooltip when you interact with the visualization.
-
-Use an override to hide individual series from the tooltip.
-
-#### Max width
-
-Set the maximum width of the tooltip box.
-
-#### Max height
-
-Set the maximum height of the tooltip box. The default is 600 pixels.
+| Option | Description                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| Tooltip mode | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how they behave:<ul><li>**Single** - The hover tooltip shows only a single series, the one that you are hovering over on the visualization.</li><li>**Hidden** - Do not display the tooltip when you interact with the visualization.</li></ul> |
+| Max width | Set the maximum width of the tooltip box.                                                                    |
 
 ### Legend options
 
