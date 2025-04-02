@@ -5,9 +5,18 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
     return true;
   }
 
+  if (idToMatch === 'prometheus') {
+   return isPromFlavor(pluginMeta.id);
+  }
+
   if (pluginMeta.aliasIDs) {
     return pluginMeta.aliasIDs.includes(idToMatch);
   }
 
   return false;
+}
+
+function isPromFlavor(pluginId: string): boolean {
+  const regex = new RegExp('grafana-.*prometheus-datasource');
+  return regex.test(pluginId);
 }

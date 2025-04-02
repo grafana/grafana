@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, matchPluginId, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -129,13 +129,21 @@ export class DashboardExporter {
           if (ds.meta?.builtIn) {
             return;
           }
-
+          let dataSourceId = ds.meta?.id;
+          let dataSourceName = ds.meta?.name;
+          let dataSourceVersion = ds.meta.info.version || '1.0.0';
+          // if this is a prom flavored data source (azure prom/ aws prom) it will be treated as a prom data source
+          if (matchPluginId('prometheus', ds.meta)) {
+            dataSourceId = 'prometheus';
+            dataSourceName = 'Prometheus'
+            dataSourceVersion = '1.0.0';
+          }
           // add data source type to require list
-          requires['datasource' + ds.meta?.id] = {
+          requires['datasource' + dataSourceId] = {
             type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
+            id: dataSourceId,
+            name: dataSourceName,
+            version: dataSourceVersion,
           };
 
           // if used via variable we can skip templatizing usage
@@ -146,14 +154,14 @@ export class DashboardExporter {
           const libraryPanel = obj.libraryPanel;
           const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
           let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
-
+         
           datasources[refName] = {
             name: refName,
             label: ds.name,
             description: '',
             type: 'datasource',
-            pluginId: ds.meta?.id,
-            pluginName: ds.meta?.name,
+            pluginId: dataSourceId,
+            pluginName: dataSourceName,
             usage: datasources[refName]?.usage,
           };
 
@@ -166,7 +174,7 @@ export class DashboardExporter {
             };
           }
 
-          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+          obj.datasource = { type: dataSourceId, uid: '${' + refName + '}' };
         });
     };
 
