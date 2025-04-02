@@ -3,7 +3,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
-import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 

@@ -1,5 +1,5 @@
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDTO } from 'app/types';
 
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';

@@ -16,10 +16,10 @@ import {
 } from '@grafana/schema';
 import {
   AnnotationQueryKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DataLink,
   DatasourceVariableKind,
-  defaultDashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
   defaultTimeSettingsSpec,
   PanelQueryKind,
@@ -39,7 +39,7 @@ import {
   PanelKind,
   GridLayoutRowKind,
   GridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
