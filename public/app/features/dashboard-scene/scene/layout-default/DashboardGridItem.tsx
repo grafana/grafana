@@ -86,6 +86,10 @@ export class DashboardGridItem
     return getDashboardGridItemOptions(this);
   }
 
+  public setElementBody(body: VizPanel): void {
+    this.setState({ body });
+  }
+
   public editingStarted() {
     if (!this.state.variableName) {
       return;
