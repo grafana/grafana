@@ -1417,7 +1417,10 @@
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
       "new-row": "New row",
-      "new-tab": "New tab"
+      "new-tab": "New tab",
+      "paste-panel": "Paste panel",
+      "paste-row": "Paste row",
+      "paste-tab": "Paste tab"
     },
     "conditional-rendering": {
       "data": {
@@ -1522,10 +1525,6 @@
         "panel": {
           "heading": "Panel",
           "title": "A container for visualizations and other content"
-        },
-        "paste-panel": {
-          "heading": "Paste panel",
-          "title": "Paste a panel from the clipboard"
         },
         "row": {
           "heading": "Row",

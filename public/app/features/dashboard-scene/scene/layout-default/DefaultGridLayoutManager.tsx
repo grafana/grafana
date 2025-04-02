@@ -38,8 +38,10 @@ import {
   getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
+  getDashboardSceneFor,
 } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -132,6 +134,14 @@ export class DefaultGridLayoutManager
     }
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
+  }
+
+  public pastePanel() {
+    const emptySpace = findSpaceForNewPanel(this.state.grid);
+    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    clearClipboard();
   }
 
   public removePanel(panel: VizPanel) {

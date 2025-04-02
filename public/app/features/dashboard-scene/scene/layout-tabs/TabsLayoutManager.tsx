@@ -14,8 +14,10 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { getTabFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -121,8 +123,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
-  public addNewTab() {
-    const newTab = new TabItem({ isNew: true });
+  public addNewTab(tab?: TabItem) {
+    const newTab = tab ?? new TabItem({ isNew: true });
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;
@@ -130,6 +132,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public editModeChanged(isEditing: boolean) {
     this.state.tabs.forEach((tab) => tab.getLayout().editModeChanged?.(isEditing));
+  }
+
+  public pasteTab() {
+    const scene = getDashboardSceneFor(this);
+    const tab = getTabFromClipboard(scene);
+    this.addNewTab(tab);
   }
 
   public activateRepeaters() {

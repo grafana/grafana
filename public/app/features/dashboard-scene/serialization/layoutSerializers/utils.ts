@@ -25,18 +25,22 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
-export function buildVizPanel(panel: PanelKind): VizPanel {
+export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
 
   if (config.featureToggles.angularDeprecationUI) {
@@ -56,7 +60,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
@@ -90,7 +94,7 @@ export function buildVizPanel(panel: PanelKind): VizPanel {
   return new VizPanel(vizPanelState);
 }
 
-export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
 
   if (config.featureToggles.angularDeprecationUI) {
@@ -107,7 +111,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
   titleItems.push(new PanelNotices());
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
     $behaviors: [
       new LibraryPanelBehavior({
@@ -241,4 +245,20 @@ export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayout
   }
 
   return new ConditionalRendering({ rootGroup: rootGroup });
+}
+
+export function getElements(layout: DashboardLayoutManager, scene: DashboardScene): DashboardV2Spec['elements'] {
+  const panels = layout.getVizPanels();
+  const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
+  const panelsArray = panels.map((vizPanel) => {
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+  });
+  return createElements(panelsArray, scene);
+}
+
+export function getElement(
+  gridItem: AutoGridItem | DashboardGridItem,
+  scene: DashboardScene
+): DashboardV2Spec['elements'] {
+  return createElements([vizPanelToSchemaV2(gridItem.state.body, scene.serializer.getDSReferencesMapping())], scene);
 }
