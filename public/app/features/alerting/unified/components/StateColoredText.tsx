@@ -22,6 +22,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   [PromAlertingRuleState.Pending]: css({
     color: theme.colors.warning.text,
   }),
+  [PromAlertingRuleState.Recovering]: css({
+    color: theme.colors.warning.text,
+  }),
   [PromAlertingRuleState.Firing]: css({
     color: theme.colors.error.text,
   }),

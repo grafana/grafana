@@ -5,6 +5,7 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { useKeepFiringFor } from '../../hooks/rules/useKeepFiringFor';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
@@ -77,6 +78,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = useKeepFiringFor(rule);
 
   return (
     <>
@@ -94,6 +96,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       {pendingPeriod && (
         <DetailsField label="Pending period" horizontal={true}>
           {pendingPeriod}
+        </DetailsField>
+      )}
+      {keepFiringFor && (
+        <DetailsField label="Keep firing for" horizontal={true}>
+          {keepFiringFor}
         </DetailsField>
       )}
 

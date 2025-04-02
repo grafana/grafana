@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef } from 'react';
 import * as React from 'react';
+import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -62,11 +62,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.primary.contrastText,
   }),
   md: css({
-    padding: theme.spacing(0.5, 1),
+    padding: theme.spacing(0.5, 0.5),
     minWidth: theme.spacing(8),
   }),
   sm: css({
-    padding: theme.spacing(0.3, 0.5),
+    padding: theme.spacing(0.3, 0.3),
     minWidth: '52px',
   }),
   muted: css({

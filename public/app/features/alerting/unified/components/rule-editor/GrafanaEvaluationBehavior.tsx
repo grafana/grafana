@@ -41,7 +41,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
-import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
+import { DurationQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -149,6 +149,7 @@ export function GrafanaEvaluationBehaviorStep({
     'isPaused',
     'folder',
     'evaluateEvery',
+    'keepFiringFor',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
@@ -291,6 +292,9 @@ export function GrafanaEvaluationBehaviorStep({
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+
+        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
+        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -531,10 +535,53 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
-      <PendingPeriodQuickPick
-        selectedPendingPeriod={currentPendingPeriod}
+      <DurationQuickPick
+        selectedDuration={currentPendingPeriod}
         groupEvaluationInterval={evaluateEvery}
         onSelect={setPendingPeriod}
+      />
+    </Stack>
+  );
+}
+
+export function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useFormContext<RuleFormValues>();
+
+  const currentKeepFiringFor = watch('keepFiringFor');
+  const keepFiringForId = 'keep-firing-for-input';
+
+  const setKeepFiringFor = (keepFiringFor: string) => {
+    setValue('keepFiringFor', keepFiringFor);
+  };
+
+  return (
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+      <Field
+        label={
+          <Label
+            htmlFor={keepFiringForId}
+            description='Duration to keep this alert firing after the firing condition was last met. Selecting "None" is equivalent to "Keep firing for" 0s.'
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for">Keep firing for</Trans>
+          </Label>
+        }
+        className={styles.inlineField}
+        error={errors.keepFiringFor?.message}
+        invalid={Boolean(errors.keepFiringFor?.message) ? true : undefined}
+        validationMessageHorizontalOverflow={true}
+      >
+        <Input id={keepFiringForId} width={8} {...register('keepFiringFor')} />
+      </Field>
+      <DurationQuickPick
+        selectedDuration={currentKeepFiringFor}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setKeepFiringFor}
       />
     </Stack>
   );

@@ -235,6 +235,9 @@ export function logRecordsToDataFrameForState(records: LogRecord[], theme: Grafa
                 Pending: {
                   color: theme.colors.warning.main,
                 },
+                Recovering: {
+                  color: theme.colors.warning.main,
+                },
                 Normal: {
                   color: theme.colors.success.main,
                 },

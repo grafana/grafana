@@ -30,6 +30,7 @@ const ui = {
     normal: byLabelText(/^Normal/),
     alerting: byLabelText(/^Alerting/),
     pending: byLabelText(/^Pending/),
+    recovering: byLabelText(/^Recovering/),
     noData: byLabelText(/^NoData/),
     error: byLabelText(/^Error/),
   },
@@ -86,6 +87,7 @@ describe('RuleDetailsMatchingInstances', () => {
             mockPromAlert({ state: GrafanaAlertState.Normal }),
             mockPromAlert({ state: GrafanaAlertState.Alerting }),
             mockPromAlert({ state: GrafanaAlertState.Pending }),
+            mockPromAlert({ state: GrafanaAlertState.Recovering }),
             mockPromAlert({ state: GrafanaAlertState.NoData }),
             mockPromAlert({ state: GrafanaAlertState.Error }),
           ],
@@ -96,6 +98,7 @@ describe('RuleDetailsMatchingInstances', () => {
         [GrafanaAlertState.Normal]: ui.grafanaStateButton.normal,
         [GrafanaAlertState.Alerting]: ui.grafanaStateButton.alerting,
         [GrafanaAlertState.Pending]: ui.grafanaStateButton.pending,
+        [GrafanaAlertState.Recovering]: ui.grafanaStateButton.recovering,
         [GrafanaAlertState.NoData]: ui.grafanaStateButton.noData,
         [GrafanaAlertState.Error]: ui.grafanaStateButton.error,
       };

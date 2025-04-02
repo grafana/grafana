@@ -8,6 +8,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { useKeepFiringFor } from '../../../hooks/rules/useKeepFiringFor';
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
 import { isNullDate } from '../../../utils/time';
@@ -43,6 +44,7 @@ export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = useKeepFiringFor(rule);
 
   let determinedRuleType: RuleType = RuleType.Unknown;
   if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
@@ -162,6 +164,13 @@ export const Details = ({ rule }: DetailsProps) => {
             id="pending-period"
             label={t('alerting.alert.pending-period', 'Pending period')}
             value={pendingPeriod}
+          />
+        )}
+        {keepFiringFor && (
+          <DetailText
+            id="keep-firing-for"
+            label={t('alerting.alert.keep-firing-for', 'Keep firing for')}
+            value={keepFiringFor}
           />
         )}
       </DetailGroup>

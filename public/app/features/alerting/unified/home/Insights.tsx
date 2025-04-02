@@ -77,6 +77,7 @@ const SERIES_COLORS = {
   missed: 'red',
   failed: 'red',
   pending: 'yellow',
+  recovering: 'yellow',
   nodata: 'blue',
   'active evaluation': 'blue',
   normal: 'green',

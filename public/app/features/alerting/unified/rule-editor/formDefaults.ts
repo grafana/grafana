@@ -53,6 +53,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    keepFiringFor: DEFAULT_GROUP_EVALUATION_INTERVAL, // not sure about this one
     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},
