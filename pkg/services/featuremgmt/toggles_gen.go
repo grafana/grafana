@@ -371,6 +371,10 @@ const (
 	// Routes requests to the new query service
 	FlagQueryServiceFromUI = "queryServiceFromUI"
 
+	// FlagQueryServiceFromExplore
+	// Routes explore requests to the new query service
+	FlagQueryServiceFromExplore = "queryServiceFromExplore"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -640,7 +644,7 @@ const (
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagFailWrongDSUID
-	// Throws an error if a datasource has an invalid UIDs
+	// Throws an error if a data source has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
 	// FlagZanzana
@@ -919,6 +923,10 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagUseScopesNavigationEndpoint
+	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
 	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
@@ -963,6 +971,14 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagAzureMonitorLogsBuilderEditor
+	// Enables the logs builder mode for the Azure Monitor data source
+	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
+	// FlagLocaleFormatPreference
+	// Specify the locale so we can show the correct format for numbers and dates
+	FlagLocaleFormatPreference = "localeFormatPreference"
+
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
@@ -970,4 +986,12 @@ const (
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagXrayApplicationSignals
+	// Support Application Signals queries in the X-Ray datasource
+	FlagXrayApplicationSignals = "xrayApplicationSignals"
+
+	// FlagLocalizationForPlugins
+	// Enables localization for plugins
+	FlagLocalizationForPlugins = "localizationForPlugins"
 )

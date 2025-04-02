@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
+
 	"github.com/patrickmn/go-cache"
 )
 
@@ -29,7 +30,7 @@ func shouldSkipFetchingWildcards(ctx context.Context, q *models.CloudWatchQuery)
 func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 	ctx context.Context,
 	region string,
-	client models.CloudWatchMetricsAPIProvider,
+	client models.CWClient,
 	origQueries []*models.CloudWatchQuery,
 	tagValueCache *cache.Cache,
 	listMetricsPageLimit int,

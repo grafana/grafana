@@ -8,6 +8,7 @@ import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObj
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
+  ElementSelectionOnSelectOptions,
   ScrollContainer,
   ToolbarButton,
   useSplitter,
@@ -15,7 +16,7 @@ import {
   Text,
   Icon,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -33,15 +34,13 @@ export interface DashboardEditPaneState extends SceneObjectState {
   showAddPane?: boolean;
 }
 
-export type EditPaneTab = 'add' | 'configure' | 'outline';
-
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
     super({
       selectionContext: {
         enabled: false,
         selected: [],
-        onSelect: (item, multi) => this.selectElement(item, multi),
+        onSelect: (item, options) => this.selectElement(item, options),
         onClear: () => this.clearSelection(),
       },
     });
@@ -83,10 +82,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     });
   }
 
-  private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+  private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
     // We should not select clones
     if (isInCloneChain(element.id)) {
-      if (multi) {
+      if (options.multi) {
         return;
       }
 
@@ -96,7 +95,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
-      this.selectObject(obj, element.id, multi);
+      this.selectObject(obj, element.id, options);
     }
   }
 
@@ -108,16 +107,19 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.setState({ showAddPane: !this.state.showAddPane });
   }
 
-  public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const prevItem = this.state.selection?.getFirstObject();
-    if (prevItem === obj && !multi) {
-      this.clearSelection();
-      return;
-    }
-
-    if (multi && this.state.selection?.hasValue(id)) {
-      this.removeMultiSelectedObject(id);
-      return;
+  public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    if (!force) {
+      if (multi) {
+        if (this.state.selection?.hasValue(id)) {
+          this.removeMultiSelectedObject(id);
+          return;
+        }
+      } else {
+        if (this.state.selection?.getFirstObject() === obj) {
+          this.clearSelection();
+          return;
+        }
+      }
     }
 
     const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
@@ -170,7 +172,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj, obj.state.key!, false);
+    this.selectObject(obj, obj.state.key!);
 
     if (this.state.showAddPane) {
       this.setState({ showAddPane: false });
@@ -289,7 +291,9 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={styles.outlineCollapseButton}
           >
-            <Text weight="medium">Outline</Text>
+            <Text weight="medium">
+              <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
+            </Text>
             <Icon name="angle-up" />
           </div>
           {!outlineCollapsed && (
