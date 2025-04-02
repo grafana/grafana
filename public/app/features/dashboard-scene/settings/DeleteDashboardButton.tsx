@@ -6,6 +6,7 @@ import { Button, ConfirmModal, Modal, Space, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -51,6 +52,10 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 
   if (dashboard.state.meta.provisioned && showModal) {
     return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
+  }
+
+  if (dashboard.isManagedRepository() && showModal) {
+    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
   }
 
   return (
@@ -106,7 +111,15 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
 
 function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModalProps) {
   return (
-    <Modal isOpen={true} title="Cannot delete provisioned dashboard" icon="trash-alt" onDismiss={onClose}>
+    <Modal
+      isOpen={true}
+      title={t(
+        'dashboard-scene.provisioned-delete-modal.title-cannot-delete-provisioned-dashboard',
+        'Cannot delete provisioned dashboard'
+      )}
+      icon="trash-alt"
+      onDismiss={onClose}
+    >
       <p>
         This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
         file to delete it.
@@ -129,7 +142,7 @@ function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModal
       </p>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onClose}>
-          OK
+          <Trans i18nKey="dashboard-scene.provisioned-delete-modal.ok">OK</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

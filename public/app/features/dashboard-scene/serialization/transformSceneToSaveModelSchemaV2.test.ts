@@ -9,7 +9,6 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneCSSGridLayout,
   SceneGridLayout,
   SceneGridRow,
   SceneRefreshPicker,
@@ -18,6 +17,9 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
+  SceneDataQuery,
+  SceneQueryRunner,
+  sceneUtils,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -27,7 +29,7 @@ import {
 
 import {
   GridLayoutSpec,
-  ResponsiveGridLayoutSpec,
+  AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
@@ -40,15 +42,52 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import {
+  getPersistedDSFor,
+  getElementDatasource,
+  transformSceneToSaveModelSchemaV2,
+  validateDashboardSchemaV2,
+} from './transformSceneToSaveModelSchemaV2';
+
+// Mock dependencies
+jest.mock('../utils/dashboardSceneGraph', () => {
+  const original = jest.requireActual('../utils/dashboardSceneGraph');
+  return {
+    ...original,
+    dashboardSceneGraph: {
+      ...original.dashboardSceneGraph,
+      getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
+        // Return the panel key if it exists, otherwise use panel-1 as default
+        return panel?.state?.key || 'panel-1';
+      }),
+    },
+  };
+});
+
+jest.mock('../utils/utils', () => {
+  const original = jest.requireActual('../utils/utils');
+  return {
+    ...original,
+    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
+      serializer: {
+        getDSReferencesMapping: jest.fn().mockReturnValue({
+          panels: new Map([['panel-1', new Set(['A'])]]),
+          variables: new Set(),
+          annotations: new Set(),
+        }),
+      },
+    })),
+  };
+});
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
@@ -100,7 +139,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // The intention is to have a complete dashboard scene
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
-      $data: new DashboardDataLayerSet({ annotationLayers }),
+      $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
       id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
@@ -377,6 +416,241 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // check annotation layer 3 with no datasource has the default datasource defined as type
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
+
+  it('should transform the minimum scene to save model schema v2', () => {
+    const minimalScene = new DashboardScene({});
+
+    expect(() => {
+      transformSceneToSaveModelSchemaV2(minimalScene);
+    }).not.toThrow();
+  });
+
+  describe('getPersistedDSFor query', () => {
+    it('should respect datasource reference mapping when determining query datasource', () => {
+      // Setup test data
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+        // No datasource defined originally
+      };
+      const queryWithDS: SceneDataQuery = {
+        refId: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      };
+
+      // Mock query runner with runtime-resolved datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithoutDS, queryWithDS],
+        datasource: { uid: 'default-ds', type: 'default' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the query without DS originally - should return undefined
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultA).toBeUndefined();
+
+      // Test the query with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
+      const queryNotInMapping: SceneDataQuery = {
+        refId: 'C',
+        // No datasource, but not in mapping
+      };
+      const resultC = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
+      expect(resultC).toEqual({ uid: 'default-ds', type: 'default' });
+    });
+  });
+
+  describe('getPersistedDSFor variable', () => {
+    it('should respect datasource reference mapping when determining variable datasource', () => {
+      // Setup test data - variable without datasource
+      const variableWithoutDS = new QueryVariable({
+        name: 'A',
+        // No datasource defined originally
+      });
+
+      // Variable with datasource
+      const variableWithDS = new QueryVariable({
+        name: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Set(['A']);
+
+      // Test the variable without DS originally - should return undefined
+      const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
+      expect(resultA).toBeUndefined();
+
+      // Test the variable with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(variableWithDS, dsReferencesMap, 'variable');
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test a variable with no DS originally but not in the mapping - should get empty object
+      const variableNotInMapping = new QueryVariable({
+        name: 'C',
+        // No datasource, but not in mapping
+      });
+      const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
+      expect(resultC).toEqual({});
+    });
+  });
+});
+
+describe('getElementDatasource', () => {
+  it('should handle panel query datasources correctly', () => {
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with the panel and query with DS
+    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Call the function with the panel and query without DS
+    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithoutDS).toBeUndefined();
+  });
+
+  it('should handle variable datasources correctly', () => {
+    // Create a variable set
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+          // No datasource
+        }),
+        new QueryVariable({
+          name: 'B',
+          datasource: { uid: 'prometheus', type: 'prometheus' },
+        }),
+      ],
+    });
+
+    // Variable with DS
+    const variableWithDS = variableSet.getByName('B');
+
+    // Variable without DS
+    const variableWithoutDS = variableSet.getByName('A');
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(['A']),
+      annotations: new Set<string>(),
+    };
+
+    // Call the function with variables
+    if (variableWithDS && sceneUtils.isQueryVariable(variableWithDS)) {
+      const resultWithDS = getElementDatasource(
+        variableSet,
+        variableWithDS,
+        'variable',
+        undefined,
+        dsReferencesMapping
+      );
+      expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    }
+
+    if (variableWithoutDS && sceneUtils.isQueryVariable(variableWithoutDS)) {
+      // Test with auto-assigned variable (in the mapping)
+      const resultWithoutDS = getElementDatasource(variableSet, variableWithoutDS, 'variable');
+      expect(resultWithoutDS).toEqual(undefined);
+    }
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new ConstantVariable({
+          name: 'constant',
+          value: 'value',
+        }),
+      ],
+    });
+
+    // Non-query variable
+    const constantVar = variableSet.getByName('constant');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, constantVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable types
+    const variableSet = new SceneVariableSet({
+      variables: [
+        // Use TextBoxVariable which is not a QueryVariable
+        new TextBoxVariable({
+          name: 'textVar',
+          value: 'text-value',
+        }),
+      ],
+    });
+
+    // Non-query variable - this is safe because getElementDatasource checks if it's a query variable
+    const textVar = variableSet.getByName('textVar');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, textVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle invalid input combinations', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+        }),
+      ],
+    });
+
+    const variable = variableSet.getByName('A');
+    const query: SceneDataQuery = { refId: 'A' };
+
+    if (variable && sceneUtils.isQueryVariable(variable)) {
+      // Panel with variable
+      expect(getElementDatasource(vizPanel, variable, 'panel')).toBeUndefined();
+    }
+    // Variable set with query
+    expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
+  });
 });
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
@@ -474,10 +748,10 @@ describe('dynamic layouts', () => {
         new RowsLayoutManager({
           rows: [
             new RowItem({
-              layout: new ResponsiveGridLayoutManager({
-                layout: new SceneCSSGridLayout({
+              layout: new AutoGridLayoutManager({
+                layout: new AutoGridLayout({
                   children: [
-                    new ResponsiveGridItem({
+                    new AutoGridItem({
                       body: new VizPanel({}),
                     }),
                   ],
@@ -507,27 +781,29 @@ describe('dynamic layouts', () => {
     const rowsLayout = result.layout.spec as RowsLayoutSpec;
     expect(rowsLayout.rows.length).toBe(2);
     expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
-    expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
-    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('AutoGridLayout');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('AutoGridLayoutItem');
 
     expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
     const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
     expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
-  it('should transform scene with responsive grid layout to schema v2', () => {
+  it('should transform scene with auto grid layout to schema v2', () => {
     const scene = setupDashboardScene(
       getMinimalSceneState(
-        new ResponsiveGridLayoutManager({
-          layout: new SceneCSSGridLayout({
-            autoRows: 'rowString',
-            templateColumns: 'colString',
+        new AutoGridLayoutManager({
+          columnWidth: 100,
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: true,
+          layout: new AutoGridLayout({
             children: [
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
-              new ResponsiveGridItem({
+              new AutoGridItem({
                 body: new VizPanel({}),
               }),
             ],
@@ -536,12 +812,16 @@ describe('dynamic layouts', () => {
       )
     );
     const result = transformSceneToSaveModelSchemaV2(scene);
-    expect(result.layout.kind).toBe('ResponsiveGridLayout');
-    const respGridLayout = result.layout.spec as ResponsiveGridLayoutSpec;
-    expect(respGridLayout.col).toBe('colString');
-    expect(respGridLayout.row).toBe('rowString');
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const respGridLayout = result.layout.spec as AutoGridLayoutSpec;
+    expect(respGridLayout.columnWidthMode).toBe('custom');
+    expect(respGridLayout.columnWidth).toBe(100);
+    expect(respGridLayout.rowHeightMode).toBe('standard');
+    expect(respGridLayout.rowHeight).toBeUndefined();
+    expect(respGridLayout.maxColumnCount).toBe(4);
+    expect(respGridLayout.fillScreen).toBe(true);
     expect(respGridLayout.items.length).toBe(2);
-    expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    expect(respGridLayout.items[0].kind).toBe('AutoGridLayoutItem');
   });
 
   it('should transform scene with tabs layout to schema v2', () => {
@@ -571,49 +851,229 @@ describe('dynamic layouts', () => {
   });
 });
 
-const annotationLayer1 = new DashboardAnnotationsDataLayer({
-  key: 'layer1',
-  query: {
-    datasource: {
-      type: 'grafana',
-      uid: '-- Grafana --',
+// Instead of reusing annotation layer objects, create a factory function to generate new ones each time
+function createAnnotationLayers() {
+  return [
+    new DashboardAnnotationsDataLayer({
+      key: 'layer1',
+      query: {
+        datasource: {
+          type: 'grafana',
+          uid: '-- Grafana --',
+        },
+        name: 'query1',
+        enable: true,
+        iconColor: 'red',
+      },
+      name: 'layer1',
+      isEnabled: true,
+      isHidden: false,
+    }),
+    new DashboardAnnotationsDataLayer({
+      key: 'layer2',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abcdef',
+        },
+        name: 'query2',
+        enable: true,
+        iconColor: 'blue',
+      },
+      name: 'layer2',
+      isEnabled: true,
+      isHidden: true,
+    }),
+    // this could happen if a dahboard was created from code and the datasource was not defined
+    new DashboardAnnotationsDataLayer({
+      key: 'layer3',
+      query: {
+        name: 'query3',
+        enable: true,
+        iconColor: 'green',
+      },
+      name: 'layer3',
+      isEnabled: true,
+      isHidden: true,
+    }),
+  ];
+}
+
+describe('validateDashboardSchemaV2', () => {
+  const validDashboard = {
+    title: 'Test Dashboard',
+    timeSettings: {
+      from: 'now-1h',
+      to: 'now',
+      autoRefresh: '5s',
+      hideTimepicker: false,
+      timezone: 'UTC',
+      autoRefreshIntervals: ['5s', '10s', '30s'],
+      quickRanges: [],
+      weekStart: 'monday',
+      nowDelay: '1m',
+      fiscalYearStartMonth: 1,
     },
-    name: 'query1',
-    enable: true,
-    iconColor: 'red',
-  },
-  name: 'layer1',
-  isEnabled: true,
-  isHidden: false,
-});
-
-const annotationLayer2 = new DashboardAnnotationsDataLayer({
-  key: 'layer2',
-  query: {
-    datasource: {
-      type: 'prometheus',
-      uid: 'abcdef',
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
     },
-    name: 'query2',
-    enable: true,
-    iconColor: 'blue',
-  },
-  name: 'layer2',
-  isEnabled: true,
-  isHidden: true,
-});
+  };
 
-// this could happen if a dahboard was created from code and the datasource was not defined
-const annotationLayer3NoDsDefined = new DashboardAnnotationsDataLayer({
-  key: 'layer3',
-  query: {
-    name: 'query3',
-    enable: true,
-    iconColor: 'green',
-  },
-  name: 'layer3',
-  isEnabled: true,
-  isHidden: true,
-});
+  it('should validate a valid dashboard', () => {
+    expect(validateDashboardSchemaV2(validDashboard)).toBe(true);
+  });
 
-const annotationLayers = [annotationLayer1, annotationLayer2, annotationLayer3NoDsDefined];
+  it('should throw error if dashboard is not an object', () => {
+    expect(() => validateDashboardSchemaV2(null)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(undefined)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2('string')).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(123)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(true)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2([])).toThrow('Dashboard is not an object or is null');
+  });
+
+  it('should validate required properties', () => {
+    const requiredProps = {
+      title: 'Title is not a string',
+      timeSettings: 'TimeSettings is not an object or is null',
+      variables: 'Variables is not an array',
+      elements: 'Elements is not an object or is null',
+      annotations: 'Annotations is not an array',
+      layout: 'Layout is not an object or is null',
+    };
+
+    for (const [prop, message] of Object.entries(requiredProps)) {
+      const invalidDashboard = { ...validDashboard };
+      delete invalidDashboard[prop as keyof typeof invalidDashboard];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate timeSettings required properties', () => {
+    const timeSettingsErrors = {
+      from: 'From is not a string',
+      to: 'To is not a string',
+      autoRefresh: 'AutoRefresh is not a string',
+      hideTimepicker: 'HideTimepicker is not a boolean',
+    } as const;
+
+    for (const [prop, message] of Object.entries(timeSettingsErrors)) {
+      const invalidDashboard = {
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings },
+      };
+      delete invalidDashboard.timeSettings[prop as keyof typeof invalidDashboard.timeSettings];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate optional properties when present', () => {
+    const invalidDashboard = {
+      ...validDashboard,
+      description: 123, // Should be string
+      cursorSync: 'Invalid', // Should be one of ['Off', 'Crosshair', 'Tooltip']
+      liveNow: 'true', // Should be boolean
+      preload: 'true', // Should be boolean
+      editable: 'true', // Should be boolean
+      links: 'not-an-array', // Should be array
+      tags: 'not-an-array', // Should be array
+      id: 'not-a-number', // Should be number
+    };
+
+    expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow('Description is not a string');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, cursorSync: 'Invalid' })).toThrow(
+      'CursorSync is not a valid value'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, liveNow: 'true' })).toThrow('LiveNow is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, preload: 'true' })).toThrow('Preload is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, editable: 'true' })).toThrow(
+      'Editable is not a boolean'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, links: 'not-an-array' })).toThrow(
+      'Links is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, tags: 'not-an-array' })).toThrow(
+      'Tags is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, id: 'not-a-number' })).toThrow('ID is not a number');
+  });
+
+  it('should validate optional timeSettings properties when present', () => {
+    const invalidTimeSettings = {
+      ...validDashboard.timeSettings,
+      autoRefreshIntervals: 'not-an-array',
+      timezone: 123,
+      quickRanges: 'not-an-array',
+      weekStart: 'invalid-day',
+      nowDelay: 123,
+      fiscalYearStartMonth: 'not-a-number',
+    };
+
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, timeSettings: invalidTimeSettings })).toThrow(
+      'AutoRefreshIntervals is not an array'
+    );
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, timezone: 123 } })
+    ).toThrow('Timezone is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, quickRanges: 'not-an-array' },
+      })
+    ).toThrow('QuickRanges is not an array');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, weekStart: 'invalid-day' },
+      })
+    ).toThrow('WeekStart should be one of "saturday", "sunday" or "monday"');
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, nowDelay: 123 } })
+    ).toThrow('NowDelay is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, fiscalYearStartMonth: 'not-a-number' },
+      })
+    ).toThrow('FiscalYearStartMonth is not a number');
+  });
+
+  it('should validate layout kind and structure', () => {
+    // Missing kind
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { spec: { items: [] } } })).toThrow(
+      'Layout kind is required'
+    );
+
+    // Invalid GridLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Invalid RowsLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Valid GridLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: { items: [] } } })).toBe(
+      true
+    );
+
+    // Valid RowsLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
+      true
+    );
+  });
+});

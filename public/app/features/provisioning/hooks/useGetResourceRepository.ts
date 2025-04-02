@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { useGetFolderQuery } from '../../../api/clients/folder';
-import { AnnoKeyManagerKind } from '../../apiserver/types';
+import { AnnoKeyManagerIdentity } from '../../apiserver/types';
 
 import { useRepositoryList } from './useRepositoryList';
 
@@ -15,7 +15,7 @@ export const useGetResourceRepository = ({ name, folderUid }: GetResourceReposit
   // Get the folder data from API to get the repository data for nested folders
   const folderQuery = useGetFolderQuery(name || !folderUid ? skipToken : { name: folderUid });
 
-  const repoName = name || folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerKind];
+  const repoName = name || folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerIdentity];
 
   if (!items?.length || isLoading || !repoName) {
     return undefined;
