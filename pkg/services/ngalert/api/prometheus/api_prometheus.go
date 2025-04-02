@@ -545,14 +545,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			}
 		}
 
-		queriedDatasourceUIDs := make([]string, 0, len(rule.Data))
-		for _, query := range rule.Data {
-			// Skip expression datasources (UID -100 or __expr__)
-			if expr.IsDataSource(query.DatasourceUID) {
-				continue
-			}
-			queriedDatasourceUIDs = append(queriedDatasourceUIDs, query.DatasourceUID)
-		}
+		queriedDatasourceUIDs := extractDatasourceUIDs(rule)
 
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
@@ -672,6 +665,19 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 	}
 
 	return newGroup, rulesTotals
+}
+
+// extractDatasourceUIDs extracts datasource UIDs from a rule
+func extractDatasourceUIDs(rule *ngmodels.AlertRule) []string {
+	queriedDatasourceUIDs := make([]string, 0, len(rule.Data))
+	for _, query := range rule.Data {
+		// Skip expression datasources (UID -100 or __expr__)
+		if expr.IsDataSource(query.DatasourceUID) {
+			continue
+		}
+		queriedDatasourceUIDs = append(queriedDatasourceUIDs, query.DatasourceUID)
+	}
+	return queriedDatasourceUIDs
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
