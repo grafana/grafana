@@ -11,14 +11,14 @@ import {
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   AutoGridLayoutItemKind,
   RowsLayoutRowKind,
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
@@ -39,6 +39,7 @@ import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
+import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
@@ -171,7 +172,12 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({
     $data: dataProvider,
-    transformations: panel.data.spec.transformations.map((transformation) => transformation.spec),
+    transformations: panel.data.spec.transformations.map((t) => {
+      return {
+        ...t.spec,
+        topic: transformDataTopic(t.spec.topic),
+      };
+    }),
   });
 }
 

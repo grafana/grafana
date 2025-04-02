@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';

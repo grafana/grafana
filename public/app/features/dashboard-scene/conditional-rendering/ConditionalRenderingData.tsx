@@ -2,7 +2,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { PanelData, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { RadioButtonGroup, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
