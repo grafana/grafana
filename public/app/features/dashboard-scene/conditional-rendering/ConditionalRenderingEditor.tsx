@@ -12,7 +12,7 @@ export function useConditionalRenderingEditor(
     return null;
   }
 
-  const title = t('dashboard.conditional-rendering.root.title', 'Show/hide rules');
+  const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
 
   return new OptionsPaneCategoryDescriptor({
     title,
@@ -20,9 +20,8 @@ export function useConditionalRenderingEditor(
     renderTitle: () => (
       <Stack direction="row" gap={1} alignItems="center">
         <div>{title}</div>
-        <Icon name={!conditionalRendering.evaluate() ? 'eye-slash' : 'eye'} />
         <Tooltip content={conditionalRendering.info}>
-          <Icon name="info-circle" />
+          <Icon name={!conditionalRendering.evaluate() ? 'eye-slash' : 'eye'} />
         </Tooltip>
       </Stack>
     ),

@@ -1480,7 +1480,7 @@
       },
       "root": {
         "info": "Set rules to control {{type}} visibility by matching any or all rules.",
-        "title": "Show/hide rules"
+        "title": "Show / hide rules"
       }
     },
     "default-layout": {
