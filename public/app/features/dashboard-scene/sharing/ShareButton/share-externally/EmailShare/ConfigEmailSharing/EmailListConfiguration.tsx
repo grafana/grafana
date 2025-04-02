@@ -77,7 +77,12 @@ const EmailList = ({
                   />
                 }
               >
-                <IconButton name="ellipsis-v" aria-label="email-menu" variant="secondary" size="lg" />
+                <IconButton
+                  name="ellipsis-v"
+                  aria-label={t('dashboard-scene.email-list.aria-label-emailmenu', 'Toggle email menu')}
+                  variant="secondary"
+                  size="lg"
+                />
               </Dropdown>
             </td>
           </tr>
