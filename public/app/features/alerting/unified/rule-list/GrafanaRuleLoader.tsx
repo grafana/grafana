@@ -1,4 +1,5 @@
 import { Alert } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -16,7 +17,6 @@ import {
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
-import { t, Trans } from 'app/core/internationalization';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
