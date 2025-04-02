@@ -35,7 +35,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   };
 
   public get title(): string {
-    return t('dashboard.conditional-rendering.group.label', 'Group');
+    return t('dashboard.conditional-rendering.conditions.group.label', 'Group');
   }
 
   public get info(): undefined {

@@ -1423,83 +1423,64 @@
       "paste-tab": "Paste tab"
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "No data",
-        "enable": "Has data",
-        "info": {
-          "element": "Show or hide the element based on query results.",
-          "panel": "Show or hide the panel based on query results."
+      "conditions": {
+        "data": {
+          "disable": "No data",
+          "enable": "Has data",
+          "info": "Show or hide the {{type}} based on query results.",
+          "label": "Query result"
         },
-        "label": "Query result"
-      },
-      "group": {
-        "add": {
-          "button": "Add rule",
-          "data": "Query result",
-          "time-range-size": "Time range less than",
-          "variable": "Template variable"
-        },
-        "condition": {
-          "all": "AND",
-          "any": "OR",
-          "label": "Match rules"
-        },
-        "label": "Group",
-        "visibility": {
-          "hide": "Hide",
-          "label": {
-            "other": "Element visibility",
-            "panel": "Panel visibility",
-            "row": "Row visibility",
-            "tab": "Tab visibility"
+        "group": {
+          "add": {
+            "button": "Add rule",
+            "data": "Query result",
+            "time-range-size": "Time range less than",
+            "variable": "Template variable"
           },
-          "show": "Show"
+          "condition": {
+            "all": "AND",
+            "any": "OR",
+            "label": "Match rules"
+          },
+          "label": "Group",
+          "visibility": {
+            "hide": "Hide",
+            "label": "{{type}} visibility",
+            "show": "Show"
+          }
+        },
+        "shared": {
+          "delete-condition": "Delete Condition",
+          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
+        },
+        "time-range-size": {
+          "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
+          "invalid-message": "Invalid interval",
+          "label": "Time range less than",
+          "values": {
+            "days": "{{value}} days",
+            "hour": "{{value}} hour",
+            "hours": "{{value}} hours",
+            "minutes": "{{value}} minutes",
+            "months": "{{value}} months",
+            "year": "{{value}} year",
+            "years": "{{value}} years"
+          }
+        },
+        "variable": {
+          "info": "Show or hide the {{type}} dynamically based on the variable value.",
+          "label": "Template variable",
+          "name": "Name",
+          "operator": {
+            "equals": "Equals",
+            "not-equals": "Not equals"
+          },
+          "value": "Value"
         }
       },
-      "info": {
-        "element": "Set rules to control element visibility by matching any or all rules.",
-        "panel": "Set rules to control panel visibility by matching any or all rules.",
-        "row": "Set rules to control row visibility by matching any or all rules.",
-        "tab": "Set rules to control tab visibility by matching any or all rules."
-      },
-      "shared": {
-        "delete-condition": "Delete Condition"
-      },
-      "time-range-size": {
-        "info": {
-          "element": "Show or hide the element if the dashboard time range is shorter than the selected time frame.",
-          "panel": "Show or hide the panel if the dashboard time range is shorter than the selected time frame.",
-          "row": "Show or hide the row if the dashboard time range is shorter than the selected time frame.",
-          "tab": "Show or hide the tab if the dashboard time range is shorter than the selected time frame."
-        },
-        "invalid-message": "Invalid interval",
-        "label": "Time range less than",
-        "values": {
-          "days": "{{value}} days",
-          "hour": "{{value}} hour",
-          "hours": "{{value}} hours",
-          "minutes": "{{value}} minutes",
-          "months": "{{value}} months",
-          "year": "{{value}} year",
-          "years": "{{value}} years"
-        }
-      },
-      "title": "Show / hide rules",
-      "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored.",
-      "variable": {
-        "info": {
-          "element": "Show or hide the element dynamically based on the variable value.",
-          "panel": "Show or hide the panel dynamically based on the variable value.",
-          "row": "Show or hide the row dynamically based on the variable value.",
-          "tab": "Show or hide the tab dynamically based on the variable value."
-        },
-        "label": "Template variable",
-        "name": "Name",
-        "operator": {
-          "equals": "Equals",
-          "not-equals": "Not equals"
-        },
-        "value": "Value"
+      "root": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
+        "title": "Show/hide rules"
       }
     },
     "default-layout": {

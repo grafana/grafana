@@ -24,35 +24,15 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
   };
 
   public get title(): string {
-    return t('dashboard.conditional-rendering.variable.label', 'Template variable');
+    return t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable');
   }
 
   public get info(): string {
-    switch (this.getItemType()) {
-      case 'auto-grid-item':
-        return t(
-          'dashboard.conditional-rendering.variable.info.panel',
-          'Show or hide the panel dynamically based on the variable value.'
-        );
-
-      case 'row':
-        return t(
-          'dashboard.conditional-rendering.variable.info.row',
-          'Show or hide the row dynamically based on the variable value.'
-        );
-
-      case 'tab':
-        return t(
-          'dashboard.conditional-rendering.variable.info.tab',
-          'Show or hide the tab dynamically based on the variable value.'
-        );
-
-      default:
-        return t(
-          'dashboard.conditional-rendering.variable.info.element',
-          'Show or hide the element dynamically based on the variable value.'
-        );
-    }
+    return t(
+      'dashboard.conditional-rendering.conditions.variable.info',
+      'Show or hide the {{type}} dynamically based on the variable value.',
+      { type: this.getItemType() }
+    );
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -121,8 +101,11 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   const operatorOptions: Array<ComboboxOption<VariableConditionValueOperator>> = useMemo(
     () => [
-      { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
-      { value: '!=', description: t('dashboard.conditional-rendering.variable.operator.not-equals', 'Not equals') },
+      { value: '=', description: t('dashboard.conditional-rendering.conditions.variable.operator.equals', 'Equals') },
+      {
+        value: '!=',
+        description: t('dashboard.conditional-rendering.conditions.variable.operator.not-equals', 'Not equals'),
+      },
     ],
     []
   );
@@ -132,7 +115,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
       <Stack direction="row" gap={0.5} grow={1}>
         <Box flex={1}>
           <Combobox
-            placeholder={t('dashboard.conditional-rendering.variable.name', 'Name')}
+            placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
             options={variableNames}
             value={value.name}
             onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
@@ -148,7 +131,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
         />
       </Stack>
       <Input
-        placeholder={t('dashboard.conditional-rendering.variable.value', 'Value')}
+        placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
         value={value.value}
         onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
       />

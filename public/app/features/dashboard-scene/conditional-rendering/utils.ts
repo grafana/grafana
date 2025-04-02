@@ -8,12 +8,12 @@ import { ItemsWithConditionalRendering } from './types';
 
 export function getItemType(object: SceneObject): ItemsWithConditionalRendering {
   if (object instanceof AutoGridItem) {
-    return 'auto-grid-item';
+    return 'panel';
   } else if (object instanceof RowItem) {
     return 'row';
   } else if (object instanceof TabItem) {
     return 'tab';
   }
 
-  return 'unknown';
+  return 'element';
 }

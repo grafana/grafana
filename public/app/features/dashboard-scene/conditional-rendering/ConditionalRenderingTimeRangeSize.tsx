@@ -7,8 +7,6 @@ import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { parseInterval } from '../../alerting/unified/utils/time';
-
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
 
@@ -24,35 +22,15 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
   };
 
   public get title(): string {
-    return t('dashboard.conditional-rendering.time-range-size.label', 'Time range less than');
+    return t('dashboard.conditional-rendering.conditions.time-range-size.label', 'Time range less than');
   }
 
   public get info(): string {
-    switch (this.getItemType()) {
-      case 'auto-grid-item':
-        return t(
-          'dashboard.conditional-rendering.time-range-size.info.panel',
-          'Show or hide the panel if the dashboard time range is shorter than the selected time frame.'
-        );
-
-      case 'row':
-        return t(
-          'dashboard.conditional-rendering.time-range-size.info.row',
-          'Show or hide the row if the dashboard time range is shorter than the selected time frame.'
-        );
-
-      case 'tab':
-        return t(
-          'dashboard.conditional-rendering.time-range-size.info.tab',
-          'Show or hide the tab if the dashboard time range is shorter than the selected time frame.'
-        );
-
-      default:
-        return t(
-          'dashboard.conditional-rendering.time-range-size.info.element',
-          'Show or hide the element if the dashboard time range is shorter than the selected time frame.'
-        );
-    }
+    return t(
+      'dashboard.conditional-rendering.conditions.time-range-size.info',
+      'Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.',
+      { type: this.getItemType() }
+    );
   }
 
   public constructor(state: ConditionalRenderingTimeRangeSizeState) {
@@ -102,74 +80,104 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
   const [isValid, setIsValid] = useState(validateIntervalRegex.test(value));
   const styles = useStyles2(getStyles);
 
-  parseInterval(value);
-
   useEffect(() => setIsValid(validateIntervalRegex.test(value)), [value]);
 
   const staticOptions = useMemo<Array<SelectableValue<string>>>(
     () => [
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.minutes', '{{value}} minutes', { value: 5 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.minutes', '{{value}} minutes', {
+          value: 5,
+        }),
         value: '5m',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.minutes', '{{value}} minutes', { value: 15 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.minutes', '{{value}} minutes', {
+          value: 15,
+        }),
         value: '15m',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.minutes', '{{value}} minutes', { value: 30 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.minutes', '{{value}} minutes', {
+          value: 30,
+        }),
         value: '30m',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.hour', '{{value}} hour', { value: 1 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.hour', '{{value}} hour', {
+          value: 1,
+        }),
         value: '1h',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.hours', '{{value}} hours', { value: 3 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.hours', '{{value}} hours', {
+          value: 3,
+        }),
         value: '3h',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.hours', '{{value}} hours', { value: 6 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.hours', '{{value}} hours', {
+          value: 6,
+        }),
         value: '6h',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.hours', '{{value}} hours', { value: 12 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.hours', '{{value}} hours', {
+          value: 12,
+        }),
         value: '12h',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.hours', '{{value}} hours', { value: 24 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.hours', '{{value}} hours', {
+          value: 24,
+        }),
         value: '24h',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.days', '{{value}} days', { value: 2 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.days', '{{value}} days', {
+          value: 2,
+        }),
         value: '2d',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.days', '{{value}} days', { value: 7 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.days', '{{value}} days', {
+          value: 7,
+        }),
         value: '7d',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.days', '{{value}} days', { value: 30 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.days', '{{value}} days', {
+          value: 30,
+        }),
         value: '30d',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.days', '{{value}} days', { value: 90 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.days', '{{value}} days', {
+          value: 90,
+        }),
         value: '90d',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.months', '{{value}} months', { value: 6 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.months', '{{value}} months', {
+          value: 6,
+        }),
         value: '6M',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.year', '{{value}} year', { value: 1 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.year', '{{value}} year', {
+          value: 1,
+        }),
         value: '1y',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.years', '{{value}} years', { value: 2 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.years', '{{value}} years', {
+          value: 2,
+        }),
         value: '2y',
       },
       {
-        label: t('dashboard.conditional-rendering.time-range-size.values.years', '{{value}} years', { value: 5 }),
+        label: t('dashboard.conditional-rendering.conditions.time-range-size.values.years', '{{value}} years', {
+          value: 5,
+        }),
         value: '5y',
       },
     ],
@@ -187,7 +195,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
   return (
     <Field
       invalid={!isValid}
-      error={t('dashboard.conditional-rendering.time-range-size.invalid-message', 'Invalid interval')}
+      error={t('dashboard.conditional-rendering.conditions.time-range-size.invalid-message', 'Invalid interval')}
       className={styles.container}
     >
       <Select

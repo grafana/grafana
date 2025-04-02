@@ -23,23 +23,20 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     deserialize: this.deserialize,
   };
 
-  public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['auto-grid-item'];
+  public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['panel'];
 
   public get title(): string {
-    return t('dashboard.conditional-rendering.data.label', 'Query result');
+    return t('dashboard.conditional-rendering.conditions.data.label', 'Query result');
   }
 
   public get info(): string {
-    switch (this.getItemType()) {
-      case 'auto-grid-item':
-        return t('dashboard.conditional-rendering.data.info.panel', 'Show or hide the panel based on query results.');
-
-      default:
-        return t(
-          'dashboard.conditional-rendering.data.info.element',
-          'Show or hide the element based on query results.'
-        );
-    }
+    return t(
+      'dashboard.conditional-rendering.conditions.data.info',
+      'Show or hide the {{type}} based on query results.',
+      {
+        type: this.getItemType(),
+      }
+    );
   }
 
   public constructor(state: ConditionalRenderingDataState) {
@@ -133,8 +130,8 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
 
   const enableConditionOptions: Array<ComboboxOption<1 | 0>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.data.enable', 'Has data'), value: 1 },
-      { label: t('dashboard.conditional-rendering.data.disable', 'No data'), value: 0 },
+      { label: t('dashboard.conditional-rendering.conditions.data.enable', 'Has data'), value: 1 },
+      { label: t('dashboard.conditional-rendering.conditions.data.disable', 'No data'), value: 0 },
     ],
     []
   );

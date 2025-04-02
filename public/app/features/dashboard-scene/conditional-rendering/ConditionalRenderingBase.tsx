@@ -105,7 +105,7 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
           {comp}
           {!model.isItemSupported() && (
             <Alert severity="error" title="">
-              <Trans i18nKey="dashboard.conditional-rendering.unsupported-item-type">
+              <Trans i18nKey="dashboard.conditional-rendering.conditions.shared.unsupported-item-type">
                 This condition is not supported by the element, hence it will be ignored.
               </Trans>
             </Alert>
@@ -113,7 +113,7 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
         </Stack>
 
         <IconButton
-          aria-label={t('dashboard.conditional-rendering.shared.delete-condition', 'Delete Condition')}
+          aria-label={t('dashboard.conditional-rendering.conditions.shared.delete-condition', 'Delete Condition')}
           name="trash-alt"
           onClick={() => model.onDelete()}
         />

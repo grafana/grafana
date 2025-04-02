@@ -17,15 +17,15 @@ export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) =
 
   const options: Array<SelectableValue<GroupConditionCondition>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.group.condition.all', 'AND'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.group.condition.any', 'OR'), value: 'or' },
+      { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'AND'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.conditions.group.condition.any', 'OR'), value: 'or' },
     ],
     []
   );
 
   return (
     <Field
-      label={t('dashboard.conditional-rendering.group.condition.label', 'Match rules')}
+      label={t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules')}
       className={styles.container}
     >
       <RadioButtonGroup fullWidth options={options} value={value} onChange={onChange} />

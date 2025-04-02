@@ -17,31 +17,11 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   public static Component = ConditionalRenderingRenderer;
 
   public get info(): string {
-    switch (this.getItemType()) {
-      case 'auto-grid-item':
-        return t(
-          'dashboard.conditional-rendering.info.panel',
-          'Set rules to control panel visibility by matching any or all rules.'
-        );
-
-      case 'row':
-        return t(
-          'dashboard.conditional-rendering.info.row',
-          'Set rules to control row visibility by matching any or all rules.'
-        );
-
-      case 'tab':
-        return t(
-          'dashboard.conditional-rendering.info.tab',
-          'Set rules to control tab visibility by matching any or all rules.'
-        );
-
-      default:
-        return t(
-          'dashboard.conditional-rendering.info.element',
-          'Set rules to control element visibility by matching any or all rules.'
-        );
-    }
+    return t(
+      'dashboard.conditional-rendering.root.info',
+      'Set rules to control {{type}} visibility by matching any or all rules.',
+      { type: this.getItemType() }
+    );
   }
 
   public constructor(state: ConditionalRenderingState) {
