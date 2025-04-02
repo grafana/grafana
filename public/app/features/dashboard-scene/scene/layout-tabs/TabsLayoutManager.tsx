@@ -14,9 +14,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import { DashboardScene } from '../DashboardScene';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
@@ -110,15 +108,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.getCurrentTab().getLayout().addPanel(vizPanel);
   }
 
-  public isEmpty(): boolean {
-    const layout = this.state.tabs[0].state.layout;
-    return (
-      this.state.tabs.length <= 1 &&
-      (layout instanceof DefaultGridLayoutManager || layout instanceof AutoGridLayoutManager) &&
-      layout.isEmpty()
-    );
-  }
-
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -146,13 +135,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public pasteTab() {
-    const scene = this.getRoot();
-    if (scene instanceof DashboardScene) {
-      const tab = getTabFromClipboard(scene);
-      this.addNewTab(tab);
-    } else {
-      throw new Error('Parent scene is not a DashboardScene');
-    }
+    const scene = getDashboardSceneFor(this);
+    const tab = getTabFromClipboard(scene);
+    this.addNewTab(tab);
   }
 
   public activateRepeaters() {

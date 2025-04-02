@@ -16,9 +16,8 @@ import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import { createElements, vizPanelToSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
-import { getDefaultVizPanel } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
+import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
@@ -102,17 +101,7 @@ export class TabItem
   }
 
   public onCopy() {
-    const panels = this.state.layout.getVizPanels();
-    const scene = this.getRoot();
-    if (!(scene instanceof DashboardScene)) {
-      throw new Error('Scene is not a DashboardScene');
-    }
-    const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
-    const panelsArray = panels.map((vizPanel) => {
-      return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
-    });
-    const elements = createElements(panelsArray, scene);
-
+    const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
     clearClipboard();
     store.set(LS_TAB_COPY_KEY, JSON.stringify({ elements, tab: this.serialize() }));
   }

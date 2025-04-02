@@ -10,11 +10,10 @@ import {
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { DashboardScene } from '../DashboardScene';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -88,15 +87,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return this.clone({ rows: newRows, key: undefined });
   }
 
-  public isEmpty(): boolean {
-    const layout = this.state.rows[0].state.layout;
-    return (
-      this.state.rows.length <= 1 &&
-      (layout instanceof DefaultGridLayoutManager || layout instanceof AutoGridLayoutManager) &&
-      layout.isEmpty()
-    );
-  }
-
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
     this.setState({ rows: [...this.state.rows, newRow] });
@@ -104,7 +94,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem();
+    const newRow = row ?? new RowItem({ isNew: true });
     this.setState({ rows: [...this.state.rows, newRow] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
     return newRow;
@@ -115,13 +105,9 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public pasteRow() {
-    const scene = this.getRoot();
-    if (scene instanceof DashboardScene) {
-      const row = getRowFromClipboard(scene);
-      this.addNewRow(row);
-    } else {
-      throw new Error('Parent scene is not a DashboardScene');
-    }
+    const scene = getDashboardSceneFor(this);
+    const row = getRowFromClipboard(scene);
+    this.addNewRow(row);
   }
 
   public activateRepeaters() {

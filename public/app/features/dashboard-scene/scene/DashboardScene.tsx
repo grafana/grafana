@@ -73,13 +73,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
-import {
-  clearClipboard,
-  getRowFromClipboard,
-  getTabFromClipboard,
-  pasteRowTo,
-  pasteTabTo,
-} from './layouts-shared/paste';
+import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
@@ -623,29 +617,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     return addNewRowTo(this.state.body);
-  }
-
-  public pasteTab() {
-    const tab = getTabFromClipboard(this);
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return pasteTabTo(layout, tab);
-    }
-
-    return pasteTabTo(this.state.body, tab);
-  }
-
-  public pasteRow() {
-    const row = getRowFromClipboard(this);
-
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return pasteRowTo(layout, row);
-    }
-
-    return pasteRowTo(this.state.body, row);
   }
 
   public onCreateNewTab() {

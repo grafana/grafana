@@ -25,6 +25,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
@@ -34,6 +35,7 @@ import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
@@ -241,4 +243,13 @@ export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayout
   }
 
   return new ConditionalRendering({ rootGroup: rootGroup });
+}
+
+export function getElements(layout: DashboardLayoutManager, scene: DashboardScene): DashboardV2Spec['elements'] {
+  const panels = layout.getVizPanels();
+  const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
+  const panelsArray = panels.map((vizPanel) => {
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+  });
+  return createElements(panelsArray, scene);
 }

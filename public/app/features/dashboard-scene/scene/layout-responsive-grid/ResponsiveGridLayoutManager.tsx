@@ -251,10 +251,6 @@ export class AutoGridLayoutManager
 
     return layoutManager;
   }
-
-  public isEmpty(): boolean {
-    return this.state.layout.state.children.length === 0;
-  }
 }
 
 function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {

@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Box, Card, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -27,7 +26,6 @@ interface CardConfig {
 export function DashboardAddPane({ editPane }: Props) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(editPane);
-  const { hasCopiedPanel, hasCopiedRow, hasCopiedTab } = useClipboardState();
 
   const cards: CardConfig[] = [
     {
@@ -63,30 +61,6 @@ export function DashboardAddPane({ editPane }: Props) {
       title: t('dashboard.edit-pane.add.tab.title', 'Break up your dashboard into different horizontal tabs'),
       testId: selectors.components.PageToolbar.itemButton('add_tab'),
       onClick: () => dashboard.onCreateNewTab(),
-    },
-    {
-      hide: !hasCopiedPanel,
-      icon: 'clipboard-alt',
-      heading: t('dashboard.edit-pane.add.paste-panel.heading', 'Paste panel'),
-      title: t('dashboard.edit-pane.add.paste-panel.title', 'Paste a panel from the clipboard'),
-      testId: selectors.components.PageToolbar.itemButton('paste_panel'),
-      onClick: () => dashboard.pastePanel(),
-    },
-    {
-      hide: !hasCopiedRow,
-      icon: 'clipboard-alt',
-      heading: t('dashboard.edit-pane.add.paste-row.heading', 'Paste row'),
-      title: t('dashboard.edit-pane.add.paste-row.title', 'Paste a row from the clipboard'),
-      testId: selectors.components.PageToolbar.itemButton('paste_row'),
-      onClick: () => dashboard.pasteRow(),
-    },
-    {
-      hide: !hasCopiedTab,
-      icon: 'clipboard-alt',
-      heading: t('dashboard.edit-pane.add.paste-tab.heading', 'Paste tab'),
-      title: t('dashboard.edit-pane.add.paste-tab.title', 'Paste a tab from the clipboard'),
-      testId: selectors.components.PageToolbar.itemButton('paste_tab'),
-      onClick: () => dashboard.pasteTab(),
     },
   ];
 

@@ -275,10 +275,6 @@ export class DefaultGridLayoutManager
     return row;
   }
 
-  public isEmpty(): boolean {
-    return this.state.grid.state.children.length === 0;
-  }
-
   public editModeChanged(isEditing: boolean) {
     const updateResizeAndDragging = () => {
       this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
