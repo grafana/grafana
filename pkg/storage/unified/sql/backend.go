@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -76,7 +76,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
-		log:                     log.New("sql-resource-server"),
+		log:                     logging.FromContext(ctx),
 		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
@@ -123,7 +123,7 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log            log.Logger
+	log            logging.Logger
 	tracer         trace.Tracer
 	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
