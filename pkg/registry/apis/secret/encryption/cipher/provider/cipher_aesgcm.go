@@ -30,7 +30,7 @@ func newAesGcmCipher() aesGcmCipher {
 }
 
 func (c aesGcmCipher) Encrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
-	salt, err := c.generateSalt()
+	salt, err := c.readEntropy(gcmSaltLength)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c aesGcmCipher) Encrypt(_ context.Context, payload []byte, secret string) 
 		return nil, err
 	}
 
-	nonce, err := c.generateNonce(gcm)
+	nonce, err := c.readEntropy(gcm.NonceSize())
 	if err != nil {
 		return nil, err
 	}
@@ -104,18 +104,10 @@ func (c aesGcmCipher) Decrypt(_ context.Context, payload []byte, secret string) 
 	return gcm.Open(nil, nonce, payload, nil)
 }
 
-func (c aesGcmCipher) generateSalt() ([]byte, error) {
-	salt := make([]byte, gcmSaltLength)
-	if _, err := io.ReadFull(c.randReader, salt); err != nil {
+func (c aesGcmCipher) readEntropy(n int) ([]byte, error) {
+	entropy := make([]byte, n)
+	if _, err := io.ReadFull(c.randReader, entropy); err != nil {
 		return nil, err
 	}
-	return salt, nil
-}
-
-func (c aesGcmCipher) generateNonce(aead cpr.AEAD) ([]byte, error) {
-	nonce := make([]byte, aead.NonceSize())
-	if _, err := io.ReadFull(c.randReader, nonce); err != nil {
-		return nil, err
-	}
-	return nonce, nil
+	return entropy, nil
 }
