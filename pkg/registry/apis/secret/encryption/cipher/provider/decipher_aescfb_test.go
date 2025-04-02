@@ -25,4 +25,16 @@ func TestCfbDecryption(t *testing.T) {
 		require.NoError(t, err, "failed to decrypt with CFB")
 		require.Equal(t, "grafana unit test", string(decrypted), "decrypted payload should match expected value")
 	})
+
+	t.Run("fails if payload is too short", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := aesCfbDecipher{}
+
+		payload := []byte{1, 2, 3, 4}
+		secret := "secret here"
+
+		_, err := cipher.Decrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected error when payload is shorter than salt")
+	})
 }

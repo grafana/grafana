@@ -70,4 +70,17 @@ func TestGcmDecryption(t *testing.T) {
 		require.NoError(t, err, "failed to decrypt with GCM")
 		require.Equal(t, "grafana unit test", string(decrypted), "decrypted payload should match expected value")
 	})
+
+	t.Run("fails if payload is shorter than salt", func(t *testing.T) {
+		t.Parallel()
+
+		cipher := newAesGcmCipher()
+		cipher.randReader = bytes.NewReader([]byte{}) // should not be used
+
+		payload := []byte{1, 2, 3, 4}
+		secret := "secret here"
+
+		_, err := cipher.Decrypt(t.Context(), payload, secret)
+		require.Error(t, err, "expected error when payload is shorter than salt")
+	})
 }
