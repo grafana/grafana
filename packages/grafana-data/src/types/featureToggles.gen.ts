@@ -1038,6 +1038,10 @@ export interface FeatureToggles {
   */
   alertingRuleRecoverDeleted?: boolean;
   /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
+  /**
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;

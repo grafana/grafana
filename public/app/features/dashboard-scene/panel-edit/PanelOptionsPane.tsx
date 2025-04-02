@@ -22,6 +22,7 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { FilterInput, RadioButtonGroup, ScrollContainer, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -134,7 +135,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               <FilterInput
                 className={styles.searchOptions}
                 value={searchQuery}
-                placeholder="Search options"
+                placeholder={t('dashboard-scene.panel-options-pane.placeholder-search-options', 'Search options')}
                 onChange={model.onSetSearchQuery}
               />
               {showSearchRadioButtons && (
@@ -208,11 +209,14 @@ export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonPro
     <Stack gap={1}>
       <ToolbarButton
         className={styles.vizButton}
-        tooltip="Click to change visualization"
+        tooltip={t(
+          'dashboard-scene.visualization-button.tooltip-click-to-change-visualization',
+          'Click to change visualization'
+        )}
         imgSrc={pluginMeta.info.logos.small}
         onClick={onOpen}
         data-testid={selectors.components.PanelEditor.toggleVizPicker}
-        aria-label="Change Visualization"
+        aria-label={t('dashboard-scene.visualization-button.aria-label-change-visualization', 'Change visualization')}
         variant="canvas"
         isOpen={false}
         fullWidth
