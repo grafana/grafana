@@ -33,7 +33,7 @@ Candlestick visualizations build upon the foundation of the [time series visuali
 
 You can use a candlestick if you want to visualize, at a glance, how a price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1065px" alt="A candlestick visualization" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candlestick-v11.6.png" max-width="750px" alt="A candlestick visualization" >}}
 
 Each candlestick is represented as a rectangle, referred to as the _candlestick body_. The candlestick body displays the opening and closing prices during a time period. Green candlesticks represent when the price appreciated while the red candlesticks represent when the price depreciated. The lines sticking out the candlestick body are referred to as _wicks_ or _shadows_, which represent the highest and lowest prices during the time period.
 
@@ -74,7 +74,7 @@ The candlestick visualization works best with price movement data for an asset. 
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick.png" max-width="1065px" alt="A candlestick visualization showing the price movements of specific asset." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candles-volume-v11.6.png" max-width="750px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
 ## Configuration options
 
@@ -122,7 +122,7 @@ The candlestick visualization legend doesn't display these values.
 
 If your data can't be mapped to these dimensions for some reason (for example, because the column names aren't the same), you can map them manually using the **Open**, **High**, **Low**, and **Close** fields under the **Candlestick** options in the panel editor:
 
-![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-olhc-options-v11.6.png" max-width="400px" alt="Open, High, Low, and Close fields in the panel editor" >}}
 
 #### Additional fields
 
