@@ -6,13 +6,13 @@ import (
 
 func ProvideCiphers() map[string]cipher.Encrypter {
 	return map[string]cipher.Encrypter{
-		cipher.AesCfb: aesCfbCipher{},
+		cipher.AesGcm: newAesGcmCipher(),
 	}
 }
 
 func ProvideDeciphers() map[string]cipher.Decrypter {
 	return map[string]cipher.Decrypter{
-		cipher.AesCfb: aesDecipher{algorithm: cipher.AesCfb},
-		cipher.AesGcm: aesDecipher{algorithm: cipher.AesGcm},
+		cipher.AesGcm: newAesGcmCipher(),
+		cipher.AesCfb: aesCfbDecipher{},
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -264,7 +265,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 			Encryption: setting.EncryptionSettings{
 				DataKeysCacheTTL:        5 * time.Minute,
 				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               "aes-cfb",
+				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}
