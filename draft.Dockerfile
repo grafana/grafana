@@ -181,6 +181,10 @@ FROM alpine:latest AS distroless-libs
 # Install bash, glibc, and musl
 RUN apk add --no-cache ca-certificates shadow coreutils curl tzdata musl-utils
 
+# glibc support for alpine x86_64 only
+# docker run --rm --env STDOUT=1 sgerrand/glibc-builder 2.40 /usr/glibc-compat > glibc-bin-2.40.tar.gz
+ARG GLIBC_VERSION=2.40
+
 # Install glibc for x86_64 architecture
 RUN if [ `arch` = "x86_64" ]; then \
   wget -qO- "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
