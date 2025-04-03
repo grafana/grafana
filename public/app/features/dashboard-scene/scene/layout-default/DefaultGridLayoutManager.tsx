@@ -533,6 +533,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const dashboard = useDashboard(model);
   const { isEditing } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts;
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -544,7 +545,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   return (
     <div className={cx(styles.container, isEditing && styles.containerEditing)}>
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
-      {isEditing && (
+      {showCanvasActions && (
         <div className={styles.actionsWrapper}>
           <CanvasGridAddActions layoutManager={model} />
         </div>
