@@ -78,5 +78,4 @@ func TestManagedAuthorizer(t *testing.T) {
 			}
 		})
 	}
-
 }
