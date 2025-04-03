@@ -148,6 +148,7 @@ export interface TableCellNGProps {
   timeRange: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
