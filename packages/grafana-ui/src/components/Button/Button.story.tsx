@@ -81,6 +81,24 @@ export const Examples: StoryFn<typeof Button> = () => {
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
         </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="destructive" icon="sync">
+            Run query
+          </Button>
+          <Button variant="destructive" icon="angle-down" />
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="success" icon="sync">
+            Run query
+          </Button>
+          <Button variant="success" icon="angle-down" />
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="secondary" icon="sync">
+            Run query
+          </Button>
+          <Button variant="secondary" icon="angle-down" />
+        </ButtonGroup>
       </Stack>
       <Card>
         <Card.Heading>Button inside card</Card.Heading>
