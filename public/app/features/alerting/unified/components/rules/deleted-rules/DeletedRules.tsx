@@ -20,8 +20,8 @@ interface DeletedRulesProps {
 export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
-  const [confirmDeletePermanently, setConfirmDeletePermanently] = useState(false);
   const [guidToDelete, setGuidToDelete] = useState<string | undefined>();
+  const confirmDeletePermanently = guidToDelete !== undefined;
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
   if (deletedRules.length === 0) {
@@ -47,7 +47,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
     setConfirmRestore(false);
   };
   const hideConfirmationForDelete = () => {
-    setConfirmDeletePermanently(false);
+    setGuidToDelete(undefined);
   };
 
   const showDeleteConfirmation = (id: string) => {
@@ -56,7 +56,6 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
       return;
     }
 
-    setConfirmDeletePermanently(true);
     setGuidToDelete(ruleTorestore.grafana_alert.guid);
   };
 
