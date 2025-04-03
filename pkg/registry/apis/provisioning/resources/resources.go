@@ -76,6 +76,11 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	ctx = r.withAuthorSignature(ctx, meta)
 
 	name := meta.GetName()
+	if name == "" {
+		return "", field.Required(field.NewPath("name", "metadata", "name"),
+			"An explicit name must be saved in the resource")
+	}
+
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how we should handle this?
 	if manager.Identity == r.repo.Config().GetName() {
@@ -104,11 +109,6 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 
 	// Always write the identifier
 	meta.SetName(name)
-
-	if name == "" {
-		return "", field.Required(field.NewPath("name", "metadata", "name"),
-			"An explicit name must be saved in the resource")
-	}
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
