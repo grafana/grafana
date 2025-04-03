@@ -34,7 +34,7 @@ export function FinishedJobStatus({
   useJobStatusEffect(job, onStatusChange, onRunningChange, onErrorChange);
 
   useEffect(() => {
-    const shouldRetry = !hasRetried.current && !finishedQuery.isFetching;
+    const shouldRetry = !job && !hasRetried.current && !finishedQuery.isFetching;
 
     if (shouldRetry) {
       hasRetried.current = true;
@@ -44,22 +44,7 @@ export function FinishedJobStatus({
     }
 
     return undefined;
-  }, [finishedQuery]);
-
-  if (finishedQuery.isLoading || finishedQuery.isFetching) {
-    return (
-      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        <Spinner size={24} />
-        <Text element="h4" weight="bold">
-          <Trans i18nKey="provisioning.job-status.loading-finished-job">Loading finished job...</Trans>
-        </Text>
-      </Stack>
-    );
-  }
-
-  if (!job) {
-    return null;
-  }
+  }, [finishedQuery, job]);
 
   if (retryFailed) {
     return (
@@ -68,6 +53,17 @@ export function FinishedJobStatus({
           The job may have been deleted or could not be retrieved. Cancel the current process and start again.
         </Trans>
       </Alert>
+    );
+  }
+
+  if (!job || finishedQuery.isLoading || finishedQuery.isFetching) {
+    return (
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" color="secondary">
+          <Trans i18nKey="provisioning.job-status.loading-finished-job">Loading finished job...</Trans>
+        </Text>
+      </Stack>
     );
   }
 
