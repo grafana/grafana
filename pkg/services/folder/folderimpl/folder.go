@@ -203,6 +203,8 @@ func (s *Service) DBMigration(db db.DB) {
 }
 
 func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.CountFoldersInOrg")
+	defer span.End()
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return s.unifiedStore.CountInOrg(ctx, orgID)
 	}
