@@ -61,7 +61,7 @@ export class OptionsPaneCategoryDescriptor {
 
     if (this.props.title === '') {
       return (
-        <Box padding={2} key={this.props.title}>
+        <Box padding={2} paddingBottom={1} key={this.props.title}>
           {this.items.map((item) => item.render(searchQuery))}
         </Box>
       );
