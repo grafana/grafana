@@ -282,7 +282,7 @@ Complete the following steps to set up notifications.
 
 ## Permanently delete or restore deleted alert rules
 
-Deleted alert rules are stored for 30 days. Admins can restore deleted Grafana-managed alert rules.
+Deleted alert rules are stored for 30 days. Only users with an Admin role can restore deleted Grafana-managed alert rules. Once an alert rule is restored, it is restored with a new, different UUID from the one it had before.
 
 1. Go to **Alerts & IRM > Alerting > Recently deleted**.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
