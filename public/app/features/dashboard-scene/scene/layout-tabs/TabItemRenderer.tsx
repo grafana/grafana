@@ -38,7 +38,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   if (!model.hasUniqueTitle()) {
     titleCollisionProps = {
       icon: 'exclamation-triangle',
-      tooltip: t('dashboard.tabs-layout.tab-options.title-collision-tooltip', 'This title is not unique'),
+      tooltip: t('dashboard.tabs-layout.tab-warning.title-not-unique', 'This title is not unique'),
     };
   }
 
