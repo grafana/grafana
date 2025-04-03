@@ -40,7 +40,6 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
       onChange={onChange}
       value={options.value?.find((opt) => opt.value === value) ?? null}
       options={options.value}
-      aria-label="Sort"
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
       isClearable={isClearable}
