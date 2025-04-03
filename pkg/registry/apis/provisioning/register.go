@@ -87,6 +87,7 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
+	jobHistory       jobs.History
 	tester           *RepositoryTester
 	resourceLister   resources.ResourceLister
 	repositoryLister listers.RepositoryLister
@@ -342,12 +343,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create historic job storage: %w", err)
 	}
 
-	jobHistory, err := jobs.NewStorageBackedHistory(historicJobStore)
+	b.jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
 	if err != nil {
 		return fmt.Errorf("failed to create historic job wrapper: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, jobHistory, time.Second*30)
+	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -380,7 +381,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		historic:   jobHistory,
+		historic:   b.jobHistory,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
 		blob: b.unified,
@@ -588,7 +589,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create pull request worker: %w", err)
 			}
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b,
+			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
 			go driver.Run(postStartHookCtx.Context)
 
