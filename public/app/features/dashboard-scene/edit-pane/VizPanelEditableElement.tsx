@@ -12,6 +12,7 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -101,6 +102,9 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     if (this.panel.parent instanceof AutoGridItem) {
       this.panel.parent.scrollIntoView();
     }
+    if (this.panel.parent instanceof DashboardGridItem) {
+      this.panel.parent.scrollIntoView();
+    }
   }
 }
 
@@ -120,7 +124,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
         size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
       >
-        <Trans i18nKey="dashboard.new-panel.configure-button">Configure panel</Trans>
+        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>
     </Stack>
   );

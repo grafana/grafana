@@ -1,5 +1,5 @@
 import { Registry, RegistryItem } from '@grafana/data';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
@@ -12,7 +12,8 @@ interface LayoutSerializerRegistryItem extends RegistryItem {
   deserialize: (
     layout: DashboardV2Spec['layout'],
     elements: DashboardV2Spec['elements'],
-    preload: boolean
+    preload: boolean,
+    panelIdGenerator?: () => number
   ) => DashboardLayoutManager;
 }
 

@@ -920,6 +920,7 @@ export type SyncStatus = {
 export type WebhookStatus = {
   encryptedSecret?: string;
   id?: number;
+  lastEvent?: number;
   secret?: string;
   subscribedEvents?: string[];
   url?: string;

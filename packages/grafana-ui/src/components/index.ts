@@ -338,5 +338,6 @@ export {
   useElementSelection,
   type ElementSelectionContextState,
   type ElementSelectionContextItem,
+  type ElementSelectionOnSelectOptions,
   type UseElementSelectionResult,
 } from './ElementSelectionContext/ElementSelectionContext';

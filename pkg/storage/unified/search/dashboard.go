@@ -18,7 +18,6 @@ import (
 // Standard dashboard fields
 //------------------------------------------------------------
 
-const DASHBOARD_LEGACY_ID = "legacy_id"
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
@@ -189,11 +188,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 				Filterable: true,
 			},
 		},
-		{
-			Name:        DASHBOARD_LEGACY_ID,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
-			Description: "Deprecated legacy id of the dashboard",
-		},
 	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -314,9 +308,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:     summary.LinkCount,
-		DASHBOARD_LEGACY_ID:      summary.ID,
+		DASHBOARD_SCHEMA_VERSION:        summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:            summary.LinkCount,
+		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
 	if len(panelTypes) > 0 {
@@ -342,7 +336,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 func DashboardFields() []string {
 	baseFields := []string{
-		DASHBOARD_LEGACY_ID,
 		DASHBOARD_SCHEMA_VERSION,
 		DASHBOARD_LINK_COUNT,
 		DASHBOARD_PANEL_TYPES,

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
@@ -22,12 +22,20 @@ export function DashboardOutline({ editPane }: Props) {
 
   return (
     <Box padding={1} gap={0.25} display="flex" direction="column">
-      <DashboardOutlineNode sceneObject={dashboard} expandable />
+      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} expandable />
     </Box>
   );
 }
 
-function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneObject; expandable: boolean }) {
+function DashboardOutlineNode({
+  sceneObject,
+  expandable,
+  editPane,
+}: {
+  sceneObject: SceneObject;
+  expandable: boolean;
+  editPane: DashboardEditPane;
+}) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { key } = sceneObject.useState();
   const styles = useStyles2(getStyles);
@@ -38,17 +46,33 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
   const children = collectEditableElementChildren(sceneObject);
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? '<empty title>' : elementInfo.instanceName;
+  const elementExpanded = !editableElement.getCollapsedState?.();
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    onSelect?.(evt);
+    setIsExpanded(!isExpanded);
+    editableElement.scrollIntoView?.();
+
+    // Sync expanded state with canvas element
+    if (editableElement.getCollapsedState) {
+      editableElement.setCollapsedState?.(isExpanded);
+    }
+  };
+
+  // Sync canvas element expanded state with outline element
+  useEffect(() => {
+    if (elementExpanded !== isExpanded) {
+      console.log('elementExpanded', elementExpanded);
+      setIsExpanded(elementExpanded);
+    }
+  }, [isExpanded, elementExpanded]);
 
   return (
     <>
       <button
         role="treeitem"
         className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-        onPointerDown={(evt) => {
-          onSelect?.(evt);
-          setIsExpanded(!isExpanded);
-          editableElement.scrollIntoView?.();
-        }}
+        onPointerDown={onPointerDown}
       >
         {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
         <Icon size="sm" name={elementInfo.icon} />
@@ -63,6 +87,7 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
                 key={child.sceneObject.state.key}
                 sceneObject={child.sceneObject}
                 expandable={child.expandable}
+                editPane={editPane}
               />
             ))
           ) : (

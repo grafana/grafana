@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"go.opentelemetry.io/otel/attribute"
@@ -1037,79 +1036,6 @@ func (dr *DashboardServiceImpl) saveDashboard(ctx context.Context, cmd *dashboar
 	return dr.dashboardStore.SaveDashboard(ctx, *cmd)
 }
 
-func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return dr.getDashboardThroughK8s(ctx, &dashboards.GetDashboardQuery{OrgID: orgID, UID: uid})
-	}
-
-	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
-}
-
-func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboard *dashboards.Dashboard, user identity.Requester, optionalFolderUID string) error {
-	ctx, span := tracer.Start(ctx, "dashboards.service.RestoreDashboard")
-	defer span.End()
-
-	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
-	}
-
-	// if the optionalFolder is provided we need to check if the folder exists and user has access to it
-	if optionalFolderUID != "" {
-		restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-			UID:          &optionalFolderUID,
-			OrgID:        dashboard.OrgID,
-			SignedInUser: user,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return dashboards.ErrFolderRestoreNotFound
-			}
-			return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
-		}
-
-		return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
-	}
-
-	// if the optionalFolder is not provided we need to restore the dashboard to the original folder
-	// we check for permissions and the folder existence before restoring
-	restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-		UID:          &dashboard.FolderUID,
-		OrgID:        dashboard.OrgID,
-		SignedInUser: user,
-	})
-	if err != nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) {
-			return dashboards.ErrFolderRestoreNotFound
-		}
-		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
-	}
-
-	// TODO: once restore in k8s is finalized, add functionality here under the feature toggle
-
-	return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
-}
-
-func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
-	ctx, span := tracer.Start(ctx, "dashboards.service.SoftDeleteDashboard")
-	defer span.End()
-
-	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
-	}
-
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		// deletes in unistore are soft deletes, so we can just delete in the same way
-		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID}, true)
-	}
-
-	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
-	if provisionedData != nil && provisionedData.ID != 0 {
-		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-	}
-
-	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
-}
-
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
@@ -1541,7 +1467,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			result := dashboards.DashboardSearchProjection{
-				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				ID:          hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 				UID:         hit.Name,
 				OrgID:       query.OrgId,
 				Title:       hit.Title,
@@ -1746,10 +1672,6 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		return dr.dashboardStore.SoftDeleteDashboardsInFolders(ctx, orgID, folderUIDs)
-	}
-
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,
@@ -1787,27 +1709,6 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	}
 
 	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID})
-}
-
-func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.CleanUpDeletedDashboards")
-	defer span.End()
-
-	var deletedDashboardsCount int64
-	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedExpiredDashboards(ctx, daysInTrash)
-	if err != nil {
-		return 0, err
-	}
-	for _, dashboard := range deletedDashboards {
-		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.UID, dashboard.OrgID)
-		if err != nil {
-			dr.log.Warn("Failed to cleanup deleted dashboard", "dashboardUid", dashboard.UID, "error", err)
-			break
-		}
-		deletedDashboardsCount++
-	}
-
-	return deletedDashboardsCount, nil
 }
 
 // -----------------------------------------------------------------------------------------

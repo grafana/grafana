@@ -417,8 +417,9 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-		if rule.For > 0 {
-			// If the alert rule has a For duration that should be observed then the state should be set to Pending
+		if state.State != eval.Recovering && rule.For > 0 {
+			// If the alert rule has a For duration that should be observed then the state should be set to Pending.
+			// If the alert is currently in the Recovering state then we skip Pending and set it directly to Alerting.
 			logger.Debug("Changing state",
 				"previous_state",
 				state.State,

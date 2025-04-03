@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { Branding } from '../../../../core/components/Branding/Branding';
 import { getLoginStyles } from '../../../../core/components/Login/LoginLayout';
@@ -25,7 +26,7 @@ export const PublicDashboardNotAvailable = ({ paused }: { paused?: boolean }) =>
         </p>
         {paused && (
           <p className={styles.description} data-testid={selectors.pausedDescription}>
-            Try again later
+            <Trans i18nKey="dashboard.public-dashboard-not-available.try-again-later">Try again later</Trans>
           </p>
         )}
       </div>

@@ -14,6 +14,7 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -112,7 +113,9 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onClick={openDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add another transformation
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
+            Add another transformation
+          </Trans>
         </Button>
         <Button
           data-testid={selectors.components.Transforms.removeAllTransformationsButton}
@@ -121,12 +124,17 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           variant="secondary"
           onClick={() => setConfirmModalOpen(true)}
         >
-          Delete all transformations
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+            Delete all transformations
+          </Trans>
         </Button>
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
-        title="Delete all transformations?"
+        title={t(
+          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
+          'Delete all transformations?'
+        )}
         body="By deleting all transformations, you will go back to the main selection screen."
         confirmText="Delete all"
         onConfirm={() => {

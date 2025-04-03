@@ -156,6 +156,41 @@ func TestCheck_Run(t *testing.T) {
 		assert.Equal(t, 1, len(items))
 		assert.Len(t, failures, 0)
 	})
+
+	t.Run("should return failure when plugin is not installed", func(t *testing.T) {
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
+		}
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{err: plugins.ErrPluginNotRegistered}
+
+		check := &check{
+			DatasourceSvc:         mockDatasourceSvc,
+			PluginContextProvider: mockPluginContextProvider,
+			PluginClient:          mockPluginClient,
+			log:                   log.New("advisor.datasourcecheck"),
+		}
+
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		failures := []advisor.CheckReportFailure{}
+		for _, step := range check.Steps() {
+			for _, item := range items {
+				stepFailures, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+				assert.NoError(t, err)
+				if stepFailures != nil {
+					failures = append(failures, *stepFailures)
+				}
+			}
+		}
+
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(items))
+		assert.Len(t, failures, 1)
+		assert.Equal(t, "health-check", failures[0].StepID)
+	})
 }
 
 type MockDatasourceSvc struct {

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
+import { config, getTemplateSrv } from '@grafana/runtime';
+import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 
+import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
+import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
@@ -27,6 +29,7 @@ interface LogsQueryEditorProps {
   basicLogsEnabled: boolean;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
   hideFormatAs?: boolean;
@@ -41,6 +44,7 @@ const LogsQueryEditor = ({
   subscriptionId,
   variableOptionGroup,
   onChange,
+  onQueryChange,
   setError,
   hideFormatAs,
   timeRange,
@@ -54,6 +58,7 @@ const LogsQueryEditor = ({
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
+  const templateVariableOptions = templateSrv.getVariables();
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -92,6 +97,35 @@ const LogsQueryEditor = ({
       onChange(setKustoQuery(updatedBasicLogsQuery, ''));
     }
   }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
+
+  useEffect(() => {
+    const hasRawKql = !!query.azureLogAnalytics?.query;
+    const hasNoBuilder = !query.azureLogAnalytics?.builderQuery;
+    const modeUnset = query.azureLogAnalytics?.mode === undefined;
+
+    if (hasRawKql && hasNoBuilder && modeUnset) {
+      onChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          mode: LogsEditorMode.Raw,
+        },
+      });
+    }
+  }, [query, onChange]);
+
+  useEffect(() => {
+    if (query.azureLogAnalytics?.mode === LogsEditorMode.Raw && query.azureLogAnalytics?.builderQuery !== undefined) {
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          builderQuery: undefined,
+          query: '',
+        },
+      });
+    }
+  }, [query.azureLogAnalytics?.mode, onQueryChange, query]);
 
   useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
@@ -197,15 +231,29 @@ const LogsQueryEditor = ({
             />
           </EditorFieldGroup>
         </EditorRow>
-        <QueryField
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-          schema={schema}
-        />
+        <Space />
+        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder &&
+        !!config.featureToggles.azureMonitorLogsBuilderEditor ? (
+          <LogsQueryBuilder
+            query={query}
+            schema={schema!}
+            basicLogsEnabled={basicLogsEnabled}
+            onQueryChange={onQueryChange}
+            templateVariableOptions={templateVariableOptions}
+            datasource={datasource}
+            timeRange={timeRange}
+          />
+        ) : (
+          <QueryField
+            query={query}
+            datasource={datasource}
+            subscriptionId={subscriptionId}
+            variableOptionGroup={variableOptionGroup}
+            onQueryChange={onChange}
+            setError={setError}
+            schema={schema}
+          />
+        )}
         {dataIngestedWarning}
         <EditorRow>
           <EditorFieldGroup>

@@ -6,6 +6,7 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -76,10 +77,10 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             onChange={setSearchQuery}
             ref={searchRef}
             autoFocus={true}
-            placeholder="Search for..."
+            placeholder={t('dashboard.visualization-select-pane.placeholder-search-for', 'Search for...')}
           />
           <Button
-            title="Close"
+            title={t('dashboard.visualization-select-pane.title-close', 'Close')}
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}

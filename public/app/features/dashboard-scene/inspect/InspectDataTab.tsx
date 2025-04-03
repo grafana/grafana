@@ -9,7 +9,7 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
@@ -51,7 +51,9 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     const timeRange = sceneGraph.getTimeRange(panel);
 
     if (!data) {
-      <div>No data found</div>;
+      <div>
+        <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
+      </div>;
     }
 
     return (

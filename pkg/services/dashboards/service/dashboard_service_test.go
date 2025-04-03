@@ -255,13 +255,6 @@ func TestDashboardService(t *testing.T) {
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})
-
-		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
-			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
-			require.NoError(t, err)
-		})
 	})
 }
 

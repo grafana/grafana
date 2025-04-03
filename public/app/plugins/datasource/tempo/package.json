@@ -8,7 +8,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/lezer-logql": "0.2.6",
-    "@grafana/lezer-traceql": "0.0.20",
+    "@grafana/lezer-traceql": "0.0.21",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "0.10.4",

@@ -1,5 +1,5 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -15,6 +15,7 @@ import {
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
+import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -96,6 +97,13 @@ export class AutoGridLayoutManager
     });
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
+  }
+
+  public pastePanel() {
+    const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    this.state.layout.setState({ children: [...this.state.layout.state.children, panel] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    clearClipboard();
   }
 
   public removePanel(panel: VizPanel) {

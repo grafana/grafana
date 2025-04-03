@@ -552,7 +552,7 @@
     {
       "metadata": {
         "name": "sql",
-        "resourceVersion": "1709915973363",
+        "resourceVersion": "1743431268321",
         "creationTimestamp": "2024-02-29T00:58:00Z"
       },
       "spec": {
@@ -573,10 +573,14 @@
               ],
               "minLength": 1,
               "type": "string"
+            },
+            "format": {
+              "type": "string"
             }
           },
           "required": [
-            "expression"
+            "expression",
+            "format"
           ],
           "type": "object"
         },
@@ -584,7 +588,8 @@
           {
             "name": "Select the first row from A",
             "saveModel": {
-              "expression": "SELECT * FROM A limit 1"
+              "expression": "SELECT * FROM A limit 1",
+              "format": ""
             }
           }
         ]

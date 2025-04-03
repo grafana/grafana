@@ -1,7 +1,10 @@
 import { advanceBy } from 'jest-date-mock';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';

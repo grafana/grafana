@@ -228,6 +228,7 @@ To use these permissions, enable the `alertingApiServer` feature toggle.
 | `alert.notifications.receivers:create`       | None                               | Create a new contact points. The creator is automatically granted full access to the created contact point. |
 | `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.                                                                             |
 | `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.                                                                  |
+| `alert.notifications.receivers:test`         | None                               | Test contact point notification.                                                                            |
 | `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
 | `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
 | `alert.notifications.time-intervals:read`    | None                               | Read mute time intervals.                                                                                   |

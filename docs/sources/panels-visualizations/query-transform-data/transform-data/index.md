@@ -1191,7 +1191,7 @@ Use this transformation to address issues when a data source returns time series
 
 ##### Wide time series
 
-Select this option to transform the time series data frame from the long format to the wide format.
+Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
 
 A wide time series combines data into a single frame with one shared, ascending time field. Time fields do not repeat and multiple values extend in separate columns.
 
@@ -1217,7 +1217,7 @@ Multi-frame time series break data into multiple frames that all contain two fie
 
 ##### Long time series
 
-A long time series combines data to one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one.
+A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one.
 
 **Example: Converting to long format**
 

@@ -12,7 +12,8 @@ import (
 
 func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
 	// Setup the search server
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) ||
+		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")

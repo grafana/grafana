@@ -5,6 +5,7 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { Trans, t } from 'app/core/internationalization';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -77,7 +78,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const cancelButton = (
     <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
-      Cancel
+      <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
@@ -94,7 +95,13 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     return (
       <>
         {error && formValuesMatchContentSent && (
-          <Alert title="Failed to save dashboard" severity="error">
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-as-form.render-footer.title-failed-to-save-dashboard',
+              'Failed to save dashboard'
+            )}
+            severity="error"
+          >
             {error.message && <p>{error.message}</p>}
           </Alert>
         )}
@@ -111,7 +118,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       <Field label={<TitleFieldLabel onChange={setValue} />} invalid={!!errors.title} error={errors.title?.message}>
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
-          aria-label="Save dashboard title field"
+          aria-label={t(
+            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
+            'Save dashboard title field'
+          )}
           data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
           onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
             setValue('title', e.target.value, { shouldValidate: true });
@@ -125,12 +135,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       >
         <TextArea
           {...register('description', { required: false })}
-          aria-label="Save dashboard description field"
+          aria-label={t(
+            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
+            'Save dashboard description field'
+          )}
           autoFocus
         />
       </Field>
 
-      <Field label="Folder">
+      <Field label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
         <FolderPicker
           onChange={async (uid: string | undefined, title: string | undefined) => {
             setValue('folder', { uid, title });
@@ -152,7 +165,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         />
       </Field>
       {!changeInfo.isNew && (
-        <Field label="Copy tags">
+        <Field label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
           <Switch {...register('copyTags')} />
         </Field>
       )}
@@ -168,7 +181,9 @@ export interface TitleLabelProps {
 export function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Title</Label>
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
+      </Label>
       {/* {config.featureToggles.dashgpt && isNew && (
                 <GenAIDashDescriptionButton
                   onGenerate={(description) => field.onChange(description)}
@@ -186,7 +201,9 @@ export interface DescriptionLabelProps {
 export function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Description</Label>
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
+      </Label>
       {/* {config.featureToggles.dashgpt && isNew && (
                 <GenAIDashDescriptionButton
                   onGenerate={(description) => field.onChange(description)}

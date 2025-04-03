@@ -151,6 +151,11 @@ export interface ExpressionQuery extends DataQuery {
   settings?: ExpressionQuerySettings;
 }
 
+export interface SqlExpressionQuery extends ExpressionQuery {
+  /** Format `alerting` is expected when using SQL expressions in alert rules */
+  format?: 'alerting';
+}
+
 export interface ThresholdExpressionQuery extends ExpressionQuery {
   conditions: ClassicCondition[];
 }
