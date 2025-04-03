@@ -90,8 +90,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
-    this.setState({ rows: [...this.state.rows, newRow] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    this.addNewRow(newRow);
   }
 
   public addNewRow(row?: RowItem): RowItem {
