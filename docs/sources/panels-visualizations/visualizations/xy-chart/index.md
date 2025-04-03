@@ -211,71 +211,9 @@ Tooltip options control the information overlay that appears when you hover over
 
 ### Axis options
 
-<!-- To be replaced by shared file when candlestick PR is merged -->
-
 Options under the axis category change how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
-#### Placement (y-axis)
-
-Select the placement of the y-axis.
-
-- **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
-- **Left:** Display all y-axes on the left side.
-- **Right:** Display all y-axes on the right side.
-- **Hidden:** Hide all axes.
-
-To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
-
-#### Label
-
-Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.
-
-#### Width
-
-Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.
-
-By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.
-
-#### Show grid lines
-
-Set the axis grid line visibility.
-
-- **Auto:** Automatically show grid lines based on the density of the data.
-- **On:** Always show grid lines.
-- **Off:** Never show grid lines.
-
-#### Color
-
-Set the color of the axis.
-
-- **Text:** Set the color based on theme text color.
-- **Series:** Set the color based on the series color.
-
-#### Show border
-
-Set the axis border visibility.
-
-#### Scale
-
-Set the y-axis values scale.
-
-- **Linear:** Divides the scale into equal parts.
-- **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
-- **Symlog:** Use a symmetrical logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale. The linear threshold option allows you to set the threshold at which the scale changes from linear to logarithmic.
-
-#### Centered zero
-
-Set the y-axis to be centered on zero.
-
-#### Soft min and soft max
-
-Set a **Soft min** or **soft max** option for better control of all axes limits. By default, Grafana sets the range automatically based on the dataset.
-
-**Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
-
-To define hard limits of the axes, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
-
-![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+{{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Transform
 
