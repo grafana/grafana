@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
+import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { CellColors, TableCellNGProps } from '../types';
+import { CellColors, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellNGProps } from '../types';
 import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
@@ -34,12 +35,15 @@ export function TableCellNG(props: TableCellNGProps) {
     cellInspect,
     getActions,
     rowBg,
+    onCellFilterAdded,
   } = props;
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
   const { type: cellType } = cellOptions;
+
+  const showFilters = field.config.filterable && onCellFilterAdded;
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
@@ -160,25 +164,53 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   };
 
+  const onFilterFor = useCallback(() => {
+    if (onCellFilterAdded) {
+      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
+    }
+  }, [field.name, onCellFilterAdded, value]);
+
+  const onFilterOut = useCallback(() => {
+    if (onCellFilterAdded) {
+      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: String(value ?? '') });
+    }
+  }, [field.name, onCellFilterAdded, value]);
+
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
-      {cellInspect && isHovered && (
+      {isHovered && (
         <div className={styles.cellActions}>
-          <IconButton
-            name="eye"
-            tooltip="Inspect value"
-            onClick={() => {
-              setContextMenuProps({
-                value: String(value ?? ''),
-                mode:
-                  cellType === TableCellDisplayMode.JSONView
-                    ? TableCellInspectorMode.code
-                    : TableCellInspectorMode.text,
-              });
-              setIsInspecting(true);
-            }}
-          />
+          {cellInspect && (
+            <IconButton
+              name="eye"
+              tooltip="Inspect value"
+              onClick={() => {
+                setContextMenuProps({
+                  value: String(value ?? ''),
+                  mode:
+                    cellType === TableCellDisplayMode.JSONView
+                      ? TableCellInspectorMode.code
+                      : TableCellInspectorMode.text,
+                });
+                setIsInspecting(true);
+              }}
+            />
+          )}
+          {showFilters && (
+            <>
+              <IconButton
+                name={'search-plus'}
+                onClick={onFilterFor}
+                tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
+              />
+              <IconButton
+                name={'search-minus'}
+                onClick={onFilterOut}
+                tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
