@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
 import {
@@ -22,6 +22,33 @@ export interface JobStatusProps {
   onErrorChange?: (error: string | null) => void;
 }
 
+// Shared hook for status change effects
+function useJobStatusEffect(
+  job?: Job,
+  onStatusChange?: (success: boolean) => void,
+  onRunningChange?: (isRunning: boolean) => void,
+  onErrorChange?: (error: string | null) => void
+) {
+  useEffect(() => {
+    if (!job) {
+      return;
+    }
+
+    if (onStatusChange && job.status?.state === 'success') {
+      onStatusChange(true);
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+    if (onErrorChange && job.status?.state === 'error') {
+      onErrorChange(job.status.message ?? t('provisioning.job-status.error-unknown', 'An unknown error occurred'));
+      if (onRunningChange) {
+        onRunningChange(false);
+      }
+    }
+  }, [job, onStatusChange, onErrorChange, onRunningChange]);
+}
+
 export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
@@ -29,39 +56,12 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
   });
   const activeJob = activeQuery?.data?.items?.[0];
   const repoLabel = watch.metadata?.labels?.['provisioning.grafana.app/repository'];
-  const finishedQuery = useGetRepositoryJobsWithPathQuery(
-    activeJob || activeQuery.isUninitialized || activeQuery.isLoading || !repoLabel
-      ? skipToken
-      : {
-          name: repoLabel,
-          uid: watch.metadata?.uid!,
-        }
-  );
 
-  const job = activeJob || finishedQuery.data;
+  // Only initialize finished query if we've checked active jobs and found none
+  const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
+  const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
 
-  useEffect(() => {
-    if (!job && !finishedQuery.isUninitialized) {
-      finishedQuery.refetch();
-    }
-  }, [finishedQuery, job]);
-
-  useEffect(() => {
-    if (onStatusChange && job?.status?.state === 'success') {
-      onStatusChange(true);
-      if (onRunningChange) {
-        onRunningChange(false);
-      }
-    }
-    if (onErrorChange && job?.status?.state === 'error') {
-      onErrorChange(job.status.message ?? t('provisioning.job-status.error-unknown', 'An unknown error occurred'));
-      if (onRunningChange) {
-        onRunningChange(false);
-      }
-    }
-  }, [job, onStatusChange, onErrorChange, onRunningChange]);
-
-  if (!job || activeQuery.isLoading) {
+  if (activeQuery.isLoading) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />
@@ -72,7 +72,125 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     );
   }
 
-  const status = () => {
+  if (activeJob) {
+    return (
+      <ActiveJobStatus
+        job={activeJob}
+        onStatusChange={onStatusChange}
+        onRunningChange={onRunningChange}
+        onErrorChange={onErrorChange}
+      />
+    );
+  }
+
+  if (shouldCheckFinishedJobs) {
+    return (
+      <FinishedJobStatus
+        jobUid={watch.metadata?.uid!}
+        repositoryName={repoLabel}
+        onStatusChange={onStatusChange}
+        onRunningChange={onRunningChange}
+        onErrorChange={onErrorChange}
+      />
+    );
+  }
+
+  return (
+    <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+      <Spinner size={24} />
+      <Text element="h4" weight="bold">
+        <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
+      </Text>
+    </Stack>
+  );
+}
+
+interface ActiveJobProps {
+  job: Job;
+  onStatusChange?: (success: boolean) => void;
+  onRunningChange?: (isRunning: boolean) => void;
+  onErrorChange?: (error: string | null) => void;
+}
+
+function ActiveJobStatus({ job, onStatusChange, onRunningChange, onErrorChange }: ActiveJobProps): JSX.Element {
+  useJobStatusEffect(job, onStatusChange, onRunningChange, onErrorChange);
+  return <JobContent job={job} isFinishedJob={false} />;
+}
+
+interface FinishedJobProps {
+  jobUid: string;
+  repositoryName: string;
+  onStatusChange?: (success: boolean) => void;
+  onRunningChange?: (isRunning: boolean) => void;
+  onErrorChange?: (error: string | null) => void;
+}
+
+function FinishedJobStatus({
+  jobUid,
+  repositoryName,
+  onStatusChange,
+  onRunningChange,
+  onErrorChange,
+}: FinishedJobProps) {
+  const hasRetried = useRef(false);
+  const finishedQuery = useGetRepositoryJobsWithPathQuery({
+    name: repositoryName,
+    uid: jobUid,
+  });
+  const retryFailed = hasRetried.current && finishedQuery.isError;
+
+  const job = finishedQuery.data;
+
+  useJobStatusEffect(job, onStatusChange, onRunningChange, onErrorChange);
+
+  useEffect(() => {
+    const shouldRetry = !hasRetried.current && !finishedQuery.isFetching;
+
+    if (shouldRetry) {
+      hasRetried.current = true;
+      setTimeout(() => {
+        finishedQuery.refetch();
+      }, 1000);
+    }
+
+    return undefined;
+  }, [finishedQuery]);
+
+  if (finishedQuery.isLoading || finishedQuery.isFetching) {
+    return (
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" weight="bold">
+          <Trans i18nKey="provisioning.job-status.loading-finished-job">Loading finished job...</Trans>
+        </Text>
+      </Stack>
+    );
+  }
+
+  if (retryFailed) {
+    return (
+      <Alert severity="error" title={t('provisioning.job-status.no-job-found', 'No job found')}>
+        <Trans i18nKey="provisioning.job-status.no-job-found-message">
+          The job may have been deleted or could not be retrieved. Cancel the current process and start again.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  return <JobContent job={job} isFinishedJob={true} />;
+}
+
+interface JobContentProps {
+  job?: Job;
+  isFinishedJob?: boolean;
+}
+
+function JobContent({ job, isFinishedJob = false }: JobContentProps) {
+  if (!job) {
+    return null;
+  }
+
+  const getStatusDisplay = () => {
     switch (job.status?.state) {
       case 'success':
         return (
@@ -93,7 +211,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     }
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        {!job.status?.progress && <Spinner size={24} />}
+        {job.status?.state === 'working' && <Spinner size={24} />}
         <Text element="h4" color="secondary">
           {job.status?.message ?? job.status?.state ?? ''}
         </Text>
@@ -105,13 +223,13 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     <Stack direction="column" gap={2}>
       {job.status && (
         <Stack direction="column" gap={2}>
-          {status()}
+          {getStatusDisplay()}
 
           <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
             <ProgressBar progress={job.status.progress} />
           </Stack>
 
-          {job.status.summary && (
+          {isFinishedJob && job.status.summary && (
             <Stack direction="column" gap={2}>
               <Text variant="h3">
                 <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>
