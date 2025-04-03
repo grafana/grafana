@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash';
 
-import { VariableRefresh } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -17,22 +16,6 @@ import {
   SceneGridRow,
   SceneGridItem,
 } from '@grafana/scenes';
-import {
-  SceneGridLayout,
-  SceneRefreshPicker,
-  SceneTimePicker,
-  SceneTimeRange,
-  SceneVariableSet,
-  VizPanel,
-  SceneDataQuery,
-  SceneQueryRunner,
-  sceneUtils,
-} from '@grafana/scenes';
-import {
-  DashboardCursorSync as DashboardCursorSyncV1,
-  VariableHide as VariableHideV1,
-  VariableSort as VariableSortV1,
-} from '@grafana/schema/dist/esm/index.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AdhocVariableKind,
@@ -50,12 +33,8 @@ import {
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
-import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
