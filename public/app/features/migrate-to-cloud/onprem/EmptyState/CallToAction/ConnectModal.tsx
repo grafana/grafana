@@ -167,6 +167,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 })}
                 id={tokenId}
                 placeholder={t('migrate-to-cloud.connect-modal.body-token-field-placeholder', 'Paste token here')}
+                data-testid="migrate-to-cloud-connect-session-modal-token-input"
               />
             </Field>
           </Stack>
@@ -176,7 +177,11 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
           <Button variant="secondary" onClick={hideModal}>
             <Trans i18nKey="migrate-to-cloud.connect-modal.cancel">Cancel</Trans>
           </Button>
-          <Button type="submit" disabled={isLoading || !token}>
+          <Button
+            type="submit"
+            disabled={isLoading || !token}
+            data-testid="migrate-to-cloud-connect-session-modal-connect-button"
+          >
             {isLoading
               ? t('migrate-to-cloud.connect-modal.connecting', 'Connecting to this stack...')
               : t('migrate-to-cloud.connect-modal.connect', 'Connect to this stack')}

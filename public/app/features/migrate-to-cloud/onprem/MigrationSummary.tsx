@@ -96,6 +96,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
             variant="secondary"
             size="sm"
             icon={disconnectIsLoading ? 'spinner' : undefined}
+            data-testid="migrate-to-cloud-summary-disconnect-button"
           >
             <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
           </Button>
@@ -115,6 +116,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
             onClick={onBuildSnapshot}
             icon={buildSnapshotIsLoading ? 'spinner' : undefined}
             variant="secondary"
+            data-testid="migrate-to-cloud-summary-rebuild-snapshot-button"
           >
             <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
           </Button>
@@ -125,6 +127,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
             disabled={isBusy || uploadSnapshotIsLoading}
             onClick={onUploadSnapshot}
             icon={uploadSnapshotIsLoading ? 'spinner' : undefined}
+            data-testid="migrate-to-cloud-summary-upload-snapshot-button"
           >
             <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
           </Button>
