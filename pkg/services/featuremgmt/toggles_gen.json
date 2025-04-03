@@ -1181,23 +1181,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardRestore",
-        "resourceVersion": "1728397491294",
-        "creationTimestamp": "2024-05-16T17:36:26Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-10-08 14:24:51.294668 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables deleted dashboard restore feature",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardRestoreUI",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-25T14:43:13Z",
