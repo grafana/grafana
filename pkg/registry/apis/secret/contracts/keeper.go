@@ -6,7 +6,6 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -20,7 +19,7 @@ type KeeperMetadataStorage interface {
 	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error)
 	Update(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
-	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.

@@ -9,12 +9,15 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,13 +38,14 @@ var (
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
 	storage        contracts.SecureValueMetadataStorage
+	accessClient   claims.AccessClient
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{storage, resource, resource.TableConverter()}
+func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, accessClient claims.AccessClient, resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{storage, accessClient, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
@@ -79,12 +83,55 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.storage.List(ctx, xkube.Namespace(namespace), options)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
+		Namespace: namespace,
+		Verb:      utils.VerbGet,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
+	}
+
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
+
+	secureValues, err := s.storage.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
 
-	return secureValueList, nil
+	checkedSecureValues := make([]secretv0alpha1.SecureValue, 0)
+
+	for _, secureValue := range secureValues {
+		// Check whether the user has permission to access this specific SecureValue in the namespace.
+		if !hasPermissionFor(secureValue.Name, "") {
+			continue
+		}
+
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			if fieldSelector.Matches(fields.Set{
+				"status.phase": string(secureValue.Status.Phase),
+			}) {
+				checkedSecureValues = append(checkedSecureValues, secureValue)
+			}
+		}
+	}
+
+	return &secretv0alpha1.SecureValueList{
+		Items: checkedSecureValues,
+	}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
