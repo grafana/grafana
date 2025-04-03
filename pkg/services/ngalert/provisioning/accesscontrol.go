@@ -84,7 +84,7 @@ func (p *provisioningRuleAccessControl) CanReadAllRules(ctx context.Context, use
 }
 
 // CanWriteAllRules is a method that checks if a user has permission to write all rules.
-// It calls the HasAccess method with the provided action "alert.provisioning:write".
+// It calls the HasAccess method with the provided action "alert.rules.provisioning:write".
 // It returns true if the user has permission, false otherwise.
 // It returns an error if there is a problem checking the permission.
 func (p *provisioningRuleAccessControl) CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error) {
