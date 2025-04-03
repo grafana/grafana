@@ -414,10 +414,9 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // To define the annnotation.query.spec, are we dealing with an scene that was saved in v1 and is now being saved in v2?
-    // If so, we need to transform the old target structure to new query structure
+    // Transform v1 dashboard (using target) to v2 structure
     if (layer.state.query.target) {
-      // if we are dealing with built-in annotations
+      // Handle built-in annotations
       if (layer.state.query.builtIn) {
         result.spec.query = {
           kind: 'grafana', // built-in annotations are always of type grafana
@@ -434,8 +433,7 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         };
       }
     }
-    // we can have cases where query.query is not defined, like grafana annotations with no tags or other prop that
-    // could generate a target property
+    // For annotations without query.query defined (e.g., grafana annotations without tags)
     else if (layer.state.query.query?.kind) {
       result.spec.query = {
         kind: layer.state.query.query.kind,
@@ -444,8 +442,7 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         },
       };
     }
-    // add other props that are not in the spec of annotation
-    // this is for cases like prometheus, where expr and other props are not in the target but outside, and the query editor is expecting them
+    // Collect datasource-specific properties not in standard annotation spec
     let otherProps = omit(
       layer.state.query,
       'type',
