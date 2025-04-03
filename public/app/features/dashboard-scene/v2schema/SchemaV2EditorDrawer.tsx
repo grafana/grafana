@@ -74,7 +74,7 @@ export class SchemaV2EditorDrawer extends SceneObjectBase<SchemaV2EditorDrawerSt
     return (
       <Drawer
         title={'[DEV] Schema V2 editor'}
-        subtitle={'Allows editing dashboard using v2 schema. Changes are not persited in db.'}
+        subtitle={'Allows editing dashboard using v2 schema. Changes are not persisted in db.'}
         onClose={model.onClose}
       >
         {renderBody()}
