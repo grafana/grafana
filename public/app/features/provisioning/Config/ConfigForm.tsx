@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 import {
   Button,
   Combobox,
@@ -46,8 +44,6 @@ export function getWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOpt
   }
   return opts.filter((opt) => opt.value === 'write'); // only write
 }
-
-const appEvents = getAppEvents();
 
 export function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
   if (!repository) {
@@ -109,11 +105,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
-
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('provisioning.config-form.alert-repository-settings-saved', 'Repository settings saved')],
-      });
       reset(formData);
       setTimeout(() => {
         navigate('/admin/provisioning');

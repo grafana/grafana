@@ -1,3 +1,7 @@
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
+
 import {
   generatedAPI,
   JobSpec,
@@ -13,26 +17,158 @@ import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
-    listJob(endpoint) {
+    listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
       // and then start watching for changes
-      endpoint.query = ({ watch, ...queryArg }) => ({
+      query: ({ watch, ...queryArg }) => ({
         url: `/jobs`,
         params: queryArg,
-      });
-      endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus, Job, JobList>('jobs');
+      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus, Job, JobList>('jobs'),
     },
-    listRepository(endpoint) {
-      endpoint.query = ({ watch, ...queryArg }) => ({
+    listRepository: {
+      query: ({ watch, ...queryArg }) => ({
         url: `/repositories`,
         params: queryArg,
-      });
-      endpoint.onCacheEntryAdded = createOnCacheEntryAdded<
-        RepositorySpec,
-        RepositoryStatus,
-        Repository,
-        RepositoryList
-      >('repositories');
+      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus, Repository, RepositoryList>(
+        'repositories'
+      ),
+    },
+    deleteRepository: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t(
+                  'provisioning.delete-repository-button.success-repository-deleted',
+                  'Repository settings queued for deletion'
+                )
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.delete-repository-button.error-repository-delete', 'Failed to delete repository'),
+                  e
+                )
+              )
+            );
+          }
+        }
+      },
+    },
+    deletecollectionRepository: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.home-page.success-all-repositories-deleted', 'All configured repositories deleted')
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.home-page.error-delete-all-repositories', 'Failed to delete all repositories'),
+                  e
+                )
+              )
+            );
+          }
+        }
+      },
+    },
+    createRepositoryTest: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(notifyApp(createErrorNotification('Error testing repository', e)));
+          }
+        }
+      },
+    },
+    createRepositoryJobs: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started')))
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources'),
+                  e
+                )
+              )
+            );
+          }
+        }
+      },
+    },
+    createRepository: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.config-form.alert-repository-settings-saved', 'Repository settings saved')
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
+                  e
+                )
+              )
+            );
+          }
+        }
+      },
+    },
+    replaceRepository: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.config-form.alert-repository-settings-updated', 'Repository settings updated')
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
+                  e
+                )
+              )
+            );
+          }
+        }
+      },
     },
   },
 });
