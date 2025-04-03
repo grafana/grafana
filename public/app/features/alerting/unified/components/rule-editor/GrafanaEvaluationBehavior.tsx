@@ -566,7 +566,7 @@ export function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={keepFiringForId}
-            description='Duration to keep this alert firing after the firing condition was last met. Selecting "None" is equivalent to "Keep firing for" 0s.'
+            description='Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
           >
             <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for">Keep firing for</Trans>
           </Label>
