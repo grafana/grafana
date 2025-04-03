@@ -16,6 +16,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
+import { generateUniqueTitle } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -95,6 +96,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public addNewRow(row?: RowItem): RowItem {
     const newRow = row ?? new RowItem({ isNew: true });
+    const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
+
+    const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
+    if (newTitle !== newRow.state.title) {
+      newRow.setState({ title: newTitle });
+    }
+
     this.setState({ rows: [...this.state.rows, newRow] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
     return newRow;
