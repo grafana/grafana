@@ -72,6 +72,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_json_functions,
 			err:  nil,
 		},
+		{
+			name: "range condition (between)",
+			q:    `SELECT '2024-04-01 15:30:00' BETWEEN '2024-04-01 15:29:00' AND '2024-04-01 15:31:00'`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

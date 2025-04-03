@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -79,7 +80,12 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         break;
       case OptionFilter.Recent:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={true}>
+          <OptionsPaneCategory
+            id="Recent options"
+            title={t('dashboard.options-pane-options.Recent options-title-recent-options', 'Recent options')}
+            key="Recent options"
+            forceOpen={true}
+          >
             {getRecentOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );

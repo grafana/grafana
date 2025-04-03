@@ -458,6 +458,21 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleSequentialEvaluation",
+        "resourceVersion": "1742580089675",
+        "creationTimestamp": "2025-03-21T18:01:29Z",
+        "deletionTimestamp": "2025-03-31T17:26:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting rule sequential evaluation feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1740740039764",
         "creationTimestamp": "2025-01-16T14:08:12Z",
@@ -909,6 +924,22 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorLogsBuilderEditor",
+        "resourceVersion": "1743001017970",
+        "creationTimestamp": "2025-03-19T22:51:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-26 14:56:57.970732 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the logs builder mode for the Azure Monitor data source",
+        "stage": "preview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorPrometheusExemplars",
         "resourceVersion": "1739465911959",
         "creationTimestamp": "2024-06-06T16:53:17Z",
@@ -1152,23 +1183,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "dashboardRestore",
-        "resourceVersion": "1728397491294",
-        "creationTimestamp": "2024-05-16T17:36:26Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-10-08 14:24:51.294668 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables deleted dashboard restore feature",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "expression": "false"
       }
     },
     {
@@ -2315,11 +2329,14 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-18T18:48:11Z"
+        "resourceVersion": "1742581260617",
+        "creationTimestamp": "2024-01-18T18:48:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-21 18:21:00.617577 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
@@ -2853,6 +2870,19 @@
     },
     {
       "metadata": {
+        "name": "multiTenantTempCredentials",
+        "resourceVersion": "1743614635650",
+        "creationTimestamp": "2025-04-02T17:23:55Z"
+      },
+      "spec": {
+        "description": "use multi-tenant path for awsTempCredentials",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-10-12T11:43:35Z"
@@ -3291,17 +3321,18 @@
     {
       "metadata": {
         "name": "pluginsDetailsRightPanel",
-        "resourceVersion": "1741965023728",
+        "resourceVersion": "1743591171870",
         "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-03-14 15:10:23.728257 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-04-02 10:52:51.870249 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
