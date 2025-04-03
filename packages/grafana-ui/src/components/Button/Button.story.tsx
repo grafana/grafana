@@ -77,9 +77,27 @@ export const Examples: StoryFn<typeof Button> = () => {
       <div />
       <Stack alignItems="center" gap={3}>
         <div>Inside ButtonGroup</div>
-        <ButtonGroup>
+        <ButtonGroup variant="primary">
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
+        </ButtonGroup>
+        <ButtonGroup variant="destructive">
+          <Button variant="destructive" icon="sync">
+            Run query
+          </Button>
+          <Button variant="destructive" icon="angle-down" />
+        </ButtonGroup>
+        <ButtonGroup variant="success">
+          <Button variant="success" icon="sync">
+            Run query
+          </Button>
+          <Button variant="success" icon="angle-down" />
+        </ButtonGroup>
+        <ButtonGroup variant="secondary">
+          <Button variant="secondary" icon="sync">
+            Run query
+          </Button>
+          <Button variant="secondary" icon="angle-down" />
         </ButtonGroup>
       </Stack>
       <Card>
