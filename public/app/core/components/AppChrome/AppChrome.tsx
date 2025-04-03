@@ -38,11 +38,7 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
-  const styles = useStyles2(
-    getStyles,
-    Boolean(state.actions) || !!scopes?.state.enabled,
-    isExtensionSidebarOpen && !state.chromeless
-  );
+  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -59,6 +55,7 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
+    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless,
   });
 
   const handleMegaMenu = () => {
@@ -113,7 +110,7 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       <div className={contentClass}>
-        <div className={styles.panes}>
+        <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
           {!state.chromeless && (
             <div
               className={cx(styles.scopesDashboardsContainer, {
@@ -127,7 +124,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedExtensionSidebar]: !state.chromeless && isExtensionSidebarOpen,
+              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
           >
@@ -149,15 +146,18 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isExtensionSidebarOpen: boolean) => {
-  // styles depend if the extension sidebar is open or not. if it is closed, we want the body to scroll
+const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
       paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
-      ...(isExtensionSidebarOpen ? { height: '100vh', overflow: 'hidden' } : { height: 'auto' }),
+      height: 'auto',
+    }),
+    contentWithSidebar: css({
+      height: '100vh',
+      overflow: 'hidden',
     }),
     contentChromeless: css({
       paddingTop: 0,
@@ -201,7 +201,11 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isExtensionSidebar
       flexDirection: 'column',
       flexGrow: 1,
       label: 'page-panes',
-      ...(isExtensionSidebarOpen ? { height: '100%', overflow: 'hidden', position: 'relative' } : {}),
+    }),
+    panesWithSidebar: css({
+      height: '100%',
+      overflow: 'hidden',
+      position: 'relative',
     }),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
@@ -214,7 +218,12 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isExtensionSidebar
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      ...(isExtensionSidebarOpen ? { overflow: 'auto', height: '100%', minHeight: 0 } : {}),
+    }),
+    pageContainerWithSidebar: css({
+      overflow: 'auto',
+      height: '100%',
+      minHeight: 0,
+      maxWidth: `calc(100% - ${EXTENSION_SIDEBAR_WIDTH})`,
     }),
     skipLink: css({
       position: 'fixed',
@@ -231,9 +240,6 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isExtensionSidebar
       height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       zIndex: 2,
       right: 0,
-    }),
-    pageContainerMenuDockedExtensionSidebar: css({
-      maxWidth: `calc(100% - ${EXTENSION_SIDEBAR_WIDTH})`,
     }),
   };
 };
