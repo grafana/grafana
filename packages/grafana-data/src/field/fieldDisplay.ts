@@ -238,14 +238,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    let noValuesFieldDisplay = {} as FieldDisplay;
-    try {
-      noValuesFieldDisplay = createNoValuesFieldDisplay(options);
-    } catch (e) {
-      console.error('failed to create no values field display ', e);
-    }
-    values.push(noValuesFieldDisplay);
+    values.push(createNoValuesFieldDisplay(options));
   }
 
   return values;
