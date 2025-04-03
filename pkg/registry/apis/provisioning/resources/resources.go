@@ -189,7 +189,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	objName := obj.GetName()
 	if objName == "" {
 		// Find the referenced file
-		objName, _ = NamesFromHashedRepoPath(r.repo.Config().Name, path)
+		objName = FileNameFromHashedRepoPath(r.repo.Config().Name, path)
 	}
 
 	client, _, err := r.clients.ForKind(*gvk)

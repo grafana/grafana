@@ -74,6 +74,7 @@ export function TableNG(props: TableNGProps) {
     height,
     initialSortBy,
     noHeader,
+    onCellFilterAdded,
     onColumnResize,
     onSortByChange,
     width,
@@ -386,6 +387,7 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
+          onCellFilterAdded,
           onSortByChange,
           osContext,
           rows,
@@ -596,6 +598,7 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
+    onCellFilterAdded,
     onSortByChange,
     osContext,
     rows,
@@ -757,6 +760,7 @@ export function mapFrameToDataGrid({
             setContextMenuProps={setContextMenuProps}
             getActions={getActions}
             rowBg={rowBg}
+            onCellFilterAdded={onCellFilterAdded}
           />
         );
       },
