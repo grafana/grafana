@@ -138,7 +138,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
