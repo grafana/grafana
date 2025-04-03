@@ -124,7 +124,7 @@ const ServiceInfo = () => {
         >
           24 x 7 x 365 support via
           <List nested={true}>
-            {/* <Item title="Email" /> */}
+            <Item title="Email" />
             <Item title="Private Slack channel" />
             <Item title="Phone" />
           </List>
