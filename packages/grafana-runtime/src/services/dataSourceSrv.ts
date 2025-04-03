@@ -1,5 +1,4 @@
-import { ScopedVars, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
+import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 
 import { RuntimeDataSource } from './RuntimeDataSource';
 
