@@ -50,7 +50,7 @@
       "method": "GET",
       "path": "alertmanager/api/v2/status",
       "reqRole": "Viewer",
-      "reqAction": "alert.instances.external:read"
+      "reqAction": "alert.notifications.external:read"
     },
     {
       "method": "GET",
