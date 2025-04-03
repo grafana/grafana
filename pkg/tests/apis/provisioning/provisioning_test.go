@@ -252,7 +252,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		// Read the file we wrote
 		obj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
 		require.NoError(t, err, "read value")
-		val, _, _ = unstructured.NestedString(obj.Object, "resource", "file", "metadata", "name")
+		name, _, _ = unstructured.NestedString(obj.Object, "resource", "file", "metadata", "name")
 		require.Equal(t, allPanels, name, "read the name out of the saved file")
 	})
 
@@ -270,6 +270,46 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		// Read a file with a bad path
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 		require.Error(t, err, "invalid path should error")
+	})
+
+	t.Run("require name or generateName", func(t *testing.T) {
+		code := 0
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "example.json").
+			Body([]byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+spec:
+  title: Test dashboard
+`)).Do(ctx).StatusCode(&code)
+		require.Error(t, result.Error(), "missing name")
+
+		result = helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "example.json").
+			Body([]byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  generateName: prefix-
+spec:
+  title: Test dashboard
+`)).Do(ctx).StatusCode(&code)
+		require.NoError(t, result.Error(), "should create name")
+		require.Equal(t, 200, code, "expect OK result")
+
+		raw, err := result.Raw()
+		require.NoError(t, err)
+
+		obj := &unstructured.Unstructured{}
+		err = json.Unmarshal(raw, obj)
+		require.NoError(t, err)
+
+		name, _, _ = unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
+		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
 	})
 }
 
