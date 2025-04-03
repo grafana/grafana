@@ -249,10 +249,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     if (annotation.query && annotation.options) {
       editorAnnotation = { ...annotation };
       Object.assign(editorAnnotation, annotation.options);
-      console.log('V2 dashboard: Enhanced annotation object for editor:', editorAnnotation);
     }
-
-    console.log('Annotation object provided to editor:', editorAnnotation);
 
     return (
       <>
