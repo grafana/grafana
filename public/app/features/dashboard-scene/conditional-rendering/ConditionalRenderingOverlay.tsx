@@ -31,6 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     bottom: 0,
     right: 0,
+    zIndex: 1,
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'all 0.2s ease',

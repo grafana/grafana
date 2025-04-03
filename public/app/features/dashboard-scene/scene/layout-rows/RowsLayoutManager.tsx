@@ -194,8 +194,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             config.push({
               title: child.state.title,
               isCollapsed: !!child.state.isCollapsed,
-              isDraggable: child.state.isDraggable ?? layout.state.grid.state.isDraggable,
-              isResizable: child.state.isResizable ?? layout.state.grid.state.isResizable,
+              isDraggable: child.state.isDraggable,
+              isResizable: child.state.isResizable,
               children: child.state.children,
               repeat: behaviour?.state.variableName,
             });
@@ -220,8 +220,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             collapse: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
-              rowConfig.isDraggable,
-              rowConfig.isResizable
+              rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
             $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })

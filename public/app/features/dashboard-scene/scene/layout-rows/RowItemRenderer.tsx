@@ -131,7 +131,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                 </span>
               </button>
-              {isDraggable && <Icon name="draggabledots" />}
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
@@ -151,6 +151,20 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
+
+      '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '&:hover': css({
+        '& .dashboard-row-header-drag-handle': css({
+          opacity: 1,
+        }),
+      }),
     }),
     rowTitleButton: css({
       display: 'flex',
