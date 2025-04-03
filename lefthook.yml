@@ -14,6 +14,7 @@ pre-commit:
       glob: '*.{ts,tsx}'
       run: |
         yarn betterer precommit {staged_files}
+        git add ./.betterer.results
       stage_fixed: true
 
     frontend-lint:
