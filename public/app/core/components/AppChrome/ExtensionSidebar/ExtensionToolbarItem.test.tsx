@@ -29,6 +29,7 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     featureToggles: {
+      ...jest.requireActual('@grafana/runtime').config.featureToggles,
       extensionSidebar: true,
     },
   },
