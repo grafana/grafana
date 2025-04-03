@@ -1811,7 +1811,8 @@
       },
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
-      "visualization-button-label": "Visualization"
+      "visualization-button-label": "Visualization",
+      "visualization-button-tooltip": "Search options"
     },
     "panel-editor-table-view": {
       "title-raw-data": "Raw data"
