@@ -122,7 +122,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Name: TableNameSecureValueOutbox,
 		Columns: []*migrator.Column{
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
-			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
+			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
