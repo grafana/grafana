@@ -4,7 +4,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   DataSourceSelectItem,
-  PluginMeta,
   ScopedVars,
   matchPluginId,
 } from '@grafana/data';
@@ -30,16 +29,6 @@ import {
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { importDataSourcePlugin } from './plugin_loader';
-
-// TODO: remove once a decision on how to match compatible datasources has been made
-const isCompatibleDatasource = (idToMatch: string, pluginMeta: PluginMeta) => {
-  if (['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'].includes(idToMatch)) {
-    return ['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'].includes(
-      pluginMeta.id
-    );
-  }
-  return false;
-};
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -256,11 +245,7 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.alerting && !x.meta.alerting) {
         return false;
       }
-      if (
-        filters.pluginId &&
-        !matchPluginId(filters.pluginId, x.meta) &&
-        !isCompatibleDatasource(filters.pluginId, x.meta)
-      ) {
+      if (filters.pluginId && !matchPluginId(filters.pluginId, x.meta)) {
         return false;
       }
       if (filters.filter && !filters.filter(x)) {
