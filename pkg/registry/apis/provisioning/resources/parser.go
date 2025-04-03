@@ -203,30 +203,30 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
-func (r *ParsedResource) DryRun(ctx context.Context) {
+func (f *ParsedResource) DryRun(ctx context.Context) {
 	// TODO: is this append errors strategy the best one?
-	if r.Client == nil {
-		r.Errors = append(r.Errors, fmt.Errorf("unable to find client"))
+	if f.Client == nil {
+		f.Errors = append(f.Errors, fmt.Errorf("unable to find client"))
 		return
 	}
 
 	var err error
 	// Dry run CREATE or UPDATE
-	r.Existing, _ = r.Client.Get(ctx, r.Obj.GetName(), metav1.GetOptions{})
-	if r.Existing == nil {
-		r.Action = provisioning.ResourceActionCreate
-		r.DryRunResponse, err = r.Client.Create(ctx, r.Obj, metav1.CreateOptions{
+	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	if f.Existing == nil {
+		f.Action = provisioning.ResourceActionCreate
+		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 	} else {
-		r.Action = provisioning.ResourceActionUpdate
-		r.DryRunResponse, err = r.Client.Update(ctx, r.Obj, metav1.UpdateOptions{
+		f.Action = provisioning.ResourceActionUpdate
+		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun: []string{"All"},
 		})
 	}
 
 	if err != nil {
-		r.Errors = append(r.Errors, err)
+		f.Errors = append(f.Errors, err)
 	}
 }
 
