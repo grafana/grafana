@@ -1813,6 +1813,7 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
       }
     },
@@ -1864,6 +1865,8 @@
         "new": "New tab"
       },
       "tab-options": {
+        "title-collision-tooltip": "This title is not unique",
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
       }
     },
