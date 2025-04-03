@@ -185,13 +185,13 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
       minHeight: '100px',
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
+        width: 'auto',
 
         '&:before': {
           content: '""',
