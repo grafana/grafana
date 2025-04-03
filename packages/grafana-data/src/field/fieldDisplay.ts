@@ -401,7 +401,7 @@ export function fixCellTemplateExpressions(str: string) {
 /**
  * Clones the existing dataContext and adds rowIndex to it
  */
-export function getFieldScopedVarsWithDataContexAndRowIndex(field: Field, rowIndex: number): ScopedVars | undefined {
+function getFieldScopedVarsWithDataContexAndRowIndex(field: Field, rowIndex: number): ScopedVars | undefined {
   if (field.state?.scopedVars?.__dataContext) {
     return {
       ...field.state?.scopedVars,
