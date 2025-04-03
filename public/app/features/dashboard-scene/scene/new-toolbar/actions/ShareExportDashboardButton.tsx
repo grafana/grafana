@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
 import { ReactElement, useState } from 'react';
 
-import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -34,13 +33,11 @@ export const ShareExportDashboardButton = ({
   arrowTestId,
   variant = 'secondary',
 }: Props) => {
-  const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <ButtonGroup
       data-testid={groupTestId}
-      className={styles.container}
       onPointerDown={(evt) => {
         if (dashboard.state.isEditing && dashboard.state.isDirty) {
           evt.preventDefault();
@@ -90,11 +87,3 @@ export const ShareExportDashboardButton = ({
     </ButtonGroup>
   );
 };
-
-function getStyles() {
-  return {
-    container: css({
-      gap: 1,
-    }),
-  };
-}

@@ -26,12 +26,13 @@ import { getUtilityClassStyles } from './utilityClasses';
 
 interface GlobalStylesProps {
   hackNoBackdropBlur?: boolean;
+  isExtensionSidebarOpen?: boolean;
 }
 
 /** @internal */
 export function GlobalStyles(props: GlobalStylesProps) {
   const theme = useTheme2();
-  const { hackNoBackdropBlur } = props;
+  const { hackNoBackdropBlur, isExtensionSidebarOpen } = props;
 
   return (
     <Global
@@ -41,7 +42,7 @@ export function GlobalStyles(props: GlobalStylesProps) {
         getCodeStyles(theme),
         getDashDiffStyles(theme),
         getDashboardGridStyles(theme),
-        getElementStyles(theme),
+        getElementStyles(theme, isExtensionSidebarOpen),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
         getFontStyles(theme),

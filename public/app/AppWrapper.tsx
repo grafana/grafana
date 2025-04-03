@@ -11,11 +11,13 @@ import {
   SidecarContext_EXPERIMENTAL,
   sidecarServiceSingleton_EXPERIMENTAL,
 } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { GrafanaApp } from './app';
+import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -108,6 +110,9 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
+    const MaybeExtensionSidebarProvider = config.featureToggles.extensionSidebar
+      ? ExtensionSidebarContextProvider
+      : Fragment;
 
     return (
       <Provider store={store}>
@@ -119,20 +124,22 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
-                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                          <div className="grafana-app">
-                            {config.featureToggles.appSidecar ? (
-                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                            ) : (
-                              <RouterWrapper {...routerWrapperProps} />
-                            )}
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
+                          <MaybeExtensionSidebarProvider>
+                            <GlobalStylesWrapper />
+                            <div className="grafana-app">
+                              {config.featureToggles.appSidecar ? (
+                                <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                              ) : (
+                                <RouterWrapper {...routerWrapperProps} />
+                              )}
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </MaybeExtensionSidebarProvider>
                         </ExtensionRegistriesProvider>
                       </ScopesContextProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>

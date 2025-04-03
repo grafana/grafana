@@ -602,6 +602,7 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
+  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,
