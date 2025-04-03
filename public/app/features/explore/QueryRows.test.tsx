@@ -9,9 +9,9 @@ import { ExploreState } from 'app/types';
 
 import { UserState } from '../profile/state/reducers';
 
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { QueryRows } from './QueryRows';
 import { makeExplorePaneState } from './state/utils';
-import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
