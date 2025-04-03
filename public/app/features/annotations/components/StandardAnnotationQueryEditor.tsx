@@ -222,14 +222,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    // Here we are relying on target, however when we are dealing a v2 dashboard, the an
-    // annotation target is not available, only the query
-    // if we are dealing with a v2 dashboard, we need to use the query
+    // For v2 dashboards, target is not available, only query
     let target = annotation.target;
 
-    // For v2 dashboards, use query.spec and merge with options (for datasource-specific properties)
+    // For v2 dashboards, use query.spec
     if (annotation.query) {
-      // Step 1: Start with the query.spec
       target = {
         ...annotation.query.spec,
       };
@@ -240,12 +237,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       ...(target ?? { refId: 'Anno' }),
     };
 
-    // Create an annotation object with all properties properly placed, respecting annotations API
-    // Some datasources like Prometheus read properties directly from annotation
+    // Create annotation object that respects annotations API
     let editorAnnotation = annotation;
 
-    // Only for V2 dashboards: If we have options, propagate them to the root level
-    // This allows datasource editors that expect properties at the top level to find them
+    // For v2 dashboards: propagate options to root level for datasource compatibility
     if (annotation.query && annotation.options) {
       editorAnnotation = { ...annotation };
       Object.assign(editorAnnotation, annotation.options);
