@@ -91,10 +91,11 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.Error(t, err)
 		require.Nil(t, numbers)
-		require.Contains(t, err.Error(), "all rows were dropped")
+		require.Contains(t, err.Error(), "duplicate label sets found")
+		require.Contains(t, err.Error(), "host=a")
 	})
 
-	t.Run("SomeDuplicates_AreDroppedWithWarning", func(t *testing.T) {
+	t.Run("SomeDuplicates_ReturnsError", func(t *testing.T) {
 		input := data.NewFrame("",
 			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu", "cpu"}),
 			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0), fp(3.0)}),
@@ -102,25 +103,35 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		)
 
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
-		require.NoError(t, err)
-		require.Len(t, numbers, 1)
+		require.Error(t, err)
+		require.Nil(t, numbers)
+		require.Contains(t, err.Error(), "duplicate label sets found")
+		require.Contains(t, err.Error(), "host=a")
+	})
 
-		require.Equal(t, fp(3.0), numbers[0].GetFloat64Value())
+	t.Run("NoDuplicates_Succeeds", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField(SQLMetricFieldName, nil, []string{"cpu", "cpu"}),
+			data.NewField(SQLValueFieldName, nil, []*float64{fp(1.0), fp(2.0)}),
+			data.NewField("host", nil, []*string{sp("a"), sp("b")}),
+		)
+
+		numbers, err := extractNumberSetFromSQLForAlerting(input)
+		require.NoError(t, err)
+		require.Len(t, numbers, 2)
+
+		require.Equal(t, data.Labels{
+			SQLMetricFieldName: "cpu",
+			"host":             "a",
+		}, numbers[0].GetLabels())
 		require.Equal(t, data.Labels{
 			SQLMetricFieldName: "cpu",
 			"host":             "b",
-		}, numbers[0].GetLabels())
-
-		notice := numbers[0].Frame.Meta.Notices
-		require.Len(t, notice, 1)
-		require.Equal(t, data.NoticeSeverityWarning, notice[0].Severity)
-		require.Contains(t, notice[0].Text, `rows dropped due to duplicated label sets`)
-		require.Contains(t, notice[0].Text, `host=a`)
+		}, numbers[1].GetLabels())
 	})
 
-	t.Run("TruncatesWarningText_IfMoreThan10Dropped", func(t *testing.T) {
+	t.Run("MoreThan10DuplicateSets_TruncatesErrorList", func(t *testing.T) {
 		const totalRows = 30
-
 		labels := make([]string, totalRows)
 		values := make([]*float64, totalRows)
 		hosts := make([]*string, totalRows)
@@ -128,7 +139,7 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		for i := 0; i < totalRows; i++ {
 			labels[i] = "cpu"
 			values[i] = fp(float64(i + 1))
-			h := fmt.Sprintf("host%d", i%15) // 15 duplicated label sets
+			h := fmt.Sprintf("host%d", i%15) // 15 distinct label sets, each repeated twice
 			hosts[i] = &h
 		}
 
@@ -141,6 +152,8 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.Error(t, err)
 		require.Nil(t, numbers)
-		require.Contains(t, err.Error(), "all rows were dropped")
+
+		require.Contains(t, err.Error(), "duplicate label sets found")
+		require.Contains(t, err.Error(), "... and 5 more")
 	})
 }

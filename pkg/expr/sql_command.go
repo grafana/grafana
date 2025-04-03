@@ -204,7 +204,6 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 		return nil, fmt.Errorf("no numeric field found in frame")
 	}
 
-	// First pass: collect values and label sets
 	type row struct {
 		value  float64
 		labels data.Labels
@@ -239,54 +238,43 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 		fp := labels.Fingerprint()
 		counts[fp]++
 		labelMap[fp] = labels.String()
+
 		rows = append(rows, row{value: val, labels: labels})
 	}
 
-	// Second pass: retain only label sets that occurred exactly once
-	numbers := make([]mathexp.Number, 0, len(rows))
-	dropped := map[string]int{}
-
-	for _, r := range rows {
-		fp := r.labels.Fingerprint()
-		if counts[fp] == 1 {
-			n := mathexp.NewNumber(numericField.Name, r.labels)
-			n.Frame.Fields[0].Config = numericField.Config
-			n.SetValue(&r.value)
-			numbers = append(numbers, n)
-		} else if counts[fp] > 1 {
-			dropped[labelMap[fp]] = counts[fp]
+	// Check for any duplicates
+	duplicates := make([]string, 0)
+	for fp, count := range counts {
+		if count > 1 {
+			duplicates = append(duplicates, labelMap[fp])
 		}
 	}
 
-	if len(numbers) == 0 {
-		return nil, fmt.Errorf("all rows were dropped due to duplicate label sets")
-	}
-
-	// Add warning notice if any were dropped
-	if len(dropped) > 0 {
+	if len(duplicates) > 0 {
+		sort.Strings(duplicates)
 		var b strings.Builder
-		total := 0
-		labelKeys := make([]string, 0, len(dropped))
-		for k := range dropped {
-			labelKeys = append(labelKeys, k)
-		}
-		sort.Strings(labelKeys)
-
-		for i, labelStr := range labelKeys {
-			count := dropped[labelStr]
-			total += count
-			if i < 10 {
-				fmt.Fprintf(&b, "- %s: %d duplicate(s)\n", labelStr, count)
+		limit := 10
+		for i, lbl := range duplicates {
+			if i < limit {
+				fmt.Fprintf(&b, "- %s\n", lbl)
+			} else if i == limit {
+				fmt.Fprintf(&b, "... and %d more\n", len(duplicates)-limit)
+				break
 			}
 		}
-		if len(labelKeys) > 10 {
-			fmt.Fprintf(&b, "... and %d more label set(s) with duplicates\n", len(labelKeys)-10)
-		}
+		return nil, fmt.Errorf(
+			"duplicate label sets found in SQL alerting result. Each label set must be unique.\n%s",
+			b.String(),
+		)
+	}
 
-		numbers[0].AddNotice(data.Notice{
-			Severity: data.NoticeSeverityWarning,
-			Text:     fmt.Sprintf("%d rows dropped due to duplicated label sets:\n%s", total, b.String()),
-		})
+	// Build final result
+	numbers := make([]mathexp.Number, 0, len(rows))
+	for _, r := range rows {
+		n := mathexp.NewNumber(numericField.Name, r.labels)
+		n.Frame.Fields[0].Config = numericField.Config
+		n.SetValue(&r.value)
+		numbers = append(numbers, n)
 	}
 
 	return numbers, nil
