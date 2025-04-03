@@ -66,6 +66,18 @@
     },
     {
       "method": "POST",
+      "path": "api/v1/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.notifications.external:write"
+    },
+    {
+      "method": "DELETE",
+      "path": "api/v1/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.notifications.external:write"
+    },
+    {
+      "method": "POST",
       "reqRole": "Editor"
     },
     {
