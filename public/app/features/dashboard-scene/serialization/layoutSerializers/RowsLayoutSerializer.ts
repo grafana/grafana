@@ -1,5 +1,8 @@
 import { SceneObject } from '@grafana/scenes';
-import { DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  RowsLayoutRowKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';

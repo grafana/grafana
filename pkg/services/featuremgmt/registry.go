@@ -931,7 +931,7 @@ var (
 		},
 		{
 			Name:              "jitterAlertRulesWithinGroups",
-			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
 			FrontendOnly:      false,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAlertingSquad,
@@ -1819,6 +1819,13 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:        "azureMonitorLogsBuilderEditor",
+			Description: "Enables the logs builder mode for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "localeFormatPreference",
 			Description: "Specify the locale so we can show the correct format for numbers and dates",
 			Stage:       FeatureStageExperimental,
@@ -1850,6 +1857,13 @@ var (
 			FrontendOnly:      true,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:         "multiTenantTempCredentials",
+			Description:  "use multi-tenant path for awsTempCredentials",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "localizationForPlugins",

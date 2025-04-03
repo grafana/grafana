@@ -500,7 +500,7 @@ const (
 	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRulesWithinGroups
-	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
@@ -967,6 +967,10 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagAzureMonitorLogsBuilderEditor
+	// Enables the logs builder mode for the Azure Monitor data source
+	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
 	// FlagLocaleFormatPreference
 	// Specify the locale so we can show the correct format for numbers and dates
 	FlagLocaleFormatPreference = "localeFormatPreference"
@@ -982,6 +986,10 @@ const (
 	// FlagXrayApplicationSignals
 	// Support Application Signals queries in the X-Ray datasource
 	FlagXrayApplicationSignals = "xrayApplicationSignals"
+
+	// FlagMultiTenantTempCredentials
+	// use multi-tenant path for awsTempCredentials
+	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
