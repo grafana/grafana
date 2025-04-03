@@ -31,7 +31,12 @@ export function BuildSnapshotCTA(props: SnapshotCTAProps) {
         </Trans>
       </Text>
 
-      <Button disabled={disabled} onClick={onClick} icon={isLoading ? 'spinner' : undefined}>
+      <Button
+        disabled={disabled}
+        onClick={onClick}
+        icon={isLoading ? 'spinner' : undefined}
+        data-testid="migrate-to-cloud-configure-snapshot-build-snapshot-button"
+      >
         <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
       </Button>
     </CTAInfo>
