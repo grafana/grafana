@@ -130,8 +130,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
-
-      throw err;
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 
@@ -174,8 +177,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
-
-      throw err;
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 
@@ -435,8 +441,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
-
-      throw err;
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 }

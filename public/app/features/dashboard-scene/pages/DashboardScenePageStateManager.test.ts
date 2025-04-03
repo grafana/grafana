@@ -101,27 +101,7 @@ describe('DashboardScenePageStateManager v1', () => {
 
       const loader = new DashboardScenePageStateManager({});
 
-      try {
-        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-      } catch (e: unknown) {
-        expect(e).toEqual({
-          status: 404,
-          statusText: 'Not Found',
-          data: {
-            message: 'Dashboard not found',
-          },
-          config: {
-            method: 'GET',
-            url: 'api/dashboards/uid/adfjq9edwm0hsdsa',
-            retry: 0,
-            headers: {
-              'X-Grafana-Org-Id': 1,
-            },
-            hideFromInspector: true,
-          },
-          isHandled: true,
-        });
-      }
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
@@ -202,14 +182,7 @@ describe('DashboardScenePageStateManager v1', () => {
         } as unknown as BackendSrv);
 
         const loader = new DashboardScenePageStateManager({});
-        try {
-          await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-        } catch (e: unknown) {
-          expect(e).toEqual({
-            status: 500,
-            data: { message: 'Failed to load home dashboard' },
-          });
-        }
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toEqual({
@@ -520,14 +493,8 @@ describe('DashboardScenePageStateManager v2', () => {
         } as unknown as BackendSrv);
 
         const loader = new DashboardScenePageStateManagerV2({});
-        try {
-          await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-        } catch (e: unknown) {
-          expect(e).toEqual({
-            status: 500,
-            data: { message: 'Failed to load home dashboard' },
-          });
-        }
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
         expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toEqual({
           message: 'Failed to load home dashboard',
