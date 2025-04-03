@@ -439,21 +439,6 @@
     },
     {
       "metadata": {
-        "name": "alertingRuleSequentialEvaluation",
-        "resourceVersion": "1742580089675",
-        "creationTimestamp": "2025-03-21T18:01:29Z",
-        "deletionTimestamp": "2025-03-31T17:26:04Z"
-      },
-      "spec": {
-        "description": "Enables the alerting rule sequential evaluation feature",
-        "stage": "preview",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingRuleRecoverDeleted",
         "resourceVersion": "1741351039908",
         "creationTimestamp": "2025-03-07T09:25:14Z",
@@ -469,6 +454,21 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleSequentialEvaluation",
+        "resourceVersion": "1742580089675",
+        "creationTimestamp": "2025-03-21T18:01:29Z",
+        "deletionTimestamp": "2025-03-31T17:26:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting rule sequential evaluation feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1741,6 +1741,19 @@
     },
     {
       "metadata": {
+        "name": "extensionSidebar",
+        "resourceVersion": "1743071445006",
+        "creationTimestamp": "2025-03-27T10:30:45Z"
+      },
+      "spec": {
+        "description": "Enables the extension sidebar",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1741964095787",
         "creationTimestamp": "2023-09-22T08:50:13Z",
@@ -2496,11 +2509,14 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1742397804851",
-        "creationTimestamp": "2025-03-19T15:23:24Z"
+        "resourceVersion": "1743662997585",
+        "creationTimestamp": "2025-03-19T15:23:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-03 06:49:57.585909 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Specify the locale so we can show the correct format for numbers and dates",
+        "description": "Specifies the locale so the correct format for numbers and dates can be shown",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
@@ -3302,11 +3318,14 @@
     {
       "metadata": {
         "name": "pluginsCDNSyncLoader",
-        "resourceVersion": "1737026684018",
-        "creationTimestamp": "2025-01-16T11:24:44Z"
+        "resourceVersion": "1743664300735",
+        "creationTimestamp": "2025-01-16T11:24:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-03 07:11:40.735562 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Load plugins from CDN synchronously",
+        "description": "Loads plugins from CDN synchronously",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }

@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     delete: deleteMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       test: {
         id: 'test',

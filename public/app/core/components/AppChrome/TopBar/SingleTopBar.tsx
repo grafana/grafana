@@ -15,6 +15,7 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -88,6 +89,7 @@ export const SingleTopBar = memo(function SingleTopBar({
         />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
+        {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
         {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>
