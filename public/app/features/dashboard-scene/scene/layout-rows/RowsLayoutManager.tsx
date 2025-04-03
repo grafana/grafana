@@ -16,6 +16,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
+import { generateUniqueTitle } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -89,12 +90,18 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
-    this.setState({ rows: [...this.state.rows, newRow] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    this.addNewRow(newRow);
   }
 
   public addNewRow(row?: RowItem): RowItem {
     const newRow = row ?? new RowItem({ isNew: true });
+    const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
+
+    const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
+    if (newTitle !== newRow.state.title) {
+      newRow.setState({ title: newTitle });
+    }
+
     this.setState({ rows: [...this.state.rows, newRow] });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
     return newRow;
@@ -186,8 +193,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             config.push({
               title: child.state.title,
               isCollapsed: !!child.state.isCollapsed,
-              isDraggable: child.state.isDraggable ?? layout.state.grid.state.isDraggable,
-              isResizable: child.state.isResizable ?? layout.state.grid.state.isResizable,
+              isDraggable: child.state.isDraggable,
+              isResizable: child.state.isResizable,
               children: child.state.children,
               repeat: behaviour?.state.variableName,
             });
@@ -212,8 +219,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             collapse: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
-              rowConfig.isDraggable,
-              rowConfig.isResizable
+              rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
             $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })
@@ -228,5 +235,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     }
 
     return new RowsLayoutManager({ rows });
+  }
+
+  public duplicateTitles(): Set<string | undefined> {
+    const titleCounts = new Map<string | undefined, number>();
+    const duplicateTitles = new Set<string | undefined>();
+
+    this.state.rows.forEach((row) => {
+      const title = row.state.title;
+      const count = (titleCounts.get(title) ?? 0) + 1;
+      titleCounts.set(title, count);
+      if (count > 1 && title) {
+        duplicateTitles.add(title);
+      }
+    });
+
+    return duplicateTitles;
   }
 }
