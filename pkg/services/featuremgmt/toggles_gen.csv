@@ -241,6 +241,7 @@ unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false
 azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
 localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
+extensionSidebar,experimental,@grafana/observability-logs,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
