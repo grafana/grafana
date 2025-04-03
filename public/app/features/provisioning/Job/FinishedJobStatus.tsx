@@ -35,15 +35,20 @@ export function FinishedJobStatus({
 
   useEffect(() => {
     const shouldRetry = !job && !hasRetried.current && !finishedQuery.isFetching;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     if (shouldRetry) {
       hasRetried.current = true;
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         finishedQuery.refetch();
       }, 1000);
     }
 
-    return undefined;
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [finishedQuery, job]);
 
   if (retryFailed) {
