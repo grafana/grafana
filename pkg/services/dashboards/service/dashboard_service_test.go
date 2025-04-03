@@ -2476,9 +2476,9 @@ func TestSetDefaultPermissions(t *testing.T) {
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
 				folderStore := foldertest.FakeFolderStore{}
-				features := featuremgmt.WithFeatures()
+				features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 				if tc.featureKubernetesDashboards {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
+					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagNestedFolders)
 				}
 
 				permService := acmock.NewMockedPermissionsService()
