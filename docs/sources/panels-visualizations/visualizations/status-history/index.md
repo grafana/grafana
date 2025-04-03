@@ -137,10 +137,6 @@ When you hover your cursor over the visualization, Grafana can display tooltips.
 
 Use an override to hide individual series from the tooltip.
 
-### Axis options
-
-{{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
-
 ### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
