@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
@@ -374,11 +373,22 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), dashboardv1alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter)
+	svcLogger := log.New("dashboard-service")
+
+	k8sHandler := NewK8sHandlerWithFallback(
+		cfg,
+		restConfigProvider,
+		dashboardStore,
+		userService,
+		resourceClient,
+		sorter,
+		dual,
+		svcLogger,
+	)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
-		log:                       log.New("dashboard-service"),
+		log:                       svcLogger,
 		dashboardStore:            dashboardStore,
 		features:                  features,
 		folderPermissions:         folderPermissionsService,
