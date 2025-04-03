@@ -3,7 +3,6 @@ import { Suspense, lazy } from 'react';
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { t } from '../../../../core/internationalization';
 import { createRelativeUrl } from '../utils/url';
 
 const AlertRulesDrawerContent = lazy(
