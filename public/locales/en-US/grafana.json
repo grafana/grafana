@@ -66,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
+      "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
       "get-stage-cell": {
         "beta": "Beta",
         "deprecated": "Deprecated",
@@ -173,6 +175,7 @@
       "columns": {
         "aria-label-role": "Role"
       },
+      "delete-aria-label": "Delete user: {{name}}",
       "title-delete": "Delete"
     },
     "orgs": {
@@ -273,6 +276,8 @@
       "columns": {
         "title-edit-user": "Edit user"
       },
+      "edit-aria-label": "Edit user: {{name}}",
+      "edit-tooltip": "Edit user",
       "last-seen-never": "Never",
       "no-licensed-roles": "Not assigned"
     }
@@ -3209,6 +3214,7 @@
   },
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
+    "input-placeholder": "Press enter to confirm new folder",
     "loading": "Loading folders..."
   },
   "folder-repo": {
@@ -4756,6 +4762,9 @@
       "submit": "Submit"
     }
   },
+  "org-picker": {
+    "select-placeholder": "Select organization"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit title"
@@ -5818,6 +5827,8 @@
   },
   "route-error": {
     "description": "Grafana has likely been updated. Please try reloading the page.",
+    "error-title": "Error details",
+    "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
@@ -5933,6 +5944,9 @@
     "role": {
       "label": "Role"
     }
+  },
+  "service-account-picker": {
+    "select-placeholder": "Start typing to search for service accounts"
   },
   "service-accounts": {
     "empty-state": {
@@ -6202,10 +6216,19 @@
   },
   "sign-up": {
     "back-button": "Back to login",
+    "confirm-password-label": "Confirm password",
+    "email-label": "Email",
+    "org-name-label": "Org. name",
+    "password-label": "Password",
     "submit-button": "Submit",
+    "user-name-label": "Your name",
+    "user-name-placeholder": "(optional)",
+    "verification-code-label": "Email verification code (sent to your email)",
     "verify": {
       "back-button": "Back to login",
       "complete-button": "Complete signup",
+      "email-description": "Enter your email address to get a verification link sent to you",
+      "email-label": "Email",
       "header": "Verify email",
       "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
       "send-button": "Send verification email"
@@ -6290,7 +6313,11 @@
     "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
-    "placeholder": "Filter by tag"
+    "placeholder": "Filter by tag",
+    "tag-option-label": "Tag option"
+  },
+  "team-picker": {
+    "select-placeholder": "Select a team"
   },
   "teams": {
     "create-team": {
@@ -6744,6 +6771,9 @@
     "role-column": "Role",
     "select-org-button": "Select organisation",
     "title": "Organizations"
+  },
+  "user-picker": {
+    "select-placeholder": "Start typing to search for user"
   },
   "user-profile": {
     "fields": {

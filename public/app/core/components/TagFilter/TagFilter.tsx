@@ -159,7 +159,7 @@ export const TagFilter = ({
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
-      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} />
     </div>
   );
 };
