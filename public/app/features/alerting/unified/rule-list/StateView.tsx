@@ -32,6 +32,7 @@ export const StateView = ({ namespaces }: Props) => {
     const result: GroupedRules = new Map([
       [PromAlertingRuleState.Firing, []],
       [PromAlertingRuleState.Pending, []],
+      [PromAlertingRuleState.Recovering, []],
       [PromAlertingRuleState.Inactive, []],
     ]);
 

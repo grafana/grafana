@@ -22,6 +22,7 @@ const emptyStats: Required<AlertGroupTotals> = {
   alerting: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
+  [PromAlertingRuleState.Recovering]: 0,
   paused: 0,
   error: 0,
   nodata: 0,
@@ -131,6 +132,12 @@ export function getComponentsFromStats(
   if (stats[AlertInstanceTotalState.Pending]) {
     statsComponents.push(
       <Badge color={'orange'} key="pending" text={`${stats[AlertInstanceTotalState.Pending]} pending`} />
+    );
+  }
+
+  if (stats[AlertInstanceTotalState.Recovering]) {
+    statsComponents.push(
+      <Badge color={'orange'} key="recovering" text={`${stats[AlertInstanceTotalState.Recovering]} recovering`} />
     );
   }
 

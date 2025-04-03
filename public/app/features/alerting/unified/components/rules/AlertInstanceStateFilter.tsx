@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Label, RadioButtonGroup, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing;
+export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing | PromAlertingRuleState.Recovering;
 
 interface Props {
   className?: string;
@@ -38,7 +38,7 @@ export const AlertInstanceStateFilter = ({
     component: getOptionComponent(state),
   }));
 
-  const promOptionValues = [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending] as const;
+  const promOptionValues = [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending, PromAlertingRuleState.Recovering] as const;
   const promOptions = promOptionValues.map((state) => ({
     label: capitalize(state),
     value: state,

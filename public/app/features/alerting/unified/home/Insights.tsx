@@ -243,6 +243,12 @@ function getGrafanaManagedScenes() {
                         ),
                         getInstanceStatByStatusScene(
                           cloudUsageDs,
+                          'Recovering instances',
+                          'The number of currently recovering alert rule instances',
+                          'recovering'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
                           'Pending instances',
                           'The number of currently pending alert rule instances',
                           'pending'
