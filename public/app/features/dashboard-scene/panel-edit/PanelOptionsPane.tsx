@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -23,18 +23,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import {
-  Button,
-  Card,
-  FilterInput,
-  RadioButtonGroup,
-  ScrollContainer,
-  Stack,
-  ToolbarButton,
-  Text,
-  useStyles2,
-  Field,
-} from '@grafana/ui';
+import { Button, Card, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
