@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
@@ -121,10 +122,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		return parsed, err
 	}
 
-	if info.Path == "" {
-		return parsed, errors.New("path is required")
-	}
-
 	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.Debug("failed to find GVK of the input data", "error", err)
@@ -173,10 +170,14 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	// Calculate name+folder from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
-		parsed.Meta.SetFolder(folderName)
+		objName := FileNameFromHashedRepoPath(r.repo.Name, info.Path)
 		if obj.GetName() == "" {
 			obj.SetName(objName) // use the name saved in config
+		}
+
+		dirPath := safepath.Dir(info.Path)
+		if dirPath != "" {
+			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
 		}
 	}
 	obj.SetUID("")             // clear identifiers

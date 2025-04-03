@@ -1,3 +1,6 @@
+import { css, cx } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -12,7 +15,8 @@ import {
   useSceneObjectState,
   SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
@@ -34,12 +38,16 @@ import {
   getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
+  getDashboardSceneFor,
 } from '../../utils/utils';
+import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
@@ -102,20 +110,38 @@ export class DefaultGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: getGridItemKeyForPanelId(panelId),
-    });
+    // With new edit mode we add panels to the bottom of the grid
+    if (config.featureToggles.dashboardNewLayouts) {
+      const emptySpace = findSpaceForNewPanel(this.state.grid);
+      const newGridItem = new DashboardGridItem({
+        ...emptySpace,
+        body: vizPanel,
+        key: getGridItemKeyForPanelId(panelId),
+      });
 
-    this.state.grid.setState({
-      children: [newGridItem, ...this.state.grid.state.children],
-    });
+      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+    } else {
+      const newGridItem = new DashboardGridItem({
+        height: NEW_PANEL_HEIGHT,
+        width: NEW_PANEL_WIDTH,
+        x: 0,
+        y: 0,
+        body: vizPanel,
+        key: getGridItemKeyForPanelId(panelId),
+      });
+
+      this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
+    }
 
     this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
+  }
+
+  public pastePanel() {
+    const emptySpace = findSpaceForNewPanel(this.state.grid);
+    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
+    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    clearClipboard();
   }
 
   public removePanel(panel: VizPanel) {
@@ -505,6 +531,9 @@ export class DefaultGridLayoutManager
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
+  const { isEditing } = dashboard.useState();
+  const styles = useStyles2(getStyles);
+  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts;
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -513,5 +542,43 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
     );
   }
 
-  return <model.state.grid.Component model={model.state.grid} />;
+  return (
+    <div className={cx(styles.container, isEditing && styles.containerEditing)}>
+      {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
+      {showCanvasActions && (
+        <div className={styles.actionsWrapper}>
+          <CanvasGridAddActions layoutManager={model} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      width: '100%',
+      display: 'flex',
+      flexGrow: 1,
+      flexDirection: 'column',
+    }),
+    containerEditing: css({
+      // In editing the add actions should live at the bottom of the grid so we have to
+      // disable flex grow on the SceneGridLayouts first div
+      '> div:first-child': {
+        flexGrow: `0 !important`,
+        minHeight: '250px',
+      },
+      '&:hover': {
+        '.dashboard-canvas-add-button': {
+          opacity: 1,
+          filter: 'unset',
+        },
+      },
+    }),
+    actionsWrapper: css({
+      position: 'relative',
+      paddingBottom: theme.spacing(5),
+    }),
+  };
 }

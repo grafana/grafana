@@ -87,7 +87,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 ) *DashboardsAPIBuilder {
-	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -103,7 +102,7 @@ func RegisterAPIService(
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 
 		legacy: &DashboardStorage{
-			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
+			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
 		},
 		reg: reg,
 	}

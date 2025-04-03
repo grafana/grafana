@@ -132,6 +132,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ParenExpr:
 		return
 
+	case *sqlparser.RangeCond:
+		return
+
 	case *sqlparser.Subquery:
 		return
 
@@ -208,6 +211,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 
 	// Type conversion
 	case "cast":
+		return
+
+	// JSON functions
+	case "json_extract", "json_unquote", "json_contains",
+		"json_object", "json_array", "json_set", "json_remove",
+		"json_length", "json_search", "json_type":
 		return
 
 	default:

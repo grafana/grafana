@@ -14,13 +14,12 @@ type SetupType = 'public-access' | 'required-features' | null;
 
 // Configuration examples
 const featureIni = `# In your custom.ini file
-app_mode = development
 
 [feature_toggles]
 provisioning = true
-kubernetesDashboards = true
 unifiedStorageSearch = true
 kubernetesClientDashboardsFolders = true
+kubernetesDashboards = true ; use k8s from browser
 
 # If you want easy kubectl setup development mode
 grafanaAPIServerEnsureKubectlAccess = true`;

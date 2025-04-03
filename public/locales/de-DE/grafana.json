@@ -503,6 +503,10 @@
       "recording": "Aufzeichnung",
       "rule-name": "Regelname"
     },
+    "ds-group-loader": {
+      "group-deleting": "",
+      "group-load-failed": ""
+    },
     "export": {
       "subtitle": {
         "formats": "Wählen Sie das Format aus und laden Sie die Datei herunter oder kopieren Sie die Inhalte in die Zwischenablage",
@@ -521,10 +525,12 @@
     },
     "group-actions": {
       "actions-trigger": "Aktionen für Regelgruppen",
-      "delete": "",
-      "edit": "",
-      "export": "",
-      "reorder": "Regeln neu anordnen"
+      "details": "",
+      "edit": ""
+    },
+    "group-actions-menu": {
+      "group-load-failed": "",
+      "unknown-error": ""
     },
     "group-details": {
       "ds-features-error": "Fehler beim Laden der Datenquellendetails",
@@ -564,6 +570,9 @@
       "page-title": "Regelgruppe bearbeiten",
       "rule-group-error": "Fehler beim Laden der Regelgruppe",
       "title": "Evaluierungsgruppe bearbeiten"
+    },
+    "group-loader": {
+      "group-load-failed": ""
     },
     "irm-integration": {
       "connection-method": "So stellen Sie eine Verbindung zu IRM her",
@@ -820,6 +829,7 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
+      "draft-new-rule": "",
       "ds-error-boundary": {
         "description": "Überprüfen Sie die Konfiguration der Datenquelle. Unterstützt die Datenquelle die Prometheus-API?",
         "title": "Regeln aus dieser Datenquelle können nicht geladen werden"
@@ -828,15 +838,20 @@
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln werden angezeigt",
         "no-rules-found": "Es gibt keine Warn- oder Aufnahmeregeln, die Ihren aktuellen Filtereinstellungen entsprechen."
       },
+      "more": "",
       "new-alert-rule": "",
+      "new-datasource-recording-rule": "",
+      "new-grafana-recording-rule": "",
       "pagination": {
         "next-page": "nächste Seite",
         "previous-page": "vorherige Seite"
       },
+      "recording-rules": "",
       "return-button": {
         "title": ""
       },
-      "rulerrule-loading-error": "Die Regel konnte nicht geladen werden"
+      "rulerrule-loading-error": "Die Regel konnte nicht geladen werden",
+      "unknown-rule-type": ""
     },
     "rule-state": {
       "creating": "Wird erstellt",
@@ -855,7 +870,7 @@
     "rule-viewer": {
       "error-loading": "Beim Laden der Regel ist ein Fehler aufgetreten",
       "prometheus-consistency-check": {
-        "alert-message": "Die Warnregel wurde aktualisiert. Es kann bis zu einer Minute dauern, bis Änderungen in der Listenansicht der Warnregeln angezeigt werden.",
+        "alert-message": "",
         "alert-title": "Aktualisierung wird durchgeführt"
       }
     },
@@ -1106,13 +1121,34 @@
       "create-label": "Erstellen",
       "name-label": "Ordnername"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "",
+      "alert-folder-created-successfully": "",
+      "button-create": "",
+      "button-creating": "",
+      "cancel": "",
+      "description-branch-name-in-git-hub": "",
+      "error-invalid-folder-name": "",
+      "error-required": "",
+      "folder-comment-input-placeholder-describe-changes-optional": "",
+      "folder-name-input-placeholder-enter-folder-name": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-folder-name": "",
+      "label-workflow": "",
+      "text-pull-request-created": "",
+      "title-pull-request-created": "",
+      "title-repository-not-found": "",
+      "title-this-repository-is-read-only": ""
+    },
     "no-results": {
       "clear": "Suche und Filter löschen",
       "text": "Keine Ergebnisse für Ihre Abfrage gefunden"
     },
     "soft-delete": {
       "success": "Dashboard {{name}} in „Kürzlich gelöscht“ verschoben"
-    }
+    },
+    "text-this-repository-is-read-only": ""
   },
   "carousel": {
     "close": "",
@@ -1381,46 +1417,73 @@
       "group-into-tab": "",
       "group-panels": "",
       "new-row": "",
-      "new-tab": ""
+      "new-tab": "",
+      "paste-panel": "",
+      "paste-row": "",
+      "paste-tab": ""
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "Deaktivieren",
-        "enable": "Aktivieren",
-        "label": ""
-      },
-      "group": {
-        "add": {
-          "button": "Bedingung hinzufügen basierend auf",
-          "data": "",
-          "interval": "",
-          "variable": "Variablenwert"
+      "conditions": {
+        "data": {
+          "disable": "",
+          "enable": "",
+          "info": "",
+          "label": ""
         },
-        "condition": {
-          "label": "Bedingungen evaluieren",
-          "meet-all": "Alle erfüllen",
-          "meet-any": "Irgendeine erfüllen"
+        "group": {
+          "add": {
+            "button": "",
+            "data": "",
+            "time-range-size": "",
+            "variable": ""
+          },
+          "condition": {
+            "all": "",
+            "any": "",
+            "label": ""
+          },
+          "label": "",
+          "visibility": {
+            "hide": "",
+            "label": "",
+            "show": ""
+          }
         },
-        "label": "Gruppe"
-      },
-      "interval": {
-        "input-label": "Wert",
-        "invalid-message": "Ungültiges Intervall",
-        "label": "Zeitbereichsintervall:"
-      },
-      "shared": {
-        "delete-condition": "Bedingung löschen"
-      },
-      "title": "Optionen für bedingtes Rendering",
-      "variable": {
-        "label": "Variable",
-        "operator": {
-          "equals": "Gleich",
-          "not-equal": "Nicht gleich"
+        "shared": {
+          "delete-condition": "",
+          "unsupported-item-type": ""
         },
-        "select-operator": "Bediener",
-        "select-variable": "Variable auswählen",
-        "value-input": "Wert"
+        "time-range-size": {
+          "info": "",
+          "invalid-message": "",
+          "label": "",
+          "values": {
+            "days": "",
+            "hour": "",
+            "hours": "",
+            "minutes": "",
+            "months": "",
+            "year": "",
+            "years": ""
+          }
+        },
+        "variable": {
+          "info": "",
+          "label": "",
+          "name": "",
+          "operator": {
+            "equals": "",
+            "not-equals": ""
+          },
+          "value": ""
+        }
+      },
+      "overlay": {
+        "tooltip": ""
+      },
+      "root": {
+        "info": "",
+        "title": ""
       }
     },
     "default-layout": {
@@ -1478,29 +1541,6 @@
       }
     },
     "edit-pane": {
-      "add": {
-        "lib-panel": {
-          "heading": "",
-          "title": "Mit Bibliotheks-Panels können Sie Panels zwischen Dashboards teilen und wiederverwenden"
-        },
-        "panel": {
-          "heading": "",
-          "title": "Ein Container für Visualisierungen und andere Inhalte"
-        },
-        "paste-panel": {
-          "heading": "",
-          "title": "Ein Panel aus der Zwischenablage einfügen"
-        },
-        "row": {
-          "heading": "",
-          "title": "Eine Gruppe von Panels mit optionalem Header"
-        },
-        "tab": {
-          "heading": "Tab",
-          "title": "Unterteilen Sie Ihr Dashboard in verschiedene horizontale Tabs"
-        },
-        "title": ""
-      },
       "elements": {
         "dashboard": "",
         "objects": "Objekte",
@@ -1596,7 +1636,9 @@
       }
     },
     "new-panel": {
-      "configure-button": ""
+      "configure-button": "",
+      "menu-open-panel-editor": "",
+      "menu-use-library-panel": ""
     },
     "new-panel-title": "",
     "options": {
@@ -1658,7 +1700,16 @@
     "toolbar": {
       "add": "Hinzufügen",
       "add-new": {
-        "tooltip": ""
+        "button": {
+          "label": "",
+          "tooltip": ""
+        },
+        "menu": {
+          "lib-panel": "",
+          "panel": "",
+          "row": "",
+          "tab": ""
+        }
       },
       "alert-rules": "Warnregeln",
       "back-to-dashboard": "Zurück zum Dashboard",
@@ -1813,12 +1864,85 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "",
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "label-data-source": "",
+      "label-use-static-key-dimensions": ""
+    },
+    "add-to-dashboard-form": {
+      "cancel": "",
+      "description-choose-where-to-add-the-panel": "",
+      "description-select-which-dashboard-panel-created": "",
+      "label-dashboard": "",
+      "label-target-dashboard": "",
+      "open-dashboard": "",
+      "open-in-new-tab": "",
+      "title-error-adding-the-panel": ""
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "",
+      "delete": "",
+      "description-color-annotation-event-markers": "",
+      "description-enabled-annotation-query-issued-every-dashboard": "",
+      "label-color": "",
+      "label-data-source": "",
+      "label-enabled": "",
+      "label-hidden": "",
+      "label-name": "",
+      "label-show-in": "",
+      "placeholder-choose-panels": "",
+      "query": "",
+      "title-annotation-support-source": ""
+    },
+    "annotation-settings-list": {
+      "data-source": "",
+      "new-query": "",
+      "query-name": "",
+      "tooltip-move-down": "",
+      "tooltip-move-up": ""
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Darf keine ungültigen Zeichen enthalten: ~, ^, :, ?, *, [, \\\\ oder ].",
       "cannot-start-with": "Darf nicht mit „/“ beginnen oder mit „/“, „.“ oder einem Leerzeichen enden.",
       "invalid-branch-name": "Ungültiger Branch-Name.",
       "it-cannot-contain-or": "Darf nicht „//“ oder „..“ enthalten.",
       "least-valid-character": "Mindestens ein gültiges Zeichen muss enthalten sein."
+    },
+    "constant-variable-form": {
+      "constant-options": "",
+      "placeholder-your-metric-prefix": ""
+    },
+    "custom-variable-form": {
+      "custom-options": "",
+      "selection-options": ""
+    },
+    "dashboard-edit-pane-renderer": {
+      "outline": ""
+    },
+    "dashboard-link-form": {
+      "back-to-list": "",
+      "label-icon": "",
+      "label-include-current-template-variable-values": "",
+      "label-include-current-time-range": "",
+      "label-open-link-in-new-tab": "",
+      "label-options": "",
+      "label-show-as-dropdown": "",
+      "label-title": "",
+      "label-tooltip": "",
+      "label-type": "",
+      "label-url": "",
+      "label-with-tags": "",
+      "placeholder-open-dashboard": ""
+    },
+    "dashboard-link-list": {
+      "info": "",
+      "new-link": "",
+      "tooltip-copy-link": "",
+      "tooltip-move-link-down": "",
+      "tooltip-move-link-up": "",
+      "type": ""
     },
     "dashboard-preview-banner": {
       "not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
@@ -1831,17 +1955,160 @@
       "value-not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
       "view-pull-request-in-git-hub": "Pull-Anfrage in GitHub anzeigen"
     },
+    "data-source-variable-form": {
+      "data-source-options": "",
+      "selection-options": ""
+    },
+    "description-label": {
+      "description": ""
+    },
+    "email-list": {
+      "aria-label-emailmenu": ""
+    },
+    "empty-transformations-message": {
+      "add-transformation": ""
+    },
+    "group-by-variable-form": {
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "group-by-options": "",
+      "label-data-source": "",
+      "label-use-static-group-by-dimensions": ""
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "",
+      "label-randomize-data": "",
+      "label-support-snapshot": "",
+      "label-template": "",
+      "randomize-field-names-label-field-names": "",
+      "randomize-labels-label-labels": "",
+      "randomize-string-values-label-string-values": "",
+      "title-complete-git-hub-comment-clipboard": "",
+      "title-get-help-with-this-panel": ""
+    },
+    "inspect-data-tab": {
+      "no-data-found": ""
+    },
+    "inspect-json-tab": {
+      "apply": ""
+    },
+    "interval-variable-form": {
+      "description-calculated-value-below-threshold": "",
+      "interval-options": ""
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": ""
+      },
+      "render-save-button-and-error": {
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      }
+    },
+    "name-already-exists-error": {
+      "title-name-already-exists": ""
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": ""
+      },
+      "text-loading-rules": "",
+      "title-dashboard-not-saved": ""
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": ""
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "",
+      "delete-all-transformations": "",
+      "title-delete-all-transformations": ""
+    },
+    "panel-edit-controls": {
+      "table-view-aria-label-toggletableview": "",
+      "table-view-label-table-view": ""
+    },
+    "panel-inspect-renderer": {
+      "title-panel-plugin-not-loaded": ""
+    },
+    "panel-options-pane": {
+      "placeholder-search-options": ""
+    },
+    "panel-viz-type-picker": {
+      "placeholder-search-for": "",
+      "title-close": ""
+    },
+    "provisioned-delete-modal": {
+      "ok": "",
+      "title-cannot-delete-provisioned-dashboard": ""
+    },
     "provisioned-resource-delete-modal": {
       "file-path": "Dateipfad:",
       "managed-by-version-control": "Diese/r/s {type} wird von der Versionskontrolle verwaltet und kann nicht gelöscht werden. Um dieses Element zu entfernen, muss es aus dem Repository gelöscht und dann synchronisiert werden, damit die Änderungen übernommen werden.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Bereitgestellte Ressource kann nicht gelöscht werden"
     },
+    "query-editor": {
+      "query": ""
+    },
+    "query-variable-editor-form": {
+      "label-data-source": "",
+      "query-options": "",
+      "selection-options": ""
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": ""
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "",
+      "aria-label-save-dashboard-title-field": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-copy-tags": "",
+      "label-folder": "",
+      "render-footer": {
+        "title-failed-to-save-dashboard": ""
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-message": "",
+      "placeholder-describe-changes-optional": "",
+      "render-footer": {
+        "no-changes-to-save": "",
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      },
+      "title-dashboard-drastically-changed": ""
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "",
+      "save-refresh-label-update-default-refresh-value": "",
+      "save-timerange-label-update-default-time-range": "",
+      "save-variables-description-current-values-default": "",
+      "save-variables-label-update-default-variable-values": ""
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "",
+      "dashboard-name": "",
+      "discard": "",
+      "loading-connected-dashboards": "",
+      "placeholder-search-affected-dashboards": "",
+      "update-all": ""
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Fehler beim Speichern des Dashboards",
       "api-success": "Dashboard-Änderungen gespeichert",
       "cancel": "",
       "copy-json-message": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein.",
+      "copy-json-to-clipboard": "",
       "dashboard-comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
       "description-branch-name-in-git-hub": "Branch-Name in GitHub",
       "description-inside-repository": "Dateipfad innerhalb des Repositorys (.json oder .yaml)",
@@ -1853,11 +2120,107 @@
       "label-title": "",
       "label-workflow": "Workflow",
       "save": "",
+      "save-json-to-file": "",
       "saving": "Wird gespeichert …",
       "title-required": "Dashboard-Titel ist erforderlich",
       "title-same-as-folder": "Der Dashboard-Name darf nicht mit dem Ordnernamen identisch sein",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt",
       "title-validation-failed": "Die Validierung des Dashboard-Titels ist fehlgeschlagen."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "new-alert-rule": "",
+      "title-no-alerting-capable-query-found": ""
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "",
+      "description-enables-option-include-variables": "",
+      "description-enables-users-custom-values": ""
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": ""
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "",
+      "text-options": ""
+    },
+    "title-field-label": {
+      "title": ""
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": ""
+      }
+    },
+    "unlink-modal": {
+      "title-really-unlink-panel": ""
+    },
+    "unsaved-changes-modal": {
+      "cancel": "",
+      "changes": "",
+      "discard": "",
+      "save-dashboard": "",
+      "title-unsaved-changes": ""
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "",
+      "aria-label-variable-referenced-other-variables-dashboard": ""
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "",
+      "back-to-list": "",
+      "delete": "",
+      "description-optional-display-name": "",
+      "description-template-variable-characters": "",
+      "general": "",
+      "placeholder-descriptive-text": "",
+      "placeholder-label-name": "",
+      "placeholder-variable-name": "",
+      "text-running-query": ""
+    },
+    "variable-editor-list": {
+      "definition": "",
+      "new-variable": "",
+      "variable": ""
+    },
+    "variable-editor-list-row": {
+      "title-delete-variable": "",
+      "tooltip-duplicate-variable": "",
+      "tooltip-remove-variable": ""
+    },
+    "variable-hide-select": {
+      "label-show-on-dashboard": ""
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": ""
+    },
+    "variable-values-preview": {
+      "preview-of-values": "",
+      "show-more": ""
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": ""
+    },
+    "version-history-header": {
+      "latest": "",
+      "tooltip-reset-version": ""
+    },
+    "version-history-table": {
+      "date": "",
+      "notes": "",
+      "restore": "",
+      "updated-by": "",
+      "version": ""
+    },
+    "versions-history-buttons": {
+      "compare-versions": "",
+      "show-more-versions": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "",
+      "tooltip-click-to-change-visualization": ""
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": ""
     }
   },
   "dashboard-settings": {
@@ -2599,6 +2962,9 @@
   "folder-picker": {
     "create-instructions": "Drücken Sie die Eingabetaste, um den neuen Ordner zu erstellen.",
     "loading": "Ordner werden geladen …"
+  },
+  "folder-repo": {
+    "badge-text": ""
   },
   "forgot-password": {
     "back-button": "Zurück zur Anmeldung",
@@ -3517,19 +3883,6 @@
       "link-title": "Gesamte Migrationsanleitung anzeigen",
       "title": "Wir helfen Ihnen bei der Migration zu diesem Stack"
     },
-    "migrated-counts": {
-      "alert_rule_groups": "Warnregelgruppen",
-      "alert_rules": "Warnregeln",
-      "contact_points": "Kontaktpunkte",
-      "dashboards": "Dashboards",
-      "datasources": "Datenquellen",
-      "folders": "Ordner",
-      "library_elements": "Bibliothekselemente",
-      "mute_timings": "Stummschaltung",
-      "notification_policies": "Benachrichtigungsrichtlinien",
-      "notification_templates": "Benachrichtigungsvorlagen",
-      "plugins": "Plugins"
-    },
     "migration-token": {
       "delete-button": "Token löschen",
       "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
@@ -3628,6 +3981,19 @@
       "notification_template": "Benachrichtigungsvorlage",
       "plugin": "Plugin",
       "unknown": "Unbekannt"
+    },
+    "resource-types": {
+      "alert_rule": "",
+      "alert_rule_group": "",
+      "contact_point": "",
+      "dashboard": "",
+      "datasource": "",
+      "folder": "",
+      "library_element": "",
+      "mute_timing": "",
+      "notification_policy": "",
+      "notification_template": "",
+      "plugin": ""
     },
     "summary": {
       "cancel-snapshot": "Snapshot abbrechen",
@@ -4422,6 +4788,389 @@
       "name": "",
       "teams": "",
       "text-loading-teams": ""
+    }
+  },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "",
+      "description-clear-repository-connection": "",
+      "empty": "",
+      "error-field-required": "",
+      "grafana": "",
+      "include-history": "",
+      "include-identifiers": "",
+      "label-display-name": "",
+      "label-migrate-options": "",
+      "placeholder-my-repository-connection": "",
+      "repository": "",
+      "resources-will-be-added": "",
+      "text-loading-resource-information": "",
+      "title-files-exist-in-the-target": "",
+      "title-note": "",
+      "tooltip-include-history": "",
+      "tooltip-include-identifiers": "",
+      "files-count_one": "",
+      "files-count_other": ""
+    },
+    "check-repository": {
+      "check": ""
+    },
+    "config-form": {
+      "alert-repository-settings-saved": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-branch": "",
+      "description-enabled": "",
+      "description-path": "",
+      "description-repository-url": "",
+      "description-title": "",
+      "description-workflows-makes-repository": "",
+      "description-write": "",
+      "error-required": "",
+      "error-valid-github-url": "",
+      "label-automatic-pulling": "",
+      "label-branch": "",
+      "label-enabled": "",
+      "label-github-token": "",
+      "label-interval-seconds": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-type": "",
+      "label-repository-url": "",
+      "label-target": "",
+      "label-title": "",
+      "label-workflows": "",
+      "option-branch": "",
+      "option-entire-instance": "",
+      "option-github": "",
+      "option-local": "",
+      "option-managed-folder": "",
+      "option-write": "",
+      "placeholder-branch": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-interval-seconds": "",
+      "placeholder-local-path": "",
+      "placeholder-my-config": "",
+      "placeholder-path": "",
+      "placeholder-readonly-repository": "",
+      "placeholder-select-repository-type": ""
+    },
+    "config-form-github-collapse": {
+      "description-attach-dashboard-previews": "",
+      "instructions": "",
+      "label-attach-dashboard-previews": "",
+      "label-git-hub-features": "",
+      "pull-request-image-previews": "",
+      "realtime-feedback": "",
+      "text-changes-in-git-eventually-pulled": "",
+      "text-changes-in-git-quick-pull": "",
+      "text-when-image-renderer-configured": "",
+      "title-image-renderer-not-configured": "",
+      "title-public-url-not-configured": "",
+      "title-webhook-will-be-created": ""
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "",
+      "max-repositories-exist": "",
+      "tooltip-max-repos_one": "",
+      "tooltip-max-repos_other": ""
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "",
+      "description-github-path": "",
+      "description-paste-your-git-hub-personal-access-token": "",
+      "description-repository-url": "",
+      "error-field-required": "",
+      "error-invalid-github-url": "",
+      "label-access-token": "",
+      "label-branch": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-url": "",
+      "label-storage-type": "",
+      "placeholder-branch": "",
+      "placeholder-github-path": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-local-path": "",
+      "storage-type-github": "",
+      "storage-type-local": ""
+    },
+    "delete-repository-button": {
+      "button-delete": "",
+      "confirm-delete-repository": "",
+      "success-repository-deleted": "",
+      "title-delete-repository": "",
+      "tooltip-delete-this-repository": ""
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "empty-state": {
+      "no-jobs": ""
+    },
+    "enhanced-features": {
+      "description-instant-updates": "",
+      "description-visual-previews-dashboard-updates-directly-requests": "",
+      "set-up-image-rendering": "",
+      "set-up-public-access": "",
+      "title-instant-updates-requests-webhooks": "",
+      "title-visual-previews-in-pull-requests": "",
+      "unlock-enhanced-functionality-for-git-hub": ""
+    },
+    "expanded-row": {
+      "job-specification": "",
+      "summary": "",
+      "title-error": ""
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": ""
+      },
+      "automatically-provision-and-update-dashboards": "",
+      "learn-more": "",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
+      "migrate-existing-dashboards-storage-provisioning": "",
+      "store-dashboards-in-version-controlled-storage": "",
+      "visual-previews-in-pull-requests": ""
+    },
+    "file-history-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "file-status-page": {
+      "title-error-loading-file": ""
+    },
+    "files-view": {
+      "columns": {
+        "history": "",
+        "view": ""
+      },
+      "placeholder-search": ""
+    },
+    "finish-step": {
+      "description-dashboard-previews": "",
+      "description-enable-webhooks": "",
+      "description-often-shall-instance-updates-git-hub": "",
+      "description-select-workflows-allowed-within-repository": "",
+      "error-field-required": "",
+      "label-enable-dashboard-previews": "",
+      "label-enable-webhooks": "",
+      "label-update-instance-interval-seconds": "",
+      "label-workflows": "",
+      "link-setup-image-rendering": "",
+      "placeholder": "",
+      "placeholder-readonly-repository": "",
+      "text-requires-image-rendering": ""
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "",
+      "placeholder-search": ""
+    },
+    "getting-started": {
+      "alert-temporary-outage": "",
+      "engaging-graphic": "",
+      "modal-description-public-access": "",
+      "modal-description-required-features": "",
+      "modal-title-set-up-public-access": "",
+      "modal-title-set-up-required-features": "",
+      "step-description-copy-url": "",
+      "step-description-enable-feature-toggles": "",
+      "step-description-start-ngrok": "",
+      "step-description-update-grafana-config": "",
+      "step-title-copy-url": "",
+      "step-title-enable-feature-toggles": "",
+      "step-title-start-ngrok": "",
+      "step-title-update-grafana-config": "",
+      "title-setting-connection-could-cause-temporary-outage": ""
+    },
+    "getting-started-page": {
+      "subtitle-provisioning-feature": "",
+      "text-remote-provisioning": ""
+    },
+    "history-view": {
+      "not-found": ""
+    },
+    "home-page": {
+      "button-delete-repositories": "",
+      "configured-repositories-while-running-legacy-storage": "",
+      "confirm-delete-repositories": "",
+      "remove-all-configured-repositories": "",
+      "subtitle": "",
+      "success-all-repositories-deleted": "",
+      "tab-getting-started": "",
+      "tab-getting-started-title": "",
+      "tab-repositories": "",
+      "tab-repositories-title": "",
+      "title-delete-all-configured-repositories": "",
+      "title-legacy-storage-detected": ""
+    },
+    "job-status": {
+      "error-unknown": "",
+      "label-view-details": "",
+      "starting": "",
+      "status": {
+        "title-error-running-job": "",
+        "title-job-completed-successfully": ""
+      },
+      "summary": ""
+    },
+    "job-step": {
+      "error-failed-to-start": "",
+      "error-invalid-response": "",
+      "error-job-failed": ""
+    },
+    "migrate-step": {
+      "description-migrating-dashboards": ""
+    },
+    "pull-step": {
+      "description-pulling-content": ""
+    },
+    "recent-jobs": {
+      "active-jobs": "",
+      "column-action": "",
+      "column-duration": "",
+      "column-message": "",
+      "column-started": "",
+      "column-status": "",
+      "error-loading": "",
+      "jobs": ""
+    },
+    "repository-actions": {
+      "settings": "",
+      "source-code": ""
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": ""
+      },
+      "settings": "",
+      "view": ""
+    },
+    "repository-health": {
+      "details": "",
+      "no-errors-found": "",
+      "title-repository-is-healthy": "",
+      "title-repository-is-unhealthy": ""
+    },
+    "repository-link": {
+      "grafana-repository": "",
+      "view-folder": "",
+      "view-repository": ""
+    },
+    "repository-overview": {
+      "checked": "",
+      "finished": "",
+      "health": "",
+      "job-id": "",
+      "last-ref": "",
+      "messages": "",
+      "pull-status": "",
+      "resources": "",
+      "started": "",
+      "status": "",
+      "view-folder": "",
+      "webhook": "",
+      "webhook-events": "",
+      "webhook-id": "",
+      "webhook-last-event": "",
+      "webhook-url": ""
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "",
+        "view-dashboard": "",
+        "view-folder": ""
+      },
+      "placeholder-search": ""
+    },
+    "repository-status-page": {
+      "back-to-repositories": "",
+      "cleaning-up-resources": "",
+      "legacy-storage-message": "",
+      "not-found": "",
+      "not-found-message": "",
+      "repository-config-exists-configuration": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title": "",
+      "title-legacy-storage": "",
+      "title-queued-for-deletion": ""
+    },
+    "request-error": {
+      "failed-to-migrate": "",
+      "failed-to-save": "",
+      "failed-to-sync": "",
+      "operation-failed": ""
+    },
+    "resource-view": {
+      "base": "",
+      "dashboard-preview": "",
+      "existing-dashboard": "",
+      "history": "",
+      "repository": "",
+      "title-error-saving-file": ""
+    },
+    "setup-modal": {
+      "done": "",
+      "next": "",
+      "previous": ""
+    },
+    "sidebar-item": {
+      "label-completed-step": "",
+      "label-current-step": "",
+      "label-pending-step": ""
+    },
+    "sync-repository": {
+      "body-edit-configuration": "",
+      "button-edit": "",
+      "error-pulling-resources": "",
+      "pull": "",
+      "success-pull-started": "",
+      "title-pull-not-enabled": "",
+      "tooltip-unhealthy-repository": ""
+    },
+    "token-permissions-info": {
+      "access": "",
+      "contents": "",
+      "github-instructions": "",
+      "metadata": "",
+      "permission": "",
+      "pull-requests": "",
+      "read-and-write": "",
+      "readonly": "",
+      "webhooks": ""
+    },
+    "wizard": {
+      "button-finish": "",
+      "button-next": "",
+      "button-start": "",
+      "step-bootstrap": "",
+      "step-connect": "",
+      "step-finish": "",
+      "step-resources": "",
+      "title-bootstrap": "",
+      "title-connect": "",
+      "title-finish": "",
+      "title-migrate": "",
+      "title-pull": ""
+    },
+    "wizard-content": {
+      "button-cancel": "",
+      "button-cancelling": "",
+      "button-submitting": "",
+      "error-failed-to-delete": "",
+      "error-instance-repository-exists": "",
+      "success-repository-deleted": "",
+      "success-repository-saved": "",
+      "title-repository-verification-failed": ""
     }
   },
   "public-dashboard": {
