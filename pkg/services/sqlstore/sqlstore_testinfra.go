@@ -372,8 +372,6 @@ func newSpannerDB(tb TestingTB) (*testDB, error) {
 		return nil, fmt.Errorf("failed to create database admin client: %v", err)
 	}
 	tb.Cleanup(func() {
-		defer databaseAdminClient.Close()
-
 		if dbCreated {
 			// Drop database in the cleanup.
 			// Can't use tb.Context() here, since that is canceled before calling Cleanup functions.
@@ -386,6 +384,8 @@ func newSpannerDB(tb TestingTB) (*testDB, error) {
 				tb.Logf("Dropped temporary Spanner database %s", fullDbName)
 			}
 		}
+
+		_ = databaseAdminClient.Close()
 	})
 
 	op, err := databaseAdminClient.CreateDatabase(tb.Context(), &databasepb.CreateDatabaseRequest{
