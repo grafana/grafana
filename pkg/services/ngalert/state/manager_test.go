@@ -1201,6 +1201,40 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:      "normal -> alerting (pending) -> alerting -> normal (recovering) -> alerting when both KeepFiringFor and For are set",
+			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2), m.WithForNTimes(1)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				tn(5): {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 4,
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Alerting,
+					LatestResult:       newEvaluation(tn(5), eval.Alerting),
+					StartsAt:           tn(5),
+					EndsAt:             tn(5).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(5),
+					LastSentAt:         util.Pointer(t3),
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
