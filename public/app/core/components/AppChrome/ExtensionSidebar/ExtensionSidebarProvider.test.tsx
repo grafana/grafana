@@ -2,6 +2,7 @@ import { render, screen, act } from '@testing-library/react';
 // import { render } from 'test/test-utils';
 
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import {
@@ -28,6 +29,16 @@ jest.mock('app/features/plugins/extensions/utils', () => ({
   getExtensionPointPluginMeta: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      extensionSidebar: true,
+    },
+  },
+}));
+
 const mockComponent = {
   title: 'Test Component',
   description: 'Test Description',
@@ -43,6 +54,7 @@ describe('ExtensionSidebarProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
   });
 
   const TestComponent = () => {
@@ -53,6 +65,7 @@ describe('ExtensionSidebarProvider', () => {
         <div data-testid="docked-component-id">{context.dockedComponentId || 'undefined'}</div>
         <div data-testid="available-components-size">{context.availableComponents.size}</div>
         <div data-testid="plugin-ids">{Array.from(context.availableComponents.keys()).join(', ')}</div>
+        <div data-testid="is-enabled">{context.isEnabled.toString()}</div>
       </div>
     );
   };
@@ -67,6 +80,20 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
     expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
+    expect(screen.getByTestId('is-enabled')).toHaveTextContent('true');
+  });
+
+  it('should have empty available components when feature toggle is disabled', () => {
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('available-components-size')).toHaveTextContent('0');
   });
 
   it('should load docked component from storage if available', () => {
@@ -81,6 +108,22 @@ describe('ExtensionSidebarProvider', () => {
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
+  });
+
+  it('should not load docked component from storage if feature toggle is disabled', () => {
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
+
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    (store.get as jest.Mock).mockReturnValue(componentId);
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
   });
 
   it('should update storage when docked component changes', () => {

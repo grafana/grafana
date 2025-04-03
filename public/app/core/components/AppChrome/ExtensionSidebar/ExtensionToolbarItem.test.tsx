@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -20,6 +21,16 @@ jest.mock('@grafana/data', () => ({
     get: jest.fn(),
     set: jest.fn(),
     delete: jest.fn(),
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      extensionSidebar: true,
+    },
   },
 }));
 
@@ -60,6 +71,13 @@ describe('ExtensionToolbarItem', () => {
     (store.get as jest.Mock).mockClear();
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
+  });
+
+  it('should not render when feature toggle is disabled', () => {
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
+    setup();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('should not render when no components are available', () => {
