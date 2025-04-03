@@ -1,19 +1,19 @@
-import { BuilderQueryEditorExpressionType } from '../../dataquery.gen';
+import { BuilderQueryEditorExpressionType, BuilderQueryExpression } from '../../dataquery.gen';
 
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
 
 describe('AzureMonitorKustoQueryParser', () => {
   it('returns empty string if from table is not specified', () => {
-    const builderQuery: any = { from: { property: { name: '' } } };
+    const builderQuery = { from: { property: { name: '' } } } as BuilderQueryExpression;
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toBe('');
   });
 
   it('builds a query with table and project', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['TimeGenerated', 'Level', 'Message'] },
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('Logs');
@@ -21,7 +21,7 @@ describe('AzureMonitorKustoQueryParser', () => {
   });
 
   it('includes time filter when needed', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       timeFilter: {
         expressions: [
@@ -33,14 +33,14 @@ describe('AzureMonitorKustoQueryParser', () => {
         ],
       },
       columns: { columns: ['TimeGenerated', 'Level'] },
-    };
+    } as unknown as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('$__timeFilter(TimeGenerated)');
   });
 
   it('handles fuzzy search expressions', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       fuzzySearch: {
         expressions: [
@@ -51,14 +51,14 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as unknown as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Message contains 'fail'");
   });
 
   it('applies additional filters', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       where: {
         expressions: [
@@ -74,7 +74,7 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as unknown as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Level == 'Error'");
@@ -82,7 +82,7 @@ describe('AzureMonitorKustoQueryParser', () => {
   });
 
   it('handles where expressions with operator', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['Level', 'Message'] },
       where: {
@@ -94,14 +94,14 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as unknown as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain("Level == 'Error'");
   });
 
   it('handles summarize with percentile function', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       reduce: {
         expressions: [
@@ -111,14 +111,14 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize percentile(95, Duration)');
   });
 
   it('handles summarize with basic aggregation function like avg', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       reduce: {
         expressions: [
@@ -128,14 +128,14 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize avg(ResponseTime)');
   });
 
   it('skips summarize when reduce expressions are invalid', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       reduce: {
         expressions: [
@@ -144,14 +144,14 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as unknown as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).not.toContain('summarize');
   });
 
   it('adds summarize with groupBy', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['Level'] },
       groupBy: {
@@ -165,31 +165,31 @@ describe('AzureMonitorKustoQueryParser', () => {
           },
         ],
       },
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('summarize count() by Level');
   });
 
   it('adds order by clause', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['TimeGenerated', 'Level'] },
       orderBy: {
         expressions: [{ property: { name: 'TimeGenerated' }, order: 'desc' }],
       },
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('order by TimeGenerated desc');
   });
 
   it('adds limit clause', () => {
-    const builderQuery: any = {
+    const builderQuery = {
       from: { property: { name: 'Logs' } },
       columns: { columns: ['TimeGenerated', 'Level'] },
       limit: 50,
-    };
+    } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
     expect(result).toContain('limit 50');

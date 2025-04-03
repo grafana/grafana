@@ -150,7 +150,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                     icon="search"
                     variant="secondary"
                     onClick={setIsSearchingOptions}
-                    tooltip={'Search options'}
+                    tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
                   />
                   {hasFieldConfig && (
                     <ToolbarButton
