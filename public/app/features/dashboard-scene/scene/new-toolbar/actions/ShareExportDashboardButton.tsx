@@ -38,7 +38,6 @@ export const ShareExportDashboardButton = ({
   return (
     <ButtonGroup
       data-testid={groupTestId}
-      solid
       onPointerDown={(evt) => {
         if (dashboard.state.isEditing && dashboard.state.isDirty) {
           evt.preventDefault();
