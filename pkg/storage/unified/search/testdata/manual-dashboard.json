@@ -51,6 +51,13 @@
       "priority": 0
     },
     {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
+    },
+    {
       "name": "schema_version",
       "type": "number",
       "format": "int32",
@@ -189,6 +196,7 @@
         null,
         null,
         null,
+        "repo",
         null,
         null,
         null,
@@ -229,6 +237,7 @@
         null,
         null,
         11,
+        "repo",
         null,
         null,
         [
@@ -272,6 +281,7 @@
         null,
         null,
         10,
+        "repo",
         null,
         null,
         [
