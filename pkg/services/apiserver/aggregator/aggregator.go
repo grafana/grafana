@@ -12,7 +12,6 @@
 package aggregator
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,7 +23,6 @@ import (
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
@@ -134,7 +132,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 			DisableRemoteAvailableConditionController: true,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
-			ProxyTransport:  createProxyTransport(),
+			ProxyTransport:  aggregatorapiserver.NewCustomTransport(),
 			ServiceResolver: serviceResolver,
 		},
 	}
@@ -493,19 +491,4 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 	}
 
 	return apiServices
-}
-
-// NOTE: below function imported from https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L197
-// createProxyTransport creates the dialer infrastructure to connect to the api servers.
-func createProxyTransport() *http.Transport {
-	// NOTE: We don't set proxyDialerFn but the below SetTransportDefaults will
-	// See https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/util/net/http.go#L109
-	var proxyDialerFn utilnet.DialFunc
-	// Proxying to services is IP-based... don't expect to be able to verify the hostname
-	proxyTLSClientConfig := &tls.Config{InsecureSkipVerify: true}
-	proxyTransport := utilnet.SetTransportDefaults(&http.Transport{
-		DialContext:     proxyDialerFn,
-		TLSClientConfig: proxyTLSClientConfig,
-	})
-	return proxyTransport
 }
