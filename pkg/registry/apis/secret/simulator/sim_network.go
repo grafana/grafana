@@ -22,11 +22,10 @@ type SimNetworkConfig struct {
 type SimNetwork struct {
 	config      SimNetworkConfig
 	activityLog *ActivityLog
-	simDatabase *SimDatabaseServer
 }
 
-func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog, simDatabase *SimDatabaseServer) *SimNetwork {
-	return &SimNetwork{config: config, activityLog: activityLog, simDatabase: simDatabase}
+func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog) *SimNetwork {
+	return &SimNetwork{config: config, activityLog: activityLog}
 }
 
 func (network *SimNetwork) Send(input SendInput) any {

@@ -112,6 +112,7 @@ func (db *SimDatabaseServer) readRow(transactionID TransactionID, row secureValu
 		return db.secretMetadata[row.Namespace][row.Name]
 	}
 
+	// TODO: there's a bug with deleting a secure value and reading
 	// If it is a transaction, make sure the row is in the transaction read set
 	transaction := db.ongoingTransactions[transactionID]
 	assert.True(transaction != nil, "transaction not found: transactionID=%+v row=%+v", transactionID, row)
@@ -123,12 +124,16 @@ func (db *SimDatabaseServer) readRow(transactionID TransactionID, row secureValu
 	}
 
 	if _, ok := ns[row.Name]; !ok {
+		fmt.Printf("\n\naaaaaaa  row being copied %+v\n\n", db.secretMetadata[row.Namespace][row.Name])
 		v, err := copystructure.Copy(db.secretMetadata[row.Namespace][row.Name])
 		if err != nil {
 			panic(fmt.Sprintf("copying database row for transaction: %+v", err))
 		}
+		fmt.Printf("\n\naaaaaaa copied value: v %+v\n\n", v)
 		copy := v.(*secureValueMetadataRow)
 
+		fmt.Printf("\n\naaaaaaa transaction %+v\n\n", transaction)
+		fmt.Printf("\n\naaaaaaa copy %+v\n\n", copy)
 		transaction.secretMetadata[copy.Namespace][copy.Name] = copy
 	}
 
@@ -214,22 +219,23 @@ func (db *SimDatabaseServer) QueryRollbackTx(transactionID TransactionID) error 
 	return nil
 }
 
-func (db *SimDatabaseServer) QueryOutboxAppend(transactionID TransactionID, message contracts.AppendOutboxMessage) error {
+func (db *SimDatabaseServer) QueryOutboxAppend(transactionID TransactionID, message contracts.AppendOutboxMessage) (string, error) {
 	transaction := db.ongoingTransactions[transactionID]
 	assert.True(transaction != nil, "transaction not found: transactionID=%+v message=%+v", transactionID, message)
 
+	messageID := fmt.Sprintf("message_%d", db.getNextCounter())
 	transaction.addToOutboxQueue = append(transaction.addToOutboxQueue, contracts.OutboxMessage{
 		Type:            message.Type,
-		MessageID:       fmt.Sprintf("message_%d", db.getNextCounter()),
+		MessageID:       messageID,
 		Name:            message.Name,
 		Namespace:       message.Namespace,
 		EncryptedSecret: message.EncryptedSecret,
-		KeeperType:      message.KeeperType,
+		KeeperName:      message.KeeperName,
 		ExternalID:      message.ExternalID,
 	})
 
 	// Query executed with no errors
-	return nil
+	return messageID, nil
 }
 
 func (db *SimDatabaseServer) QueryOutboxReceive(transactionID TransactionID, n uint) ([]contracts.OutboxMessage, error) {
@@ -290,6 +296,16 @@ func (db *SimDatabaseServer) QueryCreateSecureValueMetadata(transactionID Transa
 	}
 
 	return &v, nil
+}
+
+func (db *SimDatabaseServer) QueryDeleteSecureValueMetadata(namespace xkube.Namespace, name string) error {
+	// Check if secure value metadata already exists in the database
+	ns, ok := db.secretMetadata[namespace.String()]
+	if ok {
+		// Delete the secure value metadata
+		delete(ns, name)
+	}
+	return nil
 }
 
 func (db *SimDatabaseServer) QuerySetExternalID(transactionID TransactionID, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {

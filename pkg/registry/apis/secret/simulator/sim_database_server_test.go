@@ -74,12 +74,12 @@ func TestTransaction(t *testing.T) {
 	namespace := "namespace_1"
 	name := "name_1"
 
-	err = db.QueryOutboxAppend(txID, contracts.AppendOutboxMessage{
+	_, err = db.QueryOutboxAppend(txID, contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            name,
 		Namespace:       namespace,
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value_1"),
-		KeeperType:      contracts.SQLKeeperType,
+		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil})
 	require.NoError(t, err)
 

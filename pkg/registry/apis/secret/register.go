@@ -81,6 +81,7 @@ func NewSecretAPIBuilder(
 			BatchSize:      1,
 			ReceiveTimeout: 5 * time.Second,
 		},
+			log.New("secret.worker"),
 			database,
 			secretsOutboxQueue,
 			secureValueMetadataStorage,

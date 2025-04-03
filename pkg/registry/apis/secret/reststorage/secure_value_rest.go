@@ -147,7 +147,7 @@ func (s *SecureValueRest) Create(
 			Namespace: sv.Namespace,
 			// TODO: encrypt
 			EncryptedSecret: sv.Spec.Value,
-			KeeperType:      contracts.SQLKeeperType,
+			KeeperName:      sv.Spec.Keeper,
 		}); err != nil {
 			return fmt.Errorf("failed to append to outbox queue: %w", err)
 		}

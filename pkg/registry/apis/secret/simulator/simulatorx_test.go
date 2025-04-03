@@ -9,16 +9,35 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type Action string
@@ -26,6 +45,7 @@ type Action string
 // IMPORTANT: Add new actions to the slice in enabledActions.
 const (
 	ActionCreateSecret      Action = "CreateSecret"
+	ActionDeleteSecret      Action = "DeleteSecret"
 	ActionResumeCoroutine   Action = "ResumeCoroutine"
 	ActionStartOutboxWorker Action = "StartOutboxWorker"
 )
@@ -39,17 +59,19 @@ type Simulator struct {
 	runtime               *coro.Runtime
 	activityLog           *ActivityLog
 	simNetwork            *SimNetwork
-	simDatabaseClient     *SimDatabaseClient
+	simDatabaseClient     contracts.Database
 	simDatabaseServer     *SimDatabaseServer
-	simOutboxQueue        *SimOutboxQueue
+	simOutboxQueue        contracts.OutboxQueue
 	keepers               map[contracts.KeeperType]contracts.Keeper
-	simSecureValueStorage *SimSecureValueMetadataStorage
+	simSecureValueStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage contracts.KeeperMetadataStorage
 	secureValueRest       *reststorage.SecureValueRest
 	metrics               SimulationMetrics
 }
 
 type SimulationMetrics struct {
+	// The number of steps taken. Invariant NumSteps <= SimulatorConfig.Steps
+	NumSteps uint
 	// The number of workers running at the moment.
 	// The max number of workers is defined in SimulatorConfig.
 	NumWorkersStarted uint
@@ -65,14 +87,30 @@ func NewSimulator(
 	runtime *coro.Runtime,
 	activityLog *ActivityLog,
 	simNetwork *SimNetwork,
-	simOutboxQueue *SimOutboxQueue,
+	simOutboxQueue contracts.OutboxQueue,
 	keepers map[contracts.KeeperType]contracts.Keeper,
-	simDatabaseClient *SimDatabaseClient,
+	simDatabaseClient contracts.Database,
 	simDatabaseServer *SimDatabaseServer,
-	simSecureValueStorage *SimSecureValueMetadataStorage,
+	simSecureValueStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueRest *reststorage.SecureValueRest,
 ) *Simulator {
+	if config.Seed == 0 {
+		panic("config.Seed is required")
+	}
+	if config.Steps == 0 {
+		panic("config.Steps is required")
+	}
+	if config.NumWorkers == 0 {
+		panic("config.NumWorkers is required")
+	}
+	if config.MaxCreateSecrets == 0 {
+		panic("config.MaxCreateSecrets is required")
+	}
+	if config.CreateDuplicateSecretProbability == 0.0 {
+		panic("config.CreateDuplicateSecretProbability is required")
+	}
+
 	return &Simulator{
 		t:                     t,
 		model:                 model,
@@ -100,12 +138,16 @@ func (sim *Simulator) enabledActions() []Action {
 
 	// For each action, check if it would make sense to execute the action
 	// given the state of system, if so, add it to `enabled`.
-	for _, action := range []Action{ActionCreateSecret, ActionResumeCoroutine, ActionStartOutboxWorker} {
+	for _, action := range []Action{ActionCreateSecret, ActionDeleteSecret, ActionResumeCoroutine, ActionStartOutboxWorker} {
 		switch action {
 		case ActionCreateSecret:
 			if sim.metrics.NumCreateSecrets < sim.config.MaxCreateSecrets {
 				enabled = append(enabled, action)
 			}
+
+		case ActionDeleteSecret:
+			// Always enabled to try deleting secrets that doesn't exist
+			enabled = append(enabled, action)
 
 		case ActionResumeCoroutine:
 			if sim.runtime.HasCoroutinesReady() {
@@ -132,8 +174,55 @@ func (sim *Simulator) nextAction() Action {
 }
 
 func (sim *Simulator) step() {
+	sim.metrics.NumSteps += 1
 	action := sim.nextAction()
 	sim.execute(action)
+}
+
+func (sim *Simulator) genCreateSecureValueInput() *secretv0alpha1.SecureValue {
+	// If a secret exists, maybe try to recreate it
+	// if len(sim.simDatabaseServer.secretMetadata) > 0 && sim.rng.Float32() >= sim.config.CreateDuplicateSecretProbability {
+	// 	for _, secureValues := range sim.simDatabaseServer.secretMetadata {
+	// 		for _, secureValue := range secureValues {
+	// 			return &secretv0alpha1.SecureValue{
+	// 				ObjectMeta: metav1.ObjectMeta{
+	// 					Name:      secureValue.Name,
+	// 					Namespace: secureValue.Namespace,
+	// 				},
+	// 				Spec: secretv0alpha1.SecureValueSpec{
+	// 					Title: secureValue.Spec.Title,
+	// 					Value: secretv0alpha1.NewExposedSecureValue("value1"),
+	// 				},
+	// 				Status: secretv0alpha1.SecureValueStatus{
+	// 					Phase: secretv0alpha1.SecureValuePhasePending,
+	// 				},
+	// 			}
+	// 		}
+	// 	}
+	// }
+	return &secretv0alpha1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("sv-%d", sim.metrics.NumSteps),
+			Namespace: fmt.Sprintf("stack-%d", sim.metrics.NumSteps),
+		},
+		Spec: secretv0alpha1.SecureValueSpec{
+			Title:  fmt.Sprintf("title-%d", sim.metrics.NumSteps),
+			Value:  secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", sim.metrics.NumSteps)),
+			Keeper: contracts.DefaultSQLKeeper,
+		},
+		Status: secretv0alpha1.SecureValueStatus{
+			Phase: secretv0alpha1.SecureValuePhasePending,
+		},
+	}
+}
+
+func (sim *Simulator) genDeleteSecureValueInput() (string, string) {
+	// for _, secureValues := range sim.simDatabaseServer.secretMetadata {
+	// 	for _, secureValue := range secureValues {
+	// 		return secureValue.Namespace, secureValue.Name
+	// 	}
+	// }
+	return "doesnt_exist_ns", "doesnt_exist_v"
 }
 
 func (sim *Simulator) execute(action Action) {
@@ -144,26 +233,41 @@ func (sim *Simulator) execute(action Action) {
 
 		// Spawn a coroutine to make the request resumable
 		coroutine := sim.runtime.Spawn(func() {
-			ctx := context.Background()
-			sv := &secretv0alpha1.SecureValue{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "sv-1",
-				},
-				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "foo",
-					Value: secretv0alpha1.NewExposedSecureValue("value1"),
-				},
-				Status: secretv0alpha1.SecureValueStatus{
-					Phase: secretv0alpha1.SecureValuePhasePending,
-				},
-			}
+			ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+			sv := sim.genCreateSecureValueInput()
 			validateObjectFunc := func(ctx context.Context, obj runtime.Object) error {
 				return nil
 			}
 			createOptions := &metav1.CreateOptions{}
-			_, err := sim.secureValueRest.Create(ctx, sv, validateObjectFunc, createOptions)
+			s, err := sim.secureValueRest.Create(ctx, sv, validateObjectFunc, createOptions)
+			fmt.Printf("\n\naaaaaaa s %+v\n\n", s)
 			_, modelErr := sim.model.Create(ctx, sv, validateObjectFunc, createOptions)
-			require.ErrorIs(sim.t, err, modelErr, err)
+			require.ErrorIs(sim.t, err, modelErr)
+		})
+		// Resume once so action can make progress at least once
+		coroutine.Resume(nil)
+
+	case ActionDeleteSecret:
+		sim.metrics.NumCreateSecrets += 1
+		sim.activityLog.Record("[SIM] %s", action)
+
+		// Spawn a coroutine to make the request resumable
+		coroutine := sim.runtime.Spawn(func() {
+			ctx := context.Background()
+			namespace, name := sim.genDeleteSecureValueInput()
+			deleteValidationfunc := func(ctx context.Context, obj runtime.Object) error {
+				return nil
+			}
+			sim.activityLog.Record("deleting namespace=%s name=%s", namespace, name)
+
+			deleteOptions := &metav1.DeleteOptions{}
+			_, deleted, err := sim.secureValueRest.Delete(request.WithNamespace(ctx, namespace), name, deleteValidationfunc, deleteOptions)
+			_ = deleted
+			_ = err
+			sim.activityLog.Record("deleted namespace=%s name=%s", namespace, name)
+			// modelDeleted, modelErr := sim.model.Delete(namespace, name)
+			// require.ErrorIs(sim.t, err, modelErr)
+			// require.Equal(sim.t, modelDeleted, deleted)
 		})
 		// Resume once so action can make progress at least once
 		coroutine.Resume(nil)
@@ -186,7 +290,7 @@ func (sim *Simulator) execute(action Action) {
 				BatchSize: uint(1 + sim.rng.Intn(100)),
 				// Generate a number between 1 and 100
 				ReceiveTimeout: time.Duration(1+sim.rng.Intn(100)) * time.Millisecond,
-			}, sim.simDatabaseClient, sim.simOutboxQueue, sim.simSecureValueStorage, sim.keeperMetadataStorage, sim.keepers)
+			}, log.New("secret.worker"), sim.simDatabaseClient, sim.simOutboxQueue, sim.simSecureValueStorage, sim.keeperMetadataStorage, sim.keepers)
 
 			if err := worker.ControlLoop(context.Background()); err != nil {
 				panic(fmt.Sprintf("worker panicked: %+v", err))
@@ -208,6 +312,8 @@ type SimulatorConfig struct {
 	NumWorkers uint
 	// The maximum number of create secrets requests to send
 	MaxCreateSecrets uint
+	// The probability of trying to create a secret that already exists
+	CreateDuplicateSecretProbability float32
 }
 
 func int64FromEnv(key string) (bool, int64) {
@@ -244,8 +350,9 @@ func getSimulatorConfigOrDefault() SimulatorConfig {
 		Seed:  seed,
 		Steps: steps,
 		// TODO: random number of workers
-		NumWorkers:       3,
-		MaxCreateSecrets: 5,
+		NumWorkers:                       3,
+		MaxCreateSecrets:                 5,
+		CreateDuplicateSecretProbability: 0.5,
 	}
 }
 
@@ -268,7 +375,7 @@ func TestSimulate(t *testing.T) {
 
 	simDatabaseServer := NewSimDatabaseServer(activityLog)
 
-	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog, simDatabaseServer)
+	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)
 
 	simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
 
@@ -308,6 +415,111 @@ func TestSimulate(t *testing.T) {
 
 		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabaseServer)
 		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
+	}
+}
+
+func TestSimulateWithRealImplementation(t *testing.T) {
+	t.Parallel()
+
+	simulatorConfig := getSimulatorConfigOrDefault()
+	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
+	activityLog := NewActivityLog()
+
+	defer func() {
+		if err := recover(); err != nil || t.Failed() {
+			fmt.Println(activityLog.String())
+			fmt.Printf("SEED=%+v", simulatorConfig.Seed)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
+
+	testDB := sqlstore.NewTestStore(t)
+	require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
+
+	outbox := metadata.ProvideOutboxQueue(testDB)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	require.NoError(t, err)
+
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	require.NoError(t, err)
+
+	// Initialize the encryption manager
+	encMgr, err := encryptionmanager.ProvideEncryptionManager(
+		tracing.InitializeTracerForTest(),
+		dataKeyStore,
+		&setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				SecretKey:          "sdDkslslld",
+				EncryptionProvider: "secretKey.v1",
+				Encryption: setting.EncryptionSettings{
+					DataKeysCacheTTL:        5 * time.Minute,
+					DataKeysCleanupInterval: 1 * time.Nanosecond,
+					Algorithm:               "aes-cfb",
+				},
+			},
+		},
+		&usagestats.UsageStatsMock{},
+		encryption.ProviderMap{},
+	)
+	require.NoError(t, err)
+
+	// Initialize the keeper service
+	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
+	require.NoError(t, err)
+
+	// Initialize access client + access control
+	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+
+	// Initialize the keeper storage and add a test keeper
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	require.NoError(t, err)
+
+	// Initialize the secure value storage
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService, keeperMetadataStorage)
+	require.NoError(t, err)
+
+	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)
+
+	// simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
+	simDatabaseClient := NewSimDatabase2(simNetwork, testDB)
+
+	keepers := map[contracts.KeeperType]contracts.Keeper{
+		contracts.SQLKeeperType: fakes.NewFakeKeeper(),
+	}
+
+	simKeeperMetadataStorage := NewSimKeeperMetadataStorage()
+
+	secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, simDatabaseClient, outbox, utils.ResourceInfo{})
+
+	runtime := coro.NewRuntime()
+
+	simulator := NewSimulator(
+		t,
+		NewModel(),
+		rng,
+		simulatorConfig,
+		runtime,
+		activityLog,
+		simNetwork,
+		outbox,
+		keepers,
+		simDatabaseClient,
+		nil,
+		secureValueMetadataStorage,
+		simKeeperMetadataStorage,
+		secureValueRest,
+	)
+
+	for range simulatorConfig.Steps {
+		simulator.step()
+
+		// invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabaseServer)
+		// invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
 	}
 }
 
@@ -367,3 +579,21 @@ func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing
 //                 /\ \E metadata \in db.secret_metadata:
 //                     /\ metadata.name = secret
 //                     /\ metadata.status = "Succeeded"
+
+func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
+	requester := &identity.StaticRequester{
+		Type:      identityType,
+		Namespace: namespace,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions: permissions,
+			},
+		},
+	}
+
+	if identityType == types.TypeUser {
+		requester.UserID = 1
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}

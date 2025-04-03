@@ -37,7 +37,15 @@ func (storage *SimSecureValueMetadataStorage) Update(ctx context.Context, sv *se
 	panic("TODO: SimSecureValueMetadataStorage.Update")
 }
 func (storage *SimSecureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	panic("TODO: SimSecureValueMetadataStorage.Delete")
+	storage.simDatabase.activityLog.Record("SimSecureValueMetadataStorage.Delete: will delete namespace=%+v name=%+v", namespace, name)
+	reply := storage.simNetwork.Send(SendInput{
+		Debug: fmt.Sprintf("DatabaseDeleteSecureValueMetadataQuery(%+v, %+v)", namespace, name),
+		Execute: func() any {
+			storage.simDatabase.activityLog.Record("SimSecureValueMetadataStorage.Delete: will call db.Delete namespace=%+v name=%+v", namespace, name)
+			return storage.simDatabase.QueryDeleteSecureValueMetadata(namespace, name)
+		}})
+	storage.simDatabase.activityLog.Record("SimSecureValueMetadataStorage.Delete: reply=%+v", reply)
+	return toError(reply)
 }
 func (storage *SimSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	panic("TODO: SimSecureValueMetadataStorage.List")

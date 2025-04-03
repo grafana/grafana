@@ -26,5 +26,5 @@ func (db *Database) ExecContext(ctx context.Context, query string, args ...any) 
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
-	panic("TODO: Database.QueryContext")
+	return db.db.GetSqlxSession().Query(ctx, query, args...)
 }

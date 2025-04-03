@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret/assert"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -14,6 +14,7 @@ import (
 // Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
+	log                        *log.ConcreteLogger
 	database                   contracts.Database
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -30,6 +31,7 @@ type Config struct {
 
 func NewWorker(
 	config Config,
+	log *log.ConcreteLogger,
 	database contracts.Database,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -38,6 +40,7 @@ func NewWorker(
 ) *Worker {
 	return &Worker{
 		config:                     config,
+		log:                        log,
 		database:                   database,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -69,37 +72,36 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		messages, err := w.outboxQueue.ReceiveN(timeoutCtx, w.config.BatchSize)
 		cancel()
 		if err != nil {
-			panic(fmt.Sprintf("TODO: handle error: %+v", err))
+			return err
 		}
 
 		for _, message := range messages {
 			if err := w.processMessage(ctx, message); err != nil {
-				panic(fmt.Sprintf("TODO: handle error: %+v", err))
+				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
 		}
 		return nil
 	}); err != nil {
-		panic(fmt.Sprintf("TODO: handle error: %+v", err))
+		w.log.Error("receiving outbox messages", "err", err.Error())
 	}
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	// TODO: DECRYPT HERE
-	rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
-
-	keeperType, keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.Name)
+	keeperType, keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
 	if err != nil {
-		return fmt.Errorf("fetching keeper config: namespace=%+v name=%+v %w", message.Namespace, message.Name, err)
+		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
-	assert.Equal(keeperType, message.KeeperType, "keeper types should be equal")
 
-	keeper := w.keepers[message.KeeperType]
+	keeper := w.keepers[keeperType]
 	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", message.KeeperType)
+		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperType)
 	}
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
+		// TODO: DECRYPT HERE
+		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+
 		externalID, err := keeper.Store(ctx, keeperCfg, message.Namespace, rawSecret)
 		if err != nil {
 			return fmt.Errorf("storing secret: message=%+v %w", message, err)
@@ -110,6 +112,9 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
+		// TODO: DECRYPT HERE
+		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+
 		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
@@ -120,7 +125,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		}
 
 	default:
-		panic(fmt.Sprintf("unhandled message type: %s", message.Type))
+		return fmt.Errorf("unhandled message type: %s", message.Type)
 	}
 
 	// Setting the status to Succeeded must be the last action

@@ -18,14 +18,15 @@ func NewSimOutboxQueue(simNetwork *SimNetwork, simDatabase *SimDatabaseServer) *
 }
 
 // Sends a query to the database to append to the outbox queue.
-func (queue *SimOutboxQueue) Append(ctx context.Context, message contracts.AppendOutboxMessage) error {
+func (queue *SimOutboxQueue) Append(ctx context.Context, message contracts.AppendOutboxMessage) (string, error) {
 	reply := queue.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("AppendQuery(%+v, %+v)", transactionIDFromContext(ctx), message),
 		Execute: func() any {
-			return queue.simDatabase.QueryOutboxAppend(transactionIDFromContext(ctx), message)
-		}})
+			messageID, err := queue.simDatabase.QueryOutboxAppend(transactionIDFromContext(ctx), message)
+			return []any{messageID, err}
+		}}).([]any)
 
-	return toError(reply)
+	return reply[0].(string), toError(reply[1])
 }
 
 func (queue *SimOutboxQueue) Delete(ctx context.Context, messageID string) error {

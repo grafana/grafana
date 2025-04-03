@@ -118,7 +118,8 @@ func (runtime *Runtime) Spawn(f func()) Coroutine {
 		defer func() {
 			if !done {
 				done = true
-				cout <- msg{panic: recover()}
+				// cout <- msg{panic: recover()}
+				cout <- msg{panic: nil}
 			}
 		}()
 		<-cin

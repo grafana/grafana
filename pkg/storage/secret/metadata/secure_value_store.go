@@ -2,9 +2,14 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	claims "github.com/grafana/authlib/types"
+	"github.com/lib/pq"
+	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -69,26 +74,31 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if row.Keeper != contracts.DefaultSQLKeeper {
-			// Validate before inserting that the chosen `keeper` exists.
-			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if row.Keeper != contracts.DefaultSQLKeeper {
+				// Validate before inserting that the chosen `keeper` exists.
+				keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
-			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-			if err != nil {
-				return fmt.Errorf("check keeper existence: %w", err)
+				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+				if err != nil {
+					return fmt.Errorf("check keeper existence: %w", err)
+				}
+
+				if !keeperExists {
+					return contracts.ErrKeeperNotFound
+				}
 			}
 
-			if !keeperExists {
-				return contracts.ErrKeeperNotFound
+			if _, err := sess.Insert(row); err != nil {
+				if isUniqueConstraintError(err) {
+					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
+				}
+				return fmt.Errorf("insert row: %w", err)
 			}
-		}
 
-		if _, err := sess.Insert(row); err != nil {
-			return fmt.Errorf("insert row: %w", err)
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
@@ -310,9 +320,82 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 }
 
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
-	panic("TODO: secureValueMetadataStorage.SetExternalID")
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
+				Where("namespace = ? AND name = ?", namespace.String(), name).
+				Cols("external_id").
+				Update(&secureValueDB{ExternalID: externalID.String()})
+
+			if modifiedCount > 1 {
+				return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+			}
+
+			if err != nil {
+				return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
+			}
+
+			return nil
+		})
+	})
 }
 
 func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
-	panic("TODO: secureValueMetadataStorage.SetStatusSucceeded")
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
+				Where("namespace = ? AND name = ?", namespace.String(), name).
+				Cols("status_phase").
+				Update(&secureValueDB{Phase: string(secretv0alpha1.SecureValuePhaseSucceeded)})
+
+			if modifiedCount > 1 {
+				return fmt.Errorf("secureValueMetadataStorage.SetStatusSucceeded: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+			}
+
+			if err != nil {
+				return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
+			}
+
+			return nil
+		})
+	})
+}
+
+func isUniqueConstraintError(err error) bool {
+	return isMySQLUniqueConstraintError(err) ||
+		isPostgresUniqueConstraintError(err) ||
+		isSQliteUniqueConstraintError(err)
+}
+
+func isMySQLUniqueConstraintError(err error) bool {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isPostgresUniqueConstraintError(err error) bool {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
+		if string(driverErr.Code) == "23505" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isSQliteUniqueConstraintError(err error) bool {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
+		if int(driverErr.ExtendedCode) == int(sqlite3.ErrConstraintUnique) {
+			return true
+		}
+	}
+
+	return false
 }

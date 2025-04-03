@@ -51,6 +51,14 @@ func (model *Model) Create(
 	return nil, nil
 }
 
+func (model *Model) Delete(namespace, name string) (bool, error) {
+	if secureValues, ok := model.secrets[namespace]; ok {
+		delete(secureValues, name)
+		return true, nil
+	}
+	return true, nil
+}
+
 func TestCreate(t *testing.T) {
 	t.Run("secret names are unique per namespace", func(t *testing.T) {
 		t.Parallel()

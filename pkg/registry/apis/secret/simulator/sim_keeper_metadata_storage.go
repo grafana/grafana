@@ -10,7 +10,6 @@ import (
 )
 
 // Implementation of contracts.KeeperMetadataStorage
-
 type SimKeeperMetadataStorage struct{}
 
 func NewSimKeeperMetadataStorage() *SimKeeperMetadataStorage {

@@ -30,7 +30,7 @@ func (model *outboxStoreModel) Append(messageID string, message contracts.Append
 		Name:            message.Name,
 		Namespace:       message.Namespace,
 		EncryptedSecret: message.EncryptedSecret,
-		KeeperType:      message.KeeperType,
+		KeeperName:      message.KeeperName,
 		ExternalID:      message.ExternalID,
 	})
 }
@@ -65,7 +65,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Name:            "s-1",
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
-		KeeperType:      contracts.SQLKeeperType,
+		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
 	}
 
@@ -75,7 +75,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Name:            "s-1",
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
-		KeeperType:      contracts.SQLKeeperType,
+		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
 	}
 
@@ -85,7 +85,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Name:            "s-1",
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
-		KeeperType:      contracts.SQLKeeperType,
+		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
 	}
 
@@ -119,7 +119,7 @@ func TestOutboxStore(t *testing.T) {
 		Name:            "s-1",
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
-		KeeperType:      contracts.SQLKeeperType,
+		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
 	}
 
@@ -166,6 +166,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 	defer func() {
 		if err := recover(); err != nil || t.Failed() {
 			fmt.Printf("TestOutboxStoreProperty: err=%+v\n\nSEED=%+v", err, seed)
+			t.FailNow()
 		}
 	}()
 
@@ -188,7 +189,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 					Name:            "s-1",
 					Namespace:       "n-1",
 					EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
-					KeeperType:      contracts.SQLKeeperType,
+					KeeperName:      contracts.DefaultSQLKeeper,
 					ExternalID:      nil,
 				}
 				messageID, err := outbox.Append(ctx, message)

@@ -126,7 +126,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
-			{Name: "keeper_type", Type: migrator.DB_TinyInt, Nullable: false},
+			{Name: "keeper_name", Type: migrator.DB_Text, Nullable: false},
+			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{},
