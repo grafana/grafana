@@ -422,7 +422,7 @@ describe('datasource_srv', () => {
             },
             "name": "TestData",
             "type": "grafana-testdata-datasource",
-            "uid": "TestData",
+            "uid": "testdata",
           },
           {
             "meta": {
