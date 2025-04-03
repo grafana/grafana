@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
@@ -17,8 +16,10 @@ import {
   Text,
 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { useDatasource } from 'app/features/datasources/hooks';
 
 import { Folder } from '../../types/rule-form';
 import { DataSourceType } from '../../utils/datasource';
@@ -41,11 +42,22 @@ export interface ImportFormValues {
   targetDatasourceUID?: string;
 }
 
+export const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceType.Loki];
+
 const ImportFromDSRules = () => {
+  const [queryParams] = useQueryParams();
+  const queryParamSelectedDatasourceUID: string = String(queryParams.datasourceUid) || '';
+  const defaultDataSourceSettings = useDatasource(queryParamSelectedDatasourceUID);
+  // useDatasource gets the default data source as a fallback, so we need to check if it's the right type
+  // before trying to use it
+  const defaultDataSource = supportedImportTypes.includes(defaultDataSourceSettings?.type || '')
+    ? defaultDataSourceSettings
+    : undefined;
+
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      selectedDatasourceUID: undefined,
-      selectedDatasourceName: '',
+      selectedDatasourceUID: defaultDataSource?.uid,
+      selectedDatasourceName: defaultDataSource?.name,
       pauseAlertingRules: true,
       pauseRecordingRules: true,
       targetFolder: undefined,
@@ -73,7 +85,7 @@ const ImportFromDSRules = () => {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: t('alerting.import-to-gma.pageTitle', 'Import alert rules from a datasource to Grafana-managed rules'),
+        text: t('alerting.import-to-gma.pageTitle', 'Import alert rules from a data source to Grafana-managed rules'),
       }}
     >
       <Stack gap={2} direction={'column'}>
@@ -96,11 +108,8 @@ const ImportFromDSRules = () => {
                         setValue('selectedDatasourceUID', ds.uid);
                         setValue('selectedDatasourceName', ds.name);
                         // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
-                        if (ds.type === DataSourceType.Prometheus) {
-                          setValue('targetDatasourceUID', ds.uid);
-                        } else {
-                          setValue('targetDatasourceUID', undefined);
-                        }
+                        const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                        setValue('targetDatasourceUID', targetDataSourceUID);
                       }}
                     />
                   )}
@@ -108,7 +117,7 @@ const ImportFromDSRules = () => {
                   rules={{
                     required: {
                       value: true,
-                      message: t('alerting.import-to-gma.datasource.required-message', 'Please select a datasource'),
+                      message: t('alerting.import-to-gma.datasource.required-message', 'Please select a data source'),
                     },
                   }}
                   control={control}

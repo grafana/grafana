@@ -475,6 +475,9 @@
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
+    "data-source-section": {
+      "import-to-grafana": "Import to Grafana rules"
+    },
     "delete-rule-modal": {
       "title": "Delete rule",
       "with-soft-delete": "Are you sure you want to delete this rule? This rule will be recoverable from the Recently deleted page by a user with an admin role.",
@@ -525,7 +528,11 @@
       }
     },
     "folder-creation-modal": {
+      "placeholder-enter-a-name": "Enter a name",
       "title-new-folder": "New folder"
+    },
+    "folder-selector": {
+      "description-select-folder": "Select a folder to store your rule in."
     },
     "folderAndGroup": {
       "evaluation": {
@@ -826,12 +833,9 @@
       "folder": {
         "cancel": "Cancel",
         "create": "Create",
-        "create-folder": "Create a new folder to store your alert rule in.",
-        "creating-new-folder": "Creating new folder",
         "label": "Folder",
         "name": "Folder name",
-        "new-folder": "New folder",
-        "new-folder-or": "or"
+        "new-folder": "New folder"
       },
       "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
