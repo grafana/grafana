@@ -215,7 +215,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	// MetricsIncludeTeamLabel configures grafana to set a label fotokenExpirationDayLimitr
+	// MetricsIncludeTeamLabel configures grafana to set a label for
 	// the team responsible for the code at Grafana labs. We don't expect anyone else to
 	// use this setting.
 	MetricsIncludeTeamLabel          bool
