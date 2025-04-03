@@ -42,10 +42,22 @@ func (d sqlDB) QueryRowContext(ctx context.Context, query string, args ...any) d
 	stm, err := d.DB.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Printf("Could not prepare query row statement %v\n", err)
-		return &sql.Row{}
+		return &sqlDBRow{err: err}
 	}
 	defer stm.Close()
 	return stm.QueryRowContext(ctx, args...)
+}
+
+type sqlDBRow struct {
+	err error
+}
+
+func (r sqlDBRow) Err() error {
+	return r.err
+}
+
+func (r sqlDBRow) Scan(dest ...any) error {
+	return nil
 }
 
 func (d sqlDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
