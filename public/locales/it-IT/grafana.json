@@ -1417,46 +1417,73 @@
       "group-into-tab": "",
       "group-panels": "",
       "new-row": "",
-      "new-tab": ""
+      "new-tab": "",
+      "paste-panel": "",
+      "paste-row": "",
+      "paste-tab": ""
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "Disabilita",
-        "enable": "Abilita",
-        "label": "Data"
-      },
-      "group": {
-        "add": {
-          "button": "Aggiungi condizione in base a",
-          "data": "Data",
-          "interval": "Intervallo",
-          "variable": "Valore della variabile"
+      "conditions": {
+        "data": {
+          "disable": "",
+          "enable": "",
+          "info": "",
+          "label": ""
         },
-        "condition": {
-          "label": "Valuta condizioni",
-          "meet-all": "Soddisfa tutte",
-          "meet-any": "Soddisfa una qualsiasi"
+        "group": {
+          "add": {
+            "button": "",
+            "data": "",
+            "time-range-size": "",
+            "variable": ""
+          },
+          "condition": {
+            "all": "",
+            "any": "",
+            "label": ""
+          },
+          "label": "",
+          "visibility": {
+            "hide": "",
+            "label": "",
+            "show": ""
+          }
         },
-        "label": "Gruppo"
-      },
-      "interval": {
-        "input-label": "Valore",
-        "invalid-message": "Intervallo non valido",
-        "label": "Intervallo di tempo"
-      },
-      "shared": {
-        "delete-condition": "Elimina condizione"
-      },
-      "title": "Opzioni di rendering condizionale",
-      "variable": {
-        "label": "Variabile",
-        "operator": {
-          "equals": "Uguale",
-          "not-equal": "Diverso"
+        "shared": {
+          "delete-condition": "",
+          "unsupported-item-type": ""
         },
-        "select-operator": "Operatore",
-        "select-variable": "Seleziona una variabile",
-        "value-input": "Valore"
+        "time-range-size": {
+          "info": "",
+          "invalid-message": "",
+          "label": "",
+          "values": {
+            "days": "",
+            "hour": "",
+            "hours": "",
+            "minutes": "",
+            "months": "",
+            "year": "",
+            "years": ""
+          }
+        },
+        "variable": {
+          "info": "",
+          "label": "",
+          "name": "",
+          "operator": {
+            "equals": "",
+            "not-equals": ""
+          },
+          "value": ""
+        }
+      },
+      "overlay": {
+        "tooltip": ""
+      },
+      "root": {
+        "info": "",
+        "title": ""
       }
     },
     "default-layout": {
@@ -1514,29 +1541,6 @@
       }
     },
     "edit-pane": {
-      "add": {
-        "lib-panel": {
-          "heading": "Pannello della libreria",
-          "title": "I pannelli della libreria consentono di condividere e riutilizzare i pannelli tra i dashboard"
-        },
-        "panel": {
-          "heading": "Pannello",
-          "title": "Un contenitore per visualizzazioni e altri contenuti"
-        },
-        "paste-panel": {
-          "heading": "Incolla pannello",
-          "title": "Incolla un pannello dagli appunti"
-        },
-        "row": {
-          "heading": "Riga",
-          "title": "Un gruppo di pannelli con un'intestazione opzionale"
-        },
-        "tab": {
-          "heading": "Scheda",
-          "title": "Suddividi il dashboard in diverse schede orizzontali"
-        },
-        "title": ""
-      },
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Oggetti",
@@ -1632,7 +1636,9 @@
       }
     },
     "new-panel": {
-      "configure-button": ""
+      "configure-button": "",
+      "menu-open-panel-editor": "",
+      "menu-use-library-panel": ""
     },
     "new-panel-title": "",
     "options": {
@@ -1694,7 +1700,16 @@
     "toolbar": {
       "add": "Aggiungi",
       "add-new": {
-        "tooltip": ""
+        "button": {
+          "label": "",
+          "tooltip": ""
+        },
+        "menu": {
+          "lib-panel": "",
+          "panel": "",
+          "row": "",
+          "tab": ""
+        }
       },
       "alert-rules": "Regole di avviso",
       "back-to-dashboard": "Torna al dashboard",
@@ -1849,12 +1864,85 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "",
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "label-data-source": "",
+      "label-use-static-key-dimensions": ""
+    },
+    "add-to-dashboard-form": {
+      "cancel": "",
+      "description-choose-where-to-add-the-panel": "",
+      "description-select-which-dashboard-panel-created": "",
+      "label-dashboard": "",
+      "label-target-dashboard": "",
+      "open-dashboard": "",
+      "open-in-new-tab": "",
+      "title-error-adding-the-panel": ""
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "",
+      "delete": "",
+      "description-color-annotation-event-markers": "",
+      "description-enabled-annotation-query-issued-every-dashboard": "",
+      "label-color": "",
+      "label-data-source": "",
+      "label-enabled": "",
+      "label-hidden": "",
+      "label-name": "",
+      "label-show-in": "",
+      "placeholder-choose-panels": "",
+      "query": "",
+      "title-annotation-support-source": ""
+    },
+    "annotation-settings-list": {
+      "data-source": "",
+      "new-query": "",
+      "query-name": "",
+      "tooltip-move-down": "",
+      "tooltip-move-up": ""
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Non può contenere caratteri non validi: \"~\", \"^\", \":\", \"?\", \"*\", \"[\", \"\\\\\" o \"]\".",
       "cannot-start-with": "Non può iniziare con \"/\" o terminare con \"/\", \".\" o uno spazio.",
       "invalid-branch-name": "Nome del ramo non valido.",
       "it-cannot-contain-or": "Non può contenere \"//\" o \"..\".",
       "least-valid-character": "Deve contenere almeno un carattere valido."
+    },
+    "constant-variable-form": {
+      "constant-options": "",
+      "placeholder-your-metric-prefix": ""
+    },
+    "custom-variable-form": {
+      "custom-options": "",
+      "selection-options": ""
+    },
+    "dashboard-edit-pane-renderer": {
+      "outline": ""
+    },
+    "dashboard-link-form": {
+      "back-to-list": "",
+      "label-icon": "",
+      "label-include-current-template-variable-values": "",
+      "label-include-current-time-range": "",
+      "label-open-link-in-new-tab": "",
+      "label-options": "",
+      "label-show-as-dropdown": "",
+      "label-title": "",
+      "label-tooltip": "",
+      "label-type": "",
+      "label-url": "",
+      "label-with-tags": "",
+      "placeholder-open-dashboard": ""
+    },
+    "dashboard-link-list": {
+      "info": "",
+      "new-link": "",
+      "tooltip-copy-link": "",
+      "tooltip-move-link-down": "",
+      "tooltip-move-link-up": "",
+      "type": ""
     },
     "dashboard-preview-banner": {
       "not-saved": "Il valore non è ancora stato salvato nel database di Grafana",
@@ -1867,17 +1955,160 @@
       "value-not-saved": "Il valore non è ancora stato salvato nel database di Grafana",
       "view-pull-request-in-git-hub": "Visualizza richiesta pull in GitHub"
     },
+    "data-source-variable-form": {
+      "data-source-options": "",
+      "selection-options": ""
+    },
+    "description-label": {
+      "description": ""
+    },
+    "email-list": {
+      "aria-label-emailmenu": ""
+    },
+    "empty-transformations-message": {
+      "add-transformation": ""
+    },
+    "group-by-variable-form": {
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "group-by-options": "",
+      "label-data-source": "",
+      "label-use-static-group-by-dimensions": ""
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "",
+      "label-randomize-data": "",
+      "label-support-snapshot": "",
+      "label-template": "",
+      "randomize-field-names-label-field-names": "",
+      "randomize-labels-label-labels": "",
+      "randomize-string-values-label-string-values": "",
+      "title-complete-git-hub-comment-clipboard": "",
+      "title-get-help-with-this-panel": ""
+    },
+    "inspect-data-tab": {
+      "no-data-found": ""
+    },
+    "inspect-json-tab": {
+      "apply": ""
+    },
+    "interval-variable-form": {
+      "description-calculated-value-below-threshold": "",
+      "interval-options": ""
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": ""
+      },
+      "render-save-button-and-error": {
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      }
+    },
+    "name-already-exists-error": {
+      "title-name-already-exists": ""
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": ""
+      },
+      "text-loading-rules": "",
+      "title-dashboard-not-saved": ""
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": ""
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "",
+      "delete-all-transformations": "",
+      "title-delete-all-transformations": ""
+    },
+    "panel-edit-controls": {
+      "table-view-aria-label-toggletableview": "",
+      "table-view-label-table-view": ""
+    },
+    "panel-inspect-renderer": {
+      "title-panel-plugin-not-loaded": ""
+    },
+    "panel-options-pane": {
+      "placeholder-search-options": ""
+    },
+    "panel-viz-type-picker": {
+      "placeholder-search-for": "",
+      "title-close": ""
+    },
+    "provisioned-delete-modal": {
+      "ok": "",
+      "title-cannot-delete-provisioned-dashboard": ""
+    },
     "provisioned-resource-delete-modal": {
       "file-path": "Percorso file:",
       "managed-by-version-control": "Questo {type} è gestito dal controllo della versione e non può essere eliminato. Per rimuoverlo, eliminalo dal repository e sincronizza per applicare le modifiche.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Impossibile eliminare la risorsa con provisioning"
     },
+    "query-editor": {
+      "query": ""
+    },
+    "query-variable-editor-form": {
+      "label-data-source": "",
+      "query-options": "",
+      "selection-options": ""
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": ""
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "",
+      "aria-label-save-dashboard-title-field": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-copy-tags": "",
+      "label-folder": "",
+      "render-footer": {
+        "title-failed-to-save-dashboard": ""
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-message": "",
+      "placeholder-describe-changes-optional": "",
+      "render-footer": {
+        "no-changes-to-save": "",
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      },
+      "title-dashboard-drastically-changed": ""
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "",
+      "save-refresh-label-update-default-refresh-value": "",
+      "save-timerange-label-update-default-time-range": "",
+      "save-variables-description-current-values-default": "",
+      "save-variables-label-update-default-variable-values": ""
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "",
+      "dashboard-name": "",
+      "discard": "",
+      "loading-connected-dashboards": "",
+      "placeholder-search-affected-dashboards": "",
+      "update-all": ""
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Errore durante il salvataggio del dashboard",
       "api-success": "Modifiche al dashboard salvate",
       "cancel": "Annulla",
       "copy-json-message": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
+      "copy-json-to-clipboard": "",
       "dashboard-comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
       "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
       "description-inside-repository": "Percorso del file all'interno del repository (.json o .yaml)",
@@ -1889,11 +2120,107 @@
       "label-title": "Titolo",
       "label-workflow": "Flusso di lavoro",
       "save": "Salva",
+      "save-json-to-file": "",
       "saving": "Salvataggio in corso...",
       "title-required": "Il titolo del dashboard è obbligatorio",
       "title-same-as-folder": "Il nome del dashboard non può essere uguale al nome della cartella",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura",
       "title-validation-failed": "Convalida del titolo del dashboard non riuscita."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "new-alert-rule": "",
+      "title-no-alerting-capable-query-found": ""
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "",
+      "description-enables-option-include-variables": "",
+      "description-enables-users-custom-values": ""
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": ""
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "",
+      "text-options": ""
+    },
+    "title-field-label": {
+      "title": ""
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": ""
+      }
+    },
+    "unlink-modal": {
+      "title-really-unlink-panel": ""
+    },
+    "unsaved-changes-modal": {
+      "cancel": "",
+      "changes": "",
+      "discard": "",
+      "save-dashboard": "",
+      "title-unsaved-changes": ""
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "",
+      "aria-label-variable-referenced-other-variables-dashboard": ""
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "",
+      "back-to-list": "",
+      "delete": "",
+      "description-optional-display-name": "",
+      "description-template-variable-characters": "",
+      "general": "",
+      "placeholder-descriptive-text": "",
+      "placeholder-label-name": "",
+      "placeholder-variable-name": "",
+      "text-running-query": ""
+    },
+    "variable-editor-list": {
+      "definition": "",
+      "new-variable": "",
+      "variable": ""
+    },
+    "variable-editor-list-row": {
+      "title-delete-variable": "",
+      "tooltip-duplicate-variable": "",
+      "tooltip-remove-variable": ""
+    },
+    "variable-hide-select": {
+      "label-show-on-dashboard": ""
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": ""
+    },
+    "variable-values-preview": {
+      "preview-of-values": "",
+      "show-more": ""
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": ""
+    },
+    "version-history-header": {
+      "latest": "",
+      "tooltip-reset-version": ""
+    },
+    "version-history-table": {
+      "date": "",
+      "notes": "",
+      "restore": "",
+      "updated-by": "",
+      "version": ""
+    },
+    "versions-history-buttons": {
+      "compare-versions": "",
+      "show-more-versions": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "",
+      "tooltip-click-to-change-visualization": ""
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": ""
     }
   },
   "dashboard-settings": {
@@ -3556,19 +3883,6 @@
       "link-title": "Visualizza la Guida alla migrazione completa",
       "title": "Lascia che ti aiutiamo a eseguire la migrazione su questo stack"
     },
-    "migrated-counts": {
-      "alert_rule_groups": "gruppi di regole di avviso",
-      "alert_rules": "regole di avviso",
-      "contact_points": "punti di contatto",
-      "dashboards": "dashboard",
-      "datasources": "origini di dati",
-      "folders": "cartelle",
-      "library_elements": "elementi della libreria",
-      "mute_timings": "tempi di disattivazione dell'audio",
-      "notification_policies": "criteri di notifica",
-      "notification_templates": "modelli di notifica",
-      "plugins": "plug-in"
-    },
     "migration-token": {
       "delete-button": "Elimina token",
       "delete-modal-body": "Se hai già utilizzato questo token con un'installazione autogestita, tale installazione non sarà più in grado di caricare contenuti.",
@@ -3667,6 +3981,19 @@
       "notification_template": "Modello di notifica",
       "plugin": "Plug-in",
       "unknown": "Sconosciuto"
+    },
+    "resource-types": {
+      "alert_rule": "",
+      "alert_rule_group": "",
+      "contact_point": "",
+      "dashboard": "",
+      "datasource": "",
+      "folder": "",
+      "library_element": "",
+      "mute_timing": "",
+      "notification_policy": "",
+      "notification_template": "",
+      "plugin": ""
     },
     "summary": {
       "cancel-snapshot": "Annulla istantanea",
@@ -4674,16 +5001,10 @@
       "remove-all-configured-repositories": "",
       "subtitle": "",
       "success-all-repositories-deleted": "",
-      "tab-files": "",
-      "tab-files-title": "",
       "tab-getting-started": "",
       "tab-getting-started-title": "",
-      "tab-overview": "",
-      "tab-overview-title": "",
       "tab-repositories": "",
       "tab-repositories-title": "",
-      "tab-resources": "",
-      "tab-resources-title": "",
       "title-delete-all-configured-repositories": "",
       "title-legacy-storage-detected": ""
     },
@@ -4752,7 +5073,11 @@
       "started": "",
       "status": "",
       "view-folder": "",
-      "webhook": ""
+      "webhook": "",
+      "webhook-events": "",
+      "webhook-id": "",
+      "webhook-last-event": "",
+      "webhook-url": ""
     },
     "repository-resources": {
       "columns": {
