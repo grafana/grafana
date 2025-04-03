@@ -12,7 +12,6 @@ import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { supportedImportTypes } from '../../components/import-to-gma/ImportFromDSRules';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
-import { DataSourceType } from '../../utils/datasource';
 import { isAdmin } from '../../utils/misc';
 
 import { DataSourceIcon } from './Namespace';

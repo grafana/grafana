@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, ConfirmModal, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -47,7 +47,6 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
   const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, namespace, ruleGroup);
-  debugger;
 
   async function onConvertConfirm() {
     try {

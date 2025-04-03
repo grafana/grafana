@@ -608,7 +608,7 @@
       },
       "datasource": {
         "label": "Data source",
-        "required-message": "Please select a datasource"
+        "required-message": "Please select a data source"
       },
       "error": "Failed to import alert rules: {{error}}",
       "group": {
@@ -620,7 +620,7 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
+      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
