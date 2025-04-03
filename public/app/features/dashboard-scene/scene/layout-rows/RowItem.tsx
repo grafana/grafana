@@ -202,4 +202,18 @@ export class RowItem
   public scrollIntoView() {
     scrollCanvasElementIntoView(this, this.containerRef);
   }
+
+  public getCollapsedState(): boolean {
+    return this.state.collapse ?? false;
+  }
+
+  public setCollapsedState(collapse: boolean) {
+    this.setState({ collapse });
+  }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
+  }
 }
