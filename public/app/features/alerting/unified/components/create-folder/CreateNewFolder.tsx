@@ -12,6 +12,9 @@ import { AccessControlAction } from 'app/types';
 
 import { Folder } from '../../types/rule-form';
 
+/**
+ * Provides a button and associated modal for creating a new folder
+ */
 export const CreateNewFolder = ({ onCreate }: { onCreate: (folder: Folder) => void }) => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const handleCreate = (folder: Folder) => {
@@ -61,7 +64,7 @@ function FolderCreationModal({
   return (
     <Modal
       className={styles.modal}
-      isOpen={true}
+      isOpen
       title={t('alerting.folder-creation-modal.title-new-folder', 'New folder')}
       onDismiss={onClose}
       onClickBackdrop={onClose}
