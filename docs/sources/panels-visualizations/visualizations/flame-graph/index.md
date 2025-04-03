@@ -15,6 +15,12 @@ labels:
 description: Configure options for Grafana's flame graph visualization
 title: Flame graph
 weight: 100
+refs:
+  units:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#unit
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/unit
 ---
 
 # Flame graph
@@ -68,10 +74,6 @@ The following table is an example of the type of data you need for a flame graph
 | 3     | 3.67 Bil | 3.67 K | test/pkg/distributor.(\*Distributor).Push |
 | 4     | 1.13 Bil | 1.13 K | compress/gzip.(\*Writer).Write            |
 | 5     | 1.06 Bil | 1.06 K | compress/flat.(\*compressor).write        |
-
-## Panel options
-
-{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Modes
 
@@ -148,3 +150,32 @@ Align text either to the left or to the right to show more important parts of th
 ### Visualization picker
 
 You can choose to show only the flame graph, only table, or both at the same time
+
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Standard options
+
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations.
+When you set a standard option, the change is applied to all fields or series.
+For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
+
+You can customize the following standard options:
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Unit | This option lets you choose which unit a field should use. For more information on unit options as well as creating custom units, refer to the [unit configuration documentation](ref:units). |
+| Decimals | Specify the number of decimals Grafana includes in the rendered value. |
+
+<!-- prettier-ignore-end -->
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
