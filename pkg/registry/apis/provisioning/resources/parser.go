@@ -96,6 +96,9 @@ type ParsedResource struct {
 
 	// When the value has been saved in the grafana database
 	Upsert *unstructured.Unstructured
+
+	// If we got some Errors
+	Errors []string
 }
 
 // FIXME: eliminate clients from parser
@@ -291,6 +294,7 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		URLs:       f.URLs,
 		Timestamp:  info.Modified,
 		Resource:   res,
+		Errors:     f.Errors,
 	}
 
 	return wrap

@@ -7,6 +7,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -165,6 +166,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
+	// TODO: do we want to do a dry run before saving into the repository?
 	if err = r.repo.Create(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("create resource in repository: %w", err)
 	}
@@ -182,10 +184,11 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 			return nil, fmt.Errorf("run resource: %w", err)
 		}
 	} else {
-		// TODO: should we completely fail?
-		// TODO: do we want to do a dry run before saving into the repository?
 		if err := parsed.DryRun(ctx); err != nil {
-			return nil, fmt.Errorf("dry run resource: %w", err)
+			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
+			logger.Warn("failed to dry run resource on create", "error", err)
+			// Do not fail here as it's purely informational
+			parsed.Errors = append(parsed.Errors, err.Error())
 		}
 	}
 
@@ -215,6 +218,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
+	// TODO: do we want to do a dry run before saving into the repository?
 	err = r.repo.Update(ctx, path, ref, data, message)
 	if err != nil {
 		return nil, fmt.Errorf("update resource in repository: %w", err)
@@ -233,10 +237,11 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 			return nil, fmt.Errorf("run resource: %w", err)
 		}
 	} else {
-		// TODO: should we completely fail?
-		// TODO: do we want to do a dry run before saving into the repository?
 		if err := parsed.DryRun(ctx); err != nil {
-			return nil, fmt.Errorf("dry run resource: %w", err)
+			// Do not fail here as it's purely informational
+			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
+			logger.Warn("failed to dry run resource on update", "error", err)
+			parsed.Errors = append(parsed.Errors, err.Error())
 		}
 	}
 
