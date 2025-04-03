@@ -669,11 +669,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
-  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;

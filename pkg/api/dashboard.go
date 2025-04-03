@@ -344,91 +344,6 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-// swagger:route PATCH /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
-//
-// Restore a dashboard to a given dashboard version using UID.
-//
-// Responses:
-// 200: postDashboardResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) RestoreDeletedDashboard(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.RestoreDeletedDashboard")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	uid := web.Params(c.Req)[":uid"]
-	cmd := dashboards.RestoreDeletedDashboardCommand{}
-
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	dash, err := hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
-	if err != nil {
-		return response.Error(http.StatusNotFound, "Dashboard not found", err)
-	}
-
-	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), dash, c.SignedInUser, cmd.FolderUID)
-	if err != nil {
-		var dashboardErr dashboardaccess.DashboardErr
-		if ok := errors.As(err, &dashboardErr); ok {
-			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
-		}
-		return response.Error(http.StatusInternalServerError, "Dashboard cannot be restored", err)
-	}
-
-	return response.JSON(http.StatusOK, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s restored", dash.Title),
-		"uid":     dash.UID,
-	})
-}
-
-// SoftDeleteDashboard swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
-//
-// Delete dashboard by uid.
-//
-// Will delete the dashboard given the specified unique identifier (uid).
-//
-// Responses:
-// 200: deleteDashboardResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.SoftDeleteDashboard")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
-	if rsp != nil {
-		return rsp
-	}
-
-	err := hs.DashboardService.SoftDeleteDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
-	if err != nil {
-		var dashboardErr dashboardaccess.DashboardErr
-		if ok := errors.As(err, &dashboardErr); ok {
-			if errors.Is(err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard) {
-				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
-			}
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
-	}
-
-	return response.JSON(http.StatusOK, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s moved to Recently deleted", dash.Title),
-		"uid":     dash.UID,
-	})
-}
-
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
 // Delete dashboard by uid.
@@ -445,22 +360,6 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *contextmodel.ReqContext) response.
 	return hs.deleteDashboard(c)
 }
 
-// HardDeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid}/trash dashboards hardDeleteDashboardByUID
-//
-// Hard delete dashboard by uid.
-//
-// Will delete the dashboard given the specified unique identifier (uid).
-//
-// Responses:
-// 200: deleteDashboardResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) HardDeleteDashboardByUID(c *contextmodel.ReqContext) response.Response {
-	return hs.deleteDashboard(c)
-}
-
 func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "api.deleteDashboard")
 	defer span.End()
@@ -468,21 +367,11 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 
 	uid := web.Params(c.Req)[":uid"]
 
-	var dash *dashboards.Dashboard
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		var err error
-		dash, err = hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
-		if err != nil {
-			return response.Error(http.StatusNotFound, "Dashboard not found", err)
-		}
-	} else {
-		var rsp response.Response
-		dash, rsp = hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, web.Params(c.Req)[":uid"])
-		if rsp != nil {
-			return rsp
-		}
+	var rsp response.Response
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	if rsp != nil {
+		return rsp
 	}
-
 	if dash.IsFolder {
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}

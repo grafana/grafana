@@ -57,7 +57,6 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
-	softDelete            bool
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
@@ -69,7 +68,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
-	softDelete bool,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -78,7 +76,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		namespacer:            namespacer,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
-		softDelete:            softDelete,
 		dashboardSearchClient: *dashboardSearchClient,
 	}
 }
@@ -365,16 +362,6 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
-	}
-
-	if a.softDelete {
-		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
-		if err == nil && dash != nil {
-			now := metav1.NewTime(time.Now())
-			dash.DeletionTimestamp = &now
-			return dash, true, err
-		}
-		return dash, false, err
 	}
 
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{

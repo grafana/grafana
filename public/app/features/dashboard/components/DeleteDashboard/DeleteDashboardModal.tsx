@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { locationService, config, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
@@ -34,7 +34,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
         dashboard: 1,
       },
       source: 'dashboard_settings',
-      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
+      restore_enabled: false,
     });
     await deleteItems({
       selectedItems: {

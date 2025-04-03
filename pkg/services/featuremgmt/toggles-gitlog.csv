@@ -319,7 +319,6 @@ tlsMemcached,2024-05-09T19:12:08Z,,b009536329d110afd807ef2f27f2b7dcc7d310ba,lean
 notificationBanner,2024-05-13T09:32:34Z,2025-01-10T10:18:43Z,f3953b4955c218cc4678e842faa3d3380fd0f8f7,Alex Khomenko
 dualWritePlaylistsMode2,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
 dualWritePlaylistsMode3,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
-dashboardRestore,2024-05-16T17:36:26Z,,42d75ac737d7ac001a6d53376e25512408a01db5,Ezequiel Victorero
 datasourceProxyDisableRBAC,2024-05-21T13:05:16Z,,0072e4a92d896df343d9586522d6f7533773da78,Aaron Godin
 alertingDisableSendAlertsExternal,2024-05-23T12:29:19Z,,8421919cb552b9e8dbd4ebba20bcc67bbc5e6b4f,Steve Simpson
 datasourceQueryTypes,2024-05-23T16:46:28Z,,42b0f802de31f3d42ece68544c193a69ea381bc0,Ryan McKinley

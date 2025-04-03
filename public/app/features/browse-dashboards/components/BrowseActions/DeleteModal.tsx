@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -27,7 +27,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         folder: Object.keys(selectedItems.folder).length,
       },
       source: 'browse_dashboards',
-      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
+      restore_enabled: false,
     });
     setIsDeleting(true);
     try {
@@ -43,7 +43,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          {config.featureToggles.dashboardRestore && (
+          {false && ( // TODO: change this to a feature flag when dashboard restore is reworked
             <>
               <Text element="p">
                 <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
