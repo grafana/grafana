@@ -13,12 +13,14 @@ export interface JobContentProps {
 }
 
 export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
-  if (!job) {
+  if (!job?.status) {
     return null;
   }
 
+  const { state, message, progress, summary } = job.status;
+
   const getStatusDisplay = () => {
-    switch (job.status?.state) {
+    switch (state) {
       case 'success':
         return (
           <Alert
@@ -32,15 +34,15 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
             severity="error"
             title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
           >
-            {job.status.message}
+            {message}
           </Alert>
         );
     }
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        {job.status?.state === 'working' && <Spinner size={24} />}
+        {['working', 'pending'].includes(state ?? '') && <Spinner size={24} />}
         <Text element="h4" color="secondary">
-          {job.status?.message ?? job.status?.state ?? ''}
+          {message ?? state ?? ''}
         </Text>
       </Stack>
     );
@@ -48,31 +50,29 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      {job.status && (
-        <Stack direction="column" gap={2}>
-          {getStatusDisplay()}
+      <Stack direction="column" gap={2}>
+        {getStatusDisplay()}
 
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-            <ProgressBar progress={job.status.progress} />
-          </Stack>
-
-          {isFinishedJob && job.status.summary && (
-            <Stack direction="column" gap={2}>
-              <Text variant="h3">
-                <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>
-              </Text>
-              <JobSummary summary={job.status.summary} />
-            </Stack>
-          )}
-          {job.status.state === 'success' ? (
-            <RepositoryLink name={job.metadata?.labels?.repository} />
-          ) : (
-            <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
-              <pre>{JSON.stringify(job, null, 2)}</pre>
-            </ControlledCollapse>
-          )}
+        <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+          <ProgressBar progress={progress} />
         </Stack>
-      )}
+
+        {isFinishedJob && summary && (
+          <Stack direction="column" gap={2}>
+            <Text variant="h3">
+              <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>
+            </Text>
+            <JobSummary summary={summary} />
+          </Stack>
+        )}
+        {state === 'success' ? (
+          <RepositoryLink name={job.metadata?.labels?.repository} />
+        ) : (
+          <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
+            <pre>{JSON.stringify(job, null, 2)}</pre>
+          </ControlledCollapse>
+        )}
+      </Stack>
     </Stack>
   );
 }

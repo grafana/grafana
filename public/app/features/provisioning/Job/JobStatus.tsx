@@ -28,7 +28,7 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />
-        <Text element="h4" weight="bold">
+        <Text element="h4" color="secondary">
           <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
         </Text>
       </Stack>
