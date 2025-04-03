@@ -802,7 +802,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [hiddenLogLevels, sortOrderChanged]
   );
 
-  const filterLevels: string[] | undefined = useMemo(
+  const filterLevels: LogLevel[] | undefined = useMemo(
     () =>
       !logLevelsRef.current
         ? undefined
