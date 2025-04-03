@@ -34,3 +34,35 @@ export function useEditPaneInputAutoFocus({ autoFocus }: EditPaneInputAutoFocusP
 
   return ref;
 }
+
+export function generateUniqueTitle(title: string | undefined, existingTitles: Set<string>): string {
+  const baseTitle = title ?? '';
+
+  if (existingTitles.has(baseTitle)) {
+    const titleMatch = baseTitle.match(/^(.*?)(\d+)$/);
+    if (titleMatch) {
+      // If title ends with a number, increment it
+      const baseTitle = titleMatch[1];
+      const currentNumber = parseInt(titleMatch[2], 10);
+      let newTitle = `${baseTitle}${currentNumber + 1}`;
+
+      // Keep incrementing until we find an unused title
+      while (existingTitles.has(newTitle)) {
+        const nextNumber = parseInt(newTitle.match(/\d+$/)![0], 10) + 1;
+        newTitle = `${baseTitle}${nextNumber}`;
+      }
+      return newTitle;
+    } else {
+      // If title doesn't end with a number, append "1"
+      let i = 1;
+      let newTitle = `${baseTitle} ${i}`;
+      while (existingTitles.has(newTitle)) {
+        i++;
+        newTitle = `${baseTitle} ${i}`;
+      }
+      return newTitle;
+    }
+  }
+
+  return baseTitle;
+}
