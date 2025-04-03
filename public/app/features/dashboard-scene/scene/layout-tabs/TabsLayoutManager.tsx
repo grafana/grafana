@@ -14,8 +14,10 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
+import { RowItemRepeaterBehavior } from '../layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -23,6 +25,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
+import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -149,7 +152,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public activateRepeaters() {
-    this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
+    this.state.tabs.forEach((tab) => {
+      if (!tab.isActive) {
+        tab.activate();
+      }
+
+      const behavior = (tab.state.$behaviors ?? []).find((b) => b instanceof TabItemRepeaterBehavior);
+
+      if (!behavior?.isActive) {
+        behavior?.activate();
+      }
+
+      tab.getLayout().activateRepeaters?.();
+    });
   }
 
   public shouldUngroup(): boolean {
@@ -210,7 +225,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (layout instanceof RowsLayoutManager) {
       for (const row of layout.state.rows) {
-        tabs.push(new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+        if (isClonedKey(row.state.key!)) {
+          continue;
+        }
+
+        const conditionalRendering = row.state.conditionalRendering;
+        conditionalRendering?.clearParent();
+
+        const behavior = row.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+        const $behaviors = !behavior
+          ? undefined
+          : [new TabItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+
+        tabs.push(
+          new TabItem({ layout: row.state.layout.clone(), title: row.state.title, conditionalRendering, $behaviors })
+        );
       }
     } else {
       layout.clearParent();

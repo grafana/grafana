@@ -33,6 +33,7 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { getEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
+import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -175,6 +176,23 @@ export class TabItem
     this.setState({ title, isNew: false });
   }
 
+  public onChangeRepeat(repeat: string | undefined) {
+    let repeatBehavior = this._getRepeatBehavior();
+
+    if (repeat) {
+      // Remove repeat behavior if it exists to trigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
+      }
+
+      repeatBehavior = new TabItemRepeaterBehavior({ variableName: repeat });
+      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
+      repeatBehavior.activate();
+    } else {
+      repeatBehavior?.removeBehavior();
+    }
+  }
+
   public setIsDropTarget(isDropTarget: boolean) {
     if (!!this.state.isDropTarget !== isDropTarget) {
       this.setState({ isDropTarget });
@@ -198,6 +216,10 @@ export class TabItem
     }
   }
 
+  public getRepeatVariable(): string | undefined {
+    return this._getRepeatBehavior()?.state.variableName;
+  }
+
   public getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
@@ -215,5 +237,9 @@ export class TabItem
     const parentLayout = this.getParentLayout();
     const duplicateTitles = parentLayout.duplicateTitles();
     return !duplicateTitles.has(this.state.title);
+  }
+
+  private _getRepeatBehavior(): TabItemRepeaterBehavior | undefined {
+    return this.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
   }
 }

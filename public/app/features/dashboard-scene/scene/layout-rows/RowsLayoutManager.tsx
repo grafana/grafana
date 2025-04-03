@@ -14,6 +14,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { TabItemRepeaterBehavior } from '../layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -179,7 +180,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (layout instanceof TabsLayoutManager) {
       for (const tab of layout.state.tabs) {
-        rows.push(new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title }));
+        if (isClonedKey(tab.state.key!)) {
+          continue;
+        }
+
+        const conditionalRendering = tab.state.conditionalRendering;
+        conditionalRendering?.clearParent();
+
+        const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
+        const $behaviors = !behavior
+          ? undefined
+          : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+
+        rows.push(
+          new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering, $behaviors })
+        );
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
       const config: Array<{
