@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -151,7 +152,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownLocation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerDistance = usePointerDistance();
 
   const hasHeader = !hoverHeader;
 
@@ -200,13 +201,8 @@ export function PanelChrome({
   // Mainly the tricky bit of differentiating between dragging and selecting
   const onPointerUp = React.useCallback(
     (evt: React.PointerEvent) => {
-      const distance = Math.hypot(
-        evt.clientX - pointerDownLocation.current.x,
-        evt.clientY - pointerDownLocation.current.y
-      );
-
       if (
-        distance > 10 ||
+        pointerDistance.check(evt) ||
         (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
       ) {
         return;
@@ -216,18 +212,31 @@ export function PanelChrome({
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
     },
-    [dragClassCancel, onSelect]
+    [dragClassCancel, onSelect, pointerDistance]
   );
 
   const onPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
       evt.stopPropagation();
 
-      pointerDownLocation.current = { x: evt.clientX, y: evt.clientY };
+      pointerDistance.set(evt);
 
       onDragStart?.(evt);
     },
-    [onDragStart]
+    [pointerDistance, onDragStart]
+  );
+
+  const onContentPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+        return;
+      }
+
+      onSelect?.(evt);
+    },
+    [onSelect]
   );
 
   const headerContent = (
@@ -386,6 +395,7 @@ export function PanelChrome({
           data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
+          onPointerDown={onContentPointerDown}
         >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>

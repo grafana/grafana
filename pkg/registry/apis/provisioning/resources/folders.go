@@ -153,6 +153,9 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 		if path != "" {
 			p = safepath.Join(path, p)
 		}
+		if !safepath.IsDir(p) {
+			p = p + "/" // trailing slash indicates folder
+		}
 
 		_, err := fm.repo.Read(ctx, p, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
@@ -171,7 +174,7 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 }
 
 func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
-	return ForEachResource(ctx, fm.client, func(item *unstructured.Unstructured) error {
+	return ForEach(ctx, fm.client, func(item *unstructured.Unstructured) error {
 		if fm.tree.Count() > maxFolders {
 			return errors.New("too many folders")
 		}
