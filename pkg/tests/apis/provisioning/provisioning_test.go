@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	gh "github.com/google/go-github/v69/github"
+	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -260,9 +260,18 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Make sure the repo can see the file
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+	// Make sure the repo can read and validate the file
+	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
 	require.NoError(t, err, "valid path should be fine")
+
+	resource, _, err := unstructured.NestedMap(obj.Object, "resource")
+	require.NoError(t, err, "missing resource")
+	action, _, err := unstructured.NestedString(resource, "action")
+	require.NoError(t, err, "invalid action")
+
+	require.NotNil(t, resource["file"], "the raw file")
+	require.NotNil(t, resource["dryRun"], "dryRun result")
+	require.Equal(t, "create", action)
 
 	// But the dashboard shouldn't exist yet
 	const allPanels = "n1jR8vnnz"
@@ -306,12 +315,14 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		Namespace("default").
 		Resource("repositories").
 		Name(repo).
-		SubResource("export").
+		SubResource("jobs").
 		SetHeader("Content-Type", "application/json").
-		Body(asJSON(&provisioning.ExportJobOptions{
-			Folder:     "",   // export entire instance
-			Path:       "",   // no prefix necessary for testing
-			Identifier: true, // doesn't _really_ matter, but handy for debugging.
+		Body(asJSON(&provisioning.JobSpec{
+			Push: &provisioning.ExportJobOptions{
+				Folder:     "",   // export entire instance
+				Path:       "",   // no prefix necessary for testing
+				Identifier: true, // doesn't _really_ matter, but handy for debugging.
+			},
 		})).
 		Do(ctx)
 	require.NoError(t, result.Error())

@@ -138,6 +138,24 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 	if err != nil {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
+			// The plugin is not installed
+			return checks.NewCheckReportFailure(
+				advisor.CheckReportFailureSeverityHigh,
+				s.ID(),
+				ds.Name,
+				[]advisor.CheckErrorLink{
+					{
+						Message: "Delete data source",
+						Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+					},
+					{
+						Message: "Install plugin",
+						Url:     fmt.Sprintf("/plugins/%s", ds.Type),
+					},
+				},
+			), nil
+		}
 		// Unable to check health check
 		s.log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
 		return nil, nil
