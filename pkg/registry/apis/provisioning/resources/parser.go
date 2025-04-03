@@ -167,19 +167,16 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Checksum: info.Hash,
 	})
 
-	if obj.GetName() == "" {
+	if obj.GetName() == "" && obj.GetGenerateName() == "" {
 		parsed.Errors = append(parsed.Errors,
 			field.Required(field.NewPath("name", "metadata", "name"),
-				"An explicit name must be saved in the resource"))
+				"An explicit name must be saved in the resource (or generateName)"))
 	}
 
 	// Calculate name+folder from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
+		_, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
 		parsed.Meta.SetFolder(folderName)
-		if obj.GetName() == "" {
-			obj.SetName(objName) // use the name saved in config
-		}
 	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
@@ -222,6 +219,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 			DryRun: []string{"All"},
 		})
 	}
+
+	// When the name is missing (and generateName is configured) use the value from DryRun
+	if obj.GetName() == "" && parsed.DryRunResponse != nil {
+		obj.SetName(parsed.DryRunResponse.GetName())
+	}
+
 	if err != nil {
 		parsed.Errors = append(parsed.Errors, err)
 	}
