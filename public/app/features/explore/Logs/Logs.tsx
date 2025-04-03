@@ -801,6 +801,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [hiddenLogLevels, sortOrderChanged]
   );
 
+  const filterLevels: string[] | undefined = useMemo(
+    () =>
+      !logLevelsRef.current
+        ? undefined
+        : logLevelsRef.current.filter((level) => hiddenLogLevels.length > 0 && !hiddenLogLevels.includes(level)),
+    [hiddenLogLevels]
+  );
+
+  console.log(filterLevels);
+
   return (
     <>
       {getRowContext && contextRow && (
@@ -1088,6 +1098,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   containerElement={logsContainerRef.current}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
+                  filterLevels={filterLevels}
                   forceEscape={forceEscape}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}

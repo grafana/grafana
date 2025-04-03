@@ -104,7 +104,7 @@ export const LogListContextProvider = ({
   displayedFields,
   getRowContextQuery,
   logOptionsStorageKey,
-  filterLevels = logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : [],
+  filterLevels,
   logSupportsContext,
   onLogOptionsChange,
   onLogLineHover,
@@ -123,7 +123,8 @@ export const LogListContextProvider = ({
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
     displayedFields,
-    filterLevels,
+    filterLevels:
+      filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     pinnedLogs,
     showTime,
     sortOrder,
@@ -139,7 +140,6 @@ export const LogListContextProvider = ({
     const newState = {
       ...logListState,
       dedupStrategy,
-      filterLevels,
       showTime,
       sortOrder,
       syntaxHighlighting,
@@ -147,9 +147,6 @@ export const LogListContextProvider = ({
     };
     if (!shallowCompare(logListState.displayedFields, displayedFields)) {
       newState.displayedFields = displayedFields;
-    }
-    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
-      newState.filterLevels = filterLevels;
     }
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       newState.pinnedLogs = pinnedLogs;
@@ -161,7 +158,6 @@ export const LogListContextProvider = ({
     app,
     dedupStrategy,
     displayedFields,
-    filterLevels,
     logListState,
     pinnedLogs,
     showControls,
@@ -170,6 +166,15 @@ export const LogListContextProvider = ({
     syntaxHighlighting,
     wrapLogMessage,
   ]);
+
+  useEffect(() => {
+    if (filterLevels === undefined) {
+      return;
+    }
+    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
+      setLogListState({ ...logListState, filterLevels });
+    }
+  }, [filterLevels, logListState]);
 
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {

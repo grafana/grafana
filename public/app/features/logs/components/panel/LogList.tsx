@@ -12,6 +12,7 @@ import {
   EventBusSrv,
   Field,
   LinkModel,
+  LogLevel,
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -43,6 +44,7 @@ interface Props {
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   eventBus?: EventBus;
+  filterLevels?: LogLevel[];
   forceEscape?: boolean;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
@@ -83,6 +85,7 @@ export const LogList = ({
   containerElement,
   dedupStrategy,
   eventBus,
+  filterLevels,
   forceEscape = false,
   getFieldLinks,
   getRowContextQuery,
@@ -113,6 +116,7 @@ export const LogList = ({
       app={app}
       dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
+      filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
