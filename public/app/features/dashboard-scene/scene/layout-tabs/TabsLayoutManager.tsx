@@ -70,7 +70,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
-    this.setState({ tabs: [...this.state.tabs, newTab] });
+    this.addNewTab(newTab);
   }
 
   public getUrlState() {
