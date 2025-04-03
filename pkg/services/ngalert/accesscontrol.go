@@ -309,12 +309,6 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionAlertingProvisioningRead, // organization scope
-				},
-				{
-					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
-				},
-				{
 					Action: accesscontrol.ActionAlertingRulesProvisioningRead, // organization scope
 				},
 				{
@@ -344,9 +338,6 @@ var (
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingProvisioningReadSecrets, // organization scope
-				},
-				{
-					Action: accesscontrol.ActionAlertingProvisioningRead, // organization scope
 				},
 				{
 					Action: accesscontrol.ActionAlertingRulesProvisioningRead, // organization scope

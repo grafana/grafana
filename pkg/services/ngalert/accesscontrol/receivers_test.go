@@ -60,15 +60,6 @@ func TestReceiverAccess(t *testing.T) {
 			},
 		},
 		{
-			name: "legacy global provisioning reader should have no elevated permissions",
-			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingProvisioningRead}),
-			expected: map[string]models.ReceiverPermissionSet{
-				recv1.UID: permissions(),
-				recv2.UID: permissions(),
-				recv3.UID: permissions(),
-			},
-		},
-		{
 			name: "legacy global provisioning secret reader should have secret permissions on provisioning only",
 			user: newEmptyUser(ac.Permission{Action: ac.ActionAlertingProvisioningReadSecrets}),
 			expected: map[string]models.ReceiverPermissionSet{

@@ -884,7 +884,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		fq.UIDs = append(fq.UIDs, uid)
 	}
 
-	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
+	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.rules.provisioning:read.
 	folders, err := service.folderService.GetFolders(ctx, fq)
 	if err != nil {
 		return nil, err

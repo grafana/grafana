@@ -166,8 +166,9 @@ var provisionerUser = func(orgID int64) identity.Requester {
 		org.RoleAdmin,
 		[]accesscontrol.Permission{
 			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets},
+			{Action: accesscontrol.ActionAlertingRulesProvisioningWrite},
+			{Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite},
 		},
 	)
 }

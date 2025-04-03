@@ -41,7 +41,7 @@ func TestContactPointService(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -365,7 +365,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 

@@ -284,7 +284,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 		)
@@ -293,7 +292,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/v1/provisioning/contact-points/export":
 		perms := []ac.Evaluator{
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 		}
@@ -308,7 +306,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/export":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll( // scopes are enforced in the handler
@@ -319,7 +316,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
@@ -332,7 +328,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
@@ -348,7 +343,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
@@ -357,7 +351,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Grafana-only Provisioning Write Paths
 	case http.MethodPost + "/api/v1/provisioning/alert-rules":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleCreate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
@@ -366,7 +359,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 	case http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleUpdate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
@@ -375,7 +367,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 	case http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleDelete), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
@@ -385,7 +376,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
@@ -397,7 +387,6 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
 			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
@@ -422,7 +411,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
 		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),

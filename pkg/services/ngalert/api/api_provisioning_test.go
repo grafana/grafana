@@ -391,7 +391,7 @@ func TestProvisioningApi(t *testing.T) {
 				env := createTestEnv(t, testConfig)
 				env.ac = &recordingAccessControlFake{
 					Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-						if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingRulesProvisioningWrite) || strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningWrite) {
+						if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingRulesProvisioningWrite) {
 							return false, nil
 						}
 						return true, nil
