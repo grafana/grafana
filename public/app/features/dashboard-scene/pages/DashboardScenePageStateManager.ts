@@ -3,11 +3,12 @@ import { isEqual } from 'lodash';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -112,6 +113,43 @@ abstract class DashboardScenePageStateManagerBase<T>
     return this.cache;
   }
 
+  protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
+    const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+
+    if (isRedirectResponse(rsp)) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
+    }
+
+    // If dashboard is on v2 schema convert to v1 schema, there's curently no v2 API for home dashboard
+    if (isDashboardV2Spec(rsp.dashboard)) {
+      rsp.dashboard = transformDashboardV2SpecToV1(rsp.dashboard, {
+        name: '',
+        generation: 0,
+        resourceVersion: '0',
+        creationTimestamp: '',
+      });
+    }
+
+    if (rsp?.meta) {
+      rsp.meta.canSave = false;
+      rsp.meta.canShare = false;
+      rsp.meta.canStar = false;
+    }
+
+    return rsp;
+  }
+
+  private async loadHomeDashboard(): Promise<DashboardScene | null> {
+    const rsp = await this.fetchHomeDashboard();
+    if (rsp) {
+      return transformSaveModelToScene(rsp);
+    }
+
+    return null;
+  }
+
   public async loadSnapshot(slug: string) {
     try {
       const dashboard = await this.loadSnapshotScene(slug);
@@ -177,13 +215,20 @@ abstract class DashboardScenePageStateManagerBase<T>
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
-    const rsp = await this.fetchDashboard(options);
 
-    if (!rsp) {
-      return null;
+    // Home dashboard is not handled through legacy API and is not versioned.
+    // Handling home dashboard flow separately from regular dashboard flow.
+    if (options.route === DashboardRoutes.Home) {
+      return await this.loadHomeDashboard();
+    } else {
+      const rsp = await this.fetchDashboard(options);
+
+      if (!rsp) {
+        return null;
+      }
+
+      return this.transformResponseToScene(rsp, options);
     }
-
-    return this.transformResponseToScene(rsp, options);
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -283,36 +328,23 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
     }
 
-    let rsp: DashboardDTO | HomeDashboardRedirectDTO;
+    let rsp: DashboardDTO;
 
     try {
       switch (route) {
-        case DashboardRoutes.New:
-          rsp = await buildNewDashboardSaveModel(urlFolderUid);
-
-          break;
         case DashboardRoutes.Home:
-          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
-          rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+          // For legacy dashboarding we keep this logic here, as dashboard can be loaded through state manager's fetchDashboard method directly
+          // See DashboardPageProxy.
+          const homeDashboard = await this.fetchHomeDashboard();
 
-          if (isRedirectResponse(rsp)) {
-            const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-            locationService.replace(newUrl);
+          if (!homeDashboard) {
             return null;
           }
 
-          if (isDashboardV2Spec(rsp.dashboard)) {
-            throw new Error(
-              'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.'
-            );
-          }
-
-          if (rsp?.meta) {
-            rsp.meta.canSave = false;
-            rsp.meta.canShare = false;
-            rsp.meta.canStar = false;
-          }
-
+          rsp = homeDashboard;
+          break;
+        case DashboardRoutes.New:
+          rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Provisioning: {
           return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
@@ -499,27 +531,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       switch (route) {
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
-          break;
-        case DashboardRoutes.Home:
-          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
-          const dto = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
-
-          if (isRedirectResponse(dto)) {
-            const newUrl = locationUtil.stripBaseFromUrl(dto.redirectUri);
-            locationService.replace(newUrl);
-            return null;
-          }
-
-          // if custom home dashboard is v2 spec already, ignore the spec transformation
-          if (!isDashboardV2Resource(dto)) {
-            throw new Error('Custom home dashboard is not a v2 spec');
-          }
-
-          rsp = dto;
-          dto.access.canSave = false;
-          dto.access.canShare = false;
-          dto.access.canStar = false;
-
           break;
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);

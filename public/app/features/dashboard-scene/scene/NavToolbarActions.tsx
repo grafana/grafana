@@ -135,7 +135,7 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (isManaged && meta.canEdit) {
+  if (dashboard.isManaged() && meta.canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,

@@ -26,13 +26,13 @@ import {
   VariableHide as VariableHideV1,
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
-
 import {
   GridLayoutSpec,
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -55,6 +55,8 @@ import {
   getPersistedDSFor,
   getElementDatasource,
   transformSceneToSaveModelSchemaV2,
+  validateDashboardSchemaV2,
+  getDataQueryKind,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -112,7 +114,14 @@ jest.mock('@grafana/runtime', () => ({
           },
           loki: {
             name: 'Loki',
-            meta: { id: 'loki' },
+            meta: {
+              id: 'loki',
+              name: 'Loki',
+              type: 'datasource',
+              info: { version: '1.0.0' },
+              module: 'app/plugins/datasource/loki/module',
+              baseUrl: '/plugins/loki',
+            },
             type: 'datasource',
           },
         },
@@ -416,6 +425,14 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 
+  it('should transform the minimum scene to save model schema v2', () => {
+    const minimalScene = new DashboardScene({});
+
+    expect(() => {
+      transformSceneToSaveModelSchemaV2(minimalScene);
+    }).not.toThrow();
+  });
+
   describe('getPersistedDSFor query', () => {
     it('should respect datasource reference mapping when determining query datasource', () => {
       // Setup test data
@@ -487,6 +504,59 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       });
       const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
       expect(resultC).toEqual({});
+    });
+  });
+
+  describe('getDataQueryKind', () => {
+    it('should preserve original query datasource type when available', () => {
+      // 1. Test with a query that has its own datasource type
+      const queryWithDS: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Create a query runner with a different datasource type
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'default-ds', type: 'loki' },
+        queries: [],
+      });
+
+      // Should use the query's own datasource type (prometheus)
+      expect(getDataQueryKind(queryWithDS, queryRunner)).toBe('prometheus');
+    });
+
+    it('should use queryRunner datasource type as fallback when query has no datasource', () => {
+      // 2. Test with a query that has no datasource
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with a datasource
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'influxdb-1', type: 'influxdb' },
+        queries: [],
+      });
+
+      // Should fall back to queryRunner's datasource type
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('influxdb');
+    });
+
+    it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
+      // 3. Test with neither query nor queryRunner having a datasource type
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with no datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+      });
+
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+
+      // Also verify the function's behavior by checking the args
+      expect(queryWithoutDS.datasource?.type).toBeUndefined(); // No query datasource
+      expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
     });
   });
 });
@@ -889,3 +959,182 @@ function createAnnotationLayers() {
     }),
   ];
 }
+
+describe('validateDashboardSchemaV2', () => {
+  const validDashboard = {
+    title: 'Test Dashboard',
+    timeSettings: {
+      from: 'now-1h',
+      to: 'now',
+      autoRefresh: '5s',
+      hideTimepicker: false,
+      timezone: 'UTC',
+      autoRefreshIntervals: ['5s', '10s', '30s'],
+      quickRanges: [],
+      weekStart: 'monday',
+      nowDelay: '1m',
+      fiscalYearStartMonth: 1,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+  };
+
+  it('should validate a valid dashboard', () => {
+    expect(validateDashboardSchemaV2(validDashboard)).toBe(true);
+  });
+
+  it('should throw error if dashboard is not an object', () => {
+    expect(() => validateDashboardSchemaV2(null)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(undefined)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2('string')).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(123)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(true)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2([])).toThrow('Dashboard is not an object or is null');
+  });
+
+  it('should validate required properties', () => {
+    const requiredProps = {
+      title: 'Title is not a string',
+      timeSettings: 'TimeSettings is not an object or is null',
+      variables: 'Variables is not an array',
+      elements: 'Elements is not an object or is null',
+      annotations: 'Annotations is not an array',
+      layout: 'Layout is not an object or is null',
+    };
+
+    for (const [prop, message] of Object.entries(requiredProps)) {
+      const invalidDashboard = { ...validDashboard };
+      delete invalidDashboard[prop as keyof typeof invalidDashboard];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate timeSettings required properties', () => {
+    const timeSettingsErrors = {
+      from: 'From is not a string',
+      to: 'To is not a string',
+      autoRefresh: 'AutoRefresh is not a string',
+      hideTimepicker: 'HideTimepicker is not a boolean',
+    } as const;
+
+    for (const [prop, message] of Object.entries(timeSettingsErrors)) {
+      const invalidDashboard = {
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings },
+      };
+      delete invalidDashboard.timeSettings[prop as keyof typeof invalidDashboard.timeSettings];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate optional properties when present', () => {
+    const invalidDashboard = {
+      ...validDashboard,
+      description: 123, // Should be string
+      cursorSync: 'Invalid', // Should be one of ['Off', 'Crosshair', 'Tooltip']
+      liveNow: 'true', // Should be boolean
+      preload: 'true', // Should be boolean
+      editable: 'true', // Should be boolean
+      links: 'not-an-array', // Should be array
+      tags: 'not-an-array', // Should be array
+      id: 'not-a-number', // Should be number
+    };
+
+    expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow('Description is not a string');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, cursorSync: 'Invalid' })).toThrow(
+      'CursorSync is not a valid value'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, liveNow: 'true' })).toThrow('LiveNow is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, preload: 'true' })).toThrow('Preload is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, editable: 'true' })).toThrow(
+      'Editable is not a boolean'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, links: 'not-an-array' })).toThrow(
+      'Links is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, tags: 'not-an-array' })).toThrow(
+      'Tags is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, id: 'not-a-number' })).toThrow('ID is not a number');
+  });
+
+  it('should validate optional timeSettings properties when present', () => {
+    const invalidTimeSettings = {
+      ...validDashboard.timeSettings,
+      autoRefreshIntervals: 'not-an-array',
+      timezone: 123,
+      quickRanges: 'not-an-array',
+      weekStart: 'invalid-day',
+      nowDelay: 123,
+      fiscalYearStartMonth: 'not-a-number',
+    };
+
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, timeSettings: invalidTimeSettings })).toThrow(
+      'AutoRefreshIntervals is not an array'
+    );
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, timezone: 123 } })
+    ).toThrow('Timezone is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, quickRanges: 'not-an-array' },
+      })
+    ).toThrow('QuickRanges is not an array');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, weekStart: 'invalid-day' },
+      })
+    ).toThrow('WeekStart should be one of "saturday", "sunday" or "monday"');
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, nowDelay: 123 } })
+    ).toThrow('NowDelay is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, fiscalYearStartMonth: 'not-a-number' },
+      })
+    ).toThrow('FiscalYearStartMonth is not a number');
+  });
+
+  it('should validate layout kind and structure', () => {
+    // Missing kind
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { spec: { items: [] } } })).toThrow(
+      'Layout kind is required'
+    );
+
+    // Invalid GridLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Invalid RowsLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Valid GridLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: { items: [] } } })).toBe(
+      true
+    );
+
+    // Valid RowsLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
+      true
+    );
+  });
+});

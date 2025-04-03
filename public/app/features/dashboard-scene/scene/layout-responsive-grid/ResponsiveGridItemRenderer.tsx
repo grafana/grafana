@@ -4,16 +4,18 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useDashboardState } from '../../utils/utils';
 
 import { AutoGridItem } from './ResponsiveGridItem';
-import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './ResponsiveGridLayout';
+import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels, key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing } = useDashboardState(model);
-  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
+    useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
 
   if (isConditionallyHidden && !isEditing) {
@@ -26,26 +28,19 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   return repeatedPanels ? (
     <>
       {repeatedPanels.map((item) => (
-        <div
-          className={cx(isConditionallyHidden && 'dashboard-visible-hidden-element', styles.wrapper)}
-          key={item.state.key}
-        >
+        <div className={cx(conditionalRenderingClass, styles.wrapper)} key={item.state.key}>
           <item.Component model={item} />
+          {conditionalRenderingOverlay}
         </div>
       ))}
     </>
   ) : (
-    <div ref={(ref) => model.setRef(ref)} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
+    <div ref={model.containerRef} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
       {isDragged && <div className={styles.draggedPlaceholder} />}
 
-      <div
-        className={cx(
-          isConditionallyHidden && 'dashboard-visible-hidden-element',
-          styles.wrapper,
-          isDragged && styles.draggedWrapper
-        )}
-      >
+      <div className={cx(!isDragged && conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}>
         <body.Component model={body} />
+        {conditionalRenderingOverlay}
       </div>
     </div>
   );
