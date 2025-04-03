@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	TableNameSecureValue    = "secret_secure_value"
-	TableNameKeeper         = "secret_keeper"
-	TableNameDataKey        = "secret_data_key"
-	TableNameEncryptedValue = "secret_encrypted_value"
+	TableNameSecureValue       = "secret_secure_value"
+	TableNameSecureValueOutbox = "secret_secure_value_outbox"
+	TableNameKeeper            = "secret_keeper"
+	TableNameDataKey           = "secret_data_key"
+	TableNameEncryptedValue    = "secret_encrypted_value"
 )
 
 func MigrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
@@ -113,6 +114,21 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{},
+	})
+
+	tables = append(tables, migrator.Table{
+		Name: TableNameSecureValueOutbox,
+		Columns: []*migrator.Column{
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "message_type", Type: migrator.DB_TinyInt, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "keeper_name", Type: migrator.DB_Text, Nullable: false},
+			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{},
 	})
