@@ -11,8 +11,20 @@
       "reqAction": "alert.instances.external:read"
     },
     {
+      "method": "GET",
+      "path": "api/v2/silences",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
       "method": "POST",
       "path": "alertmanager/api/v2/silences",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "POST",
+      "path": "api/v2/silences",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
     },
@@ -23,8 +35,20 @@
       "reqAction": "alert.instances.external:read"
     },
     {
+      "method": "GET",
+      "path": "api/v2/silence/",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
       "method": "DELETE",
       "path": "alertmanager/api/v2/silence/",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "DELETE",
+      "path": "api/v2/silence/",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
     },
@@ -36,13 +60,31 @@
     },
     {
       "method": "GET",
+      "path": "api/v2/alerts/groups",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
       "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/alerts",
       "reqRole": "Viewer",
       "reqAction": "alert.instances.external:read"
     },
     {
       "method": "POST",
       "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "POST",
+      "path": "api/v2/alerts",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
     },
@@ -54,7 +96,19 @@
     },
     {
       "method": "GET",
+      "path": "api/v2/status",
+      "reqRole": "Viewer",
+      "reqAction": "alert.notifications.external:read"
+    },
+    {
+      "method": "GET",
       "path": "alertmanager/api/v2/receivers",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/receivers",
       "reqRole": "Viewer",
       "reqAction": "alert.instances.external:read"
     },
