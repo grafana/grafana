@@ -202,4 +202,12 @@ export class RowItem
   public scrollIntoView() {
     scrollCanvasElementIntoView(this, this.containerRef);
   }
+
+  public getCollapsedState(): boolean {
+    return this.state.collapse ?? false;
+  }
+
+  public setCollapsedState(collapse: boolean) {
+    this.setState({ collapse });
+  }
 }

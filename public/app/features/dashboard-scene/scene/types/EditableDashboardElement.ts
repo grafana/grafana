@@ -49,6 +49,16 @@ export interface EditableDashboardElement {
    * scroll element into view (when selected from outline)
    */
   scrollIntoView?(): void;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  getCollapsedState?(): boolean;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  setCollapsedState?(collapsed: boolean): void;
 }
 
 export interface EditableDashboardElementInfo {
