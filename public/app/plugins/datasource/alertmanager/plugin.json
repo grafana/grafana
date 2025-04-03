@@ -18,13 +18,13 @@
     },
     {
       "method": "GET",
-      "path": "alertmanager/api/v2/silence",
+      "path": "alertmanager/api/v2/silence/",
       "reqRole": "Viewer",
       "reqAction": "alert.instances.external:read"
     },
     {
       "method": "DELETE",
-      "path": "alertmanager/api/v2/silence",
+      "path": "alertmanager/api/v2/silence/",
       "reqRole": "Editor",
       "reqAction": "alert.instances.external:write"
     },
