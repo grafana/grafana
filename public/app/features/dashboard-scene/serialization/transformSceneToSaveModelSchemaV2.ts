@@ -18,8 +18,8 @@ import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
   PanelKind,
   PanelQueryKind,
@@ -44,7 +44,7 @@ import {
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -348,7 +348,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
+export function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
     let elementKey = scene.serializer.getElementIdForPanel(panel.spec.id);
     elements[elementKey!] = panel;
