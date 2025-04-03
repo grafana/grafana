@@ -38,7 +38,7 @@ export const AlertInstanceStateFilter = ({
     component: getOptionComponent(state),
   }));
 
-  const promOptionValues = [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending, PromAlertingRuleState.Recovering] as const;
+  const promOptionValues = [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending] as const;
   const promOptions = promOptionValues.map((state) => ({
     label: capitalize(state),
     value: state,
