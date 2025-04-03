@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import {
   FieldConfigSource,
@@ -30,7 +31,9 @@ import {
   ScrollContainer,
   Stack,
   ToolbarButton,
+  Text,
   useStyles2,
+  Field,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -139,25 +142,49 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const styles = useStyles2(getStyles);
     const isAngularPanel = isUsingAngularPanelPlugin(panel);
     const isSearching = searchQuery.length > 0;
-    const showSearchRadioButtons = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
+    const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
+    const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
+    const onlyOverrides = listMode === OptionFilter.Overrides;
+
     return (
       <>
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
-              <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
-              <FilterInput
-                className={styles.searchOptions}
-                value={searchQuery}
-                placeholder={t('dashboard-scene.panel-options-pane.placeholder-search-options', 'Search options')}
-                onChange={model.onSetSearchQuery}
-              />
-              {showSearchRadioButtons && (
-                <RadioButtonGroup
-                  options={model.getOptionRadioFilters()}
-                  value={listMode}
-                  fullWidth
-                  onChange={model.onSetListMode}
+              <Field label="Visualization" className={styles.vizField}>
+                <Stack gap={1}>
+                  <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
+                  <Button
+                    icon="search"
+                    variant="secondary"
+                    onClick={setIsSearchingOptions}
+                    tooltip={'Search options'}
+                  />
+                  {hasFieldConfig && (
+                    <ToolbarButton
+                      icon="filter"
+                      tooltip="Show only overrides"
+                      variant={onlyOverrides ? 'active' : 'canvas'}
+                      onClick={() => {
+                        model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
+                      }}
+                    />
+                  )}
+                </Stack>
+              </Field>
+
+              {isSearchingOptions && (
+                <FilterInput
+                  className={styles.searchOptions}
+                  value={searchQuery}
+                  placeholder={t('dashboard-scene.panel-options-pane.placeholder-search-options', 'Search options')}
+                  onChange={model.onSetSearchQuery}
+                  autoFocus={true}
+                  onBlur={() => {
+                    if (searchQuery.length === 0) {
+                      setIsSearchingOptions(false);
+                    }
+                  }}
                 />
               )}
             </div>
@@ -217,7 +244,7 @@ function getStyles(theme: GrafanaTheme2) {
     top: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2, 1),
+      padding: theme.spacing(1, 2, 2, 2),
       gap: theme.spacing(2),
     }),
     searchOptions: css({
@@ -227,7 +254,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2, 2, 2, 0),
     }),
     vizField: css({
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(0),
     }),
     rotateIcon: css({
       rotate: '180deg',
@@ -260,24 +287,22 @@ export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonPro
   }
 
   return (
-    <Stack gap={1}>
-      <ToolbarButton
-        className={styles.vizButton}
-        tooltip={t(
-          'dashboard-scene.visualization-button.tooltip-click-to-change-visualization',
-          'Click to change visualization'
-        )}
-        imgSrc={pluginMeta.info.logos.small}
-        onClick={onOpen}
-        data-testid={selectors.components.PanelEditor.toggleVizPicker}
-        aria-label={t('dashboard-scene.visualization-button.aria-label-change-visualization', 'Change visualization')}
-        variant="canvas"
-        isOpen={false}
-        fullWidth
-      >
-        {pluginMeta.name}
-      </ToolbarButton>
-    </Stack>
+    <ToolbarButton
+      className={styles.vizButton}
+      tooltip={t(
+        'dashboard-scene.visualization-button.tooltip-click-to-change-visualization',
+        'Click to change visualization'
+      )}
+      imgSrc={pluginMeta.info.logos.small}
+      onClick={onOpen}
+      data-testid={selectors.components.PanelEditor.toggleVizPicker}
+      aria-label={t('dashboard-scene.visualization-button.aria-label-change-visualization', 'Change visualization')}
+      variant="canvas"
+      isOpen={false}
+      fullWidth
+    >
+      {pluginMeta.name}
+    </ToolbarButton>
   );
 }
 
