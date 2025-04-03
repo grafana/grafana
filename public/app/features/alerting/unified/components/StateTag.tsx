@@ -62,11 +62,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.primary.contrastText,
   }),
   md: css({
-    padding: theme.spacing(0.5, 0.5),
+    padding: theme.spacing(0.5, 1),
     minWidth: theme.spacing(8),
   }),
   sm: css({
-    padding: theme.spacing(0.3, 0.3),
+    padding: theme.spacing(0.3, 0.5),
     minWidth: '52px',
   }),
   muted: css({
