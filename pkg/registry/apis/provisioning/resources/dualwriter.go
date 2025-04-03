@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DualReadWriter is a wrapper around a repository that can read and write resources
@@ -36,7 +37,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, err
 	}
 
-	parsed, err := r.parser.Parse(ctx, info, false)
+	parsed, err := r.parser.Parse(ctx, info, true)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +86,8 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	// Delete the file in the grafana database
 	if ref == "" {
+		// FIXME: empty folders with no repository files will remain in the system
+		// until the next reconciliation.
 		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
 		if apierrors.IsNotFound(err) {
 			err = nil // ignorable
@@ -192,19 +195,11 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
+	// FIXME: to make sure if behaves in the same way as in sync, we should
+	// we should refactor the code to use the same function.
 	if ref == "" {
-		// FIXME: we are not creating the folder path
-		// TODO: will existing also be present here? for update?
-		if parsed.Existing == nil {
-			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
-		} else {
-			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
+		if err := r.writeParsed(ctx, path, parsed); err != nil {
+			parsed.Errors = append(parsed.Errors, err)
 		}
 	}
 
@@ -256,21 +251,36 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
+	// FIXME: to make sure if behaves in the same way as in sync, we should
+	// we should refactor the code to use the same function.
 	if ref == "" {
-		// FIXME: we are not creating the folder path
-		// FIXME: I don't like this parsed strategy here
-		if parsed.Existing == nil {
-			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
-		} else {
-			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
+		if err := r.writeParsed(ctx, path, parsed); err != nil {
+			parsed.Errors = append(parsed.Errors, err)
 		}
 	}
 
 	return parsed, err
+}
+
+// writeParsed write parsed resource to the repository and grafana database
+func (r *DualReadWriter) writeParsed(ctx context.Context, path string, parsed *ParsedResource) error {
+	if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+		return fmt.Errorf("ensure folder path exists: %w", err)
+	}
+
+	// FIXME: I don't like this parsed strategy here
+	var err error
+	if parsed.Existing == nil {
+		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("create resource: %w", err)
+		}
+	} else {
+		parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("update resource: %w", err)
+		}
+	}
+
+	return nil
 }

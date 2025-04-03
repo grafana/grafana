@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
@@ -68,9 +69,8 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here
 	fileName, err := r.resources.CreateResourceFileFromObject(ctx, parsed.Obj, resources.WriteOptions{
-		Path:       "",
-		Ref:        "",
-		Identifier: r.options.Identifier,
+		Path: "",
+		Ref:  "",
 	})
 
 	result := jobs.JobResourceResult{
@@ -117,7 +117,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	opts.OnlyCount = false // this time actually write
 	_, err = r.legacy.Migrate(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("error running legacy migrate %s %w", r.kind.Resource, err)
+		return fmt.Errorf("error running legacy migrate (%s) %w", r.kind.Resource, err)
 	}
 
 	return nil

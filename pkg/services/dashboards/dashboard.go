@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -30,14 +29,9 @@ type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*DashboardRef, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
-	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
-	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error
-	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
-	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 }
 
@@ -99,9 +93,4 @@ type Store interface {
 
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
-	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
-	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
-	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
-	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string, folder *folder.Folder) error
-	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }

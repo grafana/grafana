@@ -5,11 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
-	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // Store is an abstraction for the storage API.
@@ -57,6 +58,9 @@ type jobDriver struct {
 	// RepoGetter lets us access repositories to pass to the worker.
 	repoGetter RepoGetter
 
+	// save info about finished jobs
+	historicJobs History
+
 	// Workers process the job.
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
@@ -66,6 +70,7 @@ func NewJobDriver(
 	timeout, cleanupInterval, jobInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
+	historicJobs History,
 	workers ...Worker,
 ) *jobDriver {
 	return &jobDriver{
@@ -74,6 +79,7 @@ func NewJobDriver(
 		jobInterval:     jobInterval,
 		store:           store,
 		repoGetter:      repoGetter,
+		historicJobs:    historicJobs,
 		workers:         workers,
 	}
 }
@@ -152,12 +158,30 @@ func (d *jobDriver) drive(ctx context.Context) error {
 
 	// Process the job.
 	start := time.Now()
+	job.Status.Started = start.UnixMilli()
 	err = d.processJob(ctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
 
+	// Mark the job as failed and remove from queue
 	if err != nil {
-		return apifmt.Errorf("failed to process job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		job.Status.State = provisioning.JobStateError
+		job.Status.Errors = append(job.Status.Errors, err.Error())
+	}
+
+	job.Status.Progress = 0 // clear progressbar
+	job.Status.Finished = end.UnixMilli()
+	if !job.Status.State.Finished() {
+		job.Status.State = provisioning.JobStateSuccess // no error
+	}
+
+	// Save the finished job
+	err = d.historicJobs.WriteJob(ctx, job.DeepCopy())
+	if err != nil {
+		// We're not going to return this as it is not critical. Not ideal, but not critical.
+		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
+	} else {
+		logger.Debug("created historic job", "historic_job", *job)
 	}
 
 	// Mark the job as completed.

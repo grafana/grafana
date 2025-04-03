@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
@@ -59,7 +61,7 @@ type Parser struct {
 	urls repository.RepositoryWithURLs
 
 	// ResourceClients give access to k8s apis
-	clients *ResourceClients
+	clients ResourceClients
 }
 
 type ParsedResource struct {
@@ -104,9 +106,8 @@ type ParsedResource struct {
 	Errors []error
 }
 
-// FIXME: eliminate clients from parser
-
-func (r *Parser) Clients() *ResourceClients {
+// FIXME: eliminate clients from parser (but be careful that we can use the same cache/resolved GVK+GVR)
+func (r *Parser) Clients() ResourceClients {
 	return r.clients
 }
 
@@ -119,10 +120,6 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	if err := IsPathSupported(info.Path); err != nil {
 		return parsed, err
-	}
-
-	if info.Path == "" {
-		return parsed, errors.New("path is required")
 	}
 
 	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
@@ -171,12 +168,17 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Checksum: info.Hash,
 	})
 
-	// Calculate name+folder from the file path
+	if obj.GetName() == "" && obj.GetGenerateName() == "" {
+		parsed.Errors = append(parsed.Errors,
+			field.Required(field.NewPath("name", "metadata", "name"),
+				"An explicit name must be saved in the resource (or generateName)"))
+	}
+
+	// Calculate folder identifier from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
-		parsed.Meta.SetFolder(folderName)
-		if obj.GetName() == "" {
-			obj.SetName(objName) // use the name saved in config
+		dirPath := safepath.Dir(info.Path)
+		if dirPath != "" {
+			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
 		}
 	}
 	obj.SetUID("")             // clear identifiers
@@ -220,6 +222,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 			DryRun: []string{"All"},
 		})
 	}
+
+	// When the name is missing (and generateName is configured) use the value from DryRun
+	if obj.GetName() == "" && parsed.DryRunResponse != nil {
+		obj.SetName(parsed.DryRunResponse.GetName())
+	}
+
 	if err != nil {
 		parsed.Errors = append(parsed.Errors, err)
 	}
@@ -227,12 +235,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO? should we use the dryRun (validated) version?
-	obj := make(map[string]any)
-	for k, v := range f.Obj.Object {
-		if k != "metadata" {
-			obj[k] = v
-		}
+	obj := f.Obj.DeepCopy().Object
+	delete(obj, "status")
+	name := f.Obj.GetName()
+	if name == "" {
+		delete(obj, "metadata")
+	} else {
+		obj["metadata"] = map[string]any{"name": name}
 	}
 
 	switch path.Ext(f.Info.Path) {
