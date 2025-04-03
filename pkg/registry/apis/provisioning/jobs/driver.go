@@ -176,7 +176,7 @@ func (d *jobDriver) drive(ctx context.Context) error {
 	}
 
 	// Save the finished job
-	err = d.historicJobs.WriteJob(ctx, job)
+	err = d.historicJobs.WriteJob(ctx, job.DeepCopy())
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
 		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
