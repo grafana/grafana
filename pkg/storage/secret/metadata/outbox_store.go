@@ -39,7 +39,7 @@ func (*outboxMessageDB) TableName() string {
 }
 
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
-	assert.True(input.Type > 0, "outboxStore.Append: outbox message type is required")
+	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
 	var messageID string
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -78,7 +78,6 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 				return fmt.Errorf("fetching rows from secure value outbox table: %w", err)
 			}
 			for _, row := range rows {
-				assert.True(row.MessageType > 0, "bug: row with no message type")
 				msg := contracts.OutboxMessage{
 					Type:       row.MessageType,
 					MessageID:  row.MessageID,
