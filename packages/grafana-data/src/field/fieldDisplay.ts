@@ -238,7 +238,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
-    values.push(createNoValuesFieldDisplay(options));
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    let noValuesFieldDisplay = {} as FieldDisplay;
+    try {
+      noValuesFieldDisplay = createNoValuesFieldDisplay(options);
+    } catch (e) {
+      console.error('failed to create no values field display ', e);
+    }
+    values.push(noValuesFieldDisplay);
   }
 
   return values;
@@ -401,7 +408,7 @@ export function fixCellTemplateExpressions(str: string) {
 /**
  * Clones the existing dataContext and adds rowIndex to it
  */
-function getFieldScopedVarsWithDataContexAndRowIndex(field: Field, rowIndex: number): ScopedVars | undefined {
+export function getFieldScopedVarsWithDataContexAndRowIndex(field: Field, rowIndex: number): ScopedVars | undefined {
   if (field.state?.scopedVars?.__dataContext) {
     return {
       ...field.state?.scopedVars,
