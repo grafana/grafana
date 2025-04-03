@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   isExpanded: boolean;
@@ -34,8 +35,8 @@ export const OverrideCategoryTitle = ({
           fill="text"
           icon="trash-alt"
           onClick={onOverrideRemove}
-          tooltip="Remove override"
-          aria-label="Remove override"
+          tooltip={t('dashboard.override-category-title.tooltip-remove-override', 'Remove override')}
+          aria-label={t('dashboard.override-category-title.aria-label-remove-override', 'Remove override')}
         />
       </HorizontalGroup>
       {!isExpanded && (

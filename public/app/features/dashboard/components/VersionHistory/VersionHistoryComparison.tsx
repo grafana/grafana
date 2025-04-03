@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -61,7 +62,10 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
       ))}
 
       <Box paddingTop={2}>
-        <CollapsableSection isOpen={false} label="View JSON Diff">
+        <CollapsableSection
+          isOpen={false}
+          label={t('dashboard.version-history-comparison.label-view-json-diff', 'View JSON diff')}
+        >
           <DiffViewer
             oldValue={JSON.stringify(diffData.lhs, null, 2)}
             newValue={JSON.stringify(diffData.rhs, null, 2)}

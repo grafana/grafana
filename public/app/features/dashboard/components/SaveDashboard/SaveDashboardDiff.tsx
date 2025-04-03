@@ -2,6 +2,7 @@ import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
@@ -95,12 +96,18 @@ export const SaveDashboardDiff = ({
           {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
           {value && value.showDiffs && value.diffs}
           <Box paddingTop={1}>
-            <h4>Full JSON diff</h4>
+            <h4>
+              <Trans i18nKey="dashboard.save-dashboard-diff.full-json-diff">Full JSON diff</Trans>
+            </h4>
             {value.jsonView}
           </Box>
         </>
       ) : (
-        <Box paddingTop={1}>No changes in the dashboard JSON</Box>
+        <Box paddingTop={1}>
+          <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
+            No changes in the dashboard JSON
+          </Trans>
+        </Box>
       )}
     </Stack>
   );

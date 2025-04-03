@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useDispatch, useSelector } from 'app/types';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -37,12 +38,15 @@ export const VisualizationButton = ({ panel }: Props) => {
       <ButtonGroup>
         <ToolbarButton
           className={styles.vizButton}
-          tooltip="Click to change visualization"
+          tooltip={t(
+            'dashboard.visualization-button.tooltip-click-to-change-visualization',
+            'Click to change visualization'
+          )}
           imgSrc={plugin.meta.info.logos.small}
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}
           data-testid={selectors.components.PanelEditor.toggleVizPicker}
-          aria-label="Change Visualization"
+          aria-label={t('dashboard.visualization-button.aria-label-change-visualization', 'Change visualization')}
           variant="canvas"
           fullWidth
         >

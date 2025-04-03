@@ -20,7 +20,7 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
@@ -119,13 +119,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       {currentTab === SnapshotTab.Data && (
         <div className={styles.code}>
           <div className={styles.opts}>
-            <Field label="Template" className={styles.field}>
+            <Field label={t('dashboard.help-wizard.label-template', 'Template')} className={styles.field}>
               <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
             </Field>
 
             {showMessage === ShowMessage.GithubComment ? (
               <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
-                Copy to clipboard
+                <Trans i18nKey="dashboard.help-wizard.copy-to-clipboard">Copy to clipboard</Trans>
               </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
@@ -152,26 +152,26 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       {currentTab === SnapshotTab.Support && (
         <>
           <Field
-            label="Obfuscate data"
+            label={t('dashboard.help-wizard.label-obfuscate-data', 'Obfuscate data')}
             description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
             <Stack direction="row" gap={1}>
               <InlineSwitch
-                label="Labels"
+                label={t('dashboard.help-wizard.randomize-labels-label-labels', 'Labels')}
                 id="randomize-labels"
                 showLabel={true}
                 value={Boolean(randomize.labels)}
                 onChange={() => service.onToggleRandomize('labels')}
               />
               <InlineSwitch
-                label="Field names"
+                label={t('dashboard.help-wizard.randomize-field-names-label-field-names', 'Field names')}
                 id="randomize-field-names"
                 showLabel={true}
                 value={Boolean(randomize.names)}
                 onChange={() => service.onToggleRandomize('names')}
               />
               <InlineSwitch
-                label="String values"
+                label={t('dashboard.help-wizard.randomize-string-values-label-string-values', 'String values')}
                 id="randomize-string-values"
                 showLabel={true}
                 value={Boolean(randomize.values)}
@@ -180,7 +180,10 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             </Stack>
           </Field>
 
-          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
+          <Field
+            label={t('dashboard.help-wizard.label-support-snapshot', 'Support snapshot')}
+            description={`Panel: ${panelTitle}`}
+          >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                 <Trans i18nKey="help-wizard.download-snapshot">Download snapshot</Trans> ({snapshotSize})
@@ -188,7 +191,10 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
               <ClipboardButton
                 icon="github"
                 getText={service.onGetMarkdownForClipboard}
-                title="Copy a complete GitHub comment to the clipboard"
+                title={t(
+                  'dashboard.help-wizard.title-complete-git-hub-comment-clipboard',
+                  'Copy a complete GitHub comment to the clipboard'
+                )}
               >
                 <Trans i18nKey="help-wizard.github-comment">Copy Github comment</Trans>
               </ClipboardButton>
