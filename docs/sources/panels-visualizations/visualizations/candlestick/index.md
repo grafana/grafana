@@ -129,18 +129,6 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 The candlestick visualization is based on the time series visualization, and it can visualize additional data dimensions beyond open, high, low, close, and volume.
 The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
-### Tooltip options
-
-Tooltip options control the information overlay that appears when you hover over data points in the visualization.
-
-| Option                                  | Description                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
-| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
-| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
-| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
-
 ### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
