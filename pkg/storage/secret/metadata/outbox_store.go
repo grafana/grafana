@@ -79,15 +79,18 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 			}
 			for _, row := range rows {
 				assert.True(row.MessageType > 0, "bug: row with no message type")
-				messages = append(messages, contracts.OutboxMessage{
-					Type:            row.MessageType,
-					MessageID:       row.MessageID,
-					Name:            row.Name,
-					Namespace:       row.Namespace,
-					EncryptedSecret: v0alpha1.ExposedSecureValue(row.EncryptedSecret),
-					KeeperName:      row.KeeperName,
-					ExternalID:      row.ExternalID,
-				})
+				msg := contracts.OutboxMessage{
+					Type:       row.MessageType,
+					MessageID:  row.MessageID,
+					Name:       row.Name,
+					Namespace:  row.Namespace,
+					KeeperName: row.KeeperName,
+					ExternalID: row.ExternalID,
+				}
+				if row.MessageType != contracts.DeleteSecretOutboxMessage {
+					msg.EncryptedSecret = v0alpha1.ExposedSecureValue(row.EncryptedSecret)
+				}
+				messages = append(messages, msg)
 			}
 			return nil
 		})
