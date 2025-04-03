@@ -621,7 +621,6 @@ export function mapFrameToDataGrid({
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
 
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   // If nested frames, add expansion control column
@@ -722,6 +721,8 @@ export function mapFrameToDataGrid({
     } else {
       fieldCountWithoutWidth++;
     }
+
+    const cellInspect = Boolean(field.config.custom?.inspect);
 
     // Add a column for each field
     columns.push({
