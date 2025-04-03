@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
 
 	"gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,10 +21,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-)
-
-var (
-	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 )
 
 type ParserFactory struct {
@@ -153,7 +149,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, ErrNamespaceMismatch
+		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
 	}
 
 	obj.SetNamespace(r.repo.Namespace)
@@ -186,6 +182,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		return parsed, fmt.Errorf("no clients configured")
 	}
 
+	// TODO: catch the not found gvk error to return bad request
 	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
 	if err != nil {
 		return parsed, fmt.Errorf("get client for kind: %w", err)
