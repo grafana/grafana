@@ -103,13 +103,12 @@ spec:
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), info)
-		// TODO: which error is this one?
-		require.Error(t, err) // no clients configured!
+		require.EqualError(t, err, "no clients configured")
 		err = parsed.DryRun(context.Background())
-		require.Error(t, err) // no clients configured!
+		require.EqualError(t, err, "no client configured")
 
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
-		require.Equal(t, &schema.GroupVersionKind{
+		require.Equal(t, schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
 			Version: "v0alpha1",
 			Kind:    "Dashboard",

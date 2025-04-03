@@ -41,6 +41,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
+	// TODO: do we want to fail or not?
 	if err := parsed.DryRun(ctx); err != nil {
 		return nil, fmt.Errorf("run dry run: %w", err)
 	}
@@ -154,14 +155,9 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		Ref:  ref,
 	}
 
-	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
 		return nil, fmt.Errorf("parse file: %w", err)
-	}
-
-	if err := parsed.DryRun(ctx); err != nil {
-		return nil, fmt.Errorf("run dry run: %w", err)
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -169,8 +165,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	err = r.repo.Create(ctx, path, ref, data, message)
-	if err != nil {
+	if err = r.repo.Create(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("create resource in repository: %w", err)
 	}
 
@@ -179,8 +174,18 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
 	if ref == "" {
-		if err := r.writeParsed(ctx, path, parsed); err != nil {
-			return nil, err
+		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
+	} else {
+		// TODO: should we completely fail?
+		// TODO: do we want to do a dry run before saving into the repository?
+		if err := parsed.DryRun(ctx); err != nil {
+			return nil, fmt.Errorf("dry run resource: %w", err)
 		}
 	}
 
@@ -205,10 +210,6 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err := parsed.DryRun(ctx); err != nil {
-		return nil, fmt.Errorf("run dry run: %w", err)
-	}
-
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
@@ -224,33 +225,20 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
 	if ref == "" {
-		if err := r.writeParsed(ctx, path, parsed); err != nil {
-			return nil, err
+		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
+	} else {
+		// TODO: should we completely fail?
+		// TODO: do we want to do a dry run before saving into the repository?
+		if err := parsed.DryRun(ctx); err != nil {
+			return nil, fmt.Errorf("dry run resource: %w", err)
 		}
 	}
 
 	return parsed, nil
-}
-
-// writeParsed write parsed resource to the repository and grafana database
-func (r *DualReadWriter) writeParsed(ctx context.Context, path string, parsed *ParsedResource) error {
-	if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
-		return fmt.Errorf("ensure folder path exists: %w", err)
-	}
-
-	// FIXME: I don't like this parsed strategy here
-	var err error
-	if parsed.Existing == nil {
-		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("create resource: %w", err)
-		}
-	} else {
-		parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("update resource: %w", err)
-		}
-	}
-
-	return nil
 }
