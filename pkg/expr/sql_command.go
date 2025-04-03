@@ -184,6 +184,20 @@ func totalCells(frames []*data.Frame) (total int64) {
 	return
 }
 
+// extractNumberSetFromSQLForAlerting converts a data frame produced by a SQL expression
+// into a slice of mathexp.Number values for use in alerting.
+//
+// This function enforces strict semantics: each row must have exactly one numeric value
+// and a unique label set. If any label set appears more than once, an error is returned.
+//
+// It is the responsibility of the SQL query to ensure uniqueness — for example, by
+// applying GROUP BY or aggregation clauses. This function will not deduplicate rows;
+// it will reject the entire input if any duplicates are present.
+//
+// Returns an error if:
+//   - No numeric field is found.
+//   - More than one numeric field exists.
+//   - Any label set appears more than once.
 func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, error) {
 	var (
 		numericField   *data.Field
