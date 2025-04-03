@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 
@@ -32,10 +33,13 @@ const ContactPointsFilter = () => {
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field className={styles.noBottom} label="Search by name or type">
+      <Field
+        className={styles.noBottom}
+        label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'Search by name or type')}
+      >
         <Input
-          aria-label="search contact points"
-          placeholder="Search"
+          aria-label={t('alerting.contact-points-filter.aria-label-search-contact-points', 'search contact points')}
+          placeholder={t('alerting.contact-points-filter.placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
@@ -44,8 +48,14 @@ const ContactPointsFilter = () => {
           value={searchValue}
         />
       </Field>
-      <Button variant="secondary" icon="times" onClick={() => clear()} disabled={!hasInput} aria-label="clear">
-        Clear
+      <Button
+        variant="secondary"
+        icon="times"
+        onClick={() => clear()}
+        disabled={!hasInput}
+        aria-label={t('alerting.contact-points-filter.aria-label-clear', 'clear')}
+      >
+        <Trans i18nKey="alerting.contact-points-filter.clear">Clear</Trans>
       </Button>
     </Stack>
   );
