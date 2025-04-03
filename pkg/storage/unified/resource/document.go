@@ -272,7 +272,8 @@ func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefini
 }
 
 const SEARCH_FIELD_PREFIX = "fields."
-const SEARCH_FIELD_ID = "_id"            // {namespace}/{group}/{resource}/{name}
+const SEARCH_FIELD_ID = "_id" // {namespace}/{group}/{resource}/{name}
+const SEARCH_FIELD_LEGACY_ID = utils.LabelKeyDeprecatedInternalID
 const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
 const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
 const SEARCH_FIELD_NAMESPACE = "namespace"
@@ -386,6 +387,16 @@ func StandardSearchFields() SearchableDocumentFields {
 				Name:        SEARCH_FIELD_SCORE,
 				Type:        ResourceTableColumnDefinition_DOUBLE,
 				Description: "The search score",
+			},
+			{
+				Name:        SEARCH_FIELD_LEGACY_ID,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "Deprecated legacy id of the resource",
+			},
+			{
+				Name:        SEARCH_FIELD_MANAGER_KIND,
+				Type:        ResourceTableColumnDefinition_STRING,
+				Description: "Type of manager, which is responsible for managing the resource",
 			},
 		})
 		if err != nil {
