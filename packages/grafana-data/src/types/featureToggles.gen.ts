@@ -550,7 +550,7 @@ export interface FeatureToggles {
   */
   newFolderPicker?: boolean;
   /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
@@ -1079,6 +1079,10 @@ export interface FeatureToggles {
   * Support Application Signals queries in the X-Ray datasource
   */
   xrayApplicationSignals?: boolean;
+  /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
   /**
   * Enables localization for plugins
   */

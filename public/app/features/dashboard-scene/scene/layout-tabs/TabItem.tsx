@@ -15,6 +15,7 @@ import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
@@ -41,6 +42,7 @@ export interface TabItemState extends SceneObjectState {
    */
   isNew?: boolean;
   isDropTarget?: boolean;
+  conditionalRendering?: ConditionalRendering;
 }
 
 export class TabItem
@@ -64,7 +66,20 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    const deactivate = this.state.conditionalRendering?.activate();
+
+    return () => {
+      if (deactivate) {
+        deactivate();
+      }
+    };
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {

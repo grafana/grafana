@@ -931,7 +931,7 @@ var (
 		},
 		{
 			Name:              "jitterAlertRulesWithinGroups",
-			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
 			FrontendOnly:      false,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAlertingSquad,
@@ -1857,6 +1857,13 @@ var (
 			FrontendOnly:      true,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:         "multiTenantTempCredentials",
+			Description:  "use multi-tenant path for awsTempCredentials",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "localizationForPlugins",
