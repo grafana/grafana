@@ -215,7 +215,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	// MetricsIncludeTeamLabel configures grafana to set a label for
+	// MetricsIncludeTeamLabel configures grafana to set a label fotokenExpirationDayLimitr
 	// the team responsible for the code at Grafana labs. We don't expect anyone else to
 	// use this setting.
 	MetricsIncludeTeamLabel          bool
@@ -227,6 +227,7 @@ type Cfg struct {
 	MinRefreshInterval          string
 	DefaultHomeDashboardPath    string
 	DashboardPerformanceMetrics []string
+	PanelSeriesLimit            int
 
 	// Auth
 	LoginCookieName               string
@@ -1150,6 +1151,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
+	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

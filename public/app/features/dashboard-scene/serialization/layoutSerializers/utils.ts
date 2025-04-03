@@ -72,6 +72,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
+    seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
@@ -115,6 +116,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
         uid: panel.spec.libraryPanel.uid,
