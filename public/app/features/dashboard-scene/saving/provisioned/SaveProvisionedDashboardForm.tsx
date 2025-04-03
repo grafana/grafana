@@ -134,6 +134,11 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
+    // If user is writing to the original branch, override ref with whatever we loaded from
+    if (workflow === 'write') {
+      ref = loadedFromRef;
+    }
+
     // The dashboard spec
     const saveModel = dashboard.getSaveAsModel({
       isNew,
@@ -141,17 +146,23 @@ export function SaveProvisionedDashboardForm({
       description,
     });
 
-    // If user is writing to the original branch, override ref with whatever we loaded from
-    if (workflow === 'write') {
-      ref = loadedFromRef;
-    }
+    const dash = {
+      apiVersion: 'dashboard.grafana.app/v1alpha1', // get from the dashboard?
+      kind: 'Dashboard',
+      metadata: {
+        ...meta.k8s,
+        name: meta.uid,
+        generateName: isNew ? 'p' : undefined,
+      },
+      spec: saveModel,
+    };
 
     createOrUpdateFile({
       ref,
       name: repo,
       path,
       message: comment,
-      body: { ...saveModel, uid: meta.uid },
+      body: dash,
     });
   };
 
@@ -238,7 +249,7 @@ export function SaveProvisionedDashboardForm({
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" {...register('path')} />
+          <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
         </Field>
 
         <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
