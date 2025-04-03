@@ -908,7 +908,7 @@ const (
 	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagPluginsCDNSyncLoader
-	// Load plugins from CDN synchronously
+	// Loads plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
@@ -968,12 +968,20 @@ const (
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
 	// FlagLocaleFormatPreference
-	// Specify the locale so we can show the correct format for numbers and dates
+	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
 
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagExtensionSidebar
+	// Enables the extension sidebar
+	FlagExtensionSidebar = "extensionSidebar"
+
+	// FlagAlertingRulePermanentlyDelete
+	// Enables UI functionality to permanently delete alert rules
+	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules

@@ -5,6 +5,7 @@ import { useLocation } from 'react-router';
 import { locationUtil, textUtil } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
@@ -30,6 +31,15 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
+  }
+
+  let titleCollisionProps = {};
+
+  if (!model.hasUniqueTitle()) {
+    titleCollisionProps = {
+      icon: 'exclamation-triangle',
+      tooltip: t('dashboard.tabs-layout.tab-warning.title-not-unique', 'This title is not unique'),
+    };
   }
 
   return (
@@ -70,6 +80,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             }}
             label={titleInterpolated}
             data-dashboard-drop-target-key={model.state.key}
+            {...titleCollisionProps}
           />
         </div>
       )}

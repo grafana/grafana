@@ -70,7 +70,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
-    this.setState({ tabs: [...this.state.tabs, newTab] });
+    this.addNewTab(newTab);
   }
 
   public getUrlState() {
@@ -232,5 +232,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return key;
+  }
+
+  public duplicateTitles() {
+    const titleCounts = new Map<string | undefined, number>();
+    const duplicateTitles = new Set<string | undefined>();
+
+    this.state.tabs.forEach((tab) => {
+      const title = tab.state.title;
+      const count = (titleCounts.get(title) ?? 0) + 1;
+      titleCounts.set(title, count);
+      if (count > 1) {
+        duplicateTitles.add(title);
+      }
+    });
+
+    return duplicateTitles;
   }
 }
