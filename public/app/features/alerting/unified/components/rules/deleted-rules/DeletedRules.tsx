@@ -6,8 +6,10 @@ import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
+import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
+import { ConfirmDeletedPermanentlyModal } from './ConfirmDeletePermanantlyModal';
 import { ConfirmRestoreDeletedRuleModal } from './ConfirmRestoreDeletedRuleModal';
 
 const DELETED_RULES_PAGE_SIZE = 30;
@@ -18,7 +20,8 @@ interface DeletedRulesProps {
 export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
-
+  const [guidToDelete, setGuidToDelete] = useState<string | undefined>();
+  const confirmDeletePermanently = guidToDelete !== undefined;
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
   if (deletedRules.length === 0) {
@@ -40,9 +43,23 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
     setRestoreRule(ruleTorestore);
   };
 
-  const hideConfirmation = () => {
+  const hideConfirmationForRestore = () => {
     setConfirmRestore(false);
   };
+  const hideConfirmationForDelete = () => {
+    setGuidToDelete(undefined);
+  };
+
+  const showDeleteConfirmation = (id: string) => {
+    const ruleTorestore = deletedRules.find((rule) => getRowId(rule.grafana_alert) === id);
+    if (!ruleTorestore) {
+      return;
+    }
+
+    setGuidToDelete(ruleTorestore.grafana_alert.guid);
+  };
+
+  const shouldAllowRemovePermanently = shouldAllowPermanentlyDeletingRules();
 
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
     {
@@ -105,6 +122,18 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
             >
               <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
             </Button>
+            {shouldAllowRemovePermanently && (
+              <Button
+                variant="destructive"
+                size="sm"
+                icon="trash-alt"
+                onClick={() => {
+                  showDeleteConfirmation(getRowId(row.original.grafana_alert));
+                }}
+              >
+                <Trans i18nKey="alerting.deleted-rules.permanently-delete">Permanently delete</Trans>
+              </Button>
+            )}
           </Stack>
         );
       },
@@ -124,9 +153,14 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
       <ConfirmRestoreDeletedRuleModal
         ruleToRestore={restoreRule}
         isOpen={confirmRestore}
-        onDismiss={hideConfirmation}
+        onDismiss={hideConfirmationForRestore}
         onRestoreSucess={trackDeletedRuleRestoreSuccess}
         onRestoreError={trackDeletedRuleRestoreFail}
+      />
+      <ConfirmDeletedPermanentlyModal
+        guid={guidToDelete}
+        isOpen={confirmDeletePermanently}
+        onDismiss={hideConfirmationForDelete}
       />
     </>
   );

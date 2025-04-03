@@ -1839,6 +1839,16 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:              "alertingRulePermanentlyDelete",
+			Description:       "Enables UI functionality to permanently delete alert rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
+		},
+		{
 			Name:              "alertingRuleRecoverDeleted",
 			Description:       "Enables the UI functionality to recover and view deleted alert rules",
 			FrontendOnly:      true,

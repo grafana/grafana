@@ -478,8 +478,16 @@
       "without-soft-delete": "Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
     },
     "deleted-rules": {
+      "delete-modal": {
+        "body": "Are you sure you want to permanently delete this alert rule? This action cannot be undone.",
+        "confirm": "Yes, permanently delete",
+        "error": "Could not permanently delete alert rule",
+        "success": "Alert rule permanently deleted",
+        "title": "Permanently delete alert rule"
+      },
       "empty-state-title": "No recently deleted rules found",
       "errorloading": "Failed to load alert deleted rules",
+      "permanently-delete": "Permanently delete",
       "restore": "Restore",
       "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.",
       "restore-modal": {
@@ -5651,7 +5659,7 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Delete permanently",
+      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {

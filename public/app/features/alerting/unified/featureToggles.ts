@@ -11,3 +11,6 @@ export const useGrafanaManagedRecordingRulesSupport = () =>
 
 export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
+
+export const shouldAllowPermanentlyDeletingRules = () =>
+  (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;

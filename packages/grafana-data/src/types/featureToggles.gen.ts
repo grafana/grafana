@@ -1070,6 +1070,11 @@ export interface FeatureToggles {
   */
   extensionSidebar?: boolean;
   /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
+  /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
   */
