@@ -207,7 +207,6 @@ function getStyles(theme: GrafanaTheme2) {
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
-        width: `calc(100% - ${theme.spacing(3)})`,
 
         '&:before': {
           content: '""',
