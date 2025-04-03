@@ -5054,6 +5054,7 @@
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
+      "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-branch": "Create a branch (and pull request) for changes",
@@ -5064,6 +5065,7 @@
       "description-workflows-makes-repository": "No workflows makes the repository read only",
       "description-write": "Allow writing updates to the remote repository",
       "error-required": "This field is required.",
+      "error-save-repository": "Failed to save repository settings",
       "error-valid-github-url": "Please enter a valid GitHub repository URL",
       "label-automatic-pulling": "Automatic pulling",
       "label-branch": "Branch",
@@ -5137,6 +5139,7 @@
     "delete-repository-button": {
       "button-delete": "Delete",
       "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
       "title-delete-repository": "Delete repository config",
       "tooltip-delete-this-repository": "Delete this repository"
@@ -5235,6 +5238,7 @@
       "button-delete-repositories": "Delete repositories",
       "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
       "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
+      "error-delete-all-repositories": "Failed to delete all repositories",
       "remove-all-configured-repositories": "Remove all configured repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
@@ -5403,10 +5407,7 @@
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-submitting": "Submitting...",
-      "error-failed-to-delete": "Failed to delete repository. Please try again.",
       "error-instance-repository-exists": "Instance repository already exists",
-      "success-repository-deleted": "Repository deleted",
-      "success-repository-saved": "Repository saved",
       "title-repository-verification-failed": "Repository verification failed"
     }
   },
