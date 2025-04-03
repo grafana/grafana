@@ -134,7 +134,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellNGProps {
-  cellInspect: boolean;
   field: Field;
   frame: DataFrame;
   getActions?: GetActionsFunction;

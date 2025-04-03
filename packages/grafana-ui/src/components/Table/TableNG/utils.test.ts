@@ -1047,7 +1047,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: false,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1073,7 +1079,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: false,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1098,7 +1110,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         true, // textWrap ENABLED
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: true,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1123,7 +1141,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        true, // cellInspect ENABLED
+        {
+          config: {
+            custom: {
+              inspect: true,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 

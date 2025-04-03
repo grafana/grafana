@@ -32,11 +32,12 @@ export function TableCellNG(props: TableCellNGProps) {
     shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
-    cellInspect,
     getActions,
     rowBg,
     onCellFilterAdded,
   } = props;
+
+  const cellInspect = field.config?.custom?.inspect ?? false;
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
@@ -148,6 +149,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
       tableCellDiv?.style.setProperty('white-space', 'normal');
       tableCellDiv?.style.setProperty('min-height', `${height}px`);
+      tableCellDiv?.style.setProperty('width', `${divWidth}px`);
     }
   };
 
@@ -179,7 +181,7 @@ export function TableCellNG(props: TableCellNGProps) {
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
-      {isHovered && (
+      {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
           {cellInspect && (
             <IconButton
