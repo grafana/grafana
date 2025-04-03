@@ -129,9 +129,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 			obj = resource.AsResourceWrapper()
 			code = http.StatusOK
-			if len(resource.Errors) > 0 {
-				code = http.StatusNotAcceptable
-			}
 		case http.MethodPost:
 			if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)

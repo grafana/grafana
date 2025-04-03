@@ -126,16 +126,16 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	return fileName, nil
 }
 
-func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	// Read the referenced file
 	fileInfo, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	parsed, err := r.parser.Parse(ctx, fileInfo)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to parse file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
 	}
 
 	// Check if the resource already exists
@@ -166,7 +166,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error) {
 	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
 	if err != nil {
 		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
@@ -175,15 +175,15 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	return r.WriteResourceFromFile(ctx, newPath, newRef)
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return "", nil, fmt.Errorf("no object found")
+		return "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
 	}
 
 	objName := obj.GetName()
@@ -194,15 +194,15 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	client, _, err := r.clients.ForKind(*gvk)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get client for deleted object: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
 	}
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to delete: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, gvk, nil
+	return objName, schema.GroupVersionKind{}, nil
 }
 
 func (r *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {

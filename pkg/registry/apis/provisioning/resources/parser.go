@@ -82,9 +82,9 @@ type ParsedResource struct {
 	Meta utils.GrafanaMetaAccessor
 
 	// The Kind is defined in the file
-	GVK *schema.GroupVersionKind
+	GVK schema.GroupVersionKind
 	// The Resource is found by mapping Kind to the right apiserver
-	GVR *schema.GroupVersionResource
+	GVR schema.GroupVersionResource
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
@@ -100,9 +100,6 @@ type ParsedResource struct {
 
 	// When the value has been saved in the grafana database
 	Upsert *unstructured.Unstructured
-
-	// If we got some Errors
-	Errors []error
 }
 
 // FIXME: eliminate clients from parser
@@ -119,24 +116,25 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if err := IsPathSupported(info.Path); err != nil {
-		return parsed, err
+		return nil, err
 	}
 
-	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if err != nil {
-		logger.Debug("failed to find GVK of the input data", "error", err)
-		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
-		if err != nil {
-			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
-			return parsed, err
+	var gvk *schema.GroupVersionKind
+	parsed.Obj, gvk, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
+	if err != nil || gvk == nil {
+		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
+		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
+		if err != nil || gvk == nil {
+			return nil, fmt.Errorf("get GVK from fallback loader: %w", err)
 		}
 	}
+
+	parsed.GVK = *gvk
 
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
 		if err != nil {
-			logger.Debug("failed to load resource URLs", "error", err)
-			return parsed, err
+			return nil, fmt.Errorf("load resource URLs: %w", err)
 		}
 	}
 
@@ -149,13 +147,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get meta accessor: %w", err)
 	}
 	obj := parsed.Obj
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
+		return nil, ErrNamespaceMismatch
 	}
 
 	obj.SetNamespace(r.repo.Namespace)
@@ -183,31 +181,21 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 
-	// We can not do anything more if no kind is defined
-	if parsed.GVK == nil {
-		return parsed, nil
-	}
-
 	if r.clients == nil {
 		return parsed, fmt.Errorf("no client configured")
 	}
 
-	client, gvr, err := r.clients.ForKind(*parsed.GVK)
+	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
 	if err != nil {
-		return nil, err // does not map to a resour e
+		return parsed, fmt.Errorf("get client for kind: %w", err)
 	}
-
-	parsed.GVR = &gvr
-	parsed.Client = client
 
 	return parsed, nil
 }
 
-func (f *ParsedResource) DryRun(ctx context.Context) {
-	// TODO: is this append errors strategy the best one?
+func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.Client == nil {
-		f.Errors = append(f.Errors, fmt.Errorf("unable to find client"))
-		return
+		return fmt.Errorf("unable to find client")
 	}
 
 	var err error
@@ -225,9 +213,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) {
 		})
 	}
 
-	if err != nil {
-		f.Errors = append(f.Errors, err)
-	}
+	return err
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
@@ -262,16 +248,10 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Action: f.Action,
 	}
 
-	if f.GVK != nil {
-		res.Type.Group = f.GVK.Group
-		res.Type.Version = f.GVK.Version
-		res.Type.Kind = f.GVK.Kind
-	}
-
-	// The resource (GVR) is derived from the kind (GVK)
-	if f.GVR != nil {
-		res.Type.Resource = f.GVR.Resource
-	}
+	res.Type.Group = f.GVK.Group
+	res.Type.Version = f.GVK.Version
+	res.Type.Kind = f.GVK.Kind
+	res.Type.Resource = f.GVR.Resource
 
 	if f.Obj != nil {
 		res.File = v0alpha1.Unstructured{Object: f.Obj.Object}
@@ -293,8 +273,6 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Timestamp:  info.Modified,
 		Resource:   res,
 	}
-	for _, err := range f.Errors {
-		wrap.Errors = append(wrap.Errors, err.Error())
-	}
+
 	return wrap
 }

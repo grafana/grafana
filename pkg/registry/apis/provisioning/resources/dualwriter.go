@@ -34,24 +34,16 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
 	parsed, err := r.parser.Parse(ctx, info)
-	parsed.DryRun(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		if parsed.GVK != nil {
-			//nolint:govet
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: %s", parsed.GVK.Kind))
-		} else {
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
-		}
+	if err := parsed.DryRun(ctx); err != nil {
+		return nil, fmt.Errorf("run dry run: %w", err)
 	}
 
 	return parsed, nil
@@ -69,14 +61,14 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	file, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err // unable to read value
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
 	// TODO: document in API specification
 	// We can only delete parsable things
 	parsed, err := r.parser.Parse(ctx, file)
 	if err != nil {
-		return nil, err // unable to read value
+		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -165,24 +157,16 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 
 	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
-	parsed.DryRun(ctx)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
+		if errors.Is(err, ErrUnableToReadResourceBytes) || errors.Is(err, ErrUnknownResource) {
+			return nil, apierrors.NewBadRequest(err.Error())
 		}
 
 		return nil, err
 	}
 
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
-	}
-
-	// Do not write if any errors exist
-	if len(parsed.Errors) > 0 {
-		return parsed, err
+	if err := parsed.DryRun(ctx); err != nil {
+		return nil, fmt.Errorf("run dry run: %w", err)
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -201,11 +185,11 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	// we should refactor the code to use the same function.
 	if ref == "" {
 		if err := r.writeParsed(ctx, path, parsed); err != nil {
-			parsed.Errors = append(parsed.Errors, err)
+			return nil, err
 		}
 	}
 
-	return parsed, err
+	return parsed, nil
 }
 
 // UpdateResource updates a resource in the repository
@@ -222,24 +206,16 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 
 	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
-	parsed.DryRun(ctx)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
+		if errors.Is(err, ErrUnableToReadResourceBytes) || errors.Is(err, ErrUnknownResource) {
+			return nil, apierrors.NewBadRequest(err.Error())
 		}
 
 		return nil, err
 	}
 
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
-	}
-
-	// Do not write if any errors exist
-	if len(parsed.Errors) > 0 {
-		return parsed, err
+	if err := parsed.DryRun(ctx); err != nil {
+		return nil, fmt.Errorf("run dry run: %w", err)
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -258,11 +234,11 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	// we should refactor the code to use the same function.
 	if ref == "" {
 		if err := r.writeParsed(ctx, path, parsed); err != nil {
-			parsed.Errors = append(parsed.Errors, err)
+			return nil, err
 		}
 	}
 
-	return parsed, err
+	return parsed, nil
 }
 
 // writeParsed write parsed resource to the repository and grafana database

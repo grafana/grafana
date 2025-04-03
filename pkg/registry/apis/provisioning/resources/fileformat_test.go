@@ -103,8 +103,9 @@ spec:
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), info)
-		parsed.DryRun(context.Background())
-		// TODO: this was not true!
+		// TODO: which error is this one?
+		require.Error(t, err) // no clients configured!
+		err = parsed.DryRun(context.Background())
 		require.Error(t, err) // no clients configured!
 
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
