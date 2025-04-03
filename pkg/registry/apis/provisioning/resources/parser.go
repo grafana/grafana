@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
@@ -173,10 +174,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 				"An explicit name must be saved in the resource (or generateName)"))
 	}
 
-	// Calculate name+folder from the file path
+	// Calculate folder identifier from the file path
 	if info.Path != "" {
-		_, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
-		parsed.Meta.SetFolder(folderName)
+		dirPath := safepath.Dir(info.Path)
+		if dirPath != "" {
+			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		}
 	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
