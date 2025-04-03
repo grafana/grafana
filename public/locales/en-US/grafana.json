@@ -6022,6 +6022,7 @@
     }
   },
   "service-account-picker": {
+    "select-aria-label": "Service account picker",
     "select-placeholder": "Start typing to search for service accounts"
   },
   "service-accounts": {
@@ -6362,6 +6363,9 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "sort-picker": {
+    "select-aria-label": "Sort"
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "New support bundle"
@@ -6390,9 +6394,11 @@
     "loading": "Loading...",
     "no-tags": "No tags found",
     "placeholder": "Filter by tag",
+    "select-aria-label": "Tag filter",
     "tag-option-label": "Tag option"
   },
   "team-picker": {
+    "select-aria-label": "Team picker",
     "select-placeholder": "Select a team"
   },
   "teams": {
@@ -6849,6 +6855,7 @@
     "title": "Organizations"
   },
   "user-picker": {
+    "select-aria-label": "User picker",
     "select-placeholder": "Start typing to search for user"
   },
   "user-profile": {

@@ -86,6 +86,7 @@ export class TeamPicker extends Component<Props, State> {
           className={className}
           placeholder={t('team-picker.select-placeholder', 'Select a team')}
           noOptionsMessage="No teams found"
+          aria-label={t('team-picker.select-aria-label', 'Team picker')}
         />
       </div>
     );

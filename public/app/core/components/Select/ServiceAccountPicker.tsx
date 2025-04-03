@@ -69,6 +69,7 @@ export class ServiceAccountPicker extends Component<Props, State> {
           onChange={onSelected}
           placeholder={t('service-account-picker.select-placeholder', 'Start typing to search for service accounts')}
           noOptionsMessage="No service accounts found"
+          aria-label={t('service-account-picker.select-aria-label', 'Service account picker')}
         />
       </div>
     );
