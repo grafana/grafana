@@ -456,21 +456,6 @@
     },
     {
       "metadata": {
-        "name": "alertingRuleSequentialEvaluation",
-        "resourceVersion": "1742580089675",
-        "creationTimestamp": "2025-03-21T18:01:29Z",
-        "deletionTimestamp": "2025-03-31T17:26:04Z"
-      },
-      "spec": {
-        "description": "Enables the alerting rule sequential evaluation feature",
-        "stage": "preview",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1743604189392",
         "creationTimestamp": "2025-04-02T14:29:49Z"
@@ -502,6 +487,21 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleSequentialEvaluation",
+        "resourceVersion": "1742580089675",
+        "creationTimestamp": "2025-03-21T18:01:29Z",
+        "deletionTimestamp": "2025-03-31T17:26:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting rule sequential evaluation feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
