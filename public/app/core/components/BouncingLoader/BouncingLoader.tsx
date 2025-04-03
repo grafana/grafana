@@ -16,7 +16,8 @@ export function BouncingLoader() {
       aria-label={t('bouncing-loader.label', 'Loading')}
     >
       <div className={styles.bounce}>
-        <img alt="" src="public/img/grafana_icon.svg" className={styles.logo} />
+        {/* @PERCONA - change to PMM logo */}
+        <img alt="" src="public/img/pmm-app-rounded-icon.svg" className={styles.logo} />
       </div>
     </div>
   );
