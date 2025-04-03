@@ -35,9 +35,8 @@ export function PromDurationDocs() {
           <div>
             <Trans i18nKey="alerting.prom-duration-docs.multiple-units-combined">Multiple units combined</Trans>
           </div>
-          <code>
-            <Trans i18nKey="alerting.prom-duration-docs.ms-hms-wd">1m30s, 2h30m20s, 1w2d</Trans>
-          </code>
+          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+          <code>1m30s, 2h30m20s, 1w2d</code>
         </div>
       </div>
     </div>
