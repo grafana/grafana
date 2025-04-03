@@ -141,6 +141,10 @@
     {
       "method": "DELETE",
       "reqRole": "Editor"
+    },
+    {
+      "method": "GET",
+      "reqRole": "Viewer"
     }
   ],
   "info": {
