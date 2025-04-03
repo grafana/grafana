@@ -181,7 +181,7 @@ export function TableCellNG(props: TableCellNGProps) {
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
-      {isHovered && (
+      {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
           {cellInspect && (
             <IconButton
