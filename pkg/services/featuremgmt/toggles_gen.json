@@ -251,6 +251,23 @@
     },
     {
       "metadata": {
+        "name": "alertingDeletePermanently",
+        "resourceVersion": "1742988550168",
+        "creationTimestamp": "2025-03-26T11:29:10Z",
+        "deletionTimestamp": "2025-04-02T14:29:49Z"
+      },
+      "spec": {
+        "description": "Enables the UI functionality to delete permanently alert rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-23T12:29:19Z"
@@ -439,6 +456,22 @@
     },
     {
       "metadata": {
+        "name": "alertingRulePermanentlyDelete",
+        "resourceVersion": "1743604189392",
+        "creationTimestamp": "2025-04-02T14:29:49Z"
+      },
+      "spec": {
+        "description": "Enables UI functionality to permanently delete alert rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleRecoverDeleted",
         "resourceVersion": "1741351039908",
         "creationTimestamp": "2025-03-07T09:25:14Z",
@@ -454,6 +487,21 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleSequentialEvaluation",
+        "resourceVersion": "1742580089675",
+        "creationTimestamp": "2025-03-21T18:01:29Z",
+        "deletionTimestamp": "2025-03-31T17:26:04Z"
+      },
+      "spec": {
+        "description": "Enables the alerting rule sequential evaluation feature",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1166,23 +1214,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardRestore",
-        "resourceVersion": "1728397491294",
-        "creationTimestamp": "2024-05-16T17:36:26Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-10-08 14:24:51.294668 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables deleted dashboard restore feature",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardRestoreUI",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-25T14:43:13Z",
@@ -1739,6 +1770,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "extensionSidebar",
+        "resourceVersion": "1743071445006",
+        "creationTimestamp": "2025-03-27T10:30:45Z"
+      },
+      "spec": {
+        "description": "Enables the extension sidebar",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
       }
     },
     {
@@ -2324,11 +2368,14 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-18T18:48:11Z"
+        "resourceVersion": "1742581260617",
+        "creationTimestamp": "2024-01-18T18:48:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-03-21 18:21:00.617577 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+        "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
@@ -2495,11 +2542,14 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1742397804851",
-        "creationTimestamp": "2025-03-19T15:23:24Z"
+        "resourceVersion": "1743662997585",
+        "creationTimestamp": "2025-03-19T15:23:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-03 06:49:57.585909 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Specify the locale so we can show the correct format for numbers and dates",
+        "description": "Specifies the locale so the correct format for numbers and dates can be shown",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
@@ -2858,6 +2908,19 @@
         "description": "Enable support for Machine Learning in server-side expressions",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "multiTenantTempCredentials",
+        "resourceVersion": "1743614635650",
+        "creationTimestamp": "2025-04-02T17:23:55Z"
+      },
+      "spec": {
+        "description": "use multi-tenant path for awsTempCredentials",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "hideFromDocs": true
       }
     },
     {
@@ -3288,11 +3351,14 @@
     {
       "metadata": {
         "name": "pluginsCDNSyncLoader",
-        "resourceVersion": "1737026684018",
-        "creationTimestamp": "2025-01-16T11:24:44Z"
+        "resourceVersion": "1743664300735",
+        "creationTimestamp": "2025-01-16T11:24:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-03 07:11:40.735562 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Load plugins from CDN synchronously",
+        "description": "Loads plugins from CDN synchronously",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }

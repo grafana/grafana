@@ -8,8 +8,9 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
-import { useDashboardState, useInterpolatedTitle, useIsConditionallyHidden } from '../../utils/utils';
+import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
@@ -18,7 +19,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = useIsClone(model);
   const { isEditing } = useDashboardState(model);
-  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
+    useIsConditionallyHidden(model);
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
@@ -54,12 +56,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           data-dashboard-drop-target-key={model.state.key}
           className={cx(
             styles.wrapper,
+            !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
             isEditing && !isCollapsed && styles.wrapperEditing,
             isEditing && isCollapsed && styles.wrapperEditingCollapsed,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
-            isConditionallyHidden && 'dashboard-visible-hidden-element',
+            conditionalRenderingClass,
             !isClone && isSelected && 'dashboard-selected-element',
             !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
             isDropTarget && 'dashboard-drop-target'
@@ -86,11 +89,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         >
           {(!isHeaderHidden || isEditing) && (
             <div
-              className={cx(
-                isHeaderHidden && 'dashboard-visible-hidden-element',
-                styles.rowHeader,
-                'dashboard-row-header'
-              )}
+              className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               {...dragProvided.dragHandleProps}
@@ -115,6 +114,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                   role="heading"
                 >
+                  {!model.hasUniqueTitle() && (
+                    <Tooltip
+                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
+                    >
+                      <Icon name="exclamation-triangle" />
+                    </Tooltip>
+                  )}
                   {title}
                   {isHeaderHidden && (
                     <Tooltip
@@ -125,10 +131,11 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                 </span>
               </button>
-              {isDraggable && <Icon name="draggabledots" />}
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
+          {conditionalRenderingOverlay}
         </div>
       )}
     </Draggable>
@@ -138,13 +145,26 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
+
+      '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '&:hover': css({
+        '& .dashboard-row-header-drag-handle': css({
+          opacity: 1,
+        }),
+      }),
     }),
     rowTitleButton: css({
       display: 'flex',
@@ -170,6 +190,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rowTitleHidden: css({
       textDecoration: 'line-through',
+      opacity: 0.6,
+
+      '&:hover': css({
+        opacity: 1,
+      }),
     }),
     rowTitleNested: css({
       fontSize: theme.typography.body.fontSize,
@@ -181,11 +206,14 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
       minHeight: '100px',
+    }),
+    wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
+        width: 'auto',
+
         '&:before': {
           content: '""',
           position: 'absolute',

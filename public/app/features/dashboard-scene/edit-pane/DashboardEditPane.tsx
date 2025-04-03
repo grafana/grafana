@@ -21,17 +21,20 @@ import { t, Trans } from 'app/core/internationalization';
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
-import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent, ObjectsReorderedOnCanvasEvent } from './shared';
+import {
+  ConditionalRenderingChangedEvent,
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+} from './shared';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
-  showAddPane?: boolean;
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
@@ -65,6 +68,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this._subs.add(
       dashboard.subscribeToEvent(ObjectsReorderedOnCanvasEvent, ({ payload }) => {
+        this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ConditionalRenderingChangedEvent, ({ payload }) => {
         this.forceRender();
       })
     );
@@ -103,10 +112,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     return this.state.selection?.getSelection();
   }
 
-  public toggleAddPane() {
-    this.setState({ showAddPane: !this.state.showAddPane });
-  }
-
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     if (!force) {
       if (multi) {
@@ -132,7 +137,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         ...this.state.selectionContext,
         selected,
       },
-      showAddPane: false,
     });
   }
 
@@ -173,10 +177,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
-
-    if (this.state.showAddPane) {
-      this.setState({ showAddPane: false });
-    }
   }
 }
 
@@ -206,7 +206,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     }
   }, [editPane, isCollapsed]);
 
-  const { selection, showAddPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
@@ -266,14 +266,6 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     splitter.secondaryProps.style.minHeight = 'unset';
   }
 
-  if (showAddPane) {
-    return (
-      <div className={styles.wrapper}>
-        <DashboardAddPane editPane={editPane} />
-      </div>
-    );
-  }
-
   return (
     <div className={styles.wrapper}>
       <div {...splitter.containerProps}>
@@ -319,6 +311,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     overlayWrapper: css({
       right: 0,
