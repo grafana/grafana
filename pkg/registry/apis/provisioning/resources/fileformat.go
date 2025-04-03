@@ -20,7 +20,6 @@ import (
 
 var (
 	ErrUnableToReadResourceBytes       = errors.New("unable to read bytes as a resource")
-	ErrUnknownResource                 = errors.New("unknown resource")
 	ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
 )
 

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -158,11 +157,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) || errors.Is(err, ErrUnknownResource) {
-			return nil, apierrors.NewBadRequest(err.Error())
-		}
-
-		return nil, err
+		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
 	if err := parsed.DryRun(ctx); err != nil {
@@ -207,11 +202,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) || errors.Is(err, ErrUnknownResource) {
-			return nil, apierrors.NewBadRequest(err.Error())
-		}
-
-		return nil, err
+		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
 	if err := parsed.DryRun(ctx); err != nil {
