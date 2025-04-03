@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Label, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { t } from 'app/core/internationalization';
 
 import { Trans } from '../../../../../core/internationalization/index';
 import { Folder, RuleFormValues } from '../../types/rule-form';
@@ -31,7 +32,13 @@ export function FolderSelector() {
       {
         <Field
           label={
-            <Label htmlFor="folder" description={'Select a folder to store your rule in.'}>
+            <Label
+              htmlFor="folder"
+              description={t(
+                'alerting.folder-selector.description-select-folder',
+                'Select a folder to store your rule in.'
+              )}
+            >
               <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
             </Label>
           }
