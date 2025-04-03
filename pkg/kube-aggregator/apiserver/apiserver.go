@@ -97,7 +97,7 @@ type ExtraConfig struct {
 
 	// If present, the Dial method will be used for dialing out to delegate
 	// apiservers.
-	ProxyTransport *http.Transport
+	ProxyTransport *CustomTransport
 
 	// Mechanism by which the Aggregator will resolve services. Required.
 	ServiceResolver ServiceResolver
@@ -147,7 +147,7 @@ type APIAggregator struct {
 
 	delegateHandler http.Handler
 
-	// proxyCurrentCertKeyContent holds he client cert used to identify this proxy. Backing APIServices use this to confirm the proxy's identity
+	// proxyCurrentCertKeyContent holds the client cert used to identify this proxy. Backing APIServices use this to confirm the proxy's identity
 	proxyCurrentCertKeyContent certKeyFunc
 	proxyTransportDial         *transport.DialHolder
 
