@@ -829,8 +829,6 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-type userIDToUserInfoFn func(id *ngmodels.UserUID) *apimodels.UserInfo
-
 // getUserUIDmaping returns a UserUID->UserInfo mapping from the UpdatedBy users in the RulesGroup
 func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.AlertRule) map[string]*apimodels.UserInfo {
 	mapping := make(map[string]*apimodels.UserInfo)
@@ -847,7 +845,7 @@ func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.Ale
 
 	for _, user := range users {
 		mapping[user.UID] = &apimodels.UserInfo{
-			UID: user.UID,
+			UID:  user.UID,
 			Name: user.NameOrFallback(),
 		}
 	}
