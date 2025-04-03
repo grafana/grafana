@@ -196,7 +196,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		})
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
-			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 			service.features = featuremgmt.WithFeatures()
 
@@ -298,61 +297,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.NotNil(t, actualCmd)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-			})
-
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				f := folder.NewFolder(util.GenerateShortUID(), "")
-				f.UID = util.GenerateShortUID()
-				folderStore.On("Get", mock.Anything, mock.MatchedBy(func(query folder.GetFolderQuery) bool {
-					return query.OrgID == orgID && *query.UID == f.UID
-				})).Return(f, nil)
-				var actualCmd *dashboards.DeleteDashboardCommand
-				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
-				}).Return(nil).Once()
-				service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
-
-				expectedForceDeleteRules := false
-				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
-					UID:              f.UID,
-					OrgID:            orgID,
-					ForceDeleteRules: expectedForceDeleteRules,
-					SignedInUser:     usr,
-				})
-				require.NoError(t, err)
-				require.NotNil(t, actualCmd)
-				require.Equal(t, orgID, actualCmd.OrgID)
-				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-			})
-
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				f := folder.NewFolder(util.GenerateShortUID(), "")
-				f.UID = util.GenerateShortUID()
-				folderStore.On("Get", mock.Anything, mock.MatchedBy(func(query folder.GetFolderQuery) bool {
-					return query.OrgID == orgID && *query.UID == f.UID
-				})).Return(f, nil)
-				var actualCmd *dashboards.DeleteDashboardCommand
-				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
-				}).Return(nil).Once()
-				service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
-
-				expectedForceDeleteRules := true
-				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
-					UID:              f.UID,
-					OrgID:            orgID,
-					ForceDeleteRules: expectedForceDeleteRules,
-					SignedInUser:     usr,
-				})
-				require.NoError(t, err)
-				require.NotNil(t, actualCmd)
-				require.Equal(t, orgID, actualCmd.OrgID)
-				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-			})
-
-			t.Cleanup(func() {
-				service.features = featuremgmt.WithFeatures()
-				guardian.New = origNewGuardian
 			})
 		})
 

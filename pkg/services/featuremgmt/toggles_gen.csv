@@ -149,7 +149,6 @@ queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
-dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
