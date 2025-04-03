@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -265,21 +263,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	if len(duplicates) > 0 {
-		sort.Strings(duplicates)
-		var b strings.Builder
-		limit := 10
-		for i, lbl := range duplicates {
-			if i < limit {
-				fmt.Fprintf(&b, "- %s\n", lbl)
-			} else if i == limit {
-				fmt.Fprintf(&b, "... and %d more\n", len(duplicates)-limit)
-				break
-			}
-		}
-		return nil, fmt.Errorf(
-			"duplicate label sets found in SQL alerting result. Each label set must be unique.\n%s",
-			b.String(),
-		)
+		return nil, makeDuplicateStringColumnError(duplicates)
 	}
 
 	// Build final result
