@@ -57,7 +57,7 @@ import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
-import { getLogLevel, getLogLevelInfo } from 'app/features/logs/utils';
+import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { getState } from 'app/store/store';
@@ -201,7 +201,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
-  const [hiddenLogLevels, setHiddenLogLevels] = useState<string[]>([]);
+  const [hiddenLogLevels, setHiddenLogLevels] = useState<LogLevel[]>([]);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
     store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
   );
@@ -224,7 +224,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
-  const logLevelsRef = useRef<string[] | null>(null);
+  const logLevelsRef = useRef<LogLevel[] | null>(null);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -268,7 +268,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const logLevelsArray: LogLevel[] = [];
     logVolumeDataFrames.forEach((dataFrame) => {
       const { level } = getLogLevelInfo(dataFrame, logsVolumeData?.data ?? []);
-      logLevelsArray.push(getLogLevel(level));
+      logLevelsArray.push(getLogLevelFromKey(level));
     });
 
     const sortedLLArray = logLevelsArray.sort((a: string, b: string) =>
@@ -567,8 +567,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   }, []);
 
-  const onToggleLogLevel = useCallback((hiddenLevels: string[]) => {
-    setHiddenLogLevels(hiddenLevels);
+  const onToggleLogLevel = useCallback((hiddenRawLevels: string[]) => {
+    const hiddenLogLevels = hiddenRawLevels.map(getLogLevelFromKey);
+    setHiddenLogLevels(hiddenLogLevels);
   }, []);
 
   const onToggleLogsVolumeCollapse = useCallback(
@@ -780,13 +781,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           setHiddenLogLevels([]);
           return;
         }
-        const allLevels = logLevelsRef.current ?? Object.keys(LogLevelColor);
+        const allLevels = logLevelsRef.current ?? Object.keys(LogLevelColor).map(getLogLevelFromKey);
         if (hiddenLogLevels.length === 0) {
           toggleLegendRef.current?.(value[0], SeriesVisibilityChangeMode.ToggleSelection);
           setHiddenLogLevels(allLevels.filter((level) => level !== value[0]));
           return;
         }
-        const appendsLevel = value.find((level) => hiddenLogLevels.includes(level));
+        const appendsLevel = value.find((level) => hiddenLogLevels.includes(getLogLevelFromKey(level)));
         const removesLevel = allLevels.find((level) => !value.includes(level) && !hiddenLogLevels.includes(level));
         if (appendsLevel) {
           toggleLegendRef.current?.(appendsLevel, SeriesVisibilityChangeMode.AppendToSelection);
@@ -808,8 +809,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         : logLevelsRef.current.filter((level) => hiddenLogLevels.length > 0 && !hiddenLogLevels.includes(level)),
     [hiddenLogLevels]
   );
-
-  console.log(filterLevels);
 
   return (
     <>
