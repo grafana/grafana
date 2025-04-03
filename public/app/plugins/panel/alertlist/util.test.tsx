@@ -64,7 +64,9 @@ describe('filterAlerts', () => {
   it('Filters by alert instance state and label', () => {
     const options = {
       ...defaultOption,
-      ...{ stateFilter: { firing: false, pending: false, noData: false, normal: false, error: true, recovering: false } },
+      ...{
+        stateFilter: { firing: false, pending: false, noData: false, normal: false, error: true, recovering: false },
+      },
       ...{ alertInstanceLabelFilter: '{severity=low}' },
     };
     const result = filterAlerts(options, alerts);

@@ -5,7 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Label, RadioButtonGroup, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing | PromAlertingRuleState.Recovering;
+export type InstanceStateFilter =
+  | GrafanaAlertState
+  | PromAlertingRuleState.Pending
+  | PromAlertingRuleState.Firing
+  | PromAlertingRuleState.Recovering;
 
 interface Props {
   className?: string;
