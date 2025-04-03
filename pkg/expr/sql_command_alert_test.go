@@ -88,8 +88,9 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.Error(t, err)
 		require.Nil(t, numbers)
-		require.Contains(t, err.Error(), "duplicate label sets found")
+		require.Contains(t, err.Error(), "duplicate values across the string columns")
 		require.Contains(t, err.Error(), "host=a")
+		require.Contains(t, err.Error(), "GROUP BY or aggregation")
 	})
 
 	t.Run("SomeDuplicates_ReturnsError", func(t *testing.T) {
@@ -102,8 +103,9 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		numbers, err := extractNumberSetFromSQLForAlerting(input)
 		require.Error(t, err)
 		require.Nil(t, numbers)
-		require.Contains(t, err.Error(), "duplicate label sets found")
+		require.Contains(t, err.Error(), "duplicate values across the string columns")
 		require.Contains(t, err.Error(), "host=a")
+		require.Contains(t, err.Error(), "GROUP BY or aggregation")
 	})
 
 	t.Run("NoDuplicates_Succeeds", func(t *testing.T) {
@@ -136,7 +138,7 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		for i := 0; i < totalRows; i++ {
 			labels[i] = "cpu"
 			values[i] = fp(float64(i + 1))
-			h := fmt.Sprintf("host%d", i%15) // 15 distinct label sets, each repeated twice
+			h := fmt.Sprintf("host%d", i%15) // 15 distinct combos, each duplicated
 			hosts[i] = &h
 		}
 
@@ -150,7 +152,9 @@ func TestExtractNumberSetFromSQLForAlerting_Duplicates(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, numbers)
 
-		require.Contains(t, err.Error(), "duplicate label sets found")
-		require.Contains(t, err.Error(), "... and 5 more")
+		require.Contains(t, err.Error(), "duplicate values across the string columns")
+		require.Contains(t, err.Error(), "Examples:")
+		require.Contains(t, err.Error(), "... and 10 more")
+		require.Contains(t, err.Error(), "GROUP BY or aggregation")
 	})
 }
