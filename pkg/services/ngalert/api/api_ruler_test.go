@@ -291,7 +291,11 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		response := svc.RouteGetNamespaceRulesConfig(req, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
-		require.Equal(t, 1, len(fakeUserService.ListUsersByIdOrUidCalls)) // only one call to the user service
+		if len(userUids) > 0 {
+			require.Equal(t, 1, len(fakeUserService.ListUsersByIdOrUidCalls))
+		} else {
+			require.Equal(t, 0, len(fakeUserService.ListUsersByIdOrUidCalls))
+		}
 		result := &apimodels.NamespaceConfigResponse{}
 		require.NoError(t, json.Unmarshal(response.Body(), result))
 		require.NotNil(t, result)
