@@ -2,7 +2,11 @@
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "Built-in role picker",
+      "level-aria-label": "Permission level",
+      "permissions-aria-label": "Permissions slider",
       "role-label": "Role",
+      "role-select-aria-label": "Role to add new permission to",
       "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
@@ -15,7 +19,9 @@
       "permission": "Permission"
     },
     "permission-list-item": {
-      "inherited": "Inherited from folder"
+      "inherited": "Inherited from folder",
+      "locked-aria-label": "Locked permission indicator",
+      "remove-aria-label": "Remove permission for {{identifier}}"
     },
     "permissions": {
       "add-label": "Add a permission",
@@ -1160,6 +1166,9 @@
     "inline-toast": {
       "success": "Copied"
     }
+  },
+  "close-button": {
+    "tooltip": "Close"
   },
   "combobox": {
     "async": {
@@ -3194,7 +3203,9 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders"
+    "clear-folder-button": "Clear folders",
+    "select-aria-label": "Folder filter",
+    "select-placeholder": "Filter by folder"
   },
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
@@ -3206,18 +3217,25 @@
   "forgot-password": {
     "back-button": "Back to login",
     "change-password": {
+      "confirm-label": "Confirm new password",
+      "default-password-alert": "Continuing to use the default password exposes you to security risks.",
+      "new-password-label": "New password",
       "skip-button": "Skip",
       "submit-button": "Submit"
     },
     "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
     "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
     "reset-password-header": "Reset password",
-    "send-email-button": "Send reset email"
+    "send-email-button": "Send reset email",
+    "user-field-description": "Enter your information to get a reset link sent to you",
+    "user-field-label": "User",
+    "user-field-placeholder": "Email or username"
   },
   "form-prompt": {
     "continue-button": "Continue editing",
     "description": "Changes that you made may not be saved.",
-    "discard-button": "Discard unsaved changes"
+    "discard-button": "Discard unsaved changes",
+    "title": "Leave page?"
   },
   "frontendtests": {
     "test-key": "test-key not found"
@@ -3487,6 +3505,7 @@
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
+      "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
       "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
@@ -3496,8 +3515,10 @@
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
+      "inspect-menu-label": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
@@ -3638,6 +3659,16 @@
       "placeholder-password": "Password",
       "placeholder-username": "Username",
       "sign-up": "Sign up"
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "Drag and drop to reorder",
+      "duplicate-tooltip": "Duplicate",
+      "remove-tooltip": "Remove"
+    },
+    "layer-name": {
+      "edit-layer-title": "Edit layer name"
     }
   },
   "ldap-drawer": {
@@ -3898,10 +3929,10 @@
       "email-placeholder": "email",
       "email-required": "Email is required",
       "name-label": "Name",
-      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
+      "passwordless-username-label": "Username",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
@@ -4624,6 +4655,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": "Breadcrumbs"
+    },
+    "help": {
+      "aria-label": "Help"
+    },
     "invite-user": {
       "invite-button": "Invite",
       "invite-tooltip": "Invite new member"
@@ -4633,6 +4670,7 @@
       "remove-bookmark": "Remove from Bookmarks"
     },
     "kiosk": {
+      "tooltip": "Enable kiosk mode",
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
@@ -4642,12 +4680,26 @@
       "open": "Open menu",
       "undock": "Undock menu"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "Collapse section: {{sectionName}}",
+      "expand-aria-label": "Expand section: {{sectionName}}"
+    },
+    "org-switcher": {
+      "aria-label": "Change organization"
+    },
+    "profile": {
+      "aria-label": "Profile"
+    },
+    "quick-add": {
+      "aria-label": "New"
+    },
     "rss-button": "Latest from the blog"
   },
   "news": {
     "drawer": {
-      "close": "Close Drawer"
+      "close": "Close drawer"
     },
+    "link-title": "Go to Grafana labs blog",
     "title": "Latest from the blog"
   },
   "notifications": {
@@ -4672,6 +4724,17 @@
       "error": "Login provider denied login request"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": "Clear settings"
+    },
+    "field-color": {
+      "color-by-label": "Color series by"
+    },
+    "units": {
+      "clear-tooltip": "Clear unit selection"
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "Create",
@@ -4691,6 +4754,11 @@
       "placeholder-optional": "(optional)",
       "role": "Role",
       "submit": "Submit"
+    }
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": "Edit title"
     }
   },
   "panel": {
@@ -4740,7 +4808,10 @@
     "unsupported-layout": "Unsupported layout"
   },
   "panel-type-filter": {
-    "clear-button": "Clear types"
+    "clear-button": "Clear types",
+    "select-aria-label": "Panel type filter",
+    "select-no-options": "No panel types found",
+    "select-placeholder": "Filter by type"
   },
   "playlist": {
     "start-modal": {
@@ -4967,6 +5038,7 @@
     },
     "plugin-help": {
       "error": "An error occurred when loading help.",
+      "loading": "Loading help...",
       "not-found": "No query help could be found."
     },
     "plugin-installed-badge": {
@@ -5727,9 +5799,13 @@
       "clear-button": "Clear all",
       "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
     },
+    "menu-aria-label": "Role picker menu",
+    "menu-group-option-aria-label": "Role picker option",
+    "menu-option-aria-label": "Role picker option",
     "sub-menu": {
       "clear-button": "Clear"
     },
+    "sub-menu-aria-label": "Role picker submenu",
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -5737,7 +5813,8 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Basic Roles"
-    }
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana has likely been updated. Please try reloading the page.",

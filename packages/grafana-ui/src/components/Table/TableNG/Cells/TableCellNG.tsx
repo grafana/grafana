@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
+import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { CellColors, TableCellNGProps } from '../types';
@@ -167,7 +168,7 @@ export function TableCellNG(props: TableCellNGProps) {
         <div className={styles.cellActions}>
           <IconButton
             name="eye"
-            tooltip="Inspect value"
+            tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
             onClick={() => {
               setContextMenuProps({
                 value: String(value ?? ''),
