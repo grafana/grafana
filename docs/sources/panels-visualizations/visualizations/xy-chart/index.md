@@ -215,21 +215,6 @@ Options under the axis category change how the x- and y-axes are rendered. Some 
 
 {{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-#### Transform
-
-<!-- figure out where this goes -->
-
-Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
-
-- **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show the first value as a constant line.
-
-{{% admonition type="note" %}}
-The transform option is only available as an override.
-{{% /admonition %}}
-
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
-
 ### Standard options
 
 **Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
@@ -246,3 +231,16 @@ You can customize the following standard options:
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Transform
+
+Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
+
+- **Negative Y transform:** Flip the results to negative values on the Y axis.
+- **Constant:** Show the first value as a constant line.
+
+{{% admonition type="note" %}}
+The transform option is only available as an override.
+{{% /admonition %}}
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
