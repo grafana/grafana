@@ -61,7 +61,7 @@
     {
       "method": "GET",
       "path": "api/v1/alerts",
-      "reqRole": "Admin",
+      "reqRole": "Viewer",
       "reqAction": "alert.instances.external:read"
     },
     {
