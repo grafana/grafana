@@ -67,18 +67,11 @@ func TestAppendHashSuffix(t *testing.T) {
 	}
 }
 
-func TestNamesFromHashedRepoPath(t *testing.T) {
-	dashName, folderName := NamesFromHashedRepoPath("xyz", "path/to/folder/dashboard.json")
+func TestFileNameFromHashedRepoPath(t *testing.T) {
+	dashName := FileNameFromHashedRepoPath("xyz", "path/to/folder/dashboard.json")
 	assert.Equal(t, "dashboard-fy2kflbmskvt6u-9uecoahd1ekwbb7", dashName, "dashboard name of dashboard.json")
-	assert.Equal(t, "path-to-folder-3ehfurpmbvs4yxfp7a0r2uskr", folderName, "folder name of dashboard.json")
 	// We only want 40 characters because UIDs support no more. When we get rid of legacy storage, we can extend the support to 253 character long strings.
 	assert.LessOrEqual(t, len(dashName), 40, "dashName after hashing needs to be <=40 chars long")
-	assert.LessOrEqual(t, len(folderName), 40, "folderName after hashing needs to be <=40 chars long")
-
-	name1, f1 := NamesFromHashedRepoPath("xyz", "path/to/folder.json")
-	name2, f2 := NamesFromHashedRepoPath("xyz", "path/to/folder")
-	assert.Equal(t, name1, name2, "folder.json should have same object name as folder (no extension)")
-	assert.Equal(t, f1, f2, "folder.json and folder should have same folder name as each other")
 }
 
 func TestParseFolderID(t *testing.T) {
