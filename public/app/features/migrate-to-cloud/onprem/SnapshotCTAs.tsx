@@ -9,6 +9,7 @@ interface SnapshotCTAProps {
   onClick: () => void;
 }
 
+// TODO: this can be removed with the new configuration flow merged.
 export function BuildSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
