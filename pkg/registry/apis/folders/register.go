@@ -197,15 +197,7 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	// The plugin description
 	oas.Info.Description = "Grafana folders"
-
-	// The root api URL
-	root := "/apis/" + b.GetGroupVersion().String() + "/"
-
-	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+v0alpha1.FolderResourceInfo.GroupResource().Resource)
-
 	return oas, nil
 }
 

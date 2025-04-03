@@ -23,12 +23,12 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 			continue
 		}
 
-		routes := provider.GetAPIRoutes()
-		if routes == nil {
-			continue
-		}
-
 		for _, gv := range GetGroupVersions(builder) {
+			routes := provider.GetAPIRoutes(gv)
+			if routes == nil {
+				continue
+			}
+
 			prefix := "/apis/" + gv.String()
 
 			// Root handlers

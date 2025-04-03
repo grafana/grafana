@@ -260,9 +260,6 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// The root api URL
 	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
 
-	// Hide the ability to list all connections across tenants
-	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
-
 	// Add queries to the request properties
 	// Add queries to the request properties
 	err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
