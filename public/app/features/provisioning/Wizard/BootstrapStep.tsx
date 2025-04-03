@@ -84,6 +84,9 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
     );
   }
 
+  // Show the history selection
+  const canIncludeHistory = repoType === 'github' && settingsData?.legacyStorage;
+
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
@@ -160,42 +163,29 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 />
               </Alert>
             )}
-            <FieldSet label={t('provisioning.bootstrap-step.label-migrate-options', 'Migrate options')}>
-              <Stack direction="column" gap={2}>
-                <Stack direction="row" gap={2} alignItems="center">
-                  <Switch {...register('migrate.identifier')} defaultChecked={true} />
-                  <Text>
-                    <Trans i18nKey="provisioning.bootstrap-step.include-identifiers">Include identifiers</Trans>
-                  </Text>
-                  <Tooltip
-                    content={t(
-                      'provisioning.bootstrap-step.tooltip-include-identifiers',
-                      'Include unique identifiers for each dashboard to maintain references'
-                    )}
-                    placement="top"
-                  >
-                    <Icon name="info-circle" />
-                  </Tooltip>
+            {canIncludeHistory && (
+              <FieldSet label={t('provisioning.bootstrap-step.label-migrate-options', 'Migrate options')}>
+                <Stack direction="column" gap={2}>
+                  {canIncludeHistory && (
+                    <Stack direction="row" gap={2} alignItems="center">
+                      <Switch {...register('migrate.history')} defaultChecked={true} />
+                      <Text>
+                        <Trans i18nKey="provisioning.bootstrap-step.include-history">Include history</Trans>
+                      </Text>
+                      <Tooltip
+                        content={t(
+                          'provisioning.bootstrap-step.tooltip-include-history',
+                          'Include complete dashboard version history'
+                        )}
+                        placement="top"
+                      >
+                        <Icon name="info-circle" />
+                      </Tooltip>
+                    </Stack>
+                  )}
                 </Stack>
-                {repoType === 'github' && settingsData?.legacyStorage && (
-                  <Stack direction="row" gap={2} alignItems="center">
-                    <Switch {...register('migrate.history')} defaultChecked={true} />
-                    <Text>
-                      <Trans i18nKey="provisioning.bootstrap-step.include-history">Include history</Trans>
-                    </Text>
-                    <Tooltip
-                      content={t(
-                        'provisioning.bootstrap-step.tooltip-include-history',
-                        'Include complete dashboard version history'
-                      )}
-                      placement="top"
-                    >
-                      <Icon name="info-circle" />
-                    </Tooltip>
-                  </Stack>
-                )}
-              </Stack>
-            </FieldSet>
+              </FieldSet>
+            )}
           </>
         )}
 

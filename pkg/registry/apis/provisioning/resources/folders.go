@@ -174,7 +174,7 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 }
 
 func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
-	return ForEachResource(ctx, fm.client, func(item *unstructured.Unstructured) error {
+	return ForEach(ctx, fm.client, func(item *unstructured.Unstructured) error {
 		if fm.tree.Count() > maxFolders {
 			return errors.New("too many folders")
 		}

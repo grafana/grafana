@@ -21,7 +21,7 @@ func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]reposi
 
 	userInfo := make(map[string]repository.CommitSignature)
 	var count int
-	err = resources.ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
+	err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 		count++
 		if count > maxUsers {
 			return errors.New("too many users")

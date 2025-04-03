@@ -15,7 +15,6 @@ export interface MigrateStepProps {
 export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
   const { watch } = useFormContext<WizardFormData>();
-  const identifier = watch('migrate.identifier');
   const history = watch('migrate.history');
 
   const startMigration = async (repositoryName: string) => {
@@ -23,7 +22,6 @@ export function MigrateStep({ onStepUpdate }: MigrateStepProps) {
       name: repositoryName,
       jobSpec: {
         migrate: {
-          identifier,
           history,
         },
       },

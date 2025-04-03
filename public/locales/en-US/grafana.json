@@ -5110,7 +5110,6 @@
       "files-count_other": "{{count}} files",
       "grafana": "Grafana",
       "include-history": "Include history",
-      "include-identifiers": "Include identifiers",
       "label-display-name": "Display name",
       "label-migrate-options": "Migrate options",
       "placeholder-my-repository-connection": "My repository connection",
@@ -5119,8 +5118,7 @@
       "text-loading-resource-information": "Loading resource information...",
       "title-files-exist-in-the-target": "Files exist in the target",
       "title-note": "Note",
-      "tooltip-include-history": "Include complete dashboard version history",
-      "tooltip-include-identifiers": "Include unique identifiers for each dashboard to maintain references"
+      "tooltip-include-history": "Include complete dashboard version history"
     },
     "check-repository": {
       "check": "Check"
