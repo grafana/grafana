@@ -118,7 +118,7 @@ export function updateTeam(name: string, email: string): ThunkResult<void> {
 export function loadTeamGroups(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    const response = await getBackendSrv().get(`/api/teams/${team.id}/groups`);
+    const response = await getBackendSrv().get(`/api/teams/${team.uid}/groups`);
     dispatch(teamGroupsLoaded(response));
   };
 }
@@ -126,7 +126,7 @@ export function loadTeamGroups(): ThunkResult<void> {
 export function addTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.id}/groups`, { groupId: groupId });
+    await getBackendSrv().post(`/api/teams/${team.uid}/groups`, { groupId: groupId });
     dispatch(loadTeamGroups());
   };
 }
@@ -135,7 +135,7 @@ export function removeTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     // need to use query parameter due to escaped characters in the request
-    await getBackendSrv().delete(`/api/teams/${team.id}/groups?groupId=${encodeURIComponent(groupId)}`);
+    await getBackendSrv().delete(`/api/teams/${team.uid}/groups?groupId=${encodeURIComponent(groupId)}`);
     dispatch(loadTeamGroups());
   };
 }
