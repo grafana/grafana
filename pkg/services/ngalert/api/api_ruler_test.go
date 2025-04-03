@@ -445,7 +445,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 					desc:             "just UID if error",
 					UpdatedBy:        util.Pointer(models.UserUID("test-uid")),
 					UserServiceError: errors.New("error"),
-				 	UserServiceCalls: []usertest.ListUsersByIdOrUidCall{{Uids: []string{"test-uid"}, Ids: []int64{}}},
+					UserServiceCalls: []usertest.ListUsersByIdOrUidCall{{Uids: []string{"test-uid"}, Ids: []int64{}}},
 					Expected: &apimodels.UserInfo{
 						UID: "test-uid",
 					},
@@ -454,7 +454,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 					desc:      "login if it's known user",
 					UpdatedBy: util.Pointer(models.UserUID("test-uid")),
 					User: &user.User{
-						UID: "test-uid",
+						UID:   "test-uid",
 						Login: "Test",
 					},
 					UserServiceError: nil,

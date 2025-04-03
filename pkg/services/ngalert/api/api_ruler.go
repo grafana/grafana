@@ -890,7 +890,7 @@ func getUserFromMapping(mapping map[string]*apimodels.UserInfo, userUID *ngmodel
 	}
 
 	// if user is not found or we get an error building the mapping, return empty name by default
-	return &apimodels.UserInfo{ UID: uid }
+	return &apimodels.UserInfo{UID: uid}
 }
 
 func getPanelIDFromQuery(v url.Values) (int64, error) {
