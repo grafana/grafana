@@ -25,11 +25,6 @@ const DEFAULT_ROW_FIELD = 'Time';
 const DEFAULT_VALUE_FIELD = 'Value';
 const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
-// grafana-data does not have access to runtime so we are accessing the window object
-// to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
-
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
   name: 'Grouping to Matrix',
@@ -118,6 +113,11 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             values.push(value);
           }
 
+          // grafana-data does not have access to runtime so we are accessing the window object
+          // to get access to the feature toggle
+          // eslint-disable-next-line
+          const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+
           // setting the displayNameFromDS in prometheus overrides
           // the column name based on value fields that are numbers
           // this prevents columns that should be named 1000190
@@ -155,6 +155,11 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
 
     // support for dataplane contract with Prometheus and change in location of field name
     let matches: boolean;
+
+    // grafana-data does not have access to runtime so we are accessing the window object
+    // to get access to the feature toggle
+    // eslint-disable-next-line
+    const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
     if (supportDataplaneFallback) {
       const matcher = fieldMatchers.get(FieldMatcherID.byName).get(matchTitle);
       matches = matcher(field, frame, [frame]);
