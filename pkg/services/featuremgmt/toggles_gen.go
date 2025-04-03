@@ -912,7 +912,7 @@ const (
 	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagPluginsCDNSyncLoader
-	// Loasd plugins from CDN synchronously
+	// Loads plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration

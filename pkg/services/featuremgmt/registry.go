@@ -1706,7 +1706,7 @@ var (
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
-			Description: "Loasd plugins from CDN synchronously",
+			Description: "Loads plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},

@@ -1000,7 +1000,7 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Loasd plugins from CDN synchronously
+  * Loads plugins from CDN synchronously
   */
   pluginsCDNSyncLoader?: boolean;
   /**
