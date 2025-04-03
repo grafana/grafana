@@ -77,23 +77,23 @@ export const Examples: StoryFn<typeof Button> = () => {
       <div />
       <Stack alignItems="center" gap={3}>
         <div>Inside ButtonGroup</div>
-        <ButtonGroup variant="primary">
+        <ButtonGroup>
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
         </ButtonGroup>
-        <ButtonGroup variant="destructive">
+        <ButtonGroup>
           <Button variant="destructive" icon="sync">
             Run query
           </Button>
           <Button variant="destructive" icon="angle-down" />
         </ButtonGroup>
-        <ButtonGroup variant="success">
+        <ButtonGroup>
           <Button variant="success" icon="sync">
             Run query
           </Button>
           <Button variant="success" icon="angle-down" />
         </ButtonGroup>
-        <ButtonGroup variant="secondary">
+        <ButtonGroup>
           <Button variant="secondary" icon="sync">
             Run query
           </Button>

@@ -383,8 +383,9 @@ var (
 		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true",
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
@@ -685,6 +686,13 @@ var (
 			FrontendOnly: true, // and can change at startup
 		},
 		{
+			Name:         "queryServiceFromExplore",
+			Description:  "Routes explore requests to the new query service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -923,7 +931,7 @@ var (
 		},
 		{
 			Name:              "jitterAlertRulesWithinGroups",
-			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
 			FrontendOnly:      false,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAlertingSquad,
@@ -1137,14 +1145,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:              "dashboardRestore",
-			Description:       "Enables deleted dashboard restore feature",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			Expression:        "false", // enabled by default
 		},
 		{
 			Name:              "alertingDisableSendAlertsExternal",
@@ -1698,7 +1698,7 @@ var (
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
-			Description: "Load plugins from CDN synchronously",
+			Description: "Loads plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
@@ -1811,8 +1811,15 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:        "azureMonitorLogsBuilderEditor",
+			Description: "Enables the logs builder mode for the Azure Monitor data source",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "localeFormatPreference",
-			Description: "Specify the locale so we can show the correct format for numbers and dates",
+			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 		},
@@ -1823,6 +1830,13 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:         "extensionSidebar",
+			Description:  "Enables the extension sidebar",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:              "alertingRuleRecoverDeleted",
@@ -1842,6 +1856,13 @@ var (
 			FrontendOnly:      true,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:         "multiTenantTempCredentials",
+			Description:  "use multi-tenant path for awsTempCredentials",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "localizationForPlugins",
