@@ -11135,7 +11135,7 @@
           "email": {
             "type": "string"
           },
-          "externalId": {
+          "externalUID": {
             "type": "string"
           },
           "id": {
