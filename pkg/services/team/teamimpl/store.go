@@ -72,7 +72,7 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 		team.org_id,
 		team.name as name,
 		team.email as email,
-		team.external_id as external_id,
+		team.external_uid as external_uid,
 		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(db, filteredUsers) +
 		` FROM team as team `
@@ -84,7 +84,7 @@ func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (t
 		Name:          cmd.Name,
 		Email:         cmd.Email,
 		OrgID:         cmd.OrgID,
-		ExternalID:    cmd.ExternalID,
+		ExternalUID:   cmd.ExternalUID,
 		IsProvisioned: cmd.IsProvisioned,
 		Created:       time.Now(),
 		Updated:       time.Now(),

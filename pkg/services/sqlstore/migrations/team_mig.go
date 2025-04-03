@@ -37,8 +37,8 @@ func addTeamMigrations(mg *Migrator) {
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
 
-	mg.AddMigration("Add column external_id in team", NewAddColumnMigration(teamV1, &Column{
-		Name: "external_id", Type: DB_NVarchar, Length: 100, Nullable: true,
+	mg.AddMigration("Add column external_uid in team", NewAddColumnMigration(teamV1, &Column{
+		Name: "external_uid", Type: DB_NVarchar, Length: 100, Nullable: true,
 	}))
 
 	mg.AddMigration("Add column is_provisioned in team", NewAddColumnMigration(teamV1, &Column{

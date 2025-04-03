@@ -27,7 +27,7 @@ type Team struct {
 	OrgID         int64  `json:"orgId" xorm:"org_id"`
 	Name          string `json:"name"`
 	Email         string `json:"email"`
-	ExternalID    string `json:"externalId" xorm:"external_id"`
+	ExternalUID   string `json:"externalUID" xorm:"external_uid"`
 	IsProvisioned bool   `json:"isProvisioned" xorm:"is_provisioned"`
 
 	Created time.Time `json:"created"`
@@ -40,7 +40,7 @@ type Team struct {
 type CreateTeamCommand struct {
 	Name          string `json:"name" binding:"Required"`
 	Email         string `json:"email"`
-	ExternalID    string `json:"-"`
+	ExternalUID   string `json:"-"`
 	IsProvisioned bool   `json:"-"`
 	OrgID         int64  `json:"-"`
 }
@@ -98,7 +98,7 @@ type TeamDTO struct {
 	OrgID         int64           `json:"orgId" xorm:"org_id"`
 	Name          string          `json:"name"`
 	Email         string          `json:"email"`
-	ExternalID    string          `json:"externalId"`
+	ExternalUID   string          `json:"externalUID"`
 	IsProvisioned bool            `json:"isProvisioned"`
 	AvatarURL     string          `json:"avatarUrl"`
 	MemberCount   int64           `json:"memberCount"`
