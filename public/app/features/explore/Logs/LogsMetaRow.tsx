@@ -192,7 +192,7 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.exploreHideLogsDownload && (
+            {false && !config.exploreHideLogsDownload && (
               <Dropdown overlay={downloadMenu}>
                 <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
                   <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
