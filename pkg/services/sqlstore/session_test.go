@@ -7,12 +7,17 @@ import (
 	"testing"
 
 	"github.com/mattn/go-sqlite3"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func TestRetryingDisabled(t *testing.T) {
+func TestIntegration_RetryingDisabled(t *testing.T) {
 	store, _ := InitTestDB(t)
+	retryErrors := getRetryErrors(t, store)
+
 	require.Equal(t, 0, store.dbCfg.QueryRetries)
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
@@ -31,20 +36,16 @@ func TestRetryingDisabled(t *testing.T) {
 			require.Equal(t, 1, i)
 		})
 
-		errCodes := []sqlite3.ErrNo{sqlite3.ErrBusy, sqlite3.ErrLocked}
-		for _, c := range errCodes {
-			t.Run(fmt.Sprintf("%s should return the sqlite3.Error %v immediately", name, c.Error()), func(t *testing.T) {
+		for _, e := range retryErrors {
+			t.Run(fmt.Sprintf("%s should return the sqlite3.Error %v immediately", name, e), func(t *testing.T) {
 				i := 0
 				callback := func(sess *DBSession) error {
 					i++
-					return sqlite3.Error{Code: c}
+					return e
 				}
 				err := f(context.Background(), callback)
 				require.Error(t, err)
-				var driverErr sqlite3.Error
-				require.ErrorAs(t, err, &driverErr)
 				require.Equal(t, 1, i)
-				assert.Equal(t, c, driverErr.Code)
 			})
 		}
 
@@ -61,8 +62,9 @@ func TestRetryingDisabled(t *testing.T) {
 	}
 }
 
-func TestRetryingOnFailures(t *testing.T) {
+func TestIntegration_RetryingOnFailures(t *testing.T) {
 	store, _ := InitTestDB(t)
+	retryErrors := getRetryErrors(t, store)
 	store.dbCfg.QueryRetries = 5
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
@@ -81,20 +83,16 @@ func TestRetryingOnFailures(t *testing.T) {
 			require.Equal(t, 1, i)
 		})
 
-		errCodes := []sqlite3.ErrNo{sqlite3.ErrBusy, sqlite3.ErrLocked}
-		for _, c := range errCodes {
-			t.Run(fmt.Sprintf("%s should return the sqlite3.Error %v if all retries have failed", name, c.Error()), func(t *testing.T) {
+		for _, e := range retryErrors {
+			t.Run(fmt.Sprintf("%s should return the error %v if all retries have failed", name, e), func(t *testing.T) {
 				i := 0
 				callback := func(sess *DBSession) error {
 					i++
-					return sqlite3.Error{Code: c}
+					return e
 				}
 				err := f(context.Background(), callback)
 				require.Error(t, err)
-				var driverErr sqlite3.Error
-				require.ErrorAs(t, err, &driverErr)
 				require.Equal(t, store.dbCfg.QueryRetries, i)
-				assert.Equal(t, c, driverErr.Code)
 			})
 		}
 
@@ -107,7 +105,7 @@ func TestRetryingOnFailures(t *testing.T) {
 				case store.dbCfg.QueryRetries == i:
 					err = nil
 				default:
-					err = sqlite3.Error{Code: sqlite3.ErrBusy}
+					err = retryErrors[0]
 				}
 				return err
 			}
@@ -136,4 +134,19 @@ func TestRetryingOnFailures(t *testing.T) {
 	require.Equal(t, 2.3, val2)
 	require.Equal(t, int64(4), val3)
 	require.False(t, rows.Next()) // no more rows
+}
+
+func getRetryErrors(t *testing.T, store *SQLStore) []error {
+	var retryErrors []error
+	switch store.GetDialect().DriverName() {
+	case migrator.SQLite:
+		retryErrors = []error{sqlite3.Error{Code: sqlite3.ErrBusy}, sqlite3.Error{Code: sqlite3.ErrLocked}}
+	case migrator.Spanner:
+		retryErrors = []error{grpcstatus.Error(codes.Aborted, "aborted transaction")}
+	}
+
+	if len(retryErrors) == 0 {
+		t.Skip("This test only works with sqlite or spanner")
+	}
+	return retryErrors
 }
