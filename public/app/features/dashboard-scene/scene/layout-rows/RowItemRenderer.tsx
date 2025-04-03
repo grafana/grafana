@@ -145,7 +145,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
@@ -193,13 +192,13 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
       minHeight: '100px',
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
+        width: 'auto',
 
         '&:before': {
           content: '""',
