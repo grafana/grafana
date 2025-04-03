@@ -92,7 +92,6 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(notifyApp(createSuccessNotification('Test started')));
         } catch (e) {
           if (e instanceof Error) {
             dispatch(notifyApp(createErrorNotification('Error testing repository', e)));
