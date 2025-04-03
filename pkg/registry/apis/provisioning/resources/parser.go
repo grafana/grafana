@@ -111,8 +111,8 @@ func (r *Parser) Clients() *ResourceClients {
 	return r.clients
 }
 
-func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
+func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
+	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
 		Repo: r.repo,
@@ -199,32 +199,35 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	parsed.GVR = &gvr
 	parsed.Client = client
-	if !validate {
-		return parsed, nil
+
+	return parsed, nil
+}
+
+func (r *ParsedResource) DryRun(ctx context.Context) {
+	// TODO: is this append errors strategy the best one?
+	if r.Client == nil {
+		r.Errors = append(r.Errors, fmt.Errorf("unable to find client"))
+		return
 	}
 
-	if parsed.Client == nil {
-		parsed.Errors = append(parsed.Errors, fmt.Errorf("unable to find client"))
-		return parsed, nil
-	}
-
+	var err error
 	// Dry run CREATE or UPDATE
-	parsed.Existing, _ = parsed.Client.Get(ctx, obj.GetName(), metav1.GetOptions{})
-	if parsed.Existing == nil {
-		parsed.Action = provisioning.ResourceActionCreate
-		parsed.DryRunResponse, err = parsed.Client.Create(ctx, obj, metav1.CreateOptions{
+	r.Existing, _ = r.Client.Get(ctx, r.Obj.GetName(), metav1.GetOptions{})
+	if r.Existing == nil {
+		r.Action = provisioning.ResourceActionCreate
+		r.DryRunResponse, err = r.Client.Create(ctx, r.Obj, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 	} else {
-		parsed.Action = provisioning.ResourceActionUpdate
-		parsed.DryRunResponse, err = parsed.Client.Update(ctx, obj, metav1.UpdateOptions{
+		r.Action = provisioning.ResourceActionUpdate
+		r.DryRunResponse, err = r.Client.Update(ctx, r.Obj, metav1.UpdateOptions{
 			DryRun: []string{"All"},
 		})
 	}
+
 	if err != nil {
-		parsed.Errors = append(parsed.Errors, err)
+		r.Errors = append(r.Errors, err)
 	}
-	return parsed, nil
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {

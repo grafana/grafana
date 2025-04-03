@@ -133,7 +133,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		return "", nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
+	parsed, err := r.parser.Parse(ctx, fileInfo)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to parse file: %w", err)
 	}

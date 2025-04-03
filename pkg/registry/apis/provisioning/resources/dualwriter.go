@@ -37,7 +37,8 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, err
 	}
 
-	parsed, err := r.parser.Parse(ctx, info, true)
+	parsed, err := r.parser.Parse(ctx, info)
+	parsed.DryRun(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	// TODO: document in API specification
 	// We can only delete parsable things
-	parsed, err := r.parser.Parse(ctx, file, false)
+	parsed, err := r.parser.Parse(ctx, file)
 	if err != nil {
 		return nil, err // unable to read value
 	}
@@ -163,7 +164,8 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 	}
 
 	// TODO: improve parser to parse out of reader
-	parsed, err := r.parser.Parse(ctx, info, true)
+	parsed, err := r.parser.Parse(ctx, info)
+	parsed.DryRun(ctx)
 	if err != nil {
 		if errors.Is(err, ErrUnableToReadResourceBytes) {
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
@@ -219,7 +221,8 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	}
 
 	// TODO: improve parser to parse out of reader
-	parsed, err := r.parser.Parse(ctx, info, true)
+	parsed, err := r.parser.Parse(ctx, info)
+	parsed.DryRun(ctx)
 	if err != nil {
 		if errors.Is(err, ErrUnableToReadResourceBytes) {
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")

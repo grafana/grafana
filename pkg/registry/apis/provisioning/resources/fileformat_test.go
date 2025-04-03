@@ -101,11 +101,10 @@ spec:
 			},
 		}
 
-		// try to validate (and lint)
-		validate := true
-
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), info, validate)
+		parsed, err := parser.Parse(context.Background(), info)
+		parsed.DryRun(context.Background())
+		// TODO: this was not true!
 		require.Error(t, err) // no clients configured!
 
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
