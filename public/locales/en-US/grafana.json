@@ -582,6 +582,44 @@
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
+    "import-from-dsrules": {
+      "description-folder-import-rules": "The folder to import the rules to"
+    },
+    "import-to-gma": {
+      "action-button": "Import",
+      "alert-rules": "Alert rules",
+      "confirm-modal": {
+        "confirm": "Yes, import",
+        "title": "Confirm import"
+      },
+      "datasource": {
+        "label": "Data source",
+        "required-message": "Please select a datasource"
+      },
+      "error": "Failed to import alert rules: {{error}}",
+      "group": {
+        "description": "Type to search for an existing group",
+        "label": "Group"
+      },
+      "import-location-and-filters": "Import location and filters",
+      "namespace": {
+        "description": "Type to search for an existing namespace",
+        "label": "Namespace"
+      },
+      "optional-settings": "Optional settings",
+      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
+      "pause": {
+        "label": "Pause imported alerting rules"
+      },
+      "pause-recording": {
+        "label": "Pause imported recording rules"
+      },
+      "recording-rules": "Recording rules",
+      "success": "Successfully imported alert rules to Grafana-managed rules.",
+      "target-folder": {
+        "label": "Target folder"
+      }
+    },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
       "disabled-description": "Enable Grafana IRM to use this integration",
@@ -607,6 +645,8 @@
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
+      "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
+      "no-rules": "No rules found.",
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -617,7 +657,8 @@
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
-        }
+        },
+        "loading-rules": "Loading rules from {{numberOfSources}} {{sources}}"
       }
     },
     "manage-permissions": {
@@ -635,6 +676,10 @@
       "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
       "save": "Save mute timing",
       "saving": "Saving mute timing"
+    },
+    "namespace-and-group-filter": {
+      "select-group": "Select group",
+      "select-namespace": "Select namespace"
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
@@ -731,7 +776,7 @@
       "previewCondition": "Preview alert rule condition"
     },
     "recording-rules": {
-      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source"
     },
     "rule-form": {
@@ -846,6 +891,10 @@
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
+      "import-to-gma": {
+        "new-badge": "New!",
+        "text": "Import to Grafana-managed rules"
+      },
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -935,6 +984,12 @@
     },
     "threshold": {
       "to": "TO"
+    },
+    "to-gma": {
+      "confirm-modal": {
+        "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
+        "summary": "These are the list of rules that will be imported:"
+      }
     }
   },
   "annotations": {

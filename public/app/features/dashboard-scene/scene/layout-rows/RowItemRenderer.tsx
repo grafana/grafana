@@ -131,7 +131,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                 </span>
               </button>
-              {isDraggable && <Icon name="draggabledots" />}
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
@@ -145,13 +145,26 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
+
+      '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '&:hover': css({
+        '& .dashboard-row-header-drag-handle': css({
+          opacity: 1,
+        }),
+      }),
     }),
     rowTitleButton: css({
       display: 'flex',
@@ -193,13 +206,13 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
       minHeight: '100px',
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
+        width: 'auto',
 
         '&:before': {
           content: '""',
