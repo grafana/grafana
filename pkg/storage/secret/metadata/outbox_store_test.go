@@ -178,6 +178,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 		}
 	}()
 
+	// The number of iterations was decided arbitrarily based on the time the test takes to run
 	for range 10 {
 		testDB := sqlstore.NewTestStore(t)
 		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
