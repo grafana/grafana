@@ -1726,6 +1726,7 @@
     },
     "new-panel": {
       "configure-button": "Configure",
+      "configure-button-menu": "Toggle menu",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel"
     },
