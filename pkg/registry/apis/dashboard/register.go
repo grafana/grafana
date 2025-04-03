@@ -20,12 +20,12 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
+	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
-	"github.com/grafana/grafana/pkg/apis/dashboard/migration/conversion"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -85,7 +85,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 ) *DashboardsAPIBuilder {
-	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -100,7 +99,7 @@ func RegisterAPIService(
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 
 		legacy: &DashboardStorage{
-			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
+			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
 		},
 		reg: reg,
 	}
@@ -109,22 +108,31 @@ func RegisterAPIService(
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
+		// If dashboards v2 is enabled, we want to use v2alpha1 as the default API version.
+		return []schema.GroupVersion{
+			v2alpha1.DashboardResourceInfo.GroupVersion(),
+			v0alpha1.DashboardResourceInfo.GroupVersion(),
+			v1alpha1.DashboardResourceInfo.GroupVersion(),
+		}
+	}
+
 	return []schema.GroupVersion{
-		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
+		v1alpha1.DashboardResourceInfo.GroupVersion(),
+		v0alpha1.DashboardResourceInfo.GroupVersion(),
+		v2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	b.scheme = scheme
-	if err := dashboardv0alpha1.AddToScheme(scheme); err != nil {
+	if err := v0alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	if err := dashboardv1alpha1.AddToScheme(scheme); err != nil {
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	if err := dashboardv2alpha1.AddToScheme(scheme); err != nil {
+	if err := v2alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
 
@@ -164,7 +172,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			}
 
 			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 			}
 		}
 	}
@@ -174,6 +182,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}
 
@@ -183,15 +192,15 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
-	opts.StorageOptions(dashboardv0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
+	opts.StorageOptions(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		dashboardv0alpha1.DashboardResourceInfo,
-		dashboardv0alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
-			dto := &dashboardv0alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*dashboardv0alpha1.Dashboard)
+		v0alpha1.DashboardResourceInfo,
+		v0alpha1.LibraryPanelResourceInfo,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &v0alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*v0alpha1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -205,11 +214,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// v1alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		dashboardv1alpha1.DashboardResourceInfo,
-		dashboardv1alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
-			dto := &dashboardv1alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*dashboardv1alpha1.Dashboard)
+		v1alpha1.DashboardResourceInfo,
+		v1alpha1.LibraryPanelResourceInfo,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &v1alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*v1alpha1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -223,11 +232,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// v2alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		dashboardv2alpha1.DashboardResourceInfo,
-		dashboardv2alpha1.LibraryPanelResourceInfo,
-		func(obj runtime.Object, access *dashboard.DashboardAccess) (v runtime.Object, err error) {
-			dto := &dashboardv2alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*dashboardv2alpha1.Dashboard)
+		v2alpha1.DashboardResourceInfo,
+		v2alpha1.LibraryPanelResourceInfo,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &v2alpha1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*v2alpha1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -270,11 +279,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
-	}
-
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
@@ -300,9 +304,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := dashboardv0alpha1.GetOpenAPIDefinitions(ref)
-		maps.Copy(defs, dashboardv1alpha1.GetOpenAPIDefinitions(ref))
-		maps.Copy(defs, dashboardv2alpha1.GetOpenAPIDefinitions(ref))
+		defs := v0alpha1.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, v1alpha1.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, v2alpha1.GetOpenAPIDefinitions(ref))
 		return defs
 	}
 }
@@ -314,11 +318,11 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	for _, gv := range b.GetGroupVersions() {
 		version := gv.Version
 		// Hide cluster-scoped resources
-		root := path.Join("/apis/", dashboardv0alpha1.GROUP, version)
+		root := path.Join("/apis/", v0alpha1.GROUP, version)
 		delete(oas.Paths.Paths, path.Join(root, "dashboards"))
 		delete(oas.Paths.Paths, path.Join(root, "watch", "dashboards"))
 
-		if version == dashboardv0alpha1.VERSION {
+		if version == v0alpha1.VERSION {
 			sub := oas.Paths.Paths[path.Join(root, "search", "{name}")]
 			oas.Paths.Paths[path.Join(root, "search")] = sub
 			delete(oas.Paths.Paths, path.Join(root, "search", "{name}"))

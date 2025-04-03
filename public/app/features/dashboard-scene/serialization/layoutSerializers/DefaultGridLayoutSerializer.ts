@@ -1,15 +1,6 @@
-import { config } from '@grafana/runtime';
+import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
 import {
-  SceneGridItemLike,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObject,
-  VizPanel,
-  VizPanelMenu,
-  VizPanelState,
-} from '@grafana/scenes';
-import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutKind,
   GridLayoutRowKind,
@@ -18,52 +9,47 @@ import {
   GridLayoutItemSpec,
   PanelKind,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { contextSrv } from 'app/core/core';
 
-import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
-import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
-import { PanelNotices } from '../../scene/PanelNotices';
-import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../../scene/layout-default/row-actions/RowActions';
-import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
-import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { getOriginalKey, isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
+import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
-import { buildVizPanel } from './utils';
+import { buildLibraryPanel, buildVizPanel } from './utils';
 
-export class DefaultGridLayoutManagerSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
-    return {
-      kind: 'GridLayout',
-      spec: {
-        items: getGridLayoutItems(layoutManager, isSnapshot),
-      },
-    };
-  }
+export function serializeDefaultGridLayout(
+  layoutManager: DefaultGridLayoutManager,
+  isSnapshot?: boolean
+): DashboardV2Spec['layout'] {
+  return {
+    kind: 'GridLayout',
+    spec: {
+      items: getGridLayoutItems(layoutManager, isSnapshot),
+    },
+  };
+}
 
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): DashboardLayoutManager {
-    if (layout.kind !== 'GridLayout') {
-      throw new Error('Invalid layout kind');
-    }
-    return new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneGridLayoutForItems(layout, elements),
-      }),
-    });
+export function deserializeDefaultGridLayout(
+  layout: DashboardV2Spec['layout'],
+  elements: DashboardV2Spec['elements'],
+  preload: boolean,
+  panelIdGenerator?: () => number
+): DefaultGridLayoutManager {
+  if (layout.kind !== 'GridLayout') {
+    throw new Error('Invalid layout kind');
   }
+  return new DefaultGridLayoutManager({
+    grid: new SceneGridLayout({
+      isLazy: !(preload || contextSrv.user.authenticatedBy === 'render'),
+      children: createSceneGridLayoutForItems(layout, elements, panelIdGenerator),
+    }),
+  });
 }
 
 function getGridLayoutItems(
@@ -123,7 +109,7 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
   };
 }
 
-function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
+export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
   let elementGridItem: GridLayoutItemKind | undefined;
   let x = 0,
     y = 0,
@@ -238,51 +224,37 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
   }
 }
 
-function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<string, Element>): SceneGridItemLike[] {
-  const gridElements = layout.spec.items;
+function createSceneGridLayoutForItems(
+  layout: GridLayoutKind,
+  elements: Record<string, Element>,
+  panelIdGenerator?: () => number
+): SceneGridItemLike[] {
+  const gridItems = layout.spec.items;
 
-  return gridElements.map((element) => {
-    if (element.kind === 'GridLayoutItem') {
-      const panel = elements[element.spec.element.name];
-
-      if (!panel) {
-        throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
-      }
-
-      if (panel.kind === 'Panel') {
-        return buildGridItem(element.spec, panel);
-      } else if (panel.kind === 'LibraryPanel') {
-        const libraryPanel = buildLibraryPanel(panel);
-
-        return new DashboardGridItem({
-          key: `grid-item-${panel.spec.id}`,
-          x: element.spec.x,
-          y: element.spec.y,
-          width: element.spec.width,
-          height: element.spec.height,
-          itemHeight: element.spec.height,
-          body: libraryPanel,
-        });
-      } else {
-        throw new Error(`Unknown element kind: ${element.kind}`);
-      }
-    } else if (element.kind === 'GridLayoutRow') {
-      const children = element.spec.elements.map((gridElement) => {
+  return gridItems.map((item) => {
+    if (item.kind === 'GridLayoutItem') {
+      return deserializeGridItem(item, elements, panelIdGenerator);
+    } else if (item.kind === 'GridLayoutRow') {
+      const children = item.spec.elements.map((gridElement) => {
         const panel = elements[getOriginalKey(gridElement.spec.element.name)];
-        if (panel.kind === 'Panel') {
-          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
+        if (panel.kind === 'Panel' || panel.kind === 'LibraryPanel') {
+          let id: number | undefined;
+          if (panelIdGenerator) {
+            id = panelIdGenerator();
+          }
+          return buildGridItem(gridElement.spec, panel, item.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y, id);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
       });
       let behaviors: SceneObject[] | undefined;
-      if (element.spec.repeat) {
-        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
+      if (item.spec.repeat) {
+        behaviors = [new RowRepeaterBehavior({ variableName: item.spec.repeat.value })];
       }
       return new SceneGridRow({
-        y: element.spec.y,
-        isCollapsed: element.spec.collapsed,
-        title: element.spec.title,
+        y: item.spec.y,
+        isCollapsed: item.spec.collapsed,
+        title: item.spec.title,
         $behaviors: behaviors,
         actions: new RowActions({}),
         children,
@@ -290,15 +262,25 @@ function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<
     } else {
       // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
       //@ts-expect-error
-      throw new Error(`Unknown layout element kind: ${element.kind}`);
+      throw new Error(`Unknown layout element kind: ${item.kind}`);
     }
   });
 }
 
-function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
-  const vizPanel = buildVizPanel(panel);
+function buildGridItem(
+  gridItem: GridLayoutItemSpec,
+  panel: PanelKind | LibraryPanelKind,
+  yOverride?: number,
+  id?: number
+): DashboardGridItem {
+  let vizPanel: VizPanel;
+  if (panel.kind === 'Panel') {
+    vizPanel = buildVizPanel(panel, id);
+  } else {
+    vizPanel = buildLibraryPanel(panel, id);
+  }
   return new DashboardGridItem({
-    key: `grid-item-${panel.spec.id}`,
+    key: `grid-item-${id ?? panel.spec.id}`,
     x: gridItem.x,
     y: yOverride ?? gridItem.y,
     width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
@@ -311,46 +293,20 @@ function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride
   });
 }
 
-function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
-  const titleItems: SceneObject[] = [];
+export function deserializeGridItem(
+  item: GridLayoutItemKind,
+  elements: DashboardV2Spec['elements'],
+  panelIdGenerator?: () => number
+): DashboardGridItem {
+  const panel = elements[item.spec.element.name];
 
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
+  if (!panel) {
+    throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
   }
 
-  titleItems.push(
-    new VizPanelLinks({
-      rawLinks: [],
-      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-    })
-  );
-
-  titleItems.push(new PanelNotices());
-
-  const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
-    titleItems,
-    $behaviors: [
-      new LibraryPanelBehavior({
-        uid: panel.spec.libraryPanel.uid,
-        name: panel.spec.libraryPanel.name,
-      }),
-    ],
-    extendPanelContext: setDashboardPanelContext,
-    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: panel.spec.title,
-    options: {},
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-  };
-
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
+  let id: number | undefined;
+  if (panelIdGenerator) {
+    id = panelIdGenerator();
   }
-
-  return new VizPanel(vizPanelState);
+  return buildGridItem(item.spec, panel, undefined, id);
 }

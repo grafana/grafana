@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -24,8 +25,6 @@ import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-
-export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
 
 interface Props {
   sectionNav: NavModelItem;

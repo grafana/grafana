@@ -29,6 +29,10 @@ type Dialect interface {
 	SupportEngine() bool
 	LikeStr() string
 	Default(col *Column) string
+	// BooleanValue can be used as an argument in SELECT or INSERT statements. For constructing
+	// raw SQL queries, please use BooleanStr instead.
+	BooleanValue(bool) any
+	// BooleanStr should only be used to construct SQL statements (strings). For arguments to queries, use BooleanValue instead.
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
 	BatchSize() int
@@ -70,7 +74,6 @@ type Dialect interface {
 
 	CleanDB(engine *xorm.Engine) error
 	TruncateDBTables(engine *xorm.Engine) error
-	NoOpSQL() string
 	// CreateDatabaseFromSnapshot is called when migration log table is not found.
 	// Dialect can recreate all tables from existing snapshot. After successful (nil error) return,
 	// migrator will list migrations from the log, and apply all missing migrations.
@@ -347,10 +350,6 @@ func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 
 func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
 	return nil
-}
-
-func (b *BaseDialect) NoOpSQL() string {
-	return "SELECT 0;"
 }
 
 func (b *BaseDialect) TruncateDBTables(engine *xorm.Engine) error {

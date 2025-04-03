@@ -1,4 +1,4 @@
-import { EmotionPerfTest } from '@grafana/ui/src/components/ThemeDemos/EmotionPerfTest';
+import { EmotionPerfTest } from '@grafana/ui/internal';
 
 export const BenchmarksPage = () => {
   return <EmotionPerfTest />;

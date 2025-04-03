@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import { IconName } from '@grafana/data';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
@@ -19,6 +21,11 @@ export interface EditableDashboardElement {
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
 
   /**
+   * Panel Actions
+   **/
+  renderActions?(): ReactNode;
+
+  /**
    * Supports delete action
    */
   onDelete?(): void;
@@ -37,6 +44,21 @@ export interface EditableDashboardElement {
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(elements: this[]): EditableDashboardElement;
+
+  /**
+   * scroll element into view (when selected from outline)
+   */
+  scrollIntoView?(): void;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  getCollapsedState?(): boolean;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  setCollapsedState?(collapsed: boolean): void;
 }
 
 export interface EditableDashboardElementInfo {

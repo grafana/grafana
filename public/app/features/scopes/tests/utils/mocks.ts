@@ -2,8 +2,6 @@ import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
-import * as api from '../../internal/api';
-
 export const mocksScopes: Scope[] = [
   {
     metadata: { name: 'cloud' },
@@ -369,10 +367,6 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
 ] as const;
 
-export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
-export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
-export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
-export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
 export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
 
 export const getMock = jest

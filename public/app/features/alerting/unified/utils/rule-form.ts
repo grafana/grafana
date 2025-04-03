@@ -1,7 +1,5 @@
 import {
-  DataQuery,
   DataSourceInstanceSettings,
-  DataSourceRef,
   IntervalValues,
   RelativeTimeRange,
   ScopedVars,
@@ -12,9 +10,9 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -34,6 +32,7 @@ import {
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
@@ -364,6 +363,56 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
+  }
+}
+
+export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
+  const defaultFormValues = getDefaultFormValues();
+
+  const ga = rule.grafana_alert;
+  const duration = rule.for;
+  const annotations = rule.annotations;
+  const labels = rule.labels;
+
+  const commonProperties = {
+    ...defaultFormValues,
+    name: ga.title,
+    queries: ga.data,
+    condition: ga.condition,
+    annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
+    labels: listifyLabelsOrAnnotations(labels, true),
+    folder: { title: namespace, uid: ga.namespace_uid },
+    isPaused: ga.is_paused,
+  };
+
+  if (rulerRuleType.grafana.recordingRule(rule)) {
+    // grafana recording rule
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafanaRecording,
+      group: ga.rule_group,
+      metric: ga.record?.metric,
+    };
+  }
+
+  // grafana alerting rule
+  const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafana,
+      group: ga.rule_group,
+      evaluateFor: duration || '0',
+      noDataState: ga.no_data_state,
+      execErrState: ga.exec_err_state,
+
+      contactPoints: routingSettings,
+      manualRouting: Boolean(routingSettings),
+
+      editorSettings: getEditorSettingsFromDTO(ga),
+    };
+  } else {
+    throw new Error('Unexpected type of rule for grafana rules source');
   }
 }
 
@@ -805,19 +854,22 @@ export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQue
   return 'expr' in model;
 }
 
-export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
-  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
-    if ('instant' in model) {
-      return model.instant;
-    } else {
-      if ('queryType' in model) {
-        return model.queryType === 'instant';
-      } else {
-        return undefined;
-      }
-    }
+export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
+  const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
+  if (!dataSourceUID) {
+    return undefined;
   }
+
+  // find the datasource type from the UID
+  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+
+  // if the datasource is not prometheus or loki, return "undefined"
+  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+    return undefined;
+  }
+
+  const { model } = query;
+
   // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;

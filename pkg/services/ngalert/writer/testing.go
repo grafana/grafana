@@ -12,10 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const RemoteWritePrefix = "/api/v1"
-const RemoteWriteSuffix = "/write"
-
-const RemoteWriteEndpoint = RemoteWritePrefix + RemoteWriteSuffix
+const RemoteWriteEndpoint = "/api/v1/write"
 
 type TestRemoteWriteTarget struct {
 	srv *httptest.Server
@@ -23,6 +20,8 @@ type TestRemoteWriteTarget struct {
 	mtx             sync.Mutex
 	RequestsCount   int
 	LastRequestBody string
+
+	ExpectedPath string
 }
 
 func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
@@ -31,10 +30,11 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 	target := &TestRemoteWriteTarget{
 		RequestsCount:   0,
 		LastRequestBody: "",
+		ExpectedPath:    RemoteWriteEndpoint,
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != RemoteWriteEndpoint {
+		if r.URL.Path != target.ExpectedPath {
 			require.Fail(t, "Received unexpected request for endpoint %s", r.URL.Path)
 		}
 
@@ -63,7 +63,7 @@ func (s *TestRemoteWriteTarget) Close() {
 }
 
 func (s *TestRemoteWriteTarget) DatasourceURL() string {
-	return s.srv.URL + RemoteWritePrefix
+	return s.srv.URL
 }
 
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {

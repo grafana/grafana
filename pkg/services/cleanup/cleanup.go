@@ -27,6 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type AlertRuleService interface {
+	CleanUpDeletedAlertRules(ctx context.Context) (int64, error)
+}
+
 type CleanUpService struct {
 	log                       log.Logger
 	tracer                    tracing.Tracer
@@ -41,12 +45,13 @@ type CleanUpService struct {
 	tempUserService           tempuser.Service
 	annotationCleaner         annotations.Cleaner
 	dashboardService          dashboards.DashboardService
+	alertRuleService          AlertRuleService
 }
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService, service AlertRuleService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -61,6 +66,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		tracer:                    tracer,
 		annotationCleaner:         annotationCleaner,
 		dashboardService:          dashboardService,
+		alertRuleService:          service,
 	}
 	return s
 }
@@ -105,11 +111,14 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old user invites", srv.expireOldUserInvites},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
 		{"expire old email verifications", srv.expireOldVerifications},
-		{"cleanup trash dashboards", srv.cleanUpTrashDashboards},
 	}
 
 	if srv.Cfg.ShortLinkExpiration > 0 {
 		cleanupJobs = append(cleanupJobs, cleanUpJob{"delete stale short URLs", srv.deleteStaleShortURLs})
+	}
+
+	if srv.Cfg.UnifiedAlerting.DeletedRuleRetention > 0 {
+		cleanupJobs = append(cleanupJobs, cleanUpJob{"cleanup trash alert rules", srv.cleanUpTrashAlertRules})
 	}
 
 	logger := srv.log.FromContext(ctx)
@@ -304,12 +313,12 @@ func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
 	}
 }
 
-func (srv *CleanUpService) cleanUpTrashDashboards(ctx context.Context) {
+func (srv *CleanUpService) cleanUpTrashAlertRules(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	affected, err := srv.dashboardService.CleanUpDeletedDashboards(ctx)
+	affected, err := srv.alertRuleService.CleanUpDeletedAlertRules(ctx)
 	if err != nil {
-		logger.Error("Problem cleaning up deleted dashboards", "error", err)
+		logger.Error("Problem cleaning up deleted alert rules", "error", err)
 	} else {
-		logger.Debug("Cleaned up deleted dashboards", "dashboards affected", affected)
+		logger.Debug("Cleaned up deleted alert rules", "rows affected", affected)
 	}
 }
