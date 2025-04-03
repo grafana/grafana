@@ -86,26 +86,23 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	// Also User agent but that is set before each rpc call as for decoupled DS we have to get it from request context
 	// and cannot add it to client here.
 
-	var creds credentials.TransportCredentials
-	if opts.TLS != nil {
+	var dialOps []grpc.DialOption
+
+	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
+	if settings.BasicAuthEnabled {
+		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
 		tls, err := httpclient.GetTLSConfig(opts)
 		if err != nil {
 			return nil, fmt.Errorf("failure in configuring tls for grpc: %w", err)
 		}
-		creds = credentials.NewTLS(tls)
-	} else {
-		creds = insecure.NewCredentials()
-	}
 
-	var dialOps []grpc.DialOption
-	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
-	if settings.BasicAuthEnabled {
-		dialOps = append(dialOps, grpc.WithTransportCredentials(creds))
+		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
 		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
 			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
 		}))
 	} else {
-		dialOps = append(dialOps, grpc.WithTransportCredentials(creds))
+		// Otherwise, it uses insecure credentials.
+		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	// The following code is required to make gRPC work with Grafana Cloud PDC
