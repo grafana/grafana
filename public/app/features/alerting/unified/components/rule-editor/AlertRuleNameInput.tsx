@@ -89,7 +89,7 @@ export const AlertRuleNameAndMetric = () => {
             label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
             description={t(
               'alerting.recording-rules.description-target-data-source',
-              'The Prometheus data source to store the recording rule in'
+              'The Prometheus data source to store recording rules in'
             )}
             error={errors.targetDatasourceUid?.message}
             invalid={!!errors.targetDatasourceUid?.message}

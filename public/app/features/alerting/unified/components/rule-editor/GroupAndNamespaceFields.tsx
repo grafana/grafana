@@ -7,7 +7,7 @@ import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 
-import { useAlertRuleSuggestions } from './useAlertRuleSuggestions';
+import { useGetNameSpacesByDatasourceName } from './useAlertRuleSuggestions';
 
 interface Props {
   rulesSourceName: string;
@@ -22,7 +22,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   } = useFormContext<RuleFormValues>();
 
   const style = useStyles2(getStyle);
-  const { namespaceGroups, isLoading } = useAlertRuleSuggestions(rulesSourceName);
+  const { namespaceGroups, isLoading } = useGetNameSpacesByDatasourceName(rulesSourceName);
 
   const namespace = watch('namespace');
 
