@@ -45,7 +45,7 @@ func ProvideLegacyMigrator(
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false, sort.ProvideService())
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, sort.ProvideService())
 }
 
 type BlobStoreInfo struct {
