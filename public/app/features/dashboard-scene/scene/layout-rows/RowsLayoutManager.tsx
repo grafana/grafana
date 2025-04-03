@@ -237,4 +237,20 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     return new RowsLayoutManager({ rows });
   }
+
+  public duplicateTitles(): Set<string | undefined> {
+    const titleCounts = new Map<string | undefined, number>();
+    const duplicateTitles = new Set<string | undefined>();
+
+    this.state.rows.forEach((row) => {
+      const title = row.state.title;
+      const count = (titleCounts.get(title) ?? 0) + 1;
+      titleCounts.set(title, count);
+      if (count > 1 && title) {
+        duplicateTitles.add(title);
+      }
+    });
+
+    return duplicateTitles;
+  }
 }

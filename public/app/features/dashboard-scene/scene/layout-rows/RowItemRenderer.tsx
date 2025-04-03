@@ -114,6 +114,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                   role="heading"
                 >
+                  {!model.hasUniqueTitle() && (
+                    <Tooltip
+                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
+                    >
+                      <Icon name="exclamation-triangle" />
+                    </Tooltip>
+                  )}
                   {title}
                   {isHeaderHidden && (
                     <Tooltip

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Input, Switch, TextLink } from '@grafana/ui';
+import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -81,14 +81,22 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 function RowTitleInput({ row }: { row: RowItem }) {
   const { title, isNew } = row.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
+  const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
-    <Input
-      ref={ref}
-      title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
-      value={title}
-      onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
-    />
+    <Field
+      invalid={!hasUniqueTitle}
+      error={
+        !hasUniqueTitle ? t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique') : undefined
+      }
+    >
+      <Input
+        ref={ref}
+        title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
+        value={title}
+        onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
+      />
+    </Field>
   );
 }
 

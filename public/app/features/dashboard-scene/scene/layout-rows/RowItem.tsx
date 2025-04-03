@@ -210,4 +210,10 @@ export class RowItem
   public setCollapsedState(collapse: boolean) {
     this.setState({ collapse });
   }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
+  }
 }

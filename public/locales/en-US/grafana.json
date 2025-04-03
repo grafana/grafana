@@ -1821,7 +1821,11 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
+      },
+      "row-warning": {
+        "title-not-unique": "This title is not unique"
       }
     },
     "save-dashboard-as-button": {
@@ -1872,7 +1876,11 @@
         "new": "New tab"
       },
       "tab-options": {
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
+      },
+      "tab-warning": {
+        "title-not-unique": "This title is not unique"
       }
     },
     "toolbar": {
