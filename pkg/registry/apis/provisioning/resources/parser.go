@@ -195,6 +195,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
+	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
 		return fmt.Errorf("unable to find client")
 	}
@@ -219,6 +220,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 }
 
 func (f *ParsedResource) Run(ctx context.Context) error {
+	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
 		return fmt.Errorf("unable to find client")
 	}
