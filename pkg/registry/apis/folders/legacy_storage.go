@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -107,8 +106,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		paging.page = 1
 	}
 
-	// only admins can add this to the query, otherwise we may return parent folder names that are not visible to the user
-	if user.GetOrgRole() == org.RoleAdmin && options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
+	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
 		query.WithFullpath = true
 		query.WithFullpathUIDs = true
 	}
