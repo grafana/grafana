@@ -130,7 +130,13 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{},
+		Indices: []*migrator.Index{
+			// There's only one operation per secret in the queue at all times,
+			// meaning the namespace + name combination should be unique
+			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+			// Used for sorting
+			{Cols: []string{"created"}, Type: migrator.IndexType},
+		},
 	})
 
 	// Initialize all tables

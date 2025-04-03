@@ -74,7 +74,7 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rows := make([]outboxMessageDB, 0)
 			// TODO: skip locked rows
-			if err := sess.Table(migrator.TableNameSecureValueOutbox).ForUpdate().OrderBy("secret_secure_value_outbox.created DESC").Limit(int(n)).Find(&rows); err != nil {
+			if err := sess.Table(migrator.TableNameSecureValueOutbox).ForUpdate().OrderBy("secret_secure_value_outbox.created ASC").Limit(int(n)).Find(&rows); err != nil {
 				return fmt.Errorf("fetching rows from secure value outbox table: %w", err)
 			}
 			for _, row := range rows {
