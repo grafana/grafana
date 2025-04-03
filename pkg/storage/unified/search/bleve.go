@@ -1080,6 +1080,7 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		standard.Field(resource.SEARCH_FIELD_RV),
 		standard.Field(resource.SEARCH_FIELD_CREATED),
 		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
+		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
 	}
 
 	if custom != nil {
