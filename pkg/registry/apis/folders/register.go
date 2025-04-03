@@ -156,6 +156,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		tableConverter: resourceInfo.TableConverter(),
 		features:       b.features,
 		cfg:            b.cfg,
+		permissions:    b.dashboardPermissions.SetDefaultPermissions,
 	}
 
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
