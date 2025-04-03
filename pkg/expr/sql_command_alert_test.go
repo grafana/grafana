@@ -11,7 +11,6 @@ import (
 func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
 	t.Run("SingleRowNoLabels", func(t *testing.T) {
 		input := data.NewFrame("",
-			data.NewField(SQLMetricFieldName, nil, []string{"cpu"}), // will be treated as a label
 			data.NewField(SQLValueFieldName, nil, []*float64{fp(3.14)}),
 		)
 
@@ -21,9 +20,7 @@ func TestExtractNumberSetFromSQLForAlerting(t *testing.T) {
 
 		got := numbers[0]
 		require.Equal(t, fp(3.14), got.GetFloat64Value())
-		require.Equal(t, data.Labels{
-			SQLMetricFieldName: "cpu",
-		}, got.GetLabels())
+		require.Equal(t, data.Labels{}, got.GetLabels())
 	})
 
 	t.Run("TwoRowsWithLabelsAndDisplay", func(t *testing.T) {
