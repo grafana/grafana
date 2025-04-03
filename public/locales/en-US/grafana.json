@@ -1807,7 +1807,10 @@
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
-      }
+      },
+      "only-overrides-button-tooltip": "Show only overrides",
+      "placeholder-search-options": "Search options",
+      "visualization-button-label": "Visualization"
     },
     "panel-editor-table-view": {
       "title-raw-data": "Raw data"
@@ -2339,9 +2342,6 @@
     },
     "panel-inspect-renderer": {
       "title-panel-plugin-not-loaded": "Panel plugin not loaded"
-    },
-    "panel-options-pane": {
-      "placeholder-search-options": "Search options"
     },
     "panel-viz-type-picker": {
       "placeholder-search-for": "Search for...",
