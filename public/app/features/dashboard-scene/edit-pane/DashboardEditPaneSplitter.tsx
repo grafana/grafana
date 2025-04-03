@@ -25,8 +25,7 @@ interface Props {
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
-  const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, isExtensionSidebarOpen);
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   if (!config.featureToggles.dashboardNewLayouts) {
@@ -119,7 +118,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, isExtensionSidebarOpen: boolean) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -180,7 +179,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, isExtensionSideba
         position: 'sticky',
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
-        top: isExtensionSidebarOpen ? '0px' : headerHeight,
+        top: headerHeight,
       },
     }),
   };
