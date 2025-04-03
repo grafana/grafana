@@ -14,7 +14,7 @@ export function useJobStatusEffect(
     if (!job) {
       return;
     }
-    
+
     if (onStatusChange && job.status?.state === 'success') {
       onStatusChange(true);
       if (onRunningChange) {
@@ -28,4 +28,4 @@ export function useJobStatusEffect(
       }
     }
   }, [job, onStatusChange, onErrorChange, onRunningChange]);
-} 
+}
