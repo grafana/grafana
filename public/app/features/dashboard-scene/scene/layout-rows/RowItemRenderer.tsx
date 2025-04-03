@@ -116,7 +116,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 >
                   {!model.hasUniqueTitle() && (
                     <Tooltip
-                      content={t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique')}
+                      content={t('dashboard.rows-layout.row-options.title-not-unique', 'This title is not unique')}
                     >
                       <Icon name="exclamation-triangle" />
                     </Tooltip>
