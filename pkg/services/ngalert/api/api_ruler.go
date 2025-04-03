@@ -831,10 +831,35 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 
 // getUserUIDmaping returns a UserUID->UserInfo mapping from the UpdatedBy users in the RulesGroup
 func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.AlertRule) map[string]*apimodels.UserInfo {
-	mapping := make(map[string]*apimodels.UserInfo)
+	mapping := map[string]*apimodels.UserInfo{
+		string(ngmodels.AlertingUserUID): {
+			UID: string(ngmodels.AlertingUserUID),
+		},
+		string(ngmodels.FileProvisioningUserUID): {
+			UID: string(ngmodels.FileProvisioningUserUID),
+		},
+	}
 	userUIDs := []string{}
 	for _, rule := range rules {
-		userUIDs = append(userUIDs, string(*rule.UpdatedBy))
+		if rule == nil {
+			continue
+		}
+
+		if rule.UpdatedBy == nil {
+			continue
+		}
+
+		uid := string(*rule.UpdatedBy)
+		if _, ok := mapping[uid]; ok {
+			// one of the system identifiers
+			continue
+		}
+
+		userUIDs = append(userUIDs, uid)
+	}
+
+	if len(userUIDs) == 0 {
+		return mapping
 	}
 
 	users, err := srv.userService.ListByIdOrUID(ctx, userUIDs, []int64{})
@@ -854,13 +879,18 @@ func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.Ale
 }
 
 func getUserFromMapping(mapping map[string]*apimodels.UserInfo, userUID *ngmodels.UserUID) *apimodels.UserInfo {
-	u, ok := mapping[string(*userUID)]
+	if userUID == nil {
+		return nil
+	}
+
+	uid := string(*userUID)
+	u, ok := mapping[uid]
 	if ok {
 		return u
 	}
 
 	// if user is not found or we get an error building the mapping, return empty name by default
-	return &apimodels.UserInfo{}
+	return &apimodels.UserInfo{ UID: uid }
 }
 
 func getPanelIDFromQuery(v url.Values) (int64, error) {
