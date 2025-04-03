@@ -93,10 +93,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.userService = userSvc
 
 		createUserCmd := user.CreateUserCommand{
-			Email:   fmt.Sprint("user", "@test.com"),
-			Name:    "user",
-			Login:   "loginuser",
-			IsAdmin: true,
+			Email:      fmt.Sprint("user", "@test.com"),
+			Name:       "user",
+			Login:      "loginuser",
+			IsAdmin:    true,
+			IsDisabled: true,
 		}
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
@@ -133,6 +134,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:          "loginuser",
 			OrgID:          1,
 			IsGrafanaAdmin: true,
+			IsDisabled:     true,
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
 			UpdatedAt:      fakeNow,
