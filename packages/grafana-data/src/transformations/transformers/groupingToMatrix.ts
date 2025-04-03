@@ -25,7 +25,7 @@ const DEFAULT_ROW_FIELD = 'Time';
 const DEFAULT_VALUE_FIELD = 'Value';
 const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
-const shouldUseDataplaneFallback = () => {
+const shouldSupportDataplaneFallback = () => {
   // grafana-data does not have access to runtime so we are accessing the window object
   // to get access to the feature toggle
   // eslint-disable-next-line
@@ -124,7 +124,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           // the column name based on value fields that are numbers
           // this prevents columns that should be named 1000190
           // from becoming named {__name__: 'metricName'}
-          if (shouldUseDataplaneFallback() && typeof columnName === 'number') {
+          if (shouldSupportDataplaneFallback() && typeof columnName === 'number') {
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
@@ -158,7 +158,7 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
     // support for dataplane contract with Prometheus and change in location of field name
     let matches: boolean;
 
-    if (shouldUseDataplaneFallback()) {
+    if (shouldSupportDataplaneFallback()) {
       const matcher = fieldMatchers.get(FieldMatcherID.byName).get(matchTitle);
       matches = matcher(field, frame, [frame]);
     } else {
