@@ -427,6 +427,9 @@
       },
       "view": "View"
     },
+    "confirm-conversion-modal": {
+      "title-warning": "Warning"
+    },
     "contact-points": {
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
@@ -521,6 +524,9 @@
         "one-format": "Download the file or copy the contents to clipboard"
       }
     },
+    "folder-creation-modal": {
+      "title-new-folder": "New folder"
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -587,6 +593,7 @@
     },
     "import-to-gma": {
       "action-button": "Import",
+      "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
@@ -606,7 +613,6 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "optional-settings": "Optional settings",
       "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
       "pause": {
         "label": "Pause imported alerting rules"
