@@ -171,7 +171,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 	progress.SetMessage(ctx, "exporting legacy resources")
 	resourceManager := resources.NewResourcesManager(rw, folders, parser, parser.Clients(), userInfo)
-	for _, kind := range resources.StandardResources {
+	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
 			continue
 		}
@@ -257,7 +257,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	for _, kind := range resources.StandardResources {
+	for _, kind := range resources.SupportedProvisioningResources {
 		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s", kind.Resource))
 		client, _, err := parser.Clients().ForResource(kind)
 		if err != nil {

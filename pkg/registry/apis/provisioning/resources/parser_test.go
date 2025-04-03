@@ -6,18 +6,27 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestParer(t *testing.T) {
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", dashboardV1.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+
 	parser := &Parser{
 		repo: v0alpha1.ResourceRepositoryInfo{
 			Type:      v0alpha1.LocalRepositoryType,
 			Namespace: "xxx",
 			Name:      "repo",
 		},
-		clients: NewDummyClients(),
+		clients: clients,
 	}
 
 	t.Run("invalid input", func(t *testing.T) {
@@ -47,7 +56,7 @@ spec:
 
 		// Now try again without a name
 		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
-			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+			Data: []byte(`apiVersion: dashboard.grafana.app/v1alpha1
 kind: Dashboard
 spec:
   title: Test dashboard

@@ -129,7 +129,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, nil)
-	for _, kind := range resources.StandardResources {
+	for _, kind := range resources.SupportedProvisioningResources {
 		// skip from folders as we do them first... so only dashboards
 		if kind == resources.FolderResource {
 			continue
