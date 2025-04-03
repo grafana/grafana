@@ -4,6 +4,7 @@ import { ReactElement, useMemo } from 'react';
 import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export type LogFilter = {
   pluginIds?: Set<string>;
@@ -63,13 +64,13 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
 
   return (
     <InlineFieldRow>
-      <InlineField label="Plugin Id">
+      <InlineField label={t('plugins.log-view-filters.label-plugin-id', 'Plugin Id')}>
         <MultiSelect options={pluginIds} onChange={onChangePluginIds} />
       </InlineField>
-      <InlineField label="Extension">
+      <InlineField label={t('plugins.log-view-filters.label-extension', 'Extension')}>
         <MultiSelect options={extensionPointIds} onChange={onChangeExtensionPointIds} />
       </InlineField>
-      <InlineField label="Severity">
+      <InlineField label={t('plugins.log-view-filters.label-severity', 'Severity')}>
         <MultiSelect options={severity} onChange={onChangeSeverity} />
       </InlineField>
     </InlineFieldRow>

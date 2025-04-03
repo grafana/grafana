@@ -66,7 +66,16 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "dashboard.grafana.app",
 		Version: "v2alpha1", // strict spec
 	}, {
+		Group:   "dashboard.grafana.app",
+		Version: "v1alpha1",
+	}, {
+		Group:   "dashboard.grafana.app",
+		Version: "v2alpha1",
+	}, {
 		Group:   "folder.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "iam.grafana.app",

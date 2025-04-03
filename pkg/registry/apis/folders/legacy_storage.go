@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -90,14 +91,27 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	// List must return all folders
-	hits, err := s.service.GetFoldersLegacy(ctx, folder.GetFoldersQuery{
+	query := folder.GetFoldersQuery{
 		SignedInUser: user,
 		OrgID:        orgId,
-		// TODO: enable pagination
-		// Limit:        paging.page,
-		// Page:         paging.limit,
-	})
+	}
+	if options.Continue != "" {
+		query.Page = paging.page
+		query.Limit = paging.limit
+	} else if options.Limit > 0 {
+		query.Limit = options.Limit
+		query.Page = 1
+		// also need to update the paging token so the continue token is correct
+		paging.limit = options.Limit
+		paging.page = 1
+	}
+
+	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
+		query.WithFullpath = true
+		query.WithFullpathUIDs = true
+	}
+
+	hits, err := s.service.GetFoldersLegacy(ctx, query)
 	if err != nil {
 		return nil, err
 	}

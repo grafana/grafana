@@ -368,9 +368,73 @@ export type DashboardPanelKindOrLibraryPanelKind = {
   LibraryPanelKind?: DashboardLibraryPanelKind;
   PanelKind?: DashboardPanelKind;
 };
+export type DashboardConditionalRenderingDataSpec = {
+  value: boolean;
+};
+export type DashboardConditionalRenderingDataKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingDataSpec;
+};
+export type DashboardConditionalRenderingTimeRangeSizeSpec = {
+  value: string;
+};
+export type DashboardConditionalRenderingTimeRangeSizeKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingTimeRangeSizeSpec;
+};
+export type DashboardConditionalRenderingVariableSpec = {
+  operator: string;
+  value: string;
+  variable: string;
+};
+export type DashboardConditionalRenderingVariableKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingVariableSpec;
+};
+export type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind =
+  {
+    ConditionalRenderingDataKind?: DashboardConditionalRenderingDataKind;
+    ConditionalRenderingTimeRangeSizeKind?: DashboardConditionalRenderingTimeRangeSizeKind;
+    ConditionalRenderingVariableKind?: DashboardConditionalRenderingVariableKind;
+  };
+export type DashboardConditionalRenderingGroupSpec = {
+  condition: string;
+  items: DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind[];
+  visibility: string;
+};
+export type DashboardConditionalRenderingGroupKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingGroupSpec;
+};
 export type DashboardElementReference = {
   kind: string;
   name: string;
+};
+export type DashboardAutoGridRepeatOptions = {
+  mode: string;
+  value: string;
+};
+export type DashboardAutoGridLayoutItemSpec = {
+  conditionalRendering?: DashboardConditionalRenderingGroupKind;
+  element: DashboardElementReference;
+  repeat?: DashboardAutoGridRepeatOptions;
+};
+export type DashboardAutoGridLayoutItemKind = {
+  kind: string;
+  spec: DashboardAutoGridLayoutItemSpec;
+};
+export type DashboardAutoGridLayoutSpec = {
+  columnWidth?: number;
+  columnWidthMode: string;
+  fillScreen?: boolean;
+  items: DashboardAutoGridLayoutItemKind[];
+  maxColumnCount?: number;
+  rowHeight?: number;
+  rowHeightMode: string;
+};
+export type DashboardAutoGridLayoutKind = {
+  kind: string;
+  spec: DashboardAutoGridLayoutSpec;
 };
 export type DashboardRepeatOptions = {
   direction?: string;
@@ -418,72 +482,9 @@ export type DashboardGridLayoutKind = {
   kind: string;
   spec: DashboardGridLayoutSpec;
 };
-export type DashboardConditionalRenderingDataSpec = {
-  value: boolean;
-};
-export type DashboardConditionalRenderingDataKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingDataSpec;
-};
-export type DashboardConditionalRenderingTimeIntervalSpec = {
-  value: string;
-};
-export type DashboardConditionalRenderingTimeIntervalKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingTimeIntervalSpec;
-};
-export type DashboardConditionalRenderingVariableSpec = {
-  operator: string;
-  value: string;
-  variable: string;
-};
-export type DashboardConditionalRenderingVariableKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingVariableSpec;
-};
-export type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind =
-  {
-    ConditionalRenderingDataKind?: DashboardConditionalRenderingDataKind;
-    ConditionalRenderingTimeIntervalKind?: DashboardConditionalRenderingTimeIntervalKind;
-    ConditionalRenderingVariableKind?: DashboardConditionalRenderingVariableKind;
-  };
-export type DashboardConditionalRenderingGroupSpec = {
-  condition: string;
-  items: DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind[];
-};
-export type DashboardConditionalRenderingGroupKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingGroupSpec;
-};
-export type DashboardResponsiveGridRepeatOptions = {
-  mode: string;
-  value: string;
-};
-export type DashboardResponsiveGridLayoutItemSpec = {
-  conditionalRendering?: DashboardConditionalRenderingGroupKind;
-  element: DashboardElementReference;
-  repeat?: DashboardResponsiveGridRepeatOptions;
-};
-export type DashboardResponsiveGridLayoutItemKind = {
-  kind: string;
-  spec: DashboardResponsiveGridLayoutItemSpec;
-};
-export type DashboardResponsiveGridLayoutSpec = {
-  col: string;
-  items: DashboardResponsiveGridLayoutItemKind[];
-  row: string;
-};
-export type DashboardResponsiveGridLayoutKind = {
-  kind: string;
-  spec: DashboardResponsiveGridLayoutSpec;
-};
-export type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind = {
-  GridLayoutKind?: DashboardGridLayoutKind;
-  ResponsiveGridLayoutKind?: DashboardResponsiveGridLayoutKind;
-  RowsLayoutKind?: DashboardRowsLayoutKind;
-};
 export type DashboardTabsLayoutTabSpec = {
-  layout: DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind;
+  conditionalRendering?: DashboardConditionalRenderingGroupKind;
+  layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   title?: string;
 };
 export type DashboardTabsLayoutTabKind = {
@@ -497,15 +498,18 @@ export type DashboardTabsLayoutKind = {
   kind: string;
   spec: DashboardTabsLayoutSpec;
 };
-export type DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind = {
+export type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind = {
+  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
   GridLayoutKind?: DashboardGridLayoutKind;
-  ResponsiveGridLayoutKind?: DashboardResponsiveGridLayoutKind;
+  RowsLayoutKind?: DashboardRowsLayoutKind;
   TabsLayoutKind?: DashboardTabsLayoutKind;
 };
 export type DashboardRowsLayoutRowSpec = {
-  collapsed: boolean;
+  collapse?: boolean;
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
-  layout: DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind;
+  fillScreen?: boolean;
+  hideHeader?: boolean;
+  layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
   repeat?: DashboardRowRepeatOptions;
   title?: string;
 };
@@ -520,9 +524,9 @@ export type DashboardRowsLayoutKind = {
   kind: string;
   spec: DashboardRowsLayoutSpec;
 };
-export type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind = {
+export type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind = {
+  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
   GridLayoutKind?: DashboardGridLayoutKind;
-  ResponsiveGridLayoutKind?: DashboardResponsiveGridLayoutKind;
   RowsLayoutKind?: DashboardRowsLayoutKind;
   TabsLayoutKind?: DashboardTabsLayoutKind;
 };
@@ -764,7 +768,7 @@ export type DashboardSpec = {
   elements: {
     [key: string]: DashboardPanelKindOrLibraryPanelKind;
   };
-  layout: DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind;
+  layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   /** Links with references to other dashboards or external websites. */
   links: DashboardDashboardLink[];
   /** When set to true, the dashboard will redraw panels at an interval matching the pixel width. This will keep data "moving left" regardless of the query refresh rate. This setting helps avoid dashboards presenting stale live data. */

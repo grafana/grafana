@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -85,7 +84,6 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 ) *DashboardsAPIBuilder {
-	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -100,7 +98,7 @@ func RegisterAPIService(
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 
 		legacy: &DashboardStorage{
-			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
+			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
 		},
 		reg: reg,
 	}
@@ -118,10 +116,9 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 		}
 	}
 
-	// TODO (@radiohead): should we switch to v1alpha1 by default?
 	return []schema.GroupVersion{
-		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v1alpha1.DashboardResourceInfo.GroupVersion(),
+		v0alpha1.DashboardResourceInfo.GroupVersion(),
 		v2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
@@ -174,7 +171,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			}
 
 			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 			}
 		}
 	}
@@ -184,6 +181,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}
 
@@ -198,7 +196,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v0alpha1.DashboardResourceInfo,
-		v0alpha1.LibraryPanelResourceInfo,
+		&v0alpha1.LibraryPanelResourceInfo,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v0alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v0alpha1.Dashboard)
@@ -216,7 +214,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// v1alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v1alpha1.DashboardResourceInfo,
-		v1alpha1.LibraryPanelResourceInfo,
+		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v1alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v1alpha1.Dashboard)
@@ -234,7 +232,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// v2alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v2alpha1.DashboardResourceInfo,
-		v2alpha1.LibraryPanelResourceInfo,
+		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v2alpha1.Dashboard)
@@ -257,7 +255,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	opts builder.APIGroupOptions,
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
-	libraryPanels utils.ResourceInfo,
+	libraryPanels *utils.ResourceInfo,
 	newDTOFunc dtoBuilder,
 ) error {
 	// Register the versioned storage
@@ -280,11 +278,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		storage[dashboards.StoragePath("restore")] = NewRestoreConnector(b.unified, gr)
-		storage[dashboards.StoragePath("latest")] = NewLatestConnector(b.unified, gr)
-	}
-
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
@@ -300,9 +293,11 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	// Expose read only library panels
-	storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
-		Access:       b.legacy.Access,
-		ResourceInfo: libraryPanels,
+	if libraryPanels != nil {
+		storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
+			Access:       b.legacy.Access,
+			ResourceInfo: *libraryPanels,
+		}
 	}
 
 	return nil
@@ -318,27 +313,15 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	// The plugin description
 	oas.Info.Description = "Grafana dashboards as resources"
-
-	for _, gv := range b.GetGroupVersions() {
-		version := gv.Version
-		// Hide cluster-scoped resources
-		root := path.Join("/apis/", v0alpha1.GROUP, version)
-		delete(oas.Paths.Paths, path.Join(root, "dashboards"))
-		delete(oas.Paths.Paths, path.Join(root, "watch", "dashboards"))
-
-		if version == v0alpha1.VERSION {
-			sub := oas.Paths.Paths[path.Join(root, "search", "{name}")]
-			oas.Paths.Paths[path.Join(root, "search")] = sub
-			delete(oas.Paths.Paths, path.Join(root, "search", "{name}"))
-		}
-	}
-
 	return oas, nil
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	if gv.Version != v0alpha1.VERSION {
+		return nil // Only show the custom routes for v0
+	}
+
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
 }

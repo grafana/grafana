@@ -15,7 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -57,7 +57,6 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
-	softDelete            bool
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
@@ -69,7 +68,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
-	softDelete bool,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -78,7 +76,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		namespacer:            namespacer,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
-		softDelete:            softDelete,
 		dashboardSearchClient: *dashboardSearchClient,
 	}
 }
@@ -367,16 +364,6 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return nil, false, err
 	}
 
-	if a.softDelete {
-		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
-		if err == nil && dash != nil {
-			now := metav1.NewTime(time.Now())
-			dash.DeletionTimestamp = &now
-			return dash, true, err
-		}
-		return dash, false, err
-	}
-
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 		OrgID: orgId,
 		UID:   uid,
@@ -404,6 +391,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		})
 		if old != nil {
 			dash.Spec.Set("id", old.ID)
+			dash.Spec.Set("version", float64(old.Version))
 		} else {
 			dash.Spec.Remove("id") // existing of "id" makes it an update
 			created = true

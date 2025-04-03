@@ -6,12 +6,13 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositorySpec, RepositoryView } from 'app/api/clients/provisioning';
+import { RepositorySpec } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind, Resource } from 'app/features/apiserver/types';
+import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -22,6 +23,7 @@ import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getWorkflowOptions } from './defaults';
+import { getProvisionedMeta } from './utils/getProvisionedMeta';
 
 type FormData = {
   ref?: string;
@@ -57,7 +59,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty } = dashboard.useState();
+  const { meta, isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -67,15 +69,22 @@ export function SaveProvisionedDashboardForm({
     watch,
     formState: { errors },
     control,
-    setValue,
+    reset,
   } = useForm<FormData>({ defaultValues });
-
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
+
+  // Update the form if default values change
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
   useEffect(() => {
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
+
       if (workflow === 'branch' && ref !== '' && path !== '') {
+        dashboard.closeModal();
+        panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
@@ -117,7 +126,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
@@ -198,22 +207,14 @@ export function SaveProvisionedDashboardForm({
                   return (
                     <FolderPicker
                       inputId="dashboard-folder"
-                      onChange={(uid?: string, title?: string, repository?: RepositoryView) => {
+                      onChange={async (uid?: string, title?: string) => {
                         onChange({ uid, title });
-                        const name = repository?.name;
-                        if (name) {
-                          setValue('repo', name);
-                        }
+                        // Update folderUid URL param
+                        updateURLParams('folderUid', uid);
+                        const meta = await getProvisionedMeta(uid);
                         dashboard.setState({
                           meta: {
-                            k8s: name
-                              ? {
-                                  annotations: {
-                                    [AnnoKeyManagerIdentity]: name,
-                                    [AnnoKeyManagerKind]: ManagerKind.Repo,
-                                  },
-                                }
-                              : undefined,
+                            ...meta,
                             folderUid: uid,
                           },
                         });
@@ -294,34 +295,6 @@ export function SaveProvisionedDashboardForm({
   );
 }
 
-const BranchValidationError = () => (
-  <>
-    <Trans i18nKey="dashboard-scene.branch-validation-error.invalid-branch-name">Invalid branch name.</Trans>
-    <ul style={{ padding: '0 20px' }}>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-start-with">
-          It cannot start with '/' or end with '/', '.', or whitespace.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">
-          It cannot contain '//' or '..'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
-          It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.least-valid-character">
-          It must have at least one valid character.
-        </Trans>
-      </li>
-    </ul>
-  </>
-);
-
 /**
  * Dashboard title validation to ensure it's not the same as the folder name
  * and meets other naming requirements.
@@ -344,4 +317,14 @@ async function validateTitle(title: string, formValues: FormData) {
           'Dashboard title validation failed.'
         );
   }
+}
+
+// Update the URL params without reloading the page
+function updateURLParams(param: string, value?: string) {
+  if (!value) {
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set(param, value);
+  window.history.replaceState({}, '', url);
 }

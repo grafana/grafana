@@ -8,7 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	spannerclient "cloud.google.com/go/spanner"
 	_ "github.com/googleapis/go-sql-spanner"
+	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 )
 
@@ -161,6 +167,8 @@ func (s *spanner) SqlType(col *core.Column) string {
 		if l > 0 {
 			return fmt.Sprintf("STRING(%d)", l)
 		}
+		return "STRING(MAX)"
+	case core.Jsonb:
 		return "STRING(MAX)"
 	case core.Bool, core.TinyInt:
 		return "BOOL"
@@ -369,4 +377,57 @@ func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
 		index.AddColumn(colName)
 	}
 	return indexes, res.Err()
+}
+
+func (s *spanner) CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error) {
+	dsn := s.DataSourceName()
+	connectorConfig, err := spannerdriver.ExtractConnectorConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if UsePlainText(connectorConfig) {
+		// Plain-text means we're either using spannertest or Spanner emulator.
+		// Switch to fake in-memory sequence number generator in that case.
+		//
+		// Using database-based sequence generator doesn't work with emulator, as emulator
+		// only supports single transaction. If there is already another transaction started
+		// generating new ID via database-based sequence generator would always fail.
+		return newInMemSequenceGenerator(), nil
+	}
+
+	return newSequenceGenerator(db), nil
+}
+
+func UsePlainText(connectorConfig spannerdriver.ConnectorConfig) bool {
+	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
+		if val, err := strconv.ParseBool(strval); err == nil {
+			return val
+		}
+	}
+	return false
+}
+
+// SpannerConnectorConfigToClientOptions is adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
+func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
+	var opts []option.ClientOption
+	if connectorConfig.Host != "" {
+		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
+	}
+	if strval, ok := connectorConfig.Params["credentials"]; ok {
+		opts = append(opts, option.WithCredentialsFile(strval))
+	}
+	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
+		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
+	}
+	if UsePlainText(connectorConfig) {
+		opts = append(opts,
+			option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
+			option.WithoutAuthentication())
+	}
+	return opts
+}
+
+func (s *spanner) RetryOnError(err error) bool {
+	return err != nil && spannerclient.ErrCode(spannerclient.ToSpannerError(err)) == codes.Aborted
 }

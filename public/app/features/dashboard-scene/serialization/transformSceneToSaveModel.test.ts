@@ -13,7 +13,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';

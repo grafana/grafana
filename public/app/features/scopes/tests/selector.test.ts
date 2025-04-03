@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
@@ -36,6 +36,7 @@ describe('Selector', () => {
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
   });
 

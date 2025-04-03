@@ -62,3 +62,11 @@ export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject
 export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
   static type = 'object-removed-from-canvas';
 }
+
+export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'objects-reordered-on-canvas';
+}
+
+export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'conditional-rendering-changed';
+}

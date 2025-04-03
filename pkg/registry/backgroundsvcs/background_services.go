@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -69,6 +70,7 @@ func ProvideBackgroundServiceRegistry(
 	zanzanaReconciler *dualwrite.ZanzanaReconciler,
 	appRegistry *appregistry.Service,
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
+	dashboardServiceImpl *service.DashboardServiceImpl,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -115,6 +117,7 @@ func ProvideBackgroundServiceRegistry(
 		zanzanaReconciler,
 		appRegistry,
 		pluginDashboardUpdater,
+		dashboardServiceImpl,
 	)
 }
 

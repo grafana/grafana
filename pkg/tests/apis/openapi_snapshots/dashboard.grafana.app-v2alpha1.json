@@ -5,7 +5,6 @@
     "title": "dashboard.grafana.app/v2alpha1"
   },
   "paths": {
-    "/apis/dashboard.grafana.app/v0alpha1/search": null,
     "/apis/dashboard.grafana.app/v2alpha1/": {
       "get": {
         "tags": [
@@ -915,529 +914,10 @@
           }
         }
       ]
-    },
-    "/apis/dashboard.grafana.app/v2alpha1/namespaces/{namespace}/librarypanels": {
-      "get": {
-        "tags": [
-          "LibraryPanel"
-        ],
-        "description": "list objects of kind LibraryPanel",
-        "operationId": "listLibraryPanel",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "LibraryPanel"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/dashboard.grafana.app/v2alpha1/namespaces/{namespace}/librarypanels/{name}": {
-      "get": {
-        "tags": [
-          "LibraryPanel"
-        ],
-        "description": "read the specified LibraryPanel",
-        "operationId": "getLibraryPanel",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "get",
-        "x-kubernetes-group-version-kind": {
-          "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "LibraryPanel"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the LibraryPanel",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/dashboard.grafana.app/v2alpha1/namespaces/{namespace}/search": {
-      "get": {
-        "tags": [
-          "Search"
-        ],
-        "description": "Dashboard search",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          },
-          {
-            "name": "query",
-            "in": "query",
-            "description": "user query string",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "folder",
-            "in": "query",
-            "description": "search/list within a folder (not recursive)",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "sortable field",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "default sorting"
-              },
-              "-title": {
-                "summary": "title descending",
-                "value": "-title"
-              },
-              "title": {
-                "summary": "title ascending",
-                "value": "title"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "totalHits",
-                    "hits"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "facets": {
-                      "description": "Facet results",
-                      "type": "object",
-                      "additionalProperties": {
-                        "default": {}
-                      }
-                    },
-                    "hits": {
-                      "description": "The dashboard body (unstructured for now)",
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "maxScore": {
-                      "description": "Max score",
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "offset": {
-                      "description": "Where the query started from",
-                      "type": "integer",
-                      "format": "int64"
-                    },
-                    "queryCost": {
-                      "description": "Cost of running the query",
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "sortBy": {
-                      "description": "How are the results sorted"
-                    },
-                    "totalHits": {
-                      "description": "The number of matching results",
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/apis/dashboard.grafana.app/v2alpha1/namespaces/{namespace}/search/sortable": {
-      "get": {
-        "tags": [
-          "Search"
-        ],
-        "description": "Get sortable fields",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "fields"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "fields": {
-                      "description": "Sortable fields (depends on backend support)",
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery": {
-        "description": "Generic query properties",
-        "type": "object",
-        "properties": {
-          "datasource": {
-            "description": "The datasource",
-            "type": "object",
-            "required": [
-              "type"
-            ],
-            "properties": {
-              "apiVersion": {
-                "description": "The apiserver version",
-                "type": "string"
-              },
-              "type": {
-                "description": "The datasource plugin type",
-                "type": "string"
-              },
-              "uid": {
-                "description": "Datasource UID (NOTE: name in k8s)",
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          },
-          "hide": {
-            "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
-            "type": "boolean"
-          },
-          "intervalMs": {
-            "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
-            "type": "number"
-          },
-          "maxDataPoints": {
-            "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
-            "type": "integer"
-          },
-          "queryType": {
-            "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
-            "type": "string"
-          },
-          "refId": {
-            "description": "RefID is the unique identifier of the query, set by the frontend call.",
-            "type": "string"
-          },
-          "resultAssertions": {
-            "description": "Optionally define expected query result behavior",
-            "type": "object",
-            "required": [
-              "typeVersion"
-            ],
-            "properties": {
-              "maxFrames": {
-                "description": "Maximum frame count",
-                "type": "integer"
-              },
-              "type": {
-                "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
-                "type": "string",
-                "enum": [
-                  "",
-                  "timeseries-wide",
-                  "timeseries-long",
-                  "timeseries-many",
-                  "timeseries-multi",
-                  "directory-listing",
-                  "table",
-                  "numeric-wide",
-                  "numeric-multi",
-                  "numeric-long",
-                  "log-lines"
-                ],
-                "x-enum-description": {}
-              },
-              "typeVersion": {
-                "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
-                "type": "array",
-                "maxItems": 2,
-                "minItems": 2,
-                "items": {
-                  "type": "integer"
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          "timeRange": {
-            "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
-            "type": "object",
-            "required": [
-              "from",
-              "to"
-            ],
-            "properties": {
-              "from": {
-                "description": "From is the start time of the query.",
-                "type": "string",
-                "default": "now-6h",
-                "examples": [
-                  "now-1h"
-                ]
-              },
-              "to": {
-                "description": "To is the end time of the query.",
-                "type": "string",
-                "default": "now",
-                "examples": [
-                  "now"
-                ]
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": true,
-        "$schema": "https://json-schema.org/draft-04/schema"
-      },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
-        "type": "object",
-        "additionalProperties": true
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.AnnotationActions": {
         "type": "object",
         "required": [
@@ -1798,6 +1278,131 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemSpec": {
+        "type": "object",
+        "required": [
+          "element"
+        ],
+        "properties": {
+          "conditionalRendering": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
+          },
+          "element": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
+              }
+            ]
+          },
+          "repeat": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridRepeatOptions"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutSpec": {
+        "type": "object",
+        "required": [
+          "columnWidthMode",
+          "rowHeightMode",
+          "items"
+        ],
+        "properties": {
+          "columnWidth": {
+            "type": "number",
+            "format": "double"
+          },
+          "columnWidthMode": {
+            "type": "string",
+            "default": ""
+          },
+          "fillScreen": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemKind"
+                }
+              ]
+            }
+          },
+          "maxColumnCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "rowHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "rowHeightMode": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridRepeatOptions": {
+        "type": "object",
+        "required": [
+          "mode",
+          "value"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataKind": {
         "type": "object",
         "required": [
@@ -1855,6 +1460,7 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpec": {
         "type": "object",
         "required": [
+          "visibility",
           "condition",
           "items"
         ],
@@ -1866,12 +1472,16 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"
             }
+          },
+          "visibility": {
+            "type": "string",
+            "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind": {
         "type": "object",
         "required": [
           "kind",
@@ -1886,13 +1496,13 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalSpec": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec": {
         "type": "object",
         "required": [
           "value"
@@ -1925,14 +1535,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind": {
         "type": "object",
         "properties": {
           "ConditionalRenderingDataKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataKind"
           },
-          "ConditionalRenderingTimeIntervalKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeIntervalKind"
+          "ConditionalRenderingTimeRangeSizeKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind"
           },
           "ConditionalRenderingVariableKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKind"
@@ -2671,42 +2281,31 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind": {
         "type": "object",
         "properties": {
+          "AutoGridLayoutKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutKind"
+          },
           "GridLayoutKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
           },
-          "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
+          "RowsLayoutKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
           },
           "TabsLayoutKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind": {
         "type": "object",
         "properties": {
+          "AutoGridLayoutKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutKind"
+          },
           "GridLayoutKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
-          },
-          "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
-          },
-          "RowsLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind": {
-        "type": "object",
-        "properties": {
-          "GridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
-          },
-          "ResponsiveGridLayoutKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind"
           },
           "RowsLayoutKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
@@ -3565,116 +3164,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemSpec": {
-        "type": "object",
-        "required": [
-          "element"
-        ],
-        "properties": {
-          "conditionalRendering": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
-          },
-          "element": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
-              }
-            ]
-          },
-          "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutSpec": {
-        "type": "object",
-        "required": [
-          "row",
-          "col",
-          "items"
-        ],
-        "properties": {
-          "col": {
-            "type": "string",
-            "default": ""
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridLayoutItemKind"
-                }
-              ]
-            }
-          },
-          "row": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardResponsiveGridRepeatOptions": {
-        "type": "object",
-        "required": [
-          "mode",
-          "value"
-        ],
-        "properties": {
-          "mode": {
-            "type": "string",
-            "default": ""
-          },
-          "value": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions": {
         "type": "object",
         "required": [
@@ -3737,19 +3226,23 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec": {
         "type": "object",
         "required": [
-          "collapsed",
           "layout"
         ],
         "properties": {
-          "collapsed": {
-            "type": "boolean",
-            "default": false
+          "collapse": {
+            "type": "boolean"
           },
           "conditionalRendering": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
           },
+          "fillScreen": {
+            "type": "boolean"
+          },
+          "hideHeader": {
+            "type": "boolean"
+          },
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
@@ -3825,7 +3318,7 @@
             }
           },
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
           },
           "links": {
             "description": "Links with references to other dashboards or external websites.",
@@ -4012,8 +3505,11 @@
           "layout"
         ],
         "properties": {
+          "conditionalRendering": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
+          },
           "layout": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
           },
           "title": {
             "type": "string"
@@ -4552,179 +4048,6 @@
             "version": "v2alpha1"
           }
         ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel": {
-        "type": "object",
-        "required": [
-          "spec"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "description": "Panel properties",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec"
-              }
-            ]
-          },
-          "status": {
-            "description": "Status will show errors",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "LibraryPanel",
-            "version": "v2alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelList": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanel"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "LibraryPanelList",
-            "version": "v2alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelSpec": {
-        "type": "object",
-        "required": [
-          "type",
-          "options",
-          "fieldConfig"
-        ],
-        "properties": {
-          "datasource": {
-            "description": "The default datasource type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef"
-              }
-            ]
-          },
-          "description": {
-            "description": "Library panel description",
-            "type": "string"
-          },
-          "fieldConfig": {
-            "description": "The fieldConfig schema depends on the panel type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "options": {
-            "description": "The options schema depends on the panel type",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "pluginVersion": {
-            "description": "The panel type",
-            "type": "string"
-          },
-          "targets": {
-            "description": "The datasource queries",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery"
-            },
-            "x-kubernetes-list-type": "set"
-          },
-          "title": {
-            "description": "The panel title",
-            "type": "string"
-          },
-          "type": {
-            "description": "The panel type",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.LibraryPanelStatus": {
-        "type": "object",
-        "properties": {
-          "missing": {
-            "description": "The properties previously stored in SQL that are not included in this model",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "warnings": {
-            "description": "Translation warnings (mostly things that were in SQL columns but not found in the saved body)",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
