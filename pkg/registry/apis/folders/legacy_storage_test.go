@@ -12,6 +12,7 @@ import (
 
 	"encoding/base64"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -40,7 +41,7 @@ func TestLegacyStorageList(t *testing.T) {
 	ls := legacyStorage{
 		service:    folderService,
 		namespacer: func(_ int64) string { return "1" },
-		permissions: func(ctx context.Context, key *resource.ResourceKey, user *user.SignedInUser, accessor *utils.MetaAccessor) error {
+		permissions: func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 			return nil
 		},
 	}
@@ -75,7 +76,7 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 	storage := legacyStorage{
 		service:    folderService,
 		namespacer: func(_ int64) string { return "1" },
-		permissions: func(ctx context.Context, key *resource.ResourceKey, user *user.SignedInUser, accessor *utils.MetaAccessor) error {
+		permissions: func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 			return nil
 		},
 	}

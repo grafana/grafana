@@ -1276,10 +1276,14 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
 		// legacy behavior
-		permissions = []accesscontrol.SetResourcePermissionCommand{
-			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+		permissions = []accesscontrol.SetResourcePermissionCommand{}
+		if user.IsIdentityType(claims.TypeUser) {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+			})
 		}
-		if obj.GetFolder() == "" {
+		isNested := obj.GetFolder() != ""
+		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -1298,6 +1302,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, key *
 	svc := dr.getPermissionsService(key.Resource == "folders")
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
 		logger.Error("Could not set default permissions", "error", err)
+		return err
 	}
 
 	return nil

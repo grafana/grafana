@@ -224,12 +224,15 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 	grv := r.GroupVersionKind()
-	s.permissions(ctx, &resource.ResourceKey{
+	err = s.permissions(ctx, &resource.ResourceKey{
 		Namespace: accessor.GetNamespace(),
 		Group:     grv.Group,
 		Resource:  "folders",
 		Name:      r.Name,
 	}, user, accessor)
+	if err != nil {
+		return nil, err
+	}
 
 	return r, nil
 }
