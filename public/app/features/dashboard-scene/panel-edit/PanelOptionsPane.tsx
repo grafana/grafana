@@ -151,7 +151,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
-              <Field label="Visualization" className={styles.vizField}>
+              <Field
+                label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')}
+                className={styles.vizField}
+              >
                 <Stack gap={1}>
                   <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
                   <Button
@@ -163,7 +166,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   {hasFieldConfig && (
                     <ToolbarButton
                       icon="filter"
-                      tooltip="Show only overrides"
+                      tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
                       variant={onlyOverrides ? 'active' : 'canvas'}
                       onClick={() => {
                         model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
@@ -177,7 +180,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 <FilterInput
                   className={styles.searchOptions}
                   value={searchQuery}
-                  placeholder={t('dashboard-scene.panel-options-pane.placeholder-search-options', 'Search options')}
+                  placeholder={t('dashboard.panel-edit.placeholder-search-options', 'Search options')}
                   onChange={model.onSetSearchQuery}
                   autoFocus={true}
                   onBlur={() => {
