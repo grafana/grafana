@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
@@ -20,8 +21,10 @@ import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { Folder } from '../../types/rule-form';
+import { DataSourceType } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
@@ -58,7 +61,7 @@ const ImportFromDSRules = () => {
     formState: { errors, isSubmitting },
   } = formAPI;
 
-  const [optionsShowing, toggleOptions] = useToggle(false);
+  const [optionsShowing, toggleOptions] = useToggle(true);
   const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
   const [showConfirmModal, setShowConfirmModal] = useToggle(false);
 
@@ -92,6 +95,12 @@ const ImportFromDSRules = () => {
                       onChange={(ds: DataSourceInstanceSettings) => {
                         setValue('selectedDatasourceUID', ds.uid);
                         setValue('selectedDatasourceName', ds.name);
+                        // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
+                        if (ds.type === DataSourceType.Prometheus) {
+                          setValue('targetDatasourceUID', ds.uid);
+                        } else {
+                          setValue('targetDatasourceUID', undefined);
+                        }
                       }}
                     />
                   )}
@@ -107,7 +116,7 @@ const ImportFromDSRules = () => {
               </Field>
 
               <Collapse
-                label={t('alerting.import-to-gma.optional-settings', 'Optional settings')}
+                label={t('alerting.import-to-gma.additional-settings', 'Additional settings')}
                 isOpen={optionsShowing}
                 onToggle={toggleOptions}
                 collapsible={true}
@@ -129,27 +138,34 @@ const ImportFromDSRules = () => {
                     error={errors.selectedDatasourceName?.message}
                     htmlFor="folder-picker"
                   >
-                    <Controller
-                      render={({ field: { onChange, ref, ...field } }) => (
-                        <Stack width={50}>
-                          <NestedFolderPicker
-                            showRootFolder={false}
-                            invalid={!!errors.targetFolder?.message}
-                            {...field}
-                            value={targetFolder?.uid}
-                            onChange={(uid, title) => {
-                              if (uid && title) {
-                                setValue('targetFolder', { title, uid });
-                              } else {
-                                setValue('targetFolder', undefined);
-                              }
-                            }}
-                          />
-                        </Stack>
-                      )}
-                      name="targetFolder"
-                      control={control}
-                    />
+                    <Stack gap={2}>
+                      <Controller
+                        render={({ field: { onChange, ref, ...field } }) => (
+                          <Stack width={42}>
+                            <NestedFolderPicker
+                              showRootFolder={false}
+                              invalid={!!errors.targetFolder?.message}
+                              {...field}
+                              value={targetFolder?.uid}
+                              onChange={(uid, title) => {
+                                if (uid && title) {
+                                  setValue('targetFolder', { title, uid });
+                                } else {
+                                  setValue('targetFolder', undefined);
+                                }
+                              }}
+                            />
+                          </Stack>
+                        )}
+                        name="targetFolder"
+                        control={control}
+                      />
+                      <CreateNewFolder
+                        onCreate={(folder) => {
+                          setValue('targetFolder', folder);
+                        }}
+                      />
+                    </Stack>
                   </Field>
                   <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName || undefined} />
                 </Box>
@@ -189,7 +205,7 @@ const ImportFromDSRules = () => {
 
                   <Box marginLeft={1} width={50}>
                     <Field
-                      required={false}
+                      required
                       id="target-data-source"
                       label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
                       description={t(
@@ -214,6 +230,9 @@ const ImportFromDSRules = () => {
                         )}
                         name="targetDatasourceUID"
                         control={control}
+                        rules={{
+                          required: { value: true, message: 'Please select a target data source' },
+                        }}
                       />
                     </Field>
                   </Box>
