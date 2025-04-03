@@ -7,9 +7,9 @@ import { createRelativeUrl } from './url';
 
 type QueryParams = ConstructorParameters<typeof URLSearchParams>[0];
 
-export const createListFilterLink = (values: Array<[string, string]>) => {
+export const createListFilterLink = (values: Array<[string, string]>, options?: { skipSubPath?: boolean }) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createRelativeUrl(`/alerting/list`, params);
+  return createRelativeUrl(`/alerting/list`, params, { skipSubPath: options?.skipSubPath });
 };
 
 export const alertListPageLink = (queryParams: Record<string, string> = {}, options?: { skipSubPath?: boolean }) =>

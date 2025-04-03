@@ -550,7 +550,7 @@ export interface FeatureToggles {
   */
   newFolderPicker?: boolean;
   /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
@@ -668,11 +668,6 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
-  /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -1000,7 +995,7 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Load plugins from CDN synchronously
+  * Loads plugins from CDN synchronously
   */
   pluginsCDNSyncLoader?: boolean;
   /**
@@ -1063,13 +1058,22 @@ export interface FeatureToggles {
   */
   azureMonitorLogsBuilderEditor?: boolean;
   /**
-  * Specify the locale so we can show the correct format for numbers and dates
+  * Specifies the locale so the correct format for numbers and dates can be shown
   */
   localeFormatPreference?: boolean;
   /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the extension sidebar
+  */
+  extensionSidebar?: boolean;
+  /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
   /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
@@ -1079,6 +1083,10 @@ export interface FeatureToggles {
   * Support Application Signals queries in the X-Ray datasource
   */
   xrayApplicationSignals?: boolean;
+  /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
   /**
   * Enables localization for plugins
   */

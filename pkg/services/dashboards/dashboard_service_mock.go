@@ -46,34 +46,6 @@ func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, d
 	return r0, r1
 }
 
-// CleanUpDeletedDashboards provides a mock function with given fields: ctx
-func (_m *FakeDashboardService) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CleanUpDeletedDashboards")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) int64); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // CountDashboardsInOrg provides a mock function with given fields: ctx, orgID
 func (_m *FakeDashboardService) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	ret := _m.Called(ctx, orgID)
@@ -376,36 +348,6 @@ func (_m *FakeDashboardService) GetDashboards(ctx context.Context, query *GetDas
 	return r0, r1
 }
 
-// GetSoftDeletedDashboard provides a mock function with given fields: ctx, orgID, uid
-func (_m *FakeDashboardService) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error) {
-	ret := _m.Called(ctx, orgID, uid)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSoftDeletedDashboard")
-	}
-
-	var r0 *Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*Dashboard, error)); ok {
-		return rf(ctx, orgID, uid)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *Dashboard); ok {
-		r0 = rf(ctx, orgID, uid)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Dashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgID, uid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ImportDashboard provides a mock function with given fields: ctx, dto
 func (_m *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error) {
 	ret := _m.Called(ctx, dto)
@@ -434,24 +376,6 @@ func (_m *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDa
 	}
 
 	return r0, r1
-}
-
-// RestoreDashboard provides a mock function with given fields: ctx, dashboard, user, optionalFolderUID
-func (_m *FakeDashboardService) RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error {
-	ret := _m.Called(ctx, dashboard, user, optionalFolderUID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RestoreDashboard")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Dashboard, identity.Requester, string) error); ok {
-		r0 = rf(ctx, dashboard, user, optionalFolderUID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // SaveDashboard provides a mock function with given fields: ctx, dto, allowUiUpdate
@@ -512,24 +436,6 @@ func (_m *FakeDashboardService) SearchDashboards(ctx context.Context, query *Fin
 	}
 
 	return r0, r1
-}
-
-// SoftDeleteDashboard provides a mock function with given fields: ctx, orgID, dashboardUid
-func (_m *FakeDashboardService) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error {
-	ret := _m.Called(ctx, orgID, dashboardUid)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SoftDeleteDashboard")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
-		r0 = rf(ctx, orgID, dashboardUid)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, orgId

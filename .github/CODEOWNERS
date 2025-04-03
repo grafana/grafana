@@ -791,7 +791,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @tolzhabayev
 /.github/workflows/pr-checks.yml @tolzhabayev
-/.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
@@ -830,6 +829,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
+/.github/workflows/e2e-suite-various.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

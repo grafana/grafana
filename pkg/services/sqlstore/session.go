@@ -2,15 +2,14 @@ package sqlstore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"xorm.io/core"
 
 	"xorm.io/xorm"
 
@@ -76,12 +75,12 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 // WithDbSession calls the callback with the session in the context (if exists).
 // Otherwise it creates a new one that is closed upon completion.
 // A session is stored in the context if sqlstore.InTransaction() has been previously called with the same context (and it's not committed/rolledback yet).
-// In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
+// In case of retryable errors, callback will be retried at most five times before giving up.
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return ss.withDbSession(ctx, ss.engine, callback)
 }
 
-func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc, sess *DBSession, retry int) func() (retryer.RetrySignal, error) {
+func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc, sess *DBSession, retry int, dialect core.Dialect) func() (retryer.RetrySignal, error) {
 	return func() (retryer.RetrySignal, error) {
 		retry++
 
@@ -89,9 +88,8 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 
 		ctxLogger := tsclogger.FromContext(ctx)
 
-		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
-			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+		if r, ok := dialect.(xorm.DialectWithRetryableErrors); ok && r.RetryOnError(err) {
+			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code")
 			// retryer immediately returns the error (if there is one) without checking the response
 			// therefore we only have to send it if we have reached the maximum retries
 			if retry >= ss.dbCfg.QueryRetries {
@@ -120,7 +118,7 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 		defer sess.Close()
 	}
 	retry := 0
-	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
+	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry, engine.Dialect()), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
 func (sess *DBSession) InsertId(bean any, dialect migrator.Dialect) error {

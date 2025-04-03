@@ -10,7 +10,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -172,7 +171,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 	progress.SetMessage(ctx, "exporting legacy resources")
 	resourceManager := resources.NewResourcesManager(rw, folders, parser, parser.Clients(), userInfo)
-	for _, kind := range resources.SupportedResources {
+	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
 			continue
 		}
@@ -235,9 +234,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{
-				Identifier: options.Identifier,
-			},
+			Push: &provisioning.ExportJobOptions{},
 		},
 	}
 	if err := w.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {
@@ -260,23 +257,31 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	progress.SetMessage(ctx, "removing unprovisioned resources")
-	return parser.Clients().ForEachUnmanagedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
-		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
-			Resource: item.GetKind(),
-			Group:    item.GroupVersionKind().Group,
-			Action:   repository.FileActionDeleted,
+	for _, kind := range resources.SupportedProvisioningResources {
+		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s", kind.Resource))
+		client, _, err := parser.Clients().ForResource(kind)
+		if err != nil {
+			return err
 		}
+		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+			result := jobs.JobResourceResult{
+				Name:     item.GetName(),
+				Resource: item.GetKind(),
+				Group:    item.GroupVersionKind().Group,
+				Action:   repository.FileActionDeleted,
+			}
 
-		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-			result.Error = fmt.Errorf("failed to delete folder: %w", err)
+			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
+				result.Error = fmt.Errorf("failed to delete folder: %w", err)
+				progress.Record(ctx, result)
+				return result.Error
+			}
+
 			progress.Record(ctx, result)
-			return result.Error
+			return nil
+		}); err != nil {
+			return err
 		}
-
-		progress.Record(ctx, result)
-
-		return nil
-	})
+	}
+	return nil
 }

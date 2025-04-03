@@ -64,7 +64,7 @@ type APIGroupValidation interface {
 
 type APIGroupRouteProvider interface {
 	// Support direct HTTP routes from an APIGroup
-	GetAPIRoutes() *APIRoutes
+	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
 type APIGroupPostStartHookProvider interface {

@@ -125,7 +125,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					// Optionally include raw http handlers
 					provider, ok := b.(APIGroupRouteProvider)
 					if ok && provider != nil {
-						routes := provider.GetAPIRoutes()
+						routes := provider.GetAPIRoutes(gv)
 						if routes != nil {
 							for _, route := range routes.Root {
 								copy.Paths.Paths[prefix+route.Path] = &spec3.Path{

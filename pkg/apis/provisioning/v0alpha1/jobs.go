@@ -126,17 +126,11 @@ type ExportJobOptions struct {
 
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 // The job status

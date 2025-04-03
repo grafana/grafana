@@ -78,8 +78,7 @@ type jobStorage interface {
 // When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
 // When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
 type persistentStore struct {
-	jobStore     jobStorage
-	historicJobs History
+	jobStore jobStorage
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
@@ -95,7 +94,6 @@ type persistentStore struct {
 
 func NewStore(
 	jobStore jobStorage,
-	historicJobs History,
 	expiry time.Duration,
 ) (*persistentStore, error) {
 	if expiry <= 0 {
@@ -103,8 +101,7 @@ func NewStore(
 	}
 
 	return &persistentStore{
-		jobStore:     jobStore,
-		historicJobs: historicJobs,
+		jobStore: jobStore,
 
 		clock:  time.Now,
 		expiry: expiry,
@@ -275,14 +272,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	}
 	delete(job.Labels, LabelJobClaim)
 
-	err = s.historicJobs.WriteJob(ctx, job)
-	if err != nil {
-		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
-	} else {
-		logger.Debug("created historic job", "historic_job", *job)
-	}
-
 	logger.Debug("job completion done")
 	return nil
 }
@@ -413,8 +402,8 @@ func (s *persistentStore) InsertNotifications() chan struct{} {
 func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
 	case provisioning.JobActionMigrate, provisioning.JobActionPull:
-		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-		job.Name = job.Spec.Repository + "-syncmigrate"
+		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
+		job.Name = job.Spec.Repository + "-sync"
 	case provisioning.JobActionPullRequest:
 		var pr int
 		if job.Spec.PullRequest != nil {

@@ -148,7 +148,7 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      const messageTextArea = screen.getByLabelText('message');
+      const messageTextArea = screen.getByPlaceholderText('Add a note to describe your changes.');
 
       expect(messageTextArea).toBeInTheDocument();
       expect(messageTextArea).toHaveTextContent('Saved draft');

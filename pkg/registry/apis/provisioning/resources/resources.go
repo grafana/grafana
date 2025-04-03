@@ -7,21 +7,22 @@ import (
 	"errors"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var ErrAlreadyInRepository = errors.New("already in repository")
 
 type WriteOptions struct {
-	Identifier bool
-	Path       string
-	Ref        string
+	Path string
+	Ref  string
 }
 
 type resourceID struct {
@@ -34,12 +35,12 @@ type ResourcesManager struct {
 	repo            repository.ReaderWriter
 	folders         *FolderManager
 	parser          *Parser
-	clients         *ResourceClients
+	clients         ResourceClients
 	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
@@ -75,6 +76,11 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	ctx = r.withAuthorSignature(ctx, meta)
 
 	name := meta.GetName()
+	if name == "" {
+		return "", field.Required(field.NewPath("name", "metadata", "name"),
+			"An explicit name must be saved in the resource")
+	}
+
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how we should handle this?
 	if manager.Identity == r.repo.Config().GetName() {
@@ -101,9 +107,8 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if options.Identifier {
-		meta.SetName(name) // keep the identifier in the metadata
-	}
+	// Always write the identifier
+	meta.SetName(name)
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
@@ -189,7 +194,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	objName := obj.GetName()
 	if objName == "" {
 		// Find the referenced file
-		objName, _ = NamesFromHashedRepoPath(r.repo.Config().Name, path)
+		objName = FileNameFromHashedRepoPath(r.repo.Config().Name, path)
 	}
 
 	client, _, err := r.clients.ForKind(*gvk)

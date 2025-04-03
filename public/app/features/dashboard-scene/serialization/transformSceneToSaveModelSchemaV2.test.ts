@@ -56,6 +56,7 @@ import {
   getElementDatasource,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
+  getDataQueryKind,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -113,7 +114,14 @@ jest.mock('@grafana/runtime', () => ({
           },
           loki: {
             name: 'Loki',
-            meta: { id: 'loki' },
+            meta: {
+              id: 'loki',
+              name: 'Loki',
+              type: 'datasource',
+              info: { version: '1.0.0' },
+              module: 'app/plugins/datasource/loki/module',
+              baseUrl: '/plugins/loki',
+            },
             type: 'datasource',
           },
         },
@@ -496,6 +504,59 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       });
       const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
       expect(resultC).toEqual({});
+    });
+  });
+
+  describe('getDataQueryKind', () => {
+    it('should preserve original query datasource type when available', () => {
+      // 1. Test with a query that has its own datasource type
+      const queryWithDS: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Create a query runner with a different datasource type
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'default-ds', type: 'loki' },
+        queries: [],
+      });
+
+      // Should use the query's own datasource type (prometheus)
+      expect(getDataQueryKind(queryWithDS, queryRunner)).toBe('prometheus');
+    });
+
+    it('should use queryRunner datasource type as fallback when query has no datasource', () => {
+      // 2. Test with a query that has no datasource
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with a datasource
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'influxdb-1', type: 'influxdb' },
+        queries: [],
+      });
+
+      // Should fall back to queryRunner's datasource type
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('influxdb');
+    });
+
+    it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
+      // 3. Test with neither query nor queryRunner having a datasource type
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with no datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+      });
+
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+
+      // Also verify the function's behavior by checking the args
+      expect(queryWithoutDS.datasource?.type).toBeUndefined(); // No query datasource
+      expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
     });
   });
 });

@@ -134,7 +134,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellNGProps {
-  cellInspect: boolean;
   field: Field;
   frame: DataFrame;
   getActions?: GetActionsFunction;
@@ -148,6 +147,7 @@ export interface TableCellNGProps {
   timeRange: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */

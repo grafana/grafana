@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext } from 'react';
 import { useObservable } from 'react-use';
+import { of } from 'rxjs';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
+import { useExtensionSidebarContext } from '../components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
 import { KeybindingSrv } from '../services/keybindingSrv';
 
@@ -45,5 +47,8 @@ export function useReturnToPreviousInternal() {
 
 export function useChromeHeaderHeight() {
   const { chrome } = useGrafana();
-  return useObservable(chrome.headerHeightObservable, 0);
+  // if the extension sidebar is open, the inner pane will be scrollable, thus we need to set the header height to 0
+  const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
+
+  return useObservable(isExtensionSidebarOpen ? of(0) : chrome.headerHeightObservable, 0);
 }

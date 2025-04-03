@@ -12,6 +12,8 @@ import (
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/selection"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -29,12 +31,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const folderSearchLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFoldersFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -73,6 +77,9 @@ func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFolde
 }
 
 func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -154,6 +161,9 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 
 // searchFoldesFromApiServer uses the search grpc connection to search folders and returns the hit list
 func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.SearchFoldersQuery) (model.HitList, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.searchFoldersFromApiServer")
+	defer span.End()
+
 	if query.OrgID == 0 {
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -233,6 +243,9 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 }
 
 func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderByIDFromApiServer")
+	defer span.End()
+
 	if id == 0 {
 		return &folder.GeneralFolder, nil
 	}
@@ -286,6 +299,9 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 }
 
 func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderByTitleFromApiServer")
+	defer span.End()
+
 	if title == "" {
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
@@ -343,6 +359,8 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getChildrenFromApiServer")
+	defer span.End()
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -397,6 +415,8 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 }
 
 func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getRootFoldersFromApiServer")
+	defer span.End()
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -438,6 +458,9 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 }
 
 func (s *Service) getParentsFromApiServer(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getParentsFromApiServer")
+	defer span.End()
+
 	if q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
@@ -449,6 +472,9 @@ func (s *Service) getParentsFromApiServer(ctx context.Context, q folder.GetParen
 }
 
 func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.createOnApiServer")
+	defer span.End()
+
 	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -514,7 +540,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 }
 
 func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Update")
+	ctx, span := s.tracer.Start(ctx, "folder.updateOnApiServer")
 	defer span.End()
 
 	if cmd.SignedInUser == nil {
@@ -586,6 +612,9 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 }
 
 func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteFromApiServer")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -689,7 +718,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 }
 
 func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Move")
+	ctx, span := s.tracer.Start(ctx, "folder.moveOnApiServer")
 	defer span.End()
 
 	if cmd.SignedInUser == nil {
@@ -795,6 +824,9 @@ func (s *Service) publishFolderFullPathUpdatedEventViaApiServer(ctx context.Cont
 }
 
 func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.canMoveViaApiServer")
+	defer span.End()
+
 	// Check that the user is allowed to move the folder to the destination folder
 	var evaluator accesscontrol.Evaluator
 	parentUID := cmd.NewParentUID
@@ -843,6 +875,9 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 }
 
 func (s *Service) getFolderAndParentUIDScopesViaApiServer(ctx context.Context, folderUID string, orgID int64) ([]string, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderAndParentUIDScopesViaApiServer")
+	defer span.End()
+
 	folderAndParentUIDScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
 	if folderUID == folder.GeneralFolderUID {
 		return folderAndParentUIDScopes, nil
@@ -859,6 +894,9 @@ func (s *Service) getFolderAndParentUIDScopesViaApiServer(ctx context.Context, f
 }
 
 func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getDescendantCountsFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}

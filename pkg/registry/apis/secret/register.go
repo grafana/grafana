@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder       = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupMutation      = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupValidation    = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*SecretAPIBuilder)(nil)
 )
 
 type SecretAPIBuilder struct {
@@ -154,11 +153,6 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authsvc.NewResourceAuthorizer(b.accessClient)
-}
-
-// Register additional routes with the server.
-func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.

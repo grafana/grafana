@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -110,13 +110,13 @@ export const GenAIHistory = ({
       </div>
 
       <Input
-        placeholder="Tell AI what to do next..."
+        placeholder={t('dashboard.gen-aihistory.placeholder-tell-ai-what-to-do-next', 'Tell AI what to do next...')}
         suffix={
           <Button
             icon="enter"
             variant="secondary"
             fill="text"
-            aria-label="Send custom feedback"
+            aria-label={t('dashboard.gen-aihistory.aria-label-send-custom-feedback', 'Send custom feedback')}
             onClick={onClickSubmitCustomFeedback}
             disabled={!customFeedback}
           >
@@ -143,7 +143,7 @@ export const GenAIHistory = ({
       </div>
 
       <div className={styles.footer}>
-        <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
+        <Icon name="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
           This content is AI-generated using the{' '}
           <TextLink

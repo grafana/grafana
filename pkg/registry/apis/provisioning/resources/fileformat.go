@@ -35,7 +35,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 	} else {
-		return nil, nil, "", fmt.Errorf("yaml not yet implemented")
+		return nil, nil, "", fmt.Errorf("classic resource must be JSON")
 	}
 
 	// regular version headers exist

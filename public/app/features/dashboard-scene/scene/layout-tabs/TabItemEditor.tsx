@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Input } from '@grafana/ui';
+import { Input, Field } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -44,6 +44,21 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 function TabTitleInput({ tab }: { tab: TabItem }) {
   const { title, isNew } = tab.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
+  const hasUniqueTitle = tab.hasUniqueTitle();
 
-  return <Input ref={ref} value={title} onChange={(e) => tab.onChangeTitle(e.currentTarget.value)} />;
+  return (
+    <Field
+      invalid={!hasUniqueTitle}
+      error={
+        !hasUniqueTitle ? t('dashboard.tabs-layout.tab-options.title-not-unique', 'Title should be unique') : undefined
+      }
+    >
+      <Input
+        ref={ref}
+        title={t('dashboard.tabs-layout.tab-options.title-option', 'Title')}
+        value={title}
+        onChange={(e) => tab.onChangeTitle(e.currentTarget.value)}
+      />
+    </Field>
+  );
 }

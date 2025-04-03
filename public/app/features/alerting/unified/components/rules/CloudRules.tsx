@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { config } from '@grafana/runtime';
+import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -15,6 +16,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
 import { isAsyncRequestStatePending } from '../../utils/redux';
+import { createRelativeUrl } from '../../utils/url';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -37,7 +39,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   );
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
-
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
   const hasDataSourcesLoading = dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
@@ -48,39 +49,64 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
+
+  const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canMigrateToGMA =
+    hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
+
   return (
     <section className={styles.wrapper}>
-      <div className={styles.sectionHeader}>
-        <div className={styles.headerRow}>
-          <Text element="h2" variant="h5">
-            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
-          </Text>
-          {dataSourcesLoading.length ? (
-            <LoadingPlaceholder
-              className={styles.loader}
-              text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
-            />
-          ) : (
-            <div />
-          )}
-          <CreateRecordingRuleButton />
+      <Stack gap={2} direction="column">
+        <div className={styles.sectionHeader}>
+          <div className={styles.headerRow}>
+            <Text element="h2" variant="h5">
+              <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
+            </Text>
+            {dataSourcesLoading.length ? (
+              <LoadingPlaceholder
+                className={styles.loader}
+                text={t(
+                  'alerting.list-view.section.loading-rules',
+                  'Loading rules from {{numberOfSources}} {{sources}}',
+                  { numberOfSource: dataSourcesLoading.length, sources: pluralize('source', dataSourcesLoading.length) }
+                )}
+              />
+            ) : (
+              <div />
+            )}
+            <Stack gap={1}>
+              {canMigrateToGMA && <MigrateToGMAButton />}
+              <CreateRecordingRuleButton />
+            </Stack>
+          </div>
         </div>
-      </div>
+      </Stack>
 
-      {pageItems.map(({ group, namespace }) => {
-        return (
-          <RulesGroup
-            group={group}
-            key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
-            namespace={namespace}
-            expandAll={expandAll}
-            viewMode={'grouped'}
-          />
-        );
-      })}
+      {pageItems.map(({ group, namespace }) => (
+        <RulesGroup
+          group={group}
+          key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
+          namespace={namespace}
+          expandAll={expandAll}
+          viewMode={'grouped'}
+        />
+      ))}
 
-      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
-      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
+      {!hasDataSourcesConfigured && (
+        <p>
+          <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
+            There are no Prometheus or Loki data sources configured
+          </Trans>
+        </p>
+      )}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && (
+        <p>
+          <Trans i18nKey="alerting.list-view.no-rules">No rules found.</Trans>
+        </p>
+      )}
       {!hasSomeResults && hasDataSourcesLoading && <Spinner size="xl" className={styles.spinner} />}
 
       <Pagination
@@ -121,7 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-
   const location = useLocation();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
@@ -143,4 +168,21 @@ export function CreateRecordingRuleButton() {
     );
   }
   return null;
+}
+
+function MigrateToGMAButton() {
+  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
+  return (
+    <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
+      <Stack direction="row" gap={1} alignItems="center">
+        <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
+        <Badge
+          text={t('alerting.rule-list.import-to-gma.new-badge', 'New!')}
+          aria-label="new"
+          color="blue"
+          icon="rocket"
+        />
+      </Stack>
+    </LinkButton>
+  );
 }

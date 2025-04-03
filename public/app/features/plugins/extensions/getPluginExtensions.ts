@@ -54,15 +54,13 @@ export const getObservablePluginExtensions = (
 
 export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
   return getObservablePluginExtensions(options).pipe(
-    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link)),
-    filter((extensions) => extensions.length > 0)
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link))
   );
 };
 
 export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
   return getObservablePluginExtensions(options).pipe(
-    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component)),
-    filter((extensions) => extensions.length > 0)
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component))
   );
 };
 

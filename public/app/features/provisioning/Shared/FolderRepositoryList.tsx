@@ -5,6 +5,7 @@ import { Repository } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
+import { checkSyncSettings } from '../utils/checkSyncSettings';
 
 import { ConnectRepositoryButton } from './ConnectRepositoryButton';
 
@@ -15,17 +16,19 @@ interface Props {
 export function FolderRepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
-
+  const instanceProvisioned = checkSyncSettings(items);
   return (
     <Stack direction={'column'} gap={3}>
-      <Stack gap={2}>
-        <FilterInput
-          placeholder={t('provisioning.folder-repository-list.placeholder-search', 'Search')}
-          value={query}
-          onChange={setQuery}
-        />
-        <ConnectRepositoryButton items={items} />
-      </Stack>
+      {!instanceProvisioned && (
+        <Stack gap={2}>
+          <FilterInput
+            placeholder={t('provisioning.folder-repository-list.placeholder-search', 'Search')}
+            value={query}
+            onChange={setQuery}
+          />
+          <ConnectRepositoryButton items={items} />
+        </Stack>
+      )}
       <Stack direction={'column'}>
         {filteredItems.length ? (
           filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)

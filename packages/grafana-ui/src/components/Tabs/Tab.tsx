@@ -10,6 +10,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { Counter } from './Counter';
 
@@ -25,10 +26,14 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
   truncate?: boolean;
+  tooltip?: string;
 }
 
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, ...otherProps }, ref) => {
+  (
+    { label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, tooltip, ...otherProps },
+    ref
+  ) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
 
@@ -55,10 +60,13 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       onClick: onChangeTab,
       role: 'tab',
       'aria-selected': active,
+      title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
+    let tab = null;
+
     if (href) {
-      return (
+      tab = (
         <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
           <a
             {...commonProps}
@@ -71,21 +79,27 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           </a>
         </div>
       );
+    } else {
+      tab = (
+        <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
+          <button
+            {...commonProps}
+            type="button"
+            // don't think we can avoid the type assertion here :(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          >
+            {content()}
+          </button>
+        </div>
+      );
     }
 
-    return (
-      <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
-        <button
-          {...commonProps}
-          type="button"
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        >
-          {content()}
-        </button>
-      </div>
-    );
+    if (tooltip) {
+      return <Tooltip content={tooltip}>{tab}</Tooltip>;
+    }
+
+    return tab;
   }
 );
 

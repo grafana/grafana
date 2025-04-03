@@ -49,6 +49,13 @@
       "format": "int64",
       "description": "Deprecated legacy id of the resource",
       "priority": 0
+    },
+    {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
     }
   ],
   "rows": [
@@ -60,7 +67,8 @@
         null,
         null,
         null,
-        321
+        321,
+        null
       ],
       "object": {
         "kind": "folders",
@@ -80,7 +88,8 @@
         null,
         null,
         null,
-        123
+        123,
+        "repo"
       ],
       "object": {
         "kind": "folders",

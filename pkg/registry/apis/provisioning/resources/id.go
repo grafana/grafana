@@ -92,12 +92,12 @@ func appendHashSuffix(hashKey, repositoryName string) func(string) string {
 }
 
 // Will pick a name based on the hashed repository and path
-func NamesFromHashedRepoPath(repo string, fpath string) (string, string) {
+func FileNameFromHashedRepoPath(repo string, fpath string) string {
 	// Remove the extension: we don't want the extension to impact the ID. This lets the user change between all supported formats.
 	fpath = safepath.RemoveExt(fpath)
 	hasher := appendHashSuffix(fpath, repo)
 
-	return hasher(safepath.Base(fpath)), hasher(strings.Trim(safepath.Dir(fpath), "/"))
+	return hasher(safepath.Base(fpath))
 }
 
 // Folder contains the data for a folder we use in provisioning.

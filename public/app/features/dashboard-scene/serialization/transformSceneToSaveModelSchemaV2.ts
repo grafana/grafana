@@ -254,7 +254,7 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
     vizPanelQueries.forEach((query) => {
       const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
+        kind: getDataQueryKind(query, queryRunner),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
@@ -272,12 +272,26 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery | string): string {
+export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: SceneQueryRunner): string {
+  // Query is a string - get default data source type
   if (typeof query === 'string') {
-    return getDefaultDataSourceRef()?.type ?? '';
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
   }
 
-  return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
+  // Query has explicit datasource with type
+  if (query.datasource?.type) {
+    return query.datasource.type;
+  }
+
+  // Get type from query runner's datasource
+  if (queryRunner?.state.datasource?.type) {
+    return queryRunner.state.datasource.type;
+  }
+
+  // Fall back to default datasource
+  const defaultDS = getDefaultDataSourceRef();
+  return defaultDS?.type || '';
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {

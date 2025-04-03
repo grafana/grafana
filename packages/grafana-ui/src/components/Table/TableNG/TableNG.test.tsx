@@ -1249,24 +1249,26 @@ describe('TableNG', () => {
 
   describe('Cell inspection', () => {
     it('shows inspect icon when hovering over a cell with inspection enabled', () => {
-      const fieldConfig = {
-        defaults: {
-          custom: {
-            inspect: true,
-            cellOptions: {
-              wrapText: false,
+      const inspectDataFrame = {
+        ...createBasicDataFrame(),
+        fields: createBasicDataFrame().fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              inspect: true,
             },
           },
-        },
-        overrides: [],
+        })),
       };
 
       // Render the component
       const { container } = render(
         <TableNG
           enableVirtualization={false}
-          fieldConfig={fieldConfig}
-          data={createBasicDataFrame()}
+          // fieldConfig={inspectDataFrame.fields[0].config}
+          data={inspectDataFrame}
           width={800}
           height={600}
         />

@@ -1,69 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 
-import { FilesView } from './File/FilesView';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { RepositoryActions } from './Repository/RepositoryActions';
-import { RepositoryOverview } from './Repository/RepositoryOverview';
-import { RepositoryResources } from './Repository/RepositoryResources';
 import { FolderRepositoryList } from './Shared/FolderRepositoryList';
 import { useRepositoryList } from './hooks';
-import { checkSyncSettings } from './utils/checkSyncSettings';
-
-const appEvents = getAppEvents();
 
 enum TabSelection {
-  Overview = 'overview',
-  Resources = 'resources',
-  Files = 'files',
-  GettingStarted = 'getting-started',
   Repositories = 'repositories',
+  GettingStarted = 'getting-started',
 }
 
 export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
-  const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
+  const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const { instanceConnected } = checkSyncSettings(items);
-  const [activeTab, setActiveTab] = useState<TabSelection>(
-    instanceConnected ? TabSelection.Overview : TabSelection.Repositories
-  );
+  const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
 
-  const connectedTabInfo = useMemo(
-    () => [
-      {
-        value: TabSelection.Overview,
-        label: t('provisioning.home-page.tab-overview', 'Overview'),
-        title: t('provisioning.home-page.tab-overview-title', 'Repository overview'),
-      },
-      {
-        value: TabSelection.Resources,
-        label: t('provisioning.home-page.tab-resources', 'Resources'),
-        title: t('provisioning.home-page.tab-resources-title', 'Resources saved in Grafana database'),
-      },
-      {
-        value: TabSelection.Files,
-        label: t('provisioning.home-page.tab-files', 'Files'),
-        title: t('provisioning.home-page.tab-files-title', 'The raw file list from the repository'),
-      },
-      {
-        value: TabSelection.GettingStarted,
-        label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
-        title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
-      },
-    ],
-    []
-  );
-
-  const disconnectedTabInfo = useMemo(
+  const tabInfo = useMemo(
     () => [
       {
         value: TabSelection.Repositories,
@@ -79,19 +38,6 @@ export default function HomePage() {
     []
   );
 
-  useEffect(() => {
-    if (deleteAllResult.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('provisioning.home-page.success-all-repositories-deleted', 'All configured repositories deleted')],
-      });
-    }
-  }, [deleteAllResult.isSuccess]);
-
-  useEffect(() => {
-    setActiveTab(instanceConnected ? TabSelection.Overview : TabSelection.Repositories);
-  }, [instanceConnected]);
-
   // Early return for onboarding
   if (!items?.length && !isLoading) {
     return <GettingStartedPage items={items ?? []} />;
@@ -103,29 +49,9 @@ export default function HomePage() {
   };
 
   const renderTabContent = () => {
-    if (!instanceConnected) {
-      switch (activeTab) {
-        case TabSelection.Repositories:
-          return <FolderRepositoryList items={items ?? []} />;
-        case TabSelection.GettingStarted:
-          return <GettingStarted items={items ?? []} />;
-        default:
-          return null;
-      }
-    }
-
-    const repo = items?.[0];
-    if (!repo) {
-      return null;
-    }
-
     switch (activeTab) {
-      case TabSelection.Overview:
-        return <RepositoryOverview repo={repo} />;
-      case TabSelection.Resources:
-        return <RepositoryResources repo={repo} />;
-      case TabSelection.Files:
-        return <FilesView repo={repo} />;
+      case TabSelection.Repositories:
+        return <FolderRepositoryList items={items ?? []} />;
       case TabSelection.GettingStarted:
         return <GettingStarted items={items ?? []} />;
       default:
@@ -137,7 +63,6 @@ export default function HomePage() {
     <Page
       navId="provisioning"
       subTitle={t('provisioning.home-page.subtitle', 'View and manage your configured repositories')}
-      actions={instanceConnected && items?.length ? <RepositoryActions repository={items[0]} /> : undefined}
     >
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
@@ -174,7 +99,7 @@ export default function HomePage() {
         />
         <Stack direction="column" gap={2}>
           <TabsBar>
-            {(instanceConnected ? connectedTabInfo : disconnectedTabInfo).map((t) => (
+            {tabInfo.map((t) => (
               <Tab
                 key={t.value}
                 label={t.label}

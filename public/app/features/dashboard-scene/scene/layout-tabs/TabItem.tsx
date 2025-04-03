@@ -180,4 +180,10 @@ export class TabItem
 
     scrollCanvasElementIntoView(this, this.containerRef);
   }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
+  }
 }
