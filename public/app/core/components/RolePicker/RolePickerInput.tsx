@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { Trans } from 'app/core/internationalization';
 
 import { Role } from '../../../types';

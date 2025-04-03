@@ -34,7 +34,8 @@ export function createMockResourcePickerData() {
   const mockDatasource = createMockDatasource();
   const mockResourcePicker = new ResourcePickerData(
     createMockInstanceSetttings(),
-    mockDatasource.azureMonitorDatasource
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
   );
 
   mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());

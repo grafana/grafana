@@ -7,7 +7,7 @@ import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 
-import { useAlertRuleSuggestions } from './useAlertRuleSuggestions';
+import { useGetNameSpacesByDatasourceName } from './useAlertRuleSuggestions';
 
 interface Props {
   rulesSourceName: string;
@@ -22,7 +22,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   } = useFormContext<RuleFormValues>();
 
   const style = useStyles2(getStyle);
-  const { namespaceGroups, isLoading } = useAlertRuleSuggestions(rulesSourceName);
+  const { namespaceGroups, isLoading } = useGetNameSpacesByDatasourceName(rulesSourceName);
 
   const namespace = watch('namespace');
 
@@ -45,6 +45,10 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
       <Field
         data-testid="namespace-picker"
         label="Namespace"
+        // Disable translations as we don't intend to use this dropdown longterm,
+        // so avoiding us adding translations for the sake of it
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        description="Type to search for an existing namespace or create a new one"
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
       >
@@ -71,7 +75,16 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           }}
         />
       </Field>
-      <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
+      <Field
+        data-testid="group-picker"
+        label="Group"
+        // Disable translations as we don't intend to use this dropdown longterm,
+        // so avoiding us adding translations for the sake of it
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        description="Type to search for an existing group or create a new one"
+        error={errors.group?.message}
+        invalid={!!errors.group?.message}
+      >
         <Controller
           render={({ field: { ref, ...field } }) => (
             <VirtualizedSelect

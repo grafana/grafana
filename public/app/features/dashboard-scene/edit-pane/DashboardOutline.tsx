@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { isInCloneChain } from '../utils/clone';
@@ -21,13 +21,21 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0.5} display="flex" direction="column">
-      <DashboardOutlineNode sceneObject={dashboard} expandable />
+    <Box padding={1} gap={0.25} display="flex" direction="column">
+      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} expandable />
     </Box>
   );
 }
 
-function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneObject; expandable: boolean }) {
+function DashboardOutlineNode({
+  sceneObject,
+  expandable,
+  editPane,
+}: {
+  sceneObject: SceneObject;
+  expandable: boolean;
+  editPane: DashboardEditPane;
+}) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { key } = sceneObject.useState();
   const styles = useStyles2(getStyles);
@@ -37,37 +45,40 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
 
   const children = collectEditableElementChildren(sceneObject);
   const elementInfo = editableElement.getEditableElementInfo();
+  const instanceName = elementInfo.instanceName === '' ? '<empty title>' : elementInfo.instanceName;
+  const elementExpanded = !editableElement.getCollapsedState?.();
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    onSelect?.(evt);
+    setIsExpanded(!isExpanded);
+    editableElement.scrollIntoView?.();
+
+    // Sync expanded state with canvas element
+    if (editableElement.getCollapsedState) {
+      editableElement.setCollapsedState?.(isExpanded);
+    }
+  };
+
+  // Sync canvas element expanded state with outline element
+  useEffect(() => {
+    if (elementExpanded !== isExpanded) {
+      console.log('elementExpanded', elementExpanded);
+      setIsExpanded(elementExpanded);
+    }
+  }, [isExpanded, elementExpanded]);
 
   return (
     <>
-      <Stack
-        direction="row"
-        gap={0.5}
-        alignItems="center"
-        role="presentation"
-        aria-expanded={expandable ? isExpanded : undefined}
-        aria-owns={expandable ? key : undefined}
+      <button
+        role="treeitem"
+        className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
+        onPointerDown={onPointerDown}
       >
-        {expandable && (
-          <IconButton
-            name={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={
-              isExpanded
-                ? t('dashboard.outline.tree.item.collapse', 'Collapse item')
-                : t('dashboard.outline.tree.item.expand', 'Expand item')
-            }
-          />
-        )}
-        <button
-          role="treeitem"
-          className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-          onPointerDown={(evt) => onSelect?.(evt)}
-        >
-          <Icon name={elementInfo.icon} />
-          <span>{elementInfo.name}</span>
-        </button>
-      </Stack>
+        {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
+        <Icon size="sm" name={elementInfo.icon} />
+        <span>{instanceName}</span>
+      </button>
+
       {expandable && isExpanded && (
         <div className={styles.container} role="group">
           {children.length > 0 ? (
@@ -76,6 +87,7 @@ function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneO
                 key={child.sceneObject.state.key}
                 sceneObject={child.sceneObject}
                 expandable={child.expandable}
+                editPane={editPane}
               />
             ))
           ) : (
@@ -94,7 +106,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       marginLeft: theme.spacing(1),
       paddingLeft: theme.spacing(1.5),
       borderLeft: `1px solid ${theme.colors.border.medium}`,
@@ -103,14 +115,18 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1),
+      padding: theme.spacing(0.25, 1, 0.25, 0),
       borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       overflow: 'hidden',
       '&:hover': {
-        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        outlineOffset: '0px',
+        backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
       },
       '> span': {
         whiteSpace: 'nowrap',
@@ -119,7 +135,12 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     nodeButtonSelected: css({
-      color: theme.colors.primary.text,
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      '&:hover': {
+        outline: `1px dashed ${theme.colors.primary.border}`,
+      },
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,

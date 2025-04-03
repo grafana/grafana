@@ -24,10 +24,10 @@ func (jenny *GoSpecJenny) Generate(sfg ...SchemaForGen) (codejen.Files, error) {
 
 	for i, v := range sfg {
 		packageName := strings.ToLower(v.Name)
-		cueValue := v.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema.spec"))
+		cueValue := v.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
 
 		b, err := cog.TypesFromSchema().
-			CUEValue(packageName, cueValue, cog.ForceEnvelope("Spec")).
+			CUEValue(packageName, cueValue).
 			Golang(cog.GoConfig{}).
 			Run(context.Background())
 		if err != nil {

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -206,6 +207,13 @@ func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
 		return store
 	}
 
+	t.Run("should return error when title is empty", func(t *testing.T) {
+		store := setupStore(t)
+		_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, u, folder.RootFolderUID)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "title is empty")
+	})
+
 	t.Run("should create folder when it does not exist", func(t *testing.T) {
 		store := setupStore(t)
 
@@ -317,6 +325,65 @@ func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
 		require.Equal(t, folder3.UID, gotFolder3.UID)
 		require.Equal(t, folder.RootFolderUID, gotFolder3.ParentUID)
 	})
+
+	t.Run("should create folder with deterministic UID and handle race conditions", func(t *testing.T) {
+		store := setupStore(t)
+
+		folderTitle := "race condition test folder"
+		parentUID := folder.RootFolderUID
+
+		// Calculate the expected UID that would be generated
+		expectedUID, err := generateAlertingFolderUID(folderTitle, parentUID, 1)
+		require.NoError(t, err)
+
+		// Create a folder first, simulating another concurrent call that succeeded first
+		createFolder(t, store, expectedUID, folderTitle, 1, parentUID)
+
+		// Now try to create a folder with the same title and parent
+		// This should not create a duplicate folder but return the existing one
+		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), folderTitle, 1, u, parentUID)
+		require.NoError(t, err)
+		require.Equal(t, expectedUID, f.UID, "Should return folder with same UID as would be deterministically generated")
+		require.Equal(t, folderTitle, f.Title)
+		require.Equal(t, parentUID, f.ParentUID)
+
+		// Verify only one folder was created
+		folders, err := store.FolderService.GetFolders(
+			context.Background(),
+			folder.GetFoldersQuery{
+				OrgID:        1,
+				WithFullpath: true,
+				SignedInUser: u,
+			},
+		)
+		require.NoError(t, err)
+		require.Len(t, folders, 1, "Only one folder should exist")
+	})
+
+	t.Run("should handle special characters in folder titles", func(t *testing.T) {
+		store := setupStore(t)
+		specialTitles := []string{
+			"folder/with/slashes",
+			"folder with spaces",
+			"folder-with-dashes",
+			"folder_with_underscores",
+			"folder.with.dots",
+			"!@#$%^&*()",
+		}
+
+		for _, title := range specialTitles {
+			t.Run(title, func(t *testing.T) {
+				f, err := store.GetOrCreateNamespaceByTitle(context.Background(), title, 1, u, folder.RootFolderUID)
+				require.NoError(t, err)
+				require.Equal(t, title, f.Title)
+
+				// Verify retrieval works
+				retrieved, err := store.GetNamespaceByTitle(context.Background(), title, 1, u, folder.RootFolderUID)
+				require.NoError(t, err)
+				require.Equal(t, f.UID, retrieved.UID)
+			})
+		}
+	})
 }
 
 func TestIntegration_GetNamespaceChildren(t *testing.T) {
@@ -415,5 +482,61 @@ func TestIntegration_GetNamespaceChildren(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(children), 2)
 		require.ElementsMatch(t, []string{rootFolder1, rootFolder2}, []string{children[0].UID, children[1].UID})
+	})
+}
+
+func TestGenerateAlertingFolderUID(t *testing.T) {
+	const orgID int64 = 1
+
+	t.Run("should generate deterministic UIDs for same inputs", func(t *testing.T) {
+		title := "Test Folder"
+		parentUID := "parent123"
+
+		uid1, err := generateAlertingFolderUID(title, parentUID, orgID)
+		require.NoError(t, err)
+		require.True(t, util.IsValidShortUID(uid1), "Generated UID should be valid")
+
+		uid2, err := generateAlertingFolderUID(title, parentUID, orgID)
+		require.NoError(t, err)
+		require.True(t, util.IsValidShortUID(uid2), "Generated UID should be valid")
+
+		require.Equal(t, uid1, uid2, "UIDs should be identical for same inputs")
+		require.True(t, strings.HasPrefix(uid1, "alerting-"), "UID should have alerting prefix")
+	})
+
+	t.Run("should generate different UIDs for different inputs", func(t *testing.T) {
+		uid1, err := generateAlertingFolderUID("Folder1", "parent1", orgID)
+		require.NoError(t, err)
+		require.True(t, util.IsValidShortUID(uid1), "Generated UID should be valid")
+
+		uid2, err := generateAlertingFolderUID("Folder2", "parent1", orgID)
+		require.NoError(t, err)
+		require.True(t, util.IsValidShortUID(uid2), "Generated UID should be valid")
+
+		uid3, err := generateAlertingFolderUID("Folder1", "parent2", orgID)
+		require.NoError(t, err)
+		require.True(t, util.IsValidShortUID(uid3), "Generated UID should be valid")
+
+		require.NotEqual(t, uid1, uid2, "UIDs should differ for different titles")
+		require.NotEqual(t, uid1, uid3, "UIDs should differ for different parent UIDs")
+	})
+
+	t.Run("should handle special characters in folder titles", func(t *testing.T) {
+		specialTitles := []string{
+			"folder/with/slashes",
+			"folder with spaces",
+			"folder-with-dashes",
+			"folder_with_underscores",
+			"folder.with.dots",
+			"!@#$%^&*()",
+		}
+
+		for _, title := range specialTitles {
+			t.Run(title, func(t *testing.T) {
+				uid, err := generateAlertingFolderUID(title, "parent123", orgID)
+				require.NoError(t, err)
+				require.True(t, util.IsValidShortUID(uid), "Generated UID should be valid")
+			})
+		}
 	})
 }

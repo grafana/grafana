@@ -12,7 +12,6 @@ import {
   AzureAPIResponse,
   Location,
   Subscription,
-  Resource,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues<T>(
@@ -37,31 +36,6 @@ export default class ResponseParser {
         });
       }
     }
-    return list;
-  }
-
-  static parseResourceNames(
-    result: AzureAPIResponse<Resource>,
-    metricNamespace?: string
-  ): Array<{ text: string; value: string }> {
-    const list: Array<{ text: string; value: string }> = [];
-
-    if (!result) {
-      return list;
-    }
-
-    for (let i = 0; i < result.value.length; i++) {
-      if (
-        typeof result.value[i].type === 'string' &&
-        (!metricNamespace || result.value[i].type.toLocaleLowerCase() === metricNamespace.toLocaleLowerCase())
-      ) {
-        list.push({
-          text: result.value[i].name,
-          value: result.value[i].name,
-        });
-      }
-    }
-
     return list;
   }
 

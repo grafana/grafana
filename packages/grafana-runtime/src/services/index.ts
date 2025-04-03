@@ -52,8 +52,14 @@ export {
   type UsePluginFunctionsOptions,
   type UsePluginFunctionsResult,
 } from './pluginExtensions/usePluginFunctions';
-
-export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
+export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
+export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
+export {
+  isPluginExtensionLink,
+  isPluginExtensionComponent,
+  getLimitedComponentsToRender,
+  renderLimitedComponents,
+} from './pluginExtensions/utils';
 export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';

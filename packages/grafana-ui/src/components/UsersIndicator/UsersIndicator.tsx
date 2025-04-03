@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 
 import { UserIcon } from './UserIcon';
 import { UserView } from './types';
@@ -28,7 +29,10 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
   const tooManyUsers = extraUsers > 99;
 
   return (
-    <div className={styles.container} aria-label="Users indicator container">
+    <div
+      className={styles.container}
+      aria-label={t('grafana-ui.users-indicator.container-label', 'Users indicator container')}
+    >
       {limitReached && (
         <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' }, lastActiveAt: '' }} showTooltip={false}>
           {tooManyUsers ? '...' : `+${extraUsers}`}

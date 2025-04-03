@@ -169,6 +169,8 @@ To interact with the API and view or modify basic roles permissions, refer to [t
 You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
 {{% /admonition %}}
 
+For Cloud customers, contact Support to reset roles.
+
 ### Fixed roles
 
 Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section](#custom-roles) below.
