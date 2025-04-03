@@ -14,10 +14,10 @@ export const EXTENSION_SIDEBAR_WIDTH = '300px';
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId } = useExtensionSidebarContext();
+  const { dockedComponentId, isEnabled } = useExtensionSidebarContext();
   const { components, isLoading } = usePluginComponents({ extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID });
 
-  if (isLoading || !dockedComponentId) {
+  if (isLoading || !dockedComponentId || !isEnabled) {
     return null;
   }
 

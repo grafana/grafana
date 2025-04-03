@@ -6,9 +6,10 @@ import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './E
 
 export function ExtensionToolbarItem() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { availableComponents, dockedComponentId, setDockedComponentId, isOpen } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
+    useExtensionSidebarContext();
 
-  if (availableComponents.size === 0) {
+  if (!isEnabled || availableComponents.size === 0) {
     return null;
   }
 

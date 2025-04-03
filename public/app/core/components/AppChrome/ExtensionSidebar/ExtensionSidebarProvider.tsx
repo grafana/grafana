@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 import { store, type ExtensionInfo } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
@@ -8,6 +9,10 @@ export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.ex
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
 
 type ExtensionSidebarContextType = {
+  /**
+   * Whether the extension sidebar is enabled.
+   */
+  isEnabled: boolean;
   /**
    * Whether the extension sidebar is open.
    */
@@ -27,6 +32,7 @@ type ExtensionSidebarContextType = {
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
+  isEnabled: !!config.featureToggles.extensionSidebar,
   isOpen: false,
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
@@ -43,12 +49,22 @@ interface ExtensionSidebarContextProps {
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+  const isEnabled = !!config.featureToggles.extensionSidebar;
   // get all components for this extension point, but only for the permitted plugins
-  const availableComponents = new Map(
-    Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(([pluginId]) =>
-      PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
-    )
-  );
+  // if the extension sidebar is not enabled, we will return an empty map
+  const availableComponents = isEnabled
+    ? new Map(
+        Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(([pluginId]) =>
+          PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
+        )
+      )
+    : new Map<
+        string,
+        {
+          readonly addedComponents: ExtensionInfo[];
+          readonly addedLinks: ExtensionInfo[];
+        }
+      >();
 
   // check if the stored docked component is still available
   let defaultDockedComponentId: string | undefined;
@@ -77,7 +93,13 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
 
   return (
     <ExtensionSidebarContext.Provider
-      value={{ isOpen: dockedComponentId !== undefined, dockedComponentId, setDockedComponentId, availableComponents }}
+      value={{
+        isEnabled,
+        isOpen: isEnabled && dockedComponentId !== undefined,
+        dockedComponentId,
+        setDockedComponentId,
+        availableComponents,
+      }}
     >
       {children}
     </ExtensionSidebarContext.Provider>
