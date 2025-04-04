@@ -44,7 +44,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
 
 export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showTime' | 'logsSortOrder' | 'wrapLogMessage' | 'visualisationType'
+  'app' | 'dedupStrategy' | 'showTime' | 'logsSortOrder' | 'wrapLogMessage'
 >;
 
 export const ControlledLogRows = ({
@@ -56,7 +56,6 @@ export const ControlledLogRows = ({
   onLogOptionsChange,
   logOptionsStorageKey,
   wrapLogMessage,
-  visualisationType,
   ...rest
 }: ControlledLogRowsProps) => {
   return (
@@ -73,14 +72,21 @@ export const ControlledLogRows = ({
       onLogOptionsChange={onLogOptionsChange}
       wrapLogMessage={wrapLogMessage}
     >
-      {visualisationType === 'logs' && <LogRowsComponent {...rest} deduplicatedRows={deduplicatedRows} />}
-      {visualisationType === 'table' && <ControlledLogsTable {...rest} />}
+      {rest.visualisationType === 'logs' && <LogRowsComponent {...rest} deduplicatedRows={deduplicatedRows} />}
+      {rest.visualisationType === 'table' && <ControlledLogsTable {...rest} />}
     </LogListContextProvider>
   );
 };
 
 // @todo move to new file
-const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
+const LogRowsComponent = ({
+  loading,
+  loadMoreLogs,
+  deduplicatedRows = [],
+  range,
+  visualisationType,
+  ...rest
+}: LogRowsComponentProps) => {
   const { app, dedupStrategy, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);

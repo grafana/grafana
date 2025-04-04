@@ -15,6 +15,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
@@ -22,6 +23,7 @@ import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
   eventBus: EventBus;
+  visualisationType?: LogsVisualisationType;
 };
 
 const DEDUP_OPTIONS = [
@@ -40,7 +42,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.critical,
 ];
 
-export const LogListControls = ({ eventBus }: Props) => {
+export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     app,
@@ -186,14 +188,16 @@ export const LogListControls = ({ eventBus }: Props) => {
 
   return (
     <div className={styles.navContainer}>
-      <IconButton
-        name="arrow-down"
-        className={styles.controlButton}
-        variant="secondary"
-        onClick={onScrollToBottomClick}
-        tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
-        size="lg"
-      />
+      {visualisationType === 'logs' && (
+        <IconButton
+          name="arrow-down"
+          className={styles.controlButton}
+          variant="secondary"
+          onClick={onScrollToBottomClick}
+          tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
+          size="lg"
+        />
+      )}
       {!inDashboard ? (
         <>
           <IconButton
@@ -207,46 +211,54 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
-          <Dropdown overlay={deduplicationMenu} placement="auto-end">
-            <IconButton
-              name={'filter'}
-              className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
-              tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
-              size="lg"
-            />
-          </Dropdown>
-          <Dropdown overlay={filterLevelsMenu} placement="auto-end">
-            <IconButton
-              name={'gf-logs'}
-              className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
-              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-              size="lg"
-            />
-          </Dropdown>
-          <IconButton
-            name="clock-nine"
-            aria-pressed={showTime}
-            className={showTime ? styles.controlButtonActive : styles.controlButton}
-            onClick={onShowTimestampsClick}
-            tooltip={
-              showTime
-                ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-            }
-            size="lg"
-          />
-          <IconButton
-            name="wrap-text"
-            className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-            aria-pressed={wrapLogMessage}
-            onClick={onWrapLogMessageClick}
-            tooltip={
-              wrapLogMessage
-                ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-                : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-            }
-            size="lg"
-          />
+          {visualisationType === 'logs' && (
+            <>
+              <Dropdown overlay={deduplicationMenu} placement="auto-end">
+                <IconButton
+                  name={'filter'}
+                  className={
+                    dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton
+                  }
+                  tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
+                  size="lg"
+                />
+              </Dropdown>
+              <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+                <IconButton
+                  name={'gf-logs'}
+                  className={
+                    filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton
+                  }
+                  tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+                  size="lg"
+                />
+              </Dropdown>
+              <IconButton
+                name="clock-nine"
+                aria-pressed={showTime}
+                className={showTime ? styles.controlButtonActive : styles.controlButton}
+                onClick={onShowTimestampsClick}
+                tooltip={
+                  showTime
+                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                }
+                size="lg"
+              />
+              <IconButton
+                name="wrap-text"
+                className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+                aria-pressed={wrapLogMessage}
+                onClick={onWrapLogMessageClick}
+                tooltip={
+                  wrapLogMessage
+                    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+                    : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+                }
+                size="lg"
+              />
+            </>
+          )}
           {syntaxHighlighting !== undefined && (
             <IconButton
               name="brackets-curly"
@@ -286,15 +298,17 @@ export const LogListControls = ({ eventBus }: Props) => {
           />
         </Dropdown>
       )}
-      <IconButton
-        name="arrow-up"
-        data-testid="scrollToTop"
-        className={styles.scrollToTopButton}
-        variant="secondary"
-        onClick={onScrollToTopClick}
-        tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
-        size="lg"
-      />
+      {visualisationType === 'logs' && (
+        <IconButton
+          name="arrow-up"
+          data-testid="scrollToTop"
+          className={styles.scrollToTopButton}
+          variant="secondary"
+          onClick={onScrollToTopClick}
+          tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
+          size="lg"
+        />
+      )}
     </div>
   );
 };
