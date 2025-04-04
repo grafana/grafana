@@ -4,6 +4,10 @@ import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   describe('info function support', () => {
+    // Currently, the visual query editor throws an error when parsing the 'info' function
+    // because this function is only supported in code mode.
+    // TODO: When visual query editor support for the 'info' function is implemented,
+    // this test should be updated to expect successful parsing instead of an error.
     it('should throw error when trying to parse info function', () => {
       expect(
         buildVisualQueryFromString(
