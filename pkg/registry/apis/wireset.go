@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/registry/apis/frontendnotification"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -39,4 +40,5 @@ var WireSet = wire.NewSet(
 	notifications.RegisterAPIService,
 	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
+	frontendnotification.RegisterAPIService,
 )

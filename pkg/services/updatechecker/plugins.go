@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/frontendnotification"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,9 +36,13 @@ type PluginsService struct {
 	log            log.Logger
 	tracer         tracing.Tracer
 	updateCheckURL *url.URL
+
+	pluginInstaller             plugins.Installer
+	frontendNotificationService *frontendnotification.FrontendNotificationService
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, tracer tracing.Tracer) (*PluginsService, error) {
+func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInstaller plugins.Installer,
+	frontendNotificationService *frontendnotification.FrontendNotificationService, tracer tracing.Tracer) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
@@ -57,14 +64,16 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 	}
 
 	return &PluginsService{
-		enabled:          cfg.CheckForPluginUpdates,
-		grafanaVersion:   cfg.BuildVersion,
-		httpClient:       cl,
-		log:              logger,
-		tracer:           tracer,
-		pluginStore:      pluginStore,
-		availableUpdates: make(map[string]string),
-		updateCheckURL:   parsedUpdateCheckURL,
+		enabled:                     cfg.CheckForPluginUpdates,
+		grafanaVersion:              cfg.BuildVersion,
+		httpClient:                  cl,
+		log:                         logger,
+		tracer:                      tracer,
+		pluginStore:                 pluginStore,
+		availableUpdates:            make(map[string]string),
+		updateCheckURL:              parsedUpdateCheckURL,
+		pluginInstaller:             pluginInstaller,
+		frontendNotificationService: frontendNotificationService,
 	}, nil
 }
 
@@ -77,11 +86,16 @@ func (s *PluginsService) Run(ctx context.Context) error {
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
+	counter := 0
 
 	for run {
 		select {
 		case <-ticker.C:
 			s.instrumentedCheckForUpdates(ctx)
+			if counter < 3 {
+				s.updateAll(ctx)
+				counter++
+			}
 		case <-ctx.Done():
 			run = false
 		}
@@ -214,4 +228,32 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 	}
 
 	return result
+}
+
+func (s *PluginsService) updateAll(ctx context.Context) {
+	ctxLogger := s.log.FromContext(ctx)
+	ctxLogger.Info("<<<<<<<<<<<<<<< Updating all plugins")
+
+	availableUpdates := map[string]string{}
+
+	for pluginID, updateVersion := range s.availableUpdates {
+		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
+
+		ctxLogger.Info("Installing plugin", "pluginID", pluginID, "version", updateVersion)
+
+		err := s.pluginInstaller.Add(ctx, pluginID, updateVersion, compatOpts)
+		if err != nil {
+			// just log the error and continue with the next plugin
+			ctxLogger.Error("Failed to update plugin", "pluginID", pluginID, "error", err)
+			availableUpdates[pluginID] = updateVersion
+		}
+	}
+
+	s.availableUpdates = availableUpdates
+
+	s.frontendNotificationService.SendNotification(ctx, 1, map[string]interface{}{
+		"message": "Updating all plugins",
+	})
+
+	ctxLogger.Info("<<<<<<<<<<<<<<< Updating all plugins FINISHED")
 }
