@@ -3,7 +3,8 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { TimePickerProps } from 'rc-time-picker';
+import { Moment } from 'moment';
+import { PickerProps } from 'rc-picker';
 import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
@@ -60,7 +61,7 @@ export interface Props {
   timeZone?: TimeZone;
   // @PERCONA
   calendarProps?: CalendarProps;
-  timepickerProps?: TimePickerProps;
+  timepickerProps?: Partial<PickerProps<Moment>>;
   inputWrapperClassName?: string;
   growInlineField?: boolean;
   shrinkInlineField?: boolean;
@@ -225,7 +226,7 @@ interface DateTimeCalendarProps extends Omit<Props, 'label' | 'clearable' | 'onC
   showSeconds?: boolean;
   // @PERCONA
   calendarProps?: CalendarProps;
-  timepickerProps?: TimePickerProps;
+  timepickerProps?: Partial<PickerProps<Moment>>;
 }
 
 type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable' | 'timeZone'> & {
@@ -432,7 +433,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
             // @PERCONA
-            timepickerProps={timepickerProps as any}
+            timepickerProps={timepickerProps}
           />
         </div>
         <Stack>
