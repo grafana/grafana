@@ -11,22 +11,41 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
+var (
+	UserResource      = iam.UserResourceInfo.GroupVersionResource()
+	FolderResource    = folders.FolderResourceInfo.GroupVersionResource()
+	DashboardResource = dashboard.DashboardResourceInfo.GroupVersionResource()
+
+	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
+	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
+)
+
 type ClientFactory struct {
 	configProvider apiserver.RestConfigProvider
+}
+
+// ResourceClients provides access to clients within a namespace
+//
+//go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter
+type ResourceClients interface {
+	ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
+	ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+
+	Folder() (dynamic.ResourceInterface, error)
+	User() (dynamic.ResourceInterface, error)
 }
 
 func NewClientFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
 	return &ClientFactory{configProvider}
 }
 
-func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*ResourceClients, error) {
+func (f *ClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	restConfig, err := f.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -46,7 +65,7 @@ func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*Resourc
 		return nil, err
 	}
 
-	return &ResourceClients{
+	return &resourceClients{
 		namespace:  namespace,
 		discovery:  discovery,
 		dynamic:    client,
@@ -55,7 +74,7 @@ func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*Resourc
 	}, nil
 }
 
-type ResourceClients struct {
+type resourceClients struct {
 	namespace string
 
 	dynamic   dynamic.Interface
@@ -73,7 +92,7 @@ type clientInfo struct {
 	client dynamic.ResourceInterface
 }
 
-func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -99,7 +118,7 @@ func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 // ForResource returns a client for a resource.
 // If the resource has a version, it will be used.
 // If the resource does not have a version, the preferred version will be used.
-func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -145,20 +164,18 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	return info.client, info.gvk, nil
 }
 
-// ForEachResource applies the function to each resource in the discovery client
-func (c *ResourceClients) ForEachResource(ctx context.Context, kind schema.GroupVersionResource, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
-	client, _, err := c.ForResource(kind)
-	if err != nil {
-		return err
-	}
-
-	return ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
-		return fn(client, item)
-	})
+func (c *resourceClients) Folder() (dynamic.ResourceInterface, error) {
+	client, _, err := c.ForResource(FolderResource)
+	return client, err
 }
 
-// ForEachResource applies the function to each resource in the discovery client
-func ForEachResource(ctx context.Context, client dynamic.ResourceInterface, fn func(item *unstructured.Unstructured) error) error {
+func (c *resourceClients) User() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(UserResource)
+	return v, err
+}
+
+// ForEach applies the function to each resource returned from the list operation
+func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item *unstructured.Unstructured) error) error {
 	var continueToken string
 	for ctx.Err() == nil {
 		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
@@ -184,66 +201,3 @@ func ForEachResource(ctx context.Context, client dynamic.ResourceInterface, fn f
 
 	return nil
 }
-
-// ForEachUnmanagedResource applies the function to each unprovisioned supported resource
-func (c *ResourceClients) ForEachUnmanagedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
-	return c.ForEachSupportedResource(ctx, func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error {
-		meta, err := utils.MetaAccessor(item)
-		if err != nil {
-			return fmt.Errorf("extract meta accessor: %w", err)
-		}
-
-		// Skip if managed
-		_, ok := meta.GetManagerProperties()
-		if ok {
-			return nil
-		}
-
-		return fn(client, item)
-	})
-}
-
-// ForEachSupportedResource applies the function to each supported resource
-func (c *ResourceClients) ForEachSupportedResource(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
-	for _, kind := range SupportedResources {
-		if err := c.ForEachResource(ctx, kind, fn); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(FolderResource)
-	return client, err
-}
-
-func (c *ResourceClients) ForEachFolder(ctx context.Context, fn func(client dynamic.ResourceInterface, item *unstructured.Unstructured) error) error {
-	return c.ForEachResource(ctx, FolderResource, fn)
-}
-
-func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(UserResource)
-	return v, err
-}
-
-var UserResource = schema.GroupVersionResource{
-	Group:    iam.GROUP,
-	Version:  iam.VERSION,
-	Resource: iam.UserResourceInfo.GroupResource().Resource,
-}
-
-var FolderResource = schema.GroupVersionResource{
-	Group:    folders.GROUP,
-	Version:  folders.VERSION,
-	Resource: folders.RESOURCE,
-}
-
-var DashboardResource = schema.GroupVersionResource{
-	Group:    dashboard.GROUP,
-	Version:  dashboard.VERSION,
-	Resource: dashboard.DASHBOARD_RESOURCE,
-}
-
-// SupportedResources is the list of resources that are supported by provisioning
-var SupportedResources = []schema.GroupVersionResource{FolderResource, DashboardResource}

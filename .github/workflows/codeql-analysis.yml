@@ -3,12 +3,12 @@
 #
 # You may wish to alter this file to override the set of languages analyzed,
 # or to provide custom queries or build logic.
-name: "CodeQL"
+name: "CodeQL checks"
 
 on:
   workflow_dispatch:
   push:
-    branches: [main, v*.*.*]
+    branches: ['**'] # run on all branches
     paths-ignore:
       - '**/*.cue'
       - '**/*.json'
@@ -25,6 +25,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    continue-on-error: true # doesn't block PRs from being merged if this fails
     if: github.repository == 'grafana/grafana'
 
     strategy:
