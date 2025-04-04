@@ -88,7 +88,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 }
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
-func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	var (
 		err   error
 		clone repository.ClonedRepository
@@ -228,7 +228,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 }
 
 // migrateFromAPIServer will export the resources from unified storage and import them into the target repository
-func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, parser resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{

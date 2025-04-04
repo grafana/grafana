@@ -13,7 +13,7 @@ import (
 
 const maxUsers = 10000
 
-func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]repository.CommitSignature, error) {
+func loadUsers(ctx context.Context, parser resources.Parser) (map[string]repository.CommitSignature, error) {
 	client, err := parser.Clients().User()
 	if err != nil {
 		return nil, err

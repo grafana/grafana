@@ -23,23 +23,23 @@ func (_m *MockParserFactory) EXPECT() *MockParserFactory_Expecter {
 }
 
 // GetParser provides a mock function with given fields: ctx, repo
-func (_m *MockParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
+func (_m *MockParserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
 	ret := _m.Called(ctx, repo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetParser")
 	}
 
-	var r0 *Parser
+	var r0 Parser
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader) (*Parser, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader) (Parser, error)); ok {
 		return rf(ctx, repo)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader) *Parser); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader) Parser); ok {
 		r0 = rf(ctx, repo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Parser)
+			r0 = ret.Get(0).(Parser)
 		}
 	}
 
@@ -71,12 +71,12 @@ func (_c *MockParserFactory_GetParser_Call) Run(run func(ctx context.Context, re
 	return _c
 }
 
-func (_c *MockParserFactory_GetParser_Call) Return(_a0 *Parser, _a1 error) *MockParserFactory_GetParser_Call {
+func (_c *MockParserFactory_GetParser_Call) Return(_a0 Parser, _a1 error) *MockParserFactory_GetParser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockParserFactory_GetParser_Call) RunAndReturn(run func(context.Context, repository.Reader) (*Parser, error)) *MockParserFactory_GetParser_Call {
+func (_c *MockParserFactory_GetParser_Call) RunAndReturn(run func(context.Context, repository.Reader) (Parser, error)) *MockParserFactory_GetParser_Call {
 	_c.Call.Return(run)
 	return _c
 }
