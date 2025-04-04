@@ -89,6 +89,25 @@ func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	query := team.GetTeamByIDQuery{
+		OrgID:        cmd.OrgID,
+		ID:           cmd.ID,
+		SignedInUser: c.SignedInUser,
+	}
+
+	existingTeam, err := tapi.teamService.GetTeamByID(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned && existingTeam.Name != cmd.Name {
+		return response.Error(http.StatusBadRequest, "Team name cannot be changed for provisioned teams", err)
+	}
+
 	if err := tapi.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusBadRequest, "Team name taken", err)
@@ -114,6 +133,25 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	query := team.GetTeamByIDQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		ID:           teamID,
+		SignedInUser: c.SignedInUser,
+	}
+
+	existingTeam, err := tapi.teamService.GetTeamByID(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned {
+		return response.Error(http.StatusBadRequest, "Cannot delete provisioned teams", err)
 	}
 
 	if err := tapi.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
