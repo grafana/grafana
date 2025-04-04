@@ -496,14 +496,11 @@ const addISODateTransformation: CustomTransformOperator = () => (source: Observa
           name: 'Date',
           values: timeField.timeField ? timeField.timeField?.values.map((v) => dateTime(v).toISOString()) : [],
           type: FieldType.other,
-          config: {}
+          config: {},
         };
         return {
           ...frame,
-          fields: [
-            field,
-            ...frame.fields,
-          ],
+          fields: [field, ...frame.fields],
         };
       });
     })
