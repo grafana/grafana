@@ -59,14 +59,13 @@ jobs:
     strategy:
       matrix:
         suite:
-          - various-suite
-          - dashboards-suite
-          - smoke-tests-suite
-          - panels-suite
+          - old-arch/various-suite
+          - old-arch/dashboards-suite
+          - old-arch/smoke-tests-suite
+          - old-arch/panels-suite
     needs:
       - build-grafana
     uses: ./.github/workflows/run-e2e-suite.yml
     with:
-      old-arch: true
       package: ${{ needs.build-grafana.outputs.artifact }}
       suite: ${{ matrix.suite }}
