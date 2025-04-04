@@ -1,8 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { sceneGraph, useSceneObjectState, SceneVariable, SceneVariableState, ControlsLabel } from '@grafana/scenes';
+import { useElementSelection, GrafanaTheme2, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -24,14 +25,33 @@ interface VariableSelectProps {
 
 export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
+  const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
+  const styles = useStyles2(getStyles);
 
   if (state.hide === VariableHide.hideVariable) {
     return null;
   }
 
+  const onPointerDown = (evt: React.PointerEvent) => {
+    if (isSelectable && onSelect) {
+      evt.stopPropagation();
+      onSelect(evt);
+    }
+  };
+
   return (
-    <div className={containerStyle} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
-      <VariableLabel variable={variable} />
+    <div
+      className={cx(
+        styles.container,
+        isSelected && 'dashboard-selected-element',
+        isSelectable && !isSelected && 'dashboard-selectable-element'
+      )}
+      onPointerDown={onPointerDown}
+      data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+    >
+      <div className={cx(styles.labelWrapper, isSelectable && styles.labelSelectable)}>
+        <VariableLabel variable={variable} />
+      </div>
       <variable.Component model={variable} />
     </div>
   );
@@ -60,11 +80,22 @@ function VariableLabel({ variable }: VariableSelectProps) {
   );
 }
 
-const containerStyle = css({
-  display: 'flex',
-  // No border for second element (inputs) as label and input border is shared
-  '> :nth-child(2)': css({
-    borderTopLeftRadius: 0,
-    borderBottomLeftRadius: 0,
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    // No border for second element (inputs) as label and input border is shared
+    '> :nth-child(2)': css({
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+    }),
+  }),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  labelSelectable: css({
+    '> label': {
+      cursor: 'pointer',
+    },
   }),
 });
