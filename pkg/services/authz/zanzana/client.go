@@ -24,8 +24,8 @@ func NewClient(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*client.
 	return client.New(cc, reg)
 }
 
-func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient) (authlib.AccessClient, error) {
-	return client.WithShadowClient(accessClient, zanzanaClient), nil
+func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	return client.WithShadowClient(accessClient, zanzanaClient, reg), nil
 }
 
 func NewNoopClient() *client.NoopClient {

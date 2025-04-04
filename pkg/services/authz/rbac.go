@@ -62,7 +62,7 @@ func ProvideAuthZClient(
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer)
 		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient)
+			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
 	default:
@@ -99,7 +99,7 @@ func ProvideAuthZClient(
 		rbacClient := newRBACClient(channel, tracer)
 
 		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient)
+			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil

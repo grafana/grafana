@@ -22,7 +22,6 @@ type Client struct {
 	logger   log.Logger
 	authz    authzv1.AuthzServiceClient
 	authzext authzextv1.AuthzExtentionServiceClient
-	metrics  *metrics
 }
 
 func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error) {
@@ -30,7 +29,6 @@ func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
 		logger:   log.New("zanzana-client"),
-		metrics:  newMetrics(reg),
 	}
 
 	return c, nil

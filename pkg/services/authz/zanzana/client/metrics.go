@@ -17,7 +17,7 @@ type metrics struct {
 	evaluationStatusTotal *prometheus.CounterVec
 }
 
-func newMetrics(reg prometheus.Registerer) *metrics {
+func newShadowClientMetrics(reg prometheus.Registerer) *metrics {
 	return &metrics{
 		evaluationsSeconds: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{

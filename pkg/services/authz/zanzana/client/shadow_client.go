@@ -4,6 +4,7 @@ import (
 	"context"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -12,14 +13,16 @@ type ShadowClient struct {
 	logger        log.Logger
 	accessClient  authlib.AccessClient
 	zanzanaClient authlib.AccessClient
+	metrics       *metrics
 }
 
 // WithShadowClient returns a new access client that runs zanzana checks in the background.
-func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient) authlib.AccessClient {
+func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) authlib.AccessClient {
 	client := &ShadowClient{
 		logger:        log.New("zanzana-shadow-client"),
 		accessClient:  accessClient,
 		zanzanaClient: zanzanaClient,
+		metrics:       newShadowClientMetrics(reg),
 	}
 	return client
 }
@@ -33,6 +36,9 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 			return
 		}
 
+		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
+		defer timer.ObserveDuration()
+
 		zanzanaCtx := context.WithoutCancel(ctx)
 		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req)
 		if err != nil {
@@ -44,14 +50,18 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 
 		if acErr == nil {
 			if res.Allowed != acRes.Allowed {
+				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
 				c.logger.Warn("Zanzana check result does not match", "expected", acRes.Allowed, "actual", res.Allowed)
 			} else {
+				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
 				c.logger.Debug("Zanzana check result is correct", "result", res.Allowed)
 			}
 		}
 	}()
 
+	timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("rbac"))
 	res, err := c.accessClient.Check(ctx, id, req)
+	timer.ObserveDuration()
 	acResChan <- res
 	acErrChan <- err
 
