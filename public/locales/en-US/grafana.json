@@ -2607,11 +2607,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Open JSON editor",
-      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
-      "angular-deprecation-heading": "Panel options"
-    },
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
@@ -4877,24 +4872,6 @@
     }
   },
   "plugins": {
-    "angular-deprecation-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "try-migration": "Try migration"
-    },
-    "angular-deprecation-plugin-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "title-angular-plugin": "Angular plugin",
-      "view-plugin-details": "View plugin details"
-    },
-    "angular-migration-notice": {
-      "report-issue": "Report issue",
-      "revert-migration": "Revert migration"
-    },
-    "app-config-ctrl-wrapper": {
-      "disable": "Disable",
-      "enable": "Enable",
-      "update": "Update"
-    },
     "app-root-page": {
       "access-denied": {
         "permission": "You do not have permission to see this page.",
@@ -5718,8 +5695,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode"
+      "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
