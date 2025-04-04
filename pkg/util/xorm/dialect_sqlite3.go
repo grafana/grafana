@@ -474,6 +474,9 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 func (db *sqlite3) Filters() []core.Filter {
 	return []core.Filter{&core.IdFilter{}}
 }
+func (db *sqlite3) CreateSequenceGenerator(sqlDB *sql.DB) (SequenceGenerator, error) {
+	return &snowflakeSequenceGenerator{}, nil
+}
 
 func (db *sqlite3) RetryOnError(err error) bool {
 	var sqlError sqlite.Error
