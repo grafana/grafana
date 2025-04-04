@@ -1,3 +1,5 @@
+// @PERCONA
+// @ts-nocheck
 import {
   BasicConfig,
   Config,
