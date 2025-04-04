@@ -1062,6 +1062,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onUnpinLine={onPinToContentOutlineClick}
                 onPinLine={onPinToContentOutlineClick}
                 pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                logsMeta={logsMeta}
                 logOptionsStorageKey={SETTING_KEY_ROOT}
                 onLogOptionsChange={onLogOptionsChange}
               />

@@ -15,6 +15,8 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { DownloadFormat } from '../../utils';
+
 import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -43,6 +45,7 @@ export const LogListControls = ({ eventBus }: Props) => {
   const {
     app,
     dedupStrategy,
+    downloadLogs,
     filterLevels,
     setDedupStrategy,
     setFilterLevels,
@@ -159,17 +162,24 @@ export const LogListControls = ({ eventBus }: Props) => {
     [filterLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
-  function downloadLogs(format: 'txt' | 'json' | 'csv') {}
-
   const downloadMenu = useMemo(
     () => (
       <Menu>
-        <Menu.Item label={t('logs.logs-controls.download-logs.txt', 'txt')} onClick={() => downloadLogs('txt')} />
-        <Menu.Item label={t('logs.logs-controls.download-logs.json', 'json')} onClick={() => downloadLogs('json')} />
-        <Menu.Item label={t('logs.logs-controls.download-logs.csv', 'csv')} onClick={() => downloadLogs('csv')} />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.txt', 'txt')}
+          onClick={() => downloadLogs(DownloadFormat.Text)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.json', 'json')}
+          onClick={() => downloadLogs(DownloadFormat.Json)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.csv', 'csv')}
+          onClick={() => downloadLogs(DownloadFormat.CSV)}
+        />
       </Menu>
     ),
-    []
+    [downloadLogs]
   );
 
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
