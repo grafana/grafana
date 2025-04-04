@@ -36,3 +36,6 @@ public/mockServiceWorker.js
 
 # Crowdin files
 public/locales/**/*.json
+
+/.nx/cache
+/.nx/workspace-data
