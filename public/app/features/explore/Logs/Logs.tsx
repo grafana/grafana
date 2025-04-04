@@ -1155,6 +1155,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     loadMore={loadMoreLogs}
                     logOptionsStorageKey={SETTING_KEY_ROOT}
                     logs={dedupedRows}
+                    logsMeta={logsMeta}
                     logSupportsContext={showContextToggle}
                     onLogOptionsChange={onLogOptionsChange}
                     onLogLineHover={onLogRowHover}
