@@ -16,6 +16,8 @@ export interface OptionsPaneCategoryDescriptorProps {
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 /**

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { RadioButtonDot, Stack, useStyles2, Text } from '@grafana/ui';
+import { RadioButtonDot, Stack, useStyles2, Text, Field, RadioButtonGroup } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -32,6 +32,15 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     },
     [layoutManager]
   );
+
+  if (!isGridLayout) {
+    const radioOptions = options.map((opt) => ({ value: opt, label: opt.name }));
+    return (
+      <Field label="Group style">
+        <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
+      </Field>
+    );
+  }
 
   return (
     <div role="radiogroup" className={styles.radioGroup}>
@@ -145,11 +154,9 @@ function LayoutRadioButton({ item, isSelected, children, onSelect }: LayoutRadio
         className={cx(styles.radioButton, isSelected && styles.radioButtonActive)}
       >
         {children}
-        <Stack direction="column" gap={1} justifyContent="space-between" grow={1}>
+        <Stack direction="column" gap={1} justifyContent="space-between" grow={1} height={'100%'}>
           <Text weight="medium">{item.name}</Text>
-          <Text variant="bodySmall" color="secondary">
-            {item.description!}
-          </Text>
+          <div className={styles.radioButtonDescription}>{item.description!}</div>
         </Stack>
       </label>
       <div className={styles.radioDot}>
@@ -173,17 +180,21 @@ function GridCell({ colSpan = 1 }: { colSpan?: number }) {
 
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    const categoryName = layoutManager.descriptor.isGridLayout
-      ? t('dashboard.layout.common.grid', 'Grid')
-      : t('dashboard.layout.common.layout', 'Layout');
+    const isGridLayout = layoutManager.descriptor.isGridLayout;
 
-    const layoutCategory = new OptionsPaneCategoryDescriptor({
-      title: categoryName,
-      id: 'layout-options',
-      isOpenDefault: true,
+    const groupLayout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.layout', 'Group layout'),
+      id: 'group-layout-category',
+      isOpenDefault: false,
     });
 
-    layoutCategory.addItem(
+    const gridLayout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.grid', 'Grid'),
+      id: 'grid-layout-category',
+      isOpenDefault: false,
+    });
+
+    gridLayout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
         skipField: true,
@@ -191,13 +202,27 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       })
     );
 
+    if (isGridLayout) {
+      groupLayout.props.disabled = true;
+    } else {
+      groupLayout.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          skipField: true,
+          render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
+        })
+      );
+
+      gridLayout.props.disabled = true;
+    }
+
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
-        layoutCategory.addItem(option);
+        gridLayout.addItem(option);
       }
     }
 
-    return layoutCategory;
+    return [groupLayout, gridLayout];
   }, [layoutManager]);
 }
 
@@ -231,6 +256,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     radioButtonActive: css({
       border: `1px solid ${theme.colors.primary.border}`,
+    }),
+    radioButtonDescription: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     gridCell: css({
       backgroundColor: theme.colors.background.secondary,

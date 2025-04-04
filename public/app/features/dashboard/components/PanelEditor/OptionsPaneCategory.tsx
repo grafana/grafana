@@ -5,7 +5,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Counter, useStyles2 } from '@grafana/ui';
+import { Button, Counter, Icon, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
@@ -21,6 +21,8 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
   sandboxId?: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -37,6 +39,8 @@ export const OptionsPaneCategory = React.memo(
     itemsCount,
     isNested = false,
     sandboxId,
+    disabled,
+    tooltip,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
@@ -107,23 +111,30 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
+          <h6
+            id={`button-${id}`}
+            className={cx(styles.title, isExpanded && styles.titleExpanded, disabled && styles.titleDisabled)}
+            title={tooltip}
+          >
             {renderTitle(isExpanded)}
           </h6>
-
-          <Button
-            data-testid={selectors.components.OptionsGroup.toggle(id)}
-            type="button"
-            fill="text"
-            size="md"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            className={styles.toggleButton}
-            icon={isExpanded ? 'angle-up' : 'angle-down'}
-            onClick={onToggle}
-          />
+          {disabled ? (
+            <Icon size="sm" name="ban" className={styles.disabledIcon} />
+          ) : (
+            <Button
+              data-testid={selectors.components.OptionsGroup.toggle(id)}
+              type="button"
+              fill="text"
+              size="md"
+              variant="secondary"
+              aria-expanded={isExpanded}
+              className={styles.toggleButton}
+              icon={isExpanded ? 'angle-up' : 'angle-down'}
+              onClick={onToggle}
+            />
+          )}
         </div>
-        {isExpanded && (
+        {isExpanded && !disabled && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
             {children}
           </div>
@@ -176,6 +187,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(1, 2, 1, 2),
+  }),
+  titleDisabled: css({
+    color: theme.colors.text.disabled,
+    cursor: 'not-allowed',
+  }),
+  disabledIcon: css({
+    color: theme.colors.text.disabled,
+    marginRight: theme.spacing(1),
   }),
   bodyNested: css({
     position: 'relative',

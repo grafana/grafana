@@ -1768,7 +1768,7 @@
         "delete": "Delete",
         "duplicate": "Duplicate",
         "grid": "Grid",
-        "layout": "Layout"
+        "layout": "Group layout"
       }
     },
     "make-editable": {
