@@ -6,8 +6,8 @@ import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
 
 import { FolderDTO } from '../../../types';
 
@@ -53,9 +53,15 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   };
 });
 
-jest.mock('app/features/provisioning/hooks/useRepositoryList', () => {
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
   return {
-    useRepositoryList: jest.fn(),
+    useGetResourceRepositoryView: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
+  return {
+    useGetResourceRepositoryView: jest.fn(),
   };
 });
 
@@ -133,25 +139,16 @@ describe('NewProvisionedFolderForm', () => {
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    (useRepositoryList as jest.Mock).mockReturnValue([
-      [
-        {
-          metadata: {
-            name: 'test-repo',
-          },
-          spec: {
-            title: 'Test Repository',
-            type: 'github',
-            github: {
-              url: 'https://github.com/grafana/grafana',
-              branch: 'main',
-            },
-            workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
-          },
-        },
-      ],
-      false,
-    ]);
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+      name: 'test-repo',
+      title: 'Test Repository',
+      type: 'github',
+      github: {
+        url: 'https://github.com/grafana/grafana',
+        branch: 'main',
+      },
+      workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
+    });
 
     // Mock useGetFolderQuery
     (useGetFolderQuery as jest.Mock).mockReturnValue({
@@ -189,7 +186,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show loading state when repository data is loading', () => {
-    (useRepositoryList as jest.Mock).mockReturnValue([[], true]);
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({});
 
     setup();
 
@@ -197,7 +194,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show error when repository is not found', () => {
-    (useRepositoryList as jest.Mock).mockReturnValue([null, false]);
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue(null);
 
     setup();
 
@@ -429,24 +426,16 @@ describe('NewProvisionedFolderForm', () => {
 
   it('should show read-only alert when repository has no workflows', () => {
     // Mock repository with empty workflows array
-    (useRepositoryList as jest.Mock).mockReturnValue([
-      [
-        {
-          metadata: {
-            name: 'test-repo',
-          },
-          spec: {
-            type: 'github',
-            github: {
-              url: 'https://github.com/grafana/grafana',
-              branch: 'main',
-            },
-            workflows: [], // Empty workflows array
-          },
-        },
-      ],
-      false,
-    ]);
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+      name: 'test-repo',
+      title: 'Test Repository',
+      type: 'github',
+      github: {
+        url: 'https://github.com/grafana/grafana',
+        branch: 'main',
+      },
+      workflows: [],
+    });
 
     setup();
 
