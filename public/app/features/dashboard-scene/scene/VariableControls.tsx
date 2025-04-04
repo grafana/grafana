@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { VariableHide } from '@grafana/data';
+import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { sceneGraph, useSceneObjectState, SceneVariable, SceneVariableState, ControlsLabel } from '@grafana/scenes';
-import { useElementSelection, GrafanaTheme2, useStyles2 } from '@grafana/ui';
+import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 
