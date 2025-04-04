@@ -135,7 +135,7 @@ export class DashboardExporter {
           // if this is a prom flavored data source (azure prom/ aws prom) it will be treated as a prom data source
           if (matchPluginId('prometheus', ds.meta)) {
             dataSourceId = 'prometheus';
-            dataSourceName = 'Prometheus'
+            dataSourceName = 'Prometheus';
             dataSourceVersion = '1.0.0';
           }
           // add data source type to require list
@@ -154,7 +154,7 @@ export class DashboardExporter {
           const libraryPanel = obj.libraryPanel;
           const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
           let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
-         
+
           datasources[refName] = {
             name: refName,
             label: ds.name,
