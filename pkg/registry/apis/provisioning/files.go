@@ -126,12 +126,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
-			code = http.StatusOK
-			if len(resource.Errors) > 0 {
-				code = http.StatusExpectationFailed
-			}
 		case http.MethodPost:
 			if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
@@ -173,7 +168,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
@@ -185,9 +179,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// something failed
-		if len(obj.Errors) > 0 && code < 400 {
-			code = http.StatusInternalServerError
+		if len(obj.Errors) > 0 {
+			code = http.StatusPartialContent
 		}
 
 		logger.Debug("request resulted in valid object", "object", obj)

@@ -67,13 +67,6 @@ func TestAppendHashSuffix(t *testing.T) {
 	}
 }
 
-func TestFileNameFromHashedRepoPath(t *testing.T) {
-	dashName := FileNameFromHashedRepoPath("xyz", "path/to/folder/dashboard.json")
-	assert.Equal(t, "dashboard-fy2kflbmskvt6u-9uecoahd1ekwbb7", dashName, "dashboard name of dashboard.json")
-	// We only want 40 characters because UIDs support no more. When we get rid of legacy storage, we can extend the support to 253 character long strings.
-	assert.LessOrEqual(t, len(dashName), 40, "dashName after hashing needs to be <=40 chars long")
-}
-
 func TestParseFolderID(t *testing.T) {
 	const repoName = "unit-test" // we have other tests verifying the repo name changes the id
 

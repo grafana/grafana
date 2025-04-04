@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-func TestParer(t *testing.T) {
+func TestParser(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	clients.On("ForKind", dashboardV0.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
@@ -32,7 +32,7 @@ func TestParer(t *testing.T) {
 	t.Run("invalid input", func(t *testing.T) {
 		_, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte("hello"), // not a real resource
-		}, false)
+		})
 		require.Error(t, err)
 		require.Equal(t, "classic resource must be JSON", err.Error())
 	})
@@ -46,7 +46,7 @@ metadata:
 spec:
   title: Test dashboard
 `),
-		}, false)
+		})
 		require.NoError(t, err)
 		require.Equal(t, "test-v0", dash.Obj.GetName())
 		require.Equal(t, "dashboard.grafana.app", dash.GVK.Group)
@@ -55,20 +55,19 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 
 		// Now try again without a name
-		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
+		_, err = parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v1alpha1
 kind: Dashboard
 spec:
   title: Test dashboard
 `),
-		}, false)
-		require.NoError(t, err) // parsed, but has internal error
-		require.NotEmpty(t, dash.Errors)
+		})
+		require.EqualError(t, err, "name.metadata.name: Required value: missing name in resource")
 
 		// Read the name from classic grafana format
 		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
-		}, false)
+		})
 		require.NoError(t, err)
 		require.Equal(t, v0alpha1.ClassicDashboard, dash.Classic)
 		require.Equal(t, "test", dash.Obj.GetName())
