@@ -7,10 +7,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
-import { getDashboardAPI } from '../../api/dashboard_api';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { SettingsPageProps } from './types';
-import { getDashboardSrv } from '../../services/DashboardSrv';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const dashboardSaveModel = dashboard.getSaveModelClone();
@@ -19,7 +18,6 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
 
   const onClick = async () => {
     await getDashboardSrv().saveJSONDashboard(dashboardJson);
-
     dashboardWatcher.reloadPage();
   };
 
