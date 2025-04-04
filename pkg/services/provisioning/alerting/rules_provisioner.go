@@ -158,6 +158,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	return cmdResult.UID, nil
 }
 
+// TODO replace it with identity.WithServiceIdentity(ctx, group.OrgID)
 var provisionerUser = func(orgID int64) identity.Requester {
 	// this user has 0 ID and therefore, organization wide quota will be applied
 	return accesscontrol.BackgroundUser(
@@ -167,7 +168,9 @@ var provisionerUser = func(orgID int64) identity.Requester {
 		[]accesscontrol.Permission{
 			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets},
+			{Action: accesscontrol.ActionAlertingRulesProvisioningRead},
 			{Action: accesscontrol.ActionAlertingRulesProvisioningWrite},
+			{Action: accesscontrol.ActionAlertingNotificationsProvisioningRead},
 			{Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite},
 		},
 	)
