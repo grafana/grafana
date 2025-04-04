@@ -55,7 +55,7 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 
 		// Now try again without a name
-		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
+		_, err = parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v1alpha1
 kind: Dashboard
 spec:
