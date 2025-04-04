@@ -77,9 +77,21 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					userIds = append(userIds, usr.ID)
 					userUIDs = append(userUIDs, usr.UID)
 				}
-				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
+
+				team1Cmd := team.CreateTeamCommand{
+					Name:  "group1 name",
+					Email: "test1@test.com",
+					OrgID: testOrgID,
+				}
+				team1, err = teamSvc.CreateTeam(context.Background(), &team1Cmd)
 				require.NoError(t, err)
-				team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
+
+				team2Cmd := team.CreateTeamCommand{
+					Name:  "group2 name",
+					Email: "test2@test.com",
+					OrgID: testOrgID,
+				}
+				team2, err = teamSvc.CreateTeam(context.Background(), &team2Cmd)
 				require.NoError(t, err)
 			}
 			setup()
@@ -540,7 +552,12 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
+		teamCmd := team.CreateTeamCommand{
+			Name:  fmt.Sprintf("team-%d", i),
+			Email: fmt.Sprintf("team-%d@example.org", i),
+			OrgID: 1,
+		}
+		_, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 		require.NoError(t, err)
 	}
 
@@ -574,10 +591,23 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	setup := func(store db.DB, cfg *setting.Cfg) {
 		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group1 name", "test1@example.org", testOrgID)
+
+		team1Cmd := team.CreateTeamCommand{
+			Name:  "group1 name",
+			Email: "test1@example.org",
+			OrgID: testOrgID,
+		}
+		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team1Cmd)
 		require.NoError(t, errCreateTeam)
-		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
+
+		team2Cmd := team.CreateTeamCommand{
+			Name:  "group2 name",
+			Email: "test2@example.org",
+			OrgID: testOrgID,
+		}
+		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team2Cmd)
 		require.NoError(t, errCreateTeam)
+
 		quotaService := quotaimpl.ProvideService(store, cfg)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
