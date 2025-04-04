@@ -275,8 +275,8 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "6.6.2",
-    "@grafana/scenes-react": "6.6.2",
+    "@grafana/scenes": "6.6.3",
+    "@grafana/scenes-react": "6.6.3",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -295,10 +295,10 @@
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.28.0",
     "@popperjs/core": "2.11.8",
-    "@react-aria/dialog": "3.5.21",
-    "@react-aria/focus": "3.19.1",
-    "@react-aria/overlays": "3.25.0",
-    "@react-aria/utils": "3.27.0",
+    "@react-aria/dialog": "3.5.23",
+    "@react-aria/focus": "3.20.1",
+    "@react-aria/overlays": "3.26.1",
+    "@react-aria/utils": "3.28.1",
     "@react-awesome-query-builder/ui": "6.6.13",
     "@reduxjs/toolkit": "2.5.1",
     "@visx/event": "3.12.0",
@@ -429,7 +429,8 @@
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.2.4"
+    "swagger-ui-react/dompurify": "3.2.4",
+    "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
     "packages": [
