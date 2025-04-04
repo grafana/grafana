@@ -17,7 +17,7 @@ import (
 )
 
 type store interface {
-	Create(name, email string, orgID int64) (team.Team, error)
+	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
 	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
@@ -71,22 +71,26 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 		team.uid,
 		team.org_id,
 		team.name as name,
-		team.email as email, ` +
+		team.email as email,
+		team.external_uid as external_uid,
+		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(db, filteredUsers) +
 		` FROM team as team `
 }
 
-func (ss *xormStore) Create(name, email string, orgID int64) (team.Team, error) {
+func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	t := team.Team{
-		UID:     util.GenerateShortUID(),
-		Name:    name,
-		Email:   email,
-		OrgID:   orgID,
-		Created: time.Now(),
-		Updated: time.Now(),
+		UID:           util.GenerateShortUID(),
+		Name:          cmd.Name,
+		Email:         cmd.Email,
+		OrgID:         cmd.OrgID,
+		ExternalUID:   cmd.ExternalUID,
+		IsProvisioned: cmd.IsProvisioned,
+		Created:       time.Now(),
+		Updated:       time.Now(),
 	}
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -521,7 +525,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Join("INNER", "team", "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanStr(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -549,20 +553,19 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			sess.Where("team_member.user_id=?", query.UserID)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanStr(true))
+			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanValue(true))
 		}
-		sess.Cols(
-			"team_member.org_id",
-			"team_member.team_id",
-			"team_member.user_id",
-			"user.email",
-			"user.name",
-			"user.login",
-			"team_member.external",
-			"team_member.permission",
-			"user_auth.auth_module",
-			"team.uid",
-		)
+		sess.Select(fmt.Sprintf(`team_member.org_id,
+			team_member.team_id,
+			team_member.user_id,
+			%[1]s.email,
+			%[1]s.name,
+			%[1]s.login,
+			%[1]s.uid as user_uid,
+			team_member.external,
+			team_member.permission,
+			user_auth.auth_module,
+			team.uid`, ss.db.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)

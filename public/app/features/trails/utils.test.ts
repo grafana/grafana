@@ -50,6 +50,7 @@ describe('limitAdhocProviders', () => {
     } as unknown as MetricDatasourceHelper;
 
     dataTrail = {
+      forEachChild: jest.fn(),
       getQueries: jest.fn().mockReturnValue([]),
     } as unknown as DataTrail;
   });

@@ -25,6 +25,7 @@ type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
 	GetByUID(ctx context.Context, uid string) (*user.User, error)
+	ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
@@ -125,6 +126,25 @@ func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error
 		return nil
 	})
 	return &usr, err
+}
+
+func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	users := make([]*user.User, 0)
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("user").In("uid", uids).OrIn("id", ids).Find(&users)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, err
 }
 
 func (ss *sqlStore) notServiceAccountFilter() string {
@@ -374,6 +394,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			Theme:          usr.Theme,
 			IsGrafanaAdmin: usr.IsAdmin,
 			IsDisabled:     usr.IsDisabled,
+			IsProvisioned:  usr.IsProvisioned,
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
@@ -468,7 +489,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		sess := dbSess.Table("user").Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, ss.dialect.BooleanStr(false))
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
 
 		// Join with only most recent auth module
 		joinCondition := `(
@@ -526,7 +547,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "u.is_provisioned")
 
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {

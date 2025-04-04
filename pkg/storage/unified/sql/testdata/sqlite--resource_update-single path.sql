@@ -3,7 +3,8 @@ UPDATE "resource"
         "guid"   = '',
         "value"  = '[]',
         "folder"  = 'fldr',
-        "action" = 'UNKNOWN'  
+        "action" = 'UNKNOWN',
+        "resource_version" = 0
     WHERE 1 = 1
         AND "group"     = 'gg'
         AND "resource"  = 'rr'

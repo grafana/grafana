@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -150,12 +151,17 @@ export function PanelChrome({
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
-  const { isSelected, onSelect } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<PointerEvent | null>(null);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
+  const pointerDistance = usePointerDistance();
 
   const hasHeader = !hoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
+
+  // Highlight the full panel when hovering over header
+  const [selectableHighlight, setSelectableHighlight] = useState(false);
+  const onHeaderEnter = React.useCallback(() => setSelectableHighlight(true), []);
+  const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally
   if (collapsed === undefined) {
@@ -190,6 +196,48 @@ export function PanelChrome({
   }
 
   const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
+
+  // Handle drag & selection events
+  // Mainly the tricky bit of differentiating between dragging and selecting
+  const onPointerUp = React.useCallback(
+    (evt: React.PointerEvent) => {
+      if (
+        pointerDistance.check(evt) ||
+        (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
+      ) {
+        return;
+      }
+
+      // setTimeout is needed here because onSelect stops the event propagation
+      // By doing so, the event won't get to the document and drag will never be stopped
+      setTimeout(() => onSelect?.(evt));
+    },
+    [dragClassCancel, onSelect, pointerDistance]
+  );
+
+  const onPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      evt.stopPropagation();
+
+      pointerDistance.set(evt);
+
+      onDragStart?.(evt);
+    },
+    [pointerDistance, onDragStart]
+  );
+
+  const onContentPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+        return;
+      }
+
+      onSelect?.(evt);
+    },
+    [onSelect]
+  );
 
   const headerContent = (
     <>
@@ -273,7 +321,8 @@ export function PanelChrome({
       className={cx(
         styles.container,
         isPanelTransparent && styles.transparentContainer,
-        isSelected && 'dashboard-selected-element'
+        isSelected && 'dashboard-selected-element',
+        !isSelected && isSelectable && selectableHighlight && 'dashboard-selectable-element'
       )}
       style={containerStyles}
       aria-labelledby={!!title ? panelTitleId : undefined}
@@ -315,28 +364,10 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerDown={(evt) => {
-            evt.stopPropagation();
-            pointerDownEvt.current = evt;
-          }}
-          onPointerMove={() => {
-            if (pointerDownEvt.current) {
-              onDragStart?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
-            }
-          }}
-          onPointerUp={(evt) => {
-            evt.stopPropagation();
-            if (
-              pointerDownEvt.current &&
-              dragClassCancel &&
-              evt.target instanceof HTMLElement &&
-              !evt.target.closest(`.${dragClassCancel}`)
-            ) {
-              onSelect?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
-            }
-          }}
+          onPointerDown={onPointerDown}
+          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+          onPointerUp={onPointerUp}
         >
           {statusMessage && (
             <div className={dragClassCancel}>
@@ -364,6 +395,7 @@ export function PanelChrome({
           data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
+          onPointerDown={onContentPointerDown}
         >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>

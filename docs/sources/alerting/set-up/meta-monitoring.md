@@ -2,6 +2,7 @@
 aliases:
   - ../meta-monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/meta-monitoring/
   - ../monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/monitoring/
+  - ../monitor/ # /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/meta-monitoring
 description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
 keywords:

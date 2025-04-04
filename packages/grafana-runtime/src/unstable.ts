@@ -9,9 +9,5 @@
  * and be subject to the standard policies
  */
 
-export {
-  ScopesContext,
-  type ScopesContextValueState,
-  type ScopesContextValue,
-  useScopes,
-} from './unstable/ScopesContext';
+export { useTranslate, setUseTranslateHook, setTransComponent, Trans } from './utils/i18n';
+export type { TransProps } from './types/i18n';

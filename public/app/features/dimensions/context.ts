@@ -1,4 +1,4 @@
-import { PanelData } from '@grafana/data/src';
+import { PanelData } from '@grafana/data';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,

@@ -18,7 +18,7 @@ title: Dashboard HTTP API
 
 # Dashboard API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -26,7 +26,7 @@ The identifier (id) of a dashboard is an auto-incrementing numeric value and is 
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning](/docs/grafana/latest/administration/provisioning/#dashboards)
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
@@ -41,7 +41,7 @@ Creates a new dashboard or updates an existing dashboard. When updating existing
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -80,7 +80,7 @@ JSON Body schema:
 - **dashboard** – The complete dashboard model.
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
-- **dashboard.refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
+- **dashboard.refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval](/docs/grafana/latest/setup-grafana/configure-grafana/#min_refresh_interval), then Grafana will ignore it and will enforce the minimum refresh interval.
 - **folderId** – The id of the folder to save the dashboard in.
 - **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite an existing dashboard with a given dashboard UID.
@@ -163,7 +163,7 @@ Will return the dashboard given the dashboard unique identifier (uid). Informati
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -222,7 +222,7 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -259,107 +259,6 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
-
-## Hard delete dashboard by uid
-
-{{% admonition type="note" %}}
-This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
-{{% /admonition %}}
-
-`DELETE /api/dashboards/uid/:uid/trash`
-
-Will delete permanently the dashboard given the specified unique identifier (uid).
-
-**Required permissions**
-
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
-
-<!-- prettier-ignore-start -->
-| Action              | Scope                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------- |
-| `dashboards:delete` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-{ .no-spacing-list }
-<!-- prettier-ignore-end -->
-
-**Example Request**:
-
-```http
-DELETE /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "title": "Production Overview",
-  "message": "Dashboard Production Overview deleted",
-  "uid": "cIBgcSjkk"
-}
-```
-
-Status Codes:
-
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
-
-## Restore deleted dashboard by uid
-
-{{% admonition type="note" %}}
-This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
-{{% /admonition %}}
-
-`PATCH /api/dashboards/uid/:uid/trash`
-
-Will restore a deleted dashboard given the specified unique identifier (uid).
-
-**Required permissions**
-
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
-
-<!-- prettier-ignore-start -->
-| Action              | Scope                                                 |
-| ------------------- | ----------------------------------------------------- |
-| `dashboards:create` | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-{ .no-spacing-list }
-<!-- prettier-ignore-end -->
-
-**Example Request**:
-
-```http
-PATCH /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "title": "Production Overview",
-  "message": "Dashboard Production Overview restored",
-  "uid": "cIBgcSjkk"
-}
-```
-
-Status Codes:
-
-- **200** – Restored
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
--
 
 ## Gets the home dashboard
 
@@ -450,4 +349,4 @@ Content-Type: application/json
 
 ## Dashboard Search
 
-See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
+See [Folder/Dashboard Search API](../folder_dashboard_search/).

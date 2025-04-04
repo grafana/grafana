@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
