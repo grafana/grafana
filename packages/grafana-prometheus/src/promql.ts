@@ -332,7 +332,7 @@ export const FUNCTIONS = [
     label: 'info',
     detail: 'info(v instant-vector[, ls data-label-selector])',
     documentation:
-      'A way to get the latest details or metadata about a group of metrics, like their labels and current values, without doing any calculations',
+      'Returns latest details and metadata about a group of metrics, such as their labels and current values, without doing any calculations',
   },
   {
     insertText: 'irate',
