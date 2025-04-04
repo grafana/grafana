@@ -149,9 +149,10 @@ func (s *EncryptionManager) registerUsageMetrics() {
 	})
 }
 
+// TODO: Why do we need to use a global variable for this?
 var b64 = base64.RawStdEncoding
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt contracts.EncryptionOptions) ([]byte, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
 
@@ -163,13 +164,11 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 		}).Inc()
 	}()
 
-	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
-	scope := opt()
-	label := encryption.KeyLabel(scope, s.currentProviderID)
+	label := encryption.KeyLabel(s.currentProviderID)
 
 	var id string
 	var dataKey []byte
-	id, dataKey, err = s.currentDataKey(ctx, namespace, label, scope)
+	id, dataKey, err = s.currentDataKey(ctx, namespace, label)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
 		return nil, err
@@ -197,7 +196,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
+func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
@@ -211,7 +210,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, namespace, label, scope)
+		id, dataKey, err = s.newDataKey(ctx, namespace, label)
 		if err != nil {
 			return "", nil, err
 		}
@@ -256,7 +255,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
+func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -285,7 +284,6 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Label:         label,
-		Scope:         scope,
 	}
 
 	err = s.store.CreateDataKey(ctx, &dbDataKey)

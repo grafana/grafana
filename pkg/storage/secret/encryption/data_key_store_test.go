@@ -5,11 +5,12 @@ import (
 	"encoding/base64"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -37,7 +38,6 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 		Label:         "test-label",
 		Active:        true,
 		EncryptedData: []byte("test-data"),
-		Scope:         "test-scope",
 		Provider:      passThroughProvider, // so that the Decrypt() method just gets us the input test data
 	}
 

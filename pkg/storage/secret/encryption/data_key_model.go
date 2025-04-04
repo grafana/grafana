@@ -12,7 +12,6 @@ type SecretDataKey struct {
 	Active        bool                  `xorm:"active"`
 	Namespace     string                `xorm:"namespace"`
 	Label         string                `xorm:"label"`
-	Scope         string                `xorm:"scope"`
 	Provider      encryption.ProviderID `xorm:"provider"`
 	EncryptedData []byte                `xorm:"encrypted_data"`
 	Created       time.Time             `xorm:"created"`

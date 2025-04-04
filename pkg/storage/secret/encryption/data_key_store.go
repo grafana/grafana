@@ -227,13 +227,13 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 		if i == 0 {
 			statement = fmt.Sprintf("SELECT '%s' AS %s, '%s' AS %s, '%s' AS %s",
 				k.UID, "uid",
-				encryption.KeyLabel(k.Scope, currProvider), "label",
+				encryption.KeyLabel(currProvider), "label",
 				encryptedData, "encrypted_data",
 			)
 		} else {
 			statement = fmt.Sprintf("SELECT '%s', '%s', x'%s'",
 				k.UID,
-				encryption.KeyLabel(k.Scope, currProvider),
+				encryption.KeyLabel(currProvider),
 				encryptedData,
 			)
 		}
