@@ -71,13 +71,22 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	var zanzanaItemChecker authlib.ItemChecker
 	var err error
 	if c.zanzanaClient != nil {
+		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
 		zanzanaItemChecker, err = c.zanzanaClient.Compile(ctx, id, req)
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
 		}
+		timer.ObserveDuration()
 	}
 
+	timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("rbac"))
+	defer timer.ObserveDuration()
+
 	rbacItemChecker, err := c.accessClient.Compile(ctx, id, req)
+	if err != nil {
+		return nil, err
+	}
+
 	shadowItemChecker := func(name, folder string) bool {
 		rbacRes := rbacItemChecker(name, folder)
 		if zanzanaItemChecker != nil {
