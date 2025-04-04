@@ -634,7 +634,7 @@ func changesToResponse(finalChanges *store.GroupDelta) response.Response {
 	return response.JSON(http.StatusAccepted, body)
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[string]*apimodels.UserInfo) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableRuleGroupConfig {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -651,7 +651,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 	}
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[string]*apimodels.UserInfo) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableExtendedRuleNode {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
@@ -830,12 +830,12 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 }
 
 // getUserUIDmaping returns a UserUID->UserInfo mapping from the UpdatedBy users in the RulesGroup
-func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.AlertRule) map[string]*apimodels.UserInfo {
-	mapping := map[string]*apimodels.UserInfo{
-		string(ngmodels.AlertingUserUID): {
+func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.AlertRule) map[ngmodels.UserUID]*apimodels.UserInfo {
+	mapping := map[ngmodels.UserUID]*apimodels.UserInfo{
+		ngmodels.AlertingUserUID: {
 			UID: string(ngmodels.AlertingUserUID),
 		},
-		string(ngmodels.FileProvisioningUserUID): {
+		ngmodels.FileProvisioningUserUID: {
 			UID: string(ngmodels.FileProvisioningUserUID),
 		},
 	}
@@ -849,13 +849,12 @@ func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.Ale
 			continue
 		}
 
-		uid := string(*rule.UpdatedBy)
-		if _, ok := mapping[uid]; ok {
+		if _, ok := mapping[*rule.UpdatedBy]; ok {
 			// one of the system identifiers
 			continue
 		}
 
-		userUIDs = append(userUIDs, uid)
+		userUIDs = append(userUIDs, string(*rule.UpdatedBy))
 	}
 
 	if len(userUIDs) == 0 {
@@ -869,7 +868,7 @@ func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.Ale
 	}
 
 	for _, user := range users {
-		mapping[user.UID] = &apimodels.UserInfo{
+		mapping[ngmodels.UserUID(user.UID)] = &apimodels.UserInfo{
 			UID:  user.UID,
 			Name: user.NameOrFallback(),
 		}
@@ -878,19 +877,18 @@ func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.Ale
 	return mapping
 }
 
-func getUserFromMapping(mapping map[string]*apimodels.UserInfo, userUID *ngmodels.UserUID) *apimodels.UserInfo {
+func getUserFromMapping(mapping map[ngmodels.UserUID]*apimodels.UserInfo, userUID *ngmodels.UserUID) *apimodels.UserInfo {
 	if userUID == nil {
 		return nil
 	}
 
-	uid := string(*userUID)
-	u, ok := mapping[uid]
+	u, ok := mapping[*userUID]
 	if ok {
 		return u
 	}
 
 	// if user is not found or we get an error building the mapping, return empty name by default
-	return &apimodels.UserInfo{UID: uid}
+	return &apimodels.UserInfo{UID: string(*userUID)}
 }
 
 func getPanelIDFromQuery(v url.Values) (int64, error) {
