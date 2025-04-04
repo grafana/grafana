@@ -11,9 +11,11 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+
+import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -43,6 +45,7 @@ export const LogListControls = ({ eventBus }: Props) => {
   const {
     app,
     dedupStrategy,
+    downloadLogs,
     filterLevels,
     setDedupStrategy,
     setFilterLevels,
@@ -159,6 +162,26 @@ export const LogListControls = ({ eventBus }: Props) => {
     [filterLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
+  const downloadMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.txt', 'txt')}
+          onClick={() => downloadLogs(DownloadFormat.Text)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.json', 'json')}
+          onClick={() => downloadLogs(DownloadFormat.Json)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.csv', 'csv')}
+          onClick={() => downloadLogs(DownloadFormat.CSV)}
+        />
+      </Menu>
+    ),
+    [downloadLogs]
+  );
+
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
 
   return (
@@ -238,6 +261,20 @@ export const LogListControls = ({ eventBus }: Props) => {
               size="lg"
             />
           )}
+          {!config.exploreHideLogsDownload && (
+            <>
+              <div className={styles.divider} />
+              <Dropdown overlay={downloadMenu} placement="auto-end">
+                <IconButton
+                  name="download-alt"
+                  className={styles.controlButton}
+                  aria-pressed={wrapLogMessage}
+                  tooltip={t('logs.logs-controls.download-logs', 'Download logs')}
+                  size="lg"
+                />
+              </Dropdown>
+            </>
+          )}
         </>
       ) : (
         <Dropdown overlay={filterLevelsMenu} placement="auto-end">
@@ -283,6 +320,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+    }),
+    divider: css({
+      borderTop: `solid 1px ${theme.colors.border.medium}`,
+      height: 1,
+      marginTop: theme.spacing(-0.25),
+      marginBottom: theme.spacing(-1.75),
     }),
     controlButtonActive: css({
       margin: 0,

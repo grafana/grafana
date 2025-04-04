@@ -7,6 +7,7 @@ import {
   DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
+  LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
   TimeRange,
@@ -25,10 +26,11 @@ import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
+  logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
+  logOptionsStorageKey?: string;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
-  logOptionsStorageKey?: string;
   visualisationType: LogsVisualisationType;
 
   /** Props added for Table **/
@@ -46,8 +48,10 @@ export type LogRowsComponentProps = Omit<
 >;
 
 export const ControlledLogRows = ({
+  deduplicatedRows,
   dedupStrategy,
   showTime,
+  logsMeta,
   logsSortOrder,
   onLogOptionsChange,
   logOptionsStorageKey,
@@ -61,13 +65,15 @@ export const ControlledLogRows = ({
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
       logOptionsStorageKey={logOptionsStorageKey}
+      logs={deduplicatedRows ?? []}
+      logsMeta={logsMeta}
       showControls
       showTime={showTime}
       sortOrder={logsSortOrder || LogsSortOrder.Descending}
       onLogOptionsChange={onLogOptionsChange}
       wrapLogMessage={wrapLogMessage}
     >
-      {visualisationType === 'logs' && <LogRowsComponent {...rest} />}
+      {visualisationType === 'logs' && <LogRowsComponent {...rest} deduplicatedRows={deduplicatedRows} />}
       {visualisationType === 'table' && <ControlledLogsTable {...rest} />}
     </LogListContextProvider>
   );

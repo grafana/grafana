@@ -1063,4 +1063,9 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default false
+  */
+  logsPanelControls?: boolean;
 }
