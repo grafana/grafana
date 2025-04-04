@@ -119,11 +119,6 @@ type ParsedResource struct {
 	Errors []string
 }
 
-// FIXME: eliminate clients from parser (but be careful that we can use the same cache/resolved GVK+GVR)
-func (r *parser) Clients() ResourceClients {
-	return r.clients
-}
-
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
