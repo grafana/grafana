@@ -67,7 +67,8 @@ export interface Props<TQuery extends DataQuery> {
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
-  onChange: (query: TQuery | DataQuery) => void;
+  onChange: (query: TQuery) => void;
+  onReplace: (query: DataQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
@@ -478,7 +479,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const {
       query,
       hideHideQueryButton: hideHideQueryButton = false,
-      onChange,
+      onReplace,
       onRunQuery,
       onQueryAddedFromLibrary,
     } = this.props;
@@ -515,8 +516,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         />
         <AddQueryFromLibraryButton
           onQueryAddedFromLibrary={onQueryAddedFromLibrary}
-          onChange={onChange}
+          onReplace={onReplace}
           onRunQuery={onRunQuery}
+          datasourceName={datasource?.name}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -689,23 +691,25 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 }
 
 interface AddQueryFromLibraryButtonProps<TQuery extends DataQuery> {
-  onChange: (query: DataQuery) => void;
-  onRunQuery: (query: DataQuery) => void;
+  onReplace: (query: DataQuery) => void;
+  onRunQuery: () => void;
   onQueryAddedFromLibrary?: () => void;
+  datasourceName?: string;
 }
 
 function AddQueryFromLibraryButton<TQuery extends DataQuery>({
-  onChange,
+  onReplace,
   onRunQuery,
   onQueryAddedFromLibrary,
+  datasourceName,
 }: AddQueryFromLibraryButtonProps<TQuery>) {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onAddQueryFromLibrary = () => {
-    openDrawer([], (query: DataQuery) => {
+    openDrawer(datasourceName ? [datasourceName] : [], (query: DataQuery) => {
       onQueryAddedFromLibrary?.();
-      onChange(query);
-      onRunQuery(query);
+      onReplace(query);
+      onRunQuery();
     });
   };
 
