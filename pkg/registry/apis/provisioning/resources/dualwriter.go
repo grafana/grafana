@@ -166,8 +166,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	// TODO: do we want to do a dry run before saving into the repository?
-	if err = r.repo.Create(ctx, path, ref, data, message); err != nil {
+	if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("create resource in repository: %w", err)
 	}
 
@@ -218,9 +217,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	// TODO: do we want to do a dry run before saving into the repository?
-	err = r.repo.Update(ctx, path, ref, data, message)
-	if err != nil {
+	if err = r.repo.Update(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("update resource in repository: %w", err)
 	}
 
