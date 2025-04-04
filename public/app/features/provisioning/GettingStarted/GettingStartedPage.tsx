@@ -12,10 +12,10 @@ export default function GettingStartedPage({ items }: Props) {
     <Page
       navId="provisioning"
       pageNav={{
-        text: t('provisioning.getting-started-page.text-remote-provisioning', 'Remote provisioning'),
+        text: t('provisioning.getting-started-page.header', 'Provisioning'),
         subTitle: t(
           'provisioning.getting-started-page.subtitle-provisioning-feature',
-          'Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems'
+          'View and manage your provisioning connections'
         ),
       }}
     >
