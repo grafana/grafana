@@ -1,12 +1,11 @@
-import { createContext, useCallback, useContext } from 'react';
-import { useObservable } from 'react-use';
-import { of } from 'rxjs';
+import React, { createContext, useCallback, useContext, useEffect } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { LocationService, locationService, BackendSrv, useScopes } from '@grafana/runtime';
 
-import { AppChromeService } from '../components/AppChrome/AppChromeService';
+import { AppChromeService, AppChromeState } from '../components/AppChrome/AppChromeService';
 import { useExtensionSidebarContext } from '../components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { TOP_BAR_LEVEL_HEIGHT } from '../components/AppChrome/types';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
 import { KeybindingSrv } from '../services/keybindingSrv';
 
@@ -45,10 +44,43 @@ export function useReturnToPreviousInternal() {
   );
 }
 
+function getHeaderHeight(
+  chromeState: AppChromeState,
+  isExtensionSidebarOpen: boolean,
+  scopesEnabled: boolean | undefined = false
+) {
+  if (chromeState.kioskMode || chromeState.chromeless || isExtensionSidebarOpen) {
+    return 0;
+  }
+
+  if (scopesEnabled || chromeState.actions) {
+    return TOP_BAR_LEVEL_HEIGHT * 2;
+  }
+
+  return TOP_BAR_LEVEL_HEIGHT;
+}
+
 export function useChromeHeaderHeight() {
   const { chrome } = useGrafana();
+  const state = chrome.state.getValue();
+  const scopes = useScopes();
   // if the extension sidebar is open, the inner pane will be scrollable, thus we need to set the header height to 0
   const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
+  const [headerHeight, setHeaderHeight] = React.useState(
+    getHeaderHeight(state, isExtensionSidebarOpen, scopes?.state.enabled)
+  );
 
-  return useObservable(isExtensionSidebarOpen ? of(0) : chrome.headerHeightObservable, 0);
+  useEffect(() => {
+    const unsub = chrome.state.subscribe((state) => {
+      const newHeaderHeight = getHeaderHeight(state, isExtensionSidebarOpen);
+      if (newHeaderHeight !== headerHeight) {
+        console.log('Header height is the same, not updating');
+        setHeaderHeight(newHeaderHeight);
+      }
+    });
+
+    return () => unsub.unsubscribe();
+  }, [chrome, headerHeight, isExtensionSidebarOpen]);
+
+  return headerHeight;
 }

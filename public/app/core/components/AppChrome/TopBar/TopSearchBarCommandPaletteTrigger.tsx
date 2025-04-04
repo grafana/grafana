@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
 import { useMemo, useState } from 'react';
 
@@ -37,7 +37,7 @@ export function TopSearchBarCommandPaletteTrigger() {
       <ToolbarButton
         iconOnly
         icon="search"
-        aria-label={t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
+        aria-label={t('nav.search.placeholderCommandPalette', 'Search...')}
         onClick={onOpenSearch}
       />
     );
@@ -66,11 +66,10 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </div>
 
         <button className={styles.fakeInput} onClick={onClick}>
-          {t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
+          {t('nav.search.placeholderCommandPalette', 'Search...')}
         </button>
 
         <div className={styles.suffix}>
-          <Icon name="keyboard" />
           <Text variant="bodySmall">{`${modKey}+k`}</Text>
         </div>
       </div>
@@ -82,7 +81,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
-    wrapper: baseStyles.wrapper,
+    wrapper: cx(
+      baseStyles.wrapper,
+      css({
+        maxWidth: 220,
+        minWidth: 140,
+      })
+    ),
     inputWrapper: baseStyles.inputWrapper,
     prefix: baseStyles.prefix,
     suffix: css([

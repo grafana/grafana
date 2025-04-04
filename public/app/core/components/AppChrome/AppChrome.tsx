@@ -5,7 +5,7 @@ import { PropsWithChildren, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useChromeHeaderHeight, useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -20,7 +20,6 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
-import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends PropsWithChildren<{}> {}
@@ -38,7 +37,10 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
-  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
+
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight);
+
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -104,8 +106,11 @@ export function AppChrome({ children }: Props) {
               pageNav={state.pageNav}
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
+              actions={state.actions}
+              actionsLeft={state.actionsLeft}
+              actionsRight={state.actionsRight}
+              scopes={scopes}
             />
-            {(state.actions || scopes?.state.enabled) && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
           </header>
         </>
       )}
@@ -146,12 +151,13 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
+const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
   return {
     content: css({
+      label: 'page-content',
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
+      paddingTop: headerHeight,
       flexGrow: 1,
       height: 'auto',
     }),
@@ -178,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     scopesDashboardsContainer: css({
       position: 'fixed',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
+      height: `calc(100% - ${headerHeight}px)`,
       zIndex: 1,
     }),
     scopesDashboardsContainerDocked: css({
@@ -237,7 +243,7 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     sidebarContainer: css({
       position: 'fixed',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
+      height: `calc(100% - ${headerHeight}px)`,
       zIndex: 2,
       right: 0,
     }),

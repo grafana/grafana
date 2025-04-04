@@ -38,7 +38,8 @@ import { isLibraryPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
-import { ToolbarActionsNew } from './new-toolbar/ToolbarActionsNew';
+import { LeftActions } from './new-toolbar/LeftActions';
+import { RightActions } from './new-toolbar/RightActions';
 
 interface Props {
   dashboard: DashboardScene;
@@ -46,13 +47,18 @@ interface Props {
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
+  const key = `${dashboard.state.key}-toolbar-actions`;
 
-  const actions = hasNewToolbar ? (
-    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
+  //    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
+
+  return hasNewToolbar ? (
+    <AppChromeUpdate
+      actionsLeft={<LeftActions dashboard={dashboard} key={key} />}
+      actionsRight={<RightActions dashboard={dashboard} key={key} />}
+    />
   ) : (
-    <ToolbarActions dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions`} />
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} key={key} />} />
   );
-  return <AppChromeUpdate actions={actions} />;
 });
 
 NavToolbarActions.displayName = 'NavToolbarActions';

@@ -56,7 +56,7 @@ export const QuickAdd = ({}: Props) => {
           aria-label="New"
         />
       </Dropdown>
-      <NavToolbarSeparator className={styles.separator} />
+      {/* <NavToolbarSeparator className={styles.separator} /> */}
     </>
   ) : null;
 };

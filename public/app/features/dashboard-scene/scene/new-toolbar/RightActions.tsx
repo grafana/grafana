@@ -98,12 +98,12 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             group: 'panel',
             condition: showPanelButtons && isEditingLibraryPanel,
           },
-          {
-            key: 'edit-schema-v2-button',
-            component: EditSchemaV2Button,
-            group: 'dashboard',
-            condition: isEditingAndShowingDashboard && hasUid,
-          },
+          // {
+          //   key: 'edit-schema-v2-button',
+          //   component: EditSchemaV2Button,
+          //   group: 'dashboard',
+          //   condition: isEditingAndShowingDashboard && hasUid,
+          // },
           {
             key: 'dashboard-settings',
             component: DashboardSettingsButton,

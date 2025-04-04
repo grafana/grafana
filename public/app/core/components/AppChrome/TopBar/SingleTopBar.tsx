@@ -3,7 +3,8 @@ import { cloneDeep } from 'lodash';
 import { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ScopesContextValue } from '@grafana/runtime';
+import { Dropdown, Icon, Stack, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -24,6 +25,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
+import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 
@@ -32,6 +34,10 @@ interface Props {
   pageNav?: NavModelItem;
   onToggleMegaMenu(): void;
   onToggleKioskMode(): void;
+  actions?: React.ReactNode;
+  actionsLeft?: React.ReactNode;
+  actionsRight?: React.ReactNode;
+  scopes?: ScopesContextValue | undefined;
 }
 
 export const SingleTopBar = memo(function SingleTopBar({
@@ -39,6 +45,10 @@ export const SingleTopBar = memo(function SingleTopBar({
   onToggleKioskMode,
   pageNav,
   sectionNav,
+  scopes,
+  actions,
+  actionsRight,
+  actionsLeft,
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -54,45 +64,54 @@ export const SingleTopBar = memo(function SingleTopBar({
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   return (
-    <div className={styles.layout}>
-      <Stack minWidth={0} gap={0.5} alignItems="center">
-        {!menuDockedAndOpen && (
-          <ToolbarButton
-            narrow
-            id={MEGA_MENU_TOGGLE_ID}
-            onClick={onToggleMegaMenu}
-            tooltip={t('navigation.megamenu.open', 'Open menu')}
-          >
-            <Stack gap={0} alignItems="center">
-              <Branding.MenuLogo className={styles.img} />
-              <Icon size="sm" name="angle-down" />
-            </Stack>
-          </ToolbarButton>
-        )}
-        <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-      </Stack>
+    <>
+      <div className={styles.layout}>
+        <Stack minWidth={0} gap={0.5} alignItems="center">
+          {!menuDockedAndOpen && (
+            <ToolbarButton
+              narrow
+              id={MEGA_MENU_TOGGLE_ID}
+              onClick={onToggleMegaMenu}
+              tooltip={t('navigation.megamenu.open', 'Open menu')}
+            >
+              <Stack gap={0} alignItems="center">
+                <Branding.MenuLogo className={styles.img} />
+                <Icon size="sm" name="angle-down" />
+              </Stack>
+            </ToolbarButton>
+          )}
+          <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
+          {actionsLeft && <ToolbarButtonRow alignment="left">{actionsLeft}</ToolbarButtonRow>}
+        </Stack>
 
-      <Stack gap={0.5} alignItems="center">
-        <TopSearchBarCommandPaletteTrigger />
-        {unifiedHistoryEnabled && <HistoryContainer />}
-        <QuickAdd />
-        {enrichedHelpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
-          </Dropdown>
-        )}
-        <ToolbarButton
-          icon="monitor"
-          className={styles.kioskToggle}
-          onClick={onToggleKioskMode}
-          tooltip="Enable kiosk mode"
-        />
-        {!contextSrv.user.isSignedIn && <SignInLink />}
-        {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
-        {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
-        {profileNode && <ProfileButton profileNode={profileNode} />}
-      </Stack>
-    </div>
+        <Stack gap={0.5} alignItems="center" justifyContent={'flex-end'}>
+          <div>
+            <TopSearchBarCommandPaletteTrigger />
+          </div>
+          <ToolbarButtonRow alignment="right">
+            {unifiedHistoryEnabled && <HistoryContainer />}
+            <QuickAdd />
+            {enrichedHelpNode && (
+              <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+                <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
+              </Dropdown>
+            )}
+            {/* <ToolbarButton
+              icon="monitor"
+              className={styles.kioskToggle}
+              onClick={onToggleKioskMode}
+              tooltip="Enable kiosk mode"
+            /> */}
+            {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
+            {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
+            {actionsRight}
+          </ToolbarButtonRow>
+          {!contextSrv.user.isSignedIn && <SignInLink />}
+          {profileNode && <ProfileButton profileNode={profileNode} />}
+        </Stack>
+      </div>
+      {(actions || scopes?.state.enabled) && <SingleTopBarActions>{actions}</SingleTopBarActions>}
+    </>
   );
 });
 
@@ -108,9 +127,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(550px, 1fr)',
-      display: 'grid',
-      justifyContent: 'flex-start',
+      display: 'flex',
     },
   }),
   breadcrumbsWrapper: css({
