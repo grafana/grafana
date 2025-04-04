@@ -43,10 +43,30 @@ jobs:
     name: ${{ matrix.suite }}
     strategy:
       matrix:
-        suite: [various-suite, dashboards-suite, smoke-tests-suite]
+        suite:
+          - various-suite
+          - dashboards-suite
+          - smoke-tests-suite
+          - panels-suite
     needs:
       - build-grafana
     uses: ./.github/workflows/run-e2e-suite.yml
     with:
+      package: ${{ needs.build-grafana.outputs.artifact }}
+      suite: ${{ matrix.suite }}
+  e2e-matrix-old-arch:
+    name: ${{ matrix.suite }} (old arch)
+    strategy:
+      matrix:
+        suite:
+          - various-suite
+          - dashboards-suite
+          - smoke-tests-suite
+          - panels-suite
+    needs:
+      - build-grafana
+    uses: ./.github/workflows/run-e2e-suite.yml
+    with:
+      old-arch: true
       package: ${{ needs.build-grafana.outputs.artifact }}
       suite: ${{ matrix.suite }}
