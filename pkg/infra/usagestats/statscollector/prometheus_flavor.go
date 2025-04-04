@@ -59,7 +59,6 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		return nil, err
 	}
 
-	// Combine all data sources into a single slice
 	allPromDataSources := append(append(dataSources, dataSourcesAmazonProm...), dataSourcesAzureProm...)
 
 	g, ctx := errgroup.WithContext(ctx)
