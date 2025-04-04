@@ -16,8 +16,10 @@ export interface OptionsPaneCategoryDescriptorProps {
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
-  disabled?: boolean;
-  tooltip?: string;
+  /**
+   * When set will disable category and show tooltip with disabledText on
+   */
+  disabledText?: string;
 }
 
 /**
