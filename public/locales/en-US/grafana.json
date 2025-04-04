@@ -1508,9 +1508,9 @@
       "group-panels": "Group panels",
       "new-row": "New row",
       "new-tab": "New tab",
-      "paste-panel": "Paste panel",
       "paste-row": "Paste row",
-      "paste-tab": "Paste tab"
+      "paste-tab": "Paste tab",
+      "un-group-panels": "Ungroup"
     },
     "conditional-rendering": {
       "conditions": {
