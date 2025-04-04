@@ -293,11 +293,9 @@ func TestChanges(t *testing.T) {
 			{Path: "abc/dash.json", Hash: "abc", Blob: true},
 			{Path: "abc/nested folder/nested-dashboard.json", Hash: "xyz", Blob: true},
 		}
+
 		target := &provisioning.ResourceList{}
 
-		// Expected correct behavior: It should create the dashboard in abc-root,
-		// and correctly create the dashboards within the nested folder.
-		// Implicit folder creation happens during applyChanges, not calculated in the diff itself for this case.
 		expected := []ResourceFileChange{
 			{
 				Action: repository.FileActionCreated,
