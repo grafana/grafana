@@ -5,7 +5,6 @@ import {
   AdHocFiltersVariable,
   behaviors,
   ConstantVariable,
-  SceneDataLayerControls,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
