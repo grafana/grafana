@@ -16,6 +16,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
+  store,
   TimeRange,
 } from '@grafana/data';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
@@ -106,7 +107,7 @@ export const LogList = ({
   showControls,
   showTime,
   sortOrder,
-  syntaxHighlighting,
+  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
   timeZone,
   wrapLogMessage,

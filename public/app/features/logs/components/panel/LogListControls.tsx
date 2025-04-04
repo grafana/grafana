@@ -224,18 +224,20 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
-          <IconButton
-            name="brackets-curly"
-            className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
-            aria-pressed={syntaxHighlighting}
-            onClick={onSyntaxHightlightingClick}
-            tooltip={
-              syntaxHighlighting
-                ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
-                : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
-            }
-            size="lg"
-          />
+          {syntaxHighlighting !== undefined && (
+            <IconButton
+              name="brackets-curly"
+              className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
+              aria-pressed={syntaxHighlighting}
+              onClick={onSyntaxHightlightingClick}
+              tooltip={
+                syntaxHighlighting
+                  ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
+                  : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+              }
+              size="lg"
+            />
+          )}
         </>
       ) : (
         <Dropdown overlay={filterLevelsMenu} placement="auto-end">
