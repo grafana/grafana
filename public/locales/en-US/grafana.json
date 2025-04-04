@@ -5222,6 +5222,7 @@
       "no-jobs": "No jobs..."
     },
     "enhanced-features": {
+      "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
       "description-visual-previews-dashboard-updates-directly-requests": "See visual previews of dashboard updates directly in pull requests",
       "header": "Enhance your GitHub experience",
