@@ -256,6 +256,15 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
+  // Visual query builder doesn't support nested queries and so info function.
+  if (funcName === 'info') {
+    context.errors.push({
+      text: 'Query parsing is ambiguous.',
+      from: node.from,
+      to: node.to,
+    });
+  }
+
   const body = node.getChild(FunctionCallBody);
   const params = [];
   let interval = '';
