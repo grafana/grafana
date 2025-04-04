@@ -35,7 +35,6 @@ type ParserFactory interface {
 //go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
 type Parser interface {
 	Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error)
-	Clients() ResourceClients
 }
 
 type parserFactory struct {

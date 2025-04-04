@@ -368,10 +368,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
-		getter:  b,
-		parsers: b.parsers,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -570,12 +567,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,
+				b.clients,
 				b.resourceLister,
 				b.storageStatus,
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,
+				b.clients,
 				b.storageStatus,
 				b.unified,
 				exportWorker,
