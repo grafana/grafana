@@ -5,40 +5,145 @@
   "metrics": false,
   "routes": [
     {
-      "method": "POST",
+      "method": "GET",
       "path": "alertmanager/api/v2/silences",
-      "reqRole": "Editor"
-    },
-    {
-      "method": "DELETE",
-      "path": "alertmanager/api/v2/silence",
-      "reqRole": "Editor"
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "GET",
-      "path": "alertmanager/api/v2/silences",
-      "reqRole": "Viewer"
+      "path": "api/v2/silences",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "POST",
-      "reqRole": "Editor"
+      "path": "alertmanager/api/v2/silences",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
     },
     {
-      "method": "PUT",
-      "reqRole": "Editor"
+      "method": "POST",
+      "path": "api/v2/silences",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silence/",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/silence/",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "DELETE",
-      "reqRole": "Editor"
+      "path": "alertmanager/api/v2/silence/",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "DELETE",
+      "path": "api/v2/silence/",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/alerts/groups",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/alerts/groups",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "GET",
       "path": "alertmanager/api/v2/alerts",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "POST",
+      "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "POST",
+      "path": "api/v2/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.instances.external:write"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/status",
+      "reqRole": "Viewer",
+      "reqAction": "alert.notifications.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/status",
+      "reqRole": "Viewer",
+      "reqAction": "alert.notifications.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/receivers",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "api/v2/receivers",
+      "reqRole": "Viewer",
+      "reqAction": "alert.instances.external:read"
     },
     {
       "method": "GET",
       "path": "api/v1/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.notifications.external:read"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.notifications.external:write"
+    },
+    {
+      "method": "DELETE",
+      "path": "api/v1/alerts",
+      "reqRole": "Editor",
+      "reqAction": "alert.notifications.external:write"
+    },
+    {
+      "method": "POST",
+      "reqRole": "Admin"
+    },
+    {
+      "method": "PUT",
+      "reqRole": "Admin"
+    },
+    {
+      "method": "DELETE",
+      "reqRole": "Admin"
+    },
+    {
+      "method": "GET",
       "reqRole": "Admin"
     }
   ],
