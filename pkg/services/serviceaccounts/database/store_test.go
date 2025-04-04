@@ -50,7 +50,7 @@ func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	})
 }
 
-func TestStore_CreateServiceAccount(t *testing.T) {
+func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
