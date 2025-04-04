@@ -134,7 +134,8 @@ export const TimeRangeContent = (props: Props) => {
     setFrom(fromValue);
     setTo(toValue);
   };
-
+  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
+  
   const fiscalYear = useMemo(() => {
     return rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
   }, [fiscalYearStartMonth, timeZone]);
