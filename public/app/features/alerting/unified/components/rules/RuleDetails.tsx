@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -45,7 +46,7 @@ export const RuleDetails = ({ rule }: Props) => {
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
           {!!rule.labels && !!Object.keys(rule.labels).length && (
-            <DetailsField label="Labels" horizontal={true}>
+            <DetailsField label={t('alerting.rule-details.labels', 'Labels')} horizontal={true}>
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
@@ -57,7 +58,7 @@ export const RuleDetails = ({ rule }: Props) => {
         </div>
       </div>
       {isAlertingRule && (
-        <DetailsField label="Instances" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.instances', 'Instances')} horizontal={true}>
           <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
         </DetailsField>
       )}
@@ -83,41 +84,45 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   return (
     <>
       {metric && (
-        <DetailsField label="Metric" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.metric', 'Metric')} horizontal={true}>
           {metric}
         </DetailsField>
       )}
       {every && (
-        <DetailsField label="Evaluate" horizontal={true}>
-          Every {every}
+        <DetailsField label={t('alerting.rule-details.evaluate', 'Evaluate')} horizontal={true}>
+          {t('alerting.rule-details.evaluate-every', 'Every {{every}}', { every })}
         </DetailsField>
       )}
 
       {pendingPeriod && (
-        <DetailsField label="Pending period" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.pending-period', 'Pending period')} horizontal={true}>
           {pendingPeriod}
         </DetailsField>
       )}
       {keepFiringFor && (
-        <DetailsField label="Keep firing for" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.keep-firing-for', 'Keep firing for')} horizontal={true}>
           {keepFiringFor}
         </DetailsField>
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
-        <DetailsField label="Last evaluation" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.last-evaluation', 'Last evaluation')} horizontal={true}>
           <Tooltip
             placement="top"
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
-            <span>{`${dateTime(lastEvaluation).locale('en').fromNow(true)} ago`}</span>
+            <span>
+              {t('alerting.rule-details.last-evaluation-ago', '{{time}} ago', {
+                time: dateTime(lastEvaluation).locale('en').fromNow(true),
+              })}
+            </span>
           </Tooltip>
         </DetailsField>
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && lastEvaluationDuration !== undefined && (
-        <DetailsField label="Evaluation time" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.evaluation-time', 'Evaluation time')} horizontal={true}>
           <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>

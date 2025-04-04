@@ -781,6 +781,18 @@
       "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source"
     },
+    "rule-details": {
+      "evaluate": "Evaluate",
+      "evaluate-every": "Every {{every}}",
+      "evaluation-time": "Evaluation time",
+      "instances": "Instances",
+      "keep-firing-for": "Keep firing for",
+      "labels": "Labels",
+      "last-evaluation": "Last evaluation",
+      "last-evaluation-ago": "{{time}} ago",
+      "metric": "Metric",
+      "pending-period": "Pending period"
+    },
     "rule-form": {
       "annotations": {
         "description1": "Annotations add additional information to alerts, helping alert responders identify and address potential issues.",
@@ -808,9 +820,19 @@
           "text": "Define how the alert rule is evaluated."
         },
         "info-help": {
+          "content": "These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.",
+          "link-text": "Read more about this option",
+          "link-title": "Configure no data and error handling",
           "text": "Define the alert behavior when the evaluation fails or the query returns no data."
         },
-        "keep-firing-for": "Keep firing for",
+        "info-help2": {
+          "link-text": "Read about evaluation and alert states",
+          "link-title": "Alert rule evaluation"
+        },
+        "keep-firing-for": {
+          "label-description": "Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting \"None\" means the alert will be back to normal immediately.",
+          "label-text": "Keep firing for"
+        },
         "pending-period": "Pending period"
       },
       "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
@@ -918,6 +940,15 @@
       "deleting": "Deleting",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-stats": {
+      "firing": "firing",
+      "inactive": "{{normalStats}} normal",
+      "nodata": "no data",
+      "paused": "{{normalStats}} normal ({{pausedStats}} paused)",
+      "pending": "{{pendingStats}} pending",
+      "recording": "{{recordingStats}} recording",
+      "recovering": "{{recoveringStats}} recovering"
     },
     "rule-view": {
       "query": {

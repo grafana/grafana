@@ -566,9 +566,12 @@ export function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={keepFiringForId}
-            description='Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
+            description={t(
+              'alerting.rule-form.evaluation-behaviour.keep-firing-for.label-description',
+              'Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
+            )}
           >
-            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for">Keep firing for</Trans>
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for.label-text">Keep firing for</Trans>
           </Label>
         }
         className={styles.inlineField}
@@ -599,10 +602,16 @@ function NeedHelpInfoForConfigureNoDataError() {
         </Trans>
       </Text>
       <NeedHelpInfo
-        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        contentText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.content',
+          'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.'
+        )}
         externalLink={docsLink}
-        linkText={`Read more about this option`}
-        title="Configure no data and error handling"
+        linkText={t('alerting.rule-form.evaluation-behaviour.info-help.link-text', `Read more about this option`)}
+        title={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.link-title',
+          'Configure no data and error handling'
+        )}
       />
     </Stack>
   );
@@ -647,8 +656,11 @@ function getDescription(isGrafanaRecordingRule: boolean) {
           </>
         }
         externalLink={docsLink}
-        linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
+        linkText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help2.link-text',
+          `Read about evaluation and alert states`
+        )}
+        title={t('alerting.rule-form.evaluation-behaviour.info-help2.link-title', 'Alert rule evaluation')}
       />
     </Stack>
   );
