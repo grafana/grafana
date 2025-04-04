@@ -135,7 +135,9 @@ export const TimeRangeContent = (props: Props) => {
     setTo(toValue);
   };
 
-  const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
+  const fiscalYear = useMemo(() => {
+    return rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
+  }, [fiscalYearStartMonth, timeZone]);
 
   const fyTooltip = (
     <div className={style.tooltip}>
