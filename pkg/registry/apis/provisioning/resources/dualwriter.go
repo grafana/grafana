@@ -42,7 +42,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	// TODO: do we want to fail or not?
+	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
 		return nil, fmt.Errorf("run dry run: %w", err)
 	}
