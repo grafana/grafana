@@ -10,6 +10,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardAPI } from '../../api/dashboard_api';
 
 import { SettingsPageProps } from './types';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const dashboardSaveModel = dashboard.getSaveModelClone();
@@ -17,17 +18,8 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
   const pageNav = sectionNav.node.parentItem;
 
   const onClick = async () => {
-    await getDashboardAPI().saveDashboard({
-      dashboard: JSON.parse(dashboardJson),
-      message: 'Edit Dashboard JSON',
-      folderUid: dashboard.meta.folderUid,
-      overwrite: true,
-      k8s: {
-        ...dashboard.meta.k8s,
-        resourceVersion: undefined,
-        generation: undefined,
-      },
-    });
+    await getDashboardSrv().saveJSONDashboard(dashboardJson);
+
     dashboardWatcher.reloadPage();
   };
 

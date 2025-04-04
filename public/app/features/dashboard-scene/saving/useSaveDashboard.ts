@@ -47,11 +47,7 @@ export function useSaveDashboard(isCopy = false) {
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
-          k8s: {
-            ...options.k8s,
-            resourceVersion: undefined,
-            generation: undefined,
-          },
+          k8s: options.k8s,
         });
 
         if ('error' in result) {
