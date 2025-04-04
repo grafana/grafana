@@ -175,8 +175,8 @@ type syncJob struct {
 	repository      repository.Reader
 	progress        jobs.JobProgressRecorder
 	lister          resources.ResourceLister
+	clients         resources.ResourceClients
 	folders         *resources.FolderManager
-	clients         *resources.ResourceClients
 	resourceManager *resources.ResourcesManager
 }
 

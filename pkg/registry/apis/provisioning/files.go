@@ -183,7 +183,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		// something failed
-		if len(obj.Errors) > 0 {
+		if len(obj.Errors) > 0 && code < 400 {
 			code = http.StatusInternalServerError
 		}
 

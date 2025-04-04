@@ -56,7 +56,7 @@ type Parser struct {
 	urls repository.RepositoryWithURLs
 
 	// ResourceClients give access to k8s apis
-	clients *ResourceClients
+	clients ResourceClients
 }
 
 type ParsedResource struct {
@@ -101,9 +101,8 @@ type ParsedResource struct {
 	Errors []string
 }
 
-// FIXME: eliminate clients from parser
-
-func (r *Parser) Clients() *ResourceClients {
+// FIXME: eliminate clients from parser (but be careful that we can use the same cache/resolved GVK+GVR)
+func (r *Parser) Clients() ResourceClients {
 	return r.clients
 }
 
@@ -165,13 +164,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		Checksum: info.Hash,
 	})
 
-	// Calculate name+folder from the file path
-	if info.Path != "" {
-		objName := FileNameFromHashedRepoPath(r.repo.Name, info.Path)
-		if obj.GetName() == "" {
-			obj.SetName(objName) // use the name saved in config
-		}
+	if obj.GetName() == "" && obj.GetGenerateName() == "" {
+		return nil, fmt.Errorf("an explicit name must be saved in the resource (or generateName)")
+	}
 
+	// Calculate folder identifier from the file path
+	if info.Path != "" {
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
@@ -182,13 +180,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// FIXME: remove this check once we have better unit tests
 	if r.clients == nil {
-		return parsed, fmt.Errorf("no clients configured")
+		return nil, fmt.Errorf("no clients configured")
 	}
 
 	// TODO: catch the not found gvk error to return bad request
 	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
 	if err != nil {
-		return parsed, fmt.Errorf("get client for kind: %w", err)
+		return nil, fmt.Errorf("get client for kind: %w", err)
 	}
 
 	return parsed, nil
@@ -216,6 +214,11 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	}
 
+	// When the name is missing (and generateName is configured) use the value from DryRun
+	if f.Obj.GetName() == "" && f.DryRunResponse != nil {
+		f.Obj.SetName(f.DryRunResponse.GetName())
+	}
+
 	return err
 }
 
@@ -241,12 +244,13 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO? should we use the dryRun (validated) version?
-	obj := make(map[string]any)
-	for k, v := range f.Obj.Object {
-		if k != "metadata" {
-			obj[k] = v
-		}
+	obj := f.Obj.DeepCopy().Object
+	delete(obj, "status")
+	name := f.Obj.GetName()
+	if name == "" {
+		delete(obj, "metadata")
+	} else {
+		obj["metadata"] = map[string]any{"name": name}
 	}
 
 	switch path.Ext(f.Info.Path) {
