@@ -138,7 +138,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideVariableControls && (
           <>
             <VariableControls dashboard={dashboard} />
-            <DataLayoutControls dashboard={dashboard} />
+            <DataLayerControls dashboard={dashboard} />
           </>
         )}
         <Box grow={1} />
@@ -156,7 +156,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   );
 }
 
-function DataLayoutControls({ dashboard }: { dashboard: DashboardScene }) {
+function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
   const layers = sceneGraph.getDataLayers(dashboard, true);
 
   return (
