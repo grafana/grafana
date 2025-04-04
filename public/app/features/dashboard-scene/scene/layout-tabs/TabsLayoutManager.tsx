@@ -18,7 +18,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle } from '../layouts-shared/utils';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -152,9 +152,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public removeTab(tabToRemove: TabItem) {
-    // Do not allow removing last tab (for now)
+    // When removing last tab replace ourselves with the inner tab layout
     if (this.state.tabs.length === 1) {
-      return;
+      ungroupLayout(this, tabToRemove.state.layout);
     }
 
     const currentTab = this.getCurrentTab();
