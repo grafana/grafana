@@ -169,7 +169,7 @@ export const LogListControls = ({ eventBus }: Props) => {
         variant="secondary"
         onClick={onScrollToBottomClick}
         tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
-        size="md"
+        size="lg"
       />
       {!inDashboard ? (
         <>
@@ -182,14 +182,14 @@ export const LogListControls = ({ eventBus }: Props) => {
                 ? t('logs.logs-controls.newest-first', 'Newest logs first')
                 : t('logs.logs-controls.oldest-first', 'Oldest logs first')
             }
-            size="md"
+            size="lg"
           />
           <Dropdown overlay={deduplicationMenu} placement="auto-end">
             <IconButton
               name={'filter'}
               className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
               tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
-              size="md"
+              size="lg"
             />
           </Dropdown>
           <Dropdown overlay={filterLevelsMenu} placement="auto-end">
@@ -197,7 +197,7 @@ export const LogListControls = ({ eventBus }: Props) => {
               name={'gf-logs'}
               className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
               tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-              size="md"
+              size="lg"
             />
           </Dropdown>
           <IconButton
@@ -210,7 +210,7 @@ export const LogListControls = ({ eventBus }: Props) => {
                 ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
                 : t('logs.logs-controls.show-timestamps', 'Show timestamps')
             }
-            size="md"
+            size="lg"
           />
           <IconButton
             name="wrap-text"
@@ -222,7 +222,7 @@ export const LogListControls = ({ eventBus }: Props) => {
                 ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
                 : t('logs.logs-controls.wrap-lines', 'Wrap lines')
             }
-            size="md"
+            size="lg"
           />
           <IconButton
             name="brackets-curly"
@@ -234,7 +234,7 @@ export const LogListControls = ({ eventBus }: Props) => {
                 ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
                 : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
             }
-            size="md"
+            size="lg"
           />
         </>
       ) : (
@@ -243,7 +243,7 @@ export const LogListControls = ({ eventBus }: Props) => {
             name={'gf-logs'}
             className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
             tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-            size="md"
+            size="lg"
           />
         </Dropdown>
       )}
@@ -254,7 +254,7 @@ export const LogListControls = ({ eventBus }: Props) => {
         variant="secondary"
         onClick={onScrollToTopClick}
         tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
-        size="md"
+        size="lg"
       />
     </div>
   );
@@ -265,12 +265,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     navContainer: css({
       maxHeight: '100%',
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(3),
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      width: theme.spacing(3),
-      paddingTop: theme.spacing(0.5),
-      paddingLeft: theme.spacing(0.5),
+      width: theme.spacing(4),
+      paddingTop: theme.spacing(0.75),
+      paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
     }),
     scrollToTopButton: css({
@@ -292,7 +292,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         position: 'absolute',
         height: 2,
         borderRadius: theme.shape.radius.default,
-        bottom: -6,
+        bottom: theme.spacing(-1),
         backgroundImage: theme.colors.gradients.brandHorizontal,
         width: '95%',
         opacity: 1,
@@ -303,7 +303,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         content: '""',
         position: 'absolute',
         left: 0,
-        top: '4px',
+        top: theme.spacing(0.5),
         height: `calc(100% - ${theme.spacing(1)})`,
         width: '2px',
         backgroundColor: theme.colors.warning.main,
