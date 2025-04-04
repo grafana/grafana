@@ -232,7 +232,15 @@ describe('SaveProvisionedDashboardForm', () => {
         name: 'test-repo',
         path: 'test-dashboard.json',
         message: 'Initial commit',
-        body: newDashboard,
+        body: {
+          apiVersion: 'dashboard.grafana.app/v1alpha1',
+          kind: 'Dashboard',
+          metadata: {
+            generateName: 'p',
+            name: undefined,
+          },
+          spec: newDashboard,
+        },
       });
     });
     const appEvents = getAppEvents();
@@ -268,10 +276,10 @@ describe('SaveProvisionedDashboardForm', () => {
     const mockRequest = { ...mockRequestBase, isSuccess: true };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
     const pathInput = screen.getByRole('textbox', { name: /path/i });
+    expect(pathInput.getAttribute('readonly')).toBe('true'); // can not edit the path value
+
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
-    await user.clear(pathInput);
     await user.clear(commentInput);
-    await user.type(pathInput, 'test-dashboard.json');
     await user.type(commentInput, 'Update dashboard');
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
