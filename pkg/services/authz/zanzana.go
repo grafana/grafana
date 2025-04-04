@@ -66,7 +66,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
 
-		client, err = zanzana.NewClient(conn, reg)
+		client, err = zanzana.NewClient(conn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -101,7 +101,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
-		client, err = zanzana.NewClient(channel, reg)
+		client, err = zanzana.NewClient(channel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}

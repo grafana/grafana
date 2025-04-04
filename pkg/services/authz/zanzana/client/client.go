@@ -5,7 +5,6 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
@@ -24,7 +23,7 @@ type Client struct {
 	authzext authzextv1.AuthzExtentionServiceClient
 }
 
-func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error) {
+func New(cc grpc.ClientConnInterface) (*Client, error) {
 	c := &Client{
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
