@@ -83,6 +83,7 @@ import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 
 interface Props extends Themeable2 {
   width: number;
@@ -778,7 +779,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const onLogOptionsChange = useCallback(
     (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
-      if (option === 'sortOrder' && (value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending)) {
+      if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'filterLevels' && Array.isArray(value)) {
         if (value.length === 0) {
@@ -801,6 +802,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           toggleLegendRef.current?.(removesLevel, SeriesVisibilityChangeMode.AppendToSelection);
           setHiddenLogLevels([...hiddenLogLevels, removesLevel]);
         }
+      } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
+        setDedupStrategy(value);
       }
     },
     [hiddenLogLevels, sortOrderChanged]

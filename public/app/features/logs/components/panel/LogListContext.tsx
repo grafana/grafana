@@ -287,3 +287,16 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export function isLogsSortOrder(value: unknown): value is LogsSortOrder {
+  return value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending;
+}
+
+export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
+  return (
+    value === LogsDedupStrategy.exact ||
+    value === LogsDedupStrategy.none ||
+    value === LogsDedupStrategy.numbers ||
+    value === LogsDedupStrategy.signature
+  );
+}
