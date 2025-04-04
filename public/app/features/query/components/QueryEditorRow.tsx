@@ -517,7 +517,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <AddQueryFromLibraryButton
           onQueryAddedFromLibrary={onQueryAddedFromLibrary}
           onReplace={onReplace}
-          onRunQuery={onRunQuery}
           datasourceName={datasource?.name}
         />
         {!hideHideQueryButton ? (
@@ -692,14 +691,12 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 
 interface AddQueryFromLibraryButtonProps<TQuery extends DataQuery> {
   onReplace: (query: DataQuery) => void;
-  onRunQuery: () => void;
   onQueryAddedFromLibrary?: () => void;
   datasourceName?: string;
 }
 
 function AddQueryFromLibraryButton<TQuery extends DataQuery>({
   onReplace,
-  onRunQuery,
   onQueryAddedFromLibrary,
   datasourceName,
 }: AddQueryFromLibraryButtonProps<TQuery>) {
@@ -709,7 +706,6 @@ function AddQueryFromLibraryButton<TQuery extends DataQuery>({
     openDrawer(datasourceName ? [datasourceName] : [], (query: DataQuery) => {
       onQueryAddedFromLibrary?.();
       onReplace(query);
-      onRunQuery();
     });
   };
 
