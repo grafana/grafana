@@ -135,6 +135,7 @@ export const SimpleConditionEditor = ({
                     width={10}
                     value={simpleCondition.evaluator.params[0] ?? ''}
                     onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 0)}
+                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
                   />
                   <ToLabel />
                   <Input
@@ -142,6 +143,7 @@ export const SimpleConditionEditor = ({
                     width={10}
                     value={simpleCondition.evaluator.params[1] ?? ''}
                     onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 1)}
+                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 1)}
                   />
                 </>
               ) : (
@@ -172,11 +174,11 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
-          draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-        }
-      })
+      if (draft && draft.conditions) {
+        draft.reducer = reducer;
+        draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+      }
+    })
     : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }
