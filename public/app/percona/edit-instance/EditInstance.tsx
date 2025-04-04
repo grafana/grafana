@@ -21,12 +21,12 @@ import { DbServicePayload } from '../shared/services/services/Services.types';
 import { EDIT_INSTANCE_DOCS_LINK, FETCH_SERVICE_CANCEL_TOKEN } from './EditInstance.constants';
 import { Messages } from './EditInstance.messages';
 import { getStyles } from './EditInstance.styles';
-import { EditInstanceFormValues } from './EditInstance.types';
+import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.types';
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
 
 const EditInstancePage: FC = () => {
   const dispatch = useAppDispatch();
-  const { serviceId } = useParams();
+  const { serviceId } = useParams() as unknown as EditInstanceRouteParams;
   const [isLoading, setIsLoading] = useState(true);
   const [service, setService] = useState<DbServicePayload>();
   const [generateToken] = useCancelToken();
