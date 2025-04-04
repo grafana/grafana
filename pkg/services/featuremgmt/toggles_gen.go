@@ -970,4 +970,8 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagMetricsFromProfiles
+	// Enables creating metrics from profiles and storing them as recording rules
+	FlagMetricsFromProfiles = "metricsFromProfiles"
 )
