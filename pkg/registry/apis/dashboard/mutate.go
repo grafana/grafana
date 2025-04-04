@@ -6,10 +6,10 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -28,20 +28,21 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 
 	switch v := obj.(type) {
 	case *dashboardV0.Dashboard:
+		delete(v.Spec.Object, "uid")
+		delete(v.Spec.Object, "version")
 		if id, ok := v.Spec.Object["id"].(float64); ok {
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
 	case *dashboardV1.Dashboard:
+		delete(v.Spec.Object, "uid")
+		delete(v.Spec.Object, "version")
 		if id, ok := v.Spec.Object["id"].(float64); ok {
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
 	case *dashboardV2.Dashboard:
-		if id, ok := v.Spec.Object["id"].(float64); ok {
-			delete(v.Spec.Object, "id")
-			internalID = int64(id)
-		}
+		// Noop for V2
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
 	}

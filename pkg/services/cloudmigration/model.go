@@ -162,12 +162,41 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ResultSortColumn string
+
+const (
+	SortColumnID     ResultSortColumn = "id"
+	SortColumnName   ResultSortColumn = "name"
+	SortColumnType   ResultSortColumn = "resource_type"
+	SortColumnStatus ResultSortColumn = "status"
+)
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+// ResultPage should be in the range [1, 10000]
+type ResultPage int
+
+// ResultLimit should be in the rage [1, 10000]
+type ResultLimit int
+
+type SnapshotResultQueryParams struct {
+	ResultPage  ResultPage
+	ResultLimit ResultLimit
+	SortColumn  ResultSortColumn
+	SortOrder   SortOrder
+	ErrorsOnly  bool
+}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
 	SessionUID  string
-	ResultPage  int
-	ResultLimit int
+	SnapshotResultQueryParams
 }
 
 type ListSnapshotsQuery struct {

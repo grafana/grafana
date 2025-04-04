@@ -72,21 +72,13 @@ export const MuteTimingTimeInterval = () => {
                 </Field>
                 <Field
                   label="Days of the month"
-                  description="The days of the month, 1-31, of a month. Negative values can be used to represent days which begin at the end of the month"
+                  description="The days of the month, 1:31, of a month. Negative values can be used to represent days which begin at the end of the month"
                   invalid={!!errors.time_intervals?.[timeIntervalIndex]?.days_of_month}
                   error={errors.time_intervals?.[timeIntervalIndex]?.days_of_month?.message}
                 >
                   <Input
                     {...register(`time_intervals.${timeIntervalIndex}.days_of_month`, {
-                      validate: (value) =>
-                        validateArrayField(
-                          value,
-                          (day) => {
-                            const parsedDay = parseInt(day, 10);
-                            return (parsedDay > -31 && parsedDay < 0) || (parsedDay > 0 && parsedDay < 32);
-                          },
-                          'Invalid day'
-                        ),
+                      validate: validateDaysOfMonth,
                     })}
                     width={50}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
@@ -194,6 +186,22 @@ const parseDays = (input: string): string[] => {
 
   return uniq(parsedDays);
 };
+
+export function validateDaysOfMonth(value: string | undefined) {
+  return validateArrayField(
+    value,
+    (day) => {
+      // Ensure the value contains ONLY digits with an optional negative sign
+      // This rejects any non-numeric characters or mixed inputs like "3-10"
+      if (!/^-?\d+$/.test(day)) {
+        return false;
+      }
+      const parsedDay = parseInt(day, 10);
+      return (parsedDay > -31 && parsedDay < 0) || (parsedDay > 0 && parsedDay < 32);
+    },
+    'Invalid day'
+  );
+}
 
 // parse monday:wednesday to ["monday", "tuesday", "wednesday"]
 function parseWeekdayRange(input: string): string[] {

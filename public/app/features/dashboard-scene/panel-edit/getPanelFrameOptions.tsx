@@ -1,7 +1,9 @@
+import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -10,6 +12,7 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -82,8 +85,8 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       )
     );
 
-  if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {
-    descriptor.addCategory(layoutElement.getOptions());
+  if (isDashboardLayoutItem(layoutElement)) {
+    layoutElement.getOptions?.().forEach((category) => descriptor.addCategory(category));
   }
 
   return descriptor;
@@ -108,9 +111,16 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 
 export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
   const { title } = panel.useState();
+  const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+
+  let ref = useEditPaneInputAutoFocus({
+    autoFocus: notInPanelEdit && title === newPanelTitle,
+  });
 
   return (
     <Input
+      ref={ref}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
       onChange={(e) => setPanelTitle(panel, e.currentTarget.value)}

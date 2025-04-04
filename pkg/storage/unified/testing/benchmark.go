@@ -26,7 +26,7 @@ type BenchmarkOptions struct {
 func DefaultBenchmarkOptions() *BenchmarkOptions {
 	return &BenchmarkOptions{
 		NumResources:     1000,
-		Concurrency:      20,
+		Concurrency:      50,
 		NumNamespaces:    1,
 		NumGroups:        1,
 		NumResourceTypes: 1,

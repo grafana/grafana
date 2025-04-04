@@ -117,6 +117,13 @@ func TestCreateWithKeyExist(t *testing.T) {
 	storagetesting.RunTestCreateWithKeyExist(ctx, t, store)
 }
 
+func TestValidUpdate(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestValidUpdate(ctx, t, store)
+}
+
 func TestGet(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -155,7 +162,7 @@ func TestDeleteWithSuggestionAndConflict(t *testing.T) {
 type resourceClientMock struct {
 	resource.ResourceStoreClient
 	resource.ResourceIndexClient
-	resource.RepositoryIndexClient
+	resource.ManagedObjectIndexClient
 	resource.BulkStoreClient
 	resource.BlobStoreClient
 	resource.DiagnosticsClient

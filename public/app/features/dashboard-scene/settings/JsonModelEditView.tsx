@@ -6,7 +6,7 @@ import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scene
 import { Dashboard } from '@grafana/schema';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
@@ -123,7 +123,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
     const cancelButton = (
       <Button variant="secondary" onClick={() => setIsSaving(false)} fill="outline">
-        Cancel
+        <Trans i18nKey="dashboard-scene.json-model-edit-view.cancel-button.cancel">Cancel</Trans>
       </Button>
     );
     const styles = useStyles2(getStyles);
@@ -132,8 +132,18 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       if (error && isSaving) {
         if (isVersionMismatchError(error)) {
           return (
-            <Alert title="Someone else has updated this dashboard" severity="error">
-              <p>Would you still like to save this dashboard?</p>
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-someone-else-has-updated-this-dashboard',
+                'Someone else has updated this dashboard'
+              )}
+              severity="error"
+            >
+              <p>
+                <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.would-still-dashboard">
+                  Would you still like to save this dashboard?
+                </Trans>
+              </p>
               <Box paddingTop={2}>
                 <Stack alignItems="center">
                   {cancelButton}
@@ -150,7 +160,13 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
         if (isPluginDashboardError(error)) {
           return (
-            <Alert title="Plugin dashboard" severity="error">
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-plugin-dashboard',
+                'Plugin dashboard'
+              )}
+              severity="error"
+            >
               <p>
                 Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom
                 version.
@@ -166,7 +182,13 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       return (
         <>
           {error && isSaving && (
-            <Alert title="Failed to save dashboard" severity="error">
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-failed-to-save-dashboard',
+                'Failed to save dashboard'
+              )}
+              severity="error"
+            >
               <p>{error.message}</p>
             </Alert>
           )}

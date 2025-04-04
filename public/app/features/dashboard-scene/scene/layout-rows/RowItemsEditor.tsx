@@ -3,24 +3,10 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { EditPaneHeader } from '../../edit-pane/EditPaneHeader';
-
 import { RowItems } from './RowItems';
 
 export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
-  const options = new OptionsPaneCategoryDescriptor({
-    title: '',
-    id: `ms-row-options-${model.key}`,
-    isOpenable: false,
-    renderTitle: () => (
-      <EditPaneHeader
-        title={t('dashboard.edit-pane.row.multi-select.title', '{{length}} rows selected', {
-          length: model.getNumberOfRowsSelected(),
-        })}
-        onDelete={() => model.onDelete()}
-      />
-    ),
-  }).addItem(
+  const options = new OptionsPaneCategoryDescriptor({ title: '', id: `rows-options` }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.row.header.title', 'Row header'),
       render: () => <RowHeaderCheckboxMulti model={model} />,
@@ -37,12 +23,12 @@ function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
   let indeterminate = false;
 
   for (let i = 0; i < rows.length; i++) {
-    const { isHeaderHidden } = rows[i].useState();
+    const { hideHeader } = rows[i].useState();
 
     const prevElement = rows[i - 1];
-    indeterminate = indeterminate || (prevElement && !!prevElement.state.isHeaderHidden !== !!isHeaderHidden);
+    indeterminate = indeterminate || (prevElement && !!prevElement.state.hideHeader !== !!hideHeader);
 
-    value = value || !!isHeaderHidden;
+    value = value || !!hideHeader;
   }
 
   return (

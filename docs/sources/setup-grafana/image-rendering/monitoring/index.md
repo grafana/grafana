@@ -18,7 +18,7 @@ weight: 100
 
 # Monitor the image renderer
 
-Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help you allocate the right amount of resources to your rendering service and set the right [rendering mode]({{< relref "../../image-rendering#rendering-mode" >}}).
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help you allocate the right amount of resources to your rendering service and set the right [rendering mode](../#rendering-mode).
 
 ## Enable Prometheus metrics endpoint
 
