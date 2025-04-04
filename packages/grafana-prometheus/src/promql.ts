@@ -330,7 +330,7 @@ export const FUNCTIONS = [
   {
     insertText: 'info',
     label: 'info',
-    detail: 'info(v instant-vector[, ls data-label-selector])',
+    detail: 'info(v instant-vector, [data-label-selector instant-vector])',
     documentation:
       'Returns latest details and metadata about a group of metrics, such as their labels and current values, without doing any calculations',
   },
