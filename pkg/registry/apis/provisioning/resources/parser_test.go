@@ -62,8 +62,7 @@ spec:
   title: Test dashboard
 `),
 		})
-		require.NoError(t, err) // parsed, but has internal error
-		require.NotEmpty(t, dash.Errors)
+		require.EqualError(t, err, "an explicit name must be saved in the resource (or generateName)")
 
 		// Read the name from classic grafana format
 		dash, err = parser.Parse(context.Background(), &repository.FileInfo{

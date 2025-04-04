@@ -123,7 +123,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, fmt.Errorf("get GVK from fallback loader: %w", err)
+			return nil, err
 		}
 	}
 
@@ -165,7 +165,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	})
 
 	if obj.GetName() == "" && obj.GetGenerateName() == "" {
-		return nil, fmt.Errorf("an explicit name must be saved in the resource (or generateName)")
+		return nil, apierrors.NewBadRequest("an explicit name must be saved in the resource (or generateName)")
 	}
 
 	// Calculate folder identifier from the file path
@@ -180,7 +180,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// FIXME: remove this check once we have better unit tests
 	if r.clients == nil {
-		return nil, fmt.Errorf("no clients configured")
+		return parsed, fmt.Errorf("no clients configured")
 	}
 
 	// TODO: catch the not found gvk error to return bad request
@@ -195,7 +195,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
-		return fmt.Errorf("unable to find client")
+		return fmt.Errorf("no client configured")
 	}
 
 	var err error
