@@ -432,7 +432,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
             // @PERCONA
-            timepickerProps={timepickerProps}
+            timepickerProps={timepickerProps as any}
           />
         </div>
         <Stack>
