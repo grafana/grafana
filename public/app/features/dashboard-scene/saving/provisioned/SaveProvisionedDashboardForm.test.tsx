@@ -48,15 +48,9 @@ jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () 
   };
 });
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepository', () => {
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
   return {
-    useGetResourceRepository: jest.fn(),
-  };
-});
-
-jest.mock('app/features/provisioning/hooks/useRepositoryList', () => {
-  return {
-    useRepositoryList: jest.fn(),
+    useGetResourceRepositoryView: jest.fn(),
   };
 });
 

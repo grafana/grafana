@@ -142,7 +142,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   };
 
   const doSave = async ({ ref, title, workflow, comment }: FormData) => {
-    const repoName = repositoryView?.name
+    const repoName = repositoryView?.name;
     if (!title || !repoName) {
       return;
     }
