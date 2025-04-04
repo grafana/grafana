@@ -6,23 +6,21 @@ import { NewThemeOptions } from '../createTheme';
  */
 
 const whiteBase = `210, 210, 220`;
-// reallt good const secondaryBase = `179, 179, 234`;
-const secondaryBase = `186, 186, 230`;
+const secondaryBase = `195, 195, 245`;
 
 //const brandMain = '#3d71d9';
 //const brandText = '#6e9fff';
 const brandMain = '#ff934d';
 const brandText = '#f99a5c';
-
-const disabledText = `rgba(${whiteBase}, 0.6)`;
+const disabledText = `rgba(${whiteBase}, 0.48)`;
 
 const gloomTheme: NewThemeOptions = {
   name: 'Gloom',
   colors: {
     mode: 'dark',
     border: {
-      weak: `rgba(${whiteBase}, 0.08)`,
-      medium: `rgba(${whiteBase}, 0.15)`,
+      weak: `rgba(${whiteBase}, 0.12)`,
+      medium: `rgba(${whiteBase}, 0.20)`,
       strong: `rgba(${whiteBase}, 0.30)`,
     },
 
@@ -53,8 +51,8 @@ const gloomTheme: NewThemeOptions = {
     background: {
       canvas: '#000',
       primary: '#121118',
-      secondary: '#19171f',
-      elevated: '#19171f',
+      secondary: '#211e28',
+      elevated: '#211e28',
     },
 
     action: {

@@ -109,7 +109,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		}
 
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
-		if p.Angular.Detected && !a.cfg.AngularSupportEnabled {
+		if p.Angular.Detected {
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
 			return (&plugins.Error{
 				PluginID:  p.ID,
