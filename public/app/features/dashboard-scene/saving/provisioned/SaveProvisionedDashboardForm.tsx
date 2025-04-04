@@ -312,9 +312,9 @@ async function validateTitle(title: string, formValues: FormData) {
     return error instanceof Error
       ? error.message
       : t(
-        'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
-        'Dashboard title validation failed.'
-      );
+          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+          'Dashboard title validation failed.'
+        );
   }
 }
 
