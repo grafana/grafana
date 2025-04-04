@@ -35,7 +35,7 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
-import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -402,7 +402,7 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
   const styles = useStyles2(getStyles);
 
   const name = getSeriesName(frame) || 'Series ' + index;
-  const value = getSeriesValue(frame);
+  const value = frame.fields.at(0)?.values.at(0);
   const labelsRecord = getSeriesLabels(frame);
   const labels = Object.entries(labelsRecord);
   const hasLabels = labels.length > 0;
@@ -438,7 +438,7 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
             )}
           </Text>
         </div>
-        <div className={styles.expression.resultValue}>{value}</div>
+        <div className={styles.expression.resultValue}>{formatSeriesValue(value)}</div>
         {shouldRenderSumary && (
           <>
             {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
