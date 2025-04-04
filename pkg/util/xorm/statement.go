@@ -201,6 +201,13 @@ func (statement *Statement) In(column string, args ...any) *Statement {
 	return statement
 }
 
+// OrIn generate "Where column IN (?) " statement
+func (statement *Statement) OrIn(column string, args ...any) *Statement {
+	in := builder.In(statement.Engine.Quote(column), args...)
+	statement.cond = statement.cond.Or(in)
+	return statement
+}
+
 // NotIn generate "Where column NOT IN (?) " statement
 func (statement *Statement) NotIn(column string, args ...any) *Statement {
 	notIn := builder.NotIn(statement.Engine.Quote(column), args...)

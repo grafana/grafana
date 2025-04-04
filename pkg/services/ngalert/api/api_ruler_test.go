@@ -83,7 +83,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder)).GenerateManyRef(1, 5)...)
+				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
@@ -96,7 +96,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				folderGen := gen.With(gen.WithNamespace(folder))
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
 
 				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
 
@@ -123,7 +123,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				folderGen := gen.With(gen.WithNamespace(folder))
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
 
 				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -155,7 +155,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access the group", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 
-				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
@@ -175,7 +175,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				provisionedRulesInFolder := groupGen.GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -204,7 +204,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -246,7 +246,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(2, 6)
+		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(2, 6)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		svc := createService(ruleStore)

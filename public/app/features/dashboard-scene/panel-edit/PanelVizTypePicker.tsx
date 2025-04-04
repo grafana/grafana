@@ -9,6 +9,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
@@ -86,10 +87,10 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
           value={searchQuery}
           onChange={handleSearchChange}
           autoFocus={true}
-          placeholder="Search for..."
+          placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
         />
         <Button
-          title="Close"
+          title={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
           variant="secondary"
           icon="angle-up"
           className={styles.closeButton}
