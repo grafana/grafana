@@ -166,7 +166,8 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             initialValue={query.expr ?? ''}
             placeholder="Enter a PromQL query…"
             datasource={datasource}
-          timeRange={this.props.range ?? getDefaultTimeRange()}/>
+            timeRange={range ?? getDefaultTimeRange()}
+          />
         </div>
       </div>
       {labelBrowserVisible && (
