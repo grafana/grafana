@@ -252,6 +252,8 @@ export const availableIconsIndex = {
   upload: true,
   user: true,
   ban: true,
+  window: true,
+  'window-grid': true,
   'users-alt': true,
   'user-arrows': true,
   'vertical-align-bottom': true,

@@ -33,105 +33,109 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     [layoutManager]
   );
 
-  if (!isGridLayout) {
-    const radioOptions = options.map((opt) => ({ value: opt, label: opt.name }));
-    return (
-      <Field label="Group style">
-        <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
-      </Field>
-    );
-  }
+  const radioOptions = options.map((opt) => ({
+    value: opt,
+    label: opt.name,
+    icon: opt.icon,
+    description: opt.description,
+  }));
 
   return (
-    <div role="radiogroup" className={styles.radioGroup}>
-      {options.map((opt) => {
-        switch (opt.id) {
-          case 'RowsLayout':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.rowsLayoutViz}>
-                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                </div>
-              </LayoutRadioButton>
-            );
-          case 'TabsLayout':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <Stack direction="column" gap={0.5} height={'100%'}>
-                  <div className={styles.tabsBar}>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={cx(styles.tab, styles.tabActive)}>-.-.-</div>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={styles.tab}>-.-.-</div>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={styles.tab}>-.-.-</div>
-                  </div>
-                  <div className={styles.tabsVizTabContent}>
-                    <GridCell />
-                    <GridCell />
-                  </div>
-                </Stack>
-              </LayoutRadioButton>
-            );
-          case 'AutoGridLayout':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.autoGridViz}>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                </div>
-              </LayoutRadioButton>
-            );
-          case 'GridLayout':
-          default:
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.customGridViz}>
-                  <GridCell colSpan={2} />
-                  <div className={styles.customGridVizInner}>
-                    <GridCell />
-                    <GridCell />
-                  </div>
-                  <GridCell />
-                  <GridCell colSpan={2} />
-                </div>
-              </LayoutRadioButton>
-            );
-        }
-      })}
-    </div>
+    <Field label={isGridLayout ? 'Grid type' : 'Group style'}>
+      <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
+    </Field>
   );
+
+  // return (
+  //   <div role="radiogroup" className={styles.radioGroup}>
+  //     {options.map((opt) => {
+  //       switch (opt.id) {
+  //         case 'RowsLayout':
+  //           return (
+  //             <LayoutRadioButton
+  //               item={opt}
+  //               isSelected={layoutManager.descriptor.id === opt.id}
+  //               onSelect={onChangeLayout}
+  //               key={opt.id}
+  //             >
+  //               <div className={styles.rowsLayoutViz}>
+  //                 {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+  //                 <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
+  //                 <GridCell />
+  //                 <GridCell />
+  //                 <GridCell />
+  //                 {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+  //                 <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
+  //                 <GridCell />
+  //                 <GridCell />
+  //                 <GridCell />
+  //               </div>
+  //             </LayoutRadioButton>
+  //           );
+  //         case 'TabsLayout':
+  //           return (
+  //             <LayoutRadioButton
+  //               item={opt}
+  //               isSelected={layoutManager.descriptor.id === opt.id}
+  //               onSelect={onChangeLayout}
+  //               key={opt.id}
+  //             >
+  //               <Stack direction="column" gap={0.5} height={'100%'}>
+  //                 <div className={styles.tabsBar}>
+  //                   {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+  //                   <div className={cx(styles.tab, styles.tabActive)}>-.-.-</div>
+  //                   {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+  //                   <div className={styles.tab}>-.-.-</div>
+  //                   {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+  //                   <div className={styles.tab}>-.-.-</div>
+  //                 </div>
+  //                 <div className={styles.tabsVizTabContent}>
+  //                   <GridCell />
+  //                   <GridCell />
+  //                 </div>
+  //               </Stack>
+  //             </LayoutRadioButton>
+  //           );
+  //         case 'AutoGridLayout':
+  //           return (
+  //             <LayoutRadioButton
+  //               item={opt}
+  //               isSelected={layoutManager.descriptor.id === opt.id}
+  //               onSelect={onChangeLayout}
+  //               key={opt.id}
+  //             >
+  //               <div className={styles.autoGridViz}>
+  //                 <GridCell />
+  //                 <GridCell />
+  //                 <GridCell />
+  //                 <GridCell />
+  //               </div>
+  //             </LayoutRadioButton>
+  //           );
+  //         case 'GridLayout':
+  //         default:
+  //           return (
+  //             <LayoutRadioButton
+  //               item={opt}
+  //               isSelected={layoutManager.descriptor.id === opt.id}
+  //               onSelect={onChangeLayout}
+  //               key={opt.id}
+  //             >
+  //               <div className={styles.customGridViz}>
+  //                 <GridCell colSpan={2} />
+  //                 <div className={styles.customGridVizInner}>
+  //                   <GridCell />
+  //                   <GridCell />
+  //                 </div>
+  //                 <GridCell />
+  //                 <GridCell colSpan={2} />
+  //               </div>
+  //             </LayoutRadioButton>
+  //           );
+  //       }
+  //     })}
+  //   </div>
+  // );
 }
 
 interface LayoutRadioButtonProps {
