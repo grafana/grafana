@@ -21,6 +21,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
+var _ builder.APIGroupRouteProvider = (*FeatureFlagAPIBuilder)(nil)
 
 var gv = v0alpha1.SchemeGroupVersion
 
@@ -100,7 +101,7 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Register additional routes with the server
-func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *FeatureFlagAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	stateSchema := defs["github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1.ResolvedToggleState"].Schema
 
