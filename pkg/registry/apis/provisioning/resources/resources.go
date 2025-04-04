@@ -18,7 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-var ErrAlreadyInRepository = errors.New("already in repository")
+var (
+	ErrAlreadyInRepository = errors.New("already in repository")
+	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
+)
 
 type WriteOptions struct {
 	Path string
@@ -77,8 +80,7 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 
 	name := meta.GetName()
 	if name == "" {
-		return "", field.Required(field.NewPath("name", "metadata", "name"),
-			"An explicit name must be saved in the resource")
+		return "", ErrMissingName
 	}
 
 	manager, _ := meta.GetManagerProperties()
@@ -143,6 +145,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
 	}
 
+	if parsed.Obj.GetName() == "" {
+		return "", schema.GroupVersionKind{}, ErrMissingName
+	}
+
 	// Check if the resource already exists
 	id := resourceID{
 		Name:     parsed.Obj.GetName(),
@@ -193,8 +199,7 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	objName := obj.GetName()
 	if objName == "" {
-		// Find the referenced file
-		objName = FileNameFromHashedRepoPath(r.repo.Config().Name, path)
+		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
 	client, _, err := r.clients.ForKind(*gvk)
