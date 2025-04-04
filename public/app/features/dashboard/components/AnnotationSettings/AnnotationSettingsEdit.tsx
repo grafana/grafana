@@ -30,7 +30,6 @@ import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
 import { Trans, t } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
-import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -272,7 +271,6 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             onChange={onUpdate}
           />
         )}
-        {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
       </FieldSet>
       <Stack>
         {!annotation.builtIn && (
