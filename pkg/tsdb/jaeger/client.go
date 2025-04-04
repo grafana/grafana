@@ -1,6 +1,7 @@
 package jaeger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -89,7 +90,8 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 	return operations, err
 }
 
-func (j *JaegerClient) Trace(traceID string, start, end int64) (TraceResponse, error) {
+func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {
+	logger := j.logger.FromContext(ctx)
 	var response TracesResponse
 	trace := TraceResponse{}
 
@@ -131,7 +133,7 @@ func (j *JaegerClient) Trace(traceID string, start, end int64) (TraceResponse, e
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+			logger.Error("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -147,6 +149,8 @@ func (j *JaegerClient) Trace(traceID string, start, end int64) (TraceResponse, e
 		return trace, err
 	}
 
+	// We only support one trace at a time
+	// this is how it was implemented in the frontend before
 	trace = response.Data[0]
 	return trace, err
 }

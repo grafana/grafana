@@ -22,7 +22,6 @@ type jaegerQuery struct {
 
 func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
-	// logger := dsInfo.JaegerClient.logger.FromContext(ctx)
 
 	for _, q := range req.Queries {
 		var query jaegerQuery
@@ -36,7 +35,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 
 		// No query type means traceID query
 		if query.QueryType == "" {
-			traces, err := dsInfo.JaegerClient.Trace(query.Query, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli())
+			traces, err := dsInfo.JaegerClient.Trace(ctx, query.Query, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
@@ -51,9 +50,8 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	return response, nil
 }
 
-// transformResponse converts Jaeger trace data to a Grafana data frame
+// transformResponse converts Jaeger trace data to a Data frame
 func transformResponse(trace TraceResponse, refID string) *data.Frame {
-	// Create a new frame with the same fields as in the TypeScript createTraceFrame function
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
 		data.NewField("spanID", nil, []string{}),
@@ -108,7 +106,7 @@ func transformResponse(trace TraceResponse, refID string) *data.Frame {
 			logs = json.RawMessage(logsMarshaled)
 		}
 
-		// Convert references (excluding parent) - match TypeScript implementation
+		// Convert references (excluding parent)
 		references := json.RawMessage{}
 		filteredRefs := []TraceSpanReference{}
 		for _, ref := range span.References {
@@ -212,7 +210,7 @@ type TraceResponse struct {
 
 type TracesResponse struct {
 	Data   []TraceResponse `json:"data"`
-	Errors interface{}     `json:"errors"` // TODO: Handle errors, but we were not using it in the frontend
+	Errors interface{}     `json:"errors"` // TODO: Handle errors, but we were not using them in the frontend either
 	Limit  int             `json:"limit"`
 	Offset int             `json:"offset"`
 	Total  int             `json:"total"`
