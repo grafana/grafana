@@ -7,24 +7,15 @@ package v0alpha1
 // ResourceCountApplyConfiguration represents a declarative configuration of the ResourceCount type for use
 // with apply.
 type ResourceCountApplyConfiguration struct {
-	Repository *string `json:"repository,omitempty"`
-	Group      *string `json:"group,omitempty"`
-	Resource   *string `json:"resource,omitempty"`
-	Count      *int64  `json:"count,omitempty"`
+	Group    *string `json:"group,omitempty"`
+	Resource *string `json:"resource,omitempty"`
+	Count    *int64  `json:"count,omitempty"`
 }
 
 // ResourceCountApplyConfiguration constructs a declarative configuration of the ResourceCount type for use with
 // apply.
 func ResourceCount() *ResourceCountApplyConfiguration {
 	return &ResourceCountApplyConfiguration{}
-}
-
-// WithRepository sets the Repository field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Repository field is set to the value of the last call.
-func (b *ResourceCountApplyConfiguration) WithRepository(value string) *ResourceCountApplyConfiguration {
-	b.Repository = &value
-	return b
 }
 
 // WithGroup sets the Group field in the declarative configuration to the given value

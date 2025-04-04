@@ -49,8 +49,10 @@ type service struct {
 
 	authenticator interceptors.Authenticator
 
-	log log.Logger
-	reg prometheus.Registerer
+	log            log.Logger
+	reg            prometheus.Registerer
+	storageMetrics *resource.StorageMetrics
+	indexMetrics   *resource.BleveIndexMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
 }
@@ -62,6 +64,8 @@ func ProvideUnifiedStorageGrpcService(
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -84,15 +88,17 @@ func ProvideUnifiedStorageGrpcService(
 	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
 
 	s := &service{
-		cfg:           cfg,
-		features:      features,
-		stopCh:        make(chan struct{}),
-		authenticator: authn,
-		tracing:       tracing,
-		db:            db,
-		log:           log,
-		reg:           reg,
-		docBuilders:   docBuilders,
+		cfg:            cfg,
+		features:       features,
+		stopCh:         make(chan struct{}),
+		authenticator:  authn,
+		tracing:        tracing,
+		db:             db,
+		log:            log,
+		reg:            reg,
+		docBuilders:    docBuilders,
+		storageMetrics: storageMetrics,
+		indexMetrics:   indexMetrics,
 	}
 
 	// This will be used when running as a dskit service
@@ -107,12 +113,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.reg)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
 	if err != nil {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
 	if err != nil {
 		return err
 	}
@@ -128,9 +134,9 @@ func (s *service) start(ctx context.Context) error {
 
 	srv := s.handler.GetServer()
 	resource.RegisterResourceStoreServer(srv, server)
-	resource.RegisterBatchStoreServer(srv, server)
+	resource.RegisterBulkStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
-	resource.RegisterRepositoryIndexServer(srv, server)
+	resource.RegisterManagedObjectIndexServer(srv, server)
 	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)

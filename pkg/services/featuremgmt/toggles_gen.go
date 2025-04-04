@@ -47,41 +47,9 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigrateOldPanels
-	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
-
-	// FlagAutoMigrateGraphPanel
-	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
-
-	// FlagAutoMigrateTablePanel
-	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"
-
-	// FlagAutoMigratePiechartPanel
-	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
-
-	// FlagAutoMigrateWorldmapPanel
-	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"
-
-	// FlagAutoMigrateStatPanel
-	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
-
-	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-	FlagDisableAngular = "disableAngular"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
-
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
 
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
@@ -247,10 +215,6 @@ const (
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
 
-	// FlagMetricsSummary
-	// Enables metrics summary queries in the Tempo data source
-	FlagMetricsSummary = "metricsSummary"
-
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
 	FlagDatasourceAPIServers = "datasourceAPIServers"
@@ -282,10 +246,6 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
-
-	// FlagAlertingNoDataErrorExecution
-	// Changes how Alerting state manager handles execution of NoData/Error
-	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagAngularDeprecationUI
 	// Display Angular warnings in dashboards and panels
@@ -363,10 +323,6 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesRestore
-	// Allow restoring objects in k8s
-	FlagKubernetesRestore = "kubernetesRestore"
-
 	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
 	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
@@ -386,6 +342,10 @@ const (
 	// FlagQueryServiceFromUI
 	// Routes requests to the new query service
 	FlagQueryServiceFromUI = "queryServiceFromUI"
+
+	// FlagQueryServiceFromExplore
+	// Routes explore requests to the new query service
+	FlagQueryServiceFromExplore = "queryServiceFromExplore"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -512,12 +472,16 @@ const (
 	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRulesWithinGroups
-	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagSecretsManagementAppPlatform
+	// Enable the secrets management API and services under app platform
+	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -540,7 +504,7 @@ const (
 	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
-	// Enables using SQL and DuckDB functions as Expressions.
+	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagNodeGraphDotLayout
@@ -591,10 +555,6 @@ const (
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 
-	// FlagAccessActionSets
-	// Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.
-	FlagAccessActionSets = "accessActionSets"
-
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
@@ -618,10 +578,6 @@ const (
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
-
-	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
-	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
@@ -656,7 +612,7 @@ const (
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagFailWrongDSUID
-	// Throws an error if a datasource has an invalid UIDs
+	// Throws an error if a data source has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
 	// FlagZanzana
@@ -694,6 +650,10 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
+
+	// FlagTableNextGen
+	// Allows access to the new react-data-grid based table component.
+	FlagTableNextGen = "tableNextGen"
 
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
@@ -776,12 +736,8 @@ const (
 	FlagTimeRangeProvider = "timeRangeProvider"
 
 	// FlagPrometheusUsesCombobox
-	// Use new combobox component for Prometheus query editor
+	// Use new **Combobox** component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
-
-	// FlagUserStorageAPI
-	// Enables the user storage API
-	FlagUserStorageAPI = "userStorageAPI"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
@@ -839,10 +795,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagUseV2DashboardsAPI
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
-
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -888,7 +840,7 @@ const (
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
 	// FlagTemplateVariablesUsesCombobox
-	// Use new combobox component for template variables
+	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
 
 	// FlagABTestFeatureToggleB
@@ -904,7 +856,7 @@ const (
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
 	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin
+	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
 	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
 
 	// FlagDatasourceConnectionsTab
@@ -919,14 +871,6 @@ const (
 	// Enable the alerting conversion API
 	FlagAlertingConversionAPI = "alertingConversionAPI"
 
-	// FlagAlertingAlertmanagerExtraDedupStage
-	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
-
-	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
-	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -936,12 +880,16 @@ const (
 	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagPluginsCDNSyncLoader
-	// Load plugins from CDN synchronously
+	// Loads plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
+
+	// FlagUseScopesNavigationEndpoint
+	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
 
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
@@ -954,4 +902,72 @@ const (
 	// FlagRendererDisableAppPluginsPreload
 	// Disable pre-loading app plugins when the request is coming from the renderer
 	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
+
+	// FlagAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagAssetSriChecks = "assetSriChecks"
+
+	// FlagAlertRuleRestore
+	// Enables the alert rule restore feature
+	FlagAlertRuleRestore = "alertRuleRestore"
+
+	// FlagGrafanaManagedRecordingRulesDatasources
+	// Enables writing to data sources for Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
+
+	// FlagInfinityRunQueriesInParallel
+	// Enables running Infinity queries in parallel
+	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
+
+	// FlagInviteUserExperimental
+	// Renders invite user button along the app
+	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagNoBackdropBlur
+	// Disables backdrop blur
+	FlagNoBackdropBlur = "noBackdropBlur"
+
+	// FlagAlertingMigrationUI
+	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagUnifiedStorageHistoryPruner
+	// Enables the unified storage history pruner
+	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
+
+	// FlagAzureMonitorLogsBuilderEditor
+	// Enables the logs builder mode for the Azure Monitor data source
+	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
+	// FlagLocaleFormatPreference
+	// Specifies the locale so the correct format for numbers and dates can be shown
+	FlagLocaleFormatPreference = "localeFormatPreference"
+
+	// FlagUnifiedStorageGrpcConnectionPool
+	// Enables the unified storage grpc connection pool
+	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagExtensionSidebar
+	// Enables the extension sidebar
+	FlagExtensionSidebar = "extensionSidebar"
+
+	// FlagAlertingRulePermanentlyDelete
+	// Enables UI functionality to permanently delete alert rules
+	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
+
+	// FlagAlertingRuleRecoverDeleted
+	// Enables the UI functionality to recover and view deleted alert rules
+	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
+
+	// FlagXrayApplicationSignals
+	// Support Application Signals queries in the X-Ray datasource
+	FlagXrayApplicationSignals = "xrayApplicationSignals"
+
+	// FlagMultiTenantTempCredentials
+	// use multi-tenant path for awsTempCredentials
+	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
+
+	// FlagLocalizationForPlugins
+	// Enables localization for plugins
+	FlagLocalizationForPlugins = "localizationForPlugins"
 )

@@ -1,6 +1,6 @@
-import { AsyncIterableX, from } from 'ix/asynciterable/index';
+import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { filter, flatMap, map } from 'ix/asynciterable/operators';
+import { catchError, filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -21,7 +21,7 @@ import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
@@ -65,14 +65,23 @@ export function useFilteredRulesIteratorProvider() {
       filter((group) => groupFilter(group, normalizedFilterState)),
       flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
       filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
-      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule)),
+      catchError(() => empty())
     );
 
-    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
-      return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
+    const sourceIterables = ruleSourcesToFetchFrom.map((ds) => {
+      const generator = prometheusGroupsGenerator(ds, groupLimit);
+      return from(generator).pipe(
+        map((group) => [ds, group] as const),
+        catchError(() => empty())
+      );
     });
 
-    const dataSourcesIterator = merge(source, ...iterables).pipe(
+    // if we have no prometheus data sources, use an empty async iterable
+    const source = sourceIterables.at(0) ?? empty();
+    const otherIterables = sourceIterables.slice(1);
+
+    const dataSourcesIterator = merge(source, ...otherIterables).pipe(
       filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),
@@ -163,7 +172,7 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   }
 
   if (filterState.ruleState) {
-    if (!isAlertingRule(rule)) {
+    if (!prometheusRuleType.alertingRule(rule)) {
       return false;
     }
     if (rule.state !== filterState.ruleState) {

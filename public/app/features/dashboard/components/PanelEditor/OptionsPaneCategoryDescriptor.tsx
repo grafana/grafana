@@ -10,7 +10,7 @@ export interface OptionsPaneCategoryDescriptorProps {
   title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   itemsCount?: number;
@@ -59,8 +59,12 @@ export class OptionsPaneCategoryDescriptor {
       return this.props.customRender();
     }
 
-    if (this.props.id === '') {
-      return <Box padding={2}>{this.items.map((item) => item.render(searchQuery))}</Box>;
+    if (this.props.title === '') {
+      return (
+        <Box padding={2} paddingBottom={1} key={this.props.title}>
+          {this.items.map((item) => item.render(searchQuery))}
+        </Box>
+      );
     }
 
     return (

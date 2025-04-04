@@ -11,6 +11,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
@@ -45,6 +46,7 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -67,7 +69,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, apiserver.GetRestConfig),
+			store.NewAPIFolderStore(tracer, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -119,9 +121,17 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 		return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
 	}
 
+	transportCreds := insecure.NewCredentials()
+	if clientCfg.certFile != "" {
+		transportCreds, err = credentials.NewClientTLSFromFile(clientCfg.certFile, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS credentials: %w", err)
+		}
+	}
+
 	conn, err := grpc.NewClient(
 		clientCfg.remoteAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),

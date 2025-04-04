@@ -40,7 +40,7 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 		WHERE d.is_folder = ?`
 	}
 
-	r, err := sess.Exec(q, mgrtr.Dialect.BooleanStr(false))
+	r, err := sess.Exec(q, mgrtr.Dialect.BooleanValue(false))
 	if err != nil {
 		mgrtr.Logger.Error("Failed to migrate dashboard folder_uid for dashboards", "error", err)
 		return err
@@ -68,7 +68,7 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 		)
 		WHERE is_folder = ?`
 	}
-	r, err = sess.Exec(q, mgrtr.Dialect.BooleanStr(true))
+	r, err = sess.Exec(q, mgrtr.Dialect.BooleanValue(true))
 	if err != nil {
 		mgrtr.Logger.Error("Failed to migrate dashboard folder_uid for folders", "error", err)
 		return err

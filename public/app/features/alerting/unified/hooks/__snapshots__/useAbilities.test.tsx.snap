@@ -6,6 +6,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
     false,
   ],
+  "delete-alert-rule-permanently": [
+    false,
+    false,
+  ],
   "duplicate-alert-rule": [
     false,
     false,
@@ -19,6 +23,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
   ],
   "pause-alert-rule": [
+    false,
+    false,
+  ],
+  "restore-alert-rule": [
     false,
     false,
   ],
@@ -43,6 +51,10 @@ exports[`AlertRule abilities should report that all actions are supported for a 
     true,
     false,
   ],
+  "delete-alert-rule-permanently": [
+    true,
+    false,
+  ],
   "duplicate-alert-rule": [
     true,
     false,
@@ -56,6 +68,10 @@ exports[`AlertRule abilities should report that all actions are supported for a 
     false,
   ],
   "pause-alert-rule": [
+    true,
+    false,
+  ],
+  "restore-alert-rule": [
     true,
     false,
   ],

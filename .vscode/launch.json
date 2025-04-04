@@ -12,6 +12,11 @@
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
+      "name": "Attach to Go Process",
+      "type": "go",
+      "request": "attach"
+    },
+    {
       "name": "Attach to Test Process",
       "type": "go",
       "request": "attach",

@@ -39,6 +39,10 @@ export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   component: React.ComponentType<Props>;
 };
 
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
+  meta: PluginExtensionComponentMeta;
+};
+
 export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
   type: PluginExtensionTypes.function;
   fn: Signature;
@@ -181,6 +185,8 @@ export enum PluginExtensionPoints {
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  TraceViewDetails = 'grafana/traceview/details',
+  QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -193,6 +199,12 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
+  /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
+  contextHints?: string[];
+  query?: DataQuery;
 };
 
 export type PluginExtensionDataSourceConfigContext<

@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isGrafanaRecordingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
+import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -34,6 +35,8 @@ export const RuleDetails = ({ rule }: Props) => {
   } = rule;
 
   const annotations = useCleanAnnotations(rule.annotations);
+  const isAlertingRule =
+    rulerRuleType.any.alertingRule(rule.rulerRule) || prometheusRuleType.alertingRule(rule.promRule);
 
   return (
     <div>
@@ -42,7 +45,7 @@ export const RuleDetails = ({ rule }: Props) => {
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
           {!!rule.labels && !!Object.keys(rule.labels).length && (
-            <DetailsField label="Labels" horizontal={true}>
+            <DetailsField label={t('alerting.rule-details.label-labels', 'Labels')} horizontal={true}>
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
@@ -53,12 +56,8 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      {!(
-        isRecordingRulerRule(rule.rulerRule) ||
-        isRecordingRule(rule.promRule) ||
-        isGrafanaRecordingRule(rule.rulerRule)
-      ) && (
-        <DetailsField label="Instances" horizontal={true}>
+      {isAlertingRule && (
+        <DetailsField label={t('alerting.rule-details.label-instances', 'Instances')} horizontal={true}>
           <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
         </DetailsField>
       )}
@@ -74,31 +73,39 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   const every = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
-  const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
+  const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
+    ? rule.rulerRule?.grafana_alert.record?.metric
+    : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
 
   return (
     <>
       {metric && (
-        <DetailsField label="Metric" horizontal={true}>
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-metric', 'Metric')} horizontal={true}>
           {metric}
         </DetailsField>
       )}
       {every && (
-        <DetailsField label="Evaluate" horizontal={true}>
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
           Every {every}
         </DetailsField>
       )}
 
       {pendingPeriod && (
-        <DetailsField label="Pending period" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-pending-period', 'Pending period')}
+          horizontal={true}
+        >
           {pendingPeriod}
         </DetailsField>
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
-        <DetailsField label="Last evaluation" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-last-evaluation', 'Last evaluation')}
+          horizontal={true}
+        >
           <Tooltip
             placement="top"
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
@@ -110,7 +117,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && lastEvaluationDuration !== undefined && (
-        <DetailsField label="Evaluation time" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
+          horizontal={true}
+        >
           <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>

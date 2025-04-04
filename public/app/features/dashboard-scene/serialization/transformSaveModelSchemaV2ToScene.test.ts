@@ -16,11 +16,12 @@ import {
   SceneGridRow,
   SceneGridItem,
 } from '@grafana/scenes';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   GridLayoutItemSpec,
   GridLayoutSpec,
@@ -28,15 +29,14 @@ import {
   IntervalVariableKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -58,6 +58,7 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
+    generation: 123,
     resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {
@@ -131,6 +132,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dashboardControls).toBeDefined();
     expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(time.autoRefreshIntervals);
     expect(dashboardControls.state.hideTimeControls).toBe(time.hideTimepicker);
+    expect(dashboardControls.state.timePicker.state.quickRanges).toEqual(dash.timeSettings.quickRanges);
 
     // Variables
     const variables = scene.state?.$variables;
@@ -222,9 +224,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
-
-    // To be implemented
-    // expect(timePicker.state.ranges).toEqual(dash.timeSettings.quickRanges);
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
@@ -504,16 +503,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       });
     });
     describe('dynamic dashboard layouts', () => {
-      it('should build a dashboard scene with a responsive grid layout', () => {
+      it('should build a dashboard scene with a auto grid layout', () => {
         const dashboard = cloneDeep(defaultDashboard);
         dashboard.spec.layout = {
-          kind: 'ResponsiveGridLayout',
+          kind: 'AutoGridLayout',
           spec: {
-            col: 'colString',
-            row: 'rowString',
+            maxColumnCount: 4,
+            columnWidthMode: 'custom',
+            columnWidth: 100,
+            rowHeightMode: 'standard',
             items: [
               {
-                kind: 'ResponsiveGridLayoutItem',
+                kind: 'AutoGridLayoutItem',
                 spec: {
                   element: {
                     kind: 'ElementReference',
@@ -525,12 +526,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           },
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        const layoutManager = scene.state.body as ResponsiveGridLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('ResponsiveGridLayout');
-        expect(layoutManager.state.layout.state.templateColumns).toBe('colString');
-        expect(layoutManager.state.layout.state.autoRows).toBe('rowString');
+        const layoutManager = scene.state.body as AutoGridLayoutManager;
+        expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
+        expect(layoutManager.state.maxColumnCount).toBe(4);
+        expect(layoutManager.state.columnWidth).toBe(100);
+        expect(layoutManager.state.rowHeight).toBe('standard');
         expect(layoutManager.state.layout.state.children.length).toBe(1);
-        const gridItem = layoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        const gridItem = layoutManager.state.layout.state.children[0] as AutoGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
       });
 
@@ -545,13 +547,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 spec: {
                   title: 'tab1',
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
-                      col: 'colString',
-                      row: 'rowString',
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',
@@ -569,14 +572,15 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as TabsLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('TabsLayout');
+        expect(layoutManager.descriptor.id).toBe('TabsLayout');
         expect(layoutManager.state.tabs.length).toBe(1);
         expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
-        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as ResponsiveGridLayoutManager;
-        expect(gridLayoutManager.state.layout.state.templateColumns).toBe('colString');
-        expect(gridLayoutManager.state.layout.state.autoRows).toBe('rowString');
+        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as AutoGridLayoutManager;
+        expect(gridLayoutManager.state.maxColumnCount).toBe(4);
+        expect(gridLayoutManager.state.columnWidth).toBe('standard');
+        expect(gridLayoutManager.state.rowHeight).toBe('standard');
         expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
-        const gridItem = gridLayoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        const gridItem = gridLayoutManager.state.layout.state.children[0] as AutoGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
       });
 
@@ -590,15 +594,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row1',
-                  collapsed: false,
+                  collapse: false,
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
-                      col: 'colString',
-                      row: 'rowString',
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',
@@ -615,7 +620,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row2',
-                  collapsed: true,
+                  collapse: true,
                   layout: {
                     kind: 'GridLayout',
                     spec: {
@@ -643,15 +648,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as RowsLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('RowsLayout');
+        expect(layoutManager.descriptor.id).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
-        const row1Manager = layoutManager.state.rows[0].state.layout as ResponsiveGridLayoutManager;
-        expect(row1Manager.descriptor.kind).toBe('ResponsiveGridLayout');
-        const row1GridItem = row1Manager.state.layout.state.children[0] as ResponsiveGridItem;
+        const row1Manager = layoutManager.state.rows[0].state.layout as AutoGridLayoutManager;
+        expect(row1Manager.descriptor.id).toBe('AutoGridLayout');
+        expect(row1Manager.state.maxColumnCount).toBe(4);
+        expect(row1Manager.state.columnWidth).toBe('standard');
+        expect(row1Manager.state.rowHeight).toBe('standard');
+        const row1GridItem = row1Manager.state.layout.state.children[0] as AutoGridItem;
         expect(row1GridItem.state.body.state.key).toBe('panel-1');
 
         const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
-        expect(row2Manager.descriptor.kind).toBe('GridLayout');
+        expect(row2Manager.descriptor.id).toBe('GridLayout');
         const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
         expect(row2GridItem.state.body!.state.key).toBe('panel-2');
       });

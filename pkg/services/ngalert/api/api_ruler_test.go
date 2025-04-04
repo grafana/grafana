@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
 		cmd := deleteCommands[0]
-		actualUIDs := cmd.Params[1].([]string)
+		actualUIDs := cmd.Params[3].([]string)
 		require.Len(t, actualUIDs, len(expectedRules))
 		for _, rule := range expectedRules {
 			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)
@@ -82,7 +83,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder)).GenerateManyRef(1, 5)...)
+				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
@@ -95,7 +96,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				folderGen := gen.With(gen.WithNamespace(folder))
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
 
 				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
 
@@ -122,7 +123,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				folderGen := gen.With(gen.WithNamespace(folder))
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
 
 				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -154,7 +155,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access the group", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 
-				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
@@ -174,7 +175,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
-				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
+				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				provisionedRulesInFolder := groupGen.GenerateManyRef(1, 5)
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -203,7 +204,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -245,7 +246,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(2, 6)
+		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(2, 6)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		svc := createService(ruleStore)
@@ -339,6 +340,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 			gen.WithUniqueGroupIndex(), gen.WithUniqueID(),
 			gen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 			gen.WithEditorSettingsSimplifiedNotificationsSection(true),
+			gen.WithKeepFiringFor(30*time.Second),
 		).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
@@ -357,6 +359,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
 		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
 		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
+		require.Equal(t, int64(expectedRule.KeepFiringFor), int64(*(result.KeepFiringFor)))
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
 
@@ -486,7 +489,7 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 		}
 
 		ruleStore.PutRule(context.Background(), rule)
-		ruleStore.History[rule.GetKey()] = append(ruleStore.History[rule.GetKey()], history...)
+		ruleStore.History[rule.GUID] = append(ruleStore.History[rule.GUID], history...)
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -516,8 +519,9 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
-		ruleStore.History[ruleKey] = append(ruleStore.History[ruleKey], history...) // even if history is full of records
+		guid := uuid.NewString()
+		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[guid] = append(ruleStore.History[guid], history...) // even if history is full of records
 
 		perms := createPermissionsForRules(history, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -533,9 +537,10 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		rule := gen.With(gen.WithKey(ruleKey)).GenerateRef()
+		guid := uuid.NewString()
+		rule := gen.With(gen.WithKey(ruleKey), gen.WithGUID(guid)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		ruleStore.History[ruleKey] = nil
+		ruleStore.History[guid] = nil
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -556,10 +561,11 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 			OrgID: orgID,
 			UID:   "test",
 		}
-		rule := gen.With(gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
+		guid := uuid.NewString()
+		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
-		ruleStore.History[ruleKey] = history
+		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[guid] = history
 
 		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
 		req := createRequestContextWithPerms(orgID, perms, nil)

@@ -12,6 +12,13 @@
     "logos": {
       "small": "img/icn-geomap.svg",
       "large": "img/icn-geomap.svg"
-    }
+    },
+    "links": [
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/"
+      }
+    ]
   }
 }

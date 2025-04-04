@@ -14,6 +14,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,8 +25,8 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
-	BatchStoreClient
+	ManagedObjectIndexClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -34,21 +35,21 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
-	BatchStoreClient
+	ManagedObjectIndexClient
+	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
 
-func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -60,9 +61,9 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
-		&RepositoryIndex_ServiceDesc,
+		&ManagedObjectIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
-		&BatchStore_ServiceDesc,
+		&BulkStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -82,12 +83,12 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -99,7 +100,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer tracing.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
@@ -124,12 +125,12 @@ func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg R
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}, nil
 }
 

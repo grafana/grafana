@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
@@ -33,24 +29,8 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func getStatusAnnotation(obj resource.Object) string {
-	return obj.GetAnnotations()[checks.StatusAnnotation]
-}
-
-func setStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
-	annotations := obj.GetAnnotations()
-	annotations[checks.StatusAnnotation] = status
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
-}
-
 func processCheck(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
-	status := getStatusAnnotation(obj)
+	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
 		return nil
@@ -59,24 +39,10 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
-	// Populate ctx with the user that created the check
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
-	}
-	createdBy := meta.GetCreatedBy()
-	typ, uid, err := claims.ParseTypeID(createdBy)
-	if err != nil {
-		return err
-	}
-	ctx = identity.WithRequester(ctx, &user.SignedInUser{
-		UserUID:      uid,
-		FallbackType: typ,
-	})
 	// Get the items to check
 	items, err := check.Items(ctx)
 	if err != nil {
-		setErr := setStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -86,7 +52,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	steps := check.Steps()
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
-		setErr := setStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -97,7 +63,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
-	err = setStatusAnnotation(ctx, client, obj, "processed")
+	err = checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationProcessed)
 	if err != nil {
 		return err
 	}
