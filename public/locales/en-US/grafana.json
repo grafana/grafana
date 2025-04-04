@@ -5299,8 +5299,8 @@
       "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
     },
     "getting-started-page": {
-      "subtitle-provisioning-feature": "Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems",
-      "text-remote-provisioning": "Remote provisioning"
+      "header": "Provisioning",
+      "subtitle-provisioning-feature": "View and manage your provisioning connection"
     },
     "history-view": {
       "not-found": "Not found"
