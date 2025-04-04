@@ -22,53 +22,6 @@ func (_m *MockParser) EXPECT() *MockParser_Expecter {
 	return &MockParser_Expecter{mock: &_m.Mock}
 }
 
-// Clients provides a mock function with no fields
-func (_m *MockParser) Clients() ResourceClients {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Clients")
-	}
-
-	var r0 ResourceClients
-	if rf, ok := ret.Get(0).(func() ResourceClients); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ResourceClients)
-		}
-	}
-
-	return r0
-}
-
-// MockParser_Clients_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Clients'
-type MockParser_Clients_Call struct {
-	*mock.Call
-}
-
-// Clients is a helper method to define mock.On call
-func (_e *MockParser_Expecter) Clients() *MockParser_Clients_Call {
-	return &MockParser_Clients_Call{Call: _e.mock.On("Clients")}
-}
-
-func (_c *MockParser_Clients_Call) Run(run func()) *MockParser_Clients_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockParser_Clients_Call) Return(_a0 ResourceClients) *MockParser_Clients_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockParser_Clients_Call) RunAndReturn(run func() ResourceClients) *MockParser_Clients_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Parse provides a mock function with given fields: ctx, info
 func (_m *MockParser) Parse(ctx context.Context, info *repository.FileInfo) (*ParsedResource, error) {
 	ret := _m.Called(ctx, info)
