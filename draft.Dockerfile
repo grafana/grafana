@@ -54,7 +54,8 @@ FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
-ARG GO_BUILD_TAGS="oss"
+# By building app with timetzdata tag we instruct golang to use embedded tzdata if tzdata files is missing on the system
+ARG GO_BUILD_TAGS="oss,timetzdata"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
@@ -82,6 +83,7 @@ COPY .citools/swagger .citools/swagger
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
 COPY pkg/apis/secret pkg/apis/secret
+COPY pkg/apis/folder pkg/apis/folder
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
@@ -179,7 +181,7 @@ COPY ${RUN_SH} /run.sh
 FROM alpine:latest AS distroless-libs
 
 # Install bash, glibc, and musl
-RUN apk add --no-cache ca-certificates shadow coreutils curl tzdata musl-utils
+RUN apk add --no-cache ca-certificates shadow coreutils curl musl-utils
 
 # glibc support for alpine x86_64 only
 # docker run --rm --env STDOUT=1 sgerrand/glibc-builder 2.40 /usr/glibc-compat > glibc-bin-2.40.tar.gz
@@ -315,7 +317,7 @@ WORKDIR ${GF_PATHS_HOME}
 # Install required packages
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get install -y ca-certificates curl tzdata musl && \
+    apt-get install -y ca-certificates curl musl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
