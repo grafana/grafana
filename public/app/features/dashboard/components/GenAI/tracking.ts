@@ -9,6 +9,8 @@ export enum EventTrackingSrc {
   dashboardChanges = 'dashboard-changes',
   dashboardTitle = 'dashboard-title',
   dashboardDescription = 'dashboard-description',
+  alertRuleDescription = 'alert-rule-description',
+  alertRuleSummary = 'alert-rule-summary',
   unknown = 'unknown',
 }
 
