@@ -18,11 +18,11 @@ import (
 // TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo    repository.ReaderWriter
-	parser  *Parser
+	parser  Parser
 	folders *FolderManager
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser *Parser, folders *FolderManager) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders}
 }
 

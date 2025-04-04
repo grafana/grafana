@@ -30,7 +30,10 @@ type SyncWorker struct {
 	lister resources.ResourceLister
 
 	// Parses fields saved in remore repository
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
+
+	// Clients for the repository
+	clients resources.ClientFactory
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
@@ -38,13 +41,15 @@ type SyncWorker struct {
 
 func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
+	clients resources.ClientFactory,
 	lister resources.ResourceLister,
 	storageStatus dualwrite.Service,
 ) *SyncWorker {
 	return &SyncWorker{
 		client:        client,
 		parsers:       parsers,
+		clients:       clients,
 		lister:        lister,
 		storageStatus: storageStatus,
 	}
@@ -137,7 +142,12 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	folderClient, err := parser.Clients().Folder()
+	clients, err := r.clients.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients for %s: %w", cfg.Name, err)
+	}
+
+	folderClient, err := clients.Folder()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
@@ -148,8 +158,8 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		progress:        progress,
 		lister:          r.lister,
 		folders:         folders,
-		clients:         parser.Clients(),
-		resourceManager: resources.NewResourcesManager(repo, folders, parser, parser.Clients(), nil),
+		clients:         clients,
+		resourceManager: resources.NewResourcesManager(repo, folders, parser, clients, nil),
 	}
 
 	return job, nil
