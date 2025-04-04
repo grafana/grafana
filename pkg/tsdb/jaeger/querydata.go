@@ -162,3 +162,58 @@ func transformResponse(trace TraceResponse, refID string) *data.Frame {
 
 	return frame
 }
+
+type TraceKeyValuePair struct {
+	Key   string      `json:"key"`
+	Type  string      `json:"type"`
+	Value interface{} `json:"value"`
+}
+
+type TraceProcess struct {
+	ServiceName string              `json:"serviceName"`
+	Tags        []TraceKeyValuePair `json:"tags"`
+}
+
+type TraceSpanReference struct {
+	RefType string `json:"refType"`
+	SpanID  string `json:"spanID"`
+	TraceID string `json:"traceID"`
+}
+
+type TraceLog struct {
+	// Millisecond epoch time
+	Timestamp int64               `json:"timestamp"`
+	Fields    []TraceKeyValuePair `json:"fields"`
+	Name      string              `json:"name"`
+}
+
+type Span struct {
+	TraceID       string `json:"traceID"`
+	SpanID        string `json:"spanID"`
+	ProcessID     string `json:"processID"`
+	OperationName string `json:"operationName"`
+	// Times are in microseconds
+	StartTime   int64                `json:"startTime"`
+	Duration    int64                `json:"duration"`
+	Logs        []TraceLog           `json:"logs"`
+	References  []TraceSpanReference `json:"references"`
+	Tags        []TraceKeyValuePair  `json:"tags"`
+	Warnings    []string             `json:"warnings"`
+	Flags       int                  `json:"flags"`
+	StackTraces []string             `json:"stackTraces"`
+}
+
+type TraceResponse struct {
+	Processes map[string]TraceProcess `json:"processes"`
+	TraceID   string                  `json:"traceID"`
+	Warnings  []string                `json:"warnings"`
+	Spans     []Span                  `json:"spans"`
+}
+
+type TracesResponse struct {
+	Data   []TraceResponse `json:"data"`
+	Errors interface{}     `json:"errors"` // TODO: Handle errors, but we were not using it in the frontend
+	Limit  int             `json:"limit"`
+	Offset int             `json:"offset"`
+	Total  int             `json:"total"`
+}
