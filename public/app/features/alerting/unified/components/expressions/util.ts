@@ -15,14 +15,14 @@ import { isCloudRulesSource } from '../../utils/datasource';
  */
 
 const getSeriesName = (frame: DataFrame): string | undefined => {
-  const firstField = frame.fields[0];
+  const firstField = frame.fields.at(0);
 
   const displayNameFromDS = firstField?.config?.displayNameFromDS;
   return displayNameFromDS ?? frame.name ?? firstField?.labels?.__name__;
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  return frame.fields[0]?.values[0];
+  return frame.fields.at(0)?.values.at(0);
 };
 
 const smallNumberFormatter = new Intl.NumberFormat(undefined, {

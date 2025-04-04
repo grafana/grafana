@@ -402,7 +402,7 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
   const styles = useStyles2(getStyles);
 
   const name = getSeriesName(frame) || 'Series ' + index;
-  const value = frame.fields.at(0)?.values.at(0);
+  const value = getSeriesValue(frame);
   const labelsRecord = getSeriesLabels(frame);
   const labels = Object.entries(labelsRecord);
   const hasLabels = labels.length > 0;
