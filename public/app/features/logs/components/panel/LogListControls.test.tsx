@@ -11,6 +11,7 @@ const contextProps = {
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  logs: [],
   showControls: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
