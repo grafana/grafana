@@ -1005,7 +1005,9 @@
       "title": "There are no custom annotation queries added yet"
     },
     "standard-annotation-query-editor": {
+      "events-found": "{{numEvents}} events (from {{numFields}} fields)",
       "no-events-found": "No events found",
+      "no-query-editor": "Annotations are not supported. This datasource needs to export a QueryEditor",
       "test-annotation-query": "Test annotation query",
       "title-query-result": "Query result"
     }
@@ -1029,6 +1031,8 @@
       "message": "No API keys found"
     },
     "migrate-to-service-accounts-card": {
+      "body-no-api-keys-found": "No API keys were found. If you reload the browser, this page will not be available anymore.",
+      "body-switch-service-accounts": "API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will continue to work as they were. We encourage you to migrate your API keys to service accounts now. <docsLink />",
       "docs-link": {
         "about-migration": "Find out more about the migration here."
       },
@@ -1036,13 +1040,20 @@
       "migration-box-desc": {
         "migrating": "Migrating all API keys will hide the API keys tab."
       },
+      "modal-title": "Migrate API keys to service accounts",
       "title-no-api-keys-found": "No API keys found",
       "title-switch-service-accounts": "Switch from API keys to service accounts"
     },
     "migration-summary": {
       "close": "Close",
+      "failed": "<0>Failed: </0>{{count}}",
+      "failed-details": "<0>Failed details: </0>{{details}}",
+      "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
+      "migrated": "<0>Migrated: </0>{{count}}",
+      "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
       "migration-successful": "Migration Successful!",
-      "title-migration-summary": "Migration summary"
+      "title-migration-summary": "Migration summary",
+      "total": "<0>Total: </0>{{count}}"
     }
   },
   "app-chrome": {
@@ -1060,10 +1071,15 @@
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
     },
+    "auth-drawer-unconneced": {
+      "subtitle": "Configure auth settings. Find out more in our <2>documentation</2>."
+    },
     "auth-drawer-unconnected": {
       "advanced-auth": "Advanced Auth",
       "enable-insecure-email-lookup": "Enable insecure email lookup",
+      "enable-insecure-email-lookup-description": "Allow users to use the same email address to log into Grafana with different identity providers.",
       "reset": "Reset",
+      "reset-tooltip": "This action will disregard any saved changes and load the configuration from the configuration file.",
       "title-auth-settings": "Auth settings"
     },
     "configure-auth-cta": {
@@ -1076,8 +1092,10 @@
         "label-reset-to-default-values": "Reset to default values"
       },
       "discard": "Discard",
+      "enabled-label-enabled": "Enabled",
       "label-enabled": "Enabled",
       "reset-configuration": "Are you sure you want to reset this configuration?",
+      "reset-configuration-description": "After resetting these settings Grafana will use the provider configuration from the system (config file/environment variables) if any.",
       "title-more-actions": "More actions",
       "title-reset": "Reset",
       "tooltip-more-actions": "More actions"
@@ -1086,6 +1104,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "bookmarks-page": {
     "empty": {
@@ -1213,6 +1234,11 @@
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
+  "canvas": {
+    "not-found-display": {
+      "not-found": "<0>Not found: </0><config />"
+    }
+  },
   "carousel": {
     "close": "Close",
     "error": "Something went wrong loading images",
@@ -1289,11 +1315,15 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
+      "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the Connections page, accessible from the main menu.",
       "go-to-connections": "Go to connections"
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
       "okay": "Okay"
+    },
+    "not-found-datasource": {
+      "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable.<3></3>To see a list of available datasources please <5>click here</5>."
     },
     "search": {
       "aria-label-search-all": "Search all",
