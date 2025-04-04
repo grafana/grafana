@@ -25,6 +25,7 @@ import { isValidLegacyName, utf8Support } from '../utf8_support';
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 const LIST_ITEM_SIZE = 25;
+const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 export interface BrowserProps {
   languageProvider: PromQlLanguageProvider;
@@ -32,9 +33,6 @@ export interface BrowserProps {
   theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
-  lastUsedLabels: string[];
-  storeLastUsedLabels: (labels: string[]) => void;
-  deleteLastUsedLabels: () => void;
   timeRange?: TimeRange;
 }
 
@@ -274,7 +272,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         valueSearchTerm: '',
       };
     });
-    this.props.deleteLastUsedLabels();
+    localStorage.removeItem(LAST_USED_LABELS_KEY);
     // Get metrics
     this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
@@ -347,9 +345,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   }
 
   componentDidMount() {
-    const { languageProvider, lastUsedLabels } = this.props;
+    const { languageProvider } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = lastUsedLabels;
+      const selectedLabels: string[] = JSON.parse(localStorage.getItem(LAST_USED_LABELS_KEY) ?? `[]`) ?? [];
       languageProvider.start(this.props.timeRange).then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         // Get metrics
@@ -378,7 +376,8 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    this.props.storeLastUsedLabels(selectedLabels);
+    localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(selectedLabels));
+
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
