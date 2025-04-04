@@ -67,6 +67,17 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
 
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+## Transform
+
+<!-- I can't find these options?? -->
+
+Use a **Transform** override to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
+
+- **Negative Y transform:** Flip the results to negative values on the Y axis.
+- **Constant:** Show the first value as a constant line.
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -231,16 +242,3 @@ You can customize the following standard options:
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Transform
-
-Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
-
-- **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show the first value as a constant line.
-
-{{% admonition type="note" %}}
-The transform option is only available as an override.
-{{% /admonition %}}
-
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
