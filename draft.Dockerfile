@@ -237,7 +237,6 @@ COPY --from=distroless-libs /bin/chown /bin/chown
 COPY --from=distroless-libs /bin/mkdir /bin/mkdir
 COPY --from=distroless-libs /bin/sh /bin/sh
 COPY --from=distroless-libs /bin/cp /bin/cp
-COPY --from=distroless-libs /bin/ls /bin/ls
 COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
 COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
 COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
