@@ -6,7 +6,7 @@ import { NewThemeOptions } from '../createTheme';
  */
 
 const whiteBase = `210, 210, 220`;
-const secondaryBase = `186, 186, 230`;
+const secondaryBase = `195, 195, 245`;
 
 //const brandMain = '#3d71d9';
 //const brandText = '#6e9fff';
