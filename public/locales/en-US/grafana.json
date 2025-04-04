@@ -884,9 +884,6 @@
       "add-alert-data-to-payload": "Add alert data to payload",
       "review-alert-payload": " Review alert data to add to the payload:"
     },
-    "get-description": {
-      "title-alert-rule-evaluation": "Alert rule evaluation"
-    },
     "get-preview-results": {
       "title-error": "Error"
     },
@@ -1275,9 +1272,6 @@
     "need-help-info": {
       "need-help": "Need help?"
     },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": "Configure no data and error handling"
-    },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": "Notify by selecting a contact point"
     },
@@ -1550,8 +1544,10 @@
       "title-view": "View"
     },
     "rule-details": {
+      "keep-firing-for": "Keep firing for",
       "label-instances": "Instances",
-      "label-labels": "Labels"
+      "label-labels": "Labels",
+      "last-evaluation-ago": "{{time}} ago"
     },
     "rule-details-buttons": {
       "go-to-dashboard": "Go to dashboard",
@@ -1579,18 +1575,6 @@
     },
     "rule-editor-section": {
       "label-advanced-options": "Advanced options"
-    },
-    "rule-details": {
-      "evaluate": "Evaluate",
-      "evaluate-every": "Every {{every}}",
-      "evaluation-time": "Evaluation time",
-      "instances": "Instances",
-      "keep-firing-for": "Keep firing for",
-      "labels": "Labels",
-      "last-evaluation": "Last evaluation",
-      "last-evaluation-ago": "{{time}} ago",
-      "metric": "Metric",
-      "pending-period": "Pending period"
     },
     "rule-form": {
       "annotations": {
