@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { locationService } from '@grafana/runtime';
-import { CodeEditor, ConfirmModal, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -90,15 +90,14 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       confirmButtonVariant="primary"
       body={
         <Stack direction="column" gap={2}>
-          <Stack direction="row" gap={1} alignItems={'self-start'}>
-            <Text color="warning">
-              <Icon name="exclamation-triangle" />
+          <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
+            <Text variant="body">
+              <Trans i18nKey="alerting.to-gma.confirm-modal.body">
+                If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to
+                import these alert rules to Grafana-managed rules?
+              </Trans>
             </Text>
-            <Trans i18nKey="alerting.to-gma.confirm-modal.body">
-              If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to
-              import these alert rules to Grafana-managed rules?
-            </Trans>
-          </Stack>
+          </Alert>
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
               These are the list of rules that will be imported:

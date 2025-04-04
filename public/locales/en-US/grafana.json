@@ -468,9 +468,22 @@
       "label": "Contact point"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "create-new-folder": {
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "name": "Folder name"
+      },
+      "new-folder": "New folder",
+      "placeholder-enter-a-name": "Enter a name",
+      "title-new-folder": "New folder"
+    },
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
+    },
+    "data-source-section": {
+      "import-to-grafana": "Import to Grafana rules"
     },
     "delete-rule-modal": {
       "title": "Delete rule",
@@ -520,6 +533,9 @@
         "formats": "Select the format and download the file or copy the contents to clipboard",
         "one-format": "Download the file or copy the contents to clipboard"
       }
+    },
+    "folder-selector": {
+      "description-select-folder": "Select a folder to store your rule in."
     },
     "folderAndGroup": {
       "evaluation": {
@@ -587,6 +603,7 @@
     },
     "import-to-gma": {
       "action-button": "Import",
+      "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
@@ -594,7 +611,7 @@
       },
       "datasource": {
         "label": "Data source",
-        "required-message": "Please select a datasource"
+        "required-message": "Please select a data source"
       },
       "error": "Failed to import alert rules: {{error}}",
       "group": {
@@ -606,8 +623,7 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "optional-settings": "Optional settings",
-      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
+      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
@@ -818,14 +834,7 @@
         "validation": "Pending period must be greater than or equal to the evaluation interval."
       },
       "folder": {
-        "cancel": "Cancel",
-        "create": "Create",
-        "create-folder": "Create a new folder to store your alert rule in.",
-        "creating-new-folder": "Creating new folder",
-        "label": "Folder",
-        "name": "Folder name",
-        "new-folder": "New folder",
-        "new-folder-or": "or"
+        "label": "Folder"
       },
       "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
@@ -988,7 +997,8 @@
     "to-gma": {
       "confirm-modal": {
         "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
-        "summary": "These are the list of rules that will be imported:"
+        "summary": "These are the list of rules that will be imported:",
+        "title-warning": "Warning"
       }
     }
   },
