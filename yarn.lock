@@ -330,12 +330,12 @@ __metadata:
   linkType: hard
 
 "@babel/helpers@npm:^7.26.9":
-  version: 7.27.0
-  resolution: "@babel/helpers@npm:7.27.0"
+  version: 7.26.9
+  resolution: "@babel/helpers@npm:7.26.9"
   dependencies:
-    "@babel/template": "npm:^7.27.0"
-    "@babel/types": "npm:^7.27.0"
-  checksum: 10/0dd40ba1e5ba4b72d1763bb381384585a56f21a61a19dc1b9a03381fe8e840207fdaa4da645d14dc028ad768087d41aad46347cc6573bd69d82f597f5a12dc6f
+    "@babel/template": "npm:^7.26.9"
+    "@babel/types": "npm:^7.26.9"
+  checksum: 10/267dfa7d04dff7720610497f466aa7b60652b7ec8dde5914527879350c9d655271e892117c5b2f0f083d92d2a8e5e2cf9832d4f98cd7fb72d78f796002af19a1
   languageName: node
   linkType: hard
 
@@ -351,7 +351,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.26.9, @babel/parser@npm:^7.27.0":
+"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.26.9":
   version: 7.27.0
   resolution: "@babel/parser@npm:7.27.0"
   dependencies:
@@ -1425,14 +1425,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/template@npm:^7.22.5, @babel/template@npm:^7.24.7, @babel/template@npm:^7.25.9, @babel/template@npm:^7.26.9, @babel/template@npm:^7.27.0, @babel/template@npm:^7.3.3":
-  version: 7.27.0
-  resolution: "@babel/template@npm:7.27.0"
+"@babel/template@npm:^7.22.5, @babel/template@npm:^7.24.7, @babel/template@npm:^7.25.9, @babel/template@npm:^7.26.9, @babel/template@npm:^7.3.3":
+  version: 7.26.9
+  resolution: "@babel/template@npm:7.26.9"
   dependencies:
     "@babel/code-frame": "npm:^7.26.2"
-    "@babel/parser": "npm:^7.27.0"
-    "@babel/types": "npm:^7.27.0"
-  checksum: 10/7159ca1daea287ad34676d45a7146675444d42c7664aca3e617abc9b1d9548c8f377f35a36bb34cf956e1d3610dcb7acfcfe890aebf81880d35f91a7bd273ee5
+    "@babel/parser": "npm:^7.26.9"
+    "@babel/types": "npm:^7.26.9"
+  checksum: 10/240288cebac95b1cc1cb045ad143365643da0470e905e11731e63280e43480785bd259924f4aea83898ef68e9fa7c176f5f2d1e8b0a059b27966e8ca0b41a1b6
   languageName: node
   linkType: hard
 
@@ -3402,7 +3402,6 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.15"
@@ -8800,22 +8799,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/angular-route@npm:1.7.6":
-  version: 1.7.6
-  resolution: "@types/angular-route@npm:1.7.6"
-  dependencies:
-    "@types/angular": "npm:*"
-  checksum: 10/a7b8aede9584b948edefdbedb831aab60ae5b9dba9174f6dc5cbfe4bb75c761ed1fe339e450f4470f9cf6eb63fcd84dd51605da9d7442cf33a4c160c3b9fe5b6
-  languageName: node
-  linkType: hard
-
-"@types/angular@npm:*, @types/angular@npm:1.8.9":
-  version: 1.8.9
-  resolution: "@types/angular@npm:1.8.9"
-  checksum: 10/dc8823c30f4caafbd28333777b9232cb9e67b000c88741a718c911d33254e3affa706d7290851c22e4ee5dac2f675b8e2a93a5f0e3eab5180fa271d2673ffc50
-  languageName: node
-  linkType: hard
-
 "@types/aria-query@npm:^5.0.1":
   version: 5.0.1
   resolution: "@types/aria-query@npm:5.0.1"
@@ -11104,34 +11087,6 @@ __metadata:
     require-from-string: "npm:^2.0.2"
     uri-js: "npm:^4.2.2"
   checksum: 10/b406f3b79b5756ac53bfe2c20852471b08e122bc1ee4cde08ae4d6a800574d9cd78d60c81c69c63ff81e4da7cd0b638fafbb2303ae580d49cf1600b9059efb85
-  languageName: node
-  linkType: hard
-
-"angular-bindonce@npm:0.3.1":
-  version: 0.3.1
-  resolution: "angular-bindonce@npm:0.3.1"
-  checksum: 10/c756ded4a920191c953732050095b2ef3f9faf42342a40c1e6f23b08ca730e57c9d30fd7b432bc74a950de162495707540cac865aa4a93a3486fc507d382d006
-  languageName: node
-  linkType: hard
-
-"angular-route@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular-route@npm:1.8.3"
-  checksum: 10/c55bcdb75ce0ecb131642aa51a9ebc49638f60e627902af0914b52fc80467ddba514eb96c0f252e4e327699893417fcbf18f5c617b1a69ada5a9dd7a4f7f8878
-  languageName: node
-  linkType: hard
-
-"angular-sanitize@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular-sanitize@npm:1.8.3"
-  checksum: 10/50227cd12259bc12b91d53f23bab9a026831d56f0b4cb74ddb3571c6da602720041e9238857837d014ef2beccf4a9565a19aa01cb2ec8ba2d3111b6c05af93e8
-  languageName: node
-  linkType: hard
-
-"angular@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular@npm:1.8.3"
-  checksum: 10/4a21f1f74790dc2cdceb582386abdc7b55a0463f86aaa59573c940295cb51ed61b8fa610011134280ae0da7f97fbbc660f3a4e4491b24c92b2c32a547073a1c2
   languageName: node
   linkType: hard
 
@@ -17674,8 +17629,6 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/angular": "npm:1.8.9"
-    "@types/angular-route": "npm:1.7.6"
     "@types/babel__core": "npm:^7"
     "@types/babel__preset-env": "npm:^7"
     "@types/chance": "npm:^1.1.3"
@@ -17737,10 +17690,6 @@ __metadata:
     "@visx/shape": "npm:3.12.0"
     "@visx/tooltip": "npm:3.12.0"
     "@welldone-software/why-did-you-render": "npm:8.0.3"
-    angular: "npm:1.8.3"
-    angular-bindonce: "npm:0.3.1"
-    angular-route: "npm:1.8.3"
-    angular-sanitize: "npm:1.8.3"
     ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.20"
     babel-loader: "npm:9.2.1"
@@ -17845,7 +17794,6 @@ __metadata:
     msw: "npm:2.7.0"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.9"
-    ngtemplate-loader: "npm:2.1.0"
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
     nx: "npm:20.7.1"
@@ -17916,10 +17864,8 @@ __metadata:
     swagger-ui-react: "npm:5.20.5"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.15.1"
-    systemjs-cjs-extra: "npm:0.2.1"
     terser-webpack-plugin: "npm:5.3.11"
     testing-library-selector: "npm:0.3.1"
-    tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: "npm:1.6.0"
     tracelib: "npm:1.0.1"
     ts-jest: "npm:29.2.5"
@@ -20536,21 +20482,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsesc@npm:^0.5.0, jsesc@npm:~0.5.0":
-  version: 0.5.0
-  resolution: "jsesc@npm:0.5.0"
-  bin:
-    jsesc: bin/jsesc
-  checksum: 10/fab949f585c71e169c5cbe00f049f20de74f067081bbd64a55443bad1c71e1b5a5b448f2359bf2fe06f5ed7c07e2e4a9101843b01c823c30b6afc11f5bfaf724
-  languageName: node
-  linkType: hard
-
 "jsesc@npm:^3.0.2, jsesc@npm:~3.0.2":
   version: 3.0.2
   resolution: "jsesc@npm:3.0.2"
   bin:
     jsesc: bin/jsesc
   checksum: 10/8e5a7de6b70a8bd71f9cb0b5a7ade6a73ae6ab55e697c74cc997cede97417a3a65ed86c36f7dd6125fe49766e8386c845023d9e213916ca92c9dfdd56e2babf3
+  languageName: node
+  linkType: hard
+
+"jsesc@npm:~0.5.0":
+  version: 0.5.0
+  resolution: "jsesc@npm:0.5.0"
+  bin:
+    jsesc: bin/jsesc
+  checksum: 10/fab949f585c71e169c5cbe00f049f20de74f067081bbd64a55443bad1c71e1b5a5b448f2359bf2fe06f5ed7c07e2e4a9101843b01c823c30b6afc11f5bfaf724
   languageName: node
   linkType: hard
 
@@ -21206,7 +21152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loader-utils@npm:^2.0.0, loader-utils@npm:^2.0.4":
+"loader-utils@npm:^2.0.4":
   version: 2.0.4
   resolution: "loader-utils@npm:2.0.4"
   dependencies:
@@ -22461,11 +22407,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^3.3.8":
-  version: 3.3.11
-  resolution: "nanoid@npm:3.3.11"
+  version: 3.3.8
+  resolution: "nanoid@npm:3.3.8"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 10/73b5afe5975a307aaa3c95dfe3334c52cdf9ae71518176895229b8d65ab0d1c0417dd081426134eb7571c055720428ea5d57c645138161e7d10df80815527c48
+  checksum: 10/2d1766606cf0d6f47b6f0fdab91761bb81609b2e3d367027aff45e6ee7006f660fb7e7781f4a34799fe6734f1268eeed2e37a5fdee809ade0c2d4eb11b0f9c40
   languageName: node
   linkType: hard
 
@@ -22503,16 +22449,6 @@ __metadata:
   version: 0.6.18
   resolution: "neotraverse@npm:0.6.18"
   checksum: 10/a19649cdadb9a3ce3c54c2d6093a2eb1e12364ace384301a7515d40c752bfbac45d12c6eb9c4b004beba7bd4d1871323ebd46ad1446e0de5bc5143b0367647cb
-  languageName: node
-  linkType: hard
-
-"ngtemplate-loader@npm:2.1.0":
-  version: 2.1.0
-  resolution: "ngtemplate-loader@npm:2.1.0"
-  dependencies:
-    jsesc: "npm:^0.5.0"
-    loader-utils: "npm:^1.0.2"
-  checksum: 10/6020fcabc13ac355b93ceec03e6df2e62bd90cf285ab11cefd345861ee2ca12d3e5475d94bbacc6b31c379aea85464410bb7ed8dc0612780aa33aa3712be45b8
   languageName: node
   linkType: hard
 
@@ -29234,13 +29170,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs-cjs-extra@npm:0.2.1":
-  version: 0.2.1
-  resolution: "systemjs-cjs-extra@npm:0.2.1"
-  checksum: 10/b620af840b1f01f3facc0f9c6895d086fd207f1a55619183b5d4e787596963edc56250acbb3b597df02fbfac38fa8cc1b537d2dbb204ba7f56a2659f56d7a02f
-  languageName: node
-  linkType: hard
-
 "systemjs@npm:6.15.1":
   version: 6.15.1
   resolution: "systemjs@npm:6.15.1"
@@ -29371,22 +29300,6 @@ __metadata:
   peerDependencies:
     "@testing-library/dom": ^9.3.3
   checksum: 10/979dc68c506688fa2e0d7f974c7213e423e082bf676b2a5d076984596316b6c9b065a98fadcda468e1a2dec2e3ab658b96a93a059976e2dedc62e9e6d439617d
-  languageName: node
-  linkType: hard
-
-"tether-drop@https://github.com/torkelo/drop":
-  version: 1.5.0
-  resolution: "tether-drop@https://github.com/torkelo/drop.git#commit=fc83ca88db0076fbf6359cbe1743a9ef0f1ee6e1"
-  dependencies:
-    tether: "npm:^1.1.0"
-  checksum: 10/178c3afb889ee6dc860f767ffd7a959774adce200148e067aff631888b98fd046123f887ca40152581a13c430ad1fa72e2a9dba9de4e79e3f7634e224c229188
-  languageName: node
-  linkType: hard
-
-"tether@npm:^1.1.0":
-  version: 1.4.7
-  resolution: "tether@npm:1.4.7"
-  checksum: 10/4185215f28392733f6248ea5d1734cd411d921ba3d5ae92df977bc1d11bd88dcf469ed6ceb9195accd8facc136ddd87d286f18cab2544300412e3f2d073d8e68
   languageName: node
   linkType: hard
 
@@ -30180,9 +30093,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^6.19.5":
-  version: 6.21.2
-  resolution: "undici@npm:6.21.2"
-  checksum: 10/9cd9ead22599c23aa2a7dfa5b80fa1491bebb294bf1dc64c9c0f90ea4ec8e272a4db2810e2565d65b952249f105523d2929d7cc951f88cf0a1f082143bae8d75
+  version: 6.19.8
+  resolution: "undici@npm:6.19.8"
+  checksum: 10/19ae4ba38b029a664d99fd330935ef59136cf99edb04ed821042f27b5a9e84777265fb744c8a7abc83f2059afb019446c69a4ebef07bbc0ed6b2de8d67ef4090
   languageName: node
   linkType: hard
 

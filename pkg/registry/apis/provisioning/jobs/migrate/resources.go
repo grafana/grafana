@@ -57,7 +57,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
 		Data: value,
-	}, false)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
