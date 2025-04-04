@@ -688,7 +688,12 @@ func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasou
 func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	c.t.Helper()
 
-	team, err := c.teamSvc.CreateTeam(context.Background(), name, email, orgID)
+	teamCmd := team.CreateTeamCommand{
+		Name:  name,
+		Email: email,
+		OrgID: orgID,
+	}
+	team, err := c.teamSvc.CreateTeam(context.Background(), &teamCmd)
 	require.NoError(c.t, err)
 	return team
 }

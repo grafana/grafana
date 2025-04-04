@@ -17,7 +17,7 @@ import (
 )
 
 type store interface {
-	Create(name, email string, orgID int64) (team.Team, error)
+	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
 	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
@@ -71,22 +71,26 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 		team.uid,
 		team.org_id,
 		team.name as name,
-		team.email as email, ` +
+		team.email as email,
+		team.external_uid as external_uid,
+		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(db, filteredUsers) +
 		` FROM team as team `
 }
 
-func (ss *xormStore) Create(name, email string, orgID int64) (team.Team, error) {
+func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	t := team.Team{
-		UID:     util.GenerateShortUID(),
-		Name:    name,
-		Email:   email,
-		OrgID:   orgID,
-		Created: time.Now(),
-		Updated: time.Now(),
+		UID:           util.GenerateShortUID(),
+		Name:          cmd.Name,
+		Email:         cmd.Email,
+		OrgID:         cmd.OrgID,
+		ExternalUID:   cmd.ExternalUID,
+		IsProvisioned: cmd.IsProvisioned,
+		Created:       time.Now(),
+		Updated:       time.Now(),
 	}
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
