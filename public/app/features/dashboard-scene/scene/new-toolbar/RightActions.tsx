@@ -100,12 +100,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPanelButtons && isEditingLibraryPanel,
           },
           {
-            key: 'dashboard-add-button',
-            component: DashboardAddButton,
-            group: 'dashboard',
-            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
-          },
-          {
             key: 'edit-schema-v2-button',
             component: EditSchemaV2Button,
             group: 'dashboard',
