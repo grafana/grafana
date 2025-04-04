@@ -165,8 +165,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	})
 
 	if obj.GetName() == "" && obj.GetGenerateName() == "" {
-		// TODO: should we use field.Required instead?
-		return nil, apierrors.NewBadRequest("an explicit name must be saved in the resource (or generateName)")
+		return nil, ErrMissingName
 	}
 
 	// Calculate folder identifier from the file path

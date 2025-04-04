@@ -62,7 +62,7 @@ spec:
   title: Test dashboard
 `),
 		})
-		require.EqualError(t, err, "an explicit name must be saved in the resource (or generateName)")
+		require.EqualError(t, err, "name.metadata.name: Required value: missing name in resource")
 
 		// Read the name from classic grafana format
 		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
