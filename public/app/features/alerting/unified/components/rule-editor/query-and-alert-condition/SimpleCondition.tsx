@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch, FormEvent } from 'react';
+import { Dispatch } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
@@ -20,7 +20,7 @@ import { updateExpression } from './reducer';
 export interface SimpleCondition {
   whenField?: string;
   evaluator: {
-    params: Array<number | string | undefined>;
+    params: Array<number | '-' | undefined>;
     type: EvalFunction;
   };
 }
@@ -73,23 +73,22 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index = 0) => {
-    const value = event.currentTarget.value;
+  const onEvaluateValueChange = (value: string, index = 0) => {
 
     // Allow empty value
     if (value === '') {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = undefined;
+      const newCondition = produce(simpleCondition, (draft) => {
+        draft.evaluator.params[index] = undefined;
       });
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+      onChange(newCondition);
       return;
     }
     // Allow '-' for negative numbers
     if (value === '-') {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = '-';
+      const newCondition = produce(simpleCondition, (draft) => {
+        draft.evaluator.params[index] = '-';
       });
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+      onChange(newCondition);
       return;
     }
 
@@ -98,11 +97,10 @@ export const SimpleConditionEditor = ({
     if (isNaN(numericValue)) {
       return;
     }
-
-    const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-      draft[index] = numericValue;
+    const newCondition = produce(simpleCondition, (draft) => {
+      draft.evaluator.params[index] = numericValue;
     });
-    onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
+    onChange(newCondition);
     updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
@@ -118,7 +116,7 @@ export const SimpleConditionEditor = ({
         </header>
         <InlineFieldRow className={styles.condition.container}>
           {simpleCondition.whenField && (
-            <InlineField label="WHEN">
+            <InlineField label={t("alerting.simpleCondition.when", "WHEN")}>
               <Select
                 options={reducerTypes}
                 value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
@@ -136,14 +134,14 @@ export const SimpleConditionEditor = ({
                     type="number"
                     width={10}
                     value={simpleCondition.evaluator.params[0] ?? ''}
-                    onChange={(event) => onEvaluateValueChange(event, 0)}
+                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 0)}
                   />
                   <ToLabel />
                   <Input
                     type="number"
                     width={10}
                     value={simpleCondition.evaluator.params[1] ?? ''}
-                    onChange={(event) => onEvaluateValueChange(event, 1)}
+                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 1)}
                   />
                 </>
               ) : (
@@ -151,7 +149,8 @@ export const SimpleConditionEditor = ({
                   type="number"
                   width={10}
                   value={simpleCondition.evaluator.params[0] ?? ''}
-                  onChange={onEvaluateValueChange}
+                  onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
+                  onChange={(e) => onEvaluateValueChange(e.currentTarget.value, 0)}
                 />
               )}
             </Stack>
