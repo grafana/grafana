@@ -34,6 +34,7 @@ interface AppWrapperProps {
 
 interface AppWrapperState {
   ready?: boolean;
+  // @PERCONA
   perconaReady?: boolean;
 }
 
@@ -107,6 +108,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     };
 
     const routerWrapperProps = {
+      // @PERCONA
       perconaBootstrapper: ready && <PerconaBootstrapper onReady={this.perconaReadyCallback} />,
       routes: ready && perconaReady && this.renderRoutes(),
       pageBanners,

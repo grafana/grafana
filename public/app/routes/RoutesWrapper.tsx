@@ -26,6 +26,7 @@ function ExtraProviders(props: { children: ReactNode; providers: Array<Component
 }
 
 type RouterWrapperProps = {
+  // @PERCONA
   perconaBootstrapper?: JSX.Element | false;
   routes?: JSX.Element | false;
   bodyRenderHooks: ComponentType[];
