@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -175,7 +176,7 @@ func (s jsonSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 
 			toUpdate := struct {
 				SecureJsonData map[string][]byte
-				Updated        string
+				Updated        time.Time
 			}{Updated: nowInUTC()}
 
 			toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonData(ctx, decrypted, secrets.WithoutScope())
