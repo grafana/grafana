@@ -50,8 +50,8 @@ export const ControlledLogRows = ({
   );
 };
 
-const LogRowsComponent = ({ loading, loadMoreLogs, range, ...rest }: LogRowsComponentProps) => {
-  const { app, dedupStrategy, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
+  const { app, dedupStrategy, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -61,6 +61,14 @@ const LogRowsComponent = ({ loading, loadMoreLogs, range, ...rest }: LogRowsComp
     );
     return () => subscription.unsubscribe();
   }, [eventBus]);
+
+  const filteredLogs = useMemo(
+    () =>
+      filterLevels.length === 0
+        ? deduplicatedRows
+        : deduplicatedRows.filter((log) => filterLevels.includes(log.logLevel)),
+    [filterLevels, deduplicatedRows]
+  );
 
   return (
     <div className={styles.logRowsContainer}>
@@ -73,7 +81,7 @@ const LogRowsComponent = ({ loading, loadMoreLogs, range, ...rest }: LogRowsComp
           loadMoreLogs={loadMoreLogs}
           range={range}
           timeZone={rest.timeZone}
-          rows={rest.logRows ?? []}
+          rows={filteredLogs}
           scrollElement={scrollElementRef.current}
           sortOrder={sortOrder}
         >
@@ -81,13 +89,14 @@ const LogRowsComponent = ({ loading, loadMoreLogs, range, ...rest }: LogRowsComp
             {...rest}
             app={app}
             dedupStrategy={dedupStrategy}
+            deduplicatedRows={filteredLogs}
+            logRows={filteredLogs}
             logsSortOrder={sortOrder}
             scrollElement={scrollElementRef.current}
             showTime={showTime}
             wrapLogMessage={wrapLogMessage}
             renderPreview
           />
-          );
         </InfiniteScroll>
       </div>
       <LogListControls eventBus={eventBus} />
