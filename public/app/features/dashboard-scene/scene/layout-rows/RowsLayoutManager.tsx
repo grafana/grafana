@@ -16,7 +16,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle } from '../layouts-shared/utils';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -90,8 +90,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
-    this.setState({ rows: [...this.state.rows, newRow] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    this.addNewRow(newRow);
   }
 
   public addNewRow(row?: RowItem): RowItem {
@@ -135,8 +134,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public removeRow(row: RowItem) {
+    // When removing last row replace ourselves with the inner row layout
+    if (this.state.rows.length === 1) {
+      ungroupLayout(this, row.state.layout);
+      return;
+    }
+
     const rows = this.state.rows.filter((r) => r !== row);
-    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
+    this.setState({ rows });
     this.publishEvent(new ObjectRemovedFromCanvasEvent(row), true);
   }
 

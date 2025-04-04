@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
@@ -14,7 +14,6 @@ import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
 
-import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
@@ -86,14 +85,6 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
       name: screenshot.name,
     }));
     return <Carousel images={carouselImages} />;
-  }
-
-  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
-    return (
-      <div>
-        <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
-      </div>
-    );
   }
 
   if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {

@@ -686,6 +686,16 @@
       "view-dashboard": "View dashboard",
       "view-panel": "View panel"
     },
+    "create-new-folder": {
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "name": "Folder name"
+      },
+      "new-folder": "New folder",
+      "placeholder-enter-a-name": "Enter a name",
+      "title-new-folder": "New folder"
+    },
     "custom-annotation-header-field": {
       "custom-annotation-name-and-content": "Custom annotation name and content",
       "placeholder-enter-custom-annotation-name": "Enter custom annotation name..."
@@ -705,6 +715,9 @@
       "title-search-dashboard": "Search dashboard",
       "title-search-panel": "Search panel",
       "title-select-dashboard-and-panel": "Select dashboard and panel"
+    },
+    "data-source-section": {
+      "import-to-grafana": "Import to Grafana rules"
     },
     "datasource-not-found": {
       "remove-query": "Remove query",
@@ -851,8 +864,8 @@
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
-    "folder-creation-modal": {
-      "placeholder-enter-a-name": "Enter a name"
+    "folder-selector": {
+      "description-select-folder": "Select a folder to store your rule in."
     },
     "folderAndGroup": {
       "evaluation": {
@@ -1017,6 +1030,7 @@
     },
     "import-to-gma": {
       "action-button": "Import",
+      "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
@@ -1024,7 +1038,7 @@
       },
       "datasource": {
         "label": "Data source",
-        "required-message": "Please select a datasource"
+        "required-message": "Please select a data source"
       },
       "error": "Failed to import alert rules: {{error}}",
       "group": {
@@ -1036,8 +1050,7 @@
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "optional-settings": "Optional settings",
-      "pageTitle": "Import alert rules from a datasource to Grafana-managed rules",
+      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
@@ -1604,14 +1617,7 @@
         "validation": "Pending period must be greater than or equal to the evaluation interval."
       },
       "folder": {
-        "cancel": "Cancel",
-        "create": "Create",
-        "create-folder": "Create a new folder to store your alert rule in.",
-        "creating-new-folder": "Creating new folder",
-        "label": "Folder",
-        "name": "Folder name",
-        "new-folder": "New folder",
-        "new-folder-or": "or"
+        "label": "Folder"
       },
       "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
@@ -1957,7 +1963,8 @@
     "to-gma": {
       "confirm-modal": {
         "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
-        "summary": "These are the list of rules that will be imported:"
+        "summary": "These are the list of rules that will be imported:",
+        "title-warning": "Warning"
       }
     },
     "unused-contact-point-badge": {
@@ -2534,9 +2541,9 @@
       "group-panels": "Group panels",
       "new-row": "New row",
       "new-tab": "New tab",
-      "paste-panel": "Paste panel",
       "paste-row": "Paste row",
-      "paste-tab": "Paste tab"
+      "paste-tab": "Paste tab",
+      "un-group-panels": "Ungroup"
     },
     "conditional-rendering": {
       "conditions": {
@@ -2807,6 +2814,7 @@
     },
     "new-panel": {
       "configure-button": "Configure",
+      "configure-button-menu": "Toggle menu",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel"
     },
@@ -2833,7 +2841,11 @@
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
-      }
+      },
+      "only-overrides-button-tooltip": "Show only overrides",
+      "placeholder-search-options": "Search options",
+      "visualization-button-label": "Visualization",
+      "visualization-button-tooltip": "Search options"
     },
     "panel-editor-table-view": {
       "title-raw-data": "Raw data"
@@ -3366,9 +3378,6 @@
     "panel-inspect-renderer": {
       "title-panel-plugin-not-loaded": "Panel plugin not loaded"
     },
-    "panel-options-pane": {
-      "placeholder-search-options": "Search options"
-    },
     "panel-viz-type-picker": {
       "placeholder-search-for": "Search for...",
       "title-close": "Close"
@@ -3631,11 +3640,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Open JSON editor",
-      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
-      "angular-deprecation-heading": "Panel options"
-    },
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
@@ -5081,6 +5085,21 @@
         "shortcut": "alt+select to enable again"
       }
     },
+    "logs-controls": {
+      "deduplication": "Deduplication",
+      "disable-highlighting": "Disable highlighting",
+      "display-level": "Display levels",
+      "display-level-all": "All levels",
+      "enable-highlighting": "Enable highlighting",
+      "hide-timestamps": "Hide timestamps",
+      "newest-first": "Newest logs first",
+      "oldest-first": "Oldest logs first",
+      "scroll-bottom": "Scroll to bottom",
+      "scroll-top": "Scroll to top",
+      "show-timestamps": "Show timestamps",
+      "unwrap-lines": "Unwrap lines",
+      "wrap-lines": "Wrap lines"
+    },
     "logs-navigation": {
       "newer-logs": "Newer logs",
       "older-logs": "Older logs",
@@ -5901,24 +5920,6 @@
     }
   },
   "plugins": {
-    "angular-deprecation-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "try-migration": "Try migration"
-    },
-    "angular-deprecation-plugin-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "title-angular-plugin": "Angular plugin",
-      "view-plugin-details": "View plugin details"
-    },
-    "angular-migration-notice": {
-      "report-issue": "Report issue",
-      "revert-migration": "Revert migration"
-    },
-    "app-config-ctrl-wrapper": {
-      "disable": "Disable",
-      "enable": "Enable",
-      "update": "Update"
-    },
     "app-root-page": {
       "access-denied": {
         "permission": "You do not have permission to see this page.",
@@ -6134,7 +6135,6 @@
       "files-count_other": "{{count}} files",
       "grafana": "Grafana",
       "include-history": "Include history",
-      "include-identifiers": "Include identifiers",
       "label-display-name": "Display name",
       "label-migrate-options": "Migrate options",
       "placeholder-my-repository-connection": "My repository connection",
@@ -6143,8 +6143,7 @@
       "text-loading-resource-information": "Loading resource information...",
       "title-files-exist-in-the-target": "Files exist in the target",
       "title-note": "Note",
-      "tooltip-include-history": "Include complete dashboard version history",
-      "tooltip-include-identifiers": "Include unique identifiers for each dashboard to maintain references"
+      "tooltip-include-history": "Include complete dashboard version history"
     },
     "check-repository": {
       "check": "Check"
@@ -6207,10 +6206,9 @@
       "title-webhook-will-be-created": "Webhook will be created"
     },
     "connect-repository-button": {
-      "connect-to-repository": "Connect to repository",
-      "max-repositories-exist": "Maximum repositories exist ({{count}})",
-      "tooltip-max-repos_one": "Max repositories already created ({{count}})",
-      "tooltip-max-repos_other": "Max repositories already created ({{count}})"
+      "configure-file": "Configure file provisioning",
+      "configure-git-sync": "Configure GitSync",
+      "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "connect-step": {
       "description-choose-storage-resources": "Choose the type of storage for your resources",
@@ -6249,13 +6247,14 @@
       "no-jobs": "No jobs..."
     },
     "enhanced-features": {
+      "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
       "description-visual-previews-dashboard-updates-directly-requests": "See visual previews of dashboard updates directly in pull requests",
+      "header": "Enhance your GitHub experience",
       "set-up-image-rendering": "Set up image rendering",
-      "set-up-public-access": "Set up public access",
-      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks",
-      "title-visual-previews-in-pull-requests": "Visual previews in pull requests",
-      "unlock-enhanced-functionality-for-git-hub": "Unlock enhanced functionality for GitHub"
+      "set-up-public-webhooks": "Set up public webhooks",
+      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
+      "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "expanded-row": {
       "job-specification": "Job Specification",
@@ -6266,13 +6265,10 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
-      "automatically-provision-and-update-dashboards": "Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository",
-      "learn-more": "Learn more",
-      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code and provision updates automatically",
-      "manage-your-dashboards-with-remote-provisioning": "Manage your dashboards with remote provisioning",
-      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to storage for provisioning",
-      "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking",
-      "visual-previews-in-pull-requests": "Visual previews in pull requests to review your changes before going live"
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
+      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to GitHub for provisioning",
+      "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
@@ -6325,8 +6321,8 @@
       "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
     },
     "getting-started-page": {
-      "subtitle-provisioning-feature": "Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems",
-      "text-remote-provisioning": "Remote provisioning"
+      "header": "Provisioning",
+      "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
     "history-view": {
       "not-found": "Not found"
@@ -6349,9 +6345,12 @@
     "job-status": {
       "error-unknown": "An unknown error occurred",
       "label-view-details": "View details",
+      "loading-finished-job": "Loading finished job...",
+      "no-job-found": "No job found",
+      "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
       "starting": "Starting...",
       "status": {
-        "title-error-running-job": "error running job",
+        "title-error-running-job": "Error running job",
         "title-job-completed-successfully": "Job completed successfully"
       },
       "summary": "Summary"
@@ -6741,8 +6740,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode"
+      "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
