@@ -29,10 +29,15 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 You can configure SAML authentication in Grafana through one of the following methods:
 
-- The Grafana configuration file
-- The API (refer to [SSO Settings API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/))
-- The user interface (refer to [Configure SAML authentication using the Grafana user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-ui/)
-- The Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings))
+- [Configure SAML using Grafana configuration file](#configure-saml-using-the-grafana-config-file)
+- Configure SAML using the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/)
+- Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-ui/)
+- Configure SAML using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings)
+
+If you are using Okta or Azure AD as Identity Provider, see the following documentation for configuration:
+
+- [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/)
+- [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
 
 {{% admonition type="note" %}}
 The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
@@ -69,7 +74,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
 
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
-Refer to [Configuration](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) for more information about configuring Grafana.
+Refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) for more information about configuring Grafana.
 
 ## Identity provider (IdP) registration
 
@@ -188,7 +193,7 @@ auto_login = true
 
 ## Configure allowed organizations
 
-With the [`allowed_organizations`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#allowed_organizations) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+With the [`allowed_organizations`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#allowed_organizations) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
 To put values containing spaces in the list, use the following JSON syntax:
 
@@ -211,3 +216,14 @@ For Grafana Cloud instances, please contact Grafana Support to update the `conte
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
+
+## Advanced configuration
+
+For advanced configuration and troublshooting, please refer to the one of the following pages:
+
+- [Configure SAML request signing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-request-signing/)
+- [Configure SAML single logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/)
+- [Configure Organization mapping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-org-mapping/)
+- [Configure Role and Team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/)
+- [SAML configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/)
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/troubleshoot-saml/)
