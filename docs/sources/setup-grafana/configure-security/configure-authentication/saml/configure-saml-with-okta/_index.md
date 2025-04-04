@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: Configure SAML with Okta
 title: Configure SAML authentication with Okta
-weight: 510
+weight: 580
 ---
 
 ## Set up SAML with Okta

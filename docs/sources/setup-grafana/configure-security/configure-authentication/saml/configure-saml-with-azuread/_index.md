@@ -9,7 +9,7 @@ labels:
     - enterprise
 menuTitle: Configure SAML with Entra ID
 title: Configure SAML authentication with Entra ID
-weight: 510
+weight: 570
 ---
 
 # Configure SAML with Microsoft Entra ID

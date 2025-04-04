@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: Configure SAML request signing
 title: Configure SAML request signing
-weight: 520
+weight: 530
 ---
 
 ## Signing and encryption

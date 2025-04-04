@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: Configure Organisation mapping for SAML
 title: Configure Organisation mapping for SAML
-weight: 540
+weight: 550
 ---
 ### Configure organization mapping
 

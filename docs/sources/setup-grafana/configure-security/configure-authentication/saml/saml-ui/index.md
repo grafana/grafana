@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: SAML user interface
 title: Configure SAML authentication using the Grafana user interface
-weight: 590
+weight: 510
 ---
 
 # Configure SAML authentication using the Grafana user interface

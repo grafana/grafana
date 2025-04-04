@@ -5,7 +5,7 @@ labels:
     - enterprise
 menuTitle: SAML configuration options
 title: SAML configuration options
-weight: 590
+weight: 520
 ---
 ### Example SAML configuration
 

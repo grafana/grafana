@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: Configure SAML single logout
 title: Configure SAML single logout
-weight: 530
+weight: 560
 ---
 
 ### Single logout
