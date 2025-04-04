@@ -48,13 +48,13 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     const isGridLayout = layoutManager.descriptor.isGridLayout;
 
     const groupLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.layout', 'Group layout'),
+      title: t('dashboard.layout.common.group-layout', 'Group layout'),
       id: 'group-layout-category',
       isOpenDefault: false,
     });
 
     const gridLayout = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.layout.common.grid', 'Grid'),
+      title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
       id: 'grid-layout-category',
       isOpenDefault: false,
     });
@@ -68,7 +68,10 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     );
 
     if (isGridLayout) {
-      groupLayout.props.disabledText = 'No groups exists';
+      groupLayout.props.disabledText = t(
+        'dashboard.layout.common.group-layout-disabled',
+        'No groups exists on this level'
+      );
     } else {
       groupLayout.addItem(
         new OptionsPaneItemDescriptor({
@@ -78,7 +81,10 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
         })
       );
 
-      gridLayout.props.disabledText = 'Select a row or tab to change grid options';
+      gridLayout.props.disabledText = t(
+        'dashboard.layout.common.panel-layout-disabled',
+        'Select a row or tab to change grid options'
+      );
     }
 
     if (layoutManager.getOptions) {
