@@ -77,13 +77,7 @@ describe('usePromQueryFieldEffects', () => {
 
   it('should call refreshMetrics when the time range changes', async () => {
     const { rerender } = renderHook(
-      (props: TestProps) =>
-        usePromQueryFieldEffects(
-          props.range,
-          props.series,
-          refreshMetricsMock,
-          refreshHintMock
-        ),
+      (props: TestProps) => usePromQueryFieldEffects(props.range, props.series, refreshMetricsMock, refreshHintMock),
       {
         initialProps: {
           languageProvider: mockLanguageProvider,
@@ -108,13 +102,7 @@ describe('usePromQueryFieldEffects', () => {
 
   it('should not call refreshMetrics when the time range is the same', () => {
     const { rerender } = renderHook(
-      (props: TestProps) =>
-        usePromQueryFieldEffects(
-          props.range,
-          props.series,
-          refreshMetricsMock,
-          refreshHintMock
-        ),
+      (props: TestProps) => usePromQueryFieldEffects(props.range, props.series, refreshMetricsMock, refreshHintMock),
       {
         initialProps: {
           languageProvider: mockLanguageProvider,
@@ -141,13 +129,7 @@ describe('usePromQueryFieldEffects', () => {
   it('should call refreshHint when series changes', () => {
     const mockSeries = [{ name: 'new series', fields: [], length: 0 }] as DataFrame[];
     const { rerender } = renderHook(
-      (props: TestProps) =>
-        usePromQueryFieldEffects(
-          props.range,
-          props.series,
-          refreshMetricsMock,
-          refreshHintMock
-        ),
+      (props: TestProps) => usePromQueryFieldEffects(props.range, props.series, refreshMetricsMock, refreshHintMock),
       {
         initialProps: {
           languageProvider: mockLanguageProvider,
@@ -175,13 +157,7 @@ describe('usePromQueryFieldEffects', () => {
   it('should not call refreshHint when series is the same', () => {
     const series = [] as DataFrame[];
     const { rerender } = renderHook(
-      (props: TestProps) =>
-        usePromQueryFieldEffects(
-          props.range,
-          props.series,
-          refreshMetricsMock,
-          refreshHintMock
-        ),
+      (props: TestProps) => usePromQueryFieldEffects(props.range, props.series, refreshMetricsMock, refreshHintMock),
       {
         initialProps: {
           languageProvider: mockLanguageProvider,
