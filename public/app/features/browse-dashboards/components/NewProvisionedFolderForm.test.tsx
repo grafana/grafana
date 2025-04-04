@@ -6,7 +6,8 @@ import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
 
 import { FolderDTO } from '../../../types';
 
@@ -46,9 +47,14 @@ jest.mock('app/api/clients/folder', () => {
   };
 });
 
-jest.mock('app/features/provisioning/hooks', () => {
+jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   return {
     usePullRequestParam: jest.fn(),
+  };
+});
+
+jest.mock('app/features/provisioning/hooks/useRepositoryList', () => {
+  return {
     useRepositoryList: jest.fn(),
   };
 });

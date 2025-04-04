@@ -11,12 +11,15 @@ interface GetResourceRepositoryArgs {
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
-export const useGetResourceRepositoryView = ({ name, folderUid }: GetResourceRepositoryArgs): RepositoryView | null => {
+export const useGetResourceRepositoryView = ({
+  name,
+  folderUid,
+}: GetResourceRepositoryArgs): RepositoryView | undefined => {
   const settings = useGetFrontendSettingsQuery();
   const folderQuery = useGetFolderQuery(name || !folderUid ? skipToken : { name: folderUid });
 
   if (!settings.data?.items) {
-    return null;
+    return undefined;
   }
 
   if (name) {
@@ -50,5 +53,5 @@ export const useGetResourceRepositoryView = ({ name, folderUid }: GetResourceRep
     return instanceConfig;
   }
 
-  return null;
+  return undefined;
 };
