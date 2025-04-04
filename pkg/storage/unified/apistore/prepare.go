@@ -61,6 +61,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
+	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+		return nil, err
+	}
 
 	if s.opts.RequireDeprecatedInternalID {
 		// nolint:staticcheck
@@ -107,6 +110,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	previous, err := utils.MetaAccessor(previousObject)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := checkManagerPropertiesOnUpdate(info, obj, previous); err != nil {
 		return nil, err
 	}
 

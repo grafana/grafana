@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -264,23 +265,21 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 
 // writeParsed write parsed resource to the repository and grafana database
 func (r *DualReadWriter) writeParsed(ctx context.Context, path string, parsed *ParsedResource) error {
+	// Use the provisioning identity to update the grafana database (ctx may be from user HTTP request)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
 	if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
 		return fmt.Errorf("ensure folder path exists: %w", err)
 	}
 
-	// FIXME: I don't like this parsed strategy here
-	var err error
-	if parsed.Existing == nil {
+	// Update... or Create
+	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	if err != nil && apierrors.IsNotFound(err) {
 		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("create resource: %w", err)
-		}
-	} else {
-		parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("update resource: %w", err)
-		}
 	}
 
-	return nil
+	return err
 }
