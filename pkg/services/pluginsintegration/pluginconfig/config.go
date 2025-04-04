@@ -36,7 +36,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
 			LocalizationForPlugins:      features.IsEnabledGlobally(featuremgmt.FlagLocalizationForPlugins),
 		},
-		cfg.AngularSupportEnabled,
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,

@@ -180,7 +180,9 @@ export function InstallControlsButton({
       </Stack>
     );
   }
-  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
+
+  const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
       {isInstalling ? 'Installing' : 'Install'}

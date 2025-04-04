@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { PluginState } from '@grafana/data';
-import { setAngularLoader, setPluginComponentsHook } from '@grafana/runtime';
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
@@ -48,16 +48,6 @@ const setup = (props?: Partial<ViewProps>) => {
 };
 
 describe('<EditDataSource>', () => {
-  beforeAll(() => {
-    setAngularLoader({
-      load: () => ({
-        destroy: jest.fn(),
-        digest: jest.fn(),
-        getScope: () => ({ $watch: () => {} }),
-      }),
-    });
-  });
-
   beforeEach(() => {
     setPluginComponentsHook(jest.fn().mockReturnValue({ isLoading: false, components: [] }));
   });

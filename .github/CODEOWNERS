@@ -543,7 +543,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/datagrid/ @grafana/dataviz-squad
 /public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
-/public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
@@ -556,7 +555,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
-/public/app/plugins/panel/table-old/ @grafana/dataviz-squad
 /public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/trend/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
@@ -568,7 +566,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
-/public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
@@ -601,7 +598,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/api-merged.json @grafana/grafana-backend-group
 /public/api-enterprise-spec.json @grafana/grafana-backend-group
 /public/openapi3.json @grafana/grafana-backend-group
-/public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend

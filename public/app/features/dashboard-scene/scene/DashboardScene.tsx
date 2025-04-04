@@ -70,7 +70,6 @@ import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
-import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -744,23 +743,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getDashboardPanels() {
     return dashboardSceneGraph.getVizPanels(this);
-  }
-
-  public hasDashboardAngularPlugins() {
-    const sceneGridLayout = this.state.body;
-    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
-      return false;
-    }
-    const gridItems = sceneGridLayout.state.grid.state.children;
-    const dashboardWasAngular = gridItems.some((gridItem) => {
-      if (!(gridItem instanceof DashboardGridItem)) {
-        return false;
-      }
-      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
-      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
-      return isAngularPanel || isAngularDs;
-    });
-    return dashboardWasAngular;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {

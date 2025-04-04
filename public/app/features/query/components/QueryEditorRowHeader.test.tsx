@@ -102,7 +102,6 @@ function renderScenario(overrides: Partial<Props>) {
     dataSource: {} as DataSourceInstanceSettings,
     hidden: false,
     onChange: jest.fn(),
-    onClick: jest.fn(),
     collapsedText: '',
   };
 
