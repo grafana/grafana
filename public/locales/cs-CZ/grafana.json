@@ -482,8 +482,16 @@
       "without-soft-delete": ""
     },
     "deleted-rules": {
+      "delete-modal": {
+        "body": "",
+        "confirm": "",
+        "error": "",
+        "success": "",
+        "title": ""
+      },
       "empty-state-title": "",
       "errorloading": "",
+      "permanently-delete": "",
       "restore": "",
       "restore-deleted-manually": "",
       "restore-modal": {
@@ -507,6 +515,10 @@
       "recording": "",
       "rule-name": ""
     },
+    "ds-group-loader": {
+      "group-deleting": "",
+      "group-load-failed": ""
+    },
     "export": {
       "subtitle": {
         "formats": "Vyberte formát a stáhněte soubor nebo zkopírujte obsah do schránky",
@@ -525,10 +537,12 @@
     },
     "group-actions": {
       "actions-trigger": "Akce skupiny pravidel",
-      "delete": "Odstranit",
-      "edit": "Upravit",
-      "export": "Exportovat",
-      "reorder": "Pravidla opětovného uspořádání"
+      "details": "",
+      "edit": "Upravit"
+    },
+    "group-actions-menu": {
+      "group-load-failed": "",
+      "unknown-error": ""
     },
     "group-details": {
       "ds-features-error": "",
@@ -569,6 +583,47 @@
       "rule-group-error": "",
       "title": ""
     },
+    "group-loader": {
+      "group-load-failed": ""
+    },
+    "import-from-dsrules": {
+      "description-folder-import-rules": ""
+    },
+    "import-to-gma": {
+      "action-button": "",
+      "alert-rules": "",
+      "confirm-modal": {
+        "confirm": "",
+        "title": ""
+      },
+      "datasource": {
+        "label": "",
+        "required-message": ""
+      },
+      "error": "",
+      "group": {
+        "description": "",
+        "label": ""
+      },
+      "import-location-and-filters": "",
+      "namespace": {
+        "description": "",
+        "label": ""
+      },
+      "optional-settings": "",
+      "pageTitle": "",
+      "pause": {
+        "label": ""
+      },
+      "pause-recording": {
+        "label": ""
+      },
+      "recording-rules": "",
+      "success": "",
+      "target-folder": {
+        "label": ""
+      }
+    },
     "irm-integration": {
       "connection-method": "Jak se připojit k IRM",
       "disabled-description": "Chcete-li použít tuto integraci, povolte Grafana IRM",
@@ -594,6 +649,8 @@
         "new-recording-rule": "Nové pravidlo nahrávání",
         "provisioning": "Pravidla můžete definovat také prostřednictvím zajištění souboru nebo Terraformu. <2>Zjistěte víc</2>"
       },
+      "no-prom-or-loki-rules": "",
+      "no-rules": "",
       "section": {
         "dataSourceManaged": {
           "title": "Spravovaný zdroj dat"
@@ -604,7 +661,8 @@
           "loading": "Načítání…",
           "new-recording-rule": "Nové pravidlo nahrávání",
           "title": "Spravováno Grafanou"
-        }
+        },
+        "loading-rules": ""
       }
     },
     "manage-permissions": {
@@ -622,6 +680,10 @@
       "description": "Zadejte konkrétní časové intervaly, kdy nechcete odesílat oznámení nebo zmrazit oznámení pro opakující se časová období.",
       "save": "Uložit časování ztlumení",
       "saving": "Ukládání časování ztlumení"
+    },
+    "namespace-and-group-filter": {
+      "select-group": "",
+      "select-namespace": ""
     },
     "notification-preview": {
       "alertmanager": "Správce výstrah:",
@@ -722,7 +784,7 @@
       "previewCondition": "Podmínka pravidla náhledu výstrahy"
     },
     "recording-rules": {
-      "description-target-data-source": "Zdroj dat Prometheus, do kterého se uloží pravidlo záznamu",
+      "description-target-data-source": "",
       "label-target-data-source": "Cílový zdroj dat"
     },
     "rule-form": {
@@ -828,6 +890,7 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurovat",
+      "draft-new-rule": "",
       "ds-error-boundary": {
         "description": "Zkontrolujte konfiguraci zdroje dat. Podporuje zdroj dat Prometheus API?",
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
@@ -836,15 +899,24 @@
         "no-more-results": "Žádné další výsledky – zobrazují se {{numberOfRules}} pravidla",
         "no-rules-found": "Vaší aktuální sadě filtrů neodpovídají žádná pravidla výstrah ani nahrávání."
       },
+      "import-to-gma": {
+        "new-badge": "",
+        "text": ""
+      },
+      "more": "",
       "new-alert-rule": "Nové pravidlo výstrahy",
+      "new-datasource-recording-rule": "",
+      "new-grafana-recording-rule": "",
       "pagination": {
         "next-page": "další strana",
         "previous-page": "předchozí strana"
       },
+      "recording-rules": "",
       "return-button": {
         "title": "Pravidla výstrah"
       },
-      "rulerrule-loading-error": "Pravidlo se nepodařilo načíst"
+      "rulerrule-loading-error": "Pravidlo se nepodařilo načíst",
+      "unknown-rule-type": ""
     },
     "rule-state": {
       "creating": "Vytváření",
@@ -863,7 +935,7 @@
     "rule-viewer": {
       "error-loading": "Při načítání pravidla se něco pokazilo",
       "prometheus-consistency-check": {
-        "alert-message": "Pravidlo výstrahy bylo aktualizováno. Může trvat až minutu, než se změny projeví v zobrazení seznamu pravidel výstrah.",
+        "alert-message": "",
         "alert-title": "Probíhá aktualizace"
       }
     },
@@ -920,6 +992,12 @@
     },
     "threshold": {
       "to": "DO"
+    },
+    "to-gma": {
+      "confirm-modal": {
+        "body": "",
+        "summary": ""
+      }
     }
   },
   "annotations": {
@@ -1124,13 +1202,34 @@
       "create-label": "Vytvořit",
       "name-label": "Název složky"
     },
+    "new-provisioned-folder-form": {
+      "alert-error-creating-folder": "",
+      "alert-folder-created-successfully": "",
+      "button-create": "",
+      "button-creating": "",
+      "cancel": "",
+      "description-branch-name-in-git-hub": "",
+      "error-invalid-folder-name": "",
+      "error-required": "",
+      "folder-comment-input-placeholder-describe-changes-optional": "",
+      "folder-name-input-placeholder-enter-folder-name": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-folder-name": "",
+      "label-workflow": "",
+      "text-pull-request-created": "",
+      "title-pull-request-created": "",
+      "title-repository-not-found": "",
+      "title-this-repository-is-read-only": ""
+    },
     "no-results": {
       "clear": "Vymazat vyhledávání a filtry",
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
     "soft-delete": {
       "success": "Nástěnka {{name}} byla přesunuta do Nedávno odstraněné"
-    }
+    },
+    "text-this-repository-is-read-only": ""
   },
   "carousel": {
     "close": "",
@@ -1353,6 +1452,10 @@
     "actions": {
       "open-settings": "Nastavení"
     },
+    "add-library-panel-widget": {
+      "aria-label-close-add-panel-widget": "",
+      "tooltip-close-widget": ""
+    },
     "add-menu": {
       "import": "Importovat z knihovny",
       "paste-panel": "Vložit panel",
@@ -1362,6 +1465,29 @@
     "alert-rules-drawer": {
       "redirect-link": "Zahrnout do seznamu výstrah Grafana",
       "subtitle": "Pravidla výstrah související s touto nástěnkou"
+    },
+    "annotation-settings-edit": {
+      "apply": "",
+      "delete": "",
+      "description-color-annotation-event-markers": "",
+      "description-enabled-annotation-query-issued-every-dashboard": "",
+      "label-color": "",
+      "label-data-source": "",
+      "label-enabled": "",
+      "label-hidden": "",
+      "label-name": "",
+      "label-show-in": "",
+      "placeholder-choose-panels": "",
+      "preview-in-dashboard": "",
+      "query": "",
+      "title-annotation-support-source": ""
+    },
+    "annotation-settings-list": {
+      "data-source": "",
+      "new-query": "",
+      "query-name": "",
+      "tooltip-move-down": "",
+      "tooltip-move-up": ""
     },
     "auto-grid": {
       "description": "",
@@ -1399,47 +1525,97 @@
       "group-into-tab": "",
       "group-panels": "",
       "new-row": "",
-      "new-tab": ""
+      "new-tab": "",
+      "paste-panel": "",
+      "paste-row": "",
+      "paste-tab": ""
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "Deaktivovat",
-        "enable": "Povolit",
-        "label": "Data"
-      },
-      "group": {
-        "add": {
-          "button": "Přidat podmínku na základě",
-          "data": "Data",
-          "interval": "Interval",
-          "variable": "Proměnná hodnota"
+      "conditions": {
+        "data": {
+          "disable": "",
+          "enable": "",
+          "info": "",
+          "label": ""
         },
-        "condition": {
-          "label": "Vyhodnotit podmínky",
-          "meet-all": "Splňovat všechny",
-          "meet-any": "Splňovat jakoukoli"
+        "group": {
+          "add": {
+            "button": "",
+            "data": "",
+            "time-range-size": "",
+            "variable": ""
+          },
+          "condition": {
+            "all": "",
+            "any": "",
+            "label": ""
+          },
+          "label": "",
+          "visibility": {
+            "hide": "",
+            "label": "",
+            "show": ""
+          }
         },
-        "label": "Skupina"
-      },
-      "interval": {
-        "input-label": "Hodnota",
-        "invalid-message": "Neplatný interval",
-        "label": "Interval časového rozsahu"
-      },
-      "shared": {
-        "delete-condition": "Odstranit podmínku"
-      },
-      "title": "Možnosti podmíněného vykreslení",
-      "variable": {
-        "label": "Proměnná",
-        "operator": {
-          "equals": "Je rovno",
-          "not-equal": "Není rovno"
+        "shared": {
+          "delete-condition": "",
+          "unsupported-item-type": ""
         },
-        "select-operator": "Operátor",
-        "select-variable": "Vyberte proměnnou",
-        "value-input": "Hodnota"
+        "time-range-size": {
+          "info": "",
+          "invalid-message": "",
+          "label": "",
+          "values": {
+            "days": "",
+            "hour": "",
+            "hours": "",
+            "minutes": "",
+            "months": "",
+            "year": "",
+            "years": ""
+          }
+        },
+        "variable": {
+          "info": "",
+          "label": "",
+          "name": "",
+          "operator": {
+            "equals": "",
+            "not-equals": ""
+          },
+          "value": ""
+        }
+      },
+      "overlay": {
+        "tooltip": ""
+      },
+      "root": {
+        "info": "",
+        "title": ""
       }
+    },
+    "confirm-plugin-dashboard-save-modal": {
+      "cancel": "",
+      "overwrite": "",
+      "title-plugin-dashboard": ""
+    },
+    "dash-nav": {
+      "render-left-actions": {
+        "text-public": ""
+      }
+    },
+    "dashboard-loading": {
+      "cancel-loading-dashboard": ""
+    },
+    "dashboard-settings": {
+      "actions": {
+        "close": ""
+      }
+    },
+    "dashboard-validation": {
+      "title-checking-dashboard-validity": "",
+      "title-dashboard-failed-schema-validation": "",
+      "title-error-checking-dashboard-validity": ""
     },
     "default-layout": {
       "description": "Umístěte a upravte velikost každého panelu jednotlivě",
@@ -1495,30 +1671,12 @@
         "title": "Možnosti řádku"
       }
     },
+    "dynamic-config-value-editor": {
+      "render-label": {
+        "tooltip-remove-property": ""
+      }
+    },
     "edit-pane": {
-      "add": {
-        "lib-panel": {
-          "heading": "",
-          "title": ""
-        },
-        "panel": {
-          "heading": "",
-          "title": ""
-        },
-        "paste-panel": {
-          "heading": "",
-          "title": ""
-        },
-        "row": {
-          "heading": "",
-          "title": ""
-        },
-        "tab": {
-          "heading": "",
-          "title": ""
-        },
-        "title": ""
-      },
       "elements": {
         "dashboard": "Nástěnka",
         "objects": "Objekty",
@@ -1550,6 +1708,24 @@
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
+    },
+    "gen-aihistory": {
+      "aria-label-send-custom-feedback": "",
+      "placeholder-tell-ai-what-to-do-next": ""
+    },
+    "get-field-override-categories": {
+      "label-add-field-override": "",
+      "label-add-override-property": ""
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "",
+      "label-obfuscate-data": "",
+      "label-support-snapshot": "",
+      "label-template": "",
+      "randomize-field-names-label-field-names": "",
+      "randomize-labels-label-labels": "",
+      "randomize-string-values-label-string-values": "",
+      "title-complete-git-hub-comment-clipboard": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -1613,13 +1789,27 @@
         "layout": "Rozvržení"
       }
     },
+    "make-editable": {
+      "dashboard-not-editable": "",
+      "make-editable": ""
+    },
+    "minimalistic-pagination": {
+      "tooltip-next": "",
+      "tooltip-previous": ""
+    },
     "new-panel": {
-      "configure-button": ""
+      "configure-button": "",
+      "configure-button-menu": "",
+      "menu-open-panel-editor": "",
+      "menu-use-library-panel": ""
     },
     "new-panel-title": "",
     "options": {
       "description": "Popis",
       "title-option": "Název"
+    },
+    "options-pane-options": {
+      "Recent options-title-recent-options": ""
     },
     "outline": {
       "tree": {
@@ -1628,11 +1818,60 @@
         }
       }
     },
+    "override-category-title": {
+      "aria-label-remove-override": "",
+      "tooltip-remove-override": ""
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Před přidáním výstrahy musí být nástěnka uložena.",
         "no-rules": "K tomuto panelu nejsou připojena žádná pravidla výstrah."
-      }
+      },
+      "only-overrides-button-tooltip": "",
+      "placeholder-search-options": "",
+      "visualization-button-label": "",
+      "visualization-button-tooltip": ""
+    },
+    "panel-editor-table-view": {
+      "title-raw-data": ""
+    },
+    "panel-editor-unconnected": {
+      "editor-actions": {
+        "apply": "",
+        "discard": "",
+        "save": "",
+        "save-library-panel": "",
+        "title-apply-changes-and-save-dashboard": "",
+        "title-apply-changes-and-save-library-panel": "",
+        "title-apply-changes-dashboard": "",
+        "title-undo-all-changes": ""
+      },
+      "table-view-label-table-view": "",
+      "unlink": ""
+    },
+    "panel-links": {
+      "aria-label-panel-links": ""
+    },
+    "panel-not-supported": {
+      "go-back-to-queries": ""
+    },
+    "public-dashboard-not-available": {
+      "try-again-later": ""
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": ""
+    },
+    "row-options-button": {
+      "aria-label-row-options": ""
+    },
+    "row-options-form": {
+      "cancel": "",
+      "label-repeat-for": "",
+      "label-title": "",
+      "update": ""
+    },
+    "row-options-modal": {
+      "title-row-options": ""
     },
     "rows-layout": {
       "description": "Sbalitelné skupiny panelů s nadpisy",
@@ -1660,8 +1899,53 @@
           "hide-header": "",
           "title": ""
         },
+        "title-not-unique": "",
         "title-option": "Název"
+      },
+      "row-warning": {
+        "title-not-unique": ""
       }
+    },
+    "save-dashboard-as-button": {
+      "save-as": ""
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-button": "",
+      "aria-label-save-dashboard-description-field": "",
+      "aria-label-save-dashboard-title-field": "",
+      "cancel": "",
+      "description": "",
+      "label-copy-tags": "",
+      "label-folder": "",
+      "title": ""
+    },
+    "save-dashboard-button": {
+      "save-dashboard": ""
+    },
+    "save-dashboard-diff": {
+      "full-json-diff": "",
+      "no-changes-in-the-dashboard-json": ""
+    },
+    "save-dashboard-error-proxy": {
+      "title-conflict": ""
+    },
+    "save-dashboard-form": {
+      "cancel": "",
+      "label-current-range-dashboard-default": "",
+      "label-current-variable-values-dashboard-default": "",
+      "no-changes-to-save": "",
+      "placeholder-describe-changes": ""
+    },
+    "save-provisioned-dashboard-form": {
+      "cancel": "",
+      "copy-json-to-clipboard": "",
+      "save-json-to-file": ""
+    },
+    "solo-panel": {
+      "loading-initializing-dashboard": ""
+    },
+    "sub-menu-un-connected": {
+      "aria-label-template-variables": ""
     },
     "tabs-layout": {
       "description": "Uspořádat panely do vodorovných karet",
@@ -1670,13 +1954,26 @@
         "new": "Nová karta"
       },
       "tab-options": {
+        "title-not-unique": "",
         "title-option": "Název"
+      },
+      "tab-warning": {
+        "title-not-unique": ""
       }
     },
     "toolbar": {
       "add": "Přidat",
       "add-new": {
-        "tooltip": ""
+        "button": {
+          "label": "",
+          "tooltip": ""
+        },
+        "menu": {
+          "lib-panel": "",
+          "panel": "",
+          "row": "",
+          "tab": ""
+        }
       },
       "alert-rules": "Pravidla výstrah",
       "back-to-dashboard": "Zpět na nástěnku",
@@ -1788,11 +2085,78 @@
       "unlink-library-panel": "Odpojit panel knihovny",
       "unmark-favorite": "Odznačit z oblíbených"
     },
+    "transformation-editor": {
+      "input-data": "",
+      "output-data": "",
+      "title-debug-transformation": ""
+    },
+    "transformation-filter": {
+      "label-apply-transformation-to": ""
+    },
+    "transformation-operation-row": {
+      "render-actions": {
+        "title-debug": "",
+        "title-disable-transformation": "",
+        "title-filter": "",
+        "title-remove": "",
+        "title-show-transform-help": ""
+      }
+    },
+    "transformation-picker": {
+      "placeholder-search-for-transformation": "",
+      "read-more": "",
+      "title-transformations": ""
+    },
+    "transformation-picker-ng": {
+      "placeholder-search-for-transformation": "",
+      "show-images": "",
+      "title-add-another-transformation": ""
+    },
+    "un-themed-transformations-editor": {
+      "actions": {
+        "add-another-transformation": ""
+      },
+      "delete-all-transformations": "",
+      "title-delete-all-transformations": "",
+      "tooltip-clear-search": "",
+      "tooltip-close-picker": ""
+    },
+    "unsaved-changes-modal": {
+      "cancel": "",
+      "changes": "",
+      "discard": "",
+      "title-unsaved-changes": ""
+    },
+    "unthemed-dashboard-row": {
+      "aria-label-delete-row": "",
+      "learn-more": ""
+    },
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",
       "invalid-json": "Neplatný JSON",
       "tags-expected-array": "očekávané pole tagů",
       "tags-expected-strings": "očekávané pole řetězců tagů"
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": ""
+    },
+    "version-history-table": {
+      "date": "",
+      "notes": "",
+      "restore": "",
+      "updated-by": "",
+      "version": ""
+    },
+    "view-json-modal": {
+      "title-json": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "",
+      "tooltip-click-to-change-visualization": ""
+    },
+    "visualization-select-pane": {
+      "placeholder-search-for": "",
+      "title-close": ""
     },
     "viz-panel": {
       "options": {
@@ -1831,12 +2195,85 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "",
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "label-data-source": "",
+      "label-use-static-key-dimensions": ""
+    },
+    "add-to-dashboard-form": {
+      "cancel": "",
+      "description-choose-where-to-add-the-panel": "",
+      "description-select-which-dashboard-panel-created": "",
+      "label-dashboard": "",
+      "label-target-dashboard": "",
+      "open-dashboard": "",
+      "open-in-new-tab": "",
+      "title-error-adding-the-panel": ""
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "",
+      "delete": "",
+      "description-color-annotation-event-markers": "",
+      "description-enabled-annotation-query-issued-every-dashboard": "",
+      "label-color": "",
+      "label-data-source": "",
+      "label-enabled": "",
+      "label-hidden": "",
+      "label-name": "",
+      "label-show-in": "",
+      "placeholder-choose-panels": "",
+      "query": "",
+      "title-annotation-support-source": ""
+    },
+    "annotation-settings-list": {
+      "data-source": "",
+      "new-query": "",
+      "query-name": "",
+      "tooltip-move-down": "",
+      "tooltip-move-up": ""
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nemůže obsahovat neplatné znaky: „~“, „^“, „:“, „?“, „*“, „[“, „\\“ nebo „]“.",
       "cannot-start-with": "Nemůže začínat nebo končit na „/“, „.“ nebo prázdným místem.",
       "invalid-branch-name": "Neplatný název větve.",
       "it-cannot-contain-or": "Nemůže obsahovat „//“ nebo „..“.",
       "least-valid-character": "Musí mít alespoň jeden platný znak."
+    },
+    "constant-variable-form": {
+      "constant-options": "",
+      "placeholder-your-metric-prefix": ""
+    },
+    "custom-variable-form": {
+      "custom-options": "",
+      "selection-options": ""
+    },
+    "dashboard-edit-pane-renderer": {
+      "outline": ""
+    },
+    "dashboard-link-form": {
+      "back-to-list": "",
+      "label-icon": "",
+      "label-include-current-template-variable-values": "",
+      "label-include-current-time-range": "",
+      "label-open-link-in-new-tab": "",
+      "label-options": "",
+      "label-show-as-dropdown": "",
+      "label-title": "",
+      "label-tooltip": "",
+      "label-type": "",
+      "label-url": "",
+      "label-with-tags": "",
+      "placeholder-open-dashboard": ""
+    },
+    "dashboard-link-list": {
+      "info": "",
+      "new-link": "",
+      "tooltip-copy-link": "",
+      "tooltip-move-link-down": "",
+      "tooltip-move-link-up": "",
+      "type": ""
     },
     "dashboard-preview-banner": {
       "not-saved": "Hodnota ještě není uložena v databázi Grafany",
@@ -1849,17 +2286,157 @@
       "value-not-saved": "Hodnota ještě není uložena v databázi Grafany",
       "view-pull-request-in-git-hub": "Zobrazit pull request v GitHubu"
     },
+    "data-source-variable-form": {
+      "data-source-options": "",
+      "selection-options": ""
+    },
+    "description-label": {
+      "description": ""
+    },
+    "email-list": {
+      "aria-label-emailmenu": ""
+    },
+    "empty-transformations-message": {
+      "add-transformation": ""
+    },
+    "group-by-variable-form": {
+      "description-enables-users-custom-values": "",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "",
+      "group-by-options": "",
+      "label-data-source": "",
+      "label-use-static-group-by-dimensions": ""
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "",
+      "label-randomize-data": "",
+      "label-support-snapshot": "",
+      "label-template": "",
+      "randomize-field-names-label-field-names": "",
+      "randomize-labels-label-labels": "",
+      "randomize-string-values-label-string-values": "",
+      "title-complete-git-hub-comment-clipboard": "",
+      "title-get-help-with-this-panel": ""
+    },
+    "inspect-data-tab": {
+      "no-data-found": ""
+    },
+    "inspect-json-tab": {
+      "apply": ""
+    },
+    "interval-variable-form": {
+      "description-calculated-value-below-threshold": "",
+      "interval-options": ""
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": ""
+      },
+      "render-save-button-and-error": {
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      }
+    },
+    "name-already-exists-error": {
+      "title-name-already-exists": ""
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": ""
+      },
+      "text-loading-rules": "",
+      "title-dashboard-not-saved": ""
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": ""
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "",
+      "delete-all-transformations": "",
+      "title-delete-all-transformations": ""
+    },
+    "panel-edit-controls": {
+      "table-view-aria-label-toggletableview": "",
+      "table-view-label-table-view": ""
+    },
+    "panel-inspect-renderer": {
+      "title-panel-plugin-not-loaded": ""
+    },
+    "panel-viz-type-picker": {
+      "placeholder-search-for": "",
+      "title-close": ""
+    },
+    "provisioned-delete-modal": {
+      "ok": "",
+      "title-cannot-delete-provisioned-dashboard": ""
+    },
     "provisioned-resource-delete-modal": {
       "file-path": "Cesta k souboru:",
       "managed-by-version-control": "Tento {type} je spravován správcem verzí a nelze ho odstranit. Pro odebrání ho odstraňte z úložiště a proveďte synchronizaci pro použití změn.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Zajištěný zdroj nelze odstranit"
     },
+    "query-editor": {
+      "query": ""
+    },
+    "query-variable-editor-form": {
+      "label-data-source": "",
+      "query-options": "",
+      "selection-options": ""
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": ""
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "",
+      "aria-label-save-dashboard-title-field": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-copy-tags": "",
+      "label-folder": "",
+      "render-footer": {
+        "title-failed-to-save-dashboard": ""
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "",
+      "cancel-button": {
+        "cancel": ""
+      },
+      "label-message": "",
+      "placeholder-describe-changes-optional": "",
+      "render-footer": {
+        "no-changes-to-save": "",
+        "title-failed-to-save-dashboard": "",
+        "title-plugin-dashboard": "",
+        "title-someone-else-has-updated-this-dashboard": "",
+        "would-still-dashboard": ""
+      },
+      "title-dashboard-drastically-changed": ""
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "",
+      "save-refresh-label-update-default-refresh-value": "",
+      "save-timerange-label-update-default-time-range": "",
+      "save-variables-description-current-values-default": "",
+      "save-variables-label-update-default-variable-values": ""
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "",
+      "dashboard-name": "",
+      "discard": "",
+      "loading-connected-dashboards": "",
+      "placeholder-search-affected-dashboards": "",
+      "update-all": ""
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Chyba při ukládání nástěnky",
       "api-success": "Změny na nástěnce uloženy",
       "cancel": "Zrušit",
       "copy-json-message": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
+      "copy-json-to-clipboard": "",
       "dashboard-comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
       "description-branch-name-in-git-hub": "Název větvě v GitHubu",
       "description-inside-repository": "Cesta k souboru uvnitř větve (.json nebo .yaml)",
@@ -1871,11 +2448,107 @@
       "label-title": "Název",
       "label-workflow": "Pracovní tok",
       "save": "Uložit",
+      "save-json-to-file": "",
       "saving": "Ukládání…",
       "title-required": "Název nástěnky je povinný",
       "title-same-as-folder": "Název nástěnky nemůže být stejný jako název složky",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení",
       "title-validation-failed": "Ověření názvu nástěnky selhalo."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "new-alert-rule": "",
+      "title-no-alerting-capable-query-found": ""
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "",
+      "description-enables-option-include-variables": "",
+      "description-enables-users-custom-values": ""
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": ""
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "",
+      "text-options": ""
+    },
+    "title-field-label": {
+      "title": ""
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": ""
+      }
+    },
+    "unlink-modal": {
+      "title-really-unlink-panel": ""
+    },
+    "unsaved-changes-modal": {
+      "cancel": "",
+      "changes": "",
+      "discard": "",
+      "save-dashboard": "",
+      "title-unsaved-changes": ""
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "",
+      "aria-label-variable-referenced-other-variables-dashboard": ""
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "",
+      "back-to-list": "",
+      "delete": "",
+      "description-optional-display-name": "",
+      "description-template-variable-characters": "",
+      "general": "",
+      "placeholder-descriptive-text": "",
+      "placeholder-label-name": "",
+      "placeholder-variable-name": "",
+      "text-running-query": ""
+    },
+    "variable-editor-list": {
+      "definition": "",
+      "new-variable": "",
+      "variable": ""
+    },
+    "variable-editor-list-row": {
+      "title-delete-variable": "",
+      "tooltip-duplicate-variable": "",
+      "tooltip-remove-variable": ""
+    },
+    "variable-hide-select": {
+      "label-show-on-dashboard": ""
+    },
+    "variable-usages-button": {
+      "tooltip-show-usages": ""
+    },
+    "variable-values-preview": {
+      "preview-of-values": "",
+      "show-more": ""
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": ""
+    },
+    "version-history-header": {
+      "latest": "",
+      "tooltip-reset-version": ""
+    },
+    "version-history-table": {
+      "date": "",
+      "notes": "",
+      "restore": "",
+      "updated-by": "",
+      "version": ""
+    },
+    "versions-history-buttons": {
+      "compare-versions": "",
+      "show-more-versions": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "",
+      "tooltip-click-to-change-visualization": ""
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": ""
     }
   },
   "dashboard-settings": {
@@ -2617,6 +3290,9 @@
   "folder-picker": {
     "create-instructions": "Stisknutím klávesy Enter vytvoříte novou složku.",
     "loading": "Načítání složek…"
+  },
+  "folder-repo": {
+    "badge-text": ""
   },
   "forgot-password": {
     "back-button": "Zpět na přihlášení",
@@ -3537,19 +4213,6 @@
       "link-title": "Zobrazit úplného průvodce migrací",
       "title": "Pomůžeme vám přejít na tuto sadu"
     },
-    "migrated-counts": {
-      "alert_rule_groups": "skupiny pravidel výstrahy",
-      "alert_rules": "pravidla výstrah",
-      "contact_points": "kontaktní body",
-      "dashboards": "nástěnky",
-      "datasources": "zdroje dat",
-      "folders": "složky",
-      "library_elements": "prvky knihovny",
-      "mute_timings": "ztlumit časování",
-      "notification_policies": "zásady oznamování",
-      "notification_templates": "šablony oznámení",
-      "plugins": "pluginy"
-    },
     "migration-token": {
       "delete-button": "Odstranit token",
       "delete-modal-body": "Pokud už jste tento token použili se samostatně spravovanou instalací, tato instalace už nebude moct nahrávat obsah.",
@@ -3648,6 +4311,19 @@
       "notification_template": "Šablona oznámení",
       "plugin": "Doplněk",
       "unknown": "Neznámý"
+    },
+    "resource-types": {
+      "alert_rule": "",
+      "alert_rule_group": "",
+      "contact_point": "",
+      "dashboard": "",
+      "datasource": "",
+      "folder": "",
+      "library_element": "",
+      "mute_timing": "",
+      "notification_policy": "",
+      "notification_template": "",
+      "plugin": ""
     },
     "summary": {
       "cancel-snapshot": "Zrušit snímek",
@@ -4444,6 +5120,395 @@
       "text-loading-teams": ""
     }
   },
+  "provisioning": {
+    "bootstrap-step": {
+      "dashboards-unavailable-while-running-process": "",
+      "description-clear-repository-connection": "",
+      "empty": "",
+      "error-field-required": "",
+      "grafana": "",
+      "include-history": "",
+      "label-display-name": "",
+      "label-migrate-options": "",
+      "placeholder-my-repository-connection": "",
+      "repository": "",
+      "resources-will-be-added": "",
+      "text-loading-resource-information": "",
+      "title-files-exist-in-the-target": "",
+      "title-note": "",
+      "tooltip-include-history": "",
+      "files-count_one": "",
+      "files-count_few": "",
+      "files-count_many": "",
+      "files-count_other": ""
+    },
+    "check-repository": {
+      "check": ""
+    },
+    "config-form": {
+      "alert-repository-settings-saved": "",
+      "alert-repository-settings-updated": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-branch": "",
+      "description-enabled": "",
+      "description-path": "",
+      "description-repository-url": "",
+      "description-title": "",
+      "description-workflows-makes-repository": "",
+      "description-write": "",
+      "error-required": "",
+      "error-save-repository": "",
+      "error-valid-github-url": "",
+      "label-automatic-pulling": "",
+      "label-branch": "",
+      "label-enabled": "",
+      "label-github-token": "",
+      "label-interval-seconds": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-type": "",
+      "label-repository-url": "",
+      "label-target": "",
+      "label-title": "",
+      "label-workflows": "",
+      "option-branch": "",
+      "option-entire-instance": "",
+      "option-github": "",
+      "option-local": "",
+      "option-managed-folder": "",
+      "option-write": "",
+      "placeholder-branch": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-interval-seconds": "",
+      "placeholder-local-path": "",
+      "placeholder-my-config": "",
+      "placeholder-path": "",
+      "placeholder-readonly-repository": "",
+      "placeholder-select-repository-type": ""
+    },
+    "config-form-github-collapse": {
+      "description-attach-dashboard-previews": "",
+      "instructions": "",
+      "label-attach-dashboard-previews": "",
+      "label-git-hub-features": "",
+      "pull-request-image-previews": "",
+      "realtime-feedback": "",
+      "text-changes-in-git-eventually-pulled": "",
+      "text-changes-in-git-quick-pull": "",
+      "text-when-image-renderer-configured": "",
+      "title-image-renderer-not-configured": "",
+      "title-public-url-not-configured": "",
+      "title-webhook-will-be-created": ""
+    },
+    "connect-repository-button": {
+      "connect-to-repository": "",
+      "max-repositories-exist": "",
+      "tooltip-max-repos_one": "",
+      "tooltip-max-repos_few": "",
+      "tooltip-max-repos_many": "",
+      "tooltip-max-repos_other": ""
+    },
+    "connect-step": {
+      "description-choose-storage-resources": "",
+      "description-github-path": "",
+      "description-paste-your-git-hub-personal-access-token": "",
+      "description-repository-url": "",
+      "error-field-required": "",
+      "error-invalid-github-url": "",
+      "label-access-token": "",
+      "label-branch": "",
+      "label-local-path": "",
+      "label-path": "",
+      "label-repository-url": "",
+      "label-storage-type": "",
+      "placeholder-branch": "",
+      "placeholder-github-path": "",
+      "placeholder-github-token": "",
+      "placeholder-github-url": "",
+      "placeholder-local-path": "",
+      "storage-type-github": "",
+      "storage-type-local": ""
+    },
+    "delete-repository-button": {
+      "button-delete": "",
+      "confirm-delete-repository": "",
+      "error-repository-delete": "",
+      "success-repository-deleted": "",
+      "title-delete-repository": "",
+      "tooltip-delete-this-repository": ""
+    },
+    "edit-repository-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "empty-state": {
+      "no-jobs": ""
+    },
+    "enhanced-features": {
+      "description-instant-updates": "",
+      "description-visual-previews-dashboard-updates-directly-requests": "",
+      "set-up-image-rendering": "",
+      "set-up-public-access": "",
+      "title-instant-updates-requests-webhooks": "",
+      "title-visual-previews-in-pull-requests": "",
+      "unlock-enhanced-functionality-for-git-hub": ""
+    },
+    "expanded-row": {
+      "job-specification": "",
+      "summary": "",
+      "title-error": ""
+    },
+    "features-list": {
+      "actions": {
+        "set-up-required-feature-toggles": ""
+      },
+      "automatically-provision-and-update-dashboards": "",
+      "learn-more": "",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
+      "migrate-existing-dashboards-storage-provisioning": "",
+      "store-dashboards-in-version-controlled-storage": "",
+      "visual-previews-in-pull-requests": ""
+    },
+    "file-history-page": {
+      "back-to-repositories": "",
+      "repository-config-exists-configuration": ""
+    },
+    "file-status-page": {
+      "title-error-loading-file": ""
+    },
+    "files-view": {
+      "columns": {
+        "history": "",
+        "view": ""
+      },
+      "placeholder-search": ""
+    },
+    "finish-step": {
+      "description-dashboard-previews": "",
+      "description-enable-webhooks": "",
+      "description-often-shall-instance-updates-git-hub": "",
+      "description-select-workflows-allowed-within-repository": "",
+      "error-field-required": "",
+      "label-enable-dashboard-previews": "",
+      "label-enable-webhooks": "",
+      "label-update-instance-interval-seconds": "",
+      "label-workflows": "",
+      "link-setup-image-rendering": "",
+      "placeholder": "",
+      "placeholder-readonly-repository": "",
+      "text-requires-image-rendering": ""
+    },
+    "folder-repository-list": {
+      "no-results-matching-your-query": "",
+      "placeholder-search": ""
+    },
+    "getting-started": {
+      "alert-temporary-outage": "",
+      "engaging-graphic": "",
+      "modal-description-public-access": "",
+      "modal-description-required-features": "",
+      "modal-title-set-up-public-access": "",
+      "modal-title-set-up-required-features": "",
+      "step-description-copy-url": "",
+      "step-description-enable-feature-toggles": "",
+      "step-description-start-ngrok": "",
+      "step-description-update-grafana-config": "",
+      "step-title-copy-url": "",
+      "step-title-enable-feature-toggles": "",
+      "step-title-start-ngrok": "",
+      "step-title-update-grafana-config": "",
+      "title-setting-connection-could-cause-temporary-outage": ""
+    },
+    "getting-started-page": {
+      "subtitle-provisioning-feature": "",
+      "text-remote-provisioning": ""
+    },
+    "history-view": {
+      "not-found": ""
+    },
+    "home-page": {
+      "button-delete-repositories": "",
+      "configured-repositories-while-running-legacy-storage": "",
+      "confirm-delete-repositories": "",
+      "error-delete-all-repositories": "",
+      "remove-all-configured-repositories": "",
+      "subtitle": "",
+      "success-all-repositories-deleted": "",
+      "tab-getting-started": "",
+      "tab-getting-started-title": "",
+      "tab-repositories": "",
+      "tab-repositories-title": "",
+      "title-delete-all-configured-repositories": "",
+      "title-legacy-storage-detected": ""
+    },
+    "job-status": {
+      "error-unknown": "",
+      "label-view-details": "",
+      "loading-finished-job": "",
+      "no-job-found": "",
+      "no-job-found-message": "",
+      "starting": "",
+      "status": {
+        "title-error-running-job": "",
+        "title-job-completed-successfully": ""
+      },
+      "summary": ""
+    },
+    "job-step": {
+      "error-failed-to-start": "",
+      "error-invalid-response": "",
+      "error-job-failed": ""
+    },
+    "migrate-step": {
+      "description-migrating-dashboards": ""
+    },
+    "pull-step": {
+      "description-pulling-content": ""
+    },
+    "recent-jobs": {
+      "active-jobs": "",
+      "column-action": "",
+      "column-duration": "",
+      "column-message": "",
+      "column-started": "",
+      "column-status": "",
+      "error-loading": "",
+      "jobs": ""
+    },
+    "repository-actions": {
+      "settings": "",
+      "source-code": ""
+    },
+    "repository-card": {
+      "get-repository-meta": {
+        "webhook": ""
+      },
+      "settings": "",
+      "view": ""
+    },
+    "repository-health": {
+      "details": "",
+      "no-errors-found": "",
+      "title-repository-is-healthy": "",
+      "title-repository-is-unhealthy": ""
+    },
+    "repository-link": {
+      "grafana-repository": "",
+      "view-folder": "",
+      "view-repository": ""
+    },
+    "repository-overview": {
+      "checked": "",
+      "finished": "",
+      "health": "",
+      "job-id": "",
+      "last-ref": "",
+      "messages": "",
+      "pull-status": "",
+      "resources": "",
+      "started": "",
+      "status": "",
+      "view-folder": "",
+      "webhook": "",
+      "webhook-events": "",
+      "webhook-id": "",
+      "webhook-last-event": "",
+      "webhook-url": ""
+    },
+    "repository-resources": {
+      "columns": {
+        "history": "",
+        "view-dashboard": "",
+        "view-folder": ""
+      },
+      "placeholder-search": ""
+    },
+    "repository-status-page": {
+      "back-to-repositories": "",
+      "cleaning-up-resources": "",
+      "legacy-storage-message": "",
+      "not-found": "",
+      "not-found-message": "",
+      "repository-config-exists-configuration": "",
+      "tab-files": "",
+      "tab-files-title": "",
+      "tab-overview": "",
+      "tab-overview-title": "",
+      "tab-resources": "",
+      "tab-resources-title": "",
+      "title": "",
+      "title-legacy-storage": "",
+      "title-queued-for-deletion": ""
+    },
+    "request-error": {
+      "failed-to-migrate": "",
+      "failed-to-save": "",
+      "failed-to-sync": "",
+      "operation-failed": ""
+    },
+    "resource-view": {
+      "base": "",
+      "dashboard-preview": "",
+      "existing-dashboard": "",
+      "history": "",
+      "repository": "",
+      "title-error-saving-file": ""
+    },
+    "setup-modal": {
+      "done": "",
+      "next": "",
+      "previous": ""
+    },
+    "sidebar-item": {
+      "label-completed-step": "",
+      "label-current-step": "",
+      "label-pending-step": ""
+    },
+    "sync-repository": {
+      "body-edit-configuration": "",
+      "button-edit": "",
+      "error-pulling-resources": "",
+      "pull": "",
+      "success-pull-started": "",
+      "title-pull-not-enabled": "",
+      "tooltip-unhealthy-repository": ""
+    },
+    "token-permissions-info": {
+      "access": "",
+      "contents": "",
+      "github-instructions": "",
+      "metadata": "",
+      "permission": "",
+      "pull-requests": "",
+      "read-and-write": "",
+      "readonly": "",
+      "webhooks": ""
+    },
+    "wizard": {
+      "button-finish": "",
+      "button-next": "",
+      "button-start": "",
+      "step-bootstrap": "",
+      "step-connect": "",
+      "step-finish": "",
+      "step-resources": "",
+      "title-bootstrap": "",
+      "title-connect": "",
+      "title-finish": "",
+      "title-migrate": "",
+      "title-pull": ""
+    },
+    "wizard-content": {
+      "button-cancel": "",
+      "button-cancelling": "",
+      "button-submitting": "",
+      "error-instance-repository-exists": "",
+      "title-repository-verification-failed": ""
+    }
+  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Před zveřejněním nástěnky potvrďte následující:",
@@ -4686,7 +5751,7 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Odstranit trvale",
+      "delete": "",
       "restore": "Obnovit"
     },
     "page": {

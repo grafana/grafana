@@ -1,10 +1,8 @@
 export * from './backendSrv';
-export * from './AngularLoader';
 export * from './dataSourceSrv';
 export * from './LocationSrv';
 export * from './EchoSrv';
 export * from './templateSrv';
-export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
@@ -52,7 +50,8 @@ export {
   type UsePluginFunctionsOptions,
   type UsePluginFunctionsResult,
 } from './pluginExtensions/usePluginFunctions';
-
+export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
+export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
 export {
   isPluginExtensionLink,
   isPluginExtensionComponent,

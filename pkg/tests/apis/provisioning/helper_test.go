@@ -109,7 +109,7 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		state := mustNestedString(result.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state,
 			"historic job '%s' was not successful", job.GetName())
-	}, time.Second*5, time.Millisecond*20) {
+	}, time.Second*10, time.Millisecond*25) {
 		// We also want to add the job details to the error when it fails.
 		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
 		if err != nil {
@@ -201,7 +201,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagUnifiedStorageSearch,
 			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{

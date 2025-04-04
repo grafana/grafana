@@ -727,8 +727,6 @@ export type ObjectMeta = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
 };
 export type PullRequestJobOptions = {
   hash?: string;
@@ -748,8 +746,6 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
   /** Prefix in target file system */
   path?: string;
 };
@@ -920,6 +916,7 @@ export type SyncStatus = {
 export type WebhookStatus = {
   encryptedSecret?: string;
   id?: number;
+  lastEvent?: number;
   secret?: string;
   subscribedEvents?: string[];
   url?: string;

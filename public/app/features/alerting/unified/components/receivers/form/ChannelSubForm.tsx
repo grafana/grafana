@@ -145,7 +145,11 @@ export function ChannelSubForm<R extends ChannelValues>({
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
+          <Field
+            label={t('alerting.channel-sub-form.label-integration', 'Integration')}
+            htmlFor={contactPointTypeInputId}
+            data-testid={`${pathPrefix}type`}
+          >
             <Controller
               name={fieldName('type')}
               defaultValue={defaultValues.type}
@@ -174,13 +178,13 @@ export function ChannelSubForm<R extends ChannelValues>({
               onClick={() => handleTest()}
               icon={testingReceiver ? 'spinner' : 'message'}
             >
-              Test
+              <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
               <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                Duplicate
+                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
               </Button>
               {onDelete && (
                 <Button
@@ -191,7 +195,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                   onClick={() => onDelete()}
                   icon="trash-alt"
                 >
-                  Delete
+                  <Trans i18nKey="alerting.channel-sub-form.delete">Delete</Trans>
                 </Button>
               )}
             </>
@@ -244,7 +248,9 @@ export function ChannelSubForm<R extends ChannelValues>({
               />
             </CollapsibleSection>
           )}
-          <CollapsibleSection label="Notification settings">
+          <CollapsibleSection
+            label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
+          >
             <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
           </CollapsibleSection>
         </div>

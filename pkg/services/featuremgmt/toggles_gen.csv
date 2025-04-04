@@ -9,13 +9,6 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,f
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
-autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
-autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
-autoMigrateTablePanel,preview,@grafana/dataviz-squad,false,false,true
-autoMigratePiechartPanel,preview,@grafana/dataviz-squad,false,false,true
-autoMigrateWorldmapPanel,preview,@grafana/dataviz-squad,false,false,true
-autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
-disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
@@ -50,7 +43,7 @@ extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 frontendSandboxMonitorOnly,privatePreview,@grafana/plugins-platform-backend,false,false,true
-pluginsDetailsRightPanel,privatePreview,@grafana/plugins-platform-backend,false,false,true
+pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
@@ -90,6 +83,7 @@ datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceFromUI,experimental,@grafana/grafana-app-platform-squad,false,false,true
+queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
@@ -148,7 +142,6 @@ queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
-dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
@@ -238,8 +231,12 @@ inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 noBackdropBlur,experimental,@grafana/grafana-frontend-platform,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
+azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
 localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
+extensionSidebar,experimental,@grafana/observability-logs,false,false,true
+alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
+multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false

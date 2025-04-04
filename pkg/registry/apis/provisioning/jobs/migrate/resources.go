@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
@@ -20,7 +21,7 @@ var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 // TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator
-	parser    *resources.Parser
+	parser    resources.Parser
 	progress  jobs.JobProgressRecorder
 	namespace string
 	kind      schema.GroupResource
@@ -28,7 +29,7 @@ type legacyResourceResourceMigrator struct {
 	resources *resources.ResourcesManager
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser *resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,
@@ -56,7 +57,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
 		Data: value,
-	}, false)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
@@ -68,9 +69,8 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here
 	fileName, err := r.resources.CreateResourceFileFromObject(ctx, parsed.Obj, resources.WriteOptions{
-		Path:       "",
-		Ref:        "",
-		Identifier: r.options.Identifier,
+		Path: "",
+		Ref:  "",
 	})
 
 	result := jobs.JobResourceResult{
@@ -117,7 +117,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	opts.OnlyCount = false // this time actually write
 	_, err = r.legacy.Migrate(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("error running legacy migrate %s %w", r.kind.Resource, err)
+		return fmt.Errorf("error running legacy migrate (%s) %w", r.kind.Resource, err)
 	}
 
 	return nil

@@ -117,16 +117,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
-					"identifier": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Include the identifier in the exported metadata",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"identifier"},
 			},
 		},
 	}
@@ -918,16 +909,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Format:      "",
 						},
 					},
-					"identifier": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Include the identifier in the exported metadata",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"identifier"},
 			},
 		},
 	}
@@ -2125,6 +2107,12 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"lastEvent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 				},

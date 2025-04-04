@@ -1,25 +1,39 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { PanelData, SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneDataProvider, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { RadioButtonGroup, Stack } from '@grafana/ui';
+import { PanelData } from '@grafana/data';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Combobox, ComboboxOption } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowItem } from '../scene/layout-rows/RowItem';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { handleDeleteNonGroupCondition } from './shared';
-
-export type DataConditionValue = boolean;
+import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
 export class ConditionalRenderingData extends ConditionalRenderingBase<ConditionalRenderingDataState> {
+  public static Component = ConditionalRenderingDataRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingData',
+    name: 'Data',
+    deserialize: this.deserialize,
+  };
+
+  public readonly supportedItemTypes: ItemsWithConditionalRendering[] = ['panel'];
+
   public get title(): string {
-    return t('dashboard.conditional-rendering.data.label', 'Data');
+    return t('dashboard.conditional-rendering.conditions.data.label', 'Query result');
+  }
+
+  public get info(): string {
+    return t(
+      'dashboard.conditional-rendering.conditions.data.info',
+      'Show or hide the {{type}} based on query results.',
+      { type: this.getItemType() }
+    );
   }
 
   public constructor(state: ConditionalRenderingDataState) {
@@ -29,122 +43,90 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
   }
 
   private _activationHandler() {
-    let panelDataProviders: SceneDataProvider[] = [];
-    const item = this.getConditionalLogicRoot().parent;
-    if (item instanceof AutoGridItem) {
-      const panelData = sceneGraph.getData(item.state.body);
-      if (panelData) {
-        panelDataProviders.push(panelData);
-      }
-    }
-    // extract multiple panel data from RowItem
-    if (item instanceof RowItem) {
-      const panels = item.getLayout().getVizPanels();
-      for (const panel of panels) {
-        const panelData = sceneGraph.getData(panel);
-        if (panelData) {
-          panelDataProviders.push(panelData);
-        }
-      }
+    if (!this.isItemSupported()) {
+      return;
     }
 
-    panelDataProviders.forEach((d) => {
-      this._subs.add(
-        d.subscribeToState(() => {
-          this.getConditionalLogicRoot().notifyChange();
-        })
-      );
-    });
+    const item = this.getItem();
+
+    if (item instanceof AutoGridItem) {
+      const dataProvider = sceneGraph.getData(item.state.body);
+
+      if (!dataProvider) {
+        return;
+      }
+
+      this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
+    }
   }
 
   public evaluate(): boolean {
-    const { value } = this.state;
-
-    // enable/disable condition
-    if (!value) {
+    if (!this.isItemSupported()) {
       return true;
     }
 
-    let data: PanelData[] = [];
+    const hasData = this._hasData();
+    return (this.state.value && hasData) || (!this.state.value && !hasData);
+  }
 
-    // get ResponsiveGridItem or RowItem
-    const item = this.getConditionalLogicRoot().parent;
+  public serialize(): ConditionalRenderingDataKind {
+    return { kind: 'ConditionalRenderingData', spec: { value: this.state.value } };
+  }
 
-    // extract single panel data from ResponsiveGridItem
+  private _hasData(): boolean {
+    const item = this.getItem();
+
+    let data: PanelData | undefined;
+
     if (item instanceof AutoGridItem) {
-      const panelData = sceneGraph.getData(item.state.body).state.data;
-      if (panelData) {
-        data.push(panelData);
-      }
+      data = sceneGraph.getData(item.state.body).state.data;
     }
 
-    // extract multiple panel data from RowItem
-    if (item instanceof RowItem) {
-      const panels = item.getLayout().getVizPanels();
-      for (const panel of panels) {
-        const panelData = sceneGraph.getData(panel).state.data;
-        if (panelData) {
-          data.push(panelData);
-        }
-      }
-    }
-
-    // early return if no panel data
-    if (!data.length) {
+    if (!data) {
       return false;
     }
 
-    for (let panelDataIdx = 0; panelDataIdx < data.length; panelDataIdx++) {
-      const series = data[panelDataIdx]?.series ?? [];
+    const series = data?.series ?? [];
 
-      for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
-        if (series[seriesIdx].length > 0) {
-          return true;
-        }
+    for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
+      if (series[seriesIdx].length > 0) {
+        return true;
       }
     }
 
     return false;
   }
 
-  public render(): ReactNode {
-    return <ConditionalRenderingDataRenderer model={this} />;
+  public static deserialize(model: ConditionalRenderingDataKind): ConditionalRenderingData {
+    return new ConditionalRenderingData({ value: model.spec.value });
   }
 
-  public onDelete() {
-    handleDeleteNonGroupCondition(this);
-  }
-
-  public serialize(): ConditionalRenderingDataKind {
-    return {
-      kind: 'ConditionalRenderingData',
-      spec: {
-        value: this.state.value,
-      },
-    };
+  public static createEmpty(): ConditionalRenderingData {
+    return new ConditionalRenderingData({ value: true });
   }
 }
 
 function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<ConditionalRenderingData>) {
   const { value } = model.useState();
 
-  const enableConditionOptions: Array<SelectableValue<true | false>> = useMemo(
+  const enableConditionOptions: Array<ComboboxOption<1 | 0>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.data.enable', 'Enable'), value: true },
-      { label: t('dashboard.conditional-rendering.data.disable', 'Disable'), value: false },
+      { label: t('dashboard.conditional-rendering.conditions.data.enable', 'Has data'), value: 1 },
+      { label: t('dashboard.conditional-rendering.conditions.data.disable', 'No data'), value: 0 },
     ],
     []
   );
 
+  const enableConditionOption = useMemo(
+    () => enableConditionOptions.find((option) => Boolean(option.value) === value) ?? enableConditionOptions[0],
+    [enableConditionOptions, value]
+  );
+
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <RadioButtonGroup
-        fullWidth
-        options={enableConditionOptions}
-        value={value}
-        onChange={(value) => model.setStateAndNotify({ value: value })}
-      />
-    </Stack>
+    <Combobox
+      options={enableConditionOptions}
+      value={enableConditionOption}
+      onChange={({ value }) => model.setStateAndNotify({ value: Boolean(value) })}
+    />
   );
 }

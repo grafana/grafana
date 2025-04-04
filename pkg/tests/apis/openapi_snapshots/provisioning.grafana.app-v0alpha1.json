@@ -2474,9 +2474,6 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
-        "required": [
-          "identifier"
-        ],
         "properties": {
           "branch": {
             "description": "Target branch for export (only git)",
@@ -2485,11 +2482,6 @@
           "folder": {
             "description": "The source folder (or empty) to export",
             "type": "string"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           },
           "path": {
             "description": "Prefix in target file system",
@@ -2986,18 +2978,10 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
         "type": "object",
-        "required": [
-          "identifier"
-        ],
         "properties": {
           "history": {
             "description": "Preserve history (if possible)",
             "type": "boolean"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           }
         }
       },
@@ -3900,6 +3884,10 @@
             "format": "byte"
           },
           "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastEvent": {
             "type": "integer",
             "format": "int64"
           },
