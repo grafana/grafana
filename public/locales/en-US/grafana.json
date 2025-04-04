@@ -5090,6 +5090,12 @@
       "disable-highlighting": "Disable highlighting",
       "display-level": "Display levels",
       "display-level-all": "All levels",
+      "download": "Download logs",
+      "download-logs": {
+        "csv": "csv",
+        "json": "json",
+        "txt": "txt"
+      },
       "enable-highlighting": "Enable highlighting",
       "hide-timestamps": "Hide timestamps",
       "newest-first": "Newest logs first",

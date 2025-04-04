@@ -269,7 +269,7 @@ export const LogListControls = ({ eventBus }: Props) => {
                   name="download-alt"
                   className={styles.controlButton}
                   aria-pressed={wrapLogMessage}
-                  tooltip={t('logs.logs-controls.download-logs', 'Download logs')}
+                  tooltip={t('logs.logs-controls.download', 'Download logs')}
                   size="lg"
                 />
               </Dropdown>
