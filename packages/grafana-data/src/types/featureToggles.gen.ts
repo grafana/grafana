@@ -754,6 +754,10 @@ export interface FeatureToggles {
   */
   tableNextGen?: boolean;
   /**
+  * Allows authenticated API calls in actions
+  */
+  vizActionsAuth?: boolean;
+  /**
   * Send dashboard and panel names to Loki when querying
   */
   lokiSendDashboardPanelNames?: boolean;

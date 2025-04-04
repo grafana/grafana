@@ -1,8 +1,16 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-import { Switch, Field, InlineField, InlineFieldRow, RadioButtonGroup, JSONFormatter, useStyles2 } from '@grafana/ui';
+import {
+  Action,
+  DataSourceInstanceSettings,
+  GrafanaTheme2,
+  httpMethodOptions,
+  HttpRequestMethod,
+  VariableSuggestion,
+} from '@grafana/data';
+import { config, DataSourcePicker } from '@grafana/runtime';
+import { Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
@@ -84,6 +92,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
+  const onDatasourceChange = (ds?: DataSourceInstanceSettings) => {
+    onChange(index, {
+      ...value,
+      fetch: {
+        ...value.fetch,
+        datasourceUid: ds?.uid ?? undefined,
+      },
+    });
+  };
+
   const renderJSON = (data = '{}') => {
     try {
       const json = JSON.parse(data);
@@ -100,6 +118,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
   const shouldRenderJSON =
     value.fetch.method !== HttpRequestMethod.GET &&
     value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+
+  const supportedDataSourceType = 'yesoreyeram-infinity-datasource';
 
   return (
     <div className={styles.listItem}>
@@ -132,6 +152,24 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           )}
         />
       </Field>
+
+      {config.featureToggles.vizActionsAuth && (
+        <Field
+          label={t('grafana-ui.viz-tooltip.action-authentication-label', 'Authentication')}
+          description={t(
+            'grafana-ui.action-editor.modal.action-authentication-description',
+            'Use the authentication method of the data source to make authenticated requests'
+          )}
+        >
+          <DataSourcePicker
+            filter={(ds) => ds.type === supportedDataSourceType}
+            current={value?.fetch.datasourceUid}
+            noDefault={true}
+            onChange={(ds) => onDatasourceChange(ds)}
+            onClear={onDatasourceChange}
+          />
+        </Field>
+      )}
 
       {showOneClick && (
         <Field

@@ -683,6 +683,10 @@ const (
 	// Allows access to the new react-data-grid based table component.
 	FlagTableNextGen = "tableNextGen"
 
+	// FlagVizActionsAuth
+	// Allows authenticated API calls in actions
+	FlagVizActionsAuth = "vizActionsAuth"
+
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
