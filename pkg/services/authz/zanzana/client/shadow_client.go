@@ -54,7 +54,6 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 				c.logger.Warn("Zanzana check result does not match", "expected", acRes.Allowed, "actual", res.Allowed)
 			} else {
 				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
-				c.logger.Debug("Zanzana check result is correct", "result", res.Allowed)
 			}
 		}
 	}()
@@ -69,5 +68,29 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 }
 
 func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
-	return c.accessClient.Compile(ctx, id, req)
+	var zanzanaItemChecker authlib.ItemChecker
+	var err error
+	if c.zanzanaClient != nil {
+		zanzanaItemChecker, err = c.zanzanaClient.Compile(ctx, id, req)
+		if err != nil {
+			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
+		}
+	}
+
+	rbacItemChecker, err := c.accessClient.Compile(ctx, id, req)
+	shadowItemChecker := func(name, folder string) bool {
+		rbacRes := rbacItemChecker(name, folder)
+		if zanzanaItemChecker != nil {
+			zanzanaRes := zanzanaItemChecker(name, folder)
+			if zanzanaRes != rbacRes {
+				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+				c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes)
+			} else {
+				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+			}
+		}
+		return rbacRes
+	}
+
+	return shadowItemChecker, err
 }
