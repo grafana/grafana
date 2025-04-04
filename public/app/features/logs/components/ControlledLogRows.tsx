@@ -16,7 +16,7 @@ interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
-  storageKey?: string;
+  logOptionsStorageKey?: string;
 }
 
 type LogRowsComponentProps = Omit<
@@ -29,7 +29,7 @@ export const ControlledLogRows = ({
   showTime,
   logsSortOrder,
   onLogOptionsChange,
-  storageKey,
+  logOptionsStorageKey,
   wrapLogMessage,
   ...rest
 }: ControlledLogRowsProps) => {
@@ -38,7 +38,7 @@ export const ControlledLogRows = ({
       app={rest.app || CoreApp.Unknown}
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
-      logOptionsStorageKey={storageKey}
+      logOptionsStorageKey={logOptionsStorageKey}
       showControls
       showTime={showTime}
       sortOrder={logsSortOrder || LogsSortOrder.Descending}
