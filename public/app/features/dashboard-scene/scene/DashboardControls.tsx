@@ -4,7 +4,6 @@ import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneObjectState,
-  SceneObject,
   SceneObjectBase,
   SceneComponentProps,
   SceneTimePicker,
@@ -22,9 +21,10 @@ import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardLinksControls } from './DashboardLinksControls';
+import { DashboardScene } from './DashboardScene';
+import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
-  variableControls: SceneObject[];
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
   hideTimeControls?: boolean;
@@ -73,7 +73,6 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
   public constructor(state: Partial<DashboardControlsState>) {
     super({
-      variableControls: [],
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
@@ -119,8 +118,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
-  const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
-    model.useState();
+  const { refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } = model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
@@ -137,7 +135,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
       <Stack grow={1} wrap={'wrap'}>
-        {!hideVariableControls && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} />
+            <DataLayerControls dashboard={dashboard} />
+          </>
+        )}
         <Box grow={1} />
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
@@ -150,6 +153,18 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
+  const layers = sceneGraph.getDataLayers(dashboard, true);
+
+  return (
+    <>
+      {layers.map((layer) => (
+        <layer.Component model={layer} key={layer.state.key} />
+      ))}
+    </>
   );
 }
 
