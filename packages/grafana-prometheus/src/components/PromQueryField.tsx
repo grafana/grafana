@@ -2,7 +2,7 @@
 import { css, cx } from '@emotion/css';
 import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
 
-import {getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
+import { getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
