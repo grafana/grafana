@@ -5,6 +5,7 @@ import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'a
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { DashboardMeta } from 'app/types';
 
+import { getDefaultWorkflow } from './defaults';
 import { generatePath } from './utils/path';
 import { generateTimestamp } from './utils/timestamp';
 
@@ -53,7 +54,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: ['write'], // TODO update the view to include workflows
+      workflow: getDefaultWorkflow(repositoryView),
     },
     isNew: !meta.k8s?.name,
     isGitHub: repositoryView?.type === 'github',
