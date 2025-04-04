@@ -4052,6 +4052,21 @@
         "shortcut": "alt+select to enable again"
       }
     },
+    "logs-controls": {
+      "deduplication": "Deduplication",
+      "disable-highlighting": "Disable highlighting",
+      "display-level": "Display levels",
+      "display-level-all": "All levels",
+      "enable-highlighting": "Enable highlighting",
+      "hide-timestamps": "Hide timestamps",
+      "newest-first": "Newest logs first",
+      "oldest-first": "Oldest logs first",
+      "scroll-bottom": "Scroll to bottom",
+      "scroll-top": "Scroll to top",
+      "show-timestamps": "Show timestamps",
+      "unwrap-lines": "Unwrap lines",
+      "wrap-lines": "Wrap lines"
+    },
     "logs-navigation": {
       "newer-logs": "Newer logs",
       "older-logs": "Older logs",

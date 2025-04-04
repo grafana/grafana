@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useEffect, useRef } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPinned } from './LogListContext';
+import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, getLineHeight, LogFieldDimension } from './virtualization';
 
@@ -35,8 +35,13 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
+  const { onLogLineHover } = useLogListContext();
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
+
+  const handleMouseOver = useCallback(() => {
+    onLogLineHover?.(log);
+  }, [log, onLogLineHover]);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -54,6 +59,7 @@ export const LogLine = ({
       style={style}
       className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
       ref={onOverflow ? logLineRef : undefined}
+      onMouseOver={handleMouseOver}
     >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
@@ -105,15 +111,21 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
 };
 
 const LogLineBody = ({ log }: { log: LogListModel }) => {
+  const { syntaxHighlighting } = useLogListContext();
+
   if (log.hasAnsi) {
     const needsHighlighter =
       log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
     const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
     return (
-      <span className="field">
+      <span className="field no-highlighting">
         <LogMessageAnsi value={log.body} highlight={highlight} />
       </span>
     );
+  }
+
+  if (!syntaxHighlighting) {
+    return <span className="field no-highlighting">{log.body}</span>;
   }
 
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
@@ -142,11 +154,11 @@ export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
-    error: '#f22f44',
+    error: theme.colors.error.text,
     warning: '#FBAD37',
-    debug: '#6CCF8E',
+    debug: '#6E9FFF',
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: '#6CCF8E',
     metadata: theme.colors.text.primary,
     parsedField: theme.colors.text.primary,
   };
@@ -161,7 +173,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        background: `hsla(0, 0%, 0%, 0.1)`,
+        background: `hsla(0, 0%, 0%, 0.2)`,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -204,6 +216,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.log-token-method': {
           color: theme.colors.info.shade,
         },
+      },
+      '& .no-highlighting': {
+        color: theme.colors.text.primary,
       },
     }),
     pinnedLogLine: css({
