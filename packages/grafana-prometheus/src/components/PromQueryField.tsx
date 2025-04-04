@@ -136,7 +136,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   };
 
   // Use our custom effects hook
-  usePromQueryFieldEffects(languageProvider, range, data?.series, refreshMetrics, refreshHint);
+  usePromQueryFieldEffects(range, data?.series, refreshMetrics, refreshHint);
 
   const { chooserText, buttonDisabled } = useMetricsState(datasource, languageProvider, syntaxLoaded);
 

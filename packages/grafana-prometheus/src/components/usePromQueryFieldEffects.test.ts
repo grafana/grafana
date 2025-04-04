@@ -69,9 +69,7 @@ describe('usePromQueryFieldEffects', () => {
   });
 
   it('should call refreshMetrics and refreshHint on initial render', async () => {
-    renderHook(() =>
-      usePromQueryFieldEffects(mockLanguageProvider, mockRange, [], refreshMetricsMock, refreshHintMock)
-    );
+    renderHook(() => usePromQueryFieldEffects(mockRange, [], refreshMetricsMock, refreshHintMock));
 
     expect(refreshMetricsMock).toHaveBeenCalledTimes(1);
     expect(refreshHintMock).toHaveBeenCalledTimes(2);
@@ -81,7 +79,6 @@ describe('usePromQueryFieldEffects', () => {
     const { rerender } = renderHook(
       (props: TestProps) =>
         usePromQueryFieldEffects(
-          props.languageProvider,
           props.range,
           props.series,
           refreshMetricsMock,
@@ -113,7 +110,6 @@ describe('usePromQueryFieldEffects', () => {
     const { rerender } = renderHook(
       (props: TestProps) =>
         usePromQueryFieldEffects(
-          props.languageProvider,
           props.range,
           props.series,
           refreshMetricsMock,
@@ -147,7 +143,6 @@ describe('usePromQueryFieldEffects', () => {
     const { rerender } = renderHook(
       (props: TestProps) =>
         usePromQueryFieldEffects(
-          props.languageProvider,
           props.range,
           props.series,
           refreshMetricsMock,
@@ -182,7 +177,6 @@ describe('usePromQueryFieldEffects', () => {
     const { rerender } = renderHook(
       (props: TestProps) =>
         usePromQueryFieldEffects(
-          props.languageProvider,
           props.range,
           props.series,
           refreshMetricsMock,
