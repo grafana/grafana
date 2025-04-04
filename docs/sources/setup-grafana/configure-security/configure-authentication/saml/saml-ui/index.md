@@ -6,7 +6,7 @@ labels:
     - enterprise
 menuTitle: SAML user interface
 title: Configure SAML authentication using the Grafana user interface
-weight: 600
+weight: 590
 ---
 
 # Configure SAML authentication using the Grafana user interface
@@ -132,7 +132,7 @@ http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
 ![image](https://github.com/user-attachments/assets/23910ab8-20ec-4dfd-8ef6-7dbaec51ac90)
 
 You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
-Learn more about [team sync](../../configure-team-sync) and [configuring team sync for SAML](../saml#configure-team-sync).
+Learn more about [team sync](../../configure-team-sync) and [configuring team sync for SAML](..#configure-team-sync).
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 
