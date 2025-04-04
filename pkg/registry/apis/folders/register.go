@@ -67,7 +67,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
-	if !featuremgmt.AnyEnabled(features,
+	// disable api in 11.6
+	if true || !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesClientDashboardsFolders,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
