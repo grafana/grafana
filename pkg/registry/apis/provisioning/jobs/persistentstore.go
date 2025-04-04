@@ -55,6 +55,9 @@ var (
 	}
 )
 
+// Queue is a job queue abstraction.
+//
+//go:generate mockery --name Queue --structname MockQueue --inpackage --filename queue_mock.go --with-expecter
 type Queue interface {
 	// Insert adds a new job to the queue.
 	//

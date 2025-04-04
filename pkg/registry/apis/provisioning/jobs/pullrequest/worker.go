@@ -24,18 +24,18 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers   *resources.ParserFactory
-	previewer *Previewer
+	parsers   resources.ParserFactory
+	previewer Previewer
 }
 
 func NewPullRequestWorker(
-	parsers *resources.ParserFactory,
-	previewer *Previewer,
-) (*PullRequestWorker, error) {
+	parsers resources.ParserFactory,
+	previewer Previewer,
+) *PullRequestWorker {
 	return &PullRequestWorker{
 		parsers:   parsers,
 		previewer: previewer,
-	}, nil
+	}
 }
 
 func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {

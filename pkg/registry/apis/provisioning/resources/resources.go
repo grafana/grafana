@@ -37,13 +37,13 @@ type resourceID struct {
 type ResourcesManager struct {
 	repo            repository.ReaderWriter
 	folders         *FolderManager
-	parser          *Parser
+	parser          Parser
 	clients         ResourceClients
 	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,

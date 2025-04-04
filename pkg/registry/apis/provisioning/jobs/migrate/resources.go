@@ -21,7 +21,7 @@ var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 // TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator
-	parser    *resources.Parser
+	parser    resources.Parser
 	progress  jobs.JobProgressRecorder
 	namespace string
 	kind      schema.GroupResource
@@ -29,7 +29,7 @@ type legacyResourceResourceMigrator struct {
 	resources *resources.ResourcesManager
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser *resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,

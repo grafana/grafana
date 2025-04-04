@@ -20,7 +20,7 @@ func TestParser(t *testing.T) {
 	clients.On("ForKind", dashboardV1.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 
-	parser := &Parser{
+	parser := &parser{
 		repo: v0alpha1.ResourceRepositoryInfo{
 			Type:      v0alpha1.LocalRepositoryType,
 			Namespace: "xxx",

@@ -20,11 +20,11 @@ const maxFolders = 10000
 
 type FolderManager struct {
 	repo   repository.ReaderWriter
-	tree   *FolderTree
+	tree   FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
 		tree:   lookup,
@@ -36,11 +36,11 @@ func (fm *FolderManager) Client() dynamic.ResourceInterface {
 	return fm.client
 }
 
-func (fm *FolderManager) Tree() *FolderTree {
+func (fm *FolderManager) Tree() FolderTree {
 	return fm.tree
 }
 
-func (fm *FolderManager) SetTree(tree *FolderTree) {
+func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 

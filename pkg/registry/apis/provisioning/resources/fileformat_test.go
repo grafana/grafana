@@ -95,7 +95,7 @@ spec:
 		info.Data, err = os.ReadFile(path.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := &Parser{
+		parser := &parser{
 			repo: provisioning.ResourceRepositoryInfo{
 				Name: "test",
 			},

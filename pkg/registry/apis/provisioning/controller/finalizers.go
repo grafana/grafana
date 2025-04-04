@@ -29,7 +29,7 @@ const CleanFinalizer = "cleanup"
 
 type finalizer struct {
 	lister        resources.ResourceLister
-	clientFactory *resources.ClientFactory
+	clientFactory resources.ClientFactory
 }
 
 func (f *finalizer) process(ctx context.Context,
