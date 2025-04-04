@@ -122,7 +122,6 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
-  // uid?: string;
 }
 
 interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {

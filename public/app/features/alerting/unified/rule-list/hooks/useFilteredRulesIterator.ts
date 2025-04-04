@@ -1,7 +1,7 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError } from 'ix/asynciterable/operators';
-import { includes, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import {
   DataSourceRuleGroupIdentifier,
@@ -16,7 +16,12 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
-import { getDataSourceByUid, getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import {
+  getDataSourceByUid,
+  getDatasourceAPIUid,
+  getExternalRulesSources,
+  isRulesDataSourceType,
+} from '../../utils/datasource';
 
 import { groupFilter, ruleFilter } from './filters';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
@@ -131,8 +136,10 @@ async function* filterDataSourceRules(
   }
 }
 
-// find all data sources that the user might want to filter by, only allow Prometheus and Loki data source types
-const SUPPORTED_RULES_SOURCE_TYPES = ['loki', 'prometheus'];
+/**
+ * Finds all data sources that the user might want to filter by.
+ * Only allows Prometheus and Loki data source types.
+ */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
   return filter.dataSourceNames.reduce<DataSourceRulesSourceIdentifier[]>((acc, dataSourceName) => {
     // since "getDatasourceAPIUid" can throw we'll omit any non-existing data sources
@@ -140,7 +147,7 @@ function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceId
       const uid = getDatasourceAPIUid(dataSourceName);
       const type = getDataSourceByUid(uid)?.type;
 
-      if (!includes(SUPPORTED_RULES_SOURCE_TYPES, type)) {
+      if (type === undefined || isRulesDataSourceType(type) === false) {
         return acc;
       }
 

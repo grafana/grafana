@@ -39,15 +39,15 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === rule.uid);
 
+  if (isError) {
+    return <RulerRuleLoadingError rule={rule} />;
+  }
+
+  if (isLoading) {
+    return <AlertRuleListItemSkeleton />;
+  }
+
   if (!rulerRule) {
-    if (isError) {
-      return <RulerRuleLoadingError rule={rule} />;
-    }
-
-    if (isLoading) {
-      return <AlertRuleListItemSkeleton />;
-    }
-
     return (
       <Alert
         title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for {{name}}', {

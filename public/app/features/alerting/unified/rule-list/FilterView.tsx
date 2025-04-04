@@ -94,7 +94,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
         // grab <FRONTENT_PAGE_SIZE> from the rules iterable
         take(FRONTENT_PAGE_SIZE),
         // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
-        catchError(() => empty())
+        catchError((error) => {
+          logError(error);
+          return empty();
+        })
       )) {
         startTransition(() => {
           // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
