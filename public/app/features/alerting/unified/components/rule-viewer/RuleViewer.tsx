@@ -133,7 +133,14 @@ const RuleViewer = () => {
           )}
           {/* error state */}
           {showError && (
-            <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
+            <Alert
+              title={t(
+                'alerting.rule-viewer.title-something-wrong-evaluating-alert',
+                'Something went wrong when evaluating this alert rule'
+              )}
+              bottomSpacing={0}
+              topSpacing={2}
+            >
               <pre style={{ marginBottom: 0 }}>
                 <code>{rule.promRule?.lastError ?? 'No error message'}</code>
               </pre>
@@ -209,7 +216,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
           title={rule.name}
           component={
             <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)}>
-              View panel
+              <Trans i18nKey="alerting.create-metadata.view-panel">View panel</Trans>
             </TextLink>
           }
         />
@@ -223,7 +230,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
           title={rule.name}
           component={
             <TextLink title={rule.name} variant="bodySmall" href={makeDashboardLink(dashboardUID)}>
-              View dashboard
+              <Trans i18nKey="alerting.create-metadata.view-dashboard">View dashboard</Trans>
             </TextLink>
           }
         />
@@ -320,7 +327,14 @@ const PrometheusConsistencyCheck = withErrorBoundary(
 
     if (isError(waitState)) {
       return (
-        <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+        <Alert
+          title={t(
+            'alerting.prometheus-consistency-check.title-unable-to-check-the-rule-status',
+            'Unable to check the rule status'
+          )}
+          bottomSpacing={0}
+          topSpacing={2}
+        >
           {stringifyErrorLike(waitState.error)}
         </Alert>
       );

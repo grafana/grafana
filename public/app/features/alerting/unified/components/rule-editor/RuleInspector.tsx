@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
@@ -39,7 +40,7 @@ export const RuleInspector = ({ onClose }: Props) => {
 
   return (
     <Drawer
-      title="Inspect Alert rule"
+      title={t('alerting.rule-inspector.title-inspect-alert-rule', 'Inspect Alert rule')}
       subtitle={
         <div className={styles.subtitle}>
           <RuleInspectorTabs tabs={cloudRulesTabs} setActiveTab={setActiveTab} activeTab={activeTab} />
@@ -99,7 +100,7 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
     <>
       <div className={styles.applyButton}>
         <Button type="button" onClick={onApply}>
-          Apply
+          <Trans i18nKey="alerting.inspector-yaml-tab.apply">Apply</Trans>
         </Button>
         <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start" interactive={true}>
           <Icon name="exclamation-triangle" size="xl" />

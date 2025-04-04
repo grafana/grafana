@@ -19,17 +19,18 @@ import (
 
 type ExportWorker struct {
 	// required to create clients
-	clientFactory *resources.ClientFactory
+	clientFactory resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
 }
 
-func NewExportWorker(clientFactory *resources.ClientFactory,
+func NewExportWorker(
+	clientFactory resources.ClientFactory,
 	storageStatus dualwrite.Service,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory,

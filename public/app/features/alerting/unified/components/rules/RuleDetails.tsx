@@ -46,7 +46,7 @@ export const RuleDetails = ({ rule }: Props) => {
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
           {!!rule.labels && !!Object.keys(rule.labels).length && (
-            <DetailsField label={t('alerting.rule-details.labels', 'Labels')} horizontal={true}>
+            <DetailsField label={t('alerting.rule-details.label-labels', 'Labels')} horizontal={true}>
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
@@ -58,7 +58,7 @@ export const RuleDetails = ({ rule }: Props) => {
         </div>
       </div>
       {isAlertingRule && (
-        <DetailsField label={t('alerting.rule-details.instances', 'Instances')} horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.label-instances', 'Instances')} horizontal={true}>
           <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
         </DetailsField>
       )}
@@ -84,18 +84,21 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   return (
     <>
       {metric && (
-        <DetailsField label={t('alerting.rule-details.metric', 'Metric')} horizontal={true}>
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-metric', 'Metric')} horizontal={true}>
           {metric}
         </DetailsField>
       )}
       {every && (
-        <DetailsField label={t('alerting.rule-details.evaluate', 'Evaluate')} horizontal={true}>
-          {t('alerting.rule-details.evaluate-every', 'Every {{every}}', { every })}
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
+          Every {every}
         </DetailsField>
       )}
 
       {pendingPeriod && (
-        <DetailsField label={t('alerting.rule-details.pending-period', 'Pending period')} horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-pending-period', 'Pending period')}
+          horizontal={true}
+        >
           {pendingPeriod}
         </DetailsField>
       )}
@@ -106,7 +109,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
-        <DetailsField label={t('alerting.rule-details.last-evaluation', 'Last evaluation')} horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-last-evaluation', 'Last evaluation')}
+          horizontal={true}
+        >
           <Tooltip
             placement="top"
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
@@ -122,7 +128,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && lastEvaluationDuration !== undefined && (
-        <DetailsField label={t('alerting.rule-details.evaluation-time', 'Evaluation time')} horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
+          horizontal={true}
+        >
           <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>
