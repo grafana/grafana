@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 
 import { AbsoluteTimeRange, CoreApp, EventBus, EventBusSrv, LogsSortOrder, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
-import { config } from '@grafana/runtime';
 
 interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   eventBus?: EventBus;
