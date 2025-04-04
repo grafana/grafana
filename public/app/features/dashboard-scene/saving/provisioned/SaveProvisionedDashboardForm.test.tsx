@@ -332,7 +332,15 @@ describe('SaveProvisionedDashboardForm', () => {
         name: 'test-repo',
         path: 'error-dashboard.json',
         message: 'Error commit',
-        body: newDashboard,
+        body: {
+          apiVersion: 'dashboard.grafana.app/v1alpha1',
+          kind: 'Dashboard',
+          metadata: {
+            generateName: 'p',
+            name: undefined,
+          },
+          spec: newDashboard,
+        },
       });
     });
     await waitFor(() => {
