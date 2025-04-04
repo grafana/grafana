@@ -8,7 +8,6 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
-import { DashboardAddButton } from './actions/DashboardAddButton';
 import { DashboardSettingsButton } from './actions/DashboardSettingsButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
