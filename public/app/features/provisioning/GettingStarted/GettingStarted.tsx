@@ -148,45 +148,47 @@ export default function GettingStarted({ items }: Props) {
           </Trans>
         </Alert>
       )}
-      <Stack direction="row" gap={2}>
-        <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
-          <FeaturesList
-            repos={items}
-            hasRequiredFeatures={hasRequiredFeatures}
-            onSetupFeatures={() => {
-              setSetupType('required-features');
+      <Stack direction="column" gap={4}>
+        <Stack gap={4}>
+          <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
+            <FeaturesList
+              repos={items}
+              hasRequiredFeatures={hasRequiredFeatures}
+              onSetupFeatures={() => {
+                setSetupType('required-features');
+                setShowModal(true);
+              }}
+            />
+          </Box>
+          <Box width="50%">
+            <div
+              className={css({
+                height: `100%`,
+                background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
+                borderRadius: `4px`,
+                padding: `16px`,
+                display: `flex`,
+                alignItems: `center`,
+                justifyContent: `center`,
+              })}
+            >
+              <Text variant="h2">
+                <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
+              </Text>
+            </div>
+          </Box>
+        </Stack>
+        {(!hasPublicAccess || !hasImageRenderer) && (
+          <EnhancedFeatures
+            hasPublicAccess={hasPublicAccess}
+            hasImageRenderer={hasImageRenderer}
+            onSetupPublicAccess={() => {
+              setSetupType('public-access');
               setShowModal(true);
             }}
           />
-        </Box>
-        <Box width="50%">
-          <div
-            className={css({
-              height: `100%`,
-              background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
-              borderRadius: `4px`,
-              padding: `16px`,
-              display: `flex`,
-              alignItems: `center`,
-              justifyContent: `center`,
-            })}
-          >
-            <Text variant="h2">
-              <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
-            </Text>
-          </div>
-        </Box>
+        )}
       </Stack>
-      {(!hasPublicAccess || !hasImageRenderer) && (
-        <EnhancedFeatures
-          hasPublicAccess={hasPublicAccess}
-          hasImageRenderer={hasImageRenderer}
-          onSetupPublicAccess={() => {
-            setSetupType('public-access');
-            setShowModal(true);
-          }}
-        />
-      )}
       {showInstructionsModal && setupType && (
         <SetupModal {...getModalContent()} isOpen={showInstructionsModal} onDismiss={() => setShowModal(false)} />
       )}
