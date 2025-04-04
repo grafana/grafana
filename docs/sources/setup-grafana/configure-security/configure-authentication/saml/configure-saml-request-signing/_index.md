@@ -8,6 +8,11 @@ menuTitle: Configure SAML request signing
 title: Configure SAML request signing
 weight: 520
 ---
+
+## Signing and encryption
+
+Grafana supports signed and encrypted assertions, and does _not_ support encrypted requests.
+
 ## Certificate and private key
 
 Commonly, the certificate and key are embedded in the [IDP metadata](#configure-the-saml-toolkit-application-endpoints) and refreshed as needed by Grafana automatically. However, if your IdP expects signed requests, you must supply a certificate and private key.

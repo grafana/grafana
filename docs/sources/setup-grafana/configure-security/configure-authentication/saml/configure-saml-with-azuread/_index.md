@@ -13,7 +13,21 @@ weight: 510
 
 Grafana supports user authentication through Azure AD, which is useful when you want users to access Grafana using single sign-on. This topic shows you how to configure SAML authentication in Grafana with [Azure AD](https://azure.microsoft.com/en-us/services/active-directory/).
 
-**Before you begin**
+{{% admonition type="note" %}}
+It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
+
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows.
+
+As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
+
+Related links:
+
+- [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+- [Set up SAML with Azure AD](#set-up-saml-with-azure-ad)
+- [Configure a Graph API application in Azure AD](#configure-a-graph-api-application-in-azure-ad)
+  {{% /admonition %}}
+
+## Before you begin
 
 Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
