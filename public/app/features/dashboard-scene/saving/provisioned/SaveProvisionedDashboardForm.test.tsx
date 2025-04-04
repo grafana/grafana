@@ -133,15 +133,12 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repositoryConfig: {
+    repositoryView: {
+      name: 'repo-xyz',
       type: 'github',
       workflows: ['write', 'branch'],
-      sync: { enabled: false, target: 'folder' },
       title: 'Test Repository',
-      github: {
-        branch: 'main',
-        generateDashboardPreviews: false,
-      },
+      target: 'folder',
     },
     ...props,
   };
@@ -401,10 +398,11 @@ describe('SaveProvisionedDashboardForm', () => {
 
   it('should show read-only alert when repository has no workflows', () => {
     setup({
-      repositoryConfig: {
+      repositoryView: {
+        name: 'repo-abc',
         type: 'github',
         workflows: [],
-        sync: { enabled: false, target: 'folder' },
+        target: 'folder',
         title: 'Read-only Repository',
       },
     });

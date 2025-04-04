@@ -19,7 +19,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  const repositoryInfo = useGetResourceRepositoryView({
+  const repositoryView = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderUid: meta.folderUid,
   });
@@ -37,7 +37,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     folderPath,
   });
 
-  if (folderQuery.isLoading || !repositoryInfo) {
+  if (folderQuery.isLoading || !repositoryView) {
     return null;
   }
 
@@ -45,7 +45,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     values: {
       ref: `dashboard/${timestamp}`,
       path: dashboardPath,
-      repo: managerIdentity || repositoryInfo?.name || '',
+      repo: managerIdentity || repositoryView?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -56,6 +56,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       workflow: ['write'], // TODO update the view to include workflows
     },
     isNew: !meta.k8s?.name,
-    isGitHub: repositoryInfo?.type === 'github',
+    isGitHub: repositoryView?.type === 'github',
+    repositoryView,
   };
 }
