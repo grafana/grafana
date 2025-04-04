@@ -3,13 +3,13 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
-import { useGetResourceRepository } from './useGetResourceRepository';
+import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
 export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
   const params = new URLSearchParams(window.location.search);
   const folderUid = params.get('folderUid') || undefined;
 
-  const folderRepository = useGetResourceRepository({ folderUid });
+  const folderRepository = useGetResourceRepositoryView({ folderUid });
   const { data } = useGetFrontendSettingsQuery();
 
   if (!config.featureToggles.provisioning) {

@@ -2,11 +2,9 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { useGetFolderQuery } from 'app/api/clients/folder';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { useGetResourceRepository } from 'app/features/provisioning/hooks/useGetResourceRepository';
-import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { DashboardMeta } from 'app/types';
 
-import { getDefaultWorkflow } from './defaults';
 import { generatePath } from './utils/path';
 import { generateTimestamp } from './utils/timestamp';
 
@@ -21,8 +19,10 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
-  const repository = repositoryConfig?.spec;
+  const repositoryInfo = useGetResourceRepositoryView({
+    name: managerKind === 'repo' ? managerIdentity : undefined,
+    folderUid: meta.folderUid,
+  });
   const timestamp = generateTimestamp();
 
   // Get folder data to retrieve the folder path
@@ -37,7 +37,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     folderPath,
   });
 
-  if (folderQuery.isLoading || !repositoryConfig) {
+  if (folderQuery.isLoading || !repositoryInfo) {
     return null;
   }
 
@@ -45,7 +45,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     values: {
       ref: `dashboard/${timestamp}`,
       path: dashboardPath,
-      repo: managerIdentity || repositoryConfig?.metadata?.name || '',
+      repo: managerIdentity || repositoryInfo?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -53,39 +53,9 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repository),
+      workflow: ['write'], // TODO update the view to include workflows
     },
     isNew: !meta.k8s?.name,
-    repositoryConfig: repository,
-    isGitHub: repository?.type === 'github',
+    isGitHub: repositoryInfo?.type === 'github',
   };
 }
-
-type UseConfigArgs = {
-  folderUid?: string;
-  managerKind?: string;
-  managerIdentity?: string;
-};
-const useConfig = ({ folderUid, managerKind, managerIdentity }: UseConfigArgs) => {
-  const repositoryConfig = useGetResourceRepository({
-    name: managerKind === 'repo' ? managerIdentity : undefined,
-    folderUid,
-  });
-
-  const [items, isLoading] = useRepositoryList(repositoryConfig ? skipToken : undefined);
-
-  if (repositoryConfig) {
-    return repositoryConfig;
-  }
-
-  if (isLoading) {
-    return null;
-  }
-  const instanceConfig = items?.find((repo) => repo.spec?.sync.target === 'instance');
-  if (instanceConfig) {
-    return instanceConfig;
-  }
-
-  // Return the config, which targets the folder
-  return items?.find((repo) => repo?.metadata?.name === folderUid);
-};

@@ -24,7 +24,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Save
   if (!defaultValues) {
     return null;
   }
-  const { values, isNew, isGitHub, repositoryConfig } = defaultValues;
+  const { values, isNew, isGitHub } = defaultValues;
 
   return (
     <SaveProvisionedDashboardForm

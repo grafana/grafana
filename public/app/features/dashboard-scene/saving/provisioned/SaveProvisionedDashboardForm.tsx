@@ -6,7 +6,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositorySpec } from 'app/api/clients/provisioning';
+import { RepositorySpec, RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
@@ -43,7 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
   isGitHub: boolean;
-  repositoryConfig?: RepositorySpec;
+  repositoryView?: RepositoryView;
   loadedFromRef?: string;
 }
 
@@ -54,7 +54,7 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repositoryConfig,
+  repositoryView,
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
