@@ -34,6 +34,8 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+
 	t, err := tapi.teamService.CreateTeam(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
