@@ -59,7 +59,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -134,24 +134,23 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    // The dashboard spec
-    const saveModel = dashboard.getSaveAsModel({
-      isNew,
-      title,
-      description,
-    });
-
     // If user is writing to the original branch, override ref with whatever we loaded from
     if (workflow === 'write') {
       ref = loadedFromRef;
     }
+
+    const body = dashboard.getSaveResource({
+      isNew,
+      title,
+      description,
+    });
 
     createOrUpdateFile({
       ref,
       name: repo,
       path,
       message: comment,
-      body: { ...saveModel, uid: meta.uid },
+      body,
     });
   };
 
@@ -238,7 +237,7 @@ export function SaveProvisionedDashboardForm({
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" {...register('path')} />
+          <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
         </Field>
 
         <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>

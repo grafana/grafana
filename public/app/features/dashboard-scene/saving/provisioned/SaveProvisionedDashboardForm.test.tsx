@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
@@ -196,12 +197,20 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should save a new dashboard successfully', async () => {
     const { user, props } = setup();
     const newDashboard = {
-      title: 'New Dashboard',
-      description: 'New Description',
-      panels: [],
-      schemaVersion: 36,
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        generateName: 'p',
+        name: undefined,
+      },
+      spec: {
+        title: 'New Dashboard',
+        description: 'New Description',
+        panels: [],
+        schemaVersion: 36,
+      },
     };
-    props.dashboard.getSaveAsModel = jest.fn().mockReturnValue(newDashboard);
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
     const mockAction = jest.fn();
     const mockRequest = { ...mockRequestBase, isSuccess: true };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
@@ -245,14 +254,26 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should update an existing dashboard successfully', async () => {
+    const updatedDashboard = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: {
+        name: 'test-dashboard',
+        annotations: {
+          [AnnoKeyFolder]: 'folder-uid',
+          [AnnoKeySourcePath]: 'path/to/file.json',
+        },
+      },
+      spec: { title: 'Test Dashboard', description: 'Test Description' },
+    };
     const { user, props } = setup({
       isNew: false,
       dashboard: {
         useState: () => ({
           meta: {
-            folderUid: 'folder-uid',
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
             slug: 'test-dashboard',
-            k8s: { name: 'test-dashboard' },
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
           },
           title: 'Test Dashboard',
           description: 'Test Description',
@@ -260,7 +281,7 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
-        getSaveAsModel: jest.fn().mockReturnValue({ title: 'Test Dashboard', description: 'Test Description' }),
+        getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
       } as unknown as DashboardScene,
     });
@@ -268,10 +289,13 @@ describe('SaveProvisionedDashboardForm', () => {
     const mockRequest = { ...mockRequestBase, isSuccess: true };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
     const pathInput = screen.getByRole('textbox', { name: /path/i });
-    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
+    pathInput.removeAttribute('readonly'); // save won't get called unless we have a value
     await user.clear(pathInput);
+    await user.type(pathInput, 'path/to/file.json');
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
-    await user.type(pathInput, 'test-dashboard.json');
     await user.type(commentInput, 'Update dashboard');
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
@@ -282,9 +306,9 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
-        path: 'test-dashboard.json',
+        path: 'path/to/file.json',
         message: 'Update dashboard',
-        body: expect.any(Object),
+        body: updatedDashboard,
       });
     });
     expect(props.dashboard.closeModal).toHaveBeenCalled();
@@ -294,12 +318,20 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should show error when save fails', async () => {
     const { user, props } = setup();
     const newDashboard = {
-      title: 'New Dashboard',
-      description: 'New Description',
-      panels: [],
-      schemaVersion: 36,
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        generateName: 'p',
+        name: undefined,
+      },
+      spec: {
+        title: 'New Dashboard',
+        description: 'New Description',
+        panels: [],
+        schemaVersion: 36,
+      },
     };
-    props.dashboard.getSaveAsModel = jest.fn().mockReturnValue(newDashboard);
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
     const mockAction = jest.fn();
     const mockRequest = {
       ...mockRequestBase,
