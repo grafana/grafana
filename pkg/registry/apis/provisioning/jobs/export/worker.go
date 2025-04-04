@@ -27,7 +27,8 @@ type ExportWorker struct {
 	parsers resources.ParserFactory
 }
 
-func NewExportWorker(clientFactory resources.ClientFactory,
+func NewExportWorker(
+	clientFactory resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	parsers resources.ParserFactory,
 ) *ExportWorker {

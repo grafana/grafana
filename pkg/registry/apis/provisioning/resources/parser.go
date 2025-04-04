@@ -23,6 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+// ParserFactory is a factory for creating parsers for a given repository
+//
+//go:generate mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
 type ParserFactory interface {
 	GetParser(ctx context.Context, repo repository.Reader) (*Parser, error)
 }

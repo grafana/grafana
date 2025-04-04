@@ -15,8 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -37,10 +35,10 @@ type MigrationWorker struct {
 	bulk resource.BulkStoreClient
 
 	// Delegate the export to the export worker
-	exportWorker *export.ExportWorker
+	exportWorker jobs.Worker
 
 	// Delegate the import to sync worker
-	syncWorker *sync.SyncWorker
+	syncWorker jobs.Worker
 }
 
 func NewMigrationWorker(
@@ -48,8 +46,8 @@ func NewMigrationWorker(
 	parsers resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
-	exportWorker *export.ExportWorker,
-	syncWorker *sync.SyncWorker,
+	exportWorker jobs.Worker,
+	syncWorker jobs.Worker,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		parsers,

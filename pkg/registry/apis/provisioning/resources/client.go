@@ -26,6 +26,9 @@ var (
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
 )
 
+// ClientFactory is a factory for creating clients for a given namespace
+//
+//go:generate mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
 type ClientFactory interface {
 	Clients(ctx context.Context, namespace string) (ResourceClients, error)
 }

@@ -23,6 +23,9 @@ type JobProgressRecorder interface {
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 }
 
+// Worker is a worker that can process a job
+//
+//go:generate mockery --name Worker --structname MockWorker --inpackage --filename worker_mock.go --with-expecter
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
 	// Process the job. The job status should be updated as the job progresses.
