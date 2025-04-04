@@ -15,7 +15,7 @@ export default function GettingStartedPage({ items }: Props) {
         text: t('provisioning.getting-started-page.header', 'Provisioning'),
         subTitle: t(
           'provisioning.getting-started-page.subtitle-provisioning-feature',
-          'View and manage your provisioning connection'
+          'View and manage your provisioning connections'
         ),
       }}
     >

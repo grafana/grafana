@@ -152,8 +152,6 @@ export default function GettingStarted({ items }: Props) {
         <Box width="50%" marginTop={2} paddingTop={2} paddingBottom={2}>
           <FeaturesList
             repos={items}
-            hasPublicAccess={hasPublicAccess}
-            hasImageRenderer={hasImageRenderer}
             hasRequiredFeatures={hasRequiredFeatures}
             onSetupFeatures={() => {
               setSetupType('required-features');
