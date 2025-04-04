@@ -1,9 +1,21 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, EventBusSrv, LogsSortOrder, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  CoreApp,
+  DataFrame,
+  EventBusSrv,
+  ExploreLogsPanelState,
+  LogsSortOrder,
+  SplitOpen,
+  TimeRange,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { LogsVisualisationType } from '../../explore/Logs/Logs';
+
+import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListControlOptions } from './panel/LogList';
@@ -11,17 +23,26 @@ import { LogListContextProvider, useLogListContext } from './panel/LogListContex
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
-interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
+export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
   logOptionsStorageKey?: string;
+  visualisationType: LogsVisualisationType;
+
+  /** Props added for Table **/
+  splitOpen: SplitOpen;
+  panelState: ExploreLogsPanelState | undefined;
+  updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
+  datasourceType?: string;
+  width: number;
+  logsTableFrames: DataFrame[] | undefined;
 }
 
-type LogRowsComponentProps = Omit<
+export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showTime' | 'logsSortOrder' | 'wrapLogMessage'
+  'app' | 'dedupStrategy' | 'showTime' | 'logsSortOrder' | 'wrapLogMessage' | 'visualisationType'
 >;
 
 export const ControlledLogRows = ({
@@ -31,6 +52,7 @@ export const ControlledLogRows = ({
   onLogOptionsChange,
   logOptionsStorageKey,
   wrapLogMessage,
+  visualisationType,
   ...rest
 }: ControlledLogRowsProps) => {
   return (
@@ -45,11 +67,13 @@ export const ControlledLogRows = ({
       onLogOptionsChange={onLogOptionsChange}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogRowsComponent {...rest} />
+      {visualisationType === 'logs' && <LogRowsComponent {...rest} />}
+      {visualisationType === 'table' && <ControlledLogsTable {...rest} />}
     </LogListContextProvider>
   );
 };
 
+// @todo move to new file
 const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
   const { app, dedupStrategy, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
