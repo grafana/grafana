@@ -1770,7 +1770,7 @@
         "group-layout": "Group layout",
         "group-layout-disabled": "No groups exists on this level",
         "panel-layout": "Panel layout",
-        "panel-layout-disabled": "Select a row or tab to change grid options"
+        "panel-layout-disabled": "Select a row or tab to change panel layout options"
       }
     },
     "make-editable": {

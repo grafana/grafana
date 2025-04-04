@@ -83,7 +83,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
       gridLayout.props.disabledText = t(
         'dashboard.layout.common.panel-layout-disabled',
-        'Select a row or tab to change grid options'
+        'Select a row or tab to change panel layout options'
       );
     }
 
