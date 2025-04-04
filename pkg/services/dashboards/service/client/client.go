@@ -1,4 +1,4 @@
-package service
+package client
 
 import (
 	"context"
@@ -22,18 +22,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-type k8sHandlerFactory func(ctx context.Context, version string) client.K8sHandler
+type K8sClientFactory func(ctx context.Context, version string) client.K8sHandler
 
-type k8sHandlerWithFallback struct {
+type K8sClientWithFallback struct {
 	client.K8sHandler
 
-	newClientFunc k8sHandlerFactory
+	newClientFunc K8sClientFactory
+	metrics       *k8sClientMetrics
 	log           log.Logger
 }
 
-func NewK8sHandlerWithFallback(
+func NewK8sClientWithFallback(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
@@ -41,30 +43,19 @@ func NewK8sHandlerWithFallback(
 	resourceClient resource.ResourceClient,
 	sorter sort.Service,
 	dual dualwrite.Service,
-	parentLogger log.Logger,
-) client.K8sHandler {
-	newClientFunc := newK8sHandlerFactory(
-		cfg,
-		restConfigProvider,
-		dashboardStore,
-		userService,
-		resourceClient,
-		sorter,
-		dual,
-	)
-
-	// Create the default client with a background context
-	defaultClient := newClientFunc(context.Background(), dashboardv1alpha1.VERSION)
-
-	return &k8sHandlerWithFallback{
-		K8sHandler:    defaultClient,
+	reg prometheus.Registerer,
+) *K8sClientWithFallback {
+	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual)
+	return &K8sClientWithFallback{
+		K8sHandler:    newClientFunc(context.Background(), dashboardv1alpha1.VERSION),
 		newClientFunc: newClientFunc,
-		log:           parentLogger.New("k8s.dashboards.fallback"),
+		metrics:       newK8sClientMetrics(reg),
+		log:           log.New("dashboards-k8s-client"),
 	}
 }
 
-func (h *k8sHandlerWithFallback) Get(ctx context.Context, name string, orgID int64, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	ctx, span := tracing.Start(ctx, "versionFallbackK8sHandler.Get")
+func (h *K8sClientWithFallback) Get(ctx context.Context, name string, orgID int64, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	spanCtx, span := tracing.Start(ctx, "versionFallbackK8sHandler.Get")
 	defer span.End()
 
 	span.SetAttributes(
@@ -74,7 +65,7 @@ func (h *k8sHandlerWithFallback) Get(ctx context.Context, name string, orgID int
 	)
 
 	span.AddEvent("v1alpha1 Get")
-	result, err := h.K8sHandler.Get(ctx, name, orgID, options, subresources...)
+	result, err := h.K8sHandler.Get(spanCtx, name, orgID, options, subresources...)
 	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
@@ -85,7 +76,9 @@ func (h *k8sHandlerWithFallback) Get(ctx context.Context, name string, orgID int
 		return result, nil
 	}
 
-	h.log.Debug("falling back to stored version", "name", name, "storedVersion", storedVersion, "conversionErr", conversionErr)
+	h.log.Info("falling back to stored version", "name", name, "storedVersion", storedVersion, "conversionErr", conversionErr)
+	h.metrics.fallbackCounter.WithLabelValues(storedVersion).Inc()
+
 	span.SetAttributes(
 		attribute.Bool("fallback", true),
 		attribute.String("fallback.stored_version", storedVersion),
@@ -93,7 +86,7 @@ func (h *k8sHandlerWithFallback) Get(ctx context.Context, name string, orgID int
 	)
 
 	span.AddEvent(fmt.Sprintf("%s Get", storedVersion))
-	return h.newClientFunc(ctx, storedVersion).Get(ctx, name, orgID, options, subresources...)
+	return h.newClientFunc(spanCtx, storedVersion).Get(spanCtx, name, orgID, options, subresources...)
 }
 
 func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVersion string, conversionErr string) {
@@ -111,7 +104,7 @@ func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVer
 	return failed, storedVersion, conversionErr
 }
 
-func newK8sHandlerFactory(
+func newK8sClientFactory(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
@@ -119,11 +112,11 @@ func newK8sHandlerFactory(
 	resourceClient resource.ResourceClient,
 	sorter sort.Service,
 	dual dualwrite.Service,
-) k8sHandlerFactory {
+) K8sClientFactory {
 	clientCache := make(map[string]client.K8sHandler)
 	cacheMutex := &sync.RWMutex{}
 	return func(ctx context.Context, version string) client.K8sHandler {
-		ctx, span := tracing.Start(ctx, "k8sClientFactory.GetClient",
+		_, span := tracing.Start(ctx, "k8sClientFactory.GetClient",
 			attribute.String("group", dashboardv1alpha1.GROUP),
 			attribute.String("version", version),
 			attribute.String("resource", "dashboards"),

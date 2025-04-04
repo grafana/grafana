@@ -1,10 +1,11 @@
-package service
+package client
 
 import (
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +17,10 @@ import (
 )
 
 type testSetup struct {
-	handler            *k8sHandlerWithFallback
+	handler            *K8sClientWithFallback
 	mockClientV1Alpha1 *client.MockK8sHandler
 	mockClientV2Alpha1 *client.MockK8sHandler
+	mockMetrics        *k8sClientMetrics
 	mockFactoryCalls   map[string]int
 	t                  *testing.T
 }
@@ -26,9 +28,10 @@ type testSetup struct {
 func setupTest(t *testing.T) *testSetup {
 	mockClientV1Alpha1 := &client.MockK8sHandler{}
 	mockClientV2Alpha1 := &client.MockK8sHandler{}
+	mockMetrics := newK8sClientMetrics(prometheus.NewRegistry())
 	mockFactoryCalls := make(map[string]int)
 
-	handler := &k8sHandlerWithFallback{
+	handler := &K8sClientWithFallback{
 		K8sHandler: mockClientV1Alpha1,
 		newClientFunc: func(ctx context.Context, version string) client.K8sHandler {
 			mockFactoryCalls[version]++
@@ -41,13 +44,15 @@ func setupTest(t *testing.T) *testSetup {
 			t.Fatalf("Unexpected call to newClientFunc with version %s", version)
 			return nil
 		},
-		log: log.New("test"),
+		log:     log.New("test"),
+		metrics: mockMetrics,
 	}
 
 	return &testSetup{
 		handler:            handler,
 		mockClientV1Alpha1: mockClientV1Alpha1,
 		mockClientV2Alpha1: mockClientV2Alpha1,
+		mockMetrics:        mockMetrics,
 		mockFactoryCalls:   mockFactoryCalls,
 		t:                  t,
 	}
