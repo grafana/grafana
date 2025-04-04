@@ -19,7 +19,7 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:    "invalid character space",
+			name:    "character space",
 			path:    "path/to/my file.json",
 			wantErr: nil,
 		},
