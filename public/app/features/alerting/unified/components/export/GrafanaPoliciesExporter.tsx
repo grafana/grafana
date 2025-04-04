@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -20,7 +21,7 @@ const GrafanaPoliciesExporterPreview = ({ exportFormat, onClose }: GrafanaPolici
   const downloadFileName = `policies-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-policies-exporter-preview.text-loading', 'Loading....')} />;
   }
 
   return (

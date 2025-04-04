@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { Alert, LoadingBar, Pagination } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -54,7 +55,14 @@ export const EvaluationGroupLoader = ({
     <EvaluationGroup name={name} interval={interval} provenance={provenance} isOpen={isOpen} onToggle={toggle}>
       {/* @TODO nicer error handling */}
       {error ? (
-        <Alert title="Something went wrong when trying to fetch group details">{String(error)}</Alert>
+        <Alert
+          title={t(
+            'alerting.evaluation-group-loader.title-something-wrong-trying-fetch-group-details',
+            'Something went wrong when trying to fetch group details'
+          )}
+        >
+          {String(error)}
+        </Alert>
       ) : (
         <>
           {isLoading ? (

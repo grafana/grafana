@@ -6,6 +6,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';
@@ -115,7 +116,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                   variant="secondary"
                   disabled={!labelsOrAnnotationsAdded()}
                 >
-                  Add alert data
+                  <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data">Add alert data</Trans>
                 </Button>
               </div>
             </Stack>
@@ -123,7 +124,12 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper} />
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>
-              <h5> Review alert data to add to the payload:</h5>
+              <h5>
+                <Trans i18nKey="alerting.generate-alert-data-modal.review-alert-payload">
+                  {' '}
+                  Review alert data to add to the payload:
+                </Trans>
+              </h5>
               <pre className={styles.result} data-testid="payloadJSON">
                 {JSON.stringify(alerts, null, 2)}
               </pre>
@@ -132,7 +138,9 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper}>
             <Modal.ButtonRow>
               <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                Add alert data to payload
+                <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data-to-payload">
+                  Add alert data to payload
+                </Trans>
               </Button>
             </Modal.ButtonRow>
           </div>

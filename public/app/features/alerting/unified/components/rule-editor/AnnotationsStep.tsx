@@ -122,7 +122,7 @@ const AnnotationsStep = () => {
               )}
             </>
           }
-          title="Annotations"
+          title={t('alerting.annotations-step.get-annotations-section-description.title-annotations', 'Annotations')}
         />
       </Stack>
     );
@@ -190,7 +190,7 @@ const AnnotationsStep = () => {
                       <Button
                         type="button"
                         className={styles.deleteAnnotationButton}
-                        aria-label="delete annotation"
+                        aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
                         icon="trash-alt"
                         variant="secondary"
                         onClick={() => remove(index)}
@@ -212,11 +212,11 @@ const AnnotationsStep = () => {
                 append({ key: '', value: '' });
               }}
             >
-              Add custom annotation
+              <Trans i18nKey="alerting.annotations-step.add-custom-annotation">Add custom annotation</Trans>
             </Button>
             {!selectedDashboard && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                Link dashboard and panel
+                <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
           </div>

@@ -6,6 +6,7 @@ import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
@@ -79,7 +80,10 @@ export function RuleListErrors(): ReactElement {
       {!!errors.length && !closed && (
         <Alert
           data-testid="cloud-rulessource-errors"
-          title="Errors loading rules"
+          title={t(
+            'alerting.rule-list-errors.cloud-rulessource-errors-title-errors-loading-rules',
+            'Errors loading rules'
+          )}
           severity="error"
           onRemove={() => setClosed(true)}
         >
@@ -118,7 +122,7 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
     <div className={styles.floatRight}>
       <Tooltip content="Show all errors" placement="bottom">
         <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
-          {count > 1 ? <>{count} errors</> : <>1 error</>}
+          {count > 1 ? <>{count} errors</> : <Trans i18nKey="alerting.error-summary-button.error">1 error</Trans>}
         </Button>
       </Tooltip>
     </div>

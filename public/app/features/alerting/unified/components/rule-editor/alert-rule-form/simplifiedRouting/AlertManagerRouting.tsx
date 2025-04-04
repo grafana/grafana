@@ -73,7 +73,10 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       )}
       <div className={styles.routingSection}>
         <CollapsableSection
-          label="Muting, grouping and timings (optional)"
+          label={t(
+            'alerting.alert-manager-manual-routing.label-muting-grouping-and-timings-optional',
+            'Muting, grouping and timings (optional)'
+          )}
           isOpen={hasRouteSettings}
           className={styles.collapsableSection}
           contentClassName={styles.collapsableSectionContent}
@@ -86,7 +89,10 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
                 </Trans>
               </Text>
               <NeedHelpInfo
-                title="Muting, grouping, and timings"
+                title={t(
+                  'alerting.alert-manager-manual-routing.title-muting-grouping-and-timings',
+                  'Muting, grouping, and timings'
+                )}
                 linkText={'Read about notification grouping'}
                 externalLink={
                   'https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/group-alert-notifications/'

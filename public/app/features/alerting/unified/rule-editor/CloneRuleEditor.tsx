@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -17,7 +18,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading the rule..." />;
+    return <LoadingPlaceholder text={t('alerting.clone-rule-editor.text-loading-the-rule', 'Loading the rule...')} />;
   }
 
   if (rule) {
@@ -29,7 +30,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   if (error) {
     return (
-      <Alert title="Error" severity="error">
+      <Alert title={t('alerting.clone-rule-editor.title-error', 'Error')} severity="error">
         {stringifyErrorLike(error)}
       </Alert>
     );
@@ -37,7 +38,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   return (
     <Alert
-      title="Cannot copy the rule. The rule does not exist"
+      title={t('alerting.clone-rule-editor.title-cannot-exist', 'Cannot copy the rule. The rule does not exist')}
       buttonContent="Go back to alert list"
       onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
     />

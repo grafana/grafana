@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { PopupCard } from '../HoverCard';
 
@@ -83,9 +84,15 @@ export function TemplateDataTable({ dataItems, caption, typeRenderer }: Template
       {caption && <caption>{caption}</caption>}
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Notes</th>
+          <th>
+            <Trans i18nKey="alerting.template-data-table.name">Name</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="alerting.template-data-table.type">Type</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="alerting.template-data-table.notes">Notes</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -111,13 +118,23 @@ function KeyValueTemplateDataTable() {
         <code>{KeyValueCodeSnippet}</code>
       </pre>
       <table className={tableStyles.table}>
-        <caption>Key-value methods</caption>
+        <caption>
+          <Trans i18nKey="alerting.key-value-template-data-table.keyvalue-methods">Key-value methods</Trans>
+        </caption>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Arguments</th>
-            <th>Returns</th>
-            <th>Notes</th>
+            <th>
+              <Trans i18nKey="alerting.key-value-template-data-table.name">Name</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="alerting.key-value-template-data-table.arguments">Arguments</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="alerting.key-value-template-data-table.returns">Returns</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="alerting.key-value-template-data-table.notes">Notes</Trans>
+            </th>
           </tr>
         </thead>
         <tbody>

@@ -1,5 +1,6 @@
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -36,7 +37,10 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
   // error handling for fetching rule and rule RBAC
   if (fetchRuleError || errorEditable) {
     return (
-      <Alert severity="error" title="Failed to load rule">
+      <Alert
+        severity="error"
+        title={t('alerting.existing-rule-editor.title-failed-to-load-rule', 'Failed to load rule')}
+      >
         {stringifyErrorLike(errorEditable ?? fetchRuleError)}
       </Alert>
     );
@@ -45,15 +49,27 @@ export function ExistingRuleEditor({ identifier, prefill }: ExistingRuleEditorPr
   const loading = loadingAlertRule || loadingEditable;
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading rule..." />;
+    return <LoadingPlaceholder text={t('alerting.existing-rule-editor.text-loading-rule', 'Loading rule...')} />;
   }
 
   if (!ruleWithLocation && !loading) {
-    return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
+    return (
+      <AlertWarning title={t('alerting.existing-rule-editor.title-rule-not-found', 'Rule not found')}>
+        <Trans i18nKey="alerting.existing-rule-editor.sorry-this-rule-does-not-exist">
+          Sorry! This rule does not exist.
+        </Trans>
+      </AlertWarning>
+    );
   }
 
   if (isEditable === false) {
-    return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
+    return (
+      <AlertWarning title={t('alerting.existing-rule-editor.title-cannot-edit-rule', 'Cannot edit rule')}>
+        <Trans i18nKey="alerting.existing-rule-editor.sorry-permission">
+          Sorry! You do not have permission to edit this rule.
+        </Trans>
+      </AlertWarning>
+    );
   }
 
   return <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />;
