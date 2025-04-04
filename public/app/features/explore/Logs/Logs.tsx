@@ -773,6 +773,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsQueries]
   );
 
+  // Feature flag placeholder
+  const logsPanelControls = true;
+
   const onLogOptionsChange = useCallback(
     (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && (value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending)) {
@@ -1021,7 +1024,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && hasData && (
+          {logsPanelControls && visualisationType === 'logs' && hasData && (
             <div className={styles.logRowsWrapper} data-testid="logRows">
               <ControlledLogRows
                 loading={loading}
@@ -1064,7 +1067,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {false && visualisationType === 'logs' && hasData && (
+          {!logsPanelControls && visualisationType === 'logs' && hasData && (
             <>
               <div
                 className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
@@ -1133,7 +1136,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {false && visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
+          {!logsPanelControls && visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
               {logsContainerRef.current && (
                 <LogList
