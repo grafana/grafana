@@ -10,14 +10,12 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneDataLayerControls,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  VariableValueSelectors,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -191,7 +189,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         annotationLayers,
       }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
         }),

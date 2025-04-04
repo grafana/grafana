@@ -11135,9 +11135,15 @@
           "email": {
             "type": "string"
           },
+          "externalUID": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "isProvisioned": {
+            "type": "boolean"
           },
           "memberCount": {
             "format": "int64",

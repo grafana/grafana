@@ -48,7 +48,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    angularSupportEnabled: true,
     panels: {
       'briangann-datatable-panel': {
         id: 'briangann-datatable-panel',
@@ -796,75 +795,6 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
-    });
-  });
-
-  describe('When a dashboard contain angular panels', () => {
-    it('should return true if the dashboard contains angular panels', () => {
-      // create a scene with angular panels inside
-      const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'briangann-datatable-panel',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
-      });
-
-      scene.activate();
-
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
-    });
-    it('should return true if the dashboard contains explicitControllerMigration panels', () => {
-      // create a scene with angular panels inside
-      const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'graph',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
-      });
-
-      scene.activate();
-
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
     });
   });
 });

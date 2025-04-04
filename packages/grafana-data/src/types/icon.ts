@@ -172,6 +172,7 @@ export const availableIconsIndex = {
   'layer-group': true,
   'layers-alt': true,
   layers: true,
+  'layers-slash': true,
   'legend-hide': true,
   'legend-show': true,
   'library-panel': true,

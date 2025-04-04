@@ -19,7 +19,7 @@ const maxFolders = 10000
 var _ resource.BulkResourceWriter = (*legacyFolderReader)(nil)
 
 type legacyFolderReader struct {
-	tree           *resources.FolderTree
+	tree           resources.FolderTree
 	repoName       string
 	legacyMigrator legacy.LegacyMigrator
 	namespace      string
@@ -68,6 +68,6 @@ func (f *legacyFolderReader) Read(ctx context.Context, legacyMigrator legacy.Leg
 	return err
 }
 
-func (f *legacyFolderReader) Tree() *resources.FolderTree {
+func (f *legacyFolderReader) Tree() resources.FolderTree {
 	return f.tree
 }

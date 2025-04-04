@@ -176,7 +176,6 @@ type Cfg struct {
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate           string
-	AngularSupportEnabled           bool
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
 	DataProxyWhiteList              map[string]bool
@@ -1578,7 +1577,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)

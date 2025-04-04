@@ -74,12 +74,9 @@ const welcomeBanner = async () =>
 
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
-const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const xychartPanel = async () => await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
-const tableOldPanel = async () =>
-  await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
 
 const nodeGraph = async () =>
   await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
@@ -104,7 +101,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/state-timeline': stateTimelinePanel,
   'core:plugin/status-history': statusHistoryPanel,
   'core:plugin/candlestick': candlestickPanel,
-  'core:plugin/graph': graphPanel,
   'core:plugin/xychart': xychartPanel,
   'core:plugin/geomap': geomapPanel,
   'core:plugin/canvas': canvasPanel,
@@ -113,7 +109,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/annolist': annoListPanel,
   'core:plugin/heatmap': heatmapPanel,
   'core:plugin/table': tablePanel,
-  'core:plugin/table-old': tableOldPanel,
   'core:plugin/news': newsPanel,
   'core:plugin/live': livePanel,
   'core:plugin/stat': statPanel,

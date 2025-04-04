@@ -16,6 +16,8 @@ import (
 )
 
 // Get repository stats
+//
+//go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)

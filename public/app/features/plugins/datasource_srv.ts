@@ -12,7 +12,6 @@ import {
   getBackendSrv,
   GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
-  getLegacyAngularInjector,
   getTemplateSrv,
   RuntimeDataSourceRegistration,
   RuntimeDataSource,
@@ -184,17 +183,7 @@ export class DatasourceSrv implements DataSourceService {
         return this.datasources[key];
       }
 
-      // If there is only one constructor argument it is instanceSettings
-      const useAngular = dsPlugin.DataSourceClass.length !== 1;
-      let instance: DataSourceApi;
-
-      if (useAngular) {
-        instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings,
-        });
-      } else {
-        instance = new dsPlugin.DataSourceClass(instanceSettings);
-      }
+      const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
 

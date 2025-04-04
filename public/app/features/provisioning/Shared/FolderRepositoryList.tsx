@@ -16,10 +16,10 @@ interface Props {
 export function FolderRepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
-  const instanceProvisioned = checkSyncSettings(items);
+  const { instanceConnected } = checkSyncSettings(items);
   return (
     <Stack direction={'column'} gap={3}>
-      {!instanceProvisioned && (
+      {!instanceConnected && (
         <Stack gap={2}>
           <FilterInput
             placeholder={t('provisioning.folder-repository-list.placeholder-search', 'Search')}

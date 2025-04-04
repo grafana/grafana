@@ -331,7 +331,12 @@ func TestApi_setTeamPermission(t *testing.T) {
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}}, service)
 
 			// seed team
-			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
+			teamCmd := team.CreateTeamCommand{
+				Name:  "test",
+				Email: "test@test.com",
+				OrgID: 1,
+			}
+			team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 			require.NoError(t, err)
 
 			assignTo := strconv.Itoa(int(tt.teamID))
@@ -520,7 +525,12 @@ func seedPermissions(t *testing.T, resourceID string, usrSvc user.Service, teamS
 	t.Helper()
 
 	// seed team 1 with "Edit" permission on dashboard 1
-	team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
+	teamCmd := team.CreateTeamCommand{
+		Name:  "test",
+		Email: "test@test.com",
+		OrgID: 1,
+	}
+	team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 	require.NoError(t, err)
 	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
 	require.NoError(t, err)

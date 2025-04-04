@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { SceneObject } from '@grafana/scenes';
 
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
 
 export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManager | null {
   let parent = sceneObject.parent;
@@ -65,4 +66,12 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   }
 
   return baseTitle;
+}
+
+export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager) {
+  const layoutParent = layout.parent!;
+  if (isLayoutParent(layoutParent)) {
+    innerLayout.clearParent();
+    layoutParent.switchLayout(innerLayout);
+  }
 }

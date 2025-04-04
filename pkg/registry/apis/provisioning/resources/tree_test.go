@@ -12,7 +12,7 @@ func TestFolderTree(t *testing.T) {
 	}
 
 	t.Run("empty tree", func(t *testing.T) {
-		tree := &FolderTree{
+		tree := &folderTree{
 			tree:    make(map[string]string),
 			folders: make(map[string]Folder),
 		}
@@ -24,7 +24,7 @@ func TestFolderTree(t *testing.T) {
 	})
 
 	t.Run("single directory in tree", func(t *testing.T) {
-		tree := &FolderTree{
+		tree := &folderTree{
 			tree:    map[string]string{"x": ""},
 			folders: map[string]Folder{"x": newFid("x", "X!")},
 		}
@@ -45,7 +45,7 @@ func TestFolderTree(t *testing.T) {
 	})
 
 	t.Run("simple nesting tree", func(t *testing.T) {
-		tree := &FolderTree{
+		tree := &folderTree{
 			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
 			folders: map[string]Folder{
 				"x": newFid("x", "X!"),

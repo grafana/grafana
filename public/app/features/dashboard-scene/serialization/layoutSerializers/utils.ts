@@ -32,7 +32,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
@@ -44,10 +43,6 @@ import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
 
   titleItems.push(
     new VizPanelLinks({
@@ -98,10 +93,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
 
 export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
 
   titleItems.push(
     new VizPanelLinks({

@@ -78,7 +78,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   queryHistoryEnabled = false;
@@ -239,10 +238,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
-
-    if (this.featureToggles.disableAngular) {
-      this.angularSupportEnabled = false;
-    }
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);

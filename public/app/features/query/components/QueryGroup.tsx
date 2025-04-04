@@ -11,7 +11,6 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -25,12 +24,10 @@ import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { isAngularDatasourcePluginAndNotHidden } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -463,15 +460,6 @@ export function QueryGroupTopSection({
             </>
           )}
         </div>
-        {dataSource && isAngularDatasourcePluginAndNotHidden(dataSource.uid) && (
-          <AngularDeprecationPluginNotice
-            pluginId={dataSource.type}
-            pluginType={PluginType.datasource}
-            angularSupportEnabled={config?.angularSupportEnabled}
-            showPluginDetailsLink={true}
-            interactionElementId="datasource-query"
-          />
-        )}
       </div>
       {isHelpOpen && (
         <Modal

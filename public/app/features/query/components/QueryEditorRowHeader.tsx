@@ -16,7 +16,6 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
   onChange: (query: TQuery) => void;
-  onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
   hideRefId?: boolean;

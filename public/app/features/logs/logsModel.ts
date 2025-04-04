@@ -102,7 +102,7 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
   }, []);
 }
 
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<LogLevel>): LogRowModel[] {
+export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<string>): LogRowModel[] {
   if (hiddenLogLevels.size === 0) {
     return logRows;
   }

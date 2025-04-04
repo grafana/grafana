@@ -32,6 +32,9 @@ type StorageStatus struct {
 	UpdateKey int64 `json:"update_key" xorm:"update_key"`
 }
 
+// Service is a service for managing the dual write storage
+//
+//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
 	ShouldManage(gr schema.GroupResource) bool
 

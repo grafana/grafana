@@ -9,11 +9,10 @@ import {
   isStandardFieldProp,
   PanelPluginMeta,
   restoreCustomOverrideRules,
-  PluginType,
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -23,15 +22,12 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, Card, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
-
-import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -129,7 +125,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { pluginId } = panel.useState();
     const { data } = sceneGraph.getData(panel).useState();
     const styles = useStyles2(getStyles);
-    const isAngularPanel = isUsingAngularPanelPlugin(panel);
     const isSearching = searchQuery.length > 0;
     const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
     const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
@@ -180,39 +175,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 />
               )}
             </div>
-            {isAngularPanel && (
-              <div className={styles.angularDeprecationContainer}>
-                <AngularDeprecationPluginNotice
-                  showPluginDetailsLink={true}
-                  pluginId={pluginId}
-                  pluginType={PluginType.panel}
-                  angularSupportEnabled={config?.angularSupportEnabled}
-                  interactionElementId="panel-options"
-                >
-                  <Card.Heading>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Panel options</Trans>
-                  </Card.Heading>
-                  <Card.Description>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
-                      Angular panels options can only be edited using the JSON editor.
-                    </Trans>
-                  </Card.Description>
-                  <Card.Actions>
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      onClick={() => {
-                        model.onOpenPanelJSON(panel);
-                      }}
-                    >
-                      <Trans i18nKey="dashboards.panel-edit.angular-deprecation-button-open-panel-json">
-                        Open JSON editor
-                      </Trans>
-                    </Button>
-                  </Card.Actions>
-                </AngularDeprecationPluginNotice>
-              </div>
-            )}
             <ScrollContainer>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </ScrollContainer>
@@ -250,13 +212,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotateIcon: css({
       rotate: '180deg',
-    }),
-    angularDeprecationContainer: css({
-      label: 'angular-deprecation-container',
-      padding: theme.spacing(1),
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-end',
     }),
   };
 }

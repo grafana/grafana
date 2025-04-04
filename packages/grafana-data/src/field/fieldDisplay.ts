@@ -356,6 +356,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
 
   const displayProcessor = getDisplayProcessor({
     field: {
+      name: '',
       type: FieldType.other,
       config: defaults,
     },

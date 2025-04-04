@@ -80,7 +80,8 @@ type APIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	parsers           *resources.ParserFactory
+	parsers           resources.ParserFactory
+	clients           resources.ClientFactory
 	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
 	jobs              interface {
@@ -117,6 +118,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+	clients := resources.NewClientFactory(configProvider)
 
 	return &APIBuilder{
 		urlProvider:       urlProvider,
@@ -125,16 +127,15 @@ func NewAPIBuilder(
 		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
-		parsers: &resources.ParserFactory{
-			ClientFactory: resources.NewClientFactory(configProvider),
-		},
-		render:         render,
-		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
-		unified:        unified,
-		secrets:        secrets,
+		clients:           clients,
+		parsers:           resources.NewParserFactory(clients),
+		render:            render,
+		clonedir:          clonedir,
+		resourceLister:    resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		legacyMigrator:    legacyMigrator,
+		storageStatus:     storageStatus,
+		unified:           unified,
+		secrets:           secrets,
 	}
 }
 
@@ -367,10 +368,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
-		getter:  b,
-		parsers: b.parsers,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -562,19 +560,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.parsers.ClientFactory,
+				b.clients,
 				b.storageStatus,
 				b.parsers,
 			)
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,
+				b.clients,
 				b.resourceLister,
 				b.storageStatus,
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,
+				b.clients,
 				b.storageStatus,
 				b.unified,
 				exportWorker,
@@ -584,10 +584,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Pull request worker
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
 			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
-			if err != nil {
-				return fmt.Errorf("create pull request worker: %w", err)
-			}
+			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 
 			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
@@ -599,6 +596,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
+				b.clients,
 				&repository.Tester{},
 				b.jobs,
 				b.secrets,

@@ -10,7 +10,7 @@ import (
 )
 
 type Service interface {
-	CreateTeam(ctx context.Context, name, email string, orgID int64) (Team, error)
+	CreateTeam(ctx context.Context, cmd *CreateTeamCommand) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
 	DeleteTeam(ctx context.Context, cmd *DeleteTeamCommand) error
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
