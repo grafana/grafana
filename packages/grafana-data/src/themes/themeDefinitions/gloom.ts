@@ -19,8 +19,8 @@ const gloomTheme: NewThemeOptions = {
   colors: {
     mode: 'dark',
     border: {
-      weak: `rgba(${whiteBase}, 0.08)`,
-      medium: `rgba(${whiteBase}, 0.15)`,
+      weak: `rgba(${whiteBase}, 0.12)`,
+      medium: `rgba(${whiteBase}, 0.20)`,
       strong: `rgba(${whiteBase}, 0.30)`,
     },
 
