@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, EventBusSrv, LogsSortOrder, TimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, EventBusSrv, LogsMetaItem, LogsSortOrder, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { InfiniteScroll } from './InfiniteScroll';
@@ -13,10 +13,11 @@ import { ScrollToLogsEvent } from './panel/virtualization';
 
 interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
+  logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
+  logOptionsStorageKey?: string;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
-  logOptionsStorageKey?: string;
 }
 
 type LogRowsComponentProps = Omit<
@@ -25,8 +26,10 @@ type LogRowsComponentProps = Omit<
 >;
 
 export const ControlledLogRows = ({
+  deduplicatedRows,
   dedupStrategy,
   showTime,
+  logsMeta,
   logsSortOrder,
   onLogOptionsChange,
   logOptionsStorageKey,
@@ -39,13 +42,15 @@ export const ControlledLogRows = ({
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
       logOptionsStorageKey={logOptionsStorageKey}
+      logs={deduplicatedRows ?? []}
+      logsMeta={logsMeta}
       showControls
       showTime={showTime}
       sortOrder={logsSortOrder || LogsSortOrder.Descending}
       onLogOptionsChange={onLogOptionsChange}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogRowsComponent {...rest} />
+      <LogRowsComponent {...rest} deduplicatedRows={deduplicatedRows} />
     </LogListContextProvider>
   );
 };
