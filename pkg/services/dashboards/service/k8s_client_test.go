@@ -30,7 +30,7 @@ func setupTest(t *testing.T) *testSetup {
 
 	handler := &k8sHandlerWithFallback{
 		K8sHandler: mockClientV1Alpha1,
-		newClientFunc: func(version string) client.K8sHandler {
+		newClientFunc: func(ctx context.Context, version string) client.K8sHandler {
 			mockFactoryCalls[version]++
 			if version == "v2alpha1" {
 				return mockClientV2Alpha1

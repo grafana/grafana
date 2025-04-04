@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type k8sHandlerFactory func(version string) client.K8sHandler
+type k8sHandlerFactory func(ctx context.Context, version string) client.K8sHandler
 
 type k8sHandlerWithFallback struct {
 	client.K8sHandler
@@ -51,9 +52,14 @@ func NewK8sHandlerWithFallback(
 		sorter,
 		dual,
 	)
+
+	// Create the default client with a background context
+	defaultClient := newClientFunc(context.Background(), dashboardv1alpha1.VERSION)
+
 	return &k8sHandlerWithFallback{
-		K8sHandler:    newClientFunc(dashboardv1alpha1.VERSION),
+		K8sHandler:    defaultClient,
 		newClientFunc: newClientFunc,
+		log:           parentLogger.New("k8s.dashboards.fallback"),
 	}
 }
 
@@ -87,7 +93,7 @@ func (h *k8sHandlerWithFallback) Get(ctx context.Context, name string, orgID int
 	)
 
 	span.AddEvent(fmt.Sprintf("%s Get", storedVersion))
-	return h.newClientFunc(storedVersion).Get(ctx, name, orgID, options, subresources...)
+	return h.newClientFunc(ctx, storedVersion).Get(ctx, name, orgID, options, subresources...)
 }
 
 func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVersion string, conversionErr string) {
@@ -114,12 +120,45 @@ func newK8sHandlerFactory(
 	sorter sort.Service,
 	dual dualwrite.Service,
 ) k8sHandlerFactory {
-	return func(version string) client.K8sHandler {
+	clientCache := make(map[string]client.K8sHandler)
+	cacheMutex := &sync.RWMutex{}
+	return func(ctx context.Context, version string) client.K8sHandler {
+		ctx, span := tracing.Start(ctx, "k8sClientFactory.GetClient",
+			attribute.String("group", dashboardv1alpha1.GROUP),
+			attribute.String("version", version),
+			attribute.String("resource", "dashboards"),
+		)
+		defer span.End()
+
+		cacheMutex.RLock()
+		cachedClient, exists := clientCache[version]
+		cacheMutex.RUnlock()
+
+		if exists {
+			span.AddEvent("Client found in cache")
+			return cachedClient
+		}
+
+		cacheMutex.Lock()
+		defer cacheMutex.Unlock()
+
+		// check again in case another goroutine created in between locks
+		cachedClient, exists = clientCache[version]
+		if exists {
+			span.AddEvent("Client found in cache after lock")
+			return cachedClient
+		}
+
 		gvr := schema.GroupVersionResource{
 			Group:    dashboardv1alpha1.GROUP,
 			Version:  version,
 			Resource: "dashboards",
 		}
-		return client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter)
+
+		span.AddEvent("Creating new client")
+		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter)
+		clientCache[version] = newClient
+
+		return newClient
 	}
 }
