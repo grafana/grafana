@@ -75,4 +75,5 @@ Open the alert rule you want to adjust and search for the data source that is be
 Since Grafana 10.2, the endpoint to check compatible versions when installing a plugin using `grafana cli plugins install` changed, which led to Grafana dependency version no longer being taken into account. This might have led to some buggy behavior where the cli would install plugins that are not fully compatible based on the plugins definition of compatibility via `grafanaDependency` property in the `plugin.json` file.
 
 #### What to do if I want to ignore the compatibility check?
+
 We definitely do not recommend doing it. But if you really have to force install a plugin despite it being declared as incompatible - please follow the [Installing a plugin from a ZIP](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-plugin-from-a-zip-file) guidance.
