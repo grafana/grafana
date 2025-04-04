@@ -24,12 +24,12 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers   *resources.ParserFactory
+	parsers   resources.ParserFactory
 	previewer *Previewer
 }
 
 func NewPullRequestWorker(
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
 	previewer *Previewer,
 ) (*PullRequestWorker, error) {
 	return &PullRequestWorker{

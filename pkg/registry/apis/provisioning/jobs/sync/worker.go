@@ -30,7 +30,7 @@ type SyncWorker struct {
 	lister resources.ResourceLister
 
 	// Parses fields saved in remore repository
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
@@ -38,7 +38,7 @@ type SyncWorker struct {
 
 func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
 	lister resources.ResourceLister,
 	storageStatus dualwrite.Service,
 ) *SyncWorker {

@@ -25,7 +25,7 @@ import (
 
 type MigrationWorker struct {
 	// temporary... while we still do an import
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -45,7 +45,7 @@ type MigrationWorker struct {
 
 func NewMigrationWorker(
 	legacyMigrator legacy.LegacyMigrator,
-	parsers *resources.ParserFactory, // should not be necessary!
+	parsers resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
 	exportWorker *export.ExportWorker,

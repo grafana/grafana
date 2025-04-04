@@ -23,11 +23,19 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-type ParserFactory struct {
-	ClientFactory *ClientFactory
+type ParserFactory interface {
+	GetParser(ctx context.Context, repo repository.Reader) (*Parser, error)
 }
 
-func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
+type parserFactory struct {
+	ClientFactory ClientFactory
+}
+
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
+}
+
+func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
 
 	clients, err := f.ClientFactory.Clients(ctx, config.GetNamespace())

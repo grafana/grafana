@@ -26,7 +26,11 @@ var (
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
 )
 
-type ClientFactory struct {
+type ClientFactory interface {
+	Clients(ctx context.Context, namespace string) (ResourceClients, error)
+}
+
+type clientFactory struct {
 	configProvider apiserver.RestConfigProvider
 }
 
@@ -41,11 +45,11 @@ type ResourceClients interface {
 	User() (dynamic.ResourceInterface, error)
 }
 
-func NewClientFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
-	return &ClientFactory{configProvider}
+func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
+	return &clientFactory{configProvider}
 }
 
-func (f *ClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	restConfig, err := f.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return nil, err

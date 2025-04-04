@@ -80,7 +80,8 @@ type APIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	render            rendering.Service
-	parsers           *resources.ParserFactory
+	parsers           resources.ParserFactory
+	clients           resources.ClientFactory
 	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
 	jobs              interface {
@@ -117,6 +118,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+	clients := resources.NewClientFactory(configProvider)
 
 	return &APIBuilder{
 		urlProvider:       urlProvider,
@@ -125,16 +127,15 @@ func NewAPIBuilder(
 		isPublic:          isPublic,
 		features:          features,
 		ghFactory:         ghFactory,
-		parsers: &resources.ParserFactory{
-			ClientFactory: resources.NewClientFactory(configProvider),
-		},
-		render:         render,
-		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
-		unified:        unified,
-		secrets:        secrets,
+		clients:           clients,
+		parsers:           resources.NewParserFactory(clients),
+		render:            render,
+		clonedir:          clonedir,
+		resourceLister:    resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		legacyMigrator:    legacyMigrator,
+		storageStatus:     storageStatus,
+		unified:           unified,
+		secrets:           secrets,
 	}
 }
 
@@ -562,7 +563,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.parsers.ClientFactory,
+				b.clients,
 				b.storageStatus,
 				b.parsers,
 			)
@@ -599,6 +600,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
+				b.clients,
 				&repository.Tester{},
 				b.jobs,
 				b.secrets,

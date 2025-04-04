@@ -24,7 +24,7 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
 }
 
 func (*filesConnector) New() runtime.Object {
