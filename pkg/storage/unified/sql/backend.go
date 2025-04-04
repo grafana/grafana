@@ -76,7 +76,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
-		log:                     logging.FromContext(ctx),
+		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
 		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
