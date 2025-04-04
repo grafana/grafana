@@ -9,7 +9,6 @@ import {
   SceneGridRow,
   SceneTimeRange,
   SceneVariableSet,
-  VariableValueSelectors,
   SceneRefreshPicker,
   SceneObject,
   VizPanelMenu,
@@ -17,7 +16,6 @@ import {
   VizPanelState,
   SceneGridItemLike,
   SceneDataLayerProvider,
-  SceneDataLayerControls,
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
@@ -278,7 +276,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       $behaviors: behaviorList,
       $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: oldModel.timepicker.quick_ranges,
         }),
