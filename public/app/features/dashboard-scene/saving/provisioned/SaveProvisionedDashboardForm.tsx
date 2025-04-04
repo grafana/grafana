@@ -59,7 +59,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -139,30 +139,18 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef;
     }
 
-    // The dashboard spec
-    const saveModel = dashboard.getSaveAsModel({
+    const body = dashboard.getSaveResource({
       isNew,
       title,
       description,
     });
-
-    const dash = {
-      apiVersion: 'dashboard.grafana.app/v1alpha1', // get from the dashboard?
-      kind: 'Dashboard',
-      metadata: {
-        ...meta.k8s,
-        name: meta.uid,
-        generateName: isNew ? 'p' : undefined,
-      },
-      spec: saveModel,
-    };
 
     createOrUpdateFile({
       ref,
       name: repo,
       path,
       message: comment,
-      body: dash,
+      body,
     });
   };
 

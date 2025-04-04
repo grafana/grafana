@@ -196,12 +196,20 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should save a new dashboard successfully', async () => {
     const { user, props } = setup();
     const newDashboard = {
-      title: 'New Dashboard',
-      description: 'New Description',
-      panels: [],
-      schemaVersion: 36,
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        generateName: 'p',
+        name: undefined,
+      },
+      spec: {
+        title: 'New Dashboard',
+        description: 'New Description',
+        panels: [],
+        schemaVersion: 36,
+      },
     };
-    props.dashboard.getSaveAsModel = jest.fn().mockReturnValue(newDashboard);
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
     const mockAction = jest.fn();
     const mockRequest = { ...mockRequestBase, isSuccess: true };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
@@ -232,15 +240,7 @@ describe('SaveProvisionedDashboardForm', () => {
         name: 'test-repo',
         path: 'test-dashboard.json',
         message: 'Initial commit',
-        body: {
-          apiVersion: 'dashboard.grafana.app/v1alpha1',
-          kind: 'Dashboard',
-          metadata: {
-            generateName: 'p',
-            name: undefined,
-          },
-          spec: newDashboard,
-        },
+        body: newDashboard,
       });
     });
     const appEvents = getAppEvents();
@@ -268,7 +268,7 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
-        getSaveAsModel: jest.fn().mockReturnValue({ title: 'Test Dashboard', description: 'Test Description' }),
+        getSaveResource: jest.fn().mockReturnValue({ title: 'Test Dashboard', description: 'Test Description' }),
         setManager: jest.fn(),
       } as unknown as DashboardScene,
     });
@@ -276,7 +276,7 @@ describe('SaveProvisionedDashboardForm', () => {
     const mockRequest = { ...mockRequestBase, isSuccess: true };
     (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
     const pathInput = screen.getByRole('textbox', { name: /path/i });
-    expect(pathInput.getAttribute('readonly')).toBe('true'); // can not edit the path value
+    expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
