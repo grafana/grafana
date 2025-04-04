@@ -1,6 +1,6 @@
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { DurationQuickPick } from './PendingPeriodQuickPick';
+import { DurationQuickPick } from './DurationQuickPick';
 
 describe('PendingPeriodQuickPick', () => {
   it('should render the correct default preset, set active element and allow selecting other options', async () => {

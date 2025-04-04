@@ -3,7 +3,7 @@ import { Button, Stack } from '@grafana/ui';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
 interface Props {
-  selectedDuration: string;
+  selectedDuration?: string;
   groupEvaluationInterval: string;
   onSelect: (interval: string) => void;
 }

@@ -38,10 +38,10 @@ import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
 
+import { DurationQuickPick } from './DurationQuickPick';
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
-import { DurationQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -109,9 +109,9 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluate
         return millisFor >= millisEvery
           ? true
           : t(
-              'alerting.rule-form.evaluation-behaviour-for.validation',
-              'Pending period must be greater than or equal to the evaluation interval.'
-            );
+            'alerting.rule-form.evaluation-behaviour-for.validation',
+            'Pending period must be greater than or equal to the evaluation interval.'
+          );
       } catch (err) {
         // if we fail to parse "every", assume validation is successful, or the error messages
         // will overlap in the UI
@@ -191,9 +191,9 @@ export function GrafanaEvaluationBehaviorStep({
   const label =
     isGrafanaManagedRuleByType(type) && !folder?.uid
       ? t(
-          'alerting.rule-form.evaluation.select-folder-before',
-          'Select a folder before setting evaluation group and interval'
-        )
+        'alerting.rule-form.evaluation.select-folder-before',
+        'Select a folder before setting evaluation group and interval'
+      )
       : t('alerting.rule-form.evaluation.evaluation-group-and-interval', 'Evaluation group and interval');
 
   return (
@@ -418,13 +418,13 @@ function EvaluationGroupCreationModal({
 
   const modalTitle = isGrafanaRecordingRule
     ? t(
-        'alerting.folderAndGroup.evaluation.modal.text.recording',
-        'Create a new evaluation group to use for this recording rule.'
-      )
+      'alerting.folderAndGroup.evaluation.modal.text.recording',
+      'Create a new evaluation group to use for this recording rule.'
+    )
     : t(
-        'alerting.folderAndGroup.evaluation.modal.text.alerting',
-        'Create a new evaluation group to use for this alert rule.'
-      );
+      'alerting.folderAndGroup.evaluation.modal.text.alerting',
+      'Create a new evaluation group to use for this alert rule.'
+    );
 
   return (
     <Modal
