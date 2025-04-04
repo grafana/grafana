@@ -241,6 +241,11 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
+# @PERCONA
+run-local-env: ## Start local frontend with pmm-server:dev-latest
+	yarn dev
+	docker compose up -d
+
 ##@ Testing
 
 .PHONY: test-go
