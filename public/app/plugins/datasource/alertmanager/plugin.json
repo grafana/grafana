@@ -132,19 +132,19 @@
     },
     {
       "method": "POST",
-      "reqRole": "Editor"
+      "reqRole": "Admin"
     },
     {
       "method": "PUT",
-      "reqRole": "Editor"
+      "reqRole": "Admin"
     },
     {
       "method": "DELETE",
-      "reqRole": "Editor"
+      "reqRole": "Admin"
     },
     {
       "method": "GET",
-      "reqRole": "Viewer"
+      "reqRole": "Admin"
     }
   ],
   "info": {
