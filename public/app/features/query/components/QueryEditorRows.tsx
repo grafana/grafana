@@ -24,7 +24,6 @@ export interface Props {
 
   // Query editing
   onQueriesChange: (queries: DataQuery[]) => void;
-  onUpdateDatasources: (datasource: DataSourceRef) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
 
@@ -38,6 +37,7 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryAddedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
@@ -82,7 +82,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       };
       const shouldChangeDatasource = dsSettings.uid !== newDatasourceRef.uid;
       if (shouldChangeDatasource) {
-        onUpdateDatasources(newDatasourceRef);
+        onUpdateDatasources?.(newDatasourceRef);
       }
     }
   }

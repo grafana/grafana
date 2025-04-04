@@ -52,7 +52,7 @@ export interface Props<TQuery extends DataQuery> {
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
-  onReplace: (query: DataQuery) => void;
+  onReplace?: (query: DataQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
@@ -523,7 +523,7 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
 }
 
 interface AddQueryFromLibraryButtonProps<TQuery extends DataQuery> {
-  onReplace: (query: DataQuery) => void;
+  onReplace?: (query: DataQuery) => void;
   onQueryAddedFromLibrary?: () => void;
   datasourceName?: string;
 }
@@ -538,11 +538,11 @@ function AddQueryFromLibraryButton<TQuery extends DataQuery>({
   const onAddQueryFromLibrary = () => {
     openDrawer(datasourceName ? [datasourceName] : [], (query: DataQuery) => {
       onQueryAddedFromLibrary?.();
-      onReplace(query);
+      onReplace?.(query);
     });
   };
 
-  return queryLibraryEnabled ? (
+  return queryLibraryEnabled && Boolean(onReplace) ? (
     <QueryOperationAction
       title={t('query-operation.header.add-query-from-library', 'Add query from library')}
       icon="book"
