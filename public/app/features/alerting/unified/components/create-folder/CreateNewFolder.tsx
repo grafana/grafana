@@ -31,7 +31,7 @@ export const CreateNewFolder = ({ onCreate }: { onCreate: (folder: Folder) => vo
         variant="secondary"
         disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
       >
-        <Trans i18nKey="alerting.rule-form.folder.new-folder">New folder</Trans>
+        <Trans i18nKey="alerting.create-new-folder.new-folder">New folder</Trans>
       </Button>
       {isCreatingFolder && <FolderCreationModal onCreate={handleCreate} onClose={() => setIsCreatingFolder(false)} />}
     </>
@@ -65,7 +65,7 @@ function FolderCreationModal({
     <Modal
       className={styles.modal}
       isOpen
-      title={t('alerting.folder-creation-modal.title-new-folder', 'New folder')}
+      title={t('alerting.create-new-folder.title-new-folder', 'New folder')}
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
@@ -73,7 +73,7 @@ function FolderCreationModal({
         <Field
           label={
             <Label htmlFor="folder">
-              <Trans i18nKey="alerting.rule-form.folder.name">Folder name</Trans>
+              <Trans i18nKey="alerting.create-new-folder.folder.name">Folder name</Trans>
             </Label>
           }
         >
@@ -81,7 +81,7 @@ function FolderCreationModal({
             data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
             id="folderName"
-            placeholder={t('alerting.folder-creation-modal.placeholder-enter-a-name', 'Enter a name')}
+            placeholder={t('alerting.create-new-folder.placeholder-enter-a-name', 'Enter a name')}
             value={title}
             onChange={(e) => setTitle(e.currentTarget.value)}
           />
@@ -89,14 +89,14 @@ function FolderCreationModal({
 
         <Modal.ButtonRow>
           <Button variant="secondary" type="button" onClick={onClose}>
-            <Trans i18nKey="alerting.rule-form.folder.cancel">Cancel</Trans>
+            <Trans i18nKey="alerting.create-new-folder.folder.cancel">Cancel</Trans>
           </Button>
           <Button
             onClick={onSubmit}
             disabled={!title}
             data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
           >
-            <Trans i18nKey="alerting.rule-form.folder.create">Create</Trans>
+            <Trans i18nKey="alerting.create-new-folder.folder.create">Create</Trans>
           </Button>
         </Modal.ButtonRow>
       </Stack>

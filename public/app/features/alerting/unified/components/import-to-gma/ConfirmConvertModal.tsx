@@ -90,7 +90,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       confirmButtonVariant="primary"
       body={
         <Stack direction="column" gap={2}>
-          <Alert title={t('alerting.confirm-conversion-modal.title-warning', 'Warning')} severity="warning">
+          <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
             <Text variant="body">
               <Trans i18nKey="alerting.to-gma.confirm-modal.body">
                 If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to
