@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { downloadLogs } from '../../utils';
+import { createLogRow } from '../__mocks__/logRow';
 
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
-import { createLogRow } from '../__mocks__/logRow';
 
 jest.mock('../../utils');
 
