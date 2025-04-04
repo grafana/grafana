@@ -287,4 +287,30 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
+
+	t.Run("nested folder with space is created correctly", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "abc/dash.json", Hash: "abc", Blob: true},
+			{Path: "abc/nested folder/nested-dashboard.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+
+		// Expected correct behavior: It should create the dashboard in abc-root,
+		// and correctly create the dashboards within the nested folder.
+		// Implicit folder creation happens during applyChanges, not calculated in the diff itself for this case.
+		expected := []ResourceFileChange{
+			{
+				Action: repository.FileActionCreated,
+				Path:   "abc/nested folder/nested-dashboard.json",
+			},
+			{
+				Action: repository.FileActionCreated,
+				Path:   "abc/dash.json",
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Equal(t, expected, changes, "Expected diff to correctly include nested folder contents")
+	})
 }
