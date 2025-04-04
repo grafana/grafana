@@ -450,14 +450,14 @@ export enum DownloadFormat {
 export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[], meta?: LogsMetaItem[]) => {
   switch (format) {
     case DownloadFormat.Text:
-      downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
+      downloadLogsModelAsTxt({ meta, rows: logRows });
       break;
     case DownloadFormat.Json:
       const jsonLogs = logRowsToReadableJson(logRows);
       const blob = new Blob([JSON.stringify(jsonLogs)], {
         type: 'application/json;charset=utf-8',
       });
-      const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
+      const fileName = `Logs-${dateTimeFormat(new Date())}.json`;
       saveAs(blob, fileName);
       break;
     case DownloadFormat.CSV:
@@ -482,7 +482,7 @@ export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[
           addISODateTransformation
         );
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-        downloadDataFrameAsCsv(transformedDataFrame[0], `Explore-logs-${dataFrame.refId}`);
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
       });
   }
 };
