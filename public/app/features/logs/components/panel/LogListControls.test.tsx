@@ -1,11 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, EventBusSrv, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+
+import { downloadLogs } from '../../utils';
+import { createLogRow } from '../__mocks__/logRow';
 
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
+
+jest.mock('../../utils');
 
 const contextProps = {
   app: CoreApp.Unknown,
@@ -160,5 +165,39 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText('Enable highlighting'));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('syntaxHighlighting', true);
+  });
+
+  test.each([
+    ['txt', 'text'],
+    ['json', 'json'],
+    ['csv', 'csv'],
+  ])('Allows to download logs', async (label: string, format: string) => {
+    jest.mocked(downloadLogs).mockClear();
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Download logs'));
+    await userEvent.click(await screen.findByText(label));
+    expect(downloadLogs).toHaveBeenCalledTimes(1);
+    expect(downloadLogs).toHaveBeenCalledWith(format, [], undefined);
+  });
+
+  test('Allows to download logs filtered logs', async () => {
+    jest.mocked(downloadLogs).mockClear();
+    const log1 = createLogRow({ logLevel: LogLevel.error });
+    const log2 = createLogRow({ logLevel: LogLevel.warning });
+    const logs = [log1, log2];
+    const filteredLogs = [log1];
+
+    render(
+      <LogListContextProvider {...contextProps} logs={logs} filterLevels={[LogLevel.error]}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Download logs'));
+    await userEvent.click(await screen.findByText('txt'));
+    expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined);
   });
 });
