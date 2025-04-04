@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 import {
   RepositorySpec,
   useCreateRepositoryMutation,
@@ -13,63 +11,37 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
-  const appEvents = getAppEvents();
 
   const updateOrCreate = useCallback(
     async (data: RepositorySpec) => {
-      try {
-        // First test the config
-        const testResult = await testConfig({
-          // HACK: we need to provide a name to the test configuration
-          name: name || 'new',
-          body: {
+      // First test the config and wait for the result
+      // unwrap will throw an error if the test fails
+      await testConfig({
+        // HACK: we need to provide a name to the test configuration
+        name: name || 'new',
+        body: {
+          spec: data,
+        },
+      }).unwrap();
+
+      // If test passes, proceed with create/update
+      if (name) {
+        return update({
+          name,
+          repository: {
+            metadata: {
+              name,
+              // TODO? -- replace with patch spec, so the rest of the metadata is not replaced?
+              // Can that support optimistic locking? (eg, make sure the RV is the same?)
+              finalizers: ['cleanup', 'remove-orphan-resources'],
+            },
             spec: data,
           },
-        }).unwrap();
-
-        if (!testResult.success) {
-          appEvents.publish({
-            type: AppEvents.alertError.name,
-            payload: ['Repository configuration test failed', testResult.errors?.join(', ')],
-          });
-          return;
-        }
-
-        // If test passes, proceed with create/update
-        if (name) {
-          return update({
-            name,
-            repository: {
-              metadata: {
-                name,
-                // TODO? -- replace with patch spec, so the rest of the metadata is not replaced?
-                // Can that support optimistic locking? (eg, make sure the RV is the same?)
-                finalizers: ['cleanup', 'remove-orphan-resources'],
-              },
-              spec: data,
-            },
-          });
-        }
-        return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
-      } catch (error: any) {
-        // Handle RTK Query error response which contains the test results
-        if (error.data?.errors?.length) {
-          appEvents.publish({
-            type: AppEvents.alertError.name,
-            payload: ['Repository configuration test failed', error.data.errors.join(', ')],
-          });
-          return;
-        }
-
-        // Handle other errors
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: ['Error testing repository configuration', error.message || error],
         });
-        throw error;
       }
+      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
     },
-    [create, name, update, testConfig, appEvents]
+    [create, name, update, testConfig]
   );
 
   return [updateOrCreate, name ? updateRequest : createRequest, testRequest] as const;
