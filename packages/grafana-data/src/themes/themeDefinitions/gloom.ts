@@ -6,21 +6,21 @@ import { NewThemeOptions } from '../createTheme';
  */
 
 const whiteBase = `210, 210, 220`;
-const secondaryBase = `210, 210, 220`;
+const secondaryBase = `195, 195, 245`;
+
 //const brandMain = '#3d71d9';
 //const brandText = '#6e9fff';
 const brandMain = '#ff934d';
 const brandText = '#f99a5c';
-
-const disabledText = `rgba(${whiteBase}, 0.6)`;
+const disabledText = `rgba(${whiteBase}, 0.48)`;
 
 const gloomTheme: NewThemeOptions = {
   name: 'Gloom',
   colors: {
     mode: 'dark',
     border: {
-      weak: `rgba(${whiteBase}, 0.08)`,
-      medium: `rgba(${whiteBase}, 0.15)`,
+      weak: `rgba(${whiteBase}, 0.12)`,
+      medium: `rgba(${whiteBase}, 0.20)`,
       strong: `rgba(${whiteBase}, 0.30)`,
     },
 
@@ -50,16 +50,16 @@ const gloomTheme: NewThemeOptions = {
 
     background: {
       canvas: '#000',
-      primary: '#0d0b14',
-      secondary: '#19171f',
-      elevated: '#19171f',
+      primary: '#121118',
+      secondary: '#211e28',
+      elevated: '#211e28',
     },
 
     action: {
-      hover: `rgba(${secondaryBase}, 0.10)`,
-      selected: `rgba(${secondaryBase}, 0.12)`,
+      hover: `rgba(${secondaryBase}, 0.07)`,
+      selected: `rgba(${secondaryBase}, 0.11)`,
       selectedBorder: brandMain,
-      focus: `rgba(${secondaryBase}, 0.10)`,
+      focus: `rgba(${secondaryBase}, 0.07)`,
       hoverOpacity: 0.05,
       disabledText: disabledText,
       disabledBackground: `rgba(${whiteBase}, 0.04)`,
