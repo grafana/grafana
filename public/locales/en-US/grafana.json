@@ -863,7 +863,8 @@
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simpleCondition": {
-      "alertCondition": "Alert condition"
+      "alertCondition": "Alert condition",
+      "when": "WHEN"
     },
     "templates": {
       "editor": {
