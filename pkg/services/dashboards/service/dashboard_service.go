@@ -766,7 +766,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 	var err error
 	if dashboard.ID > 0 {
 		// if ID is set and the dashboard is not found, ErrDashboardNotFound will be returned
-		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, ID: dashboard.ID})
+		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			OrgID:      dashboard.OrgID,
+			ID:         dashboard.ID,
+			IncludeDTO: true,
+		})
 		if err != nil {
 			return false, err
 		}
@@ -779,7 +783,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 
 	var existingByUid *dashboards.Dashboard
 	if dashboard.UID != "" {
-		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, UID: dashboard.UID})
+		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			OrgID:      dashboard.OrgID,
+			UID:        dashboard.UID,
+			IncludeDTO: true,
+		})
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return false, err
 		}
@@ -1716,6 +1724,12 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 // -----------------------------------------------------------------------------------------
 
 func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	var dtoSub string
+	// The DTO subresource is required in order to return a rehydrated large object.
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) && query.IncludeDTO {
+		dtoSub = "dto"
+	}
+
 	// get uid if not passed in
 	if query.UID == "" {
 		result, err := dr.GetDashboardUIDByID(ctx, &dashboards.GetDashboardRefByIDQuery{
@@ -1728,7 +1742,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, "")
+	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, dtoSub)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
