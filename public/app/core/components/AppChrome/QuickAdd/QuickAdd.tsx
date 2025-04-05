@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { useSelector } from 'app/types';
 
 import { findCreateActions } from './utils';
@@ -14,8 +13,11 @@ export const QuickAdd = ({}: Props) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
-  const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const showQuickAdd = createActions.length > 0 && !isSmallScreen;
+  const showQuickAdd = createActions.length > 0;
+
+  if (!showQuickAdd) {
+    return null;
+  }
 
   const MenuActions = () => {
     return (
@@ -32,16 +34,9 @@ export const QuickAdd = ({}: Props) => {
     );
   };
 
-  return showQuickAdd ? (
-    <>
-      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
-        <ToolbarButton
-          iconOnly
-          icon={isSmallScreen ? 'plus-circle' : 'plus'}
-          isOpen={isSmallScreen ? undefined : isOpen}
-          aria-label="New"
-        />
-      </Dropdown>
-    </>
-  ) : null;
+  return (
+    <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
+      <ToolbarButton iconOnly icon={'plus'} isOpen={isOpen} aria-label="New" />
+    </Dropdown>
+  );
 };

@@ -20,7 +20,7 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
-import { useChromeHeaderHeight } from './TopBar/useChromeHeaderHeight';
+import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
 export interface Props extends PropsWithChildren<{}> {}
 
@@ -36,8 +36,8 @@ export function AppChrome({ children }: Props) {
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
 
-  const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight);
+  const headerLevels = useChromeHeaderLevels();
+  const styles = useStyles2(getStyles, headerLevels * getChromeHeaderLevelHeight());
   const isLargeScreen = useMediaQueryMinWidth('xl');
 
   // If saved menu dock state is open, dock/undock it based on screen size
@@ -110,6 +110,7 @@ export function AppChrome({ children }: Props) {
               actions={state.actions}
               breadcrumbActions={state.breadcrumbActions}
               scopes={scopes}
+              showToolbarLevel={headerLevels === 2}
             />
           </header>
         </>
@@ -179,7 +180,8 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       zIndex: 2,
 
       [theme.breakpoints.up('xl')]: {
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
       },
     }),
     scopesDashboardsContainer: css({

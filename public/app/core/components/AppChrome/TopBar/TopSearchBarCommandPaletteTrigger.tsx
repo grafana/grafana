@@ -10,6 +10,8 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
 export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
@@ -24,12 +26,15 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
 
   if (!isLargeScreen) {
     return (
-      <ToolbarButton
-        iconOnly
-        icon="search"
-        aria-label={t('nav.search.placeholderCommandPalette', 'Search...')}
-        onClick={onOpenSearch}
-      />
+      <>
+        <ToolbarButton
+          iconOnly
+          icon="search"
+          aria-label={t('nav.search.placeholderCommandPalette', 'Search...')}
+          onClick={onOpenSearch}
+        />
+        <NavToolbarSeparator />
+      </>
     );
   }
 
@@ -74,9 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: cx(
       baseStyles.wrapper,
       css({
-        width: 150,
+        width: 140,
         [theme.breakpoints.up('xl')]: {
-          width: 200,
+          width: 180,
         },
         [theme.breakpoints.up('xxl')]: {
           width: 300,

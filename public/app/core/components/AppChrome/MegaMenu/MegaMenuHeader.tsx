@@ -7,6 +7,7 @@ import { t } from 'app/core/internationalization';
 
 import { Branding } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
+import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 export interface Props {
@@ -78,8 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     justifyContent: 'space-between',
     padding: theme.spacing(0, 1, 0, 0.75),
-    height: TOP_BAR_LEVEL_HEIGHT,
-    minHeight: TOP_BAR_LEVEL_HEIGHT,
+    height: getChromeHeaderLevelHeight(),
   }),
   img: css({
     alignSelf: 'center',

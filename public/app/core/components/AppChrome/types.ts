@@ -1,5 +1,4 @@
 import { NavModelItem } from '@grafana/data';
-export const TOP_BAR_LEVEL_HEIGHT = 48;
 
 export interface ToolbarUpdateProps {
   pageNav?: NavModelItem;

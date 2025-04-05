@@ -42,17 +42,18 @@ function getHeaderLevelsGivenState(
   scopesEnabled: boolean | undefined = false,
   isLargeScreen: boolean
 ) {
+  // No levels when chromeless or kiosk mode
   if (chromeState.kioskMode || chromeState.chromeless) {
     return 0;
   }
 
-  // If scopes or small screen use two levels
-  if (scopesEnabled || !isLargeScreen) {
+  // If scopes always use two levels
+  if (scopesEnabled) {
     return 2;
   }
 
-  // If have actions and unifiedNavbars is disabled, use two levels
-  if (chromeState.actions && !config.featureToggles.unifiedNavbars) {
+  // If we have actions and and screen is small (or unifiedNavbars is disabled) then we need two levels
+  if (chromeState.actions && (!isLargeScreen || !config.featureToggles.unifiedNavbars)) {
     return 2;
   }
 
@@ -62,6 +63,7 @@ function getHeaderLevelsGivenState(
 /**
  * Translates header levels to header height but also takes the
  * sidebar into account as header height can be treated as zero when the sidebar is open
+ * this should be better named as useStickyTopPadding or something as that is what is's used for
  */
 export function useChromeHeaderHeight() {
   const levels = useChromeHeaderLevels();
@@ -73,5 +75,12 @@ export function useChromeHeaderHeight() {
     return 0;
   }
 
-  return levels * TOP_BAR_LEVEL_HEIGHT;
+  return levels * getChromeHeaderLevelHeight();
+}
+
+/**
+ * Can replace with constant once unifiedNavbars feature toggle is removed
+ **/
+export function getChromeHeaderLevelHeight() {
+  return config.featureToggles.unifiedNavbars ? 48 : 40;
 }

@@ -7,7 +7,8 @@ import { Stack, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+
+import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
 export interface Props {
   actions?: React.ReactNode;
@@ -41,7 +42,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: theme.colors.background.primary,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      height: TOP_BAR_LEVEL_HEIGHT,
+      height: getChromeHeaderLevelHeight(),
       padding: theme.spacing(0, 1, 0, 2),
     }),
   };

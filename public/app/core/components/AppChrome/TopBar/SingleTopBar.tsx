@@ -9,6 +9,7 @@ import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
@@ -29,7 +30,7 @@ import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { useChromeHeaderLevels } from './useChromeHeaderHeight';
+import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -39,6 +40,7 @@ interface Props {
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
   scopes?: ScopesContextValue | undefined;
+  showToolbarLevel: boolean;
 }
 
 export const SingleTopBar = memo(function SingleTopBar({
@@ -49,6 +51,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   scopes,
   actions,
   breadcrumbActions,
+  showToolbarLevel,
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -61,7 +64,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
-  const showToolbarLevel = useChromeHeaderLevels() === 2;
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   return (
     <>
@@ -87,29 +90,25 @@ export const SingleTopBar = memo(function SingleTopBar({
         </Stack>
 
         <Stack gap={0.5} alignItems="center" justifyContent={'flex-end'}>
-          <div>
-            <TopSearchBarCommandPaletteTrigger />
-          </div>
-          <ToolbarButtonRow alignment="right">
-            {unifiedHistoryEnabled && <HistoryContainer />}
-            <QuickAdd />
-            <NavToolbarSeparator />
-            {enrichedHelpNode && (
-              <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-                <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
-              </Dropdown>
-            )}
-            <NavToolbarSeparator />
-            <ToolbarButton
-              icon="monitor"
-              className={styles.kioskToggle}
-              onClick={onToggleKioskMode}
-              tooltip="Enable kiosk mode"
-            />
-            {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
-            {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
-            {!showToolbarLevel && actions}
-          </ToolbarButtonRow>
+          <TopSearchBarCommandPaletteTrigger />
+          {unifiedHistoryEnabled && <HistoryContainer />}
+          <QuickAdd />
+          <NavToolbarSeparator />
+          {enrichedHelpNode && (
+            <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+              <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
+            </Dropdown>
+          )}
+          <NavToolbarSeparator />
+          {config.featureToggles.inviteUserExperimental && !isSmallScreen && <InviteUserButton />}
+          {config.featureToggles.extensionSidebar && !isSmallScreen && <ExtensionToolbarItem />}
+          <ToolbarButton
+            icon="monitor"
+            className={styles.kioskToggle}
+            onClick={onToggleKioskMode}
+            tooltip="Enable kiosk mode"
+          />
+          {!showToolbarLevel && actions && <ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           {profileNode && <ProfileButton profileNode={profileNode} />}
         </Stack>
@@ -123,7 +122,7 @@ export const SingleTopBar = memo(function SingleTopBar({
 
 const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
   layout: css({
-    height: TOP_BAR_LEVEL_HEIGHT,
+    height: getChromeHeaderLevelHeight(),
     display: 'flex',
     gap: theme.spacing(2),
     alignItems: 'center',
