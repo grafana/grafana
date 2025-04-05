@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQuery, useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { useMediaQueryMinWidth, useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
@@ -28,7 +28,6 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const { isOpen: isExtensionSidebarOpen, isEnabled: isExtensionSidebarEnabled } = useExtensionSidebarContext();
   const state = chrome.useState();
-  const theme = useTheme2();
   const scopes = useScopes();
 
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
@@ -39,7 +38,7 @@ export function AppChrome({ children }: Props) {
 
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
-  const isLargeScreen = useMediaQuery(`(min-width: ${theme.breakpoints.values.xl}px)`);
+  const isLargeScreen = useMediaQueryMinWidth('xl');
 
   useEffect(() => {
     if (dockedMenuLocalStorageState && !isLargeScreen) {

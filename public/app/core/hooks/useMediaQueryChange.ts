@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { ThemeBreakpointsKey } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+
 export function useMediaQueryChange({
   breakpoint,
   onChange,
@@ -16,8 +19,12 @@ export function useMediaQueryChange({
   }, [breakpoint, onChange]);
 }
 
-export function useMediaQuery(query: string): boolean {
-  const mediaQuery = useMemo(() => window.matchMedia(query), [query]);
+export function useMediaQueryMinWidth(breakpoint: ThemeBreakpointsKey): boolean {
+  const theme = useTheme2();
+  const mediaQuery = useMemo(
+    () => window.matchMedia(`(min-width: ${theme.breakpoints.values[breakpoint]}px)`),
+    [theme, breakpoint]
+  );
   const [isMatch, setIsMatch] = useState(mediaQuery.matches);
 
   useEffect(() => {
