@@ -387,12 +387,9 @@
 
 
 /crowdin.yml @grafana/grafana-frontend-platform
-/public/locales/ @grafana/grafana-frontend-platform
-/public/locales/de-DE @grafanabot
-/public/locales/es-ES @grafanabot
-/public/locales/fr-FR @grafanabot
-/public/locales/pt-BR @grafanabot
-/public/locales/zh-Hans @grafanabot
+/public/locales/ @grafanabot
+/public/locales/i18next-parser.config.cjs @grafana/grafana-frontend-platform
+/public/locales/i18next-parser-enterprise.config.cjs @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
@@ -546,7 +543,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/datagrid/ @grafana/dataviz-squad
 /public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
-/public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
@@ -559,7 +555,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
-/public/app/plugins/panel/table-old/ @grafana/dataviz-squad
 /public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/trend/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
@@ -571,7 +566,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
-/public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
@@ -604,7 +598,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/api-merged.json @grafana/grafana-backend-group
 /public/api-enterprise-spec.json @grafana/grafana-backend-group
 /public/openapi3.json @grafana/grafana-backend-group
-/public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
@@ -794,7 +787,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @tolzhabayev
 /.github/workflows/pr-checks.yml @tolzhabayev
-/.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
@@ -833,6 +825,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
+/.github/workflows/e2e-suite-various.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

@@ -52,7 +52,6 @@ import {
 import {
   frameToRecords,
   getCellColors,
-  getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
   getFooterItemNG,
@@ -75,6 +74,7 @@ export function TableNG(props: TableNGProps) {
     height,
     initialSortBy,
     noHeader,
+    onCellFilterAdded,
     onColumnResize,
     onSortByChange,
     width,
@@ -128,7 +128,10 @@ export function TableNG(props: TableNGProps) {
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
+  const textWrap = fieldConfig?.defaults?.custom?.cellOptions?.wrapText ?? false;
+
   const theme = useTheme2();
+  const styles = useStyles2(getStyles, textWrap);
   const panelContext = usePanelContext();
 
   const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -192,6 +195,23 @@ export function TableNG(props: TableNGProps) {
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Create off-screen canvas for measuring rows for virtualized rendering
+  // This line is like this because Jest doesn't have OffscreenCanvas mocked
+  // nor is it a part of the jest-canvas-mock package
+  let osContext = null;
+  if (window.OffscreenCanvas !== undefined) {
+    // The canvas size is defined arbitrarily
+    // As we never actually visualize rendered content
+    // from the offscreen canvas, only perform text measurements
+    osContext = new OffscreenCanvas(256, 1024).getContext('2d');
+  }
+
+  // Set font property using theme info
+  // This will make text measurement accurate
+  if (osContext !== undefined && osContext !== null) {
+    osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
+  }
+
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
   const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
@@ -200,73 +220,12 @@ export function TableNG(props: TableNGProps) {
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create a map of column key to column type
-  const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
-    [props.data.fields]
-  );
-
-  // Create a map of column key to text wrap
-  const textWraps = useMemo(
-    () =>
-      props.data.fields.reduce(
-        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
-      ),
-    [props.data.fields]
-  );
-
-  const textWrap = useMemo(() => Object.values(textWraps).some(Boolean), [textWraps]);
-  const styles = useStyles2(getStyles, textWrap);
-
-  // Create a function to get column widths for text wrapping calculations
-  const getColumnWidths = useCallback(() => {
-    const widths: Record<string, number> = {};
-
-    // Set default widths from field config if they exist
-    props.data.fields.forEach(({ name, config }) => {
-      const configWidth = config?.custom?.width;
-      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH - TABLE.CELL_PADDING * 2;
-    });
-
-    // Measure actual widths if available
-    Object.keys(headerCellRefs.current).forEach((key) => {
-      const headerCell = headerCellRefs.current[key];
-
-      if (headerCell.offsetWidth > 0) {
-        widths[key] = headerCell.offsetWidth;
-      }
-    });
-
-    return widths;
+  const columnTypes = useMemo(() => {
+    return props.data.fields.reduce((acc, field) => {
+      acc[field.name] = field.type;
+      return acc;
+    }, {} as ColumnTypes);
   }, [props.data.fields]);
-
-  const headersLength = useMemo(() => {
-    return props.data.fields.length;
-  }, [props.data.fields]);
-
-  const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
-  }, [props.data.fields]);
-
-  // Clean up fieldsData to simplify
-  const fieldsData = useMemo(
-    () => ({
-      headersLength,
-      textWraps,
-      columnTypes,
-      fieldDisplayType,
-      columnWidths: getColumnWidths(),
-    }),
-    [textWraps, columnTypes, getColumnWidths, headersLength, fieldDisplayType]
-  );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
     const field = props.data.fields.find((field) => field.name === key)!;
@@ -412,27 +371,6 @@ export function TableNG(props: TableNGProps) {
     setResizeTrigger((prev) => prev + 1);
   };
 
-  const { ctx, avgCharWidth } = useMemo(() => {
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    // set in grafana/data in createTypography.ts
-    const letterSpacing = 0.15;
-
-    ctx.letterSpacing = `${letterSpacing}px`;
-    ctx.font = font;
-    let txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width;
-    const avgCharWidth = txtWidth / txt.length + letterSpacing;
-
-    return {
-      ctx,
-      font,
-      avgCharWidth,
-    };
-  }, [theme.typography.fontSize, theme.typography.fontFamily]);
-
   const columns = useMemo(
     () =>
       mapFrameToDataGrid({
@@ -449,8 +387,9 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
-          ctx,
+          onCellFilterAdded,
           onSortByChange,
+          osContext,
           rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
           sortedRows,
@@ -494,10 +433,6 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
-  const cellHeightCalc = useMemo(() => {
-    return getCellHeightCalculator(ctx, defaultLineHeight, defaultRowHeight, TABLE.CELL_PADDING);
-  }, [ctx, defaultLineHeight, defaultRowHeight]);
-
   const calculateRowHeight = useCallback(
     (row: TableRow) => {
       // Logic for sub-tables
@@ -507,9 +442,17 @@ export function TableNG(props: TableNGProps) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
-      return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
+      return getRowHeight(
+        row,
+        columnTypes,
+        headerCellRefs,
+        osContext,
+        defaultLineHeight,
+        defaultRowHeight,
+        TABLE.CELL_PADDING
+      );
     },
-    [expandedRows, avgCharWidth, defaultRowHeight, fieldsData, cellHeightCalc]
+    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -655,8 +598,9 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
-    ctx,
+    onCellFilterAdded,
     onSortByChange,
+    osContext,
     rows,
     sortedRows,
     setContextMenuProps,
@@ -666,7 +610,6 @@ export function mapFrameToDataGrid({
     sortColumnsRef,
     styles,
     textWrap,
-    fieldConfig,
     theme,
     timeRange,
     getActions,
@@ -676,9 +619,6 @@ export function mapFrameToDataGrid({
 
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
-
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
-  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   // If nested frames, add expansion control column
   if (hasNestedFrames) {
@@ -763,7 +703,7 @@ export function mapFrameToDataGrid({
 
   let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
-    if (field.type === FieldType.nestedFrames) {
+    if (field.type === FieldType.nestedFrames || field.config.custom?.hidden) {
       // Don't render nestedFrames type field
       return;
     }
@@ -800,27 +740,27 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={rowIdx}
+            rowIdx={sortedRows[rowIdx].__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
                 row,
                 columnTypes,
                 headerCellRefs,
-                ctx,
+                osContext,
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect,
+                field,
                 cellType
               )
             }
             setIsInspecting={setIsInspecting}
             setContextMenuProps={setContextMenuProps}
-            cellInspect={cellInspect}
             getActions={getActions}
             rowBg={rowBg}
+            onCellFilterAdded={onCellFilterAdded}
           />
         );
       },
@@ -858,7 +798,6 @@ export function mapFrameToDataGrid({
           justifyContent={justifyColumnContent}
           filter={filter}
           setFilter={setFilter}
-          filterable={filterable}
           onColumnResize={onColumnResize}
           headerCellRefs={headerCellRefs}
           crossFilterOrder={crossFilterOrder}
@@ -1024,7 +963,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   cell: css({
     '--rdg-border-color': theme.colors.border.medium,
     borderLeft: 'none',
-    whiteSpace: `${textWrap ? 'normal' : 'nowrap'}`,
+    whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
