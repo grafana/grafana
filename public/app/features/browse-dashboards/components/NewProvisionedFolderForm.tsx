@@ -1,4 +1,3 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -6,10 +5,9 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
-import { useGetFolderQuery } from 'app/api/clients/folder';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
-import { AnnoKeyManagerIdentity, AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
+import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
@@ -42,15 +40,13 @@ const initialFormValues: Partial<FormData> = {
 };
 
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
-  const repositoryView = useGetResourceRepositoryView({ folderUid: parentFolder?.uid });
+  const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
   const prURL = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   // Get k8s folder data, necessary to get parent folder path
-  const folderQuery = useGetFolderQuery(parentFolder ? { name: parentFolder.uid } : skipToken);
-  const repositoryName = folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-  if (!repositoryView && !folderQuery.isLoading) {
+  if (!repository) {
     return (
       <Alert
         title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
@@ -59,7 +55,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     );
   }
 
-  const isGitHub = Boolean(repositoryView?.type === 'github');
+  const isGitHub = Boolean(repository?.type === 'github');
 
   const {
     register,
@@ -68,13 +64,13 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     formState: { errors },
     control,
     setValue,
-  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryView) } });
+  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repository) } });
 
   const [workflow, ref] = watch(['workflow', 'ref']);
 
   useEffect(() => {
-    setValue('workflow', getDefaultWorkflow(repositoryView));
-  }, [repositoryView, setValue]);
+    setValue('workflow', getDefaultWorkflow(repository));
+  }, [repository, setValue]);
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -99,7 +95,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         return;
       }
 
-      let url = `${PROVISIONING_URL}/${repositoryName}/file/${request.data.path}`;
+      let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
@@ -122,10 +118,10 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     request.data,
     workflow,
     navigate,
-    repositoryName,
+    repository,
   ]);
 
-  if (folderQuery.isLoading) {
+  if (isLoading) {
     return <Spinner />;
   }
 
@@ -142,11 +138,11 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   };
 
   const doSave = async ({ ref, title, workflow, comment }: FormData) => {
-    const repoName = repositoryView?.name;
+    const repoName = repository?.name;
     if (!title || !repoName) {
       return;
     }
-    const basePath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
+    const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
     // Convert folder title to filename format (lowercase, replace spaces with hyphens)
     const titleInFilenameFormat = title
@@ -178,7 +174,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {!repositoryView?.workflows.length && (
+        {!repository?.workflows?.length && (
           <Alert
             title={t(
               'browse-dashboards.new-provisioned-folder-form.title-this-repository-is-read-only',
@@ -228,7 +224,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
                 control={control}
                 name="workflow"
                 render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryView)} id={'folder-workflow'} />
+                  <RadioButtonGroup {...field} options={getWorkflowOptions(repository)} id={'folder-workflow'} />
                 )}
               />
             </Field>
