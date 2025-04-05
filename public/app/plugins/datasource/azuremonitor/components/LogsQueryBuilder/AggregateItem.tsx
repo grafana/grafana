@@ -9,6 +9,8 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
 } from '../../dataquery.gen';
+import { AzureMonitorOption } from '../../types';
+import { addValueToOptions } from '../../utils/common';
 
 import { aggregateOptions, inputFieldSize } from './utils';
 
@@ -17,7 +19,7 @@ interface AggregateItemProps {
   columns: Array<SelectableValue<string>>;
   onChange: (item: BuilderQueryEditorReduceExpression) => void;
   onDelete: () => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 const AggregateItem: React.FC<AggregateItemProps> = ({
@@ -25,7 +27,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   onChange,
   onDelete,
   columns,
-  templateVariableOptions,
+  variableOptionGroup,
 }) => {
   const isPercentile = aggregate.reduce?.name === 'percentile';
   const isCountAggregate = aggregate.reduce?.name?.includes('count');
@@ -35,11 +37,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
     isPercentile ? aggregate.parameters?.[1]?.value || '' : aggregate.property?.name || ''
   );
 
-  const safeTemplateVariables = Array.isArray(templateVariableOptions)
-    ? templateVariableOptions
-    : [templateVariableOptions];
-
-  const selectableOptions = columns.concat(safeTemplateVariables);
+  const selectableOptions = addValueToOptions(columns, variableOptionGroup, columnValue);
 
   const buildPercentileParams = (percentile: string, column: string) => [
     {

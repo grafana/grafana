@@ -5,7 +5,12 @@ import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/p
 import { Button, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
-import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
+import {
+  AzureMonitorQuery,
+  AzureLogAnalyticsMetadataColumn,
+  AzureLogAnalyticsMetadataTable,
+  AzureMonitorOption,
+} from '../../types';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -14,11 +19,11 @@ interface TableSectionProps {
   tables: AzureLogAnalyticsMetadataTable[];
   query: AzureMonitorQuery;
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions?: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions } = props;
+  const { allColumns, query, tables, buildAndUpdateQuery, variableOptionGroup } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
@@ -38,15 +43,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     value: '__all_columns__',
   };
 
-  const selectableOptions: Array<SelectableValue<string>> = [
-    selectAllOption,
-    ...columnOptions,
-    ...(templateVariableOptions
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : []),
-  ];
+  const selectableOptions: Array<SelectableValue<string>> = [selectAllOption, ...columnOptions, variableOptionGroup];
 
   const handleTableChange = (selected: SelectableValue<string>) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
@@ -73,22 +70,22 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>> | null) => {
     const selectedArray = Array.isArray(selected) ? selected : selected ? [selected] : [];
-
+  
     if (selectedArray.length === 0) {
       buildAndUpdateQuery({ columns: [] });
       return;
     }
-
+  
     const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
     const lastSelected = selectedArray[selectedArray.length - 1];
-
+  
     if (includesAll && lastSelected.value === '__all_columns__') {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
       return;
     }
-
+  
     if (includesAll && selectedArray.length > 1) {
       const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
       buildAndUpdateQuery({
@@ -96,18 +93,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       });
       return;
     }
-
+  
     if (includesAll && selectedArray.length === 1) {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
       return;
     }
-
+  
     buildAndUpdateQuery({
       columns: selectedArray.map((opt) => opt.value!),
     });
-  };
+  };  
 
   const onDeleteAllColumns = () => {
     buildAndUpdateQuery({
@@ -150,9 +147,11 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               value={columnSelectValue}
               options={selectableOptions}
               placeholder="Select columns"
-              onChange={handleColumnsChange}
               isDisabled={!builderQuery?.from?.property.name}
-              width={30}
+              onChange={(e) => {
+                handleColumnsChange(e);
+              }}
+              width={inputFieldSize}
             />
             <Button variant="secondary" icon="times" onClick={onDeleteAllColumns} />
           </InputGroup>
