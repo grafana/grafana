@@ -275,7 +275,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: definitions.Provenance(models.ProvenanceFile),
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
-			//expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
+			// expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
 		},
 		{
 			name:        "delete receiver with optimistic version mismatch fails",
@@ -673,7 +673,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI)),
 			existing: util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			//expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
+			// expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
 			expectedUpdate: models.CopyReceiverWith(baseReceiver,
 				models.ReceiverMuts.WithProvenance(models.ProvenanceAPI),
 				rm.Encrypted(models.Base64Enrypt)),
@@ -960,13 +960,6 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			}},
 			existing: allReceivers(),
 			visible:  []models.Receiver{recv1, recv3},
-		},
-		{
-			name:                    "provisioning read applies to only provisioning",
-			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningRead: nil},
-			existing:                allReceivers(),
-			visible:                 nil,
-			visibleWithProvisioning: allReceivers(),
 		},
 		{
 			name:                    "provisioning read secrets applies to only provisioning",

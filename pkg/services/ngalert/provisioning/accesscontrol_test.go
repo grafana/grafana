@@ -34,7 +34,6 @@ func TestCanReadAllRules(t *testing.T) {
 		require.Len(t, rs.Calls, 1)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
 		require.Equal(t, accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningRead),
 		).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
@@ -68,11 +67,7 @@ func TestCanWriteAllRules(t *testing.T) {
 
 		require.Len(t, rs.Calls, 1)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
-		require.Equal(t,
-			accesscontrol.EvalAny(
-				accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningWrite),
-				accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningWrite),
-			).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
+		require.Equal(t, accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningWrite).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
 	})
 
 	t.Run("should return error", func(t *testing.T) {
@@ -107,7 +102,6 @@ func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 		require.Len(t, rs.Calls, 1)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
 		assert.Equal(t, accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningRead),
 		).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
@@ -183,7 +177,6 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 		require.Len(t, rs.Calls, 1)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
 		assert.Equal(t, accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningRead),
 		).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
@@ -258,10 +251,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 		require.Len(t, rs.Calls, 1)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
-		assert.Equal(t, accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningWrite),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningWrite),
-		).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
+		assert.Equal(t, accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesProvisioningWrite).GoString(), rs.Calls[0].Arguments[2].(accesscontrol.Evaluator).GoString())
 		assert.Equal(t, testUser, rs.Calls[0].Arguments[1])
 	})
 

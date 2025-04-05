@@ -480,9 +480,7 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead               = "alert.provisioning:read"
 	ActionAlertingProvisioningReadSecrets        = "alert.provisioning.secrets:read"
-	ActionAlertingProvisioningWrite              = "alert.provisioning:write"
 	ActionAlertingRulesProvisioningRead          = "alert.rules.provisioning:read"
 	ActionAlertingRulesProvisioningWrite         = "alert.rules.provisioning:write"
 	ActionAlertingNotificationsProvisioningRead  = "alert.notifications.provisioning:read"

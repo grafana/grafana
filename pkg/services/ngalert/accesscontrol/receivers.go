@@ -96,7 +96,6 @@ var (
 
 	// Extra permissions that give read-only access to all redacted receivers when called from provisioning api.
 	provisioningExtraReadRedactedPermissions = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // Global provisioning action for all AM config. Org scope.
 		ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // Global provisioning action for receivers. Org scope.
 		provisioningExtraReadDecryptedPermissions,
 	)

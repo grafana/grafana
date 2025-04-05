@@ -74,23 +74,19 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleGroupWrite(ctx context.Cont
 }
 
 // CanReadAllRules checks if the user has permission to read all rules.
-// It evaluates if the user has either "alert.provisioning:read" or "alert.provisioning.secrets:read" permissions.
+// It evaluates if the user has either "alert.provisioning.secrets:read" or "alert.rules.provisioning:read" permissions.
 // It returns true if the user has the required permissions, otherwise it returns false.
 func (p *provisioningRuleAccessControl) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
 	return p.HasAccess(ctx, user, ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 		ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 		ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 	))
 }
 
 // CanWriteAllRules is a method that checks if a user has permission to write all rules.
-// It calls the HasAccess method with the provided action "alert.provisioning:write".
+// It calls the HasAccess method with the provided action "alert.rules.provisioning:write".
 // It returns true if the user has permission, false otherwise.
 // It returns an error if there is a problem checking the permission.
 func (p *provisioningRuleAccessControl) CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error) {
-	return p.HasAccess(ctx, user, ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
-		ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
-	))
+	return p.HasAccess(ctx, user, ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite))
 }
