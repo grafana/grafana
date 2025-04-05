@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { Checkbox, Field } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 
@@ -15,7 +16,10 @@ export const GrafanaCommonChannelSettings = ({
       <Field>
         <Checkbox
           {...register(`${pathPrefix}disableResolveMessage`)}
-          label="Disable resolved message"
+          label={t(
+            'alerting.grafana-common-channel-settings.label-disable-resolved-message',
+            'Disable resolved message'
+          )}
           description="Disable the resolve message [OK] that is sent when alerting state returns to false"
           disabled={readOnly}
         />
