@@ -42,6 +42,7 @@ __debug_bin*
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
 /devenv/docker/blocks/spanner_tests
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
