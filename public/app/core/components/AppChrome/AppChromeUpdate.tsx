@@ -17,7 +17,6 @@ export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(
     // Unmount cleanup
     useLayoutEffect(() => {
       return () => {
-        console.log('Clean up of app chrome actions');
         chrome.update({ actions: undefined, breadcrumbActions: undefined });
       };
     }, [chrome]);
@@ -25,7 +24,6 @@ export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(
     // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
     // This prevents flickering actions when going from one dashboard to another for example
     useLayoutEffect(() => {
-      console.log('Update app chrome actions');
       chrome.update({ actions, breadcrumbActions });
     });
 

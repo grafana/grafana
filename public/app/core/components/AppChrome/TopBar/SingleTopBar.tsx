@@ -90,8 +90,8 @@ export const SingleTopBar = memo(function SingleTopBar({
 
         <Stack gap={0.5} alignItems="center" justifyContent={'flex-end'}>
           <TopSearchBarCommandPaletteTrigger />
-          {unifiedHistoryEnabled && <HistoryContainer />}
-          <QuickAdd />
+          {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
+          {!isSmallScreen && <QuickAdd />}
           <NavToolbarSeparator />
           {enrichedHelpNode && (
             <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
@@ -99,7 +99,7 @@ export const SingleTopBar = memo(function SingleTopBar({
             </Dropdown>
           )}
           <NavToolbarSeparator />
-          {config.featureToggles.inviteUserExperimental && !isSmallScreen && <InviteUserButton />}
+          {config.featureToggles.inviteUserExperimental && !isSmallScreen && !actions && <InviteUserButton />}
           {config.featureToggles.extensionSidebar && !isSmallScreen && <ExtensionToolbarItem />}
           <ToolbarButton
             icon="monitor"
