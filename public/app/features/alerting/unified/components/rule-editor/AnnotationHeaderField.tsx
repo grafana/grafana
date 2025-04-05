@@ -12,17 +12,19 @@ const AnnotationHeaderField = ({
   annotations,
   annotation,
   index,
+  labelId,
 }: {
   annotationField: FieldArrayWithId<RuleFormValues, 'annotations', 'id'>;
   annotations: Array<{ key: string; value: string }>;
   annotation: Annotation;
   index: number;
+  labelId: string;
 }) => {
   const { control } = useFormContext<RuleFormValues>();
 
   return (
     <Stack direction="column" gap={0}>
-      <label>
+      <label htmlFor={labelId}>
         {
           <Controller
             name={`annotations.${index}.key`}

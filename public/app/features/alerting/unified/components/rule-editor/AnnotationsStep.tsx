@@ -151,6 +151,7 @@ const AnnotationsStep = () => {
                   annotations={annotations}
                   annotation={annotation}
                   index={index}
+                  labelId={`annotation-${index}`}
                 />
                 {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
@@ -175,6 +176,7 @@ const AnnotationsStep = () => {
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
+                        id={`annotation-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
                         {...register(`annotations.${index}.value`)}
                         placeholder={
