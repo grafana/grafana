@@ -15,30 +15,6 @@ import { DashboardQueryResult, SearchQuery } from '../search/service/types';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
 
-class LegacyAPI implements PlaylistAPI {
-  async getAllPlaylist(): Promise<Playlist[]> {
-    return getBackendSrv().get<Playlist[]>('/api/playlists/');
-  }
-
-  async getPlaylist(uid: string): Promise<Playlist> {
-    const p = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
-    await migrateInternalIDs(p);
-    return p;
-  }
-
-  async createPlaylist(playlist: Playlist): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
-  }
-
-  async updatePlaylist(playlist: Playlist): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().put(`/api/playlists/${playlist.uid}`, playlist));
-  }
-
-  async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${uid}`), 'Playlist deleted');
-  }
-}
-
 interface PlaylistSpec {
   title: string;
   interval: string;
@@ -210,5 +186,5 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
 }
 
 export function getPlaylistAPI() {
-  return config.featureToggles.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
+  return new K8sAPI();
 }

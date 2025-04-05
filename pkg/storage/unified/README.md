@@ -26,8 +26,6 @@ target = all
 protocol = https
 
 [feature_toggles]
-; store playlists in k8s
-kubernetesPlaylists = true
 
 [grafana-apiserver]
 ; use unified storage for k8s apiserver
