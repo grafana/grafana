@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 )
 
 type groupResource map[string]map[string]interface{}
@@ -117,11 +116,11 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
 		attribute.String("folder", req.Folder),
-		attribute.Bool("fallback_used", grpcutils.FallbackUsed(ctx)),
+		attribute.Bool("fallback_used", FallbackUsed(ctx)),
 	))
 	defer span.End()
 
-	if grpcutils.FallbackUsed(ctx) {
+	if FallbackUsed(ctx) {
 		if req.Namespace == "" {
 			// cross namespace queries are not allowed when fallback is used
 			span.SetAttributes(attribute.Bool("allowed", false))
@@ -162,7 +161,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 // Compile implements claims.AccessClient.
 func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, error) {
 	t := time.Now()
-	fallbackUsed := grpcutils.FallbackUsed(ctx)
+	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Compile", trace.WithAttributes(
 		attribute.String("group", req.Group),
 		attribute.String("resource", req.Resource),
@@ -218,3 +217,13 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 }
 
 var _ claims.AccessClient = &authzLimitedClient{}
+
+type contextFallbackKey struct{}
+
+func WithFallback(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextFallbackKey{}, true)
+}
+
+func FallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
