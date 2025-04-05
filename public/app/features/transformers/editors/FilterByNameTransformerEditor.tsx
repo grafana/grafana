@@ -1,3 +1,4 @@
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import {
@@ -10,10 +11,11 @@ import {
   stringToJsRegex,
   TransformerCategory,
   SelectableValue,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+import { config, getTemplateSrv } from '@grafana/runtime';
+import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select, Checkbox } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -195,8 +197,17 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     this.setState({ byVariable: val });
   };
 
+  onToggleSelectAll = () => {
+    this.onChange(
+      this.state.selected.length === this.state.options.length ? [] : this.state.options.map((o) => o.name)
+    );
+  };
+
   render() {
     const { options, selected, isRegexValid } = this.state;
+    const styles = getStyles(config.theme2);
+    const allChecked = selected.length === options.length;
+
     return (
       <div>
         <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-use-variable', 'Use variable')}>
@@ -204,6 +215,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
             <InlineSwitch value={this.state.byVariable} onChange={this.onFromVariableChange}></InlineSwitch>
           </InlineField>
         </InlineFieldRow>
+
         {this.state.byVariable ? (
           <InlineFieldRow>
             <InlineField label={t('transformers.filter-by-name-transformer-editor.label-variable', 'Variable')}>
@@ -216,36 +228,48 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
           </InlineFieldRow>
         ) : (
           <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}>
-            <InlineField
-              label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}
-              invalid={!isRegexValid}
-              error={!isRegexValid ? 'Invalid pattern' : undefined}
-            >
-              <Input
-                placeholder={t(
-                  'transformers.filter-by-name-transformer-editor.placeholder-regular-expression-pattern',
-                  'Regular expression pattern'
-                )}
-                value={this.state.regex || ''}
-                onChange={(e) => this.setState({ regex: e.currentTarget.value })}
-                onBlur={this.onInputBlur}
-                width={25}
-              />
-            </InlineField>
-            {options.map((o, i) => {
-              const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-              const isSelected = selected.indexOf(o.name) > -1;
-              return (
-                <FilterPill
-                  key={`${o.name}/${i}`}
-                  onClick={() => {
-                    this.onFieldToggle(o.name);
-                  }}
-                  label={label}
-                  selected={isSelected}
+            <div className={cx(styles.fieldNameOptions, styles.fullWidth)}>
+              <InlineField
+                label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}
+                invalid={!isRegexValid}
+                error={!isRegexValid ? 'Invalid pattern' : undefined}
+              >
+                <Input
+                  placeholder={t(
+                    'transformers.filter-by-name-transformer-editor.placeholder-regular-expression-pattern',
+                    'Regular expression pattern'
+                  )}
+                  value={this.state.regex || ''}
+                  onChange={(e) => this.setState({ regex: e.currentTarget.value })}
+                  onBlur={this.onInputBlur}
+                  width={25}
                 />
-              );
-            })}
+              </InlineField>
+              <Checkbox
+                value={allChecked}
+                label={allChecked ? `${selected.length} selected` : 'Select all'}
+                description={
+                  allChecked ? 'Remove all fields from the visualization' : 'Add all fields to the visualization'
+                }
+                onChange={this.onToggleSelectAll}
+              />
+            </div>
+            <div className={styles.fieldNameOptions}>
+              {options.map((o, i) => {
+                const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+                const isSelected = selected.indexOf(o.name) > -1;
+                return (
+                  <FilterPill
+                    key={`${o.name}/${i}`}
+                    onClick={() => {
+                      this.onFieldToggle(o.name);
+                    }}
+                    label={label}
+                    selected={isSelected}
+                  />
+                );
+              })}
+            </div>
           </InlineFieldRow>
         )}
       </div>
@@ -262,3 +286,15 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<Fi
   categories: new Set([TransformerCategory.Filter]),
   help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    fieldNameOptions: css({
+      display: 'flex',
+    }),
+    fullWidth: css({
+      width: '100%',
+      gap: theme.spacing(2),
+    }),
+  };
+}
