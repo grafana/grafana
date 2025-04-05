@@ -42,6 +42,8 @@ export enum DataSourceType {
   Alertmanager = 'alertmanager',
   Loki = 'loki',
   Prometheus = 'prometheus',
+  AmazonPrometheus = 'grafana-amazonprometheus-datasource',
+  AzurePrometheus = 'grafana-azureprometheus-datasource',
 }
 
 export interface AlertManagerDataSource {
@@ -52,7 +54,12 @@ export interface AlertManagerDataSource {
   handleGrafanaManagedAlerts?: boolean;
 }
 
-export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
+export const RulesDataSourceTypes: string[] = [
+  DataSourceType.Loki,
+  DataSourceType.Prometheus,
+  DataSourceType.AmazonPrometheus,
+  DataSourceType.AzurePrometheus,
+];
 
 export function getRulesDataSources() {
   const hasReadPermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);

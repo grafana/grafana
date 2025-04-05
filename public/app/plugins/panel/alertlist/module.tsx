@@ -112,7 +112,13 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
           <Stack gap={1}>
             <DataSourcePicker
               {...props}
-              type={['prometheus', 'loki', 'grafana']}
+              type={[
+                'prometheus',
+                'grafana-amazonprometheus-datasource',
+                'grafana-azureprometheus-datasource',
+                'loki',
+                'grafana',
+              ]}
               noDefault
               current={props.value}
               onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}

@@ -34,7 +34,12 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
     throw new Error(`The data source url cannot be empty.`);
   }
 
-  if (type !== 'prometheus' && type !== 'loki') {
+  if (
+    type !== 'prometheus' &&
+    type !== 'grafana-amazonprometheus-datasource' &&
+    type !== 'grafana-azureprometheus-datasource' &&
+    type !== 'loki'
+  ) {
     throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
   }
 
@@ -52,7 +57,7 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: 'prometheus' | 'loki';
+  type: 'prometheus' | 'grafana-amazonprometheus-datasource' | 'grafana-azureprometheus-datasource' | 'loki';
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 

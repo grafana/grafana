@@ -80,7 +80,9 @@ function cloudAlertRuleToModel(dsSettings: DataSourceInstanceSettings, rule: Com
   const refId = 'A';
 
   switch (dsSettings.type) {
-    case 'prometheus': {
+    case 'prometheus':
+    case 'grafana-amazonprometheus-datasource':
+    case 'grafana-azureprometheus-datasource': {
       const query: PromQuery = {
         refId,
         expr: rule.query,

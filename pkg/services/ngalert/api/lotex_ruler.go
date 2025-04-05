@@ -23,8 +23,10 @@ const (
 )
 
 const (
-	PrometheusDatasourceType = "prometheus"
-	LokiDatasourceType       = "loki"
+	PrometheusDatasourceType       = "prometheus"
+	AmazonPrometheusDatasourceType = "grafana-amazonprometheus-datasource"
+	AzurePrometheusDatasourceType  = "grafana-azureprometheus-datasource"
+	LokiDatasourceType             = "loki"
 
 	mimirPrefix      = "/config/v1/rules"
 	prometheusPrefix = "/rules"
@@ -34,8 +36,10 @@ const (
 )
 
 var dsTypeToRulerPrefix = map[string]string{
-	PrometheusDatasourceType: prometheusPrefix,
-	LokiDatasourceType:       lokiPrefix,
+	PrometheusDatasourceType:       prometheusPrefix,
+	AmazonPrometheusDatasourceType: prometheusPrefix,
+	AzurePrometheusDatasourceType:  prometheusPrefix,
+	LokiDatasourceType:             lokiPrefix,
 }
 
 var subtypeToPrefix = map[string]string{
