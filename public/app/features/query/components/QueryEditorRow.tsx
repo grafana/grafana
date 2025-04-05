@@ -52,6 +52,7 @@ export interface Props<TQuery extends DataQuery> {
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
+  onReplace?: (query: DataQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
@@ -63,6 +64,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryAddedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
 }
@@ -354,7 +356,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, onReplace, onQueryAddedFromLibrary } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -376,6 +378,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
           onClick={this.onCopyQuery}
+        />
+        <AddQueryFromLibraryButton
+          onQueryAddedFromLibrary={onQueryAddedFromLibrary}
+          onReplace={onReplace}
+          datasourceName={datasource?.name}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -513,6 +520,35 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query);
+}
+
+interface AddQueryFromLibraryButtonProps<TQuery extends DataQuery> {
+  onReplace?: (query: DataQuery) => void;
+  onQueryAddedFromLibrary?: () => void;
+  datasourceName?: string;
+}
+
+function AddQueryFromLibraryButton<TQuery extends DataQuery>({
+  onReplace,
+  onQueryAddedFromLibrary,
+  datasourceName,
+}: AddQueryFromLibraryButtonProps<TQuery>) {
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+
+  const onAddQueryFromLibrary = () => {
+    openDrawer(datasourceName ? [datasourceName] : [], (query: DataQuery) => {
+      onQueryAddedFromLibrary?.();
+      onReplace?.(query);
+    });
+  };
+
+  return queryLibraryEnabled && Boolean(onReplace) ? (
+    <QueryOperationAction
+      title={t('query-operation.header.add-query-from-library', 'Add query from library')}
+      icon="book"
+      onClick={onAddQueryFromLibrary}
+    />
+  ) : null;
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
