@@ -106,7 +106,7 @@ Both types of templates are written in the Go templating system. However, it's i
 
 Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
 
-Grafana includes several optional annotations, such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
+Grafana includes several optional annotations, such as `description`, `summary`, and `runbook_url`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
 
 Here’s an example of a `summary` annotation explaining why the alert was triggered, using plain text.
 
