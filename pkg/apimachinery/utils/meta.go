@@ -26,6 +26,13 @@ const LabelKeyGetTrash = "grafana.app/get-trash"
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
 
+// AnnoKeyGrantPermissions allows users to explicitly grant themself permissions when creating
+// resoures in the "root" folder.  This annotation is not saved and invalud for update.
+const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
+
+// AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
+const AnnoGrantPermissionsDefault = "default"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 
@@ -206,14 +213,10 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 
 func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
 	anno := m.obj.GetAnnotations()
-	if anno != nil {
-		return anno[key]
+	if anno == nil {
+		return ""
 	}
-	return ""
-}
-
-func (m *grafanaMetaAccessor) get(key string) string {
-	return m.obj.GetAnnotations()[key]
+	return anno[key]
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
@@ -247,7 +250,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 }
 
 func (m *grafanaMetaAccessor) GetCreatedBy() string {
-	return m.get(AnnoKeyCreatedBy)
+	return m.GetAnnotation(AnnoKeyCreatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
@@ -255,7 +258,7 @@ func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedBy() string {
-	return m.get(AnnoKeyUpdatedBy)
+	return m.GetAnnotation(AnnoKeyUpdatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
@@ -263,7 +266,7 @@ func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
-	return ParseBlobInfo(m.get(AnnoKeyBlob))
+	return ParseBlobInfo(m.GetAnnotation(AnnoKeyBlob))
 }
 
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
@@ -275,7 +278,7 @@ func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
-	return m.get(AnnoKeyFolder)
+	return m.GetAnnotation(AnnoKeyFolder)
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
@@ -283,7 +286,7 @@ func (m *grafanaMetaAccessor) SetFolder(uid string) {
 }
 
 func (m *grafanaMetaAccessor) GetMessage() string {
-	return m.get(AnnoKeyMessage)
+	return m.GetAnnotation(AnnoKeyMessage)
 }
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
@@ -329,7 +332,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 }
 
 func (m *grafanaMetaAccessor) GetFullpath() string {
-	return m.get(AnnoKeyFullpath)
+	return m.GetAnnotation(AnnoKeyFullpath)
 }
 
 func (m *grafanaMetaAccessor) SetFullpath(path string) {
@@ -337,7 +340,7 @@ func (m *grafanaMetaAccessor) SetFullpath(path string) {
 }
 
 func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
-	return m.get(AnnoKeyFullpathUIDs)
+	return m.GetAnnotation(AnnoKeyFullpathUIDs)
 }
 
 func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
