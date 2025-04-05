@@ -43,12 +43,12 @@ export function AppChrome({ children }: Props) {
   // If saved menu dock state is open, dock/undock it based on screen size
   useEffect(() => {
     if (dockedMenuLocalStorageState) {
-      if (!isLargeScreen) {
-        chrome.setMegaMenuDocked(false, false);
-        chrome.setMegaMenuOpen(false);
-      } else {
+      if (isLargeScreen) {
         chrome.setMegaMenuDocked(true, false);
         chrome.setMegaMenuOpen(true);
+      } else {
+        chrome.setMegaMenuDocked(false, false);
+        chrome.setMegaMenuOpen(false);
       }
     }
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
