@@ -25,6 +25,8 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { isPluginFrontendSandboxEligible } from '../sandbox/sandbox_plugin_loader_registry';
+
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
@@ -74,6 +76,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
       loading,
       value: pluginMeta,
     } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { value: isSandboxEnabled } = useAsync(() => isPluginFrontendSandboxEligible({ isAngular: false, pluginId }));
 
     if (loading) {
       return null;
@@ -90,6 +93,16 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
     if (!pluginMeta) {
       log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
+    }
+
+    if (isSandboxEnabled) {
+      return (
+        <PluginContextProvider meta={pluginMeta}>
+          <div data-plugin-sandbox={pluginMeta.id}>
+            <Component {...props} />
+          </div>
+        </PluginContextProvider>
+      );
     }
 
     return (
