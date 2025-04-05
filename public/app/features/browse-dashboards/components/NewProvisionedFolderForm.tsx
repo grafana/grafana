@@ -45,16 +45,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
-  // Get k8s folder data, necessary to get parent folder path
-  if (!repository) {
-    return (
-      <Alert
-        title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
-        severity="error"
-      />
-    );
-  }
-
   const isGitHub = Boolean(repository?.type === 'github');
 
   const {
@@ -74,7 +64,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
 
   useEffect(() => {
     const appEvents = getAppEvents();
-    if (request.isSuccess) {
+    if (request.isSuccess && repository) {
       onSubmit();
 
       appEvents.publish({
@@ -109,20 +99,19 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         ],
       });
     }
-  }, [
-    request.isSuccess,
-    request.isError,
-    request.error,
-    onSubmit,
-    ref,
-    request.data,
-    workflow,
-    navigate,
-    repository,
-  ]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, request.data, workflow, navigate, repository]);
 
   if (isLoading) {
     return <Spinner />;
+  }
+
+  if (!repository) {
+    return (
+      <Alert
+        title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
+        severity="error"
+      />
+    );
   }
 
   const validateFolderName = async (folderName: string) => {

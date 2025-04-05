@@ -59,12 +59,6 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   };
 });
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
-  return {
-    useGetResourceRepositoryView: jest.fn(),
-  };
-});
-
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
@@ -140,14 +134,17 @@ describe('NewProvisionedFolderForm', () => {
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
     (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-      name: 'test-repo',
-      title: 'Test Repository',
-      type: 'github',
-      github: {
-        url: 'https://github.com/grafana/grafana',
-        branch: 'main',
+      isLoading: false,
+      repository: {
+        name: 'test-repo',
+        title: 'Test Repository',
+        type: 'github',
+        github: {
+          url: 'https://github.com/grafana/grafana',
+          branch: 'main',
+        },
+        workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
       },
-      workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
     });
 
     // Mock useGetFolderQuery
@@ -186,7 +183,9 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show loading state when repository data is loading', () => {
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({});
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+      isLoading: true,
+    });
 
     setup();
 
@@ -194,7 +193,10 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show error when repository is not found', () => {
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue(null);
+    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+      isLoading: false,
+      repository: undefined,
+    });
 
     setup();
 
@@ -427,14 +429,16 @@ describe('NewProvisionedFolderForm', () => {
   it('should show read-only alert when repository has no workflows', () => {
     // Mock repository with empty workflows array
     (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-      name: 'test-repo',
-      title: 'Test Repository',
-      type: 'github',
-      github: {
-        url: 'https://github.com/grafana/grafana',
-        branch: 'main',
+      repository: {
+        name: 'test-repo',
+        title: 'Test Repository',
+        type: 'github',
+        github: {
+          url: 'https://github.com/grafana/grafana',
+          branch: 'main',
+        },
+        workflows: [],
       },
-      workflows: [],
     });
 
     setup();
