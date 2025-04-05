@@ -27,16 +27,17 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
       break;
   }
 
-  return spec;
+  // We need to deep clone the data, so it doesn't become immutable
+  return structuredClone(spec);
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  return {
+  return structuredClone({
     ...spec,
     ...spec.github,
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
-  };
+  });
 };
