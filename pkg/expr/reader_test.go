@@ -14,11 +14,11 @@ import (
 
 func TestReaderReduceMode(t *testing.T) {
 	testData := []struct {
-		name        string
-		bytes       []byte
-		expectError bool
-		hasMapper   bool
-		mapperType  reflect.Type
+		name          string
+		bytes         []byte
+		expectedError error
+		hasMapper     bool
+		mapperType    reflect.Type
 	}{
 		{
 			name: "no_settings",
@@ -35,8 +35,7 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectError: false,
-			hasMapper:   false,
+			hasMapper: false,
 		},
 		{
 			name: "mode_dropnn",
@@ -56,9 +55,8 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectError: false,
-			hasMapper:   true,
-			mapperType:  reflect.TypeOf(mathexp.DropNonNumber{}),
+			hasMapper:  true,
+			mapperType: reflect.TypeOf(mathexp.DropNonNumber{}),
 		},
 		{
 			name: "mode_replacenn",
@@ -79,9 +77,8 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectError: false,
-			hasMapper:   true,
-			mapperType:  reflect.TypeOf(mathexp.ReplaceNonNumberWithValue{}),
+			hasMapper:  true,
+			mapperType: reflect.TypeOf(mathexp.ReplaceNonNumberWithValue{}),
 		},
 		{
 			name: "mode_strict",
@@ -101,8 +98,7 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectError: false,
-			hasMapper:   false,
+			hasMapper: false,
 		},
 		{
 			name: "mode_invalid",
@@ -122,7 +118,7 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectError: true,
+			expectedError: InvalidReduceModeError,
 		},
 	}
 
@@ -143,7 +139,8 @@ func TestReaderReduceMode(t *testing.T) {
 
 			eq, err := reader.ReadQuery(q, iter)
 
-			if test.expectError {
+			if test.expectedError != nil {
+				require.ErrorIs(t, err, test.expectedError)
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
