@@ -8,10 +8,10 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { Trans, t } from 'app/core/internationalization';
 
+import { Playlist } from '../../api/clients/playlist';
 import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
-import { Playlist } from './types';
 import { usePlaylistItems } from './usePlaylistItems';
 
 interface Props {
@@ -21,16 +21,22 @@ interface Props {
 
 export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
   const [saving, setSaving] = useState(false);
-  const { name, interval, items: propItems } = playlist;
+  const { title: name, interval, items: propItems } = playlist.spec;
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
   const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
-  const doSubmit = (list: Playlist) => {
+  const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
-    onSubmit({ ...list, items, uid: playlist.uid });
+    onSubmit({
+      ...playlist,
+      spec: {
+        ...specUpdates,
+        items,
+      },
+    });
   };
 
   return (
@@ -41,12 +47,12 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
           <>
             <Field
               label={t('playlist-edit.form.name-label', 'Name')}
-              invalid={!!errors.name}
-              error={errors?.name?.message}
+              invalid={!!errors.title}
+              error={errors?.title?.message}
             >
               <Input
                 type="text"
-                {...register('name', { required: t('playlist-edit.form.name-required', 'Name is required') })}
+                {...register('title', { required: t('playlist-edit.form.name-required', 'Name is required') })}
                 placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
                 defaultValue={name}
                 aria-label={selectors.pages.PlaylistForm.name}
