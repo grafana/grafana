@@ -91,3 +91,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	handler := httpadapter.New(s.registerResourceRoutes())
 	return handler.CallResource(ctx, req, sender)
 }
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	return queryData(ctx, dsInfo, req)
+}
