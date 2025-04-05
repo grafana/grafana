@@ -29,6 +29,7 @@ import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
+import { useChromeHeaderLevels } from './useChromeHeaderHeight';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -37,7 +38,6 @@ interface Props {
   onToggleKioskMode(): void;
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
-  headerHeight: number;
   scopes?: ScopesContextValue | undefined;
 }
 
@@ -49,7 +49,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   scopes,
   actions,
   breadcrumbActions,
-  headerHeight,
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -62,8 +61,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
-  // The header height also encodes if we should switch to two level navbar + toolbar
-  const showToolbarLevel = headerHeight > TOP_BAR_LEVEL_HEIGHT;
+  const showToolbarLevel = useChromeHeaderLevels() === 2;
 
   return (
     <>
