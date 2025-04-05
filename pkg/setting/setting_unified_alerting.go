@@ -148,7 +148,6 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable       bool
 	URL          string
 	TenantID     string
 	Password     string
@@ -389,7 +388,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
-		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
