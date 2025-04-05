@@ -1,6 +1,10 @@
 package provisioning
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
+)
 
 type Calls struct {
 	RunInitProvisioners                 []any
@@ -11,6 +15,8 @@ type Calls struct {
 	GetDashboardProvisionerResolvedPath []any
 	GetAllowUIUpdatesFromConfig         []any
 	Run                                 []any
+	GetCachingDeleteConfigs             []any
+	GetCachingCreateConfigs             []any
 }
 
 type ProvisioningServiceMock struct {
@@ -22,6 +28,8 @@ type ProvisioningServiceMock struct {
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
 	RunFunc                                 func(ctx context.Context) error
+	GetCachingDeleteConfigsFunc             func(ctx context.Context) ([]string, error)
+	GetCachingCreateConfigsFunc             func(ctx context.Context) ([]datasources.DatasourceCachingConfig, error)
 }
 
 func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
@@ -89,4 +97,20 @@ func (mock *ProvisioningServiceMock) Run(ctx context.Context) error {
 		return mock.RunFunc(ctx)
 	}
 	return nil
+}
+
+func (mock *ProvisioningServiceMock) GetCachingDeleteConfigs(ctx context.Context) ([]string, error) {
+	mock.Calls.GetCachingDeleteConfigs = append(mock.Calls.GetCachingDeleteConfigs, nil)
+	if mock.GetCachingDeleteConfigsFunc != nil {
+		return mock.GetCachingDeleteConfigsFunc(ctx)
+	}
+	return nil, nil
+}
+
+func (mock *ProvisioningServiceMock) GetCachingCreateConfigs(ctx context.Context) ([]datasources.DatasourceCachingConfig, error) {
+	mock.Calls.GetCachingCreateConfigs = append(mock.Calls.GetCachingCreateConfigs, nil)
+	if mock.GetCachingCreateConfigsFunc != nil {
+		return mock.GetCachingCreateConfigsFunc(ctx)
+	}
+	return nil, nil
 }
