@@ -109,7 +109,7 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -268,7 +268,7 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -355,7 +355,7 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -443,7 +443,7 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -559,7 +559,7 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -661,7 +661,7 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
@@ -777,7 +777,7 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
