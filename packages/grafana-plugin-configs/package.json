@@ -18,7 +18,7 @@
     "glob": "11.0.1",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "typescript": "5.7.3",
+    "typescript": "5.8.3",
     "webpack": "5.97.1",
     "webpack-bundle-analyzer": "^4.10.2"
   },
