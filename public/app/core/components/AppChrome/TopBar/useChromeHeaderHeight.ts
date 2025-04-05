@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { config, useScopes } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryChange';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { AppChromeState } from '../AppChromeService';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
