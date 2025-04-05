@@ -49,13 +49,16 @@ func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, g
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher)
 
-	return &k8sHandler{
-		namespacer:  namespacer,
-		gvr:         gvr,
-		restConfig:  restConfig,
-		searcher:    searchClient,
-		userService: userSvc,
-	}
+	return NewK8sClientTracingWrapper(
+		&k8sHandler{
+			namespacer:  namespacer,
+			gvr:         gvr,
+			restConfig:  restConfig,
+			searcher:    searchClient,
+			userService: userSvc,
+		},
+		gvr,
+	)
 }
 
 func (h *k8sHandler) GetNamespace(orgID int64) string {
