@@ -1059,4 +1059,8 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
 }
