@@ -41,7 +41,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	err = dashboardv1alpha1.AddToScheme(scheme)
 	require.NoError(t, err)
 
-	largeObject := NewDashboardLargeObjectSupport(scheme)
+	largeObject := NewDashboardLargeObjectSupport(scheme, 0)
 
 	// Convert the dashboard to a small value
 	err = largeObject.ReduceSpec(dash)
