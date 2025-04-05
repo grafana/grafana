@@ -217,7 +217,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const textWrap = useMemo(() => Object.values(textWraps).some(Boolean), [textWraps]);
-  const styles = useStyles2(getStyles, textWrap);
+  const styles = useStyles2(getStyles);
 
   // Create a function to get column widths for text wrapping calculations
   const getColumnWidths = useCallback(() => {
@@ -441,6 +441,7 @@ export function TableNG(props: TableNGProps) {
         calcsRef,
         options: {
           columnTypes,
+          textWraps,
           columnWidth,
           crossFilterOrder,
           crossFilterRows,
@@ -462,7 +463,6 @@ export function TableNG(props: TableNGProps) {
           setSortColumns,
           sortColumnsRef,
           styles,
-          textWrap,
           theme,
           showTypeIcons,
           ...props,
@@ -649,6 +649,7 @@ export function mapFrameToDataGrid({
 }): TableColumn[] {
   const {
     columnTypes,
+    textWraps,
     crossFilterOrder,
     crossFilterRows,
     defaultLineHeight,
@@ -668,7 +669,6 @@ export function mapFrameToDataGrid({
     setSortColumns,
     sortColumnsRef,
     styles,
-    textWrap,
     theme,
     timeRange,
     getActions,
@@ -783,7 +783,7 @@ export function mapFrameToDataGrid({
       key,
       name: field.name,
       field,
-      cellClass: styles.cell,
+      cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -810,7 +810,7 @@ export function mapFrameToDataGrid({
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
-                textWrap,
+                textWraps[field.name],
                 field,
                 cellType
               )
@@ -957,7 +957,7 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
-const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   dataGrid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
@@ -1022,7 +1022,18 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   cell: css({
     '--rdg-border-color': theme.colors.border.medium,
     borderLeft: 'none',
-    whiteSpace: `${textWrap ? 'normal' : 'nowrap'}`,
+    whiteSpace: 'nowrap',
+    wordWrap: 'break-word',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+
+    // Reset default cell styles for custom cell component styling
+    paddingInline: '0',
+  }),
+  cellWrapped: css({
+    '--rdg-border-color': theme.colors.border.medium,
+    borderLeft: 'none',
+    whiteSpace: 'pre-line',
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
