@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 import { ScopesContextValue } from '@grafana/runtime';
 import { Dropdown, Icon, Stack, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -107,7 +108,11 @@ export const SingleTopBar = memo(function SingleTopBar({
             onClick={onToggleKioskMode}
             tooltip="Enable kiosk mode"
           />
-          {!showToolbarLevel && actions && <ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>}
+          {!showToolbarLevel && actions && (
+            <ToolbarButtonRow alignment="right" data-testid={Components.NavToolbar.container}>
+              {actions}
+            </ToolbarButtonRow>
+          )}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           {profileNode && <ProfileButton profileNode={profileNode} />}
         </Stack>
