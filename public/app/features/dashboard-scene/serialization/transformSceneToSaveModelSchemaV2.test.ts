@@ -559,6 +559,72 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
     });
   });
+
+  it('should test annotation with options field', () => {
+    // Create a scene with an annotation layer that has options
+    const annotationWithOptions = new DashboardAnnotationsDataLayer({
+      key: 'layerWithOptions',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abc123',
+        },
+        name: 'annotation-with-options',
+        enable: true,
+        iconColor: 'red',
+        options: {
+          expr: 'rate(http_requests_total[5m])',
+          queryType: 'range',
+          legendFormat: '{{method}} {{endpoint}}',
+          useValueAsTime: true,
+        },
+        // Some other properties that aren't in the annotation spec
+        // and should be moved to options
+        customProp1: 'value1',
+        customProp2: 'value2',
+      },
+      name: 'layerWithOptions',
+      isEnabled: true,
+      isHidden: false,
+    });
+
+    const scene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [annotationWithOptions],
+      }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [] }),
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+
+    // Verify the annotation options are properly serialized
+    expect(result.annotations.length).toBe(1);
+    expect(result.annotations[0].spec.options).toBeDefined();
+    expect(result.annotations[0].spec.options).toEqual({
+      expr: 'rate(http_requests_total[5m])',
+      queryType: 'range',
+      legendFormat: '{{method}} {{endpoint}}',
+      useValueAsTime: true,
+      customProp1: 'value1',
+      customProp2: 'value2',
+    });
+
+    // Ensure these properties are not at the root level
+    // @ts-expect-error this are the properties that should be moved to options
+    expect(result.annotations[0].spec.expr).toBeUndefined();
+    // @ts-expect-error
+    expect(result.annotations[0].spec.queryType).toBeUndefined();
+    // @ts-expect-error
+    expect(result.annotations[0].spec.legendFormat).toBeUndefined();
+    // @ts-expect-error
+    expect(result.annotations[0].spec.useValueAsTime).toBeUndefined();
+    // @ts-expect-error
+    expect(result.annotations[0].spec.customProp1).toBeUndefined();
+    // @ts-expect-error
+    expect(result.annotations[0].spec.customProp2).toBeUndefined();
+  });
 });
 
 describe('getElementDatasource', () => {

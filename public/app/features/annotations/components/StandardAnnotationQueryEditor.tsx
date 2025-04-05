@@ -103,6 +103,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     this.props.onChange({
       ...this.props.annotation,
       target,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
     });
   };
 
@@ -202,7 +204,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   onAnnotationChange = (annotation: AnnotationQuery) => {
-    this.props.onChange(annotation);
+    // Also preserve any options field that might exist when migrating from V2 to V1
+    this.props.onChange({
+      ...annotation,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
+    });
   };
 
   render() {
@@ -215,10 +222,29 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = {
+    // For v2 dashboards, target is not available, only query
+    let target = annotation.target;
+
+    // For v2 dashboards, use query.spec
+    if (annotation.query) {
+      target = {
+        ...annotation.query.spec,
+      };
+    }
+
+    let query = {
       ...datasource.annotations?.getDefaultQuery?.(),
-      ...(annotation.target ?? { refId: 'Anno' }),
+      ...(target ?? { refId: 'Anno' }),
     };
+
+    // Create annotation object that respects annotations API
+    let editorAnnotation = annotation;
+
+    // For v2 dashboards: propagate options to root level for datasource compatibility
+    if (annotation.query && annotation.options) {
+      editorAnnotation = { ...annotation };
+      Object.assign(editorAnnotation, annotation.options);
+    }
 
     return (
       <>
@@ -231,7 +257,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             onRunQuery={this.onRunQuery}
             data={response?.panelData}
             range={getTimeSrv().timeRange()}
-            annotation={annotation}
+            annotation={editorAnnotation}
             onAnnotationChange={this.onAnnotationChange}
           />
         </DataSourcePluginContextProvider>
