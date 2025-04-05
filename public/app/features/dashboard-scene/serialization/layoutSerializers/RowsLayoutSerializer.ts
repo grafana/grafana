@@ -1,4 +1,3 @@
-import { SceneObject } from '@grafana/scenes';
 import {
   Spec as DashboardV2Spec,
   RowsLayoutRowKind,
@@ -7,6 +6,7 @@ import {
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { isClonedKey } from '../../utils/clone';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -15,7 +15,7 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager): Dashboard
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.map(serializeRow),
+      rows: layoutManager.state.rows.filter((row) => !isClonedKey(row.state.key!)).map(serializeRow),
     },
   };
 }
@@ -72,17 +72,16 @@ export function deserializeRow(
   panelIdGenerator?: () => number
 ): RowItem {
   const layout = row.spec.layout;
-  const behaviors: SceneObject[] = [];
-  if (row.spec.repeat) {
-    behaviors.push(new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value }));
-  }
+  const $behaviors = !row.spec.repeat
+    ? undefined
+    : [new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value })];
 
   return new RowItem({
     title: row.spec.title,
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
-    $behaviors: behaviors,
+    $behaviors,
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });
