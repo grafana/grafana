@@ -4,6 +4,16 @@ import { PermissionLevelString } from 'app/types';
 
 import { ManagerKind } from '../../apiserver/types';
 
+export interface SortOption {
+  description: string;
+  displayName: string;
+  meta: string;
+  name: string;
+}
+export interface SortOptions {
+  sortOptions: SortOption[];
+}
+
 export interface FacetField {
   field: string;
   count?: number;

@@ -125,7 +125,7 @@ const validVariableNames: Record<string, RegExp[]> = {
 };
 
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
-  const stringValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
+  const stringValues = Object.keys(parent.value).reduce<Record<string, string>>((all, key) => {
     const value = parent.value[key];
     if (!value || typeof value !== 'string') {
       return all;
@@ -151,7 +151,7 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     return all;
   }, {});
 
-  const objectValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
+  const objectValues = Object.keys(parent.value).reduce<Record<string, object>>((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
       let id = value.title || value.name || value.id || key;
