@@ -68,7 +68,7 @@ const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 
 
 const PAGE_SIZE = 50;
 
-function useGetLatestSnapshot(sessionUid?: string, page = 1) {
+function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortParams, showErrors = false) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(
@@ -78,7 +78,15 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
   const getSnapshotQueryArgs =
     sessionUid && lastItem?.uid
-      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
+      ? {
+          uid: sessionUid,
+          snapshotUid: lastItem.uid,
+          resultLimit: PAGE_SIZE,
+          resultPage: page,
+          resultSortColumn: sortParams?.column ? sortParams.column : undefined,
+          resultSortOrder: sortParams?.direction,
+          errorsOnly: showErrors,
+        }
       : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
@@ -113,11 +121,17 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   };
 }
 
+interface SortParams {
+  column: string;
+  direction: string | undefined;
+}
+
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-  const session = useGetLatestSession();
   const [page, setPage] = useState(1);
-  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
+  const [sortParams, setSortParams] = useState({} as SortParams);
+  const [showErrors, setShowErrors] = useState(false);
+
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -125,6 +139,14 @@ export const Page = () => {
 
   const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
+  const session = useGetLatestSession();
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, showErrors);
+  const numPages = Math.ceil(
+    (showErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
+  );
+  if (page > numPages) {
+    setPage(numPages);
+  }
   useNotifySuccessful(snapshot.data);
 
   const sessionUid = session.data?.uid;
@@ -210,6 +232,8 @@ export const Page = () => {
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
+            onShowErrors={() => setShowErrors(!showErrors)}
+            isShowingErrors={showErrors}
           />
         )}
 
@@ -245,8 +269,14 @@ export const Page = () => {
               resources={snapshot.data.results}
               localPlugins={localPlugins}
               onChangePage={setPage}
-              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              numberOfPages={numPages}
               page={page}
+              onChangeSort={(a) =>
+                setSortParams({
+                  column: a.sortBy[0]?.id,
+                  direction: a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc',
+                })
+              }
             />
             <SupportedTypesDisclosure />
           </Stack>
