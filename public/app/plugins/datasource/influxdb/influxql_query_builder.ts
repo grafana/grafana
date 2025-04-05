@@ -15,6 +15,7 @@ export const buildMetadataQuery = (params: {
   tags?: InfluxQueryTag[];
   withKey?: string;
   withMeasurementFilter?: string;
+  withTimeFilter?: string;
 }): string => {
   let query = '';
   let {
@@ -27,6 +28,7 @@ export const buildMetadataQuery = (params: {
     tags,
     withKey,
     withMeasurementFilter,
+    withTimeFilter,
   } = params;
 
   switch (type) {
@@ -89,8 +91,9 @@ export const buildMetadataQuery = (params: {
     query += ' WITH KEY = "' + keyIdentifier + '"';
   }
 
+  let whereConditions: string[] = [];
   if (tags && tags.length > 0) {
-    const whereConditions = reduce<InfluxQueryTag, string[]>(
+    whereConditions = reduce<InfluxQueryTag, string[]>(
       tags,
       (memo, tag) => {
         // do not add a condition for the key we want to explore for
@@ -108,10 +111,13 @@ export const buildMetadataQuery = (params: {
       },
       []
     );
+  }
 
-    if (whereConditions.length > 0) {
-      query += ' WHERE ' + whereConditions.join(' ');
-    }
+  let shouldUseTime = withTimeFilter !== '' && type !== 'MEASUREMENTS';
+  if (whereConditions.length > 0) {
+    query += ' WHERE ' + whereConditions.join(' ') + (shouldUseTime ? ' AND time > now() - ' + withTimeFilter : '');
+  } else {
+    query += shouldUseTime ? ' WHERE time > now() - ' + withTimeFilter : '';
   }
 
   if (type === 'MEASUREMENTS') {
