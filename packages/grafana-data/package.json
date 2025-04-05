@@ -71,7 +71,7 @@
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
     "moment-timezone": "0.5.47",
-    "ol": "7.4.0",
+    "ol": "10.5.0",
     "papaparse": "5.5.2",
     "react-use": "17.6.0",
     "rxjs": "7.8.1",

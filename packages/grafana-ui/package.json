@@ -97,7 +97,7 @@
     "micro-memoize": "^4.1.2",
     "moment": "2.30.1",
     "monaco-editor": "0.34.1",
-    "ol": "7.4.0",
+    "ol": "10.5.0",
     "prismjs": "1.30.0",
     "rc-cascader": "3.33.0",
     "rc-drawer": "7.2.0",
