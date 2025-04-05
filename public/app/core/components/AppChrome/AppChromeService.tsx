@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -14,15 +14,14 @@ import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
+import { HistoryEntry } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
-  actionsRight?: React.ReactNode;
-  actionsLeft?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;

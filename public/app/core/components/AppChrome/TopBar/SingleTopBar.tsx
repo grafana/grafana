@@ -35,8 +35,8 @@ interface Props {
   onToggleMegaMenu(): void;
   onToggleKioskMode(): void;
   actions?: React.ReactNode;
-  actionsLeft?: React.ReactNode;
-  actionsRight?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
+  headerHeight: number;
   scopes?: ScopesContextValue | undefined;
 }
 
@@ -47,21 +47,22 @@ export const SingleTopBar = memo(function SingleTopBar({
   sectionNav,
   scopes,
   actions,
-  actionsRight,
-  actionsLeft,
+  breadcrumbActions,
+  headerHeight,
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const navIndex = useSelector((state) => state.navIndex);
-
   const helpNode = cloneDeep(navIndex['help']);
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
   const profileNode = navIndex['profile'];
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
+  // The header height also encodes if we should switch to two level navbar + toolbar
+  const showToolbarLevel = headerHeight > TOP_BAR_LEVEL_HEIGHT;
 
   return (
     <>
@@ -81,7 +82,9 @@ export const SingleTopBar = memo(function SingleTopBar({
             </ToolbarButton>
           )}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-          {actionsLeft && <ToolbarButtonRow alignment="left">{actionsLeft}</ToolbarButtonRow>}
+          {!showToolbarLevel && breadcrumbActions && (
+            <ToolbarButtonRow alignment="left">{breadcrumbActions}</ToolbarButtonRow>
+          )}
         </Stack>
 
         <Stack gap={0.5} alignItems="center" justifyContent={'flex-end'}>
@@ -104,13 +107,15 @@ export const SingleTopBar = memo(function SingleTopBar({
             /> */}
             {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
             {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
-            {actionsRight}
+            {!showToolbarLevel && actions}
           </ToolbarButtonRow>
           {!contextSrv.user.isSignedIn && <SignInLink />}
           {profileNode && <ProfileButton profileNode={profileNode} />}
         </Stack>
       </div>
-      {(actions || scopes?.state.enabled) && <SingleTopBarActions>{actions}</SingleTopBarActions>}
+      {showToolbarLevel && (
+        <SingleTopBarActions scopes={scopes} actions={actions} breadcrumbActions={breadcrumbActions} />
+      )}
     </>
   );
 });

@@ -1,41 +1,35 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { useScopes } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { ScopesContextValue } from '@grafana/runtime';
+import { Stack, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
-export function SingleTopBarActions({ children }: PropsWithChildren) {
-  const styles = useStyles2(getStyles);
-  const scopes = useScopes();
+export interface Props {
+  actions?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
+  scopes?: ScopesContextValue | undefined;
+}
 
-  const scopesRender = scopes?.state.enabled ? <ScopesSelector /> : undefined;
-  const childrenRender = children ? (
-    <Stack
-      alignItems="center"
-      justifyContent={scopes?.state.enabled ? 'space-between' : 'flex-end'}
-      flex={1}
-      wrap="nowrap"
-      minWidth={0}
-    >
-      {children}
-    </Stack>
-  ) : undefined;
+export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Props) {
+  const styles = useStyles2(getStyles);
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.actionsBar}>
-      {scopesRender ? (
-        <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
-          {scopesRender}
-          {children}
+      <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
+        {scopes?.state.enabled ? <ScopesSelector /> : undefined}
+        <Stack alignItems="center" justifyContent={'flex-end'} flex={1} wrap="nowrap" minWidth={0}>
+          <ToolbarButtonRow alignment="right">
+            {breadcrumbActions}
+            {breadcrumbActions && actions && <NavToolbarSeparator />}
+            {actions}
+          </ToolbarButtonRow>
         </Stack>
-      ) : (
-        childrenRender
-      )}
+      </Stack>
     </div>
   );
 }

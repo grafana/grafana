@@ -53,8 +53,8 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
 
   return hasNewToolbar ? (
     <AppChromeUpdate
-      actionsLeft={<LeftActions dashboard={dashboard} key={key} />}
-      actionsRight={<RightActions dashboard={dashboard} key={key} />}
+      breadcrumbActions={<LeftActions dashboard={dashboard} key={key} />}
+      actions={<RightActions dashboard={dashboard} key={key} />}
     />
   ) : (
     <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} key={key} />} />
@@ -74,7 +74,6 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
-  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
@@ -617,12 +616,9 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
 
   return (
-    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
+    <Stack flex={1} minWidth={0} justifyContent={'flex-end'}>
       <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
     </Stack>
   );

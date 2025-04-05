@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +10,7 @@ import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
-export function TopSearchBarCommandPaletteTrigger() {
+export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
   const theme = useTheme2();
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
@@ -44,7 +44,7 @@ export function TopSearchBarCommandPaletteTrigger() {
   }
 
   return <PretendTextInput onClick={onOpenSearch} />;
-}
+});
 
 interface PretendTextInputProps {
   onClick: () => void;
@@ -84,8 +84,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: cx(
       baseStyles.wrapper,
       css({
-        maxWidth: 220,
-        minWidth: 140,
+        width: 150,
+        [theme.breakpoints.up('xl')]: {
+          width: 200,
+        },
+        [theme.breakpoints.up('xxl')]: {
+          width: 300,
+        },
       })
     ),
     inputWrapper: baseStyles.inputWrapper,

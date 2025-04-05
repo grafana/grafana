@@ -3028,6 +3028,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedNavbars",
+        "resourceVersion": "1743836001134",
+        "creationTimestamp": "2025-04-05T06:53:21Z"
+      },
+      "spec": {
+        "description": "Enables unified navbars",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-03-31T13:38:09Z"

@@ -5,7 +5,7 @@ import { PropsWithChildren, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { useChromeHeaderHeight, useGrafana } from 'app/core/context/GrafanaContext';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -20,7 +20,7 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
+import { useChromeHeaderHeight } from './TopBar/useChromeHeaderHeight';
 
 export interface Props extends PropsWithChildren<{}> {}
 
@@ -107,8 +107,8 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
               actions={state.actions}
-              actionsLeft={state.actionsLeft}
-              actionsRight={state.actionsRight}
+              breadcrumbActions={state.breadcrumbActions}
+              headerHeight={headerHeight}
               scopes={scopes}
             />
           </header>

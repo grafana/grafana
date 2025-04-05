@@ -1063,4 +1063,9 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables unified navbars
+  * @default true
+  */
+  unifiedNavbars?: boolean;
 }
