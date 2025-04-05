@@ -296,7 +296,7 @@ func (n *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) {
 		}
 		alerts := n.nextBatch()
 
-		if !n.sendAll(alerts...) {
+		if err := n.sendAll(alerts...); err != nil {
 			n.metrics.dropped.Add(float64(len(alerts)))
 		}
 		// If the queue still has items left, kick off the next iteration.

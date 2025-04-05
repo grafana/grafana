@@ -69,10 +69,11 @@ type alertmanagerSet struct {
 }
 
 // sendAll sends the alerts to all configured Alertmanagers concurrently.
-// It returns true if the alerts could be sent successfully to at least one Alertmanager.
-func (n *Manager) sendAll(alerts ...*Alert) bool {
+// It returns nil if at least some of the alerts could be sent successfully to at least one Alertmanager,
+// otherwise it returns the errors
+func (n *Manager) sendAll(alerts ...*Alert) error {
 	if len(alerts) == 0 {
-		return true
+		return nil
 	}
 
 	begin := time.Now()
@@ -89,6 +90,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 	var (
 		wg         sync.WaitGroup
 		numSuccess atomic.Uint64
+		finalErr   error
 	)
 	for _, ams := range amSets {
 		var (
@@ -106,7 +108,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 					if err != nil {
 						level.Error(n.logger).Log("msg", "Encoding alerts for Alertmanager API v1 failed", "err", err)
 						ams.mtx.RUnlock()
-						return false
+						return err
 					}
 				}
 
@@ -121,7 +123,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 					if err != nil {
 						level.Error(n.logger).Log("msg", "Encoding alerts for Alertmanager API v2 failed", "err", err)
 						ams.mtx.RUnlock()
-						return false
+						return err
 					}
 				}
 
@@ -134,7 +136,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 					"err", err,
 				)
 				ams.mtx.RUnlock()
-				return false
+				return err
 			}
 		}
 
@@ -146,8 +148,11 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 			// Extension: added headers parameter.
 			go func(client *http.Client, url string, headers http.Header) {
+				err := n.sendOne(ctx, client, url, payload, headers)
+
 				// Treat cancellations as a success, so that we don't increment error or dropped counters.
-				if err := n.sendOne(ctx, client, url, payload, headers); err != nil && !errors.Is(err, context.Canceled) {
+				if err != nil && !errors.Is(err, context.Canceled) {
+					finalErr = errors.Join(finalErr, err)
 					level.Error(n.logger).Log("alertmanager", url, "count", len(alerts), "msg", "Error sending alert", "err", err)
 					n.metrics.errors.WithLabelValues(url).Inc()
 				} else {
@@ -165,7 +170,11 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 	wg.Wait()
 
-	return numSuccess.Load() > 0
+	if numSuccess.Load() > 0 {
+		return nil
+	}
+
+	return finalErr
 }
 
 // Extension: added headers parameter.
