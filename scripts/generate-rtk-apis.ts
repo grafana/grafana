@@ -58,6 +58,12 @@ const config: ConfigFile = {
       filterEndpoints: ['getFolder'],
       tag: true,
     },
+    '../public/app/api/clients/advisor/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/advisor/baseAPI.ts',
+      schemaFile: '../data/openapi/advisor.grafana.app-v0alpha1.json',
+      filterEndpoints: ['createCheck', 'getCheck', 'listCheck', 'deleteCheck', 'updateCheck', 'listCheckType'],
+      tag: true,
+    },
   },
 };
 
