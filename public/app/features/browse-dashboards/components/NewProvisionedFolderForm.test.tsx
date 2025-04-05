@@ -143,7 +143,7 @@ describe('NewProvisionedFolderForm', () => {
           url: 'https://github.com/grafana/grafana',
           branch: 'main',
         },
-        workflows: [{ name: 'default', path: 'workflows/default.yaml' }],
+        workflows: [{ name: 'default', path: 'workflows/default.json' }],
       },
     });
 
