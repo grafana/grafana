@@ -159,7 +159,7 @@ export function SaveProvisionedDashboardForm({
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repositoryView?.workflows.length && (
+        {!repositoryView?.workflows?.length && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
@@ -312,9 +312,9 @@ async function validateTitle(title: string, formValues: FormData) {
     return error instanceof Error
       ? error.message
       : t(
-          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
-          'Dashboard title validation failed.'
-        );
+        'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+        'Dashboard title validation failed.'
+      );
   }
 }
 
