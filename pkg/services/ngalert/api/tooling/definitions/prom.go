@@ -152,9 +152,10 @@ type AlertingRule struct {
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true
-	Query         string  `json:"query,omitempty"`
-	Duration      float64 `json:"duration,omitempty"`
-	KeepFiringFor float64 `json:"keepFiringFor,omitempty"`
+	Query                 string   `json:"query,omitempty"`
+	QueriedDatasourceUIDs []string `json:"queriedDatasourceUIDs,omitempty"`
+	Duration              float64  `json:"duration,omitempty"`
+	KeepFiringFor         float64  `json:"keepFiringFor,omitempty"`
 	// required: true
 	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
@@ -168,12 +169,10 @@ type AlertingRule struct {
 // adapted from cortex
 // swagger:model
 type Rule struct {
+	UID string `json:"uid,omitempty"`
 	// required: true
-	UID string `json:"uid"`
-	// required: true
-	Name string `json:"name"`
-	// required: true
-	FolderUID string `json:"folderUid"`
+	Name      string `json:"name"`
+	FolderUID string `json:"folderUid,omitempty"`
 	// required: true
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitempty"`

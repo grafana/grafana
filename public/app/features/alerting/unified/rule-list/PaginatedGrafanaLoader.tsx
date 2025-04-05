@@ -14,7 +14,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
-import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 const GRAFANA_GROUP_PAGE_SIZE = 40;
@@ -22,7 +22,7 @@ const GRAFANA_GROUP_PAGE_SIZE = 40;
 export function PaginatedGrafanaLoader() {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
 
-  const groupsGenerator = useRef(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE));
+  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;

@@ -62,7 +62,7 @@ export function getRulesDataSources() {
   }
 
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => isRulesDataSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -83,6 +83,10 @@ export function getAlertManagerDataSources() {
   return getAllDataSources()
     .filter(isAlertmanagerDataSourceInstance)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function isRulesDataSourceType(dsType: string) {
+  return RulesDataSourceTypes.includes(dsType);
 }
 
 export function isAlertmanagerDataSourceInstance(

@@ -37,3 +37,45 @@ jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });
+
+// Mock Performance API methods not implemented in jsdom
+if (window.performance) {
+  // Type-safe spies with proper return type definitions
+  if (!window.performance.mark) {
+    window.performance.mark = jest.mocked<typeof window.performance.mark>((markName: string) => {
+      return {
+        name: markName,
+        entryType: 'mark',
+        startTime: 0,
+        duration: 0,
+        detail: null,
+        toJSON: () => ({}),
+      };
+    });
+  }
+
+  if (!window.performance.measure) {
+    window.performance.measure = jest.mocked<typeof window.performance.measure>((measureName: string) => {
+      return {
+        name: measureName,
+        entryType: 'measure',
+        startTime: 0,
+        duration: 100,
+        detail: null,
+        toJSON: () => ({}),
+      };
+    });
+  }
+
+  if (!window.performance.getEntriesByName) {
+    window.performance.getEntriesByName = jest.mocked<typeof window.performance.getEntriesByName>(() => []);
+  }
+
+  if (!window.performance.clearMarks) {
+    window.performance.clearMarks = jest.mocked<typeof window.performance.clearMarks>(() => {});
+  }
+
+  if (!window.performance.clearMeasures) {
+    window.performance.clearMeasures = jest.mocked<typeof window.performance.clearMeasures>(() => {});
+  }
+}
