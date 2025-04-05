@@ -39,10 +39,33 @@ jobs:
           retention-days: 1
           name: ${{ steps.artifact.outputs.artifact }}
           path: grafana.tar.gz
-  misc-suite:
+  e2e-matrix:
+    name: ${{ matrix.suite }}
+    strategy:
+      matrix:
+        suite:
+          - various-suite
+          - dashboards-suite
+          - smoke-tests-suite
+          - panels-suite
     needs:
       - build-grafana
-    uses: ./.github/workflows/e2e-suite-various.yml
-    name: Various Suite
+    uses: ./.github/workflows/run-e2e-suite.yml
     with:
       package: ${{ needs.build-grafana.outputs.artifact }}
+      suite: ${{ matrix.suite }}
+  e2e-matrix-old-arch:
+    name: ${{ matrix.suite }} (old arch)
+    strategy:
+      matrix:
+        suite:
+          - old-arch/various-suite
+          - old-arch/dashboards-suite
+          - old-arch/smoke-tests-suite
+          - old-arch/panels-suite
+    needs:
+      - build-grafana
+    uses: ./.github/workflows/run-e2e-suite.yml
+    with:
+      package: ${{ needs.build-grafana.outputs.artifact }}
+      suite: ${{ matrix.suite }}
