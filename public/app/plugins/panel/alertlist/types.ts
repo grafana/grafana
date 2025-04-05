@@ -20,6 +20,7 @@ export interface StateFilter {
   firing: boolean;
   pending: boolean;
   inactive?: boolean; // backwards compat
+  recovering: boolean;
   noData: boolean;
   normal: boolean;
   error: boolean;

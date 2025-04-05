@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
-import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState, DataLink } from '@grafana/data';
-import { Icon, PanelChrome, Tooltip, useStyles2, TimePickerTooltip } from '@grafana/ui';
+import { AlertState, DataLink, GrafanaTheme2, LinkModel, PanelData, PanelModel } from '@grafana/data';
+import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelLinks } from '../PanelLinks';
 
@@ -31,7 +31,7 @@ export function PanelHeaderTitleItems(props: Props) {
       <PanelChrome.TitleItem
         className={cx({
           [styles.ok]: alertState === AlertState.OK,
-          [styles.pending]: alertState === AlertState.Pending,
+          [styles.pending]: alertState === AlertState.Pending || alertState === AlertState.Recovering,
           [styles.alerting]: alertState === AlertState.Alerting,
         })}
       >

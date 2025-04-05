@@ -93,6 +93,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
     instanceTotals.alerting,
     instanceTotals.inactive,
     instanceTotals.pending,
+    instanceTotals.recovering,
     instanceTotals.nodata,
   ]);
   const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;

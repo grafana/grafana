@@ -141,6 +141,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     noDataState,
     execErrState,
     evaluateFor,
+    keepFiringFor,
     queries,
     isPaused,
     contactPoints,
@@ -183,6 +184,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
       // Alerting rule specific
       for: evaluateFor,
+      keep_firing_for: keepFiringFor,
     };
   } else if (wantsRecordingRule) {
     return {
@@ -299,6 +301,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           group: group.name,
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: rule.for || '0',
+          keepFiringFor: rule.keep_firing_for || '0',
           noDataState: ga.no_data_state,
           execErrState: ga.exec_err_state,
           queries: ga.data,
@@ -371,6 +374,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   const ga = rule.grafana_alert;
   const duration = rule.for;
+  const keepFiringFor = rule.keep_firing_for;
   const annotations = rule.annotations;
   const labels = rule.labels;
 
@@ -403,6 +407,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       type: RuleFormType.grafana,
       group: ga.rule_group,
       evaluateFor: duration || '0',
+      keepFiringFor: keepFiringFor || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
 

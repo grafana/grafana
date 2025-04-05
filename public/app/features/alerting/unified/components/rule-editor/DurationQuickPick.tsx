@@ -3,7 +3,7 @@ import { Button, Stack } from '@grafana/ui';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
 interface Props {
-  selectedPendingPeriod: string;
+  selectedDuration?: string;
   groupEvaluationInterval: string;
   onSelect: (interval: string) => void;
 }
@@ -24,8 +24,8 @@ export function getPendingPeriodQuickOptions(groupEvaluationInterval: string): s
   return options.map(formatPrometheusDuration);
 }
 
-export function PendingPeriodQuickPick({ selectedPendingPeriod, groupEvaluationInterval, onSelect }: Props) {
-  const isQuickSelectionActive = (duration: string) => selectedPendingPeriod === duration;
+export function DurationQuickPick({ selectedDuration, groupEvaluationInterval, onSelect }: Props) {
+  const isQuickSelectionActive = (duration: string) => selectedDuration === duration;
 
   const options = getPendingPeriodQuickOptions(groupEvaluationInterval);
 

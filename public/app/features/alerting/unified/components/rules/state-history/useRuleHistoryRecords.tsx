@@ -140,6 +140,9 @@ export function logRecordsToDataFrame(
                 Pending: {
                   color: theme.colors.warning.main,
                 },
+                Recovering: {
+                  color: theme.colors.warning.main,
+                },
                 NoData: {
                   color: theme.colors.info.main,
                 },

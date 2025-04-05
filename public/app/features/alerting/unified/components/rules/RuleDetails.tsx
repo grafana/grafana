@@ -6,6 +6,7 @@ import { t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { useKeepFiringFor } from '../../hooks/rules/useKeepFiringFor';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
@@ -78,6 +79,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = useKeepFiringFor(rule);
 
   return (
     <>
@@ -100,6 +102,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           {pendingPeriod}
         </DetailsField>
       )}
+      {keepFiringFor && (
+        <DetailsField label={t('alerting.rule-details.keep-firing-for', 'Keep firing for')} horizontal={true}>
+          {keepFiringFor}
+        </DetailsField>
+      )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
         <DetailsField
@@ -111,7 +118,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
-            <span>{`${dateTime(lastEvaluation).locale('en').fromNow(true)} ago`}</span>
+            <span>
+              {t('alerting.rule-details.last-evaluation-ago', '{{time}} ago', {
+                time: dateTime(lastEvaluation).locale('en').fromNow(true),
+              })}
+            </span>
           </Tooltip>
         </DetailsField>
       )}

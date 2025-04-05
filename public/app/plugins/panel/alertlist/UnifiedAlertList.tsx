@@ -304,7 +304,8 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     return (
       (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
+      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive) ||
+      (options.stateFilter.recovering && alertingRule.state === PromAlertingRuleState.Recovering)
     );
   });
 
