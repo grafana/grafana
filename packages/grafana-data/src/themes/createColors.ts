@@ -115,7 +115,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   primary = {
     main: palette.blueDarkMain,
     text: palette.blueDarkText,
-    border: palette.blueDarkText,
+    border: palette.blueDarkBorder,
   };
 
   secondary = {
@@ -132,16 +132,19 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   error = {
     main: palette.redDarkMain,
     text: palette.redDarkText,
+    border: palette.redDarkBorder,
   };
 
   success = {
     main: palette.greenDarkMain,
     text: palette.greenDarkText,
+    border: palette.greenDarkBorder,
   };
 
   warning = {
     main: palette.orangeDarkMain,
     text: palette.orangeDarkText,
+    border: palette.orangeDarkBorder,
   };
 
   background = {
@@ -252,7 +255,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   contrastThreshold = 3;
   hoverFactor = 0.03;
-  tonalOffset = 0.2;
+  tonalOffset = 0.25;
 }
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {

@@ -270,8 +270,8 @@ export const getButtonStyles = (props: StyleProps) => {
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
-  let borderColor = 'transparent';
-  let hoverBorderColor = 'transparent';
+  let borderColor = theme.isDark ? color.border : 'transparent';
+  let hoverBorderColor = theme.isDark ? color.border : 'transparent';
 
   // Secondary button has some special rules as we lack theem color token to
   // specify border color for normal button vs border color for outline button
