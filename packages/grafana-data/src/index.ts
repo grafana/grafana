@@ -9,7 +9,6 @@ export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 // DataFrames
 export { DataFrameView } from './dataframe/DataFrameView';
 export { type FieldWithIndex, FieldCache } from './dataframe/FieldCache';
-export { type MutableField, MISSING_VALUE, MutableDataFrame } from './dataframe/MutableDataFrame';
 export {
   guessFieldTypeFromNameAndValue,
   getFieldTypeFromValue,
@@ -666,7 +665,6 @@ export {
   DataSourceApi,
 } from './types/datasource';
 export { CoreApp, type AppRootProps, type AppPluginMeta, AppPlugin, FeatureState } from './types/app';
-export { patchArrayVectorProrotypeMethods } from './types/vector';
 export {
   type DynamicConfigValue,
   type ConfigOverrideRule,
@@ -864,11 +862,6 @@ export {
 } from './types/data';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
-// deprecated
-export { CircularVector } from './vector/CircularVector';
-export { vectorator } from './vector/FunctionalVector';
-export { ArrayVector } from './vector/ArrayVector';
-export { CircularDataFrame } from './dataframe/CircularDataFrame';
 export {
   type CurrentUser,
   userHasPermission,
