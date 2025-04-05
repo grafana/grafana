@@ -47,7 +47,8 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.PluginDataType,
 }
 
-func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
+//nolint:gocyclo
+func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser, resourceTypes cloudmigration.ResourceTypes) (*cloudmigration.MigrateDataRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
 	defer span.End()
 
@@ -56,199 +57,223 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	folderHierarchy := make(map[cloudmigration.MigrateDataType]map[string]string, 0)
 
 	// Plugins
-	plugins, err := s.getPlugins(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get plugins", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.PluginDataType) {
+		plugins, err := s.getPlugins(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get plugins", "err", err)
+			return nil, err
+		}
 
-	for _, plugin := range plugins {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.PluginDataType,
-			RefID: plugin.ID,
-			Name:  plugin.Name,
-			Data:  plugin.SettingCmd,
-		})
+		for _, plugin := range plugins {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.PluginDataType,
+				RefID: plugin.ID,
+				Name:  plugin.Name,
+				Data:  plugin.SettingCmd,
+			})
+		}
 	}
 
 	// Data sources
-	dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get datasources", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.DatasourceDataType) {
+		dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get datasources", "err", err)
+			return nil, err
+		}
 
-	for _, ds := range dataSources {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.DatasourceDataType,
-			RefID: ds.UID,
-			Name:  ds.Name,
-			Data:  ds,
-		})
+		for _, ds := range dataSources {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.DatasourceDataType,
+				RefID: ds.UID,
+				Name:  ds.Name,
+				Data:  ds,
+			})
+		}
 	}
 
 	// Dashboards & Folders: linked via the schema, so we need to get both
-	dashs, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get dashboards and folders", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.DashboardDataType) || resourceTypes.Has(cloudmigration.FolderDataType) {
+		dashs, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get dashboards and folders", "err", err)
+			return nil, err
+		}
 
-	folderHierarchy[cloudmigration.DashboardDataType] = make(map[string]string, 0)
+		if resourceTypes.Has(cloudmigration.DashboardDataType) {
+			folderHierarchy[cloudmigration.DashboardDataType] = make(map[string]string, 0)
 
-	for _, dashboard := range dashs {
-		dashboard.Data.Del("id")
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.DashboardDataType,
-			RefID: dashboard.UID,
-			Name:  dashboard.Title,
-			Data: dashboards.SaveDashboardCommand{
-				Dashboard: dashboard.Data,
-				Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
-				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
-				IsFolder:  false,
-				FolderUID: dashboard.FolderUID,
-			},
-		})
+			for _, dashboard := range dashs {
+				dashboard.Data.Del("id")
+				migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+					Type:  cloudmigration.DashboardDataType,
+					RefID: dashboard.UID,
+					Name:  dashboard.Title,
+					Data: dashboards.SaveDashboardCommand{
+						Dashboard: dashboard.Data,
+						Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
+						Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
+						IsFolder:  false,
+						FolderUID: dashboard.FolderUID,
+					},
+				})
 
-		folderHierarchy[cloudmigration.DashboardDataType][dashboard.UID] = dashboard.FolderUID
-	}
+				folderHierarchy[cloudmigration.DashboardDataType][dashboard.UID] = dashboard.FolderUID
+			}
+		}
 
-	folderHierarchy[cloudmigration.FolderDataType] = make(map[string]string, 0)
+		if resourceTypes.Has(cloudmigration.FolderDataType) {
+			folderHierarchy[cloudmigration.FolderDataType] = make(map[string]string, 0)
 
-	folders = sortFolders(folders)
-	for _, f := range folders {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.FolderDataType,
-			RefID: f.UID,
-			Name:  f.Title,
-			Data:  f,
-		})
+			folders = sortFolders(folders)
+			for _, f := range folders {
+				migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+					Type:  cloudmigration.FolderDataType,
+					RefID: f.UID,
+					Name:  f.Title,
+					Data:  f,
+				})
 
-		folderHierarchy[cloudmigration.FolderDataType][f.UID] = f.ParentUID
+				folderHierarchy[cloudmigration.FolderDataType][f.UID] = f.ParentUID
+			}
+		}
 	}
 
 	// Library Elements
-	libraryElements, err := s.getLibraryElementsCommands(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get library elements", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.LibraryElementDataType) {
+		libraryElements, err := s.getLibraryElementsCommands(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get library elements", "err", err)
+			return nil, err
+		}
 
-	folderHierarchy[cloudmigration.LibraryElementDataType] = make(map[string]string, 0)
+		folderHierarchy[cloudmigration.LibraryElementDataType] = make(map[string]string, 0)
 
-	for _, libraryElement := range libraryElements {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.LibraryElementDataType,
-			RefID: libraryElement.UID,
-			Name:  libraryElement.Name,
-			Data:  libraryElement,
-		})
+		for _, libraryElement := range libraryElements {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.LibraryElementDataType,
+				RefID: libraryElement.UID,
+				Name:  libraryElement.Name,
+				Data:  libraryElement,
+			})
 
-		if libraryElement.FolderUID != nil {
-			folderHierarchy[cloudmigration.LibraryElementDataType][libraryElement.UID] = *libraryElement.FolderUID
+			if libraryElement.FolderUID != nil {
+				folderHierarchy[cloudmigration.LibraryElementDataType][libraryElement.UID] = *libraryElement.FolderUID
+			}
 		}
 	}
 
 	// Alerts: Mute Timings
-	muteTimings, err := s.getAlertMuteTimings(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert mute timings", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.MuteTimingType) {
+		muteTimings, err := s.getAlertMuteTimings(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert mute timings", "err", err)
+			return nil, err
+		}
 
-	for _, muteTiming := range muteTimings {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.MuteTimingType,
-			RefID: muteTiming.UID,
-			Name:  muteTiming.Name,
-			Data:  muteTiming,
-		})
+		for _, muteTiming := range muteTimings {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.MuteTimingType,
+				RefID: muteTiming.UID,
+				Name:  muteTiming.Name,
+				Data:  muteTiming,
+			})
+		}
 	}
 
 	// Alerts: Notification Templates
-	notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert notification templates", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.NotificationTemplateType) {
+		notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert notification templates", "err", err)
+			return nil, err
+		}
 
-	for _, notificationTemplate := range notificationTemplates {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.NotificationTemplateType,
-			RefID: notificationTemplate.UID,
-			Name:  notificationTemplate.Name,
-			Data:  notificationTemplate,
-		})
+		for _, notificationTemplate := range notificationTemplates {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.NotificationTemplateType,
+				RefID: notificationTemplate.UID,
+				Name:  notificationTemplate.Name,
+				Data:  notificationTemplate,
+			})
+		}
 	}
 
 	// Alerts: Contact Points
-	contactPoints, err := s.getContactPoints(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert contact points", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.ContactPointType) {
+		contactPoints, err := s.getContactPoints(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert contact points", "err", err)
+			return nil, err
+		}
 
-	for _, contactPoint := range contactPoints {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.ContactPointType,
-			RefID: contactPoint.UID,
-			Name:  contactPoint.Name,
-			Data:  contactPoint,
-		})
+		for _, contactPoint := range contactPoints {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.ContactPointType,
+				RefID: contactPoint.UID,
+				Name:  contactPoint.Name,
+				Data:  contactPoint,
+			})
+		}
 	}
 
 	// Alerts: Notification Policies
-	notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert notification policies", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.NotificationPolicyType) {
+		notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert notification policies", "err", err)
+			return nil, err
+		}
 
-	if len(notificationPolicies.Name) > 0 {
-		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.NotificationPolicyType,
-			RefID: notificationPolicies.Name, // no UID available
-			Name:  notificationPolicies.Name,
-			Data:  notificationPolicies.Routes,
-		})
+		if len(notificationPolicies.Name) > 0 {
+			// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.NotificationPolicyType,
+				RefID: notificationPolicies.Name, // no UID available
+				Name:  notificationPolicies.Name,
+				Data:  notificationPolicies.Routes,
+			})
+		}
 	}
 
 	// Alerts: Alert Rule Groups
-	alertRuleGroups, err := s.getAlertRuleGroups(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert rule groups", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.AlertRuleGroupType) {
+		alertRuleGroups, err := s.getAlertRuleGroups(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert rule groups", "err", err)
+			return nil, err
+		}
 
-	for _, alertRuleGroup := range alertRuleGroups {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.AlertRuleGroupType,
-			RefID: alertRuleGroup.Title, // no UID available
-			Name:  alertRuleGroup.Title,
-			Data:  alertRuleGroup,
-		})
+		for _, alertRuleGroup := range alertRuleGroups {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.AlertRuleGroupType,
+				RefID: alertRuleGroup.Title, // no UID available
+				Name:  alertRuleGroup.Title,
+				Data:  alertRuleGroup,
+			})
+		}
 	}
 
 	// Alerts: Alert Rules
-	alertRules, err := s.getAlertRules(ctx, signedInUser)
-	if err != nil {
-		s.log.Error("Failed to get alert rules", "err", err)
-		return nil, err
-	}
+	if resourceTypes.Has(cloudmigration.AlertRuleType) {
+		alertRules, err := s.getAlertRules(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get alert rules", "err", err)
+			return nil, err
+		}
 
-	folderHierarchy[cloudmigration.AlertRuleType] = make(map[string]string, 0)
+		folderHierarchy[cloudmigration.AlertRuleType] = make(map[string]string, 0)
 
-	for _, alertRule := range alertRules {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.AlertRuleType,
-			RefID: alertRule.UID,
-			Name:  alertRule.Title,
-			Data:  alertRule,
-		})
+		for _, alertRule := range alertRules {
+			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+				Type:  cloudmigration.AlertRuleType,
+				RefID: alertRule.UID,
+				Name:  alertRule.Title,
+				Data:  alertRule,
+			})
 
-		folderHierarchy[cloudmigration.AlertRuleType][alertRule.UID] = alertRule.FolderUID
+			folderHierarchy[cloudmigration.AlertRuleType][alertRule.UID] = alertRule.FolderUID
+		}
 	}
 
 	// Obtain the names of parent elements for data types that have folders.
@@ -508,7 +533,14 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
-func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, metadata []byte, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
+func (s *Service) buildSnapshot(
+	ctx context.Context,
+	signedInUser *user.SignedInUser,
+	maxItemsPerPartition uint32,
+	metadata []byte,
+	snapshotMeta cloudmigration.CloudMigrationSnapshot,
+	resourceTypes cloudmigration.ResourceTypes,
+) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.buildSnapshot")
 	defer span.End()
 
@@ -542,7 +574,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: created snapshot writing in %d ms", time.Since(start).Milliseconds()))
 
-	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser)
+	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser, resourceTypes)
 	if err != nil {
 		return fmt.Errorf("fetching migration data: %w", err)
 	}
