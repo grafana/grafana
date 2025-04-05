@@ -1,3 +1,5 @@
+// @PERCONA
+// @ts-nocheck
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
