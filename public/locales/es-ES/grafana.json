@@ -280,6 +280,9 @@
     }
   },
   "alerting": {
+    "add-button": {
+      "add-more": ""
+    },
     "alert": {
       "alert-state": "Estado de la alerta",
       "annotations": "",
@@ -299,6 +302,48 @@
       "state-no-data": "Estado de alerta si no hay datos o todos los valores son nulos",
       "target-datasource-uid": "Fuente de datos de destino"
     },
+    "alert-details": {
+      "manage-silences": "",
+      "silence": ""
+    },
+    "alert-group": {
+      "no-grouping": ""
+    },
+    "alert-group-filter": {
+      "clear-filters": ""
+    },
+    "alert-groups": {
+      "no-results": "",
+      "text-loading-notifications": "",
+      "title-grafana-alerts-delivered-alertmanager": ""
+    },
+    "alert-instance-details": {
+      "label-value": ""
+    },
+    "alert-instance-extension-point": {
+      "aria-label-actions": ""
+    },
+    "alert-instance-modal-selector": {
+      "add-alert-data-to-payload": "",
+      "placeholder-search-alert-rule": "",
+      "text-loading-rule": "",
+      "text-loading-rules": "",
+      "title-search-alert-rule": "",
+      "title-select-alert-instances": ""
+    },
+    "alert-instance-state-filter": {
+      "state": ""
+    },
+    "alert-label": {
+      "tooltip-remove-label": ""
+    },
+    "alert-labels": {
+      "aria-label-labels": ""
+    },
+    "alert-manager-manual-routing": {
+      "label-muting-grouping-and-timings-optional": "",
+      "title-muting-grouping-and-timings": ""
+    },
     "alert-menu": {
       "copy-link": "",
       "duplicate": "",
@@ -313,17 +358,77 @@
         }
       }
     },
+    "alert-rule-form": {
+      "action-buttons": {
+        "delete": "",
+        "edit-yaml": ""
+      },
+      "title-delete-rule": ""
+    },
+    "alert-rule-name-and-metric": {
+      "aria-label-name": "",
+      "label-metric": "",
+      "label-name": "",
+      "metric-aria-label-metric": ""
+    },
     "alert-rules": {
       "firing-for": "Activando para",
       "next-evaluation": "Siguiente evaluación",
       "next-evaluation-in": "siguiente evaluación en",
       "rule-definition": "Definición de la regla"
     },
+    "alert-rules-drawer": {
+      "text-loading-alert-rules": "",
+      "title-alert-rules": ""
+    },
+    "alert-rules-drawer-content": {
+      "text-loading-alert-rules": ""
+    },
+    "alert-state-filter": {
+      "suppressed-the-alert-has-been-silenced": ""
+    },
+    "alert-warning": {
+      "to-rule-list": ""
+    },
     "alertform": {
       "labels": {
         "alerting": "Añade etiquetas a tu regla para buscar, silenciar o enrutar a una política de notificación.",
         "recording": "Añade etiquetas a tu regla."
       }
+    },
+    "alertmanager-card": {
+      "disable": "",
+      "enable": "",
+      "not-receiving-grafana-managed-alerts": "",
+      "text-activation-in-progress": "",
+      "text-failed-to-adopt-alertmanager": "",
+      "text-inconclusive": "",
+      "text-receiving-grafanamanaged-alerts": "",
+      "title-alerting-settings": ""
+    },
+    "alertmanager-config": {
+      "reset": "",
+      "resetting-configuration-might-while": "",
+      "title-failed-to-load-alertmanager-configuration": "",
+      "title-oops-something-went-wrong": "",
+      "title-reset-alertmanager-configuration": "",
+      "title-resetting-alertmanager-configuration": ""
+    },
+    "alertmanager-configuration-version-manager": {
+      "columns": {
+        "compare": "",
+        "restore": "",
+        "text-latest": ""
+      },
+      "this-might-take-a-while": "",
+      "title-failed-to-load-configuration-history": "",
+      "title-restoring-alertmanager-configuration": ""
+    },
+    "alerts-folder-view": {
+      "aria-label-sort": "",
+      "label-filter-placeholder-search-alerts-by-labels": "",
+      "name-filter-placeholder-search-alert-rules-by-name": "",
+      "no-alert-rules-found": ""
     },
     "alertVersionHistory": {
       "alerting": "",
@@ -367,9 +472,50 @@
       "warning-restore-manually": "Estás restaurando manualmente una versión anterior de esta regla de alerta. Revisa los cambios cuidadosamente antes de guardar la definición de la regla.",
       "warning-restore-manually-title": "Restaurando regla manualmente"
     },
+    "am-root-route-form": {
+      "am-group-interval-label-group-interval": "",
+      "am-group-select-label-group-by": "",
+      "am-group-wait-label-group-wait": "",
+      "am-repeat-interval-label-repeat-interval": "",
+      "aria-label-group-by": "",
+      "aria-label-group-interval": "",
+      "aria-label-group-wait": "",
+      "aria-label-repeat-interval": "",
+      "create-a-contact-point": "",
+      "label-default-contact-point": "",
+      "label-timing-options": "",
+      "or": ""
+    },
+    "am-routes-expanded-form": {
+      "add-matcher": "",
+      "am-mute-timing-select-description-add-mute-timing-to-policy": "",
+      "am-mute-timing-select-label-mute-timings": "",
+      "aria-label-group-by": "",
+      "aria-label-operator": "",
+      "label-contact-point": "",
+      "label-continue-matching-subsequent-sibling-nodes": "",
+      "label-group-by": "",
+      "label-label": "",
+      "label-override-general-timings": "",
+      "label-override-grouping": "",
+      "label-value": "",
+      "matching-labels": "",
+      "placeholder-label": "",
+      "placeholder-value": "",
+      "remove": "",
+      "tooltip-remove-matcher": ""
+    },
     "annotations": {
       "description": "Añade más contexto a tus notificaciones de alerta.",
       "title": "Configurar mensaje de notificación"
+    },
+    "annotations-step": {
+      "add-custom-annotation": "",
+      "aria-label-delete-annotation": "",
+      "get-annotations-section-description": {
+        "title-annotations": ""
+      },
+      "link-dashboard-and-panel": ""
     },
     "central-alert-history": {
       "details": {
@@ -413,6 +559,41 @@
         "title": "No se pueden mostrar todos los eventos"
       }
     },
+    "channel-sub-form": {
+      "delete": "",
+      "duplicate": "",
+      "label-integration": "",
+      "label-notification-settings": "",
+      "test": ""
+    },
+    "classic-condition-viewer": {
+      "of": ""
+    },
+    "clone-rule-button": {
+      "title-copy": ""
+    },
+    "clone-rule-editor": {
+      "text-loading-the-rule": "",
+      "title-cannot-exist": "",
+      "title-error": ""
+    },
+    "cloud-alert-preview": {
+      "alerts-preview": "",
+      "info": "",
+      "labels": "",
+      "state": ""
+    },
+    "cloud-common-channel-settings": {
+      "description-whether-notify-about-resolved-alerts": "",
+      "label-send-resolved": ""
+    },
+    "cloud-evaluation-behavior": {
+      "label-pending-period": "",
+      "title-set-evaluation-behavior": ""
+    },
+    "cloud-receiver-form": {
+      "title-info": ""
+    },
     "common": {
       "cancel": "",
       "clear-filters": "Borrar filtros",
@@ -426,6 +607,21 @@
         "notification-templates": "Plantillas de notificación"
       },
       "view": ""
+    },
+    "compare-versions": {
+      "restore": "",
+      "return": ""
+    },
+    "contact-point-header": {
+      "export-label-export": "",
+      "label-delete": "",
+      "label-manage-permissions": ""
+    },
+    "contact-point-selector": {
+      "aria-label-refresh-contact-points": "",
+      "contact-point-picker-label-contact-point": "",
+      "title-failed-to-fetch-contact-points": "",
+      "tooltip-refresh-contact-points-list": ""
     },
     "contact-points": {
       "create": "Crear punto de contacto",
@@ -464,13 +660,76 @@
       "used-by-rules_one": "Utilizado por {{ count }} regla de alerta",
       "used-by-rules_other": "Utilizado por {{ count }} regla de alerta"
     },
+    "contact-points-filter": {
+      "aria-label-clear": "",
+      "aria-label-search-contact-points": "",
+      "clear": "",
+      "label-search-by-name-or-type": "",
+      "placeholder-search": ""
+    },
+    "contact-points-page-contents": {
+      "label-contact-points": "",
+      "label-notification-templates": ""
+    },
+    "contact-points-tab": {
+      "aria-label-add-contact-point": "",
+      "aria-label-export-all": "",
+      "export-all": "",
+      "text-loading": "",
+      "title-failed-to-fetch-contact-points": ""
+    },
     "contactPointFilter": {
       "label": "Punto de contacto"
     },
     "copy-to-clipboard": "Copiar «{{label}}» al portapapeles",
+    "create-metadata": {
+      "view-dashboard": "",
+      "view-panel": ""
+    },
+    "create-new-folder": {
+      "folder": {
+        "cancel": "",
+        "create": "",
+        "name": ""
+      },
+      "new-folder": "",
+      "placeholder-enter-a-name": "",
+      "title-new-folder": ""
+    },
+    "custom-annotation-header-field": {
+      "custom-annotation-name-and-content": "",
+      "placeholder-enter-custom-annotation-name": ""
+    },
     "dag": {
       "missing-reference": "La expresión «{{source}}» no se ha podido ejecutar porque falta «{{target}}» o también ha fallado.",
       "self-reference": "No puedes vincular una expresión a sí misma"
+    },
+    "dashboard-picker": {
+      "confirm": "",
+      "placeholder-search-dashboard": "",
+      "placeholder-search-panel": "",
+      "select-dashboard-available-panels": "",
+      "text-loading-dashboard": "",
+      "text-loading-dashboards": "",
+      "title-current-selection": "",
+      "title-search-dashboard": "",
+      "title-search-panel": "",
+      "title-select-dashboard-and-panel": ""
+    },
+    "data-source-section": {
+      "import-to-grafana": ""
+    },
+    "datasource-not-found": {
+      "remove-query": "",
+      "show-details": "",
+      "this-datasource-has-been-removed": "",
+      "update-datasource": ""
+    },
+    "declare-incident-button": {
+      "declare-incident": ""
+    },
+    "declare-incident-menu-item": {
+      "label-declare-incident": ""
     },
     "delete-rule-modal": {
       "title": "",
@@ -515,11 +774,98 @@
       "group-deleting": "",
       "group-load-failed": ""
     },
+    "duplicate-message-template": {
+      "text-loading-notification-template": "",
+      "title-error-loading-notification-template": ""
+    },
+    "edit-contact-point": {
+      "text-loading": "",
+      "title-failed-to-fetch-contact-point": "",
+      "title-receiver-not-found": ""
+    },
+    "edit-message-template": {
+      "text-loading-template": "",
+      "title-failed-to-fetch-notification-template": ""
+    },
+    "error-modal": {
+      "failed-to-update-your-configuration": ""
+    },
+    "error-summary-button": {
+      "error": ""
+    },
+    "evaluation-behavior-summary": {
+      "label-evaluate": "",
+      "label-evaluation-time": "",
+      "label-last-evaluation": "",
+      "label-metric": "",
+      "label-pending-period": ""
+    },
+    "evaluation-group": {
+      "label-delete": "",
+      "label-export": "",
+      "label-reorder-rules": "",
+      "text-provisioned": ""
+    },
+    "evaluation-group-creation-modal": {
+      "description-often-rules-group-evaluated": "",
+      "placeholder-enter-a-name": ""
+    },
+    "evaluation-group-loader": {
+      "title-something-wrong-trying-fetch-group-details": ""
+    },
+    "evaluation-interval-limit-exceeded": {
+      "title-global-evaluation-interval-limit-exceeded": ""
+    },
+    "existing-rule-editor": {
+      "sorry-permission": "",
+      "sorry-this-rule-does-not-exist": "",
+      "text-loading-rule": "",
+      "title-cannot-edit-rule": "",
+      "title-failed-to-load-rule": "",
+      "title-rule-not-found": ""
+    },
+    "existing-silence-editor": {
+      "text-loading-existing-silence-information": ""
+    },
     "export": {
       "subtitle": {
         "formats": "Selecciona el formato y descarga el archivo o copia el contenido al portapapeles",
         "one-format": "Descarga el archivo o copia el contenido al portapapeles"
       }
+    },
+    "export-new-rule-button": {
+      "tooltip-export-new-grafana-rule": ""
+    },
+    "expression": {
+      "title-expression-failed": "",
+      "title-expression-warning": ""
+    },
+    "expression-editor": {
+      "preview-alerts": "",
+      "there-firing-alerts-query": "",
+      "title-alerts-preview": ""
+    },
+    "expression-preview": {
+      "title-expression-failed": ""
+    },
+    "expression-result": {
+      "aria-label-nextpage": "",
+      "aria-label-previouspage": "",
+      "no-data": ""
+    },
+    "federated-rule-warning": {
+      "read-documentation": "",
+      "title-federated-group": ""
+    },
+    "file-export-preview": {
+      "copy-code": "",
+      "download": ""
+    },
+    "filter-view-results": {
+      "aria-label-filteredrulelist": ""
+    },
+    "folder-selector": {
+      "description-select-folder": ""
     },
     "folderAndGroup": {
       "evaluation": {
@@ -531,6 +877,91 @@
         }
       }
     },
+    "generate-alert-data-modal": {
+      "add-alert-data": "",
+      "add-alert-data-to-payload": "",
+      "review-alert-payload": ""
+    },
+    "get-description": {
+      "title-alert-rule-evaluation": ""
+    },
+    "get-preview-results": {
+      "title-error": ""
+    },
+    "getting-started": {
+      "condition-breached-alert-instance-fires": "",
+      "get-started": "",
+      "how-it-works": ""
+    },
+    "global-config": {
+      "title-failed-to-fetch-notification-template": ""
+    },
+    "global-config-alert": {
+      "title-global-config-for-contact-points": ""
+    },
+    "global-config-form": {
+      "save-global-config": "",
+      "saving": "",
+      "title-error-saving-receiver": ""
+    },
+    "grafana-alertmanager-delivery-warning": {
+      "title-grafana-alerts-delivered-alertmanager": "",
+      "title-you-have-additional-alertmanagers-to-configure": ""
+    },
+    "grafana-common-channel-settings": {
+      "label-disable-resolved-message": ""
+    },
+    "grafana-evaluation-behavior-step": {
+      "or": "",
+      "text-configure-no-data-and-error-handling": "",
+      "title-set-evaluation-behavior": ""
+    },
+    "grafana-folder-and-labels-step": {
+      "title-add-folder-and-labels": ""
+    },
+    "grafana-modify-export": {
+      "title-invalid-rule-id": ""
+    },
+    "grafana-mute-timing-exporter-preview": {
+      "text-loading": ""
+    },
+    "grafana-mute-timings-exporter-preview": {
+      "text-loading": ""
+    },
+    "grafana-policies-exporter-preview": {
+      "text-loading": ""
+    },
+    "grafana-receiver-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-receiver-form": {
+      "text-loading-notifiers": "",
+      "title-loading-on-call-integration-failed": ""
+    },
+    "grafana-receivers-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-rule-design-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-rule-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-rule-folder-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-rule-group-export-preview": {
+      "text-loading": ""
+    },
+    "grafana-rules": {
+      "export-all-grafana-rules-aria-label-export-all-grafana-rules": "",
+      "export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules": "",
+      "no-rules-found": "",
+      "tooltip-create-new-grafanamanaged-recording-rule": ""
+    },
+    "grafana-rules-export-preview": {
+      "text-loading": ""
+    },
     "group-actions": {
       "actions-trigger": "Acciones del grupo de reglas",
       "details": "",
@@ -539,6 +970,13 @@
     "group-actions-menu": {
       "group-load-failed": "",
       "unknown-error": ""
+    },
+    "group-and-namespace-fields": {
+      "group-picker-label-group": "",
+      "namespace-picker-label-namespace": ""
+    },
+    "group-by": {
+      "placeholder-group-by": ""
     },
     "group-details": {
       "ds-features-error": "Error al cargar los detalles de la fuente de datos",
@@ -582,11 +1020,17 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "home": {
+      "label-get-started": "",
+      "label-insights": "",
+      "title-alerting": ""
+    },
     "import-from-dsrules": {
       "description-folder-import-rules": ""
     },
     "import-to-gma": {
       "action-button": "",
+      "additional-settings": "",
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
@@ -606,7 +1050,6 @@
         "description": "",
         "label": ""
       },
-      "optional-settings": "",
       "pageTitle": "",
       "pause": {
         "label": ""
@@ -619,6 +1062,20 @@
       "target-folder": {
         "label": ""
       }
+    },
+    "insights-menu-button-renderer": {
+      "aria-label-rate-this-panel": "",
+      "menu": {
+        "label-explore": "",
+        "label-rate-this-panel": ""
+      },
+      "modal": {
+        "i-like-it": "",
+        "title-rate-this-panel": ""
+      }
+    },
+    "inspector-yaml-tab": {
+      "apply": ""
     },
     "irm-integration": {
       "connection-method": "Cómo conectarse a IRM",
@@ -636,6 +1093,45 @@
       "new-integration-description": "Se creará automáticamente una nueva integración de IRM sin cadenas de escalamiento",
       "recommended": "Recomendado",
       "validation-failed": "Error al validar el nombre de la integración de IRM. ¿Está disponible la API de OnCall?"
+    },
+    "key-value-map-input": {
+      "name": "",
+      "value": ""
+    },
+    "key-value-template-data-table": {
+      "arguments": "",
+      "keyvalue-methods": "",
+      "name": "",
+      "notes": "",
+      "returns": ""
+    },
+    "labels-editor-modal": {
+      "title-edit-labels": ""
+    },
+    "labels-field": {
+      "labels": "",
+      "title-labels": ""
+    },
+    "labels-field-in-form": {
+      "add-labels": "",
+      "edit-labels": "",
+      "labels": "",
+      "no-labels-selected": "",
+      "title-labels": ""
+    },
+    "labels-sub-form": {
+      "save": ""
+    },
+    "labels-with-suggestions": {
+      "text-loading-existing-labels": ""
+    },
+    "labels-without-suggestions": {
+      "placeholder-key": "",
+      "placeholder-value": ""
+    },
+    "link-to-contact-points": {
+      "aria-label-view-or-create-contact-points": "",
+      "view-or-create-contact-points": ""
     },
     "list-view": {
       "empty": {
@@ -661,9 +1157,53 @@
         "loading-rules": ""
       }
     },
+    "log-record-viewer-by-timestamp": {
+      "aria-label-state-history-by-timestamp": ""
+    },
+    "loki-state-history": {
+      "clear-filters": "",
+      "common-labels": "",
+      "loading": "",
+      "title-error-fetching-the-state-history": ""
+    },
     "manage-permissions": {
       "button": "",
       "title": ""
+    },
+    "matcher-filter": {
+      "search-by-label": "",
+      "search-query-input-placeholder-search": ""
+    },
+    "matchers-field": {
+      "add-matcher": "",
+      "aria-label-operator": "",
+      "aria-label-remove-matcher": "",
+      "label-alert-rule": "",
+      "label-label": "",
+      "label-operator": "",
+      "label-refine-affected-alerts": "",
+      "label-value": "",
+      "placeholder-label": "",
+      "placeholder-value": "",
+      "remove": "",
+      "tooltip-refine-which-alert-instances-silenced-selecting": ""
+    },
+    "math-expression-viewer": {
+      "input": ""
+    },
+    "max-data-points-option": {
+      "label-max-data-points": ""
+    },
+    "migrate-to-gmabutton": {
+      "aria-label-new": ""
+    },
+    "min-interval-option": {
+      "label-interval": ""
+    },
+    "modify-export-rule-form": {
+      "action-buttons": {
+        "export": ""
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -671,23 +1211,123 @@
         "title": "Error al cargar los tiempos de silenciación"
       }
     },
+    "mute-timing-actions-buttons": {
+      "text-disabled": "",
+      "title-delete-mute-timing": ""
+    },
+    "mute-timing-fields": {
+      "am-mute-timing-select-label-mute-timings": ""
+    },
+    "mute-timing-form": {
+      "description-unique-timing": "",
+      "label-name": "",
+      "text-loading-mute-timing": "",
+      "title-no-matching-mute-timing-found": ""
+    },
+    "mute-timing-time-interval": {
+      "add-another-time-interval": "",
+      "label-days-of-the-month": "",
+      "label-days-of-the-week": "",
+      "label-disable": "",
+      "label-location": "",
+      "label-months": "",
+      "label-time-intervals": "",
+      "label-years": "",
+      "mute-timing-days-placeholder-example": "",
+      "mute-timing-months-placeholder-example-mayaugust-december": "",
+      "mute-timing-years-placeholder-example": "",
+      "remove-time-interval": ""
+    },
+    "mute-timing-time-range": {
+      "add-another-time-range": "",
+      "label-end-time": "",
+      "label-start-time": "",
+      "label-time-range": "",
+      "mute-timing-ends-at-placeholder-hhmm": "",
+      "mute-timing-starts-at-placeholder-hhmm": "",
+      "title-remove": "",
+      "tooltip-remove-time-range": ""
+    },
     "mute-timings": {
       "add-mute-timing": "Añadir tiempo de silenciación",
       "description": "Introduce intervalos de tiempo específicos en los que no enviar notificaciones o congela las notificaciones durante periodos de tiempo recurrentes.",
       "save": "Guardar tiempo de silenciación",
       "saving": "Guardando tiempo de silenciación"
     },
+    "mute-timings-selector": {
+      "aria-label-mute-timings": "",
+      "placeholder-select-mute-timings": ""
+    },
+    "mute-timings-table": {
+      "text-havent-created-timings": "",
+      "text-loading-mute-timings": "",
+      "text-no-mute-timings-configured": ""
+    },
+    "namespace": {
+      "title-alert-rules": ""
+    },
     "namespace-and-group-filter": {
       "select-group": "",
       "select-namespace": ""
+    },
+    "need-help-info": {
+      "need-help": ""
+    },
+    "need-help-info-for-configure-no-data-error": {
+      "title-configure-no-data-and-error-handling": ""
+    },
+    "need-help-info-for-contactpoint": {
+      "title-notify-by-selecting-a-contact-point": ""
+    },
+    "need-help-info-for-notification-policy": {
+      "title-notification-routing": ""
+    },
+    "new-rule-from-panel-button": {
+      "new-alert-rule": "",
+      "title-no-alerting-capable-query-found": ""
+    },
+    "no-alert-managers-available": {
+      "title-no-alertmanager-found": ""
+    },
+    "notification-policies-filter": {
+      "label-search-by-contact-point": "",
+      "search-query-input-placeholder-search": ""
+    },
+    "notification-policies-list": {
+      "title-error-loading-alertmanager-config": "",
+      "title-notification-policies-have-changed": ""
+    },
+    "notification-policy-matchers": {
+      "default-policy": "",
+      "no-matchers": ""
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
       "error": "No se ha podido cargar la vista previa del enrutamiento para {{alertmanager}}",
       "initialized": "Según las etiquetas añadidas, las instancias de alerta se enrutan a las siguientes políticas de notificación. Amplía cada política de notificación a continuación para ver más detalles.",
       "preview-routing": "Vista previa del enrutamiento",
+      "text-loading-preview": "",
       "title": "Vista previa del enrutamiento de la instancia de alerta",
       "uninitialized": "Cuando hayas seleccionado la carpeta y configurado la consulta y las etiquetas, haz clic en «Vista previa del enrutamiento» para ver los resultados aquí."
+    },
+    "notification-preview-by-alert-manager": {
+      "text-loading-routing-preview": ""
+    },
+    "notification-route": {
+      "no-labels": "",
+      "no-matching-labels": ""
+    },
+    "notification-route-details-modal": {
+      "alert-instances-routed-follows": "",
+      "close": "",
+      "default-policy": "",
+      "notification-policy-path": "",
+      "title-routing-details": ""
+    },
+    "notification-route-header": {
+      "aria-label-expand-policy-route": "",
+      "delivered-to": "",
+      "see-details": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -701,7 +1341,37 @@
       "new": {
         "subTitle": "Crear un nuevo grupo de plantillas de notificación",
         "title": "Nuevo grupo de plantillas de notificación"
-      }
+      },
+      "text-loading-notification-templates": "",
+      "title-failed-to-fetch-notification-templates": ""
+    },
+    "notification-templates-tab": {
+      "add-notification-template-group": "",
+      "create-notification-templates-customize-notifications": ""
+    },
+    "notifications-step": {
+      "labels-better-manage-recording-rules": "",
+      "recipient": ""
+    },
+    "option-customfield": {
+      "label-custom-template": ""
+    },
+    "other-alert-managers-available": {
+      "title-selected-alertmanager-not-found": ""
+    },
+    "panel-alert-tab-content": {
+      "alert": {
+        "title-errors-loading-rules": ""
+      },
+      "text-loading-rules": "",
+      "title-dashboard-not-saved": ""
+    },
+    "payload-editor": {
+      "edit-payload": "",
+      "label-add-custom-alert-instance": "",
+      "label-payload": "",
+      "label-use-existing-alert-instances": "",
+      "reference": ""
     },
     "policies": {
       "default-policy": {
@@ -764,9 +1434,56 @@
       "n-more-policies_one": "{{count}} políticas adicionales",
       "n-more-policies_other": "{{count}} políticas adicionales"
     },
+    "policy": {
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
+    },
+    "policy-path": {
+      "default-policy": "",
+      "no-matchers": ""
+    },
+    "preview-rule": {
+      "preview-alerts": "",
+      "title-preview-is-not-available": ""
+    },
+    "preview-rule-result": {
+      "loading-preview": ""
+    },
+    "preview-summary": {
+      "no-series": ""
+    },
+    "prom-duration-docs": {
+      "example": "",
+      "multiple-units-combined": "",
+      "symbol": "",
+      "time-unit": ""
+    },
+    "prometheus-consistency-check": {
+      "title-unable-to-check-the-rule-status": ""
+    },
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso se ha aprovisionado a través de {{provenance}} y no se puede editar mediante la interfaz de usuario",
       "badge-tooltip-standard": "Este recurso se ha aprovisionado y no se puede editar a través de la interfaz de usuario"
+    },
+    "provisioning-badge": {
+      "badge": {
+        "text-provisioned": ""
+      }
+    },
+    "query-and-expressions-step": {
+      "add-query": "",
+      "expressions": "",
+      "manipulate-returned-queries-other-operations": "",
+      "title-deactivate-advanced-options": "",
+      "title-queries-expressions-configured": ""
+    },
+    "query-box": {
+      "text-alert-condition": "",
+      "view-in-explore": ""
+    },
+    "query-options": {
+      "label-time-range": ""
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -775,9 +1492,91 @@
       "preview": "Vista previa",
       "previewCondition": "Vista previa de la condición de la regla de alerta"
     },
+    "receiver-form": {
+      "add-contact-point-integration": "",
+      "label-name": "",
+      "name-placeholder-name": "",
+      "save-contact-point": "",
+      "saving": "",
+      "title-attention": "",
+      "title-manage-contact-point-permissions": ""
+    },
+    "receivers-section": {
+      "new-menu": {
+        "label-export-all": ""
+      }
+    },
     "recording-rules": {
       "description-target-data-source": "",
       "label-target-data-source": "Fuente de datos de destino"
+    },
+    "recording-rules-name-space-and-group-step": {
+      "description-select-namespace-group-recording": ""
+    },
+    "redirect-to-clone-rule": {
+      "title-copy-provisioned-alert-rule": ""
+    },
+    "redirect-to-rule-viewer": {
+      "text-loading-rule": "",
+      "title-could-not-view-rule": ""
+    },
+    "reduce-condition-viewer": {
+      "function": "",
+      "input": "",
+      "mode": ""
+    },
+    "remove-button": {
+      "aria-label-delete-label": ""
+    },
+    "resample-expression-viewer": {
+      "downsample": "",
+      "input": "",
+      "resample-to": "",
+      "upsample": ""
+    },
+    "routing": {
+      "routing": ""
+    },
+    "routing-settings": {
+      "aria-label-group-by": "",
+      "label-group-by": "",
+      "label-override-grouping": "",
+      "label-override-timings": ""
+    },
+    "rule-actions-buttons": {
+      "title-edit": "",
+      "title-view": ""
+    },
+    "rule-details": {
+      "label-instances": "",
+      "label-labels": ""
+    },
+    "rule-details-buttons": {
+      "go-to-dashboard": "",
+      "go-to-panel": "",
+      "see-graph": "",
+      "show-state-history": "",
+      "view-runbook": ""
+    },
+    "rule-details-data-sources": {
+      "label-data-source": ""
+    },
+    "rule-details-expression": {
+      "label-expression": ""
+    },
+    "rule-details-federated-sources": {
+      "label-tenant-sources": ""
+    },
+    "rule-editor": {
+      "get-content": {
+        "sorry-allowed-create-rules": "",
+        "sorry-allowed-rules": "",
+        "title-cannot-create-rules": "",
+        "title-cannot-edit-rules": ""
+      }
+    },
+    "rule-editor-section": {
+      "label-advanced-options": ""
     },
     "rule-form": {
       "annotations": {
@@ -818,14 +1617,7 @@
         "validation": "El periodo pendiente debe ser mayor o igual que el intervalo de evaluación."
       },
       "folder": {
-        "cancel": "",
-        "create": "",
-        "create-folder": "Crea una nueva carpeta para almacenar tu regla de alerta.",
-        "creating-new-folder": "Creando nueva carpeta",
-        "label": "",
-        "name": "",
-        "new-folder": "",
-        "new-folder-or": "o..."
+        "label": ""
       },
       "folder-and-labels": "Dispón tu regla de alerta con una carpeta y un conjunto de etiquetas.",
       "folders": {
@@ -880,6 +1672,12 @@
         "success": "Grupo de reglas actualizado correctamente"
       }
     },
+    "rule-health": {
+      "error": ""
+    },
+    "rule-inspector": {
+      "title-inspect-alert-rule": ""
+    },
     "rule-list": {
       "configure-datasource": "Configurar",
       "draft-new-rule": "",
@@ -910,9 +1708,20 @@
       "rulerrule-loading-error": "Error al cargar la regla",
       "unknown-rule-type": ""
     },
+    "rule-list-errors": {
+      "cloud-rulessource-errors-title-errors-loading-rules": ""
+    },
+    "rule-modify-export": {
+      "text-loading-the-rule": "",
+      "title-cannot-exist": "",
+      "title-cannot-load-modify-export": "",
+      "title-grafanamanaged-alert": "",
+      "title-unknown-error": ""
+    },
     "rule-state": {
       "creating": "Creando",
       "deleting": "Eliminando",
+      "na": "",
       "paused": "En pausa",
       "recording-rule": "Registrando regla"
     },
@@ -929,7 +1738,8 @@
       "prometheus-consistency-check": {
         "alert-message": "",
         "alert-title": "Actualización en curso"
-      }
+      },
+      "title-something-wrong-evaluating-alert": ""
     },
     "rules": {
       "add-rule": {
@@ -948,6 +1758,31 @@
         "success": "Regla actualizada correctamente"
       }
     },
+    "rules-filter": {
+      "clear-filters": "",
+      "dashboard": "",
+      "data-source-picker-inline-help-title-search-by-data-sources-help": "",
+      "filter-options": {
+        "aria-label-show-filters": ""
+      },
+      "health": "",
+      "placeholder-all-data-sources": "",
+      "plugin-rules": "",
+      "rule-type": "",
+      "rulesSearchInput-placeholder-search": "",
+      "search": "",
+      "search-by-data-sources": "",
+      "state": "",
+      "title-search-help": "",
+      "view-as": ""
+    },
+    "rules-group": {
+      "text-federated": "",
+      "text-provisioned": ""
+    },
+    "saved-searches": {
+      "text-default": ""
+    },
     "search": {
       "property": {
         "data-source": "",
@@ -961,13 +1796,134 @@
       },
       "save-query": "Guardar búsqueda actual"
     },
+    "search-field-input": {
+      "clear": "",
+      "filter-instances": "",
+      "instancesSearchInput-placeholder-filter-instances": ""
+    },
+    "search-query-help": {
+      "expression": "",
+      "filter-type": "",
+      "title-contact-point": "",
+      "title-dashboard-uid": "",
+      "title-datasources": "",
+      "title-folder-namespace": "",
+      "title-group": "",
+      "title-health": "",
+      "title-labels": "",
+      "title-rule": "",
+      "title-state": "",
+      "title-type": ""
+    },
+    "settings-content": {
+      "add-new-alertmanager": "",
+      "builtin-alertmanager": "",
+      "other-alertmanagers": "",
+      "title-alerting-settings": ""
+    },
+    "silence-details": {
+      "affected-alerts": "",
+      "comment": "",
+      "created-by": "",
+      "duration": "",
+      "schedule": ""
+    },
+    "silence-grafana-rule-drawer": {
+      "title-silence-alert-rule": ""
+    },
+    "silence-period": {
+      "label-silence-start-and-end": ""
+    },
+    "silenced-instances-preview": {
+      "no-firing-alert-instances-found": "",
+      "text-loading-affected-alert-rule-instances": "",
+      "title-preview-not-available": "",
+      "valid-matcher-affected-alerts": ""
+    },
     "silences": {
       "affected-instances": "Instancias de alerta afectadas",
       "only-firing-instances": "Solo se muestran las instancias de alerta en estado de activación.",
       "preview-affected-instances": "Previsualiza las instancias de alerta afectadas por este silencio."
     },
+    "silences-editor": {
+      "comment-placeholder-details-about-the-silence": "",
+      "label-comment": "",
+      "label-created-by": "",
+      "label-duration": "",
+      "placeholder-whos-creating-the-silence": "",
+      "save-silence": "",
+      "saving": ""
+    },
+    "silences-filter": {
+      "search-query-input-placeholder-search": ""
+    },
+    "silences-table": {
+      "text-loading-silences": "",
+      "title-error-loading-silences": "",
+      "title-the-selected-alertmanager-has-no-configuration": ""
+    },
+    "simple-condition-editor": {
+      "label-when": ""
+    },
     "simpleCondition": {
       "alertCondition": "Condición de alerta"
+    },
+    "smart-alert-type-detector": {
+      "data-sourcemanaged-alert-rules": "",
+      "grafanamanaged-alert-rules": "",
+      "rule-type": "",
+      "select-where-alert-managed": "",
+      "title-alert-rule-types": ""
+    },
+    "state-history": {
+      "filter-group": "",
+      "placeholder-search": ""
+    },
+    "string-array-input": {
+      "add": "",
+      "tooltip-delete": ""
+    },
+    "subform-array-field": {
+      "add": "",
+      "tooltip-delete": ""
+    },
+    "subform-field": {
+      "add": "",
+      "tooltip-delete": ""
+    },
+    "template-content-and-preview": {
+      "label-preview-with-the-default-payload": "",
+      "label-template-content": ""
+    },
+    "template-data-table": {
+      "name": "",
+      "notes": "",
+      "type": ""
+    },
+    "template-form": {
+      "aria-label-template-form": "",
+      "label-template-group": "",
+      "label-template-group-name": "",
+      "new-template-name-placeholder-give-your-template-group-a-name": "",
+      "title-error-saving-template": "",
+      "title-templating-cheat-sheet": ""
+    },
+    "template-preview": {
+      "aria-label-refresh-preview": "",
+      "label-preview": "",
+      "refresh": ""
+    },
+    "template-row": {
+      "tooltip-copy-template-group": "",
+      "tooltip-delete-template-group": "",
+      "tooltip-edit-template-group": "",
+      "tooltip-view-template": ""
+    },
+    "template-selector": {
+      "error-loading-templates": "",
+      "existing-templates-selector-aria-label-choose-notification-template": "",
+      "existing-templates-selector-placeholder-choose-notification-template": "",
+      "loading": ""
     },
     "templates": {
       "editor": {
@@ -982,14 +1938,91 @@
       "misconfigured-warning": "La configuración de esta plantilla es incorrecta.",
       "misconfigured-warning-details": "Las plantillas deben definirse en las secciones <1></1> y <4></4> de la configuración de Alertmanager."
     },
+    "templates-table": {
+      "actions": "",
+      "no-templates-defined": "",
+      "template-group": "",
+      "title-delete-template-group": ""
+    },
+    "test-contact-point-modal": {
+      "notification-message": "",
+      "send-test-notification": ""
+    },
     "threshold": {
       "to": "HASTA"
+    },
+    "threshold-expression-viewer": {
+      "input": "",
+      "stop-alerting-when": ""
+    },
+    "timeseries-row": {
+      "time-series-data": "",
+      "timestamp": "",
+      "value": ""
     },
     "to-gma": {
       "confirm-modal": {
         "body": "",
-        "summary": ""
+        "summary": "",
+        "title-warning": ""
       }
+    },
+    "unused-contact-point-badge": {
+      "aria-label-unused": "",
+      "text-unused": ""
+    },
+    "use-add-policy-modal": {
+      "modal-element": {
+        "title-add-notification-policy": ""
+      }
+    },
+    "use-columns": {
+      "title-edit": "",
+      "title-recreate": "",
+      "title-unsilence": ""
+    },
+    "use-create-dropdown-menu-actions": {
+      "label-delete": "",
+      "label-edit": "",
+      "label-export": ""
+    },
+    "use-delete-contact-point-modal": {
+      "modal-element": {
+        "delete-contact-point": "",
+        "deleting-contact-point-permanently-remove": "",
+        "title-delete-contact-point": ""
+      }
+    },
+    "use-delete-policy-modal": {
+      "modal-element": {
+        "title-delete-notification-policy": ""
+      }
+    },
+    "use-edit-configuration-drawer": {
+      "drawer": {
+        "label-json-model": "",
+        "label-versions": ""
+      }
+    },
+    "use-edit-policy-modal": {
+      "modal-element": {
+        "title-edit-notification-policy": ""
+      }
+    },
+    "use-state-history-modal": {
+      "state-history-modal": {
+        "title-state-history": ""
+      }
+    },
+    "viz-wrapper": {
+      "table": ""
+    },
+    "welcome-header": {
+      "description-configure-firing-alert-instances-routed-contact": "",
+      "description-configure-receives-notifications": "",
+      "title-alert-rules": "",
+      "title-contact-points": "",
+      "title-notification-policies": ""
     }
   },
   "annotations": {
@@ -1508,9 +2541,9 @@
       "group-panels": "",
       "new-row": "",
       "new-tab": "",
-      "paste-panel": "",
       "paste-row": "",
-      "paste-tab": ""
+      "paste-tab": "",
+      "un-group-panels": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -2607,11 +3640,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Abrir editor de JSON",
-      "angular-deprecation-description": "Las opciones de los paneles angulares solo se pueden editar con el editor JSON.",
-      "angular-deprecation-heading": ""
-    },
     "panel-queries": {
       "add-query-from-library": "Añadir consulta desde la biblioteca"
     },
@@ -4057,6 +5085,21 @@
         "shortcut": "Alt+seleccionar para volver a activar"
       }
     },
+    "logs-controls": {
+      "deduplication": "",
+      "disable-highlighting": "",
+      "display-level": "",
+      "display-level-all": "",
+      "enable-highlighting": "",
+      "hide-timestamps": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "scroll-bottom": "",
+      "scroll-top": "",
+      "show-timestamps": "",
+      "unwrap-lines": "",
+      "wrap-lines": ""
+    },
     "logs-navigation": {
       "newer-logs": "Registros más recientes",
       "older-logs": "Registros más antiguos",
@@ -4877,24 +5920,6 @@
     }
   },
   "plugins": {
-    "angular-deprecation-notice": {
-      "deprecation-notice-migration-advice": "",
-      "try-migration": ""
-    },
-    "angular-deprecation-plugin-notice": {
-      "deprecation-notice-migration-advice": "",
-      "title-angular-plugin": "",
-      "view-plugin-details": ""
-    },
-    "angular-migration-notice": {
-      "report-issue": "",
-      "revert-migration": ""
-    },
-    "app-config-ctrl-wrapper": {
-      "disable": "",
-      "enable": "",
-      "update": ""
-    },
     "app-root-page": {
       "access-denied": {
         "permission": "",
@@ -5181,10 +6206,9 @@
       "title-webhook-will-be-created": ""
     },
     "connect-repository-button": {
-      "connect-to-repository": "",
-      "max-repositories-exist": "",
-      "tooltip-max-repos_one": "",
-      "tooltip-max-repos_other": ""
+      "configure-file": "",
+      "configure-git-sync": "",
+      "repository-limit-info-alert": ""
     },
     "connect-step": {
       "description-choose-storage-resources": "",
@@ -5223,13 +6247,14 @@
       "no-jobs": ""
     },
     "enhanced-features": {
+      "description": "",
       "description-instant-updates": "",
       "description-visual-previews-dashboard-updates-directly-requests": "",
+      "header": "",
       "set-up-image-rendering": "",
-      "set-up-public-access": "",
+      "set-up-public-webhooks": "",
       "title-instant-updates-requests-webhooks": "",
-      "title-visual-previews-in-pull-requests": "",
-      "unlock-enhanced-functionality-for-git-hub": ""
+      "title-visual-previews-in-pull-requests": ""
     },
     "expanded-row": {
       "job-specification": "",
@@ -5240,13 +6265,10 @@
       "actions": {
         "set-up-required-feature-toggles": ""
       },
-      "automatically-provision-and-update-dashboards": "",
-      "learn-more": "",
       "manage-dashboards-provision-updates-automatically": "",
       "manage-your-dashboards-with-remote-provisioning": "",
       "migrate-existing-dashboards-storage-provisioning": "",
-      "store-dashboards-in-version-controlled-storage": "",
-      "visual-previews-in-pull-requests": ""
+      "store-dashboards-in-version-controlled-storage": ""
     },
     "file-history-page": {
       "back-to-repositories": "",
@@ -5299,8 +6321,8 @@
       "title-setting-connection-could-cause-temporary-outage": ""
     },
     "getting-started-page": {
-      "subtitle-provisioning-feature": "",
-      "text-remote-provisioning": ""
+      "header": "",
+      "subtitle-provisioning-feature": ""
     },
     "history-view": {
       "not-found": ""
@@ -5718,8 +6740,7 @@
       "expand-row": "Expandir la fila de la consulta",
       "hide-response": "Ocultar respuesta",
       "remove-query": "Eliminar consulta",
-      "show-response": "Mostrar respuesta",
-      "toggle-edit-mode": "Alternar el modo de edición de texto"
+      "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
