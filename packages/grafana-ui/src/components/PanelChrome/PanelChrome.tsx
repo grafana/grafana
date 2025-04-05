@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
@@ -25,7 +25,11 @@ import { TitleItem } from './TitleItem';
 /**
  * @internal
  */
-export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | HoverHeader);
+export type PanelChromeProps = (AutoSize | FixedDimensions) &
+  (Collapsible | HoverHeader) & {
+    compareWith?: string;
+    onCompareWithChange?: (value: string) => void;
+  };
 
 interface BaseProps {
   padding?: PanelPadding;
@@ -168,8 +172,6 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
-  // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
@@ -377,12 +379,16 @@ export function PanelChrome({
 
           {headerContent}
 
+          <div className={styles.rightAligned}>
+            {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+          </div>
+
           {menu && (
             <PanelMenu
               menu={menu}
               title={typeof title === 'string' ? title : undefined}
               placement="bottom-end"
-              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+              menuButtonClass={cx(styles.menuItem, dragClassCancel, showMenuAlways && styles.alwaysShow)}
               onOpenMenu={onOpenMenu}
             />
           )}
@@ -562,7 +568,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     menuItem: css({
       label: 'panel-menu',
       border: 'none',
-      background: theme.colors.secondary.main,
+      background: 'transparent',
+      padding: theme.spacing(0, padding),
       '&:hover': {
         background: theme.colors.secondary.shade,
       },
@@ -597,6 +604,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       padding: 0,
       maxWidth: '100%',
+    }),
+    alwaysShow: css({
+      opacity: '1',
+      visibility: 'visible',
     }),
   };
 };
