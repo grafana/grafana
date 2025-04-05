@@ -80,7 +80,7 @@ export function createSpanLinkFactory({
         ...scopedVarsFromSpan(span),
         ...scopedVarsFromTags(span, traceToProfilesOptions),
       };
-      // We should be here only if there are some links in the dataframe
+      // We should be here only if there are some links in the data frame
       const fields = dataFrame.fields.filter((f) => Boolean(f.config.links?.length))!;
       try {
         let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
@@ -113,6 +113,7 @@ export function createSpanLinkFactory({
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
             target: link.target,
+            resourceAttributes: link.resourceAttributes,
           };
         });
 

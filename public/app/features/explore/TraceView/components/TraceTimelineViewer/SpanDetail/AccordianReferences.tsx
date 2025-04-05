@@ -175,7 +175,6 @@ export function References(props: ReferenceItemProps) {
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
                 label={'attributes'}
-                linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>

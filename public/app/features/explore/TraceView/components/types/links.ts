@@ -22,6 +22,7 @@ export type SpanLinkDef = {
   field: Field;
   type: SpanLinkType;
   target?: LinkTarget;
+  resourceAttributes?: string[];
 };
 
 export type SpanLinkFunc = (span: TraceSpan) => SpanLinkDef[] | undefined;
