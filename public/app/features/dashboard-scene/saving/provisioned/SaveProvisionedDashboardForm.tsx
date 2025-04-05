@@ -43,7 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
   isGitHub: boolean;
-  repositoryView?: RepositoryView;
+  repository?: RepositoryView;
   loadedFromRef?: string;
 }
 
@@ -54,7 +54,7 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repositoryView,
+  repository,
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
@@ -154,12 +154,12 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const workflowOptions = getWorkflowOptions(repositoryView, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repositoryView?.workflows?.length && (
+        {!repository?.workflows?.length && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
@@ -312,9 +312,9 @@ async function validateTitle(title: string, formValues: FormData) {
     return error instanceof Error
       ? error.message
       : t(
-          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
-          'Dashboard title validation failed.'
-        );
+        'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+        'Dashboard title validation failed.'
+      );
   }
 }
 
