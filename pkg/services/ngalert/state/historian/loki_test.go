@@ -366,7 +366,7 @@ func TestMerge(t *testing.T) {
 								"extra":     "label",
 							},
 							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 						{
@@ -377,7 +377,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 					},
@@ -407,6 +407,10 @@ func TestMerge(t *testing.T) {
 						FolderUIDLabel:       "test-folder-1",
 					}),
 				}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+				}),
 			),
 		},
 		{
@@ -427,6 +431,7 @@ func TestMerge(t *testing.T) {
 				data.NewField(dfTime, data.Labels{}, []time.Time{}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{}),
 			),
 		},
 		{
@@ -442,8 +447,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`, map[string]string{"annotation-key": "annotation-value"}},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 						{
@@ -454,7 +459,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 					},
@@ -491,6 +496,11 @@ func TestMerge(t *testing.T) {
 						FolderUIDLabel:       "test-folder-1",
 					}),
 				}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+				}),
 			),
 		},
 		{
@@ -507,8 +517,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`, map[string]string{"annotation-key": "annotation-value"}},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 						{
@@ -519,7 +529,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-2",
 							},
 							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 					},
@@ -548,6 +558,10 @@ func TestMerge(t *testing.T) {
 						FolderUIDLabel:       "test-folder-1",
 					}),
 				}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
+				}),
 			),
 		},
 		{
@@ -561,8 +575,8 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`, map[string]string{"annotation-key": "annotation-value"}},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 					},
@@ -572,6 +586,7 @@ func TestMerge(t *testing.T) {
 				data.NewField(dfTime, data.Labels{}, []time.Time{}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{}),
 			),
 		},
 		{
@@ -585,7 +600,7 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`, map[string]string{"annotation-key": "annotation-value"}},
 							},
 						},
 					},
@@ -602,6 +617,9 @@ func TestMerge(t *testing.T) {
 					toJson(map[string]string{
 						GroupLabel: "test-group-1",
 					}),
+				}),
+				data.NewField("metadata", data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{"annotation-key": "annotation-value"}),
 				}),
 			),
 		},
