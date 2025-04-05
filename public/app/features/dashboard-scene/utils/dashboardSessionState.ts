@@ -1,6 +1,6 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { UrlSyncManager } from '@grafana/scenes';
+import { GroupByVariable, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -26,8 +26,10 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
         continue;
       }
 
+      const currentVariable = dashboard.state.$variables?.getByName(key.replace('var-', ''));
       // remove params for variables that are not present on the target dashboard
-      if (!dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
+      // or if variable is of type GroupBy
+      if (!currentVariable || currentVariable instanceof GroupByVariable) {
         currentQueryParams.delete(key);
       }
     }
