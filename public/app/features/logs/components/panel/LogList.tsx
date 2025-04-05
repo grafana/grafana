@@ -15,7 +15,9 @@ import {
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
+  LogsMetaItem,
   LogsSortOrder,
+  store,
   TimeRange,
 } from '@grafana/data';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
@@ -53,6 +55,7 @@ interface Props {
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
@@ -94,6 +97,7 @@ export const LogList = ({
   loadMore,
   logOptionsStorageKey,
   logs,
+  logsMeta,
   logSupportsContext,
   onLogOptionsChange,
   onLogLineHover,
@@ -106,7 +110,7 @@ export const LogList = ({
   showControls,
   showTime,
   sortOrder,
-  syntaxHighlighting,
+  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
   timeZone,
   wrapLogMessage,
@@ -118,6 +122,8 @@ export const LogList = ({
       displayedFields={displayedFields}
       filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
+      logs={logs}
+      logsMeta={logsMeta}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
       onLogOptionsChange={onLogOptionsChange}

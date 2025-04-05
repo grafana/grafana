@@ -1823,6 +1823,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:         "logsPanelControls",
+			Description:  "Enables a control component for the logs panel in Explore",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "false",
+		},
 	}
 )
 

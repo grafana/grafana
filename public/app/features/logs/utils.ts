@@ -1,5 +1,7 @@
+import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
 import { MouseEvent } from 'react';
+import { lastValueFrom, map, Observable } from 'rxjs';
 
 import {
   LogLevel,
@@ -20,8 +22,18 @@ import {
   locationUtil,
   urlUtil,
   dateTime,
+  dateTimeFormat,
+  DataTransformerConfig,
+  CustomTransformOperator,
+  transformDataFrame,
+  getTimeField,
+  Field,
+  LogsMetaItem,
 } from '@grafana/data';
 import { getConfig } from 'app/core/config';
+
+import { getLogsExtractFields } from '../explore/Logs/LogsTable';
+import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
@@ -428,3 +440,69 @@ export function enablePopoverMenu() {
 export function isPopoverMenuDisabled() {
   return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
 }
+
+export enum DownloadFormat {
+  Text = 'text',
+  Json = 'json',
+  CSV = 'csv',
+}
+
+export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[], meta?: LogsMetaItem[]) => {
+  switch (format) {
+    case DownloadFormat.Text:
+      downloadLogsModelAsTxt({ meta, rows: logRows });
+      break;
+    case DownloadFormat.Json:
+      const jsonLogs = logRowsToReadableJson(logRows);
+      const blob = new Blob([JSON.stringify(jsonLogs)], {
+        type: 'application/json;charset=utf-8',
+      });
+      const fileName = `Logs-${dateTimeFormat(new Date())}.json`;
+      saveAs(blob, fileName);
+      break;
+    case DownloadFormat.CSV:
+      const dataFrameMap = new Map<string, DataFrame>();
+      logRows.forEach((row) => {
+        if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
+          dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+        }
+      });
+      dataFrameMap.forEach(async (dataFrame) => {
+        const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
+        transforms.push(
+          {
+            id: 'organize',
+            options: {
+              excludeByName: {
+                ['labels']: true,
+                ['labelTypes']: true,
+              },
+            },
+          },
+          addISODateTransformation
+        );
+        const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
+      });
+  }
+};
+
+const addISODateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
+  return source.pipe(
+    map((data: DataFrame[]) => {
+      return data.map((frame: DataFrame) => {
+        const timeField = getTimeField(frame);
+        const field: Field = {
+          name: 'Date',
+          values: timeField.timeField ? timeField.timeField?.values.map((v) => dateTime(v).toISOString()) : [],
+          type: FieldType.other,
+          config: {},
+        };
+        return {
+          ...frame,
+          fields: [field, ...frame.fields],
+        };
+      });
+    })
+  );
+};

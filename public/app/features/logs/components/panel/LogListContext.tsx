@@ -9,12 +9,24 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogLevel, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare, store } from '@grafana/data';
+import {
+  CoreApp,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  shallowCompare,
+  store,
+} from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
+
+import { DownloadFormat, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
-export interface LogListContextData extends Omit<Props, 'showControls'> {
+export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
+  downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
@@ -31,6 +43,7 @@ export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
+  downloadLogs: () => {},
   filterLevels: [],
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
@@ -80,6 +93,8 @@ export interface Props {
   displayedFields: string[];
   filterLevels?: LogLevel[];
   getRowContextQuery?: GetRowContextQueryFn;
+  logs: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
@@ -103,6 +118,8 @@ export const LogListContextProvider = ({
   dedupStrategy,
   displayedFields,
   getRowContextQuery,
+  logs,
+  logsMeta,
   logOptionsStorageKey,
   filterLevels,
   logSupportsContext,
@@ -117,7 +134,7 @@ export const LogListContextProvider = ({
   showControls,
   showTime,
   sortOrder,
-  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
+  syntaxHighlighting,
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -252,12 +269,24 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const downloadLogs = useCallback(
+    (format: DownloadFormat) => {
+      const filteredLogs =
+        logListState.filterLevels.length === 0
+          ? logs
+          : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
+      download(format, filteredLogs, logsMeta);
+    },
+    [logListState.filterLevels, logs, logsMeta]
+  );
+
   return (
     <LogListContext.Provider
       value={{
         app,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
+        downloadLogs,
         filterLevels: logListState.filterLevels,
         getRowContextQuery,
         logSupportsContext,
@@ -287,3 +316,16 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export function isLogsSortOrder(value: unknown): value is LogsSortOrder {
+  return value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending;
+}
+
+export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
+  return (
+    value === LogsDedupStrategy.exact ||
+    value === LogsDedupStrategy.none ||
+    value === LogsDedupStrategy.numbers ||
+    value === LogsDedupStrategy.signature
+  );
+}
