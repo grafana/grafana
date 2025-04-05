@@ -21,7 +21,6 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFile        StorageType = "file"
 	StorageTypeEtcd        StorageType = "etcd"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
@@ -80,11 +79,11 @@ func (o *StorageOptions) Validate() []error {
 	// nolint:staticcheck
 	case StorageTypeLegacy:
 		// no-op
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	case StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
 		// nolint:staticcheck
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s", StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {
