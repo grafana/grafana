@@ -22,7 +22,7 @@ jobs:
           go-version-file: ./go.mod
       - run: make gen-go
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v1.64.2
           args: |
