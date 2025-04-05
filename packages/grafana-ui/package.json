@@ -129,7 +129,7 @@
     "tslib": "2.8.1",
     "uplot": "1.6.32",
     "uuid": "11.0.5",
-    "uwrap": "leeoniya/uWrap#bf18faaea5ef39bfc1dbdc6ca49be491d3bf5ead"
+    "uwrap": "0.1.1"
   },
   "devDependencies": {
     "@babel/core": "7.26.9",
