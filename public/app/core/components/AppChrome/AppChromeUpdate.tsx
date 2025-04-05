@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useEffect } from 'react';
 import * as React from 'react';
 
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -18,11 +18,15 @@ export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(
     // This prevents flickering actions when going from one dashboard to another for example
     useLayoutEffect(() => {
       chrome.update({ actions, breadcrumbActions });
-
-      return () => {
-        chrome.update({ actions: null, breadcrumbActions: null });
-      };
     });
+
+    // Unmount cleanup
+    useEffect(() => {
+      return () => {
+        console.log('Clean up of app chrome actions');
+        chrome.update({ actions: undefined, breadcrumbActions: undefined });
+      };
+    }, [chrome]);
 
     return null;
   }

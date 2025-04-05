@@ -19,6 +19,7 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
@@ -94,17 +95,18 @@ export const SingleTopBar = memo(function SingleTopBar({
           <ToolbarButtonRow alignment="right">
             {unifiedHistoryEnabled && <HistoryContainer />}
             <QuickAdd />
+            <NavToolbarSeparator />
             {enrichedHelpNode && (
               <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
                 <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
               </Dropdown>
             )}
-            {/* <ToolbarButton
+            <ToolbarButton
               icon="monitor"
               className={styles.kioskToggle}
               onClick={onToggleKioskMode}
               tooltip="Enable kiosk mode"
-            /> */}
+            />
             {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
             {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
             {!showToolbarLevel && actions}

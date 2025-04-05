@@ -4,18 +4,7 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Icon,
-  Menu,
-  Stack,
-  ToolbarButton,
-  ToolbarButtonRow,
-  useStyles2,
-} from '@grafana/ui';
+import { Badge, Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import grafanaConfig from 'app/core/config';
@@ -48,8 +37,6 @@ interface Props {
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
   const key = `${dashboard.state.key}-toolbar-actions`;
-
-  //    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -149,23 +136,6 @@ export function ToolbarActions({ dashboard }: Props) {
       },
     });
   }
-
-  const isDevEnv = config.buildInfo.env === 'development';
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={t('dashboard.toolbar.switch-old-dashboard', 'Switch to old dashboard page')}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -616,12 +586,7 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={'flex-end'}>
-      <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return rightActionsElements;
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

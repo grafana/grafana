@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { useMediaQuery, useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
@@ -31,7 +31,6 @@ export function AppChrome({ children }: Props) {
   const theme = useTheme2();
   const scopes = useScopes();
 
-  const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -40,18 +39,20 @@ export function AppChrome({ children }: Props) {
 
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
+  const isLargeScreen = useMediaQuery(`(min-width: ${theme.breakpoints.values.xl}px)`);
 
-  useMediaQueryChange({
-    breakpoint: dockedMenuBreakpoint,
-    onChange: (e) => {
-      if (dockedMenuLocalStorageState) {
-        chrome.setMegaMenuDocked(e.matches, false);
-        chrome.setMegaMenuOpen(
-          e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.megaMenuOpen) : false
-        );
-      }
-    },
-  });
+  useEffect(() => {
+    if (dockedMenuLocalStorageState && !isLargeScreen) {
+      console.log('updating docked menu due to screen size');
+      chrome.setMegaMenuDocked(false, false);
+      chrome.setMegaMenuOpen(false);
+    } else if (dockedMenuLocalStorageState && isLargeScreen) {
+      console.log('updating docked menu due to screen size');
+      chrome.setMegaMenuDocked(true, false);
+      chrome.setMegaMenuOpen(true);
+    }
+  }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
+
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
   const contentClass = cx({

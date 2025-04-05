@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { config, useScopes } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
@@ -39,7 +39,10 @@ export function useChromeHeaderHeight() {
 
   // if the extension sidebar is open, the inner pane will be scrollable, thus we need to set the header height to 0
   const { isOpen: isExtensionSidebarOpen } = useExtensionSidebarContext();
-  const mediaQuery = window.matchMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
+  const mediaQuery = useMemo(
+    () => window.matchMedia(`(min-width: ${theme.breakpoints.values.xl}px)`),
+    [theme.breakpoints.values.xl]
+  );
   const [isSmallScreen, setIsSmallScreen] = useState(!mediaQuery.matches);
 
   const [headerHeight, setHeaderHeight] = useState(
@@ -60,11 +63,11 @@ export function useChromeHeaderHeight() {
   }, [chrome, headerHeight, isExtensionSidebarOpen, isSmallScreen]);
 
   // Subscribe to media query changes and update isSmallScreen state
-  useEffect(() => {
-    const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(!e.matches);
-    mediaQuery.addEventListener('change', onChange);
-    return () => mediaQuery.removeEventListener('change', onChange);
-  }, [mediaQuery]);
+  // useEffect(() => {
+  //   const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(!e.matches);
+  //   mediaQuery.addEventListener('change', onChange);
+  //   return () => mediaQuery.removeEventListener('change', onChange);
+  // }, [mediaQuery]);
 
   return headerHeight;
 }

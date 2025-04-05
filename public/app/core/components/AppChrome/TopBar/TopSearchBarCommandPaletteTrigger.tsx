@@ -21,12 +21,12 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
 
   const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
 
-  useMediaQueryChange({
-    breakpoint,
-    onChange: (e) => {
-      setIsSmallScreen(!e.matches);
-    },
-  });
+  // useMediaQueryChange({
+  //   breakpoint,
+  //   onChange: (e) => {
+  //     setIsSmallScreen(!e.matches);
+  //   },
+  // });
 
   const onOpenSearch = () => {
     kbar.toggle();
