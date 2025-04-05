@@ -3,6 +3,7 @@ import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
+import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -40,7 +41,6 @@ import {
   Comparator,
   TableFooterCalc,
 } from './types';
-import { uWrap } from './uWrap';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export function getCellHeight(
@@ -108,17 +108,12 @@ export function getCellHeightCalculator(
   defaultRowHeight: number,
   padding = 0
 ) {
-  let uw = uWrap(ctx);
+  const { count } = varPreLine(ctx);
 
   return (text: string, cellWidth: number) => {
     const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
     const TOTAL_PADDING = padding * 2;
-
-    let numLines = 0;
-    uw.each(text, effectiveCellWidth, () => {
-      numLines++;
-    });
-
+    const numLines = count(text, effectiveCellWidth);
     const totalHeight = numLines * lineHeight + TOTAL_PADDING;
     return Math.max(totalHeight, defaultRowHeight);
   };

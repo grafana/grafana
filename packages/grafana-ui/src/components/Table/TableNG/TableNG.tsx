@@ -210,7 +210,7 @@ export function TableNG(props: TableNGProps) {
   const textWraps = useMemo(
     () =>
       props.data.fields.reduce(
-        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.wrapText ?? false }),
+        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
         {} as { [key: string]: boolean }
       ),
     [props.data.fields]

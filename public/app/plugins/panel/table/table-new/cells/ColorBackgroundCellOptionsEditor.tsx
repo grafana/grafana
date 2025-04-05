@@ -8,7 +8,6 @@ const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
-
 export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
@@ -18,10 +17,15 @@ export const ColorBackgroundCellOptionsEditor = ({
     cellOptions.mode = v;
     onChange(cellOptions);
   };
-
   // Handle row coloring changes
   const onColorRowChange = () => {
     cellOptions.applyToRow = !cellOptions.applyToRow;
+    onChange(cellOptions);
+  };
+
+  // Handle row coloring changes
+  const onWrapTextChange = () => {
+    cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
   };
 
@@ -39,6 +43,12 @@ export const ColorBackgroundCellOptionsEditor = ({
         description="If selected the entire row will be colored as this cell would be."
       >
         <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
+      </Field>
+      <Field
+        label="Wrap text"
+        description="If selected text will be wrapped to the width of text in the configured column"
+      >
+        <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
       </Field>
     </>
   );
