@@ -72,6 +72,7 @@ export class DefaultGridLayoutManager
     id: 'GridLayout',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     isGridLayout: true,
+    icon: 'window-grid',
   };
 
   public serialize(): DashboardV2Spec['layout'] {

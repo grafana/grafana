@@ -125,6 +125,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     fullWidth: css({
       display: 'flex',
+      flexGrow: 1,
     }),
     icon: css({
       marginRight: '6px',

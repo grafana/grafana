@@ -56,6 +56,7 @@ export class AutoGridLayoutManager
     id: 'AutoGridLayout',
     createFromLayout: AutoGridLayoutManager.createFromLayout,
     isGridLayout: true,
+    icon: 'apps',
   };
 
   public serialize(): DashboardV2Spec['layout'] {

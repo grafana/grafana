@@ -64,7 +64,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, layoutCategory, repeatCategory];
+  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
