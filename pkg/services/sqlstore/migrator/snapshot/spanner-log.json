@@ -543,7 +543,7 @@
   "prevent seeding OnCall access",
   "managed folder permissions alert actions repeated fixed migration",
   "managed folder permissions library panel actions migration",
-  "migrate external alertmanagers to datsourcse",
+  "migrate external alertmanagers to datasource",
   "create folder table",
   "Add index for parent_uid",
   "Add unique index for folder.uid and folder.org_id",

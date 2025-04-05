@@ -218,7 +218,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 	instance, ok := i.(types.DatasourceInfo)
 	if !ok {
-		return types.DatasourceInfo{}, fmt.Errorf("failed to cast datsource info")
+		return types.DatasourceInfo{}, fmt.Errorf("failed to cast datasource info")
 	}
 
 	return instance, nil
