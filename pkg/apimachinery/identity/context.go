@@ -118,6 +118,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"users:read",     // accesscontrol.ActionUsersRead,
 	"org.users:read", // accesscontrol.ActionOrgUsersRead,
 	"teams:read",     // accesscontrol.ActionTeamsRead,
+	"query.grafana.app",
 )
 
 var serviceIdentityTokenPermissions = getTokenPermissions(

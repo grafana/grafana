@@ -67,6 +67,15 @@ func newMapper() mapper {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
 		},
+		"query.grafana.app": {
+			"query": translation{
+				resource:  "query",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+			},
+		},
 	}
 }
 
