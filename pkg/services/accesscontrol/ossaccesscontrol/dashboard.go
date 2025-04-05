@@ -163,8 +163,8 @@ func ProvideDashboardPermissions(
 			"Edit":  getDashboardEditActions(features),
 			"Admin": getDashboardAdminActions(features),
 		},
-		ReaderRoleName: "Dashboard permission reader",
-		WriterRoleName: "Dashboard permission writer",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
 		RoleGroup:      "Dashboards",
 	}
 

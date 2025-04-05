@@ -47,6 +47,7 @@ export const RolePickerSubMenu = ({
           {options.map((option, i) => (
             <RoleMenuOption
               data={option}
+              useFilteredDisplayName={false}
               key={i}
               isSelected={
                 !!(
