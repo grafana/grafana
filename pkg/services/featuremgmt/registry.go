@@ -1823,6 +1823,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:         "unifiedNavbars",
+			Description:  "Enables unified navbars",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+		},
 	}
 )
 

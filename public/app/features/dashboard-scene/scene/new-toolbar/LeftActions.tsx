@@ -1,7 +1,3 @@
-import { css } from '@emotion/css';
-
-import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
-
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { DashboardScene } from '../DashboardScene';
 
@@ -12,7 +8,6 @@ import { StarButton } from './actions/StarButton';
 import { getDynamicActions, renderActionElements, useIsManagedRepository } from './utils';
 
 export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
 
   const hasEditView = Boolean(editview);
@@ -56,7 +51,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         condition: isSnapshot && !isEditingDashboard,
       },
       // This adds the presence indicators in enterprise
-      ...getDynamicActions(dynamicDashNavActions.right, 'right-dynamic', !isEditingPanel && !isEditingDashboard),
+      ...getDynamicActions(dynamicDashNavActions.right, 'actions', !isEditingPanel && !isEditingDashboard),
     ],
     dashboard
   );
@@ -65,15 +60,5 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
     return null;
   }
 
-  return (
-    <ToolbarButtonRow alignment="left" className={styles.container}>
-      {elements}
-    </ToolbarButtonRow>
-  );
+  return elements;
 };
-
-const getStyles = () => ({
-  container: css({
-    flex: 1,
-  }),
-});

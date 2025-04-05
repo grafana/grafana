@@ -7,6 +7,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -53,19 +54,22 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public renderActions(): ReactNode {
     return (
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => this.dashboard.onOpenSettings()}
-        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-      >
-        <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
-          <span>
-            <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-          </span>
-          <Icon name="sliders-v-alt" />
-        </Stack>
-      </Button>
+      <>
+        <EditSchemaV2Button dashboard={this.dashboard} />
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => this.dashboard.onOpenSettings()}
+          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+        >
+          <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+            <span>
+              <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+            </span>
+            <Icon name="sliders-v-alt" />
+          </Stack>
+        </Button>
+      </>
     );
   }
 }

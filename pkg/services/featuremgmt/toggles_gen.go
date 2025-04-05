@@ -966,4 +966,8 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
 )
