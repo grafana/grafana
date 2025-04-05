@@ -17,6 +17,7 @@ const loadingTeam = {
   accessControl: { isEditor: false },
   orgId: 0,
   updated: '',
+  isProvisioned: false,
 };
 
 export function buildNavModel(team: Team): NavModelItem {

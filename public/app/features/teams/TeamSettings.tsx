@@ -54,7 +54,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
           </Field>
           <Field
             label={t('teams.team-settings.label-name', 'Name')}
-            disabled={!canWriteTeamSettings}
+            disabled={!canWriteTeamSettings || !!team.isProvisioned}
             required
             invalid={!!errors.name}
             error="Name is required"

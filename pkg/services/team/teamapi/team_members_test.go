@@ -171,7 +171,10 @@ func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint(t *testing.T) {
 	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
+		hs.teamService = &teamtest.FakeService{
+			ExpectedIsMember: true,
+			ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001"},
+		}
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
 	})
 
