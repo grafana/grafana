@@ -116,6 +116,27 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "resource_folder",
+		Columns: []*migrator.Column{
+			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, Nullable: false, IsPrimaryKey: true},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "tree", Type: migrator.DB_Text, Nullable: false},     // JSON []{uid, title}
+			{Name: "depth", Type: migrator.DB_Int, Nullable: false},     // starts at 1
+			{Name: "lft", Type: migrator.DB_Int, Nullable: false},       // MPTT
+			{Name: "rgt", Type: migrator.DB_Int, Nullable: false},       // MPTT
+			{Name: "detached", Type: migrator.DB_Bool, Nullable: false}, // the parent folder was not found
+		},
+		Indices: []*migrator.Index{
+			{
+				Cols: []string{"namespace", "name"},
+				Type: migrator.IndexType,
+				Name: "IDX_resource_folder_namespace_name",
+			},
+		},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
