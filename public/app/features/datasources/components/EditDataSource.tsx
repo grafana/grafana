@@ -1,5 +1,4 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
 import { useMemo } from 'react';
 import * as React from 'react';
 
@@ -14,6 +13,7 @@ import {
 import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { getReadOnlyProxy } from 'app/features/plugins/extensions/utils';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
@@ -198,8 +198,8 @@ export function EditDataSourceView({
         return (
           <div key={Component.meta.id}>
             <Component
-              context={{
-                dataSource: cloneDeep(dataSource),
+              context={getReadOnlyProxy({
+                dataSource: dataSource,
                 dataSourceMeta: dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>
@@ -212,7 +212,7 @@ export function EditDataSourceView({
                     ...dataSource,
                     secureJsonData: { ...dataSource.secureJsonData, ...secureJsonData },
                   }),
-              }}
+              })}
             />
           </div>
         );
