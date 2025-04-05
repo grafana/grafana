@@ -14,19 +14,20 @@ export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(
   ({ actions, breadcrumbActions }: AppChromeUpdateProps) => {
     const { chrome } = useGrafana();
 
-    // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
-    // This prevents flickering actions when going from one dashboard to another for example
-    useLayoutEffect(() => {
-      chrome.update({ actions, breadcrumbActions });
-    });
-
     // Unmount cleanup
-    useEffect(() => {
+    useLayoutEffect(() => {
       return () => {
         console.log('Clean up of app chrome actions');
         chrome.update({ actions: undefined, breadcrumbActions: undefined });
       };
     }, [chrome]);
+
+    // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+    // This prevents flickering actions when going from one dashboard to another for example
+    useLayoutEffect(() => {
+      console.log('Update app chrome actions');
+      chrome.update({ actions, breadcrumbActions });
+    });
 
     return null;
   }

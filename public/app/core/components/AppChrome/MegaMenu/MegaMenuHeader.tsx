@@ -79,6 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     padding: theme.spacing(0, 1, 0, 0.75),
     height: getChromeHeaderLevelHeight(),
+    flexShrink: 0,
   }),
   img: css({
     alignSelf: 'center',
