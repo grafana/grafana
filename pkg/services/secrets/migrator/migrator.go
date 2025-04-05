@@ -166,8 +166,8 @@ type alertingSecret struct{}
 
 type ssoSettingsSecret struct{}
 
-func nowInUTC() string {
-	return time.Now().UTC().Format("2006-01-02 15:04:05")
+func nowInUTC() time.Time {
+	return time.Now().UTC()
 }
 
 var logger = log.New("secrets.migrations")

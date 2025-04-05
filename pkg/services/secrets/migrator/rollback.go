@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -180,7 +181,7 @@ func (s jsonSecret) Rollback(
 
 			toUpdate := struct {
 				SecureJsonData map[string][]byte
-				Updated        string
+				Updated        time.Time
 			}{Updated: nowInUTC()}
 
 			toUpdate.SecureJsonData, err = encryptionSrv.EncryptJsonData(ctx, decrypted, secretKey)
