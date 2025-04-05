@@ -31,8 +31,8 @@ require (
 	github.com/apache/arrow-go/v18 v18.2.0 // @grafana/plugins-platform-backend
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.6 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2 v1.36.1 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.43.9 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2 v1.36.3 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.44.1 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.45.7 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.200.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.15.13 // @grafana/aws-datasources
@@ -285,8 +285,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.57 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.27 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.10 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.31 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.2 // indirect
