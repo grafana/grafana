@@ -50,6 +50,8 @@ const (
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
+	schedulerDefaultInitialRetryDelay       = 1 * time.Second
+	schedulerDefaultMaxRetryDelay           = 1 * time.Second
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
@@ -93,6 +95,8 @@ type UnifiedAlertingSettings struct {
 	HARedisTLSConfig                dstls.ClientConfig
 	InitializationTimeout           time.Duration
 	MaxAttempts                     int64
+	InitialRetryDelay               time.Duration
+	MaxRetryDelay                   time.Duration
 	MinInterval                     time.Duration
 	EvaluationTimeout               time.Duration
 	EvaluationResultLimit           int
@@ -329,6 +333,20 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
 	uaCfg.MaxAttempts = ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
+
+	uaInitialRetryDelay, err := gtime.ParseDuration(valueAsString(ua, "initial_retry_delay", schedulerDefaultInitialRetryDelay.String()))
+	if err != nil {
+		cfg.Logger.Warn("failed to parse setting 'initial_retry_delay' as duration, falling back to the default value", "error", err, "default", schedulerDefaultInitialRetryDelay)
+		uaInitialRetryDelay = schedulerDefaultInitialRetryDelay
+	}
+	uaCfg.InitialRetryDelay = uaInitialRetryDelay
+
+	uaMaxRetryDelay, err := gtime.ParseDuration(valueAsString(ua, "max_retry_delay", schedulerDefaultMaxRetryDelay.String()))
+	if err != nil {
+		cfg.Logger.Warn("failed to parse setting 'max_retry_delay' as duration, falling back to the default value", "error", err, "default", schedulerDefaultMaxRetryDelay)
+		uaMaxRetryDelay = schedulerDefaultMaxRetryDelay
+	}
+	uaCfg.MaxRetryDelay = uaMaxRetryDelay
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 

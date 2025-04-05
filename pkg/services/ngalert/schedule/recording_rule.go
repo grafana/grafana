@@ -40,7 +40,9 @@ type recordingRule struct {
 	evaluationTimestamp *atomic.Time
 	evaluationDuration  *atomic.Duration
 
-	maxAttempts int64
+	maxAttempts       int64
+	initialRetryDelay time.Duration
+	maxRetryDelay     time.Duration
 
 	clock       clock.Clock
 	evalFactory eval.EvaluatorFactory
@@ -56,7 +58,22 @@ type recordingRule struct {
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKeyWithGroup, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
+func newRecordingRule(
+	parent context.Context,
+	key ngmodels.AlertRuleKeyWithGroup,
+	maxAttempts int64,
+	initialRetryDelay time.Duration,
+	maxRetryDelay time.Duration,
+	clock clock.Clock,
+	evalFactory eval.EvaluatorFactory,
+	cfg setting.RecordingRuleSettings,
+	logger log.Logger,
+	metrics *metrics.Scheduler,
+	tracer tracing.Tracer,
+	writer RecordingWriter,
+	evalAppliedHook evalAppliedFunc,
+	stopAppliedHook stopAppliedFunc,
+) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &recordingRule{
 		key:                 key,
@@ -71,6 +88,8 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKeyWithGroup
 		evalFactory:         evalFactory,
 		cfg:                 cfg,
 		maxAttempts:         maxAttempts,
+		initialRetryDelay:   initialRetryDelay,
+		maxRetryDelay:       maxRetryDelay,
 		evalAppliedHook:     evalAppliedHook,
 		stopAppliedHook:     stopAppliedHook,
 		logger:              logger.FromContext(ctx),
@@ -190,8 +209,18 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	))
 	defer span.End()
 
+	maxElapsedTime := time.Duration(0)
+	retryer := newExponentialBackoffRetryer(
+		r.maxAttempts-1, // first attempt is not a retry
+		r.initialRetryDelay,
+		r.maxRetryDelay,
+		maxElapsedTime,
+		r.clock,
+	)
+	attempt := 1
+
 	var latestError error
-	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
+	for {
 		logger := logger.New("attempt", attempt)
 		if ctx.Err() != nil {
 			span.SetStatus(codes.Error, "rule evaluation cancelled")
@@ -213,14 +242,20 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			break
 		}
 
-		if attempt < r.maxAttempts {
-			select {
-			case <-ctx.Done():
-				logger.Error("Context has been cancelled while backing off", "attempt", attempt)
-				return
-			case <-time.After(retryDelay):
-				continue
-			}
+		retryIn := retryer.NextAttemptIn()
+		if retryIn == retryStop {
+			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
+			break
+		}
+
+		attempt++
+
+		select {
+		case <-ctx.Done():
+			logger.Error("Context has been cancelled while backing off", "attempt", attempt)
+			return
+		case <-r.clock.After(retryIn):
+			continue
 		}
 	}
 
@@ -230,9 +265,6 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		span.RecordError(latestError)
 		r.lastError.Store(latestError)
 		r.health.Store("error")
-		if r.maxAttempts > 0 {
-			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
-		}
 		return
 	}
 	logger.Debug("Recording rule evaluation succeeded")
