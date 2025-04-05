@@ -6,7 +6,6 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { AppChromeState } from '../AppChromeService';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 /**
  * Returns the current header levels given current app chrome state, scopes and screen size.

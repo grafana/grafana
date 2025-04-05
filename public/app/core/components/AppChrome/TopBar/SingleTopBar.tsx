@@ -22,7 +22,6 @@ import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';

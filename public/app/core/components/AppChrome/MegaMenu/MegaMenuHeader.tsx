@@ -8,7 +8,6 @@ import { t } from 'app/core/internationalization';
 import { Branding } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 export interface Props {
   handleMegaMenu: () => void;
