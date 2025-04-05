@@ -5,6 +5,12 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
     return true;
   }
 
+  if (idToMatch === 'prometheus') {
+    if (pluginMeta.id === 'grafana-amazonprometheus-datasource') {
+      return true;
+    }
+  }
+
   if (pluginMeta.aliasIDs) {
     return pluginMeta.aliasIDs.includes(idToMatch);
   }
