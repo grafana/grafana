@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Alert history",
+  "id": "alertStateHistory",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "Shows transition history of alert states",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/history.svg",
+      "large": "img/history.svg"
+    }
+  }
+}
