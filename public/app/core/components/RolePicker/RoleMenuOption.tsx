@@ -5,6 +5,8 @@ import { Checkbox, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
 import { Role } from 'app/types';
 
+import { t } from '../../internationalization';
+
 import { getStyles } from './styles';
 
 interface RoleMenuOptionProps {
@@ -49,7 +51,12 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
     return (
       // TODO: fix keyboard a11y
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-      <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChangeInternal}>
+      <div
+        ref={ref}
+        className={wrapperClassName}
+        aria-label={t('role-picker.menu-option-aria-label', 'Role picker option')}
+        onClick={onChangeInternal}
+      >
         <Checkbox
           value={isSelected}
           className={customStyles.menuOptionCheckbox}

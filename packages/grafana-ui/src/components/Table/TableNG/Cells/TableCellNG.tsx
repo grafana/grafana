@@ -186,7 +186,7 @@ export function TableCellNG(props: TableCellNGProps) {
           {cellInspect && (
             <IconButton
               name="eye"
-              tooltip="Inspect value"
+              tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
               onClick={() => {
                 setContextMenuProps({
                   value: String(value ?? ''),
