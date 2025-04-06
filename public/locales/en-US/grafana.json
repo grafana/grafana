@@ -3011,6 +3011,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "kiosk-button": "Enable kiosk mode",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "new": {
