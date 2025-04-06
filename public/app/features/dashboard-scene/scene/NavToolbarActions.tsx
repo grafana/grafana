@@ -39,6 +39,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
+import { KioskToggleButton } from './new-toolbar/actions/KioskToggleButton';
 
 interface Props {
   dashboard: DashboardScene;
@@ -93,6 +94,12 @@ export function ToolbarActions({ dashboard }: Props) {
     // This adds the presence indicators in enterprise
     addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
   }
+
+  toolbarActions.push({
+    group: '',
+    condition: !isEditing,
+    render: () => <KioskToggleButton dashboard={dashboard} />,
+  });
 
   toolbarActions.push({
     group: 'icon-actions',
