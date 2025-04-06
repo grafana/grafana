@@ -127,7 +127,7 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repositoryView: {
+    repository: {
       name: 'repo-xyz',
       type: 'github',
       workflows: ['write', 'branch'],
@@ -392,7 +392,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
   it('should show read-only alert when repository has no workflows', () => {
     setup({
-      repositoryView: {
+      repository: {
         name: 'repo-abc',
         type: 'github',
         workflows: [],
