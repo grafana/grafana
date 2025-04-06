@@ -81,5 +81,7 @@ export function useChromeHeaderHeight() {
  * Can replace with constant once unifiedNavbars feature toggle is removed
  **/
 export function getChromeHeaderLevelHeight() {
-  return config.featureToggles.unifiedNavbars ? 40 : 40;
+  // Waiting with switch to 48 until we have a story for scopes
+  // return config.featureToggles.unifiedNavbars ? 48 : 40;
+  return 40;
 }
