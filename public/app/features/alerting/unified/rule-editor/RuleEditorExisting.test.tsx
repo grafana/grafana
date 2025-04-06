@@ -116,7 +116,7 @@ describe('RuleEditor grafana managed rules', () => {
     await user.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
     // save and check what was sent to backend
-    await user.click(ui.buttons.save.get());
+    await user.click(ui.buttons.saveAndExit.get());
 
     expect(screen.getByText('New folder')).toBeInTheDocument();
   });
@@ -142,7 +142,7 @@ describe('RuleEditor grafana managed rules', () => {
       (req) => req.method === 'POST' && req.url.includes('/api/ruler/grafana/api/v1/rules/uuid020c61ef')
     );
 
-    await user.click(ui.buttons.save.get());
+    await user.click(ui.buttons.saveAndExit.get());
 
     const [request] = await capture;
     const postBody = await request.json();

@@ -8,7 +8,6 @@ import { RuleIdentifier } from 'app/types/unified-alerting';
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
-import { Title } from '../components/rule-viewer/RuleViewer';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
