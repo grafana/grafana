@@ -281,17 +281,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           Save rule
         </Button>
       )}
-      <Button
-        data-testid="save-rule-and-exit"
-        variant="primary"
-        type="button"
-        size="sm"
-        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-        disabled={isSubmitting}
-      >
-        {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-        Save rule and exit
-      </Button>
       <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
         <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
       </Button>

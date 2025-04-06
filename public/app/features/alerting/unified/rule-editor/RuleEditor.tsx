@@ -8,6 +8,7 @@ import { RuleIdentifier } from 'app/types/unified-alerting';
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
+import { Title } from '../components/rule-viewer/RuleViewer';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
@@ -92,8 +93,11 @@ const RuleEditor = () => {
     isManualRestore,
   ]);
 
+  const pageNav = getPageNav(identifier, type);
+  const title = <Title name={pageNav.text} />;
+
   return (
-    <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
+    <AlertingPageWrapper navId="alert-list" pageNav={pageNav} renderTitle={() => title}>
       {getContent()}
     </AlertingPageWrapper>
   );
