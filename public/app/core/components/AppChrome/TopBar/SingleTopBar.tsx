@@ -69,7 +69,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   return (
     <>
       <div className={styles.layout}>
-        <Stack minWidth={0} gap={0.5} alignItems="center" flex={1}>
+        <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
             <ToolbarButton
               narrow
