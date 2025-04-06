@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../types/rule-form';
 
@@ -44,7 +45,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
     <div className={style.flexRow}>
       <Field
         data-testid="namespace-picker"
-        label="Namespace"
+        label={t('alerting.group-and-namespace-fields.namespace-picker-label-namespace', 'Namespace')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
         // eslint-disable-next-line @grafana/no-untranslated-strings
@@ -77,7 +78,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
       </Field>
       <Field
         data-testid="group-picker"
-        label="Group"
+        label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
         // eslint-disable-next-line @grafana/no-untranslated-strings

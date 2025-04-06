@@ -24,7 +24,12 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
+	clients resources.ClientFactory
+}
+
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -70,7 +75,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
-	folderClient, err := parser.Clients().Folder()
+	clients, err := s.clients.Clients(ctx, repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+
+	folderClient, err := clients.Folder()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
@@ -126,12 +136,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
-			code = http.StatusOK
-			if len(resource.Errors) > 0 {
-				code = http.StatusExpectationFailed
-			}
 		case http.MethodPost:
 			if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
@@ -173,7 +178,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
@@ -185,9 +189,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// something failed
-		if len(obj.Errors) > 0 && code < 400 {
-			code = http.StatusInternalServerError
+		if len(obj.Errors) > 0 {
+			code = http.StatusPartialContent
 		}
 
 		logger.Debug("request resulted in valid object", "object", obj)

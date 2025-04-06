@@ -19,11 +19,10 @@ export interface Props {
   panelId: number;
   onShowPanelLinks?: () => Array<LinkModel<PanelModel>>;
   panelLinks?: DataLink[];
-  angularNotice?: AngularNotice;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data, panelId, onShowPanelLinks, panelLinks, angularNotice } = props;
+  const { alertState, data, panelId, onShowPanelLinks, panelLinks } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
@@ -53,15 +52,6 @@ export function PanelHeaderTitleItems(props: Props) {
     </>
   );
 
-  const message = `This ${pluginType(angularNotice)} requires Angular (deprecated).`;
-  const angularNoticeTooltip = (
-    <Tooltip content={message}>
-      <PanelChrome.TitleItem className={styles.angularNotice} data-testid="angular-deprecation-icon">
-        <Icon name="exclamation-triangle" size="md" />
-      </PanelChrome.TitleItem>
-    </Tooltip>
-  );
-
   return (
     <>
       {panelLinks && panelLinks.length > 0 && onShowPanelLinks && (
@@ -71,20 +61,9 @@ export function PanelHeaderTitleItems(props: Props) {
       {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
       {timeshift}
       {alertState && alertStateItem}
-      {angularNotice?.show && angularNoticeTooltip}
     </>
   );
 }
-
-const pluginType = (angularNotice?: AngularNotice): string => {
-  if (angularNotice?.isAngularPanel) {
-    return 'panel';
-  }
-  if (angularNotice?.isAngularDatasource) {
-    return 'data source';
-  }
-  return 'panel or data source';
-};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

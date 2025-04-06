@@ -6,6 +6,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -56,7 +57,11 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <InlineField label="Override grouping" transparent={true} className={styles.switchElement}>
+        <InlineField
+          label={t('alerting.routing-settings.label-override-grouping', 'Override grouping')}
+          transparent={true}
+          className={styles.switchElement}
+        >
           <Switch id="override-grouping-toggle" {...register(`contactPoints.${alertManager}.overrideGrouping`)} />
         </InlineField>
         {!overrideGrouping && (
@@ -67,7 +72,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
       </Stack>
       {overrideGrouping && (
         <Field
-          label="Group by"
+          label={t('alerting.routing-settings.label-group-by', 'Group by')}
           description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy."
           {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
@@ -93,7 +98,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <MultiSelect
-                  aria-label="Group by"
+                  aria-label={t('alerting.routing-settings.aria-label-group-by', 'Group by')}
                   {...field}
                   allowCustomValue
                   className={formStyles.input}
@@ -137,7 +142,11 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </Field>
       )}
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <InlineField label="Override timings" transparent={true} className={styles.switchElement}>
+        <InlineField
+          label={t('alerting.routing-settings.label-override-timings', 'Override timings')}
+          transparent={true}
+          className={styles.switchElement}
+        >
           <Switch id="override-timings-toggle" {...register(`contactPoints.${alertManager}.overrideTimings`)} />
         </InlineField>
         {!overrideTimings && (
