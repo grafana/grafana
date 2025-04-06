@@ -46,8 +46,10 @@ function getHeaderLevelsGivenState(
     return 0;
   }
 
-  // If scopes always use two levels or menu docked
-  if (scopesEnabled || chromeState.megaMenuDocked) {
+  // If scopes always use two levels
+  // If mega menu docked always use two levels
+  // If scenes disabled always use two levels (mainly because of the time range picker)
+  if (scopesEnabled || chromeState.megaMenuDocked || !config.featureToggles.dashboardScene) {
     return 2;
   }
 
