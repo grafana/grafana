@@ -13,7 +13,7 @@ describe('Docked Navigation', () => {
 
   it('should remain un-docked when reloading the page', () => {
     // Undock the menu
-    cy.get('[aria-label="Undock menu"]').click({ force: true });
+    cy.get('[aria-label="Undock menu"]').click();
 
     e2e.components.NavMenu.Menu().should('not.exist');
 
@@ -23,27 +23,27 @@ describe('Docked Navigation', () => {
 
   it('Can re-dock after undock', () => {
     // Undock the menu
-    cy.get('[aria-label="Undock menu"]').click({ force: true });
-    cy.get('[aria-label="Open menu"]').click({ force: true });
-    cy.get('[aria-label="Dock menu"]').click({ force: true });
+    cy.get('[aria-label="Undock menu"]').click();
+    cy.get('[aria-label="Open menu"]').click();
+    cy.get('[aria-label="Dock menu"]').click();
 
     e2e.components.NavMenu.Menu().should('be.visible');
   });
 
   it('should remain in same state when navigating to another page', () => {
     // Undock the menu
-    cy.get('[aria-label="Undock menu"]').click({ force: true });
+    cy.get('[aria-label="Undock menu"]').click();
 
     // Navigate
-    cy.get('[aria-label="Open menu"]').click({ force: true });
+    cy.get('[aria-label="Open menu"]').click();
     cy.contains('a', 'Administration').click();
 
     // Still undocked
     e2e.components.NavMenu.Menu().should('not.exist');
 
     // dock the menu
-    cy.get('[aria-label="Open menu"]').click({ force: true });
-    cy.get('[aria-label="Dock menu"]').click({ force: true });
+    cy.get('[aria-label="Open menu"]').click();
+    cy.get('[aria-label="Dock menu"]').click();
 
     // Navigate
     cy.contains('a', 'Users').click();
