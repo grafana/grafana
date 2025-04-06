@@ -3,6 +3,7 @@ import { capitalize } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Label, RadioButtonGroup, Tag, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing;
@@ -49,7 +50,9 @@ export const AlertInstanceStateFilter = ({
 
   return (
     <div className={className} data-testid="alert-instance-state-filter">
-      <Label>State</Label>
+      <Label>
+        <Trans i18nKey="alerting.alert-instance-state-filter.state">State</Trans>
+      </Label>
       <RadioButtonGroup
         options={stateOptions}
         value={stateFilter}

@@ -178,7 +178,7 @@ function MigrateToGMAButton() {
         <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
         <Badge
           text={t('alerting.rule-list.import-to-gma.new-badge', 'New!')}
-          aria-label="new"
+          aria-label={t('alerting.migrate-to-gmabutton.aria-label-new', 'new')}
           color="blue"
           icon="rocket"
         />
