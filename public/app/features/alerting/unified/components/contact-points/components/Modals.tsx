@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Button, Modal, ModalProps } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -54,10 +54,21 @@ export const useDeleteContactPointModal = (
         onDismiss={handleDismiss}
         closeOnBackdropClick={!isLoading}
         closeOnEscape={!isLoading}
-        title="Delete contact point"
+        title={t(
+          'alerting.use-delete-contact-point-modal.modal-element.title-delete-contact-point',
+          'Delete contact point'
+        )}
       >
-        <p>Deleting this contact point will permanently remove it.</p>
-        <p>Are you sure you want to delete this contact point?</p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-contact-point-modal.modal-element.deleting-contact-point-permanently-remove">
+            Deleting this contact point will permanently remove it.
+          </Trans>
+        </p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-contact-point-modal.modal-element.delete-contact-point">
+            Are you sure you want to delete this contact point?
+          </Trans>
+        </p>
 
         <Modal.ButtonRow>
           <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
@@ -85,7 +96,11 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
     closeOnEscape={true}
     title={'Something went wrong'}
   >
-    <p>Failed to update your configuration:</p>
+    <p>
+      <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
+        Failed to update your configuration:
+      </Trans>
+    </p>
     <pre>
       <code>{stringifyErrorLike(error)}</code>
     </pre>

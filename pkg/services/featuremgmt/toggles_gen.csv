@@ -214,7 +214,6 @@ elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,f
 exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
-alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
