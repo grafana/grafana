@@ -93,11 +93,8 @@ const RuleEditor = () => {
     isManualRestore,
   ]);
 
-  const pageNav = getPageNav(identifier, type);
-  const title = <Title name={pageNav.text} />;
-
   return (
-    <AlertingPageWrapper navId="alert-list" pageNav={pageNav} renderTitle={() => title}>
+    <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
       {getContent()}
     </AlertingPageWrapper>
   );
