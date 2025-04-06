@@ -5,6 +5,7 @@ describe('Docked Navigation', () => {
   beforeEach(() => {
     // This is a breakpoint where the mega menu can be docked (and docked is the default state)
     cy.viewport(1280, 800);
+    cy.clearAllLocalStorage();
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
     cy.visit(fromBaseUrl('/'));
@@ -12,7 +13,7 @@ describe('Docked Navigation', () => {
 
   it('should remain un-docked when reloading the page', () => {
     // Undock the menu
-    cy.get('[aria-label="Undock menu"]').click();
+    cy.get('[aria-label="Undock menu"]').click({ force: true });
 
     e2e.components.NavMenu.Menu().should('not.exist');
 
@@ -20,23 +21,40 @@ describe('Docked Navigation', () => {
     e2e.components.NavMenu.Menu().should('not.exist');
   });
 
-  it('should remain undocked when navigating to another page', () => {
+  it('Can re-dock after undock', () => {
     // Undock the menu
-    cy.get('[aria-label="Undock menu"]').click();
+    cy.get('[aria-label="Undock menu"]').click({ force: true });
+    cy.get('[aria-label="Open menu"]').click({ force: true });
+    cy.get('[aria-label="Dock menu"]').click({ force: true });
 
-    cy.contains('a', 'Administration').click();
-    e2e.components.NavMenu.Menu().should('not.exist');
-
-    cy.contains('a', 'Users').click();
     e2e.components.NavMenu.Menu().should('be.visible');
   });
 
-  it('should become docked at larger viewport sizes', () => {
+  it('should remain in same state when navigating to another page', () => {
+    // Undock the menu
+    cy.get('[aria-label="Undock menu"]').click({ force: true });
+
+    // Navigate
+    cy.get('[aria-label="Open menu"]').click({ force: true });
+    cy.contains('a', 'Administration').click();
+
+    // Still undocked
     e2e.components.NavMenu.Menu().should('not.exist');
 
-    cy.viewport(1920, 1080);
+    // dock the menu
+    cy.get('[aria-label="Open menu"]').click({ force: true });
+    cy.get('[aria-label="Dock menu"]').click({ force: true });
+
+    // Navigate
+    cy.contains('a', 'Users').click();
+    // Still docked
+    e2e.components.NavMenu.Menu().should('be.visible');
+  });
+
+  it('should undock on smaller viewport sizes', () => {
+    cy.viewport(1120, 1080);
     cy.reload();
 
-    e2e.components.NavMenu.Menu().should('be.visible');
+    e2e.components.NavMenu.Menu().should('not.exist');
   });
 });
