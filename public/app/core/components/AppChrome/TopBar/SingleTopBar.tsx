@@ -92,7 +92,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           alignItems="center"
           justifyContent={'flex-end'}
           flex={1}
-          data-testid={showToolbarLevel ? Components.NavToolbar.container : undefined}
+          data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
         >
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
