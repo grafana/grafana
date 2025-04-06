@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-var ErrUnableToReadResourceBytes = errors.New("unable to read bytes as a resource")
-var ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+var (
+	ErrUnableToReadResourceBytes       = errors.New("unable to read bytes as a resource")
+	ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+)
 
 // This reads a "classic" file format and will convert it to an unstructured k8s resource
 // The file path may determine how the resource is parsed
