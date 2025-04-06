@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
@@ -45,14 +46,19 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
 
   const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isPlaying && !isEditingPanel;
+
+  useEffect(() => {
+    return () => console.log('RightActions unmounted');
+  }, []);
 
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
       {renderActionElements(
         [
           // This adds the presence indicators in enterprise
-          ...getDynamicActions(dynamicDashNavActions.right, 'actions', !isEditingPanel && !isEditingDashboard),
+          // Leaving group empty here as these are sometimes not rendered leaving separators with blank space between them
+          ...getDynamicActions(dynamicDashNavActions.right, '', !isEditingPanel && !isEditingDashboard),
           {
             key: 'play-list-previous-button',
             component: PlayListPreviousButton,
@@ -117,13 +123,14 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditable,
+            condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditable && !isPlaying,
           },
           {
             key: 'edit-dashboard-switch',
             component: EditDashboardSwitch,
             group: 'save-edit',
-            condition: dashboard.canEditDashboard() && !isEditingLibraryPanel && !isViewingPanel && isEditable,
+            condition:
+              dashboard.canEditDashboard() && !isEditingLibraryPanel && !isViewingPanel && isEditable && !isPlaying,
           },
           {
             key: 'new-export-dashboard-button',

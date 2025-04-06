@@ -46,15 +46,14 @@ interface Props {
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
-  const key = `${dashboard.state.key}-toolbar-actions`;
 
   return hasNewToolbar ? (
     <AppChromeUpdate
-      breadcrumbActions={<LeftActions dashboard={dashboard} key={key} />}
-      actions={<RightActions dashboard={dashboard} key={key} />}
+      breadcrumbActions={<LeftActions dashboard={dashboard} />}
+      actions={<RightActions dashboard={dashboard} />}
     />
   ) : (
-    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} key={key} />} />
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
   );
 });
 

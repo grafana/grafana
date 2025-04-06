@@ -19,7 +19,7 @@ export function renderActionElements(toolbarActions: ToolbarAction[], dashboard:
       continue;
     }
 
-    if (lastGroup && lastGroup !== action.group) {
+    if (action.group && lastGroup && lastGroup !== action.group) {
       actionElements.push(<NavToolbarSeparator key={`${action.group}-separator`} />);
     }
 
