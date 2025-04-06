@@ -1,3 +1,5 @@
+import { ToolbarButtonRow } from '@grafana/ui';
+
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { DashboardScene } from '../DashboardScene';
 
@@ -50,8 +52,6 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         group: 'actions',
         condition: isSnapshot && !isEditingDashboard,
       },
-      // This adds the presence indicators in enterprise
-      ...getDynamicActions(dynamicDashNavActions.right, 'actions', !isEditingPanel && !isEditingDashboard),
     ],
     dashboard
   );
@@ -60,5 +60,5 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
     return null;
   }
 
-  return elements;
+  return <ToolbarButtonRow alignment="left">{elements}</ToolbarButtonRow>;
 };

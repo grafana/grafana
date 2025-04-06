@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -21,12 +23,12 @@ import { SaveDashboard } from './actions/SaveDashboard';
 import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
 import { ShareDashboardButton } from './actions/ShareDashboardButton';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
-import { renderActionElements } from './utils';
+import { getDynamicActions, renderActionElements } from './utils';
 
 export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const styles = useStyles2(getStyles);
   const { editPanel, editable, editview, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const styles = useStyles2(getStyles);
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -49,6 +51,8 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
     <ToolbarButtonRow alignment="right" className={styles.container}>
       {renderActionElements(
         [
+          // This adds the presence indicators in enterprise
+          ...getDynamicActions(dynamicDashNavActions.right, 'actions', !isEditingPanel && !isEditingDashboard),
           {
             key: 'play-list-previous-button',
             component: PlayListPreviousButton,
@@ -140,8 +144,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   );
 };
 
-const getStyles = () => ({
-  container: css({
-    flex: 1,
-  }),
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({ paddingLeft: theme.spacing(0.5) }),
 });

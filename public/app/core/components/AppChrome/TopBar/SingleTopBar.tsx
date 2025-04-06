@@ -5,7 +5,7 @@ import { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { ScopesContextValue } from '@grafana/runtime';
-import { Dropdown, Icon, Stack, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -69,7 +69,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   return (
     <>
       <div className={styles.layout}>
-        <Stack minWidth={0} gap={0.5} alignItems="center">
+        <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, sm: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
             <ToolbarButton
               narrow
@@ -84,12 +84,16 @@ export const SingleTopBar = memo(function SingleTopBar({
             </ToolbarButton>
           )}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-          {!showToolbarLevel && breadcrumbActions && (
-            <ToolbarButtonRow alignment="left">{breadcrumbActions}</ToolbarButtonRow>
-          )}
+          {!showToolbarLevel && breadcrumbActions}
         </Stack>
 
-        <Stack gap={0.5} alignItems="center" justifyContent={'flex-end'}>
+        <Stack
+          gap={0.5}
+          alignItems="center"
+          justifyContent={'flex-end'}
+          flex={1}
+          data-testid={showToolbarLevel ? Components.NavToolbar.container : undefined}
+        >
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
@@ -102,17 +106,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <NavToolbarSeparator />
           {config.featureToggles.inviteUserExperimental && !isSmallScreen && !actions && <InviteUserButton />}
           {config.featureToggles.extensionSidebar && !isSmallScreen && <ExtensionToolbarItem />}
-          <ToolbarButton
-            icon="monitor"
-            className={styles.kioskToggle}
-            onClick={onToggleKioskMode}
-            tooltip="Enable kiosk mode"
-          />
-          {!showToolbarLevel && actions && (
-            <ToolbarButtonRow alignment="right" data-testid={Components.NavToolbar.container}>
-              {actions}
-            </ToolbarButtonRow>
-          )}
+          {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           {profileNode && <ProfileButton profileNode={profileNode} />}
         </Stack>
@@ -134,10 +128,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.75),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
-
-    [theme.breakpoints.up('lg')]: {
-      display: 'flex',
-    },
   }),
   breadcrumbsWrapper: css({
     display: 'flex',

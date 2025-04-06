@@ -4,7 +4,17 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { Badge, Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  ToolbarButton,
+  ToolbarButtonRow,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import grafanaConfig from 'app/core/config';
@@ -585,8 +595,7 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  return rightActionsElements;
+  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

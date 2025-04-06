@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { ScopesContextValue } from '@grafana/runtime';
-import { Stack, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -24,11 +24,9 @@ export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Prop
       <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
         {scopes?.state.enabled ? <ScopesSelector /> : undefined}
         <Stack alignItems="center" justifyContent={'flex-end'} flex={1} wrap="nowrap" minWidth={0}>
-          <ToolbarButtonRow alignment="right">
-            {breadcrumbActions}
-            {breadcrumbActions && actions && <NavToolbarSeparator />}
-            {actions}
-          </ToolbarButtonRow>
+          {breadcrumbActions}
+          {breadcrumbActions && actions && <NavToolbarSeparator />}
+          {actions}
         </Stack>
       </Stack>
     </div>

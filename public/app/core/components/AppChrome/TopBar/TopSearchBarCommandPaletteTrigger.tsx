@@ -79,13 +79,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: cx(
       baseStyles.wrapper,
       css({
-        width: 140,
-        [theme.breakpoints.up('xl')]: {
-          width: 180,
-        },
-        [theme.breakpoints.up('xxl')]: {
-          width: 300,
-        },
+        width: 'auto',
+        minWidth: 140,
+        maxWidth: 350,
+        flexGrow: 1,
       })
     ),
     inputWrapper: baseStyles.inputWrapper,
