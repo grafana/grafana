@@ -152,11 +152,10 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
     }
 
     const state = chrome.state.getValue();
-    const isDockedAndOpen = state.megaMenuDocked && state.megaMenuOpen;
-    if (isLargeScreen && !isDockedAndOpen) {
+    if (isLargeScreen && !state.megaMenuDocked) {
       chrome.setMegaMenuDocked(true, false);
       chrome.setMegaMenuOpen(true);
-    } else if (!isLargeScreen && isDockedAndOpen) {
+    } else if (!isLargeScreen && state.megaMenuDocked) {
       chrome.setMegaMenuDocked(false, false);
       chrome.setMegaMenuOpen(false);
     }
