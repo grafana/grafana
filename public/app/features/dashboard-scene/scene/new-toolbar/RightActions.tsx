@@ -48,10 +48,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
   const showShareButton = hasUid && !isSnapshot && !isPlaying && !isEditingPanel;
 
-  useEffect(() => {
-    return () => console.log('RightActions unmounted');
-  }, []);
-
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
       {renderActionElements(
