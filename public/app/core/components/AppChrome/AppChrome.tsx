@@ -13,7 +13,7 @@ import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
 import { AppChromeMenu } from './AppChromeMenu';
-import { DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
+import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { EXTENSION_SIDEBAR_WIDTH, ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -30,7 +30,6 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
 
-  const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
@@ -38,25 +37,8 @@ export function AppChrome({ children }: Props) {
 
   const headerLevels = useChromeHeaderLevels();
   const styles = useStyles2(getStyles, headerLevels * getChromeHeaderLevelHeight());
-  const isLargeScreen = useMediaQueryMinWidth('xl');
 
-  // If saved menu dock state is open, dock/undock it based on screen size
-  useEffect(() => {
-    if (dockedMenuLocalStorageState) {
-      const state = chrome.state.getValue();
-      const isDockedAndOpen = state.megaMenuDocked && state.megaMenuOpen;
-      if (isLargeScreen && !isDockedAndOpen) {
-        console.log('adjusting docked menu state');
-        chrome.setMegaMenuDocked(true, false);
-        chrome.setMegaMenuOpen(true);
-      } else if (!isLargeScreen && isDockedAndOpen) {
-        console.log('adjusting docked menu state');
-        chrome.setMegaMenuDocked(false, false);
-        chrome.setMegaMenuOpen(false);
-      }
-    }
-  }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
-
+  useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
   const contentClass = cx({
@@ -154,6 +136,31 @@ export function AppChrome({ children }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * When having docked mega menu we automatically undock it on smaller screens
+ */
+function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
+  const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
+  const isLargeScreen = useMediaQueryMinWidth('xl');
+
+  useEffect(() => {
+    // if undocked we do not need to do anything
+    if (!dockedMenuLocalStorageState) {
+      return;
+    }
+
+    const state = chrome.state.getValue();
+    const isDockedAndOpen = state.megaMenuDocked && state.megaMenuOpen;
+    if (isLargeScreen && !isDockedAndOpen) {
+      chrome.setMegaMenuDocked(true, false);
+      chrome.setMegaMenuOpen(true);
+    } else if (!isLargeScreen && isDockedAndOpen) {
+      chrome.setMegaMenuDocked(false, false);
+      chrome.setMegaMenuOpen(false);
+    }
+  }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
