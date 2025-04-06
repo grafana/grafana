@@ -125,7 +125,13 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: EditDashboardSwitch,
             group: 'save-edit',
             condition:
-              dashboard.canEditDashboard() && !isEditingLibraryPanel && !isViewingPanel && isEditable && !isPlaying,
+              dashboard.canEditDashboard() &&
+              !isEditingPanel &&
+              !isEditingLibraryPanel &&
+              !isViewingPanel &&
+              isEditable &&
+              !isPlaying &&
+              !isEditingPanel,
           },
           {
             key: 'new-export-dashboard-button',
