@@ -46,8 +46,8 @@ function getHeaderLevelsGivenState(
     return 0;
   }
 
-  // If scopes always use two levels
-  if (scopesEnabled) {
+  // If scopes always use two levels or menu docked
+  if (scopesEnabled || chromeState.megaMenuDocked) {
     return 2;
   }
 
