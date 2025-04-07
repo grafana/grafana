@@ -21,7 +21,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -343,7 +342,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			GUID:        guid,
 		}); err != nil {
 			if isRowAlreadyExistsError(err) {
-				return guid, unifiedbackend.ErrResourceAlreadyExists
+				return guid, resource.ErrResourceAlreadyExists
 			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
 		}
