@@ -4,6 +4,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
+import { t } from '../../../internationalization';
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
 import { findCreateActions } from './utils';
 
 export interface Props {}
@@ -34,9 +37,17 @@ export const QuickAdd = ({}: Props) => {
     );
   };
 
-  return (
-    <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
-      <ToolbarButton iconOnly icon={'plus'} isOpen={isOpen} aria-label="New" />
-    </Dropdown>
-  );
+  return showQuickAdd ? (
+    <>
+      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
+        <ToolbarButton
+          iconOnly
+          icon={'plus'}
+          isOpen={isOpen}
+          aria-label={t('navigation.quick-add.aria-label', 'New')}
+        />
+      </Dropdown>
+      <NavToolbarSeparator />
+    </>
+  ) : null;
 };

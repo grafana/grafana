@@ -101,7 +101,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           <NavToolbarSeparator />
           {enrichedHelpNode && (
             <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-              <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
+              <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
             </Dropdown>
           )}
           <NavToolbarSeparator />

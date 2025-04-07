@@ -11,7 +11,7 @@ export function KioskToggleButton({ dashboard }: ToolbarActionProps) {
     <ToolbarButton
       icon="monitor"
       onClick={chrome.onToggleKioskMode}
-      tooltip={t('dashboard.toolbar.kiosk-button', 'Enable kiosk mode')}
+      tooltip={t('navigation.kiosk.tooltip', 'Enable kiosk mode')}
     />
   );
 }
