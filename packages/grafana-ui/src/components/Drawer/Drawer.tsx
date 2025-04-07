@@ -292,7 +292,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
-        backdropFilter: 'blur(1px)',
+        backdropFilter: theme.components.overlay.blur ? `blur(${theme.components.overlay.blur}px)` : undefined,
         bottom: 0,
         content: '""',
         left: 0,

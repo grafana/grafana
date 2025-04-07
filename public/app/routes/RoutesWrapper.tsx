@@ -113,7 +113,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
             <Router history={locationService.getHistory()}>
               <LocationServiceProvider service={locationService}>
                 <CompatRouter>
-                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
+                  <GlobalStyles />
                   <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton

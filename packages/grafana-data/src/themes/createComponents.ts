@@ -31,6 +31,9 @@ export interface ThemeComponents {
   };
   overlay: {
     background: string;
+
+    /* pixel strength for backdrop blurs */
+    blur?: number;
   };
   dashboard: {
     background: string;
@@ -50,6 +53,14 @@ export interface ThemeComponents {
     rowHoverBackground: string;
     rowSelected: string;
   };
+}
+
+function shouldBlurBackdrops() {
+  try {
+    return !(window.grafanaBootData?.settings?.featureToggles?.noBackdropBlur ?? false);
+  } catch (error) {
+    return true;
+  }
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
@@ -87,9 +98,14 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: colors.background.canvas,
       padding: 1,
     },
-    overlay: {
-      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
-    },
+    overlay: shouldBlurBackdrops()
+      ? {
+          background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+          blur: 1,
+        }
+      : {
+          background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)', // new
+        },
     sidemenu: {
       width: 57,
     },
