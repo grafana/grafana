@@ -890,107 +890,109 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          {visualisationType !== 'table' && !config.featureToggles.newLogsPanel && !config.featureToggles.logsPanelControls && (
-            <div className={styles.logOptions}>
-              <InlineFieldRow>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-time', 'Time')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={showTime}
-                    onChange={onChangeShowTime}
-                    className={styles.horizontalInlineSwitch}
+          {visualisationType !== 'table' &&
+            !config.featureToggles.newLogsPanel &&
+            !config.featureToggles.logsPanelControls && (
+              <div className={styles.logOptions}>
+                <InlineFieldRow>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-time', 'Time')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`show-time_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={showLabels}
-                    onChange={onChangeLabels}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showTime}
+                      onChange={onChangeShowTime}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`show-time_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`unique-labels_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={wrapLogMessage}
-                    onChange={onChangeWrapLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showLabels}
+                      onChange={onChangeLabels}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`unique-labels_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`wrap-lines_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={prettifyLogMessage}
-                    onChange={onChangePrettifyLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={wrapLogMessage}
+                      onChange={onChangeWrapLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`wrap-lines_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`prettify_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <RadioButtonGroup
-                    options={DEDUP_OPTIONS.map((dedupType) => ({
-                      label: capitalize(dedupType),
-                      value: dedupType,
-                      description: LogsDedupDescription[dedupType],
-                    }))}
-                    value={dedupStrategy}
-                    onChange={onChangeDedup}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
-              </InlineFieldRow>
+                  >
+                    <InlineSwitch
+                      value={prettifyLogMessage}
+                      onChange={onChangePrettifyLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`prettify_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                  >
+                    <RadioButtonGroup
+                      options={DEDUP_OPTIONS.map((dedupType) => ({
+                        label: capitalize(dedupType),
+                        value: dedupType,
+                        description: LogsDedupDescription[dedupType],
+                      }))}
+                      value={dedupStrategy}
+                      onChange={onChangeDedup}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
 
-              <div>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-display-results', 'Display results')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                  disabled={isFlipping || loading}
-                >
-                  <RadioButtonGroup
-                    options={[
-                      {
-                        label: 'Newest first',
-                        value: LogsSortOrder.Descending,
-                        description: 'Show results newest to oldest',
-                      },
-                      {
-                        label: 'Oldest first',
-                        value: LogsSortOrder.Ascending,
-                        description: 'Show results oldest to newest',
-                      },
-                    ]}
-                    value={logsSortOrder}
-                    onChange={onChangeLogsSortOrder}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
+                <div>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-display-results', 'Display results')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                    disabled={isFlipping || loading}
+                  >
+                    <RadioButtonGroup
+                      options={[
+                        {
+                          label: 'Newest first',
+                          value: LogsSortOrder.Descending,
+                          description: 'Show results newest to oldest',
+                        },
+                        {
+                          label: 'Oldest first',
+                          value: LogsSortOrder.Ascending,
+                          description: 'Show results oldest to newest',
+                        },
+                      ]}
+                      value={logsSortOrder}
+                      onChange={onChangeLogsSortOrder}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <div ref={topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
