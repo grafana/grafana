@@ -98,7 +98,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
-          <NavToolbarSeparator />
           {enrichedHelpNode && (
             <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
               <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
