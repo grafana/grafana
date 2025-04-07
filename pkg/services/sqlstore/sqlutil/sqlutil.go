@@ -17,6 +17,7 @@ type ITestDB interface {
 	Logf(format string, args ...any)
 	Log(args ...any)
 	Cleanup(func())
+	Skipf(format string, args ...any)
 }
 
 type TestDB struct {
@@ -161,7 +162,7 @@ func spannerTestDB() (*TestDB, error) {
 
 	spannerDB := os.Getenv("SPANNER_DB")
 	if spannerDB == "" {
-		return nil, errors.New("SPANNER_DB environment variable not set")
+		spannerDB = "emulator"
 	}
 
 	if spannerDB == "spannertest" {

@@ -26,7 +26,14 @@ const (
 )
 
 var (
-	ErrInvalidDatasourceType = errutil.ValidationFailed("alerting.invalidDatasourceType")
+	ErrInvalidDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidDatasourceType",
+		errutil.WithPublicMessage("Datasource type must be Prometheus or Loki to import rules."),
+	)
+	ErrInvalidTargetDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidTargetDatasourceType",
+		errutil.WithPublicMessage("Target datasource type must be Prometheus for recording rules."),
+	)
 )
 
 // Config defines the configuration options for the Prometheus to Grafana rules converter.
@@ -109,9 +116,6 @@ func NewConverter(cfg Config) (*Converter, error) {
 	}
 	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
 		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
-	}
-	if cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
-		return nil, ErrInvalidDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", cfg.TargetDatasourceType)
 	}
 
 	return &Converter{
@@ -199,12 +203,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var err error
 
 	isRecordingRule := rule.Record != ""
-	query, err = p.createQuery(rule.Expr, isRecordingRule)
+	query, err = p.createQuery(rule.Expr, isRecordingRule, promGroup)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 
 	if isRecordingRule {
+		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
+			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
+		}
+
 		record = &models.Record{
 			From:                queryRefID,
 			Metric:              rule.Record,
@@ -241,6 +249,12 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		RuleGroup:    promGroup.Name,
 		IsPaused:     isPaused,
 		Record:       record,
+
+		// MissingSeriesEvalsToResolve is set to 1 to match the Prometheus behaviour.
+		// Prometheus resolves alerts as soon as the series disappears.
+		// By setting this value to 1 we ensure that the alert is resolved on the first evaluation
+		// that doesn't have the series.
+		MissingSeriesEvalsToResolve: util.Pointer(1),
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {
@@ -265,8 +279,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 //
 // This is needed to ensure that we keep the Prometheus behaviour, where any returned result
 // is considered alerting, and only when the query returns no data is the alert treated as normal.
-func (p *Converter) createQuery(expr string, isRecordingRule bool) ([]models.AlertQuery, error) {
-	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
+func (p *Converter) createQuery(expr string, isRecordingRule bool, promGroup PrometheusRuleGroup) ([]models.AlertQuery, error) {
+	// If evaluation offset is set on the group level, use that, otherwise use the global evaluation offset.
+	var evaluationOffset time.Duration
+	if promGroup.QueryOffset != nil {
+		evaluationOffset = time.Duration(*promGroup.QueryOffset)
+	} else {
+		evaluationOffset = *p.cfg.EvaluationOffset
+	}
+
+	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, evaluationOffset)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneVariableSet,
@@ -42,8 +42,8 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,

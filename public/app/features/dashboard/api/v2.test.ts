@@ -1,4 +1,7 @@
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
@@ -19,6 +22,7 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
 
   metadata: {
     name: 'dash-uid',
+    generation: 1,
     resourceVersion: '1',
     creationTimestamp: '1',
     annotations: {},
@@ -38,6 +42,7 @@ const mockPut = jest.fn().mockImplementation((url, data) => {
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name,
+      generation: 2,
       resourceVersion: '2',
       creationTimestamp: new Date().toISOString(),
       labels: data.metadata?.labels,

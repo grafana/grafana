@@ -10,25 +10,18 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneDataLayerControls,
-  SceneDataProvider,
-  SceneDataQuery,
-  SceneDataTransformer,
-  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  VariableValueSelectors,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
@@ -42,10 +35,9 @@ import {
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
-  PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -55,14 +47,12 @@ import {
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -71,7 +61,8 @@ import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSes
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -138,7 +129,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
-    version: parseInt(metadata.resourceVersion, 10),
+    version: metadata.generation,
     k8s: metadata,
   };
 
@@ -149,9 +140,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
+  const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   //createLayoutManager(dashboard);
 
@@ -167,7 +158,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       tags: dashboard.tags,
       title: dashboard.title,
       uid: metadata.name,
-      version: parseInt(metadata.resourceVersion, 10),
+      version: metadata.generation,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         from: dashboard.timeSettings.from,
@@ -198,7 +189,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         annotationLayers,
       }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
         }),
@@ -216,71 +206,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
 
   return dashboardScene;
-}
-
-function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
-  if (!panel.spec.data?.spec.queries?.length) {
-    return undefined;
-  }
-
-  let datasource: DataSourceRef | undefined = undefined;
-  let isMixedDatasource = false;
-
-  panel.spec.data.spec.queries.forEach((query) => {
-    if (!datasource) {
-      datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
-      isMixedDatasource = true;
-    }
-  });
-
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
-}
-
-function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
-  return {
-    refId: query.spec.refId,
-    datasource: query.spec.datasource,
-    hide: query.spec.hidden,
-    ...query.spec.query.spec,
-  };
-}
-
-export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
-  const panel = panelKind.spec;
-  const targets = panel.data?.spec.queries ?? [];
-  // Skip setting query runner for panels without queries
-  if (!targets?.length) {
-    return undefined;
-  }
-
-  // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
-    return undefined;
-  }
-
-  let dataProvider: SceneDataProvider | undefined = undefined;
-  const datasource = getPanelDataSource(panelKind);
-
-  dataProvider = new SceneQueryRunner({
-    datasource,
-    queries: targets.map(panelQueryKindToSceneQuery),
-    maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
-    maxDataPointsFromWidth: true,
-    cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-    queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-    minInterval: panel.data.spec.queryOptions.interval ?? undefined,
-    dataLayerFilter: {
-      panelId: panel.id,
-    },
-    $behaviors: [new DashboardDatasourceBehaviour({})],
-  });
-
-  // Wrap inner data provider in a data transformer
-  return new SceneDataTransformer({
-    $data: dataProvider,
-    transformations: panel.data.spec.transformations.map((transformation) => transformation.spec),
-  });
 }
 
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
@@ -365,7 +290,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
       query: getDataQueryForVariable(variable),
-      datasource: variable.spec.datasource,
+      datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
