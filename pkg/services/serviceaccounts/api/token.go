@@ -112,7 +112,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response
 }
 
 // @PERCONA
-// swagger:route GET /auth/serviceaccount serviceaccounts retrieveServiceAccount
+// swagger:route GET /auth/serviceaccount serviceaccounts
 //
 // # CurrentServiceAccount get current service account info
 //
