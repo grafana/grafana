@@ -362,7 +362,8 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
 	// Try writing the value directly
-	obj.SetLabels(map[string]string{"x": "y"})
+	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
+	require.NoError(t, err, "set tags")
 	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
 	require.Error(t, err, "only the provisionding service should be able to update")
 	require.True(t, apierrors.IsForbidden(err))

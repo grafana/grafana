@@ -123,7 +123,7 @@ func TestManagedAuthorizer(t *testing.T) {
 				err = checkManagerPropertiesOnCreate(tt.auth, obj)
 			} else {
 				old, _ := utils.MetaAccessor(tt.old)
-				err = checkManagerPropertiesOnUpdate(tt.auth, obj, old)
+				err = checkManagerPropertiesOnUpdateSpec(tt.auth, obj, old)
 			}
 
 			if tt.err != "" {

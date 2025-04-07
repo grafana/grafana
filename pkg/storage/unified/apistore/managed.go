@@ -18,11 +18,7 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 	return enforceManagerProperties(auth, obj)
 }
 
-func checkManagerPropertiesOnUpdate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
-	if obj.GetGeneration() == old.GetGeneration() {
-		return nil // status updates are enforced by regular RBAC
-	}
-
+func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
 	objKind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	oldKind := old.GetAnnotation(utils.AnnoKeyManagerKind)
 	if objKind == "" && objKind == oldKind {

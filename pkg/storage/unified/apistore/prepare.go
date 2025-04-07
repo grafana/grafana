@@ -113,10 +113,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return nil, err
 	}
 
-	if err := checkManagerPropertiesOnUpdate(info, obj, previous); err != nil {
-		return nil, err
-	}
-
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
@@ -167,6 +163,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetGeneration(previous.GetGeneration() + 1)
 		obj.SetUpdatedBy(info.GetUID())
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+
+		// Only validate when the generation has changed
+		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+			return nil, err
+		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
