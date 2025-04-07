@@ -19,40 +19,58 @@ interface RepositoryViewData {
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
 export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRepositoryArgs): RepositoryViewData => {
-  const settings = useGetFrontendSettingsQuery();
-  const folderQuery = useGetFolderQuery(name || !folderName ? skipToken : { name: folderName });
-  const folder = folderQuery.data;
+  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery();
+  const skipFolderQuery = name || !folderName;
+  const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
+    skipFolderQuery ? skipToken : { name: folderName }
+  );
 
-  if (settings.isLoading || folderQuery.isLoading) {
+  if (isSettingsLoading || isFolderLoading) {
     return { isLoading: true, isInstanceManaged: false };
   }
 
-  if (!settings.data?.items) {
-    return { folder, isInstanceManaged: false }; // not found
+  const items = settingsData?.items ?? [];
+
+  if (!items.length) {
+    return { folder, isInstanceManaged: false };
   }
 
-  const instanceRepo = settings.data.items.find((repo) => repo.target === 'instance');
+  const instanceRepo = items.find((repo) => repo.target === 'instance');
+  const isInstanceManaged = Boolean(instanceRepo);
+
   if (name) {
-    const repository = settings.data.items.find((repo) => repo.name === name);
+    const repository = items.find((repo) => repo.name === name);
     if (repository) {
-      return { repository, folder, isInstanceManaged: Boolean(instanceRepo) };
+      return {
+        repository,
+        folder,
+        isInstanceManaged,
+      };
     }
   }
 
   // Find the matching folder repository
   if (folderName) {
     // For root values it will be the same
-    let repository = settings.data.items.find((repo) => repo.name === folderName);
+    let repository = items.find((repo) => repo.name === folderName);
     if (repository) {
-      return { repository, folder, isInstanceManaged: Boolean(instanceRepo) };
+      return {
+        repository,
+        folder,
+        isInstanceManaged,
+      };
     }
 
     // For nested folders we need to see what the folder thinks
-    folderName = folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (name) {
-      repository = settings.data.items.find((repo) => repo.name === folderName);
+    const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
+    if (annotatedFolderName && name) {
+      repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
-        return { repository, folder, isInstanceManaged: Boolean(instanceRepo) };
+        return {
+          repository,
+          folder,
+          isInstanceManaged,
+        };
       }
     }
   }
@@ -60,6 +78,6 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
   return {
     repository: instanceRepo,
     folder,
-    isInstanceManaged: Boolean(instanceRepo),
+    isInstanceManaged,
   };
 };
