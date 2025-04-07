@@ -18,8 +18,8 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme, ts int) *apistore.Ba
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboardV0.DashboardResourceInfo.GroupResource(),
 
-		// Byte size after which an object is considered large.
-		ThresholdSize: ts,
+		// Byte size above which an object is considered large.
+		ThresholdSizeBytes: ts,
 
 		// 10mb -- we should check what the largest ones are... might be bigger
 		MaxByteSize: 10 * 1024 * 1024,
