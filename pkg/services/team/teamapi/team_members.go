@@ -83,17 +83,9 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	existingTeam, err := tapi.getTeamDTOByID(c, teamID)
-	if err != nil {
-		if errors.Is(err, team.ErrTeamNotFound) {
-			return response.Error(http.StatusNotFound, "Team not found", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
-	}
-
-	if existingTeam.IsProvisioned {
-		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
+	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
 	}
 
 	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
@@ -142,17 +134,9 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 	}
 	orgId := c.SignedInUser.GetOrgID()
 
-	existingTeam, err := tapi.getTeamDTOByID(c, teamId)
-	if err != nil {
-		if errors.Is(err, team.ErrTeamNotFound) {
-			return response.Error(http.StatusNotFound, "Team not found", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
-	}
-
-	if existingTeam.IsProvisioned {
-		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
 	}
 
 	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), orgId, teamId, userId)
@@ -194,17 +178,9 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 	}
 	orgId := c.SignedInUser.GetOrgID()
 
-	existingTeam, err := tapi.getTeamDTOByID(c, teamId)
-	if err != nil {
-		if errors.Is(err, team.ErrTeamNotFound) {
-			return response.Error(http.StatusNotFound, "Team not found", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
-	}
-
-	if existingTeam.IsProvisioned {
-		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
 	}
 
 	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgId, teamId, cmd, c.SignedInUser)
