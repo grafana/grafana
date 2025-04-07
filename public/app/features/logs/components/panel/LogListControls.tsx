@@ -337,15 +337,17 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           />
         </Dropdown>
       )}
-      <IconButton
-        name="arrow-up"
-        data-testid="scrollToTop"
-        className={styles.scrollToTopButton}
-        variant="secondary"
-        onClick={onScrollToTopClick}
-        tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
-        size="lg"
-      />
+      {visualisationType === 'logs' && (
+        <IconButton
+          name="arrow-up"
+          data-testid="scrollToTop"
+          className={styles.scrollToTopButton}
+          variant="secondary"
+          onClick={onScrollToTopClick}
+          tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
+          size="lg"
+        />
+      )}
     </div>
   );
 };
