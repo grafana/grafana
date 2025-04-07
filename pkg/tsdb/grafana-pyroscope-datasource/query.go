@@ -94,7 +94,14 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
-			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+			frames, err := seriesToDataFrames(seriesResp)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				return err
+			}
+			response.Frames = append(response.Frames, frames...)
 			responseMutex.Unlock()
 			return nil
 		})
@@ -411,7 +418,11 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+type ProfileAnnotations struct {
+	Bodies []string `json:"bodies"`
+}
+
+func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
 
 	for _, series := range resp.Series {
@@ -419,7 +430,7 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 
-		fields := make(data.Fields, 0, 2)
+		fields := make(data.Fields, 0, 3)
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
@@ -431,14 +442,25 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		valueField := data.NewField(resp.Label, labels, []float64{})
 		valueField.Config = &data.FieldConfig{Unit: resp.Units}
 
+		annotationsField := data.NewField("annotations", nil, []json.RawMessage{})
+
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
+			annotations := ProfileAnnotations{Bodies: make([]string, 0, len(point.Annotations))}
+			for _, annotation := range point.Annotations {
+				annotations.Bodies = append(annotations.Bodies, annotation.Value)
+			}
+			encoded, err := json.Marshal(annotations)
+			if err != nil {
+				return nil, err
+			}
+			annotationsField.Append(json.RawMessage(encoded))
 		}
 
-		fields = append(fields, valueField)
+		fields = append(fields, valueField, annotationsField)
 		frame.Fields = fields
 		frames = append(frames, frame)
 	}
-	return frames
+	return frames, nil
 }
