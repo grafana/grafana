@@ -8,7 +8,7 @@ import { t, Trans } from 'app/core/internationalization';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { FolderRepositoryList } from './Shared/FolderRepositoryList';
-import { useRepositoryList } from './hooks';
+import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
   Repositories = 'repositories',

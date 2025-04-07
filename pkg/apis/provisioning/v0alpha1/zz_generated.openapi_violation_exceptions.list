@@ -6,6 +6,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provis
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ManagerStats,Stats
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositoryList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,Workflows
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositoryView,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositoryViewList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,TestResults,Errors

@@ -14,7 +14,7 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
-import { useCreateOrUpdateRepository } from '../hooks';
+import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 

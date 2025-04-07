@@ -163,11 +163,11 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, val := range all {
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:     val.ObjectMeta.Name,
-			Title:    val.Spec.Title,
-			Type:     val.Spec.Type,
-			ReadOnly: len(val.Spec.Workflows) == 0,
-			Target:   val.Spec.Sync.Target,
+			Name:      val.ObjectMeta.Name,
+			Title:     val.Spec.Title,
+			Type:      val.Spec.Type,
+			Target:    val.Spec.Sync.Target,
+			Workflows: val.Spec.Workflows,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
