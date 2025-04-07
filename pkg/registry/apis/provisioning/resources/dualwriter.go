@@ -146,56 +146,16 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 
 // CreateResource creates a new resource in the repository
 func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
-		return nil, err
-	}
-
-	info := &repository.FileInfo{
-		Data: data,
-		Path: path,
-		Ref:  ref,
-	}
-
-	parsed, err := r.parser.Parse(ctx, info)
-	if err != nil {
-		return nil, fmt.Errorf("parse file: %w", err)
-	}
-
-	data, err = parsed.ToSaveBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
-		return nil, fmt.Errorf("create resource in repository: %w", err)
-	}
-
-	// Directly update the grafana database
-	// Behaves the same running sync after writing
-	// FIXME: to make sure if behaves in the same way as in sync, we should
-	// we should refactor the code to use the same function.
-	if ref == "" {
-		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
-			return nil, fmt.Errorf("ensure folder path exists: %w", err)
-		}
-
-		if err := parsed.Run(ctx); err != nil {
-			return nil, fmt.Errorf("run resource: %w", err)
-		}
-	} else {
-		if err := parsed.DryRun(ctx); err != nil {
-			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
-			logger.Warn("failed to dry run resource on create", "error", err)
-			// Do not fail here as it's purely informational
-			parsed.Errors = append(parsed.Errors, err.Error())
-		}
-	}
-
-	return parsed, nil
+	return r.createOrUpdate(ctx, true, path, ref, message, data)
 }
 
 // UpdateResource updates a resource in the repository
 func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
+	return r.createOrUpdate(ctx, false, path, ref, message, data)
+}
+
+// UpdateResource updates a resource in the repository
+func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path string, ref string, message string, data []byte) (*ParsedResource, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
 	}
@@ -206,10 +166,21 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		Ref:  ref,
 	}
 
-	// TODO: improve parser to parse out of reader
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
 		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	// Make sure the value is valid
+	if err := parsed.DryRun(ctx); err != nil {
+		logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
+		logger.Warn("failed to dry run resource on create", "error", err)
+		// Do not fail here as it's purely informational
+		parsed.Errors = append(parsed.Errors, err.Error())
+	}
+
+	if len(parsed.Errors) > 0 {
+		return parsed, nil
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -217,28 +188,30 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	if err = r.repo.Update(ctx, path, ref, data, message); err != nil {
-		return nil, fmt.Errorf("update resource in repository: %w", err)
+	// Create or update
+	if create {
+		if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
+			return nil, fmt.Errorf("create resource in repository: %w", err)
+		}
+	} else {
+		if err := r.repo.Update(ctx, path, ref, data, message); err != nil {
+			return nil, fmt.Errorf("create resource in repository: %w", err)
+		}
 	}
 
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
-	if ref == "" {
+	if ref == "" && parsed.Client != nil {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		if err := parsed.Run(ctx); err != nil {
-			return nil, fmt.Errorf("run resource: %w", err)
-		}
-	} else {
-		if err := parsed.DryRun(ctx); err != nil {
-			// Do not fail here as it's purely informational
-			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
-			logger.Warn("failed to dry run resource on update", "error", err)
-			parsed.Errors = append(parsed.Errors, err.Error())
+		if parsed.Action == provisioning.ResourceActionCreate {
+			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+		} else if parsed.Action == provisioning.ResourceActionUpdate {
+			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 		}
 	}
 
