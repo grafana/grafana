@@ -65,6 +65,7 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
 const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
+const SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES: Array<SnapshotDto['status']> = ['PROCESSING', 'FINISHED'];
 
 const PAGE_SIZE = 50;
 
@@ -169,6 +170,7 @@ export const Page = () => {
   const showUploadSnapshot =
     !snapshot.isError && (status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status));
   const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
+  const showOnlyErrorsSwitch = SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES.includes(status);
 
   const error = getError({
     snapshot: snapshot.data,
@@ -234,6 +236,7 @@ export const Page = () => {
             showRebuildSnapshot={showRebuildSnapshot}
             onHighlightErrors={() => setShowErrors(!showErrors)}
             isHighlightErrors={showErrors}
+            showOnlyErrorsSwitch={showOnlyErrorsSwitch}
           />
         )}
 

@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, Space, Stack, Text } from '@grafana/ui';
+import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -26,6 +26,7 @@ interface MigrationSummaryProps {
 
   onHighlightErrors: () => void;
   isHighlightErrors: boolean;
+  showOnlyErrorsSwitch: boolean;
 }
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -53,6 +54,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
     isHighlightErrors,
     onHighlightErrors,
+    showOnlyErrorsSwitch,
   } = props;
 
   const totalCount = snapshot?.stats?.total ?? 0;
@@ -92,11 +94,13 @@ export function MigrationSummary(props: MigrationSummaryProps) {
         <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
           {errorCount}
           <Space h={5} layout="inline" />
-          <Checkbox
-            label={t('migrate-to-cloud.summary.show-errors', 'highlight errors')}
-            value={isHighlightErrors}
-            onChange={onHighlightErrors}
-          />
+          {showOnlyErrorsSwitch && (
+            <Switch
+              label={t('migrate-to-cloud.summary.show-errors', 'Only view errors')}
+              value={isHighlightErrors}
+              onChange={onHighlightErrors}
+            />
+          )}
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}>
