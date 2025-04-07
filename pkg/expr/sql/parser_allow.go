@@ -183,6 +183,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "variance", "var_pop":
 		return
+	case "group_concat":
+		return
+	case "row_number", "rank", "dense_rank", "lead", "lag":
+		return
+	case "first_value", "last_value":
+		return
 
 	// Mathematical functions
 	case "abs":

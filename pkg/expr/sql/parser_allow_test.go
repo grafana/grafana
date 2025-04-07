@@ -82,6 +82,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT '2024-04-01 15:30:00' BETWEEN '2024-04-01 15:29:00' AND '2024-04-01 15:31:00'`,
 			err:  nil,
 		},
+		{
+			name: "window functions",
+			q:    example_window_functions,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -332,3 +337,21 @@ SELECT
   JSON_INSERT('{"a": 1}', '$.b', 2) as json_insert_val,
   JSON_REPLACE('{"a": 1, "b": 2}', '$.b', 3) as json_replace_val
 FROM dual;`
+
+var example_window_functions = `
+WITH dummy_data AS (
+  SELECT 1 as val, 'apple' as txt
+  UNION ALL SELECT 2, 'banana'
+  UNION ALL SELECT 3, 'cherry'
+)
+SELECT 
+  val,
+  txt,
+  ROW_NUMBER() OVER (ORDER BY val) as row_num,
+  RANK() OVER (ORDER BY val) as rank_val,
+  DENSE_RANK() OVER (ORDER BY val) as dense_rank_val,
+  LEAD(val) OVER (ORDER BY val) as lead_val,
+  LAG(val) OVER (ORDER BY val) as lag_val,
+  FIRST_VALUE(val) OVER (ORDER BY val) as first_val,
+  LAST_VALUE(val) OVER (ORDER BY val ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_val
+FROM dummy_data;`
