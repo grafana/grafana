@@ -32,6 +32,10 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	if dbType == "sqlite3" {
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
+	// TODO: remove this when drone integration tests are removed
+	if dbType == "postgres" {
+		t.Skip("skipping - enable test when drone integration tests are removed")
+	}
 
 	_, cfg := db.InitTestDBWithCfg(t)
 	cfg.HTTPPort = "3001"
@@ -54,6 +58,11 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		if err != nil {
 			return false
 		}
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				t.Fatalf("failed to close response body: %v", err)
+			}
+		}()
 		return res.StatusCode == http.StatusOK
 	}, 10*time.Second, 1*time.Second)
 
@@ -77,7 +86,7 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 	require.NoError(t, err)
 
 	if dbType == "postgres" {
-		_, _ = s.NewKey("db_host", "postgres")
+		_, _ = s.NewKey("db_host", "localhost")
 		_, _ = s.NewKey("db_name", "grafanatest")
 		_, _ = s.NewKey("db_user", "grafanatest")
 		_, _ = s.NewKey("db_pass", "grafanatest")
