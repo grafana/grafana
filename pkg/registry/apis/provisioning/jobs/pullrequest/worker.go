@@ -54,6 +54,10 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.pr")
 	}
 
+	if options.Ref == "" {
+		return apierrors.NewBadRequest("missing spec.ref")
+	}
+
 	prRepo, ok := repo.(PullRequestRepo)
 	if !ok {
 		return fmt.Errorf("repository is not a github repository")
@@ -75,8 +79,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	progress.SetMessage(ctx, "listing pull request files")
 	base := cfg.GitHub.Branch
-	ref := options.Hash
-	files, err := prRepo.CompareFiles(ctx, base, ref)
+	files, err := prRepo.CompareFiles(ctx, base, options.Ref)
 	if err != nil {
 		return fmt.Errorf("failed to list pull request files: %s", err.Error())
 	}
@@ -104,12 +107,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return nil
 	}
 
-	fileInfo, err := prRepo.Read(ctx, f.Path, ref)
+	fileInfo, err := prRepo.Read(ctx, f.Path, options.Ref)
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
 	}
 
-	_, err = parser.Parse(ctx, fileInfo)
+	obj, err := parser.Parse(ctx, fileInfo)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 			progress.SetFinalMessage(ctx, "file changes is not valid resource")
@@ -119,13 +122,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		}
 	}
 
-	// Preview should be the branch name if provided, otherwise use the commit hash
-	previewRef := options.Ref
-	if previewRef == "" {
-		previewRef = ref
-	}
-
-	preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, previewRef, options.URL, cfg.GitHub.GenerateDashboardPreviews)
+	preview, err := c.previewer.Preview(ctx, obj, options.URL, cfg.GitHub.GenerateDashboardPreviews)
 	if err != nil {
 		return fmt.Errorf("generate preview: %w", err)
 	}

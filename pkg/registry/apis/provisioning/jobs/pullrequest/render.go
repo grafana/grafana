@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,14 +37,18 @@ func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
 	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore != nil && r.isPublic
 }
 
-func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {
-	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", repoName, path, ref)
+func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, namespace, repoName, req string) (string, error) {
+	u, err := url.Parse(req)
+	query := u.RawQuery
+	if query == "" {
+		query = "kiosk"
+	} else {
+		query += "&kiosk"
+	}
 
-	// TODO: why were we using a different context?
-	// renderContext := identity.WithRequester(context.Background(), r.id)
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
-			Path: url,
+			Path: strings.TrimLeft(u.Path, "/") + "?" + query, // exclude the HOST+port
 			AuthOpts: rendering.AuthOpts{
 				OrgID:   1, // TODO!!!, use the worker identity
 				UserID:  1,
