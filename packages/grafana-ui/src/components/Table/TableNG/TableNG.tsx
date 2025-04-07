@@ -26,7 +26,7 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { t, Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -423,7 +423,7 @@ export function TableNG(props: TableNGProps) {
     return (
       <>
         <MenuItem
-          label="Inspect value"
+          label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
           onClick={() => {
             setIsInspecting(true);
           }}
