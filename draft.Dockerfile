@@ -142,6 +142,29 @@ RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
+FROM ${ALPINE_IMAGE} as grafana-dirs
+
+ARG GF_UID
+ARG GF_GID
+ARG GF_PATHS_HOME
+ARG GF_PATHS_CONFIG
+ARG GF_PATHS_DATA
+ARG GF_PATHS_LOGS
+ARG GF_PATHS_PLUGINS
+ARG GF_PATHS_PROVISIONING
+
+WORKDIR ${GF_PATHS_HOME}
+
+RUN mkdir -p "/tmp/$GF_PATHS_HOME/.aws" && \
+    mkdir -p "/tmp/$GF_PATHS_PROVISIONING/datasources" \
+             "/tmp/$GF_PATHS_PROVISIONING/dashboards" \
+             "/tmp/$GF_PATHS_PROVISIONING/notifiers" \
+             "/tmp/$GF_PATHS_PROVISIONING/plugins" \
+             "/tmp/$GF_PATHS_PROVISIONING/access-control" \
+             "/tmp/$GF_PATHS_PROVISIONING/alerting" \
+             "/tmp/$GF_PATHS_LOGS" \
+             "/tmp/$GF_PATHS_PLUGINS" \
+             "/tmp/$GF_PATHS_DATA"
 
 # Create common base image containing Grafana files
 FROM scratch AS grafana-base
@@ -155,16 +178,9 @@ ARG GF_PATHS_LOGS
 ARG GF_PATHS_PLUGINS
 ARG GF_PATHS_PROVISIONING
 
-# Set environment variables
-ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
-    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
-    GF_PATHS_DATA="${GF_PATHS_DATA}" \
-    GF_PATHS_HOME="${GF_PATHS_HOME}" \
-    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
-    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
-    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
-
 WORKDIR ${GF_PATHS_HOME}
+
+COPY --from=grafana-dirs /tmp /
 
 # Copy configuration files from go-src
 COPY --from=go-src /tmp/grafana/conf ./conf
@@ -252,30 +268,21 @@ COPY --from=distroless-libs /lib64 /lib64
 # Copy Grafana files
 COPY --from=grafana-base / /
 
-WORKDIR ${GF_PATHS_HOME}
-
 # gclib-compat is only available on x86_64 arch
 RUN if [ ! `arch` = "x86_64" ]; then \
     rm -rf /lib64 && \
     rm -rf /usr/glibc-compat; \
     fi
 
+WORKDIR ${GF_PATHS_HOME}
+
 RUN if [ ! $(getent group "$GF_GID") ]; then \
   addgroup -S -g $GF_GID grafana; \
   fi && \
   GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-  mkdir -p "$GF_PATHS_HOME/.aws" && \
-  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
-  mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
-  "$GF_PATHS_PROVISIONING/dashboards" \
-  "$GF_PATHS_PROVISIONING/notifiers" \
-  "$GF_PATHS_PROVISIONING/plugins" \
-  "$GF_PATHS_PROVISIONING/access-control" \
-  "$GF_PATHS_PROVISIONING/alerting" \
-  "$GF_PATHS_LOGS" \
-  "$GF_PATHS_PLUGINS" \
-  "$GF_PATHS_DATA" && \
-  cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+  addduser -S -u $GF_UID -G "$GF_GID_NAME" grafana
+
+RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
   cp conf/ldap.toml /etc/grafana/ldap.toml && \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
@@ -324,18 +331,9 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
     addgroup --system --gid $GF_GID grafana;  \
     fi && \
     GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-    mkdir -p "$GF_PATHS_HOME/.aws" && \
-    useradd --system --uid $GF_UID --gid "$GF_GID_NAME" grafana && \
-    mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
-    "$GF_PATHS_PROVISIONING/dashboards" \
-    "$GF_PATHS_PROVISIONING/notifiers" \
-    "$GF_PATHS_PROVISIONING/plugins" \
-    "$GF_PATHS_PROVISIONING/access-control" \
-    "$GF_PATHS_PROVISIONING/alerting" \
-    "$GF_PATHS_LOGS" \
-    "$GF_PATHS_PLUGINS" \
-    "$GF_PATHS_DATA" && \
-    cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+    useradd --system --uid $GF_UID --gid "$GF_GID_NAME" grafana
+
+RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
     cp conf/ldap.toml /etc/grafana/ldap.toml && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
