@@ -154,7 +154,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	return r.createOrUpdate(ctx, false, path, ref, message, data)
 }
 
-// UpdateResource updates a resource in the repository
+// Create or updates a resource in the repository
 func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path string, ref string, message string, data []byte) (*ParsedResource, error) {
 	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
-	// Create or update
+	// Create or update (we could do write!)
 	if create {
 		if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
 			return nil, fmt.Errorf("create resource in repository: %w", err)
