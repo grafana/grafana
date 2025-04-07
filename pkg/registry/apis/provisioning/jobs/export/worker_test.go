@@ -71,7 +71,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 
 	r := NewExportWorker(nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "this repository does not support the write workflow")
+	require.EqualError(t, err, "this repository is read only")
 }
 func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 	job := v0alpha1.Job{
