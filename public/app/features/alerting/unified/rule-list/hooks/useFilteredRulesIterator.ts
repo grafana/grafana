@@ -1,6 +1,6 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError } from 'ix/asynciterable/operators';
+import { catchError, withAbort } from 'ix/asynciterable/operators';
 import { isEmpty } from 'lodash';
 
 import {
@@ -45,20 +45,32 @@ export interface PromRuleWithOrigin {
   origin: 'datasource';
 }
 
+interface GetIteratorResult {
+  iterator: AsyncIterableX<RuleWithOrigin>;
+  abortController: AbortController;
+}
+
 export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
-  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): AsyncIterableX<RuleWithOrigin> => {
+  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
+    /* this is the abort controller that allows us to stop an AsyncIterable */
+    const abortController = new AbortController();
+
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     // Create the generator for Grafana rules
-    const grafanaRulesGenerator = from(
-      filterGrafanaRules(grafanaGroupsGenerator(groupLimit), normalizedFilterState)
-    ).pipe(catchError(() => empty()));
+    const grafanaRulesGenerator = filterGrafanaRules(
+      from(grafanaGroupsGenerator(groupLimit)).pipe(
+        withAbort(abortController.signal),
+        catchError(() => empty())
+      ),
+      normalizedFilterState
+    );
 
     // Determine which data sources to use
     const externalRulesSourcesToFetchFrom = hasDataSourceFilterActive
@@ -67,21 +79,27 @@ export function useFilteredRulesIteratorProvider() {
 
     // If no data sources, just return Grafana rules
     if (isEmpty(externalRulesSourcesToFetchFrom)) {
-      return grafanaRulesGenerator;
+      return {
+        iterator: from(grafanaRulesGenerator),
+        abortController,
+      };
     }
 
     // Create a generator for each data source
     const dataSourceGenerators = externalRulesSourcesToFetchFrom.map((dataSourceIdentifier) => {
-      const dsGenerator = filterDataSourceRules(
-        prometheusGroupsGenerator(dataSourceIdentifier, groupLimit),
-        dataSourceIdentifier,
-        normalizedFilterState
+      const promGroupsGenerator = from(prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)).pipe(
+        withAbort(abortController.signal),
+        catchError(() => empty())
       );
-      return from(dsGenerator).pipe(catchError(() => empty()));
+
+      return filteredDataSourceRulesGenerator(promGroupsGenerator, dataSourceIdentifier, normalizedFilterState);
     });
 
     // Merge all generators
-    return merge(grafanaRulesGenerator, ...dataSourceGenerators);
+    return {
+      iterator: merge(grafanaRulesGenerator, ...dataSourceGenerators),
+      abortController,
+    };
   };
 
   return { getFilteredRulesIterator };
@@ -114,8 +132,8 @@ async function* filterGrafanaRules(
 /**
  * Flattens groups to rules and filters them
  */
-async function* filterDataSourceRules(
-  groupsGenerator: AsyncIterable<PromRuleGroupDTO[]>,
+async function* filteredDataSourceRulesGenerator(
+  groupsGenerator: AsyncIterableX<PromRuleGroupDTO[]>,
   dataSourceIdentifier: DataSourceRulesSourceIdentifier,
   filterState: RulesFilter
 ): AsyncGenerator<RuleWithOrigin, void, unknown> {

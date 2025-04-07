@@ -1,5 +1,5 @@
 import { AsyncIterableX, empty } from 'ix/asynciterable';
-import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
+import { catchError, take, tap } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
@@ -65,17 +65,13 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   // If not, we create it and store it in the iteration ref
   // Using getFilteredRulesIterator as init value for the useRef would call it on every render
   if (iteration.current === null) {
-    /* this is the abort controller that allows us to stop an AsyncIterable */
-    const abortController = new AbortController();
     /**
      * This an iterator that we can use to populate the search results.
      * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
      * callback function to detect when we've exhausted the source.
      * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-    const rulesIterator = getFilteredRulesIterator(filterState, API_PAGE_SIZE).pipe(
-      withAbort(abortController.signal),
-      onFinished(() => setDoneSearching(true))
-    );
+    const { iterator, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
+    const rulesIterator = iterator.pipe(onFinished(() => setDoneSearching(true)));
     iteration.current = { rulesIterator, abortController };
   }
   const [rules, setRules] = useState<KeyedRuleWithOrigin[]>([]);
@@ -90,7 +86,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
         return;
       }
 
-      for await (const rule of rulesIterator.pipe(
+      const pageIterator = rulesIterator.pipe(
         // grab <FRONTENT_PAGE_SIZE> from the rules iterable
         take(FRONTENT_PAGE_SIZE),
         // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
@@ -98,7 +94,9 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           logError(error);
           return empty();
         })
-      )) {
+      );
+
+      for await (const rule of pageIterator) {
         startTransition(() => {
           // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
           // It's a not trivial computation because it involves hashing the rule
