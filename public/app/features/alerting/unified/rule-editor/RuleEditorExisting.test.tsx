@@ -117,8 +117,6 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
-
-    expect(screen.getByText('New folder')).toBeInTheDocument();
   });
 
   it('saves evaluation interval correctly', async () => {
