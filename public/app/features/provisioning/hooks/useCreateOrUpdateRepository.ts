@@ -3,15 +3,28 @@ import { useCallback } from 'react';
 import {
   RepositorySpec,
   useCreateRepositoryMutation,
+  useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
+  const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    (data: RepositorySpec) => {
+    async (data: RepositorySpec) => {
+      // First test the config and wait for the result
+      // unwrap will throw an error if the test fails
+      await testConfig({
+        // HACK: we need to provide a name to the test configuration
+        name: name || 'new',
+        body: {
+          spec: data,
+        },
+      }).unwrap();
+
+      // If test passes, proceed with create/update
       if (name) {
         return update({
           name,
@@ -28,10 +41,10 @@ export function useCreateOrUpdateRepository(name?: string) {
       }
       return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
     },
-    [create, name, update]
+    [create, name, update, testConfig]
   );
 
-  return [updateOrCreate, name ? updateRequest : createRequest] as const;
+  return [updateOrCreate, name ? updateRequest : createRequest, testRequest] as const;
 }
 
 const generateRepositoryMetadata = (data: RepositorySpec) => {

@@ -1,23 +1,17 @@
 import { config } from '@grafana/runtime';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
-import { useGetResourceRepository } from './useGetResourceRepository';
+import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
 export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
   const params = new URLSearchParams(window.location.search);
-  const folderUid = params.get('folderUid') || undefined;
+  const folderName = params.get('folderUid') || undefined;
 
-  const folderRepository = useGetResourceRepository({ folderUid });
-  const { data } = useGetFrontendSettingsQuery();
+  const { repository, isInstanceManaged } = useGetResourceRepositoryView({ folderName });
 
   if (!config.featureToggles.provisioning) {
     return false;
   }
-  return (
-    dashboard.isManagedRepository() ||
-    Boolean(folderRepository) ||
-    Boolean(data?.items.some((item) => item.target === 'instance'))
-  );
+  return dashboard.isManagedRepository() || Boolean(repository) || isInstanceManaged;
 }

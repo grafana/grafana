@@ -17,7 +17,8 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
@@ -28,6 +29,7 @@ import { reportPanelInspectInteraction } from 'app/features/search/page/reportin
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -150,6 +152,11 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return false;
     }
 
+    // V2 dashboard panels are not editable from the inspect
+    if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+      return false;
+    }
+
     // Only support normal grid items for now and not repeated items
     if (panel.parent instanceof DashboardGridItem && panel.parent.isRepeated()) {
       return false;
@@ -177,7 +184,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
           </Field>
           {model.isEditable() && (
             <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
-              Apply
+              <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
             </Button>
           )}
         </div>
@@ -218,8 +225,13 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
         break;
       }
 
-      if (gridItem instanceof DashboardGridItem) {
-        objToStringify = gridItemToPanel(gridItem);
+      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+        objToStringify = vizPanelToSchemaV2(panel);
+        break;
+      } else {
+        if (gridItem instanceof DashboardGridItem) {
+          objToStringify = gridItemToPanel(gridItem);
+        }
       }
 
       break;

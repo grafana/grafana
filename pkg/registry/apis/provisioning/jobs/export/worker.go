@@ -7,29 +7,30 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 type ExportWorker struct {
 	// required to create clients
-	clientFactory *resources.ClientFactory
+	clientFactory resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
 }
 
-func NewExportWorker(clientFactory *resources.ClientFactory,
+func NewExportWorker(
+	clientFactory resources.ClientFactory,
 	storageStatus dualwrite.Service,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory,
@@ -129,14 +130,19 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, nil)
-	for _, kind := range resources.SupportedResources {
-		// skip from folders as we do them first
+	for _, kind := range resources.SupportedProvisioningResources {
+		// skip from folders as we do them first... so only dashboards
 		if kind == resources.FolderResource {
 			continue
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := clients.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		client, _, err := clients.ForResource(kind)
+		if err != nil {
+			return err
+		}
+
+		if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 			result := jobs.JobResourceResult{
 				Name:     item.GetName(),
 				Resource: kind.Resource,
@@ -145,9 +151,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}
 
 			fileName, err := resourceManager.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-				Path:       options.Path,
-				Ref:        options.Branch,
-				Identifier: options.Identifier,
+				Path: options.Path,
+				Ref:  options.Branch,
 			})
 			if errors.Is(err, resources.ErrAlreadyInRepository) {
 				result.Action = repository.FileActionIgnored

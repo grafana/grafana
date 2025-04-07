@@ -17,6 +17,7 @@ import {
   parseLiveChannelAddress,
   ScopedVars,
   AdHocVariableFilter,
+  CoreApp,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
@@ -195,18 +196,23 @@ class DataSourceWithBackend<
       to: range?.to.valueOf().toString(),
     };
 
-    if (config.featureToggles.queryOverLive) {
-      return getGrafanaLiveSrv().getQueryData({
-        request,
-        body,
-      });
-    }
-
     const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
     let url = '/api/ds/query?ds_type=' + this.type;
+
+    // Use the new query service for explore
+    if (config.featureToggles.queryServiceFromExplore && request.app === CoreApp.Explore) {
+      // make sure query-service is enabled on the backend
+      const isQueryServiceEnabled = config.featureToggles.queryService;
+      const isExperimentalAPIsEnabled = config.featureToggles.grafanaAPIServerWithExperimentalAPIs;
+      if (!isQueryServiceEnabled && !isExperimentalAPIsEnabled) {
+        console.warn('feature toggle queryServiceFromExplore also requires the queryService to be running');
+      } else {
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      }
+    }
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {

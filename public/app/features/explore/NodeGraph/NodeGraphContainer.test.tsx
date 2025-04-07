@@ -1,8 +1,43 @@
 import { render, screen } from '@testing-library/react';
 
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
+import { NodeDatum } from 'app/plugins/panel/nodeGraph/types';
 
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
+
+jest.mock('../../../plugins/panel/nodeGraph/createLayoutWorker', () => {
+  const createMockWorker = () => {
+    const onmessage = jest.fn();
+    const postMessage = jest.fn();
+    const terminate = jest.fn();
+
+    const worker = {
+      onmessage: onmessage,
+      postMessage: postMessage,
+      terminate: terminate,
+    };
+
+    postMessage.mockImplementation((data) => {
+      if (worker.onmessage) {
+        const event = {
+          data: {
+            nodes: (data.nodes || []).map((n: NodeDatum) => ({ ...n, x: 0, y: 0 })),
+            edges: data.edges || [],
+          },
+        };
+        setTimeout(() => worker.onmessage(event), 0);
+      }
+    });
+
+    return worker;
+  };
+
+  return {
+    __esModule: true,
+    createWorker: createMockWorker,
+    createMsaglWorker: createMockWorker,
+  };
+});
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {

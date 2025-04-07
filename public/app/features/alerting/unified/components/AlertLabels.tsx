@@ -33,7 +33,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
   return (
-    <div className={styles.wrapper} role="list" aria-label="Labels">
+    <div className={styles.wrapper} role="list" aria-label={t('alerting.alert-labels.aria-label-labels', 'Labels')}>
       {labelsToShow.map(([label, value]) => {
         return (
           <Label
