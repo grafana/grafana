@@ -32,9 +32,9 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
 	// TODO - fix this test for postgres
-	if dbType == "postgres" {
-		t.Skip("skipping - test not working with postgres in Drone. Works locally.")
-	}
+	// if dbType == "postgres" {
+	// 	t.Skip("skipping - test not working with postgres in Drone. Works locally.")
+	// }
 
 	_, cfg := db.InitTestDBWithCfg(t)
 	cfg.HTTPPort = "3001"
@@ -59,7 +59,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		}
 		defer res.Body.Close()
 		return res.StatusCode == http.StatusOK
-	}, 10*time.Second, 200*time.Millisecond)
+	}, 10*time.Second, 1*time.Second)
 
 	err = ms.Shutdown(context.Background(), "test over")
 	require.NoError(t, err)
