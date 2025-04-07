@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1
 
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
@@ -143,39 +143,6 @@ FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
 
-FROM alpine:3.20 as grafana-dirs
-
-ARG GF_UID
-ARG GF_GID
-ARG GF_PATHS_HOME
-ARG GF_PATHS_CONFIG
-ARG GF_PATHS_DATA
-ARG GF_PATHS_LOGS
-ARG GF_PATHS_PLUGINS
-ARG GF_PATHS_PROVISIONING
-
-# Set environment variables
-ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
-    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
-    GF_PATHS_DATA="${GF_PATHS_DATA}" \
-    GF_PATHS_HOME="${GF_PATHS_HOME}" \
-    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
-    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
-    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
-
-
-# --mount is a BuildKit feature, build has to be executed with DOCKER_BUILDKIT=1
-RUN mkdir -p "/tmp/$GF_PATHS_HOME/.aws" && \
-    mkdir -p "/tmp/$GF_PATHS_PROVISIONING/datasources" \
-             "/tmp/$GF_PATHS_PROVISIONING/dashboards" \
-             "/tmp/$GF_PATHS_PROVISIONING/notifiers" \
-             "/tmp/$GF_PATHS_PROVISIONING/plugins" \
-             "/tmp/$GF_PATHS_PROVISIONING/access-control" \
-             "/tmp/$GF_PATHS_PROVISIONING/alerting" \
-             "/tmp/$GF_PATHS_LOGS" \
-             "/tmp/$GF_PATHS_PLUGINS" \
-             "/tmp/$GF_PATHS_DATA"
-
 # Create common base image containing Grafana files
 FROM scratch AS grafana-base
 
@@ -200,29 +167,17 @@ ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
 WORKDIR ${GF_PATHS_HOME}
 
 # Copy configuration files from go-src
-COPY --from=go-src  /tmp/grafana/conf ./conf
-COPY --from=go-src  /tmp/grafana/conf/sample.ini $GF_PATHS_CONFIG
-COPY --from=go-src  /tmp/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+COPY --from=go-src /tmp/grafana/conf ./conf
 
 # Copy binaries and assets
-COPY --from=go-src  /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-
-COPY --from=grafana-dirs /tmp /
+COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/LICENSE ./
 
 ARG RUN_SH=./packaging/docker/run.sh
 COPY ${RUN_SH} /run.sh
 
-FROM scratch as grafana-front
-
-ARG GF_PATHS_HOME
-# Set environment variables
-ENV GF_PATHS_HOME="${GF_PATHS_HOME}"
-
-WORKDIR ${GF_PATHS_HOME}
-COPY --from=js-src  /tmp/grafana/public ./public
-COPY --from=js-src  /tmp/grafana/LICENSE .
-
-#/ Prepare libs required by Grafana on distroless image
+# Prepare libs required by Grafana on distroless image
 FROM alpine:latest AS distroless-libs
 
 # Install bash, glibc, and musl
@@ -276,24 +231,28 @@ ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
     GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
 
 # Copy sh and common utils
-COPY --from=distroless-libs  /bin/chmod /bin/chmod
-COPY --from=distroless-libs  /bin/grep /bin/grep
-COPY --from=distroless-libs  /bin/chown /bin/chown
-COPY --from=distroless-libs  /bin/mkdir /bin/mkdir
-COPY --from=distroless-libs  /bin/sh /bin/sh
-COPY --from=distroless-libs  /bin/cp /bin/cp
-COPY --from=distroless-libs  /bin/ls /bin/ls
-COPY --from=distroless-libs  /usr/bin/cut /usr/bin/cut
-COPY --from=distroless-libs  /usr/bin/getent /usr/bin/getent
-COPY --from=distroless-libs  /usr/sbin/adduser /sbin/adduser
-COPY --from=distroless-libs  /usr/sbin/addgroup /sbin/addgroup
+COPY --from=distroless-libs /bin/chmod /bin/chmod
+COPY --from=distroless-libs /bin/grep /bin/grep
+COPY --from=distroless-libs /bin/chown /bin/chown
+COPY --from=distroless-libs /bin/mkdir /bin/mkdir
+COPY --from=distroless-libs /bin/sh /bin/sh
+COPY --from=distroless-libs /bin/cp /bin/cp
+COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
+COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
+COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
+COPY --from=distroless-libs /usr/sbin/addgroup /sbin/addgroup
 
-COPY --from=distroless-libs  /usr/lib/* /usr/lib/
-COPY --from=distroless-libs  /lib/* /lib/
+COPY --from=distroless-libs /usr/lib/* /usr/lib/
+COPY --from=distroless-libs /lib/* /lib/
 
 # Copy gclib-commpat
-COPY --from=distroless-libs  /usr/glibc-compat /usr/glibc-compat
-COPY --from=distroless-libs  /lib64 /lib64
+COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
+COPY --from=distroless-libs /lib64 /lib64
+
+# Copy Grafana files
+COPY --from=grafana-base / /
+
+WORKDIR ${GF_PATHS_HOME}
 
 # gclib-compat is only available on x86_64 arch
 RUN if [ ! `arch` = "x86_64" ]; then \
@@ -301,18 +260,29 @@ RUN if [ ! `arch` = "x86_64" ]; then \
     rm -rf /usr/glibc-compat; \
     fi
 
-# Copy Grafana files
-COPY --from=grafana-base --chmod=777 / /
-COPY --from=grafana-front --chmod=755 / /
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+  addgroup -S -g $GF_GID grafana; \
+  fi && \
+  GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+  mkdir -p "$GF_PATHS_HOME/.aws" && \
+  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
+  mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
+  "$GF_PATHS_PROVISIONING/dashboards" \
+  "$GF_PATHS_PROVISIONING/notifiers" \
+  "$GF_PATHS_PROVISIONING/plugins" \
+  "$GF_PATHS_PROVISIONING/access-control" \
+  "$GF_PATHS_PROVISIONING/alerting" \
+  "$GF_PATHS_LOGS" \
+  "$GF_PATHS_PLUGINS" \
+  "$GF_PATHS_DATA" && \
+  cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+  cp conf/ldap.toml /etc/grafana/ldap.toml && \
+  chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-WORKDIR ${GF_PATHS_HOME}
-
-RUN GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-    adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana
-
-USER "$GF_UID"
 EXPOSE 3000
 
+USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
 
 # Build ubuntu-based image
@@ -339,19 +309,36 @@ ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
     GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
 
 # Copy Grafana files
-COPY --chmod=755 --from=grafana-base  / /
+COPY --from=grafana-base / /
 
 WORKDIR ${GF_PATHS_HOME}
 
 # Install required packages
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get install -y ca-certificates musl && \
+    apt-get install -y ca-certificates curl musl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-RUN GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-    useradd --system --uid $GF_UID --gid "$GF_GID_NAME" grafana
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+    addgroup --system --gid $GF_GID grafana;  \
+    fi && \
+    GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    mkdir -p "$GF_PATHS_HOME/.aws" && \
+    useradd --system --uid $GF_UID --gid "$GF_GID_NAME" grafana && \
+    mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
+    "$GF_PATHS_PROVISIONING/dashboards" \
+    "$GF_PATHS_PROVISIONING/notifiers" \
+    "$GF_PATHS_PROVISIONING/plugins" \
+    "$GF_PATHS_PROVISIONING/access-control" \
+    "$GF_PATHS_PROVISIONING/alerting" \
+    "$GF_PATHS_LOGS" \
+    "$GF_PATHS_PLUGINS" \
+    "$GF_PATHS_DATA" && \
+    cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+    cp conf/ldap.toml /etc/grafana/ldap.toml && \
+    chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
 EXPOSE 3000
 
