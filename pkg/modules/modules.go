@@ -101,12 +101,7 @@ func (m *service) Run(ctx context.Context) error {
 	}
 
 	stopCtx := context.Background()
-	errChan := make(chan error, 1)
-	go func() {
-		errChan <- m.serviceManager.AwaitStopped(stopCtx)
-	}()
-
-	if err = <-errChan; err != nil {
+	if err = m.serviceManager.AwaitStopped(stopCtx); err != nil {
 		m.log.Error("Failed to stop module service manager", "error", err)
 		return err
 	}
