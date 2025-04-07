@@ -15,6 +15,8 @@ import (
 
 // Store is an abstraction for the storage API.
 // This exists to allow for unit testing.
+//
+//go:generate mockery --name Store --structname MockStore --inpackage --filename store_mock.go --with-expecter
 type Store interface {
 	// Claim takes a job from storage, marks it as ours, and returns it.
 	//
@@ -58,6 +60,9 @@ type jobDriver struct {
 	// RepoGetter lets us access repositories to pass to the worker.
 	repoGetter RepoGetter
 
+	// save info about finished jobs
+	historicJobs History
+
 	// Workers process the job.
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
@@ -67,6 +72,7 @@ func NewJobDriver(
 	timeout, cleanupInterval, jobInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
+	historicJobs History,
 	workers ...Worker,
 ) *jobDriver {
 	return &jobDriver{
@@ -75,6 +81,7 @@ func NewJobDriver(
 		jobInterval:     jobInterval,
 		store:           store,
 		repoGetter:      repoGetter,
+		historicJobs:    historicJobs,
 		workers:         workers,
 	}
 }
@@ -168,6 +175,15 @@ func (d *jobDriver) drive(ctx context.Context) error {
 	job.Status.Finished = end.UnixMilli()
 	if !job.Status.State.Finished() {
 		job.Status.State = provisioning.JobStateSuccess // no error
+	}
+
+	// Save the finished job
+	err = d.historicJobs.WriteJob(ctx, job.DeepCopy())
+	if err != nil {
+		// We're not going to return this as it is not critical. Not ideal, but not critical.
+		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
+	} else {
+		logger.Debug("created historic job", "historic_job", *job)
 	}
 
 	// Mark the job as completed.

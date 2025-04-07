@@ -11135,9 +11135,15 @@
           "email": {
             "type": "string"
           },
+          "externalUID": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "isProvisioned": {
+            "type": "boolean"
           },
           "memberCount": {
             "format": "int64",
@@ -17179,91 +17185,6 @@
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "tags": [
           "dashboard_versions"
-        ]
-      }
-    },
-    "/dashboards/uid/{uid}/trash": {
-      "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).",
-        "operationId": "hardDeleteDashboardByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/deleteDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Hard delete dashboard by uid.",
-        "tags": [
-          "dashboards"
-        ]
-      },
-      "patch": {
-        "operationId": "restoreDeletedDashboardByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestoreDeletedDashboardCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/postDashboardResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Restore a dashboard to a given dashboard version using UID.",
-        "tags": [
-          "dashboards"
         ]
       }
     },

@@ -91,6 +91,7 @@ type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
+	afterEval   func()
 }
 
 func (e *Evaluation) Fingerprint() fingerprint {

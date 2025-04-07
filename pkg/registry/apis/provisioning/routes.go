@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -19,7 +20,7 @@ import (
 
 // TODO: Move the specific logic to the connector so that we don't have logic all over the place.
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
-func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -162,11 +163,11 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, val := range all {
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:     val.ObjectMeta.Name,
-			Title:    val.Spec.Title,
-			Type:     val.Spec.Type,
-			ReadOnly: len(val.Spec.Workflows) == 0,
-			Target:   val.Spec.Sync.Target,
+			Name:      val.ObjectMeta.Name,
+			Title:     val.Spec.Title,
+			Type:      val.Spec.Type,
+			Target:    val.Spec.Sync.Target,
+			Workflows: val.Spec.Workflows,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
