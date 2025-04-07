@@ -287,8 +287,8 @@ export const LogListControls = ({ eventBus }: Props) => {
               onClick={onSetPrettifyJSONClick}
               tooltip={
                 prettifyJSON
-                  ? t('logs.logs-controls.disable-prettify-json', 'Show original logs')
-                  : t('logs.logs-controls.prettify-json', 'Prettify JSON')
+                  ? t('logs.logs-controls.disable-prettify-json', 'Collapse JSON logs')
+                  : t('logs.logs-controls.prettify-json', 'Expand JSON logs')
               }
               size="lg"
             />
