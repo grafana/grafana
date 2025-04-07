@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"testing"
@@ -31,10 +32,6 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	if dbType == "sqlite3" {
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
-	// TODO - fix this test for postgres
-	// if dbType == "postgres" {
-	// 	t.Skip("skipping - test not working with postgres in Drone. Works locally.")
-	// }
 
 	_, cfg := db.InitTestDBWithCfg(t)
 	cfg.HTTPPort = "3001"
@@ -57,7 +54,6 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		if err != nil {
 			return false
 		}
-		defer res.Body.Close()
 		return res.StatusCode == http.StatusOK
 	}, 10*time.Second, 1*time.Second)
 
@@ -66,7 +62,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	select {
 	case err := <-errChan:
-		if err != nil && err != context.Canceled {
+		if err != nil && errors.Is(err, context.Canceled) {
 			t.Fatalf("unexpected error from module server: %v", err)
 		}
 	case <-time.After(10 * time.Second):
@@ -81,7 +77,7 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 	require.NoError(t, err)
 
 	if dbType == "postgres" {
-		_, _ = s.NewKey("db_host", "localhost")
+		_, _ = s.NewKey("db_host", "postgres")
 		_, _ = s.NewKey("db_name", "grafanatest")
 		_, _ = s.NewKey("db_user", "grafanatest")
 		_, _ = s.NewKey("db_pass", "grafanatest")
