@@ -40,6 +40,7 @@ export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerP
           legendItems={[
             { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
             { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
+            { label: 'Recovering', color: theme.colors.warning.main, yAxis: 1 },
             { label: 'Firing', color: theme.colors.error.main, yAxis: 1 },
             { label: 'No Data', color: theme.colors.info.main, yAxis: 1 },
             { label: 'Mixed', color: theme.colors.text.secondary, yAxis: 1 },

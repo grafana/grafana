@@ -58,7 +58,7 @@ type RepositoryController struct {
 	resourceLister resources.ResourceLister
 	repoLister     listers.RepositoryLister
 	repoSynced     cache.InformerSynced
-	parsers        *resources.ParserFactory
+	parsers        resources.ParserFactory
 	logger         logging.Logger
 	secrets        secrets.Service
 	dualwrite      dualwrite.Service
@@ -83,7 +83,8 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
 	resourceLister resources.ResourceLister,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
+	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
 	secrets secrets.Service,
@@ -104,7 +105,7 @@ func NewRepositoryController(
 		parsers:    parsers,
 		finalizer: &finalizer{
 			lister:        resourceLister,
-			clientFactory: parsers.ClientFactory,
+			clientFactory: clients,
 		},
 		tester:    tester,
 		jobs:      jobs,

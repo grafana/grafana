@@ -15,8 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -25,7 +23,9 @@ import (
 
 type MigrationWorker struct {
 	// temporary... while we still do an import
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
+
+	clients resources.ClientFactory
 
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
@@ -37,22 +37,24 @@ type MigrationWorker struct {
 	bulk resource.BulkStoreClient
 
 	// Delegate the export to the export worker
-	exportWorker *export.ExportWorker
+	exportWorker jobs.Worker
 
 	// Delegate the import to sync worker
-	syncWorker *sync.SyncWorker
+	syncWorker jobs.Worker
 }
 
 func NewMigrationWorker(
 	legacyMigrator legacy.LegacyMigrator,
-	parsers *resources.ParserFactory, // should not be necessary!
+	parsers resources.ParserFactory, // should not be necessary!
+	clients resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	batch resource.BulkStoreClient,
-	exportWorker *export.ExportWorker,
-	syncWorker *sync.SyncWorker,
+	exportWorker jobs.Worker,
+	syncWorker jobs.Worker,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		parsers,
+		clients,
 		storageStatus,
 		legacyMigrator,
 		batch,
@@ -82,15 +84,20 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
-		return w.migrateFromLegacy(ctx, rw, parser, *options, progress)
+	clients, err := w.clients.Clients(ctx, rw.Config().Namespace)
+	if err != nil {
+		return fmt.Errorf("error getting clients: %w", err)
 	}
 
-	return w.migrateFromAPIServer(ctx, rw, parser, *options, progress)
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
+		return w.migrateFromLegacy(ctx, rw, parser, clients, *options, progress)
+	}
+
+	return w.migrateFromAPIServer(ctx, rw, clients, *options, progress)
 }
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
-func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser resources.Parser, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	var (
 		err   error
 		clone repository.ClonedRepository
@@ -128,7 +135,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	var userInfo map[string]repository.CommitSignature
 	if options.History {
 		progress.SetMessage(ctx, "loading users")
-		userInfo, err = loadUsers(ctx, parser)
+		userInfo, err = loadUsers(ctx, clients)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
 		}
@@ -141,7 +148,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		return fmt.Errorf("error loading folder tree: %w", err)
 	}
 
-	folderClient, err := parser.Clients().Folder()
+	folderClient, err := clients.Folder()
 	if err != nil {
 		return fmt.Errorf("error getting folder client: %w", err)
 	}
@@ -170,7 +177,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "exporting legacy resources")
-	resourceManager := resources.NewResourcesManager(rw, folders, parser, parser.Clients(), userInfo)
+	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, userInfo)
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
 			continue
@@ -230,7 +237,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 }
 
 // migrateFromAPIServer will export the resources from unified storage and import them into the target repository
-func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, parser *resources.Parser, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "exporting unified storage resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -259,7 +266,7 @@ func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo reposit
 
 	for _, kind := range resources.SupportedProvisioningResources {
 		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s", kind.Resource))
-		client, _, err := parser.Clients().ForResource(kind)
+		client, _, err := clients.ForResource(kind)
 		if err != nil {
 			return err
 		}
