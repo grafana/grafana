@@ -35,7 +35,6 @@ var passthroughErrors = []error{
 	plugins.ErrPluginUnavailable,
 	plugins.ErrMethodNotImplemented,
 	plugins.ErrPluginGrpcResourceExhaustedBase,
-	plugins.ErrPluginGrpcConnectionUnavailableBase,
 }
 
 type Service struct {
@@ -64,6 +63,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if errors.Is(err, e) {
 				return nil, err
 			}
+		}
+
+		// If the error is a plugin grpc connection unavailable error, return it directly
+		// This error is created dynamically based on the context, so we need to check for it here
+		if errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
+			return nil, err
 		}
 
 		if errors.Is(err, context.Canceled) {

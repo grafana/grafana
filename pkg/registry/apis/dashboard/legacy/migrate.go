@@ -35,6 +35,8 @@ type MigrateOptions struct {
 }
 
 // Read from legacy and write into unified storage
+//
+//go:generate mockery --name LegacyMigrator --structname MockLegacyMigrator --inpackage --filename legacy_migrator_mock.go --with-expecter
 type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BulkResponse, error)
 }
@@ -45,7 +47,7 @@ func ProvideLegacyMigrator(
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false, sort.ProvideService())
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, sort.ProvideService())
 }
 
 type BlobStoreInfo struct {

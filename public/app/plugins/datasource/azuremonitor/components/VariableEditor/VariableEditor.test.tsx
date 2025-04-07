@@ -22,10 +22,18 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
+
 const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
 const getResourceNames = jest.fn().mockResolvedValue([
   {
@@ -103,10 +111,10 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...defaultProps} onChange={onChange} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
-      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      await userEvent.type(screen.getByTestId('mockeditor'), '2');
       expect(onChange).toHaveBeenCalledWith({
         azureLogAnalytics: {
-          query: 'test quer',
+          query: 'test query2',
         },
         queryType: 'Azure Log Analytics',
         refId: 'A',

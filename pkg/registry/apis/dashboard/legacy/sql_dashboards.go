@@ -57,7 +57,6 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
-	softDelete            bool
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
@@ -69,7 +68,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
-	softDelete bool,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -78,7 +76,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		namespacer:            namespacer,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
-		softDelete:            softDelete,
 		dashboardSearchClient: *dashboardSearchClient,
 	}
 }
@@ -367,16 +364,6 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return nil, false, err
 	}
 
-	if a.softDelete {
-		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
-		if err == nil && dash != nil {
-			now := metav1.NewTime(time.Now())
-			dash.DeletionTimestamp = &now
-			return dash, true, err
-		}
-		return dash, false, err
-	}
-
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 		OrgID: orgId,
 		UID:   uid,
@@ -441,7 +428,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}, created, nil
 }
 
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard, failOnExisting bool) (*dashboard.Dashboard, bool, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, false, fmt.Errorf("no user found in context")
@@ -450,6 +437,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	cmd, created, err := a.buildSaveDashboardCommand(ctx, orgId, dash)
 	if err != nil {
 		return nil, created, err
+	}
+	if failOnExisting && !created {
+		return nil, created, dashboards.ErrDashboardWithSameUIDExists
 	}
 
 	out, err := a.dashStore.SaveDashboard(ctx, *cmd)

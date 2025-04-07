@@ -10,6 +10,7 @@ INSERT INTO {{ .Ident "resource_history" }}
         {{ .Ident "resource_version" }},
         {{ end }}
         {{ .Ident "previous_resource_version"}},
+        {{ .Ident "generation"}},
         {{ .Ident "value" }},
         {{ .Ident "action" }}
     )
@@ -25,6 +26,7 @@ INSERT INTO {{ .Ident "resource_history" }}
         {{ .Arg .ResourceVersion }},
         {{ end }}
         {{ .Arg .WriteEvent.PreviousRV }},
+        {{ .Arg .Generation }},
         {{ .Arg .WriteEvent.Value }},
         {{ .Arg .WriteEvent.Type }}
     )

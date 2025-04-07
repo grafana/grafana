@@ -16,7 +16,7 @@ export interface DashboardV2Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -738,7 +738,7 @@ export interface RowsLayoutRowSpec {
 	fillScreen?: boolean;
 	repeat?: RowRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -756,11 +756,13 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 });
 
 export interface ConditionalRenderingGroupSpec {
+	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	visibility: "show",
 	condition: "and",
 	items: [],
 });
@@ -805,45 +807,45 @@ export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataS
 	value: false,
 });
 
-export interface ConditionalRenderingTimeIntervalKind {
-	kind: "ConditionalRenderingTimeInterval";
-	spec: ConditionalRenderingTimeIntervalSpec;
+export interface ConditionalRenderingTimeRangeSizeKind {
+	kind: "ConditionalRenderingTimeRangeSize";
+	spec: ConditionalRenderingTimeRangeSizeSpec;
 }
 
-export const defaultConditionalRenderingTimeIntervalKind = (): ConditionalRenderingTimeIntervalKind => ({
-	kind: "ConditionalRenderingTimeInterval",
-	spec: defaultConditionalRenderingTimeIntervalSpec(),
+export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
+	kind: "ConditionalRenderingTimeRangeSize",
+	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
 });
 
-export interface ConditionalRenderingTimeIntervalSpec {
+export interface ConditionalRenderingTimeRangeSizeSpec {
 	value: string;
 }
 
-export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRenderingTimeIntervalSpec => ({
+export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
 });
 
-export interface ResponsiveGridLayoutKind {
-	kind: "ResponsiveGridLayout";
-	spec: ResponsiveGridLayoutSpec;
+export interface AutoGridLayoutKind {
+	kind: "AutoGridLayout";
+	spec: AutoGridLayoutSpec;
 }
 
-export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
-	kind: "ResponsiveGridLayout",
-	spec: defaultResponsiveGridLayoutSpec(),
+export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
+	kind: "AutoGridLayout",
+	spec: defaultAutoGridLayoutSpec(),
 });
 
-export interface ResponsiveGridLayoutSpec {
+export interface AutoGridLayoutSpec {
 	maxColumnCount?: number;
 	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
 	columnWidth?: number;
 	rowHeightMode: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
 	fillScreen?: boolean;
-	items: ResponsiveGridLayoutItemKind[];
+	items: AutoGridLayoutItemKind[];
 }
 
-export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	maxColumnCount: 3,
 	columnWidthMode: "standard",
 	rowHeightMode: "standard",
@@ -851,32 +853,32 @@ export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => (
 	items: [],
 });
 
-export interface ResponsiveGridLayoutItemKind {
-	kind: "ResponsiveGridLayoutItem";
-	spec: ResponsiveGridLayoutItemSpec;
+export interface AutoGridLayoutItemKind {
+	kind: "AutoGridLayoutItem";
+	spec: AutoGridLayoutItemSpec;
 }
 
-export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
-	kind: "ResponsiveGridLayoutItem",
-	spec: defaultResponsiveGridLayoutItemSpec(),
+export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
+	kind: "AutoGridLayoutItem",
+	spec: defaultAutoGridLayoutItemSpec(),
 });
 
-export interface ResponsiveGridLayoutItemSpec {
+export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
-	repeat?: ResponsiveGridRepeatOptions;
+	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
-export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 	element: defaultElementReference(),
 });
 
-export interface ResponsiveGridRepeatOptions {
+export interface AutoGridRepeatOptions {
 	mode: "variable";
 	value: string;
 }
 
-export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -911,7 +913,8 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 
 export interface TabsLayoutTabSpec {
 	title?: string;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({

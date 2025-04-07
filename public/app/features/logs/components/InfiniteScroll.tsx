@@ -211,7 +211,7 @@ const styles = {
 
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
-    End of the selected time range.
+    <Trans i18nKey="logs.out-of-range-message.end-of-the-selected-time-range">End of the selected time range.</Trans>
   </div>
 );
 

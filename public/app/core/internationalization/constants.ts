@@ -1,8 +1,7 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-import { UNTRANSLATED_LANGUAGES, TRANSLATED_LANGUAGES } from '@grafana/data/unstable';
-import { config } from '@grafana/runtime';
+import { LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/data/unstable';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
 
@@ -19,20 +18,10 @@ export interface LanguageDefinition<Namespace extends string = string> {
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
-// New languages added recently without translations available yet
-const NEW_LANGUAGES: LanguageDefinition[] = UNTRANSLATED_LANGUAGES.map((def) => ({
+export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => ({
   ...def,
   loader: { grafana: () => import(`../../../locales/${def.code}/grafana.json`) },
 }));
-
-export const LANGUAGES: LanguageDefinition[] = TRANSLATED_LANGUAGES.map((def) => ({
-  ...def,
-  loader: { grafana: () => import(`../../../locales/${def.code}/grafana.json`) },
-}));
-
-if (config.featureToggles?.extraLanguages) {
-  LANGUAGES.push(...NEW_LANGUAGES);
-}
 
 if (process.env.NODE_ENV === 'development') {
   LANGUAGES.push({

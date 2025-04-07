@@ -29,9 +29,15 @@ interface TranslationDefinition {
 }
 
 /**
- * New languages added recently without translations available yet
+ * Supported languages for translation.
  */
-export const UNTRANSLATED_LANGUAGES: TranslationDefinition[] = [
+export const LANGUAGES: TranslationDefinition[] = [
+  { code: ENGLISH_US, name: 'English' },
+  { code: FRENCH_FRANCE, name: 'Français' },
+  { code: SPANISH_SPAIN, name: 'Español' },
+  { code: GERMAN_GERMANY, name: 'Deutsch' },
+  { code: CHINESE_SIMPLIFIED, name: '中文（简体）' },
+  { code: BRAZILIAN_PORTUGUESE, name: 'Português Brasileiro' },
   { code: CHINESE_TRADITIONAL, name: '中文（繁體）' },
   { code: ITALIAN_ITALY, name: 'Italiano' },
   { code: JAPANESE_JAPAN, name: '日本語' },
@@ -45,16 +51,4 @@ export const UNTRANSLATED_LANGUAGES: TranslationDefinition[] = [
   { code: POLISH_POLAND, name: 'Polski' },
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
-];
-
-/**
- * Languages that are translated.
- */
-export const TRANSLATED_LANGUAGES: TranslationDefinition[] = [
-  { code: ENGLISH_US, name: 'English' },
-  { code: FRENCH_FRANCE, name: 'Français' },
-  { code: SPANISH_SPAIN, name: 'Español' },
-  { code: GERMAN_GERMANY, name: 'Deutsch' },
-  { code: CHINESE_SIMPLIFIED, name: '中文（简体）' },
-  { code: BRAZILIAN_PORTUGUESE, name: 'Português Brasileiro' },
 ];
