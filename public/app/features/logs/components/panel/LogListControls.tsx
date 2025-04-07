@@ -315,6 +315,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     scrollToTopButton: css({
       margin: 0,
       marginTop: 'auto',
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
     }),
     controlButton: css({
       margin: 0,
