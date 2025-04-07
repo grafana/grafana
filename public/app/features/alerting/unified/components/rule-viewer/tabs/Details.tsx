@@ -43,6 +43,7 @@ export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   let determinedRuleType: RuleType = RuleType.Unknown;
   if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
@@ -162,6 +163,13 @@ export const Details = ({ rule }: DetailsProps) => {
             id="pending-period"
             label={t('alerting.alert.pending-period', 'Pending period')}
             value={pendingPeriod}
+          />
+        )}
+        {keepFiringFor && (
+          <DetailText
+            id="keep-firing-for"
+            label={t('alerting.alert.keep-firing-for', 'Keep firing for')}
+            value={keepFiringFor}
           />
         )}
       </DetailGroup>
