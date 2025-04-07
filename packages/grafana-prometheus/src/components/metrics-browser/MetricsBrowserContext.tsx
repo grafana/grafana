@@ -81,6 +81,7 @@ export function MetricsBrowserProvider({
   const [selectedLabelKeys, setSelectedLabelKeys] = useState<string[]>([]);
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+  const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
 
   /**
    * Build a Prometheus selector string from the current selections
@@ -204,11 +205,16 @@ export function MetricsBrowserProvider({
 
       setStatus('Fetching label values...');
       const newLabelValues: Record<string, string[]> = {};
+      // We don't want to remove values from the last selected value list.
+      // So by keeping track of the label key, when we fetch the values we don't override the list
+      if (lastSelectedLabelKey !== '') {
+        newLabelValues[lastSelectedLabelKey] = [...labelValues[lastSelectedLabelKey]];
+      }
       let hasErrors = false;
 
       try {
         for (const lk of selectedLabelKeys) {
-          if (labelKeys.includes(lk)) {
+          if (labelKeys.includes(lk) && lk !== lastSelectedLabelKey) {
             try {
               const selector = getSelector();
               const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
@@ -241,6 +247,7 @@ export function MetricsBrowserProvider({
     }
 
     fetchValues();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSelector, labelKeys, languageProvider, selectedLabelKeys, seriesLimit, timeRange]);
 
   // Fetch metrics with new selector
@@ -313,6 +320,10 @@ export function MetricsBrowserProvider({
         newSelectedLabelValues[labelKey] = [];
       }
 
+      if (labelKey !== lastSelectedLabelKey) {
+        setLastSelectedLabelKey(labelKey);
+      }
+
       const lvIdx = newSelectedLabelValues[labelKey].indexOf(labelValue);
 
       if (lvIdx === -1) {
@@ -328,7 +339,7 @@ export function MetricsBrowserProvider({
 
       setSelectedLabelValues(newSelectedLabelValues);
     },
-    [selectedLabelValues]
+    [lastSelectedLabelKey, selectedLabelValues]
   );
 
   /**
