@@ -9,7 +9,7 @@ import { ManagedDashboardBadge } from './actions/ManagedDashboardBadge';
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';
 import { PublicDashboardBadge } from './actions/PublicDashboardBadge';
 import { StarButton } from './actions/StarButton';
-import { getDynamicActions, renderActionElements, useIsManagedRepository } from './utils';
+import { getDynamicActions, renderActionElements } from './utils';
 
 export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const styles = useStyles2(getStyles);
