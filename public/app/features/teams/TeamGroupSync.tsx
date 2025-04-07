@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { PureComponent } from 'react';
+import { FormEventHandler, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
@@ -59,11 +59,11 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onNewGroupIdChanged = (event: any) => {
-    this.setState({ newGroupId: event.target.value });
+  onNewGroupIdChanged: FormEventHandler<HTMLInputElement> = (event) => {
+    this.setState({ newGroupId: event.currentTarget.value });
   };
 
-  onAddGroup = (event: any) => {
+  onAddGroup: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     this.props.addTeamGroup(this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });

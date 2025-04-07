@@ -19,6 +19,7 @@ import {
   isExpressionReference,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -60,8 +61,16 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Preload expressions
-    this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as any;
-    this.datasources[ExpressionDatasourceUID] = expressionDatasource as any;
+    this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as DataSourceApi<
+      DataQuery,
+      DataSourceJsonData,
+      {}
+    >;
+    this.datasources[ExpressionDatasourceUID] = expressionDatasource as DataSourceApi<
+      DataQuery,
+      DataSourceJsonData,
+      {}
+    >;
     this.settingsMapByUid[ExpressionDatasourceRef.uid] = expressionInstanceSettings;
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
   }
@@ -189,7 +198,7 @@ export class DatasourceSrv implements DataSourceService {
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
-        const anyInstance = instance as any;
+        const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
         anyInstance.type = instanceSettings.type;

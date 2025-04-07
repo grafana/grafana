@@ -164,20 +164,28 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     row: LogRowModel,
     origRow: LogRowModel,
     options: LogRowContextOptions
-  ): Promise<DataQueryResponse | []> => {
+  ): Promise<DataQueryResponse> => {
     const { logsQueries } = this.props;
 
     if (!origRow.dataFrame.refId || !this.state.dsInstances[origRow.dataFrame.refId]) {
-      return Promise.resolve([]);
+      return Promise.resolve({
+        data: [],
+      });
     }
 
     const ds = this.state.dsInstances[origRow.dataFrame.refId];
     if (!hasLogsContextSupport(ds)) {
-      return Promise.resolve([]);
+      return Promise.resolve({
+        data: [],
+      });
     }
 
     const query = this.getQuery(logsQueries, origRow, ds);
-    return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
+    return query
+      ? ds.getLogRowContext(row, options, query)
+      : Promise.resolve({
+          data: [],
+        });
   };
 
   getLogRowContextQuery = async (

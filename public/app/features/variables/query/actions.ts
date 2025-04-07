@@ -55,7 +55,7 @@ export const updateQueryVariableOptions = (
         const { rootStateKey } = identifier;
         if (getVariablesState(rootStateKey, getState()).editor.id === identifier.id) {
           dispatch(
-            toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+            toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message ?? '' }))
           );
         }
 
@@ -178,7 +178,7 @@ export function hasSelfReferencingQuery(name: string, query: any): boolean {
 /*
  * Function that takes any object and flattens all props into one level deep object
  * */
-export function flattenQuery(query: any): any {
+export function flattenQuery(query: any) {
   if (typeof query !== 'object' || query === null) {
     return { query };
   }

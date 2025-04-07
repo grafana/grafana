@@ -143,7 +143,7 @@ export function validateVariableSelection(args: {
     );
 }
 
-export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
+export function areMetricFindValues(data: unknown[]): data is MetricFindValue[] {
   if (!data) {
     return false;
   }
