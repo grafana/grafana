@@ -18,10 +18,10 @@ type FakeKeeper struct {
 
 var _ contracts.Keeper = (*FakeKeeper)(nil)
 
-func NewFakeKeeper() *FakeKeeper {
+func NewFakeKeeper() (*FakeKeeper, error) {
 	return &FakeKeeper{
 		values: make(map[string]map[string]string),
-	}
+	}, nil
 }
 
 func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
