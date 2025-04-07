@@ -14,28 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type ExportWorker struct {
-	// required to create clients
-	clientFactory resources.ClientFactory
-
-	// Check where values are currently saved
-	storageStatus dualwrite.Service
-
-	parsers resources.ParserFactory
+	clientFactory       resources.ClientFactory
+	repositoryResources resources.RepositoryResourcesFactory
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
-	storageStatus dualwrite.Service,
-	parsers resources.ParserFactory,
+	repositoryResources resources.RepositoryResourcesFactory,
 ) *ExportWorker {
 	return &ExportWorker{
-		clientFactory,
-		storageStatus,
-		parsers,
+		clientFactory:       clientFactory,
+		repositoryResources: repositoryResources,
 	}
 }
 
@@ -91,18 +83,18 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
-	client, err := clients.Folder()
+	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 	if err != nil {
-		return fmt.Errorf("failed to get folder client: %w", err)
+		return fmt.Errorf("create repository resource client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(rw, client, resources.NewEmptyFolderTree())
-	if err := folders.LoadFromServer(ctx); err != nil {
-		return fmt.Errorf("failed to load folders from API server: %w", err)
+	tree, err := r.loadFolderTree(ctx, rw, clients)
+	if err != nil {
+		return fmt.Errorf("load folders from API server: %w", err)
 	}
 
 	progress.SetMessage(ctx, "write folders to repository")
-	err = folders.EnsureTreeExists(ctx, options.Branch, options.Path, func(folder resources.Folder, created bool, err error) error {
+	err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
 			Name:     folder.ID,
@@ -124,12 +116,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "start resource export")
-	parser, err := r.parsers.GetParser(ctx, rw)
-	if err != nil {
-		return fmt.Errorf("failed to get parser: %w", err)
-	}
-
-	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, nil)
 	for _, kind := range resources.SupportedProvisioningResources {
 		// skip from folders as we do them first... so only dashboards
 		if kind == resources.FolderResource {
@@ -150,7 +136,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 				Action:   repository.FileActionCreated,
 			}
 
-			fileName, err := resourceManager.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
+			fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path: options.Path,
 				Ref:  options.Branch,
 			})
@@ -183,4 +169,27 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	return nil
+}
+
+func (r *ExportWorker) loadFolderTree(ctx context.Context, repo repository.Repository, clients resources.ResourceClients) (resources.FolderTree, error) {
+	tree := resources.NewEmptyFolderTree()
+
+	folderClient, err := clients.Folder()
+	if err != nil {
+		return nil, fmt.Errorf("create folder client: %w", err)
+	}
+
+	err = resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+		if tree.Count() > resources.MaxNumberOfFolders {
+			return errors.New("too many folders")
+		}
+
+		return tree.AddUnstructured(item, repo.Config().Name)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("load folder tree: %w", err)
+	}
+
+	return tree, nil
 }
