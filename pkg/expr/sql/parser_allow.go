@@ -132,6 +132,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ParenExpr:
 		return
 
+	case *sqlparser.RangeCond:
+		return
+
 	case *sqlparser.Subquery:
 		return
 

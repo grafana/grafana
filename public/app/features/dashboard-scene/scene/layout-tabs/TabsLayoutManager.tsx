@@ -5,7 +5,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { t } from 'app/core/internationalization';
 
 import {
@@ -14,8 +14,11 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { getTabFromClipboard } from '../layouts-shared/paste';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -67,7 +70,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
-    this.setState({ tabs: [...this.state.tabs, newTab] });
+    this.addNewTab(newTab);
   }
 
   public getUrlState() {
@@ -121,8 +124,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
-  public addNewTab() {
-    const newTab = new TabItem({ isNew: true });
+  public addNewTab(tab?: TabItem) {
+    const newTab = tab ?? new TabItem({ isNew: true });
+    const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
+    const newTitle = generateUniqueTitle(newTab.state.title, existingNames);
+    if (newTitle !== newTab.state.title) {
+      newTab.setState({ title: newTitle });
+    }
+
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;
@@ -132,14 +141,20 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().editModeChanged?.(isEditing));
   }
 
+  public pasteTab() {
+    const scene = getDashboardSceneFor(this);
+    const tab = getTabFromClipboard(scene);
+    this.addNewTab(tab);
+  }
+
   public activateRepeaters() {
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
   public removeTab(tabToRemove: TabItem) {
-    // Do not allow removing last tab (for now)
+    // When removing last tab replace ourselves with the inner tab layout
     if (this.state.tabs.length === 1) {
-      return;
+      ungroupLayout(this, tabToRemove.state.layout);
     }
 
     const currentTab = this.getCurrentTab();
@@ -158,56 +173,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
   }
 
-  public addTabBefore(tab: TabItem): TabItem {
-    const newTab = new TabItem({ isNew: true });
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab), 0, newTab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
-
-    return newTab;
-  }
-
-  public addTabAfter(tab: TabItem): TabItem {
-    const newTab = new TabItem({ isNew: true });
-    const tabs = this.state.tabs.slice();
-    tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
-
-    return newTab;
-  }
-
-  public moveTabLeft(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    if (currentIndex <= 0) {
-      return;
-    }
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex - 1, 0, tab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex - 1 });
+  public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
+    const tabs = [...this.state.tabs];
+    const [removed] = tabs.splice(fromIndex, 1);
+    tabs.splice(toIndex, 0, removed);
+    this.setState({ tabs, currentTabIndex: toIndex });
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
-  public moveTabRight(tab: TabItem) {
-    const currentIndex = this.state.tabs.indexOf(tab);
-    if (currentIndex >= this.state.tabs.length - 1) {
+  public forceSelectTab(tabKey: string) {
+    const tabIndex = this.state.tabs.findIndex((tab) => tab.state.key === tabKey);
+    const tab = this.state.tabs[tabIndex];
+
+    if (!tab) {
       return;
     }
-    const tabs = this.state.tabs.slice();
-    tabs.splice(currentIndex, 1);
-    tabs.splice(currentIndex + 1, 0, tab);
-    this.setState({ tabs, currentTabIndex: this.state.currentTabIndex + 1 });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
-  }
 
-  public isFirstTab(tab: TabItem): boolean {
-    return this.state.tabs[0] === tab;
-  }
-
-  public isLastTab(tab: TabItem): boolean {
-    return this.state.tabs[this.state.tabs.length - 1] === tab;
+    const editPane = getDashboardSceneFor(this).state.editPane;
+    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
+    this.setState({ currentTabIndex: tabIndex });
   }
 
   public static createEmpty(): TabsLayoutManager {
@@ -230,9 +214,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return new TabsLayoutManager({ tabs });
   }
 
-  getUrlKey(): string {
+  public getUrlKey(): string {
     let parent = this.parent;
-    // Panel edit uses tab key already so we are using dtab here to not conflict
+    // Panel edit uses `tab` key already so we are using `dtab` here to not conflict
     let key = 'dtab';
 
     while (parent) {
@@ -248,5 +232,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return key;
+  }
+
+  public duplicateTitles() {
+    const titleCounts = new Map<string | undefined, number>();
+    const duplicateTitles = new Set<string | undefined>();
+
+    this.state.tabs.forEach((tab) => {
+      const title = tab.state.title;
+      const count = (titleCounts.get(title) ?? 0) + 1;
+      titleCounts.set(title, count);
+      if (count > 1) {
+        duplicateTitles.add(title);
+      }
+    });
+
+    return duplicateTitles;
   }
 }

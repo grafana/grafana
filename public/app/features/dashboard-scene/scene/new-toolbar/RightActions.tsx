@@ -8,7 +8,6 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
-import { DashboardAddButton } from './actions/DashboardAddButton';
 import { DashboardSettingsButton } from './actions/DashboardSettingsButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
@@ -98,12 +97,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: SaveLibraryPanelButton,
             group: 'panel',
             condition: showPanelButtons && isEditingLibraryPanel,
-          },
-          {
-            key: 'dashboard-add-button',
-            component: DashboardAddButton,
-            group: 'dashboard',
-            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
           },
           {
             key: 'edit-schema-v2-button',

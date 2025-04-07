@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -318,15 +317,10 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 
 	dashboardCmds := make([]dashboards.Dashboard, 0)
 	folderUids := make([]string, 0)
-	softDeleteEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 
 	// Folders need to be fetched by UID in a separate step, separate dashboards from folders
 	// If any result is in the trash bin, don't migrate it
 	for _, d := range dashs {
-		if softDeleteEnabled && !d.Deleted.IsZero() {
-			continue
-		}
-
 		if d.IsFolder {
 			folderUids = append(folderUids, d.UID)
 		} else {

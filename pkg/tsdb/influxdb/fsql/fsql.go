@@ -6,7 +6,9 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -51,7 +53,21 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 		logger.Info(fmt.Sprintf("InfluxDB executing SQL: %s", qm.RawSQL))
 		info, err := r.client.Execute(ctx, qm.RawSQL)
 		if err != nil {
-			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+			errStr := fmt.Sprintf("flightsql: %s", err)
+			if grpcStatusErr, ok := status.FromError(err); ok {
+				switch grpcStatusErr.Code() {
+				case codes.InvalidArgument:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, errStr)
+				case codes.PermissionDenied:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusForbidden, backend.ErrorSourceDownstream, errStr)
+				case codes.NotFound:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusNotFound, backend.ErrorSourceDownstream, errStr)
+				default:
+					tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
+				}
+			} else {
+				tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
+			}
 			return tRes, nil
 		}
 		if len(info.Endpoint) != 1 {
@@ -81,20 +97,39 @@ type runner struct {
 	client *client
 }
 
+func ParseURL(endpoint string) (string, error) {
+	if endpoint == "" {
+		return "", fmt.Errorf("missing URL from datasource configuration")
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return "", fmt.Errorf("bad URL : %s", err)
+	}
+
+	addr := u.Host
+	if u.Port() == "" {
+		addr += ":443"
+	}
+
+	// If the user has specified an address with no scheme it can still be valid
+	// So we use the raw URL value
+	if u.Host == "" {
+		addr = endpoint
+	}
+
+	return addr, nil
+}
+
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
 func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	if dsInfo.URL == "" {
 		return nil, fmt.Errorf("missing URL from datasource configuration")
 	}
 
-	u, err := url.Parse(dsInfo.URL)
+	u, err := ParseURL(dsInfo.URL)
 	if err != nil {
-		return nil, fmt.Errorf("bad URL : %s", err)
-	}
-
-	addr := u.Host
-	if u.Port() == "" {
-		addr += ":443"
+		return nil, err
 	}
 
 	md := metadata.MD{}
@@ -105,7 +140,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}
 
-	fsqlClient, err := newFlightSQLClient(addr, md, !dsInfo.InsecureGrpc)
+	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc, dsInfo.ProxyClient)
 	if err != nil {
 		return nil, err
 	}
