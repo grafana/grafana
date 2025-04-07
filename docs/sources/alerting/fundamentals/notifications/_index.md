@@ -82,7 +82,7 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 ### Contact points
 
-[Contact points](ref:contact-points) contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages.
+[Contact points](ref:contact-points) contain the configuration for sending alert notifications, specifying destinations like email, Slack, IRM, webhooks, and their notification messages.
 
 A contact point is a list of integrations, each sending a message to a specific destination.
 
