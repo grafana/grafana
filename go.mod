@@ -41,8 +41,8 @@ require (
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
-	github.com/blevesearch/bleve/v2 v2.4.4-0.20250319135056-b82baf10b205 // @grafana/grafana-search-and-storage
-	github.com/blevesearch/bleve_index_api v1.2.3 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve/v2 v2.5.0 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve_index_api v1.2.7 // @grafana/grafana-search-and-storage
 	github.com/blugelabs/bluge v0.2.2 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 // @grafana/grafana-backend-group
@@ -84,8 +84,8 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // @grafana/grafana-search-and-storage
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250325165008-58ba6c617ff0 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250305132846-37f49eb947fa // @grafana/identity-access-team
+	github.com/grafana/alerting v0.0.0-20250331100049-71df46678ea6 // @grafana/alerting-backend
+	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -300,13 +300,13 @@ require (
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.12.0 // indirect
+	github.com/bits-and-blooms/bitset v1.22.0 // indirect
 	github.com/blevesearch/geo v0.1.20 // indirect
-	github.com/blevesearch/go-faiss v1.0.24 // indirect
+	github.com/blevesearch/go-faiss v1.0.25 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/gtreap v0.1.1 // indirect
 	github.com/blevesearch/mmap-go v1.0.4 // indirect
-	github.com/blevesearch/scorch_segment_api/v2 v2.3.5 // indirect
+	github.com/blevesearch/scorch_segment_api/v2 v2.3.9 // indirect
 	github.com/blevesearch/segment v0.9.1 // indirect
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
@@ -316,7 +316,7 @@ require (
 	github.com/blevesearch/zapx/v13 v13.4.1 // indirect
 	github.com/blevesearch/zapx/v14 v14.4.1 // indirect
 	github.com/blevesearch/zapx/v15 v15.4.1 // indirect
-	github.com/blevesearch/zapx/v16 v16.2.2-0.20250305220028-89edb0ef9aa9 // indirect
+	github.com/blevesearch/zapx/v16 v16.2.2 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/blugelabs/ice/v2 v2.0.1 // indirect
@@ -539,7 +539,7 @@ require (
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.etcd.io/bbolt v1.3.11 // indirect
+	go.etcd.io/bbolt v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.16 // indirect
@@ -587,7 +587,7 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250325133853-820cb26e127a
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250331083058-4563aec7a975
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

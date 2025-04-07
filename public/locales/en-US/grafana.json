@@ -2,7 +2,11 @@
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "Built-in role picker",
+      "level-aria-label": "Permission level",
+      "permissions-aria-label": "Permissions slider",
       "role-label": "Role",
+      "role-select-aria-label": "Role to add new permission to",
       "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
@@ -15,7 +19,9 @@
       "permission": "Permission"
     },
     "permission-list-item": {
-      "inherited": "Inherited from folder"
+      "inherited": "Inherited from folder",
+      "locked-aria-label": "Locked permission indicator",
+      "remove-aria-label": "Remove permission for {{identifier}}"
     },
     "permissions": {
       "add-label": "Add a permission",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
+      "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
       "get-stage-cell": {
         "beta": "Beta",
         "deprecated": "Deprecated",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": "Role"
       },
+      "delete-aria-label": "Delete user: {{name}}",
       "title-delete": "Delete"
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": "Edit user"
       },
+      "edit-aria-label": "Edit user: {{name}}",
+      "edit-tooltip": "Edit user",
       "last-seen-never": "Never",
       "no-licensed-roles": "Not assigned"
     }
@@ -1154,7 +1165,8 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules": "Loading rules from {{numberOfSources}} {{sources}}"
+        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -2257,6 +2269,9 @@
       "success": "Copied"
     }
   },
+  "close-button": {
+    "tooltip": "Close"
+  },
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -2800,8 +2815,10 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "grid": "Grid",
-        "layout": "Layout"
+        "group-layout": "Group layout",
+        "group-layout-disabled": "No groups exists on this level",
+        "panel-layout": "Panel layout",
+        "panel-layout-disabled": "Select a row or tab to change panel layout options"
       }
     },
     "make-editable": {
@@ -4295,10 +4312,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders"
+    "clear-folder-button": "Clear folders",
+    "select-aria-label": "Folder filter",
+    "select-placeholder": "Filter by folder"
   },
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
+    "input-placeholder": "Press enter to confirm new folder",
     "loading": "Loading folders..."
   },
   "folder-repo": {
@@ -4307,18 +4327,25 @@
   "forgot-password": {
     "back-button": "Back to login",
     "change-password": {
+      "confirm-label": "Confirm new password",
+      "default-password-alert": "Continuing to use the default password exposes you to security risks.",
+      "new-password-label": "New password",
       "skip-button": "Skip",
       "submit-button": "Submit"
     },
     "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
     "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
     "reset-password-header": "Reset password",
-    "send-email-button": "Send reset email"
+    "send-email-button": "Send reset email",
+    "user-field-description": "Enter your information to get a reset link sent to you",
+    "user-field-label": "User",
+    "user-field-placeholder": "Email or username"
   },
   "form-prompt": {
     "continue-button": "Continue editing",
     "description": "Changes that you made may not be saved.",
-    "discard-button": "Discard unsaved changes"
+    "discard-button": "Discard unsaved changes",
+    "title": "Leave page?"
   },
   "frontendtests": {
     "test-key": "test-key not found"
@@ -4588,6 +4615,7 @@
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
+      "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
       "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
@@ -4597,8 +4625,10 @@
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
+      "inspect-menu-label": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
@@ -4739,6 +4769,16 @@
       "placeholder-password": "Password",
       "placeholder-username": "Username",
       "sign-up": "Sign up"
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "Drag and drop to reorder",
+      "duplicate-tooltip": "Duplicate",
+      "remove-tooltip": "Remove"
+    },
+    "layer-name": {
+      "edit-layer-title": "Edit layer name"
     }
   },
   "ldap-drawer": {
@@ -4999,10 +5039,10 @@
       "email-placeholder": "email",
       "email-required": "Email is required",
       "name-label": "Name",
-      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
+      "passwordless-username-label": "Username",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
@@ -5740,6 +5780,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": "Breadcrumbs"
+    },
+    "help": {
+      "aria-label": "Help"
+    },
     "invite-user": {
       "invite-button": "Invite",
       "invite-tooltip": "Invite new member"
@@ -5749,6 +5795,7 @@
       "remove-bookmark": "Remove from Bookmarks"
     },
     "kiosk": {
+      "tooltip": "Enable kiosk mode",
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
@@ -5758,12 +5805,26 @@
       "open": "Open menu",
       "undock": "Undock menu"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "Collapse section: {{sectionName}}",
+      "expand-aria-label": "Expand section: {{sectionName}}"
+    },
+    "org-switcher": {
+      "aria-label": "Change organization"
+    },
+    "profile": {
+      "aria-label": "Profile"
+    },
+    "quick-add": {
+      "aria-label": "New"
+    },
     "rss-button": "Latest from the blog"
   },
   "news": {
     "drawer": {
-      "close": "Close Drawer"
+      "close": "Close drawer"
     },
+    "link-title": "Go to Grafana labs blog",
     "title": "Latest from the blog"
   },
   "notifications": {
@@ -5788,6 +5849,17 @@
       "error": "Login provider denied login request"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": "Clear settings"
+    },
+    "field-color": {
+      "color-by-label": "Color series by"
+    },
+    "units": {
+      "clear-tooltip": "Clear unit selection"
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "Create",
@@ -5807,6 +5879,14 @@
       "placeholder-optional": "(optional)",
       "role": "Role",
       "submit": "Submit"
+    }
+  },
+  "org-picker": {
+    "select-placeholder": "Select organization"
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": "Edit title"
     }
   },
   "panel": {
@@ -5856,7 +5936,10 @@
     "unsupported-layout": "Unsupported layout"
   },
   "panel-type-filter": {
-    "clear-button": "Clear types"
+    "clear-button": "Clear types",
+    "select-aria-label": "Panel type filter",
+    "select-no-options": "No panel types found",
+    "select-placeholder": "Filter by type"
   },
   "playlist": {
     "start-modal": {
@@ -6065,6 +6148,7 @@
     },
     "plugin-help": {
       "error": "An error occurred when loading help.",
+      "loading": "Loading help...",
       "not-found": "No query help could be found."
     },
     "plugin-installed-badge": {
@@ -6822,9 +6906,13 @@
       "clear-button": "Clear all",
       "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
     },
+    "menu-aria-label": "Role picker menu",
+    "menu-group-option-aria-label": "Role picker option",
+    "menu-option-aria-label": "Role picker option",
     "sub-menu": {
       "clear-button": "Clear"
     },
+    "sub-menu-aria-label": "Role picker submenu",
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -6832,10 +6920,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Basic Roles"
-    }
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana has likely been updated. Please try reloading the page.",
+    "error-title": "Error details",
+    "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
@@ -6951,6 +7042,10 @@
     "role": {
       "label": "Role"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "Service account picker",
+    "select-placeholder": "Start typing to search for service accounts"
   },
   "service-accounts": {
     "empty-state": {
@@ -7220,10 +7315,19 @@
   },
   "sign-up": {
     "back-button": "Back to login",
+    "confirm-password-label": "Confirm password",
+    "email-label": "Email",
+    "org-name-label": "Org. name",
+    "password-label": "Password",
     "submit-button": "Submit",
+    "user-name-label": "Your name",
+    "user-name-placeholder": "(optional)",
+    "verification-code-label": "Email verification code (sent to your email)",
     "verify": {
       "back-button": "Back to login",
       "complete-button": "Complete signup",
+      "email-description": "Enter your email address to get a verification link sent to you",
+      "email-label": "Email",
       "header": "Verify email",
       "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
       "send-button": "Send verification email"
@@ -7281,6 +7385,9 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "sort-picker": {
+    "select-aria-label": "Sort"
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "New support bundle"
@@ -7308,7 +7415,13 @@
     "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
-    "placeholder": "Filter by tag"
+    "placeholder": "Filter by tag",
+    "select-aria-label": "Tag filter",
+    "tag-option-label": "Tag option"
+  },
+  "team-picker": {
+    "select-aria-label": "Team picker",
+    "select-placeholder": "Select a team"
   },
   "teams": {
     "create-team": {
@@ -7762,6 +7875,10 @@
     "role-column": "Role",
     "select-org-button": "Select organisation",
     "title": "Organizations"
+  },
+  "user-picker": {
+    "select-aria-label": "User picker",
+    "select-placeholder": "Start typing to search for user"
   },
   "user-profile": {
     "fields": {
