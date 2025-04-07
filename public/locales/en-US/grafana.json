@@ -297,6 +297,7 @@
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
+      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
@@ -304,6 +305,7 @@
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
       "last-updated-by": "Last updated by",
+      "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
       "pending-period": "Pending period",
       "rule": "Rule",
@@ -923,8 +925,6 @@
       "label-disable-resolved-message": "Disable resolved message"
     },
     "grafana-evaluation-behavior-step": {
-      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved",
-      "label-missing-series-evaluations": "Missing series evaluations to resolve",
       "or": "or",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"

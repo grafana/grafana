@@ -370,12 +370,9 @@ export function GrafanaEvaluationBehaviorStep({
                 />
               </Field>
               <Field
-                label={t(
-                  'alerting.grafana-evaluation-behavior-step.label-missing-series-evaluations',
-                  'Missing series evaluations to resolve'
-                )}
+                label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
                 description={t(
-                  'alerting.grafana-evaluation-behavior-step.description-missing-series-evaluations',
+                  'alerting.alert.description-missing-series-evaluations',
                   'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved'
                 )}
                 invalid={!!errors.missingSeriesEvalsToResolve?.message}
