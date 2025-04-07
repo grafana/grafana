@@ -1726,7 +1726,8 @@
       "metadata": {
         "name": "live-service-web-worker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "deletionTimestamp": "2025-04-07T09:56:17Z"
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
@@ -2588,7 +2589,8 @@
       "metadata": {
         "name": "queryOverLive",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "deletionTimestamp": "2025-04-07T09:56:17Z"
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
