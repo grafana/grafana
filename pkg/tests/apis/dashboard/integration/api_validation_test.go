@@ -189,6 +189,15 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		})
 	})
 
+	t.Run("Dashboard folder validations", func(t *testing.T) {
+		// Test non-existent folder UID
+		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
+			nonExistentFolderUID := "non-existent-folder-uid"
+			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
+			require.Error(t, err)
+		})
+	})
+
 	t.Run("Dashboard schema validations", func(t *testing.T) {
 		// Test invalid dashboard schema
 		t.Run("reject dashboard with invalid schema", func(t *testing.T) {
