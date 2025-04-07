@@ -15,6 +15,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "notification_settings": undefined,
     "title": "",
   },
+  "keep_firing_for": "0s",
   "labels": {},
 }
 `;
@@ -68,6 +69,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
     "notification_settings": undefined,
     "title": "",
   },
+  "keep_firing_for": "0s",
   "labels": {},
 }
 `;
