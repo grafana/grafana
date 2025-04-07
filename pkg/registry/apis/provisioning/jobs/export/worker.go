@@ -94,7 +94,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-		if tree.Count() > resources.MaxNumberOfFolders {
+		if tree.Count() >= resources.MaxNumberOfFolders {
 			return errors.New("too many folders")
 		}
 

@@ -293,3 +293,113 @@ func TestExportWorker_ProcessFolderMigrationError(t *testing.T) {
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "load folder tree: error executing list: failed to list folders")
 }
+
+func TestExportWorker_ProcessFolderErrors(t *testing.T) {
+	tests := []struct {
+		name          string
+		reactorFunc   func(action k8testing.Action) (bool, runtime.Object, error)
+		expectedError string
+		setupProgress func(progress *jobs.MockJobProgressRecorder)
+	}{
+		{
+			name: "list folders error",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				return true, nil, fmt.Errorf("failed to list folders")
+			},
+			expectedError: "load folder tree: error executing list: failed to list folders",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+			},
+		},
+		{
+			name: "too many folders",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				list := &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "FolderList",
+					},
+					Items: make([]metav1.PartialObjectMetadata, resources.MaxNumberOfFolders+1),
+				}
+				for i := 0; i <= resources.MaxNumberOfFolders; i++ {
+					list.Items[i] = metav1.PartialObjectMetadata{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: fmt.Sprintf("folder-%d", i),
+						},
+					}
+				}
+				return true, list, nil
+			},
+			expectedError: "load folder tree: too many folders",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPush,
+					Push: &v0alpha1.ExportJobOptions{
+						Path: "grafana",
+					},
+				},
+			}
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&v0alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "test-namespace",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+				},
+			})
+
+			scheme := runtime.NewScheme()
+			require.NoError(t, metav1.AddMetaToScheme(scheme))
+			listGVK := schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    "FolderList",
+			}
+			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    resources.FolderResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+
+			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+				resources.FolderResource: listGVK.Kind,
+			})
+			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
+
+			resourceClients := resources.NewMockResourceClients(t)
+			resourceClients.On("Folder").Return(fakeFolderClient, nil)
+
+			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
+
+			mockClients := resources.NewMockClientFactory(t)
+			mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+
+			repoResources := resources.NewMockRepositoryResources(t)
+			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResources.On("Client", context.Background(), mockRepo).Return(repoResources, nil)
+
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			tt.setupProgress(mockProgress)
+
+			r := NewExportWorker(mockClients, mockRepoResources)
+			err := r.Process(context.Background(), mockRepo, job, mockProgress)
+			require.EqualError(t, err, tt.expectedError)
+		})
+	}
+}
