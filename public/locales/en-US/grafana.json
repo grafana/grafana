@@ -300,6 +300,7 @@
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
+      "keep-firing-for": "Keep firing for",
       "last-evaluated": "Last evaluated",
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
@@ -547,7 +548,8 @@
           "error": "Error",
           "no-data": "No data",
           "normal": "Normal",
-          "pending": "Pending"
+          "pending": "Pending",
+          "recovering": "Recovering"
         },
         "state-transitions": "State transition",
         "unknown-event-state": "Unknown",
@@ -805,6 +807,7 @@
       "error": "1 error"
     },
     "evaluation-behavior-summary": {
+      "evaluate": "Every {{every}}",
       "label-evaluate": "Evaluate",
       "label-evaluation-time": "Evaluation time",
       "label-last-evaluation": "Last evaluation",
@@ -892,9 +895,6 @@
       "add-alert-data": "Add alert data",
       "add-alert-data-to-payload": "Add alert data to payload",
       "review-alert-payload": " Review alert data to add to the payload:"
-    },
-    "get-description": {
-      "title-alert-rule-evaluation": "Alert rule evaluation"
     },
     "get-preview-results": {
       "title-error": "Error"
@@ -1285,9 +1285,6 @@
     "need-help-info": {
       "need-help": "Need help?"
     },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": "Configure no data and error handling"
-    },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": "Notify by selecting a contact point"
     },
@@ -1560,8 +1557,10 @@
       "title-view": "View"
     },
     "rule-details": {
+      "keep-firing-for": "Keep firing for",
       "label-instances": "Instances",
-      "label-labels": "Labels"
+      "label-labels": "Labels",
+      "last-evaluation-ago": "{{time}} ago"
     },
     "rule-details-buttons": {
       "go-to-dashboard": "Go to dashboard",
@@ -1617,7 +1616,18 @@
           "text": "Define how the alert rule is evaluated."
         },
         "info-help": {
+          "content": "These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.",
+          "link-text": "Read more about this option",
+          "link-title": "Configure no data and error handling",
           "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        },
+        "info-help2": {
+          "link-text": "Read about evaluation and alert states",
+          "link-title": "Alert rule evaluation"
+        },
+        "keep-firing-for": {
+          "label-description": "Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting \"None\" means the alert will be back to normal immediately.",
+          "label-text": "Keep firing for"
         },
         "pending-period": "Pending period"
       },
@@ -1736,6 +1746,17 @@
       "na": "n/a",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-stats": {
+      "error_one": "{{count}} error",
+      "error_other": "{{count}} errors",
+      "firing": "{{alertingStats}} firing",
+      "inactive": "{{normalStats}} normal",
+      "nodata": "{{nodataStats}} no data",
+      "paused": "{{normalStats}} normal ({{pausedStats}} paused)",
+      "pending": "{{pendingStats}} pending",
+      "recording": "{{recordingStats}} recording",
+      "recovering": "{{recoveringStats}} recovering"
     },
     "rule-view": {
       "query": {
