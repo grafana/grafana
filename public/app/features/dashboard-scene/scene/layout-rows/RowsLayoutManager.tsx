@@ -43,6 +43,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     id: 'RowsLayout',
     createFromLayout: RowsLayoutManager.createFromLayout,
     isGridLayout: false,
+    icon: 'list-ul',
   };
 
   public serialize(): DashboardV2Spec['layout'] {

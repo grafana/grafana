@@ -45,6 +45,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     id: 'TabsLayout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     isGridLayout: false,
+    icon: 'window',
   };
 
   public serialize(): DashboardV2Spec['layout'] {
