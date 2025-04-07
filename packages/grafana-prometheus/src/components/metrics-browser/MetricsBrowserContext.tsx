@@ -155,7 +155,7 @@ export function MetricsBrowserProvider({
       const selector = buildSelector(selectedMetric, selectedLabelValues);
 
       languageProvider
-        .fetchSeriesLabelsMatch(timeRange, selector)
+        .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
         .then((fetchedLabelKeys) => {
           setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
           setStatus('Ready');
@@ -190,7 +190,13 @@ export function MetricsBrowserProvider({
             try {
               const selector = getSelector();
               const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-              const values = await languageProvider.fetchSeriesValuesWithMatch(timeRange, lk, safeSelector);
+              const values = await languageProvider.fetchSeriesValuesWithMatch(
+                timeRange,
+                lk,
+                safeSelector,
+                'MetricsBrowser_LV',
+                validSeriesLimit(seriesLimit)
+              );
               newLabelValues[lk] = values;
             } catch (error) {
               console.error(`Error fetching values for label ${lk}:`, error);
@@ -213,7 +219,7 @@ export function MetricsBrowserProvider({
     }
 
     fetchValues();
-  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys, timeRange]);
+  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys, seriesLimit, timeRange]);
 
   // Fetch metrics with new selector
   useEffect(() => {
@@ -227,7 +233,13 @@ export function MetricsBrowserProvider({
       setStatus('Fetching metrics...');
 
       try {
-        const metricsResult = await languageProvider.fetchSeriesValuesWithMatch(timeRange, METRIC_LABEL, selector);
+        const metricsResult = await languageProvider.fetchSeriesValuesWithMatch(
+          timeRange,
+          METRIC_LABEL,
+          selector,
+          'MetricsBrowser_M',
+          validSeriesLimit(seriesLimit)
+        );
         setMetrics(metricsResult.map((m) => ({ name: m, details: getMetricDetails(m) })));
         setStatus('Ready');
       } catch (error) {
@@ -238,7 +250,7 @@ export function MetricsBrowserProvider({
 
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languageProvider, selectedLabelValues]);
+  }, [languageProvider, selectedLabelValues, seriesLimit]);
 
   /**
    * Handle click on a metric name to toggle selection
@@ -367,4 +379,9 @@ export function useMetricsBrowser() {
     throw new Error('useMetricsBrowser must be used within a MetricsBrowserProvider');
   }
   return context;
+}
+
+function validSeriesLimit(seriesLimit: string): number {
+  const limit = Number(seriesLimit);
+  return isNaN(limit) ? +DEFAULT_SERIES_LIMIT : limit;
 }
