@@ -1,5 +1,7 @@
 import { isEqual, last } from 'lodash';
 
+import { Scope } from '@grafana/data';
+
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
@@ -142,7 +144,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     if (selectedIdx === -1) {
       // We prefetch the scope when clicking on it. This will mean that once the selection is applied in closeAndApply()
       // we already have all the scopes in cache and don't need to fetch all of them again is multiple requests.
-      this.apiClient.fetchScope(linkId!);
+      this.apiClient.fetchScope(linkId!).then((scope) => {
+        setRecentScopes(scope);
+      });
 
       const selectedFromSameNode =
         treeScopes.length === 0 ||
@@ -328,4 +332,20 @@ function getNodesAtPath(nodes: NodesMap, path: string[]): NodesMap {
   }
 
   return currentNodes;
+}
+
+export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
+const RECENT_SCOPES_MAX_LENGTH = 5;
+
+function setRecentScopes(scope: Scope) {
+  const recentScopes: Scope[] = JSON.parse(localStorage.getItem(RECENT_SCOPES_KEY) || '[]');
+
+  // Avoid duplication and move item to the top
+  if (recentScopes.find((s) => s.metadata.name === scope.metadata.name)) {
+    recentScopes.splice(recentScopes.indexOf(scope), 1);
+  }
+
+  recentScopes.unshift(scope);
+
+  localStorage.setItem(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
 }

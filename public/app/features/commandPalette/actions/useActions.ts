@@ -5,12 +5,14 @@ import { useSelector } from 'app/types';
 import { CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
+import { getRecentScopesActions } from './recentScopesActions';
 import getStaticActions from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
 export default function useActions(searchQuery: string) {
   const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
+  const [recentScopesActions, setRecentScopesActions] = useState<CommandPaletteAction[]>([]);
   const extensionActions = useExtensionActions();
 
   const navBarTree = useSelector((state) => state.navBarTree);
@@ -32,5 +34,14 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions];
+  useEffect(() => {
+    // Scopes parent is set in static actions. We need to verify its existence.
+    const scopesIndex = navTreeActions.findIndex((action) => action.id === 'scopes');
+    if (scopesIndex !== -1) {
+      const recentScopesActionsResp = getRecentScopesActions();
+      setRecentScopesActions(recentScopesActionsResp);
+    }
+  }, [navTreeActions]);
+
+  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions, ...recentScopesActions];
 }

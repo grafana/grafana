@@ -95,6 +95,13 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       parent: 'preferences/theme',
       priority: PREFERENCES_PRIORITY,
     },
+    {
+      id: 'scopes',
+      name: t('command-palette.action.select-scope', 'Select scope...'),
+      keywords: 'scopes',
+      section: t('command-palette.section.scopes', 'Scopes'),
+      priority: PREFERENCES_PRIORITY,
+    },
   ];
 
   const navBarActions = navTreeToActions(navBarTree);
