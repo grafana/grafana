@@ -38,12 +38,13 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	}
 
 	if !okNew && okOld {
+		// This allows removing the managedBy annotations if you were allowed to write them originally
 		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
 				Reason:  metav1.StatusReasonForbidden,
-				Message: "Can not remove resource manager check",
+				Message: "Can not remove resource manager from resource",
 			}}
 		}
 	}

@@ -326,7 +326,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
 
-	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
@@ -350,6 +350,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	const allPanels = "n1jR8vnnz"
 	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
+	require.True(t, apierrors.IsNotFound(err))
 
 	// Now, we import it, such that it may exist
 	helper.SyncAndWait(t, repo, nil)
@@ -368,10 +369,18 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.Error(t, err, "only the provisionding service should be able to update")
 	require.True(t, apierrors.IsForbidden(err))
 
-	// Can not delete (not provisioning)
+	// Should not be able to directly delete the managed resource
 	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
 	require.Error(t, err, "only the provisioning service should be able to delete")
 	require.True(t, apierrors.IsForbidden(err))
+
+	// But we can delete the repository file, and this should also remove the resource
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "all-panels.json")
+	require.NoError(t, err, "should delete the resource file")
+
+	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.Error(t, err, "should delete the internal resource")
+	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
