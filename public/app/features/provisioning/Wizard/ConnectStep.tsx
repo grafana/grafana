@@ -59,7 +59,7 @@ export function ConnectStep() {
         <>
           <TokenPermissionsInfo />
           <Field
-            label={t('provisioning.connect-step.label-access-token', 'Enter your access token')}
+            label={t('provisioning.connect-step.label-access-token', 'GitHub access token')}
             required
             description={t(
               'provisioning.connect-step.description-paste-your-git-hub-personal-access-token',
@@ -93,7 +93,7 @@ export function ConnectStep() {
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-repository-url', 'Enter your Repository URL')}
+            label={t('provisioning.connect-step.label-repository-url', 'GitHub repository URL')}
             error={errors.repository?.url?.message}
             invalid={!!errors.repository?.url}
             description={t(
@@ -119,7 +119,8 @@ export function ConnectStep() {
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-branch', 'Branch')}
+            label={t('provisioning.connect-step.label-branch', 'Branch name')}
+            description={t('provisioning.connect-step.description-branch', 'Branch to use for the GitHub repository')}
             error={errors.repository?.branch?.message}
             invalid={!!errors.repository?.branch}
           >
@@ -130,12 +131,13 @@ export function ConnectStep() {
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-path', 'Path')}
+            label={t('provisioning.connect-step.label-path', 'Path to subdirectory in repository')}
             error={errors.repository?.path?.message}
             invalid={!!errors.repository?.path}
             description={t(
               'provisioning.connect-step.description-github-path',
-              'Path to a subdirectory in the Git repository'
+              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from' +
+                ''
             )}
           >
             <Input
