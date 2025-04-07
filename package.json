@@ -29,6 +29,10 @@
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
     "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",
     "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
+    "format:check": "yarn run biome:check && yarn run prettier:check",
+    "format:check-all": "yarn run biome:check-all && yarn run prettier:check",
+    "format:write": "yarn run biome:write && yarn run prettier:write",
+    "format:write-all": "yarn run biome:write-all && yarn run prettier:write",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
@@ -438,7 +442,12 @@
     "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
-    "packages": ["packages/*", "packages/!(grafana-icons)/**", "public/app/plugins/*/*", "e2e/test-plugins/*"]
+    "packages": [
+      "packages/*",
+      "packages/!(grafana-icons)/**",
+      "public/app/plugins/*/*",
+      "e2e/test-plugins/*"
+    ]
   },
   "engines": {
     "node": ">= 22"
@@ -450,6 +459,8 @@
     }
   },
   "msw": {
-    "workerDirectory": ["public"]
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

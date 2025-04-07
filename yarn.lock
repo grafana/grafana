@@ -3565,14 +3565,12 @@ __metadata:
     "@svgr/cli": "npm:^8.1.0"
     "@svgr/core": "npm:8.1.0"
     "@svgr/plugin-jsx": "npm:^8.1.0"
-    "@svgr/plugin-prettier": "npm:^8.1.0"
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/babel__core": "npm:^7"
     "@types/node": "npm:22.12.0"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     esbuild: "npm:0.25.0"
-    prettier: "npm:3.4.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     rimraf: "npm:6.0.1"
@@ -7881,7 +7879,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/plugin-prettier@npm:8.1.0, @svgr/plugin-prettier@npm:^8.1.0":
+"@svgr/plugin-prettier@npm:8.1.0":
   version: 8.1.0
   resolution: "@svgr/plugin-prettier@npm:8.1.0"
   dependencies:
