@@ -15,8 +15,6 @@ cloud.google.com/go/storage v1.43.0 h1:CcxnSohZwizt4LCzQHWvBf1/kvtHUn7gk9QERXPyX
 cloud.google.com/go/storage v1.43.0/go.mod h1:ajvxEa7WmZS1PxvKRq4bq0tFT3vMd502JwstCcYv0Q0=
 dagger.io/dagger v0.11.8-rc.2 h1:HCP3gXgAfJJBFitJm0jRdKWJsIKgSWNmVN9UV+CkOdk=
 dagger.io/dagger v0.11.8-rc.2/go.mod h1:kIzxLfN8N8FXUCN9u5EHLBJUJMJm0t6XynecUzp0A5w=
-docker.io/go-docker v1.0.0 h1:VdXS/aNYQxyA9wdLD5z8Q8Ro688/hG8HzKxYVEVbE6s=
-docker.io/go-docker v1.0.0/go.mod h1:7tiAn5a0LFmjbPDbyTPOaTTOuG1ZRNXdPA6RvKY+fpY=
 github.com/99designs/basicauth-go v0.0.0-20160802081356-2a93ba0f464d/go.mod h1:3cARGAK9CfW3HoxCy1a0G4TKrdiKke8ftOMEOHyySYs=
 github.com/99designs/gqlgen v0.17.44 h1:OS2wLk/67Y+vXM75XHbwRnNYJcbuJd4OBL76RX3NQQA=
 github.com/99designs/gqlgen v0.17.44/go.mod h1:UTCu3xpK2mLI5qcMNw+HKDiEL77it/1XtAjisC4sLwM=
