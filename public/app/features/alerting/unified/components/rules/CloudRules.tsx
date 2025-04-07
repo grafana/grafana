@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -68,11 +67,9 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             {dataSourcesLoading.length ? (
               <LoadingPlaceholder
                 className={styles.loader}
-                text={t(
-                  'alerting.list-view.section.loading-rules',
-                  'Loading rules from {{numberOfSources}} {{sources}}',
-                  { numberOfSource: dataSourcesLoading.length, sources: pluralize('source', dataSourcesLoading.length) }
-                )}
+                text={t('alerting.list-view.section.loading-rules', 'Loading rules from {{count}} sources', {
+                  count: dataSourcesLoading.length,
+                })}
               />
             ) : (
               <div />
