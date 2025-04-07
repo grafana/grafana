@@ -7,6 +7,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { OrgUser } from 'app/types';
 
+import { t } from '../../internationalization';
+
 export interface Props {
   onSelected: (user: SelectableValue<OrgUser>) => void;
   className?: string;
@@ -65,9 +67,9 @@ export class UserPicker extends Component<Props, State> {
           defaultOptions={true}
           loadOptions={this.search}
           onChange={onSelected}
-          placeholder="Start typing to search for user"
+          placeholder={t('user-picker.select-placeholder', 'Start typing to search for user')}
           noOptionsMessage="No users found"
-          aria-label="User picker"
+          aria-label={t('user-picker.select-aria-label', 'User picker')}
         />
       </div>
     );

@@ -7,6 +7,7 @@ import { Menu, Dropdown, useStyles2, useTheme2, ToolbarButton } from '@grafana/u
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useSelector } from 'app/types';
 
+import { t } from '../../../internationalization';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 import { findCreateActions } from './utils';
@@ -53,7 +54,7 @@ export const QuickAdd = ({}: Props) => {
           iconOnly
           icon={isSmallScreen ? 'plus-circle' : 'plus'}
           isOpen={isSmallScreen ? undefined : isOpen}
-          aria-label="New"
+          aria-label={t('navigation.quick-add.aria-label', 'New')}
         />
       </Dropdown>
       <NavToolbarSeparator className={styles.separator} />

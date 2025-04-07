@@ -61,7 +61,7 @@ export function ProfileButton({ profileNode }: Props) {
           className={styles.profileButton}
           imgSrc={contextSrv.user.gravatarUrl}
           imgAlt="User avatar"
-          aria-label="Profile"
+          aria-label={t('navigation.profile.aria-label', 'Profile')}
         />
       </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}

@@ -4,6 +4,8 @@ import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../internationalization';
+
 import { LayerName } from './LayerName';
 import { LayerElement } from './types';
 
@@ -81,7 +83,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                             {onDuplicate ? (
                               <IconButton
                                 name="copy"
-                                tooltip="Duplicate"
+                                tooltip={t('layers.layer-drag-drop-list.duplicate-tooltip', 'Duplicate')}
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -89,7 +91,7 @@ export const LayerDragDropList = <T extends LayerElement>({
 
                             <IconButton
                               name="trash-alt"
-                              tooltip="Remove"
+                              tooltip={t('layers.layer-drag-drop-list.remove-tooltip', 'Remove')}
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />
@@ -97,8 +99,10 @@ export const LayerDragDropList = <T extends LayerElement>({
                         )}
                         {layers.length > shouldRenderDragIconLengthThreshold && (
                           <Icon
-                            aria-label="Drag and drop icon"
-                            title="Drag and drop to reorder"
+                            aria-label={t(
+                              'layers.layer-drag-drop-list.draggable-aria-label',
+                              'Drag and drop to reorder'
+                            )}
                             name="draggabledots"
                             size="lg"
                             className={style.dragIcon}

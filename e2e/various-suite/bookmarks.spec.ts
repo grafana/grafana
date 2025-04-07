@@ -27,7 +27,7 @@ describe('Pin nav items', () => {
     bookmarkPinIcon.click({ force: true });
 
     // Check if the Administration menu item is visible in the Bookmarks section
-    cy.get('[aria-label="Expand section Bookmarks"]').click();
+    cy.get('[aria-label="Expand section: Bookmarks"]').click();
     const bookmarks = cy.get('[href="/bookmarks"]').parentsUntil('li').siblings('ul');
     bookmarks.within(() => {
       cy.get('a').should('contain.text', 'Administration');
@@ -46,7 +46,7 @@ describe('Pin nav items', () => {
 
     // Check if the Bookmark section is visible and open it
     cy.get('[href="/bookmarks"]').should('be.visible');
-    cy.get('[aria-label="Expand section Bookmarks"]').click();
+    cy.get('[aria-label="Expand section: Bookmarks"]').click();
 
     // Check if the Administration menu item is visible in the Bookmarks section
     const bookmarks = cy.get('[href="/bookmarks"]').parentsUntil('li').siblings('ul').children();
