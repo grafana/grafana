@@ -193,7 +193,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+            {isFederated && <Badge color="purple" text={t('alerting.rules-group.text-federated', 'Federated')} />}{' '}
+            {groupName}
           </div>
         }
         <div className={styles.spacer} />
@@ -204,7 +205,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           <>
             <div className={styles.actionsSeparator}>|</div>
             <div className={styles.actionIcons}>
-              <Badge color="purple" text="Provisioned" />
+              <Badge color="purple" text={t('alerting.rules-group.text-provisioned', 'Provisioned')} />
             </div>
           </>
         )}
