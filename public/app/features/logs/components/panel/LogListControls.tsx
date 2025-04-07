@@ -11,9 +11,11 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+
+import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -43,14 +45,19 @@ export const LogListControls = ({ eventBus }: Props) => {
   const {
     app,
     dedupStrategy,
+    downloadLogs,
     filterLevels,
+    prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setPrettifyJSON,
     setShowTime,
+    setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
     setWrapLogMessage,
     showTime,
+    showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
@@ -90,10 +97,17 @@ export const LogListControls = ({ eventBus }: Props) => {
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: showTime,
+      show_time: !showTime,
     });
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
+
+  const onShowUniqueLabelsClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
+      show_unique_labels: showUniqueLabels,
+    });
+    setShowUniqueLabels(!showUniqueLabels);
+  }, [setShowUniqueLabels, showUniqueLabels]);
 
   const onSortOrderClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_sort_order_clicked', {
@@ -101,6 +115,13 @@ export const LogListControls = ({ eventBus }: Props) => {
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
+
+  const onSetPrettifyJSONClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_prettify_json_clicked', {
+      state: !prettifyJSON,
+    });
+    setPrettifyJSON(!prettifyJSON);
+  }, [prettifyJSON, setPrettifyJSON]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -159,6 +180,26 @@ export const LogListControls = ({ eventBus }: Props) => {
     [filterLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
+  const downloadMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.txt', 'txt')}
+          onClick={() => downloadLogs(DownloadFormat.Text)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.json', 'json')}
+          onClick={() => downloadLogs(DownloadFormat.Json)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.csv', 'csv')}
+          onClick={() => downloadLogs(DownloadFormat.CSV)}
+        />
+      </Menu>
+    ),
+    [downloadLogs]
+  );
+
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
 
   return (
@@ -212,6 +253,20 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
+          {showUniqueLabels !== undefined && (
+            <IconButton
+              name="tag-alt"
+              aria-pressed={showUniqueLabels}
+              className={showUniqueLabels ? styles.controlButtonActive : styles.controlButton}
+              onClick={onShowUniqueLabelsClick}
+              tooltip={
+                showUniqueLabels
+                  ? t('logs.logs-controls.hide-unique-labels', 'Hide unique labels')
+                  : t('logs.logs-controls.show-unique-labels', 'Show unique labels')
+              }
+              size="lg"
+            />
+          )}
           <IconButton
             name="wrap-text"
             className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
@@ -224,18 +279,48 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
-          <IconButton
-            name="brackets-curly"
-            className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
-            aria-pressed={syntaxHighlighting}
-            onClick={onSyntaxHightlightingClick}
-            tooltip={
-              syntaxHighlighting
-                ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
-                : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
-            }
-            size="lg"
-          />
+          {prettifyJSON !== undefined && (
+            <IconButton
+              name="brackets-curly"
+              aria-pressed={prettifyJSON}
+              className={prettifyJSON ? styles.controlButtonActive : styles.controlButton}
+              onClick={onSetPrettifyJSONClick}
+              tooltip={
+                prettifyJSON
+                  ? t('logs.logs-controls.disable-prettify-json', 'Collapse JSON logs')
+                  : t('logs.logs-controls.prettify-json', 'Expand JSON logs')
+              }
+              size="lg"
+            />
+          )}
+          {syntaxHighlighting !== undefined && (
+            <IconButton
+              name="brackets-curly"
+              className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
+              aria-pressed={syntaxHighlighting}
+              onClick={onSyntaxHightlightingClick}
+              tooltip={
+                syntaxHighlighting
+                  ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
+                  : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+              }
+              size="lg"
+            />
+          )}
+          {!config.exploreHideLogsDownload && (
+            <>
+              <div className={styles.divider} />
+              <Dropdown overlay={downloadMenu} placement="auto-end">
+                <IconButton
+                  name="download-alt"
+                  className={styles.controlButton}
+                  aria-pressed={wrapLogMessage}
+                  tooltip={t('logs.logs-controls.download', 'Download logs')}
+                  size="lg"
+                />
+              </Dropdown>
+            </>
+          )}
         </>
       ) : (
         <Dropdown overlay={filterLevelsMenu} placement="auto-end">
@@ -276,11 +361,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     scrollToTopButton: css({
       margin: 0,
       marginTop: 'auto',
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
     }),
     controlButton: css({
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+    }),
+    divider: css({
+      borderTop: `solid 1px ${theme.colors.border.medium}`,
+      height: 1,
+      marginTop: theme.spacing(-0.25),
+      marginBottom: theme.spacing(-1.75),
     }),
     controlButtonActive: css({
       margin: 0,

@@ -966,4 +966,8 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagLogsPanelControls
+	// Enables a control component for the logs panel in Explore
+	FlagLogsPanelControls = "logsPanelControls"
 )

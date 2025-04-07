@@ -5128,15 +5128,25 @@
     "logs-controls": {
       "deduplication": "Deduplication",
       "disable-highlighting": "Disable highlighting",
+      "disable-prettify-json": "Collapse JSON logs",
       "display-level": "Display levels",
       "display-level-all": "All levels",
+      "download": "Download logs",
+      "download-logs": {
+        "csv": "csv",
+        "json": "json",
+        "txt": "txt"
+      },
       "enable-highlighting": "Enable highlighting",
       "hide-timestamps": "Hide timestamps",
+      "hide-unique-labels": "Hide unique labels",
       "newest-first": "Newest logs first",
       "oldest-first": "Oldest logs first",
+      "prettify-json": "Expand JSON logs",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-timestamps": "Show timestamps",
+      "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
     },
