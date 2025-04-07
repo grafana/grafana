@@ -299,6 +299,7 @@ SELECT
   ASCII('A') as ascii_val,
   ORD('A') as ord_val,
   CHAR(65) as char_val,
+  REGEXP_SUBSTR('hello world', 'world') as regexp_substr_val,
   
   -- Date functions
   CURRENT_DATE() as current_date_val,

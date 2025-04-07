@@ -221,6 +221,8 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "ascii", "ord", "char":
 		return
+	case "regexp_substr":
+		return
 
 	// Date functions
 	case "str_to_date":
