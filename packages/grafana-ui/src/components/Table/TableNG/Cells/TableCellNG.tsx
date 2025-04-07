@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CustomCellRendererProps } from 'src/components';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
@@ -9,7 +8,13 @@ import { useStyles2 } from '../../../../themes';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { CellColors, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellNGProps } from '../types';
+import {
+  CellColors,
+  CustomCellRendererProps,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableCellNGProps,
+} from '../types';
 import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
