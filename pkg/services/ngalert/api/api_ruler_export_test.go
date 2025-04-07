@@ -40,7 +40,7 @@ func TestExportFromPayload(t *testing.T) {
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
@@ -253,7 +253,7 @@ func TestExportRules(t *testing.T) {
 	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
 	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	allRules := make([]*ngmodels.AlertRule, 0, len(hasAccess1)+len(hasAccess2)+len(noAccess1))
 	allRules = append(allRules, hasAccess1...)
