@@ -115,7 +115,7 @@ export const SimpleConditionEditor = ({
         </header>
         <InlineFieldRow className={styles.condition.container}>
           {simpleCondition.whenField && (
-            <InlineField label={t('alerting.simpleCondition.when', 'WHEN')}>
+            <InlineField label={t('alerting.simple-condition-editor.label-when', 'WHEN')}>
               <Select
                 options={reducerTypes}
                 value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
@@ -173,11 +173,11 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
-          draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-        }
-      })
+      if (draft && draft.conditions) {
+        draft.reducer = reducer;
+        draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+      }
+    })
     : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }

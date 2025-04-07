@@ -17,7 +17,7 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
@@ -60,7 +60,10 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
           </TabsBar>
         }
       >
-        <IconButton name="filter" aria-label="Show filters" />
+        <IconButton
+          name="filter"
+          aria-label={t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Show filters')}
+        />
       </PopupCard>
     );
   }, [activeTab, styles.content, styles.fixTabsMargin]);
@@ -170,7 +173,9 @@ const SavedSearches = () => {
             cell: ({ row }) => (
               <Stack alignItems="center">
                 {row.original.name}
-                {row.original.default ? <Badge text="Default" color="blue" /> : null}
+                {row.original.default ? (
+                  <Badge text={t('alerting.saved-searches.text-default', 'Default')} color="blue" />
+                ) : null}
               </Stack>
             ),
           },

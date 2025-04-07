@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -49,7 +50,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
   }
 
   return (
-    <DetailsField label="Data source">
+    <DetailsField label={t('alerting.rule-details-data-sources.label-data-source', 'Data source')}>
       {dataSources.map(({ name, icon }, index) => (
         <div key={name}>
           {icon && (
