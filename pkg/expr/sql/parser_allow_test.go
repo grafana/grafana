@@ -87,6 +87,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_window_functions,
 			err:  nil,
 		},
+		{
+			name: "json table",
+			q:    "SELECT * FROM mockGitHubIssuesDSResponse, JSON_TABLE(labels, '$[*]' COLUMNS(val VARCHAR(255) PATH '$')) AS jt WHERE CAST(jt.val AS CHAR) LIKE 'type%'",
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -188,11 +193,11 @@ var example_many_allowed_functions = `WITH sample_data AS (
   SELECT 
     100 AS value,
     'example' AS name,
-    NOW() AS created_at
+   '2025-01-01 00:00:00' AS created_at
   UNION ALL SELECT 
     50 AS value,
     'test' AS name,
-    DATE_SUB(NOW(), INTERVAL 1 DAY) AS created_at
+    DATE_SUB('2025-01-01 00:00:00', INTERVAL 1 DAY) AS created_at
 )
 SELECT
   -- Conditional functions
@@ -239,17 +244,15 @@ SELECT
   
   -- Date functions
   STR_TO_DATE('2023-01-01', '%Y-%m-%d') AS date_str_to_date,
-  DATE_FORMAT(NOW(), '%Y-%m-%d') AS date_format,
-  NOW() AS date_now,
-  CURDATE() AS date_curdate,
-  CURTIME() AS date_curtime,
+  DATE_FORMAT('2025-01-01 00:00:00', '%Y-%m-%d') AS date_format,
+  '2025-01-01 00:00:00' AS date_now,
   DATE_ADD(created_at, INTERVAL 1 DAY) AS date_add,
   DATE_SUB(created_at, INTERVAL 1 DAY) AS date_sub,
   YEAR(created_at) AS date_year,
   MONTH(created_at) AS date_month,
   DAY(created_at) AS date_day,
   WEEKDAY(created_at) AS date_weekday,
-  DATEDIFF(NOW(), created_at) AS date_datediff,
+  DATEDIFF('2025-01-01 00:00:00', created_at) AS date_datediff,
   UNIX_TIMESTAMP(created_at) AS date_unix_timestamp,
   FROM_UNIXTIME(1634567890) AS date_from_unixtime,
   
@@ -307,9 +310,6 @@ SELECT
   REGEXP_SUBSTR('hello world', 'world') as regexp_substr_val,
   
   -- Date functions
-  CURRENT_DATE() as current_date_val,
-  CURRENT_TIME() as current_time_val,
-  CURRENT_TIMESTAMP() as current_timestamp_val,
   EXTRACT(YEAR FROM '2023-01-01') as extract_val,
   HOUR('12:34:56') as hour_val,
   MINUTE('12:34:56') as minute_val,

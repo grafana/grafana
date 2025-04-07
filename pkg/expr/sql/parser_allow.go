@@ -69,7 +69,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.CharExpr:
 		return
 
-	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns:
+	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns, sqlparser.ColumnType:
 		return
 
 	case sqlparser.Comments: // TODO: understand why some are pointer vs not
@@ -112,6 +112,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
+		return
+
+	case *sqlparser.JSONTableExpr, *sqlparser.JSONTableSpec, *sqlparser.JSONTableColDef:
 		return
 
 	case *sqlparser.Select, sqlparser.SelectExprs, *sqlparser.ParenSelect:
@@ -233,7 +236,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	// Date functions
 	case "str_to_date":
 		return
-	case "date_format", "now", "curdate", "curtime":
+	case "date_format":
 		return
 	case "date_add", "date_sub":
 		return
@@ -242,8 +245,6 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	case "datediff":
 		return
 	case "unix_timestamp", "from_unixtime":
-		return
-	case "current_date", "current_time", "current_timestamp":
 		return
 	case "extract", "hour", "minute", "second":
 		return
