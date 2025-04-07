@@ -27,7 +27,7 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [tabCategory, layoutCategory];
+  const editOptions = [tabCategory, ...layoutCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
