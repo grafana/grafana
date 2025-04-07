@@ -60,6 +60,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(),
+    missingSeriesEvalsToResolve: 0,
 
     // cortex / loki
     namespace: '',
