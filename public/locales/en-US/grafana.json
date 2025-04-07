@@ -1165,7 +1165,8 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules": "Loading rules from {{numberOfSources}} {{sources}}"
+        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
     "log-record-viewer-by-timestamp": {
