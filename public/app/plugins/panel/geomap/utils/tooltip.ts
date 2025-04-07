@@ -119,8 +119,14 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
             // If we found multiple features at the same coordinates, sort them by rowIndex
             if (addedFeatures) {
               h.features.sort((a, b) => {
-                const aIndex = Number(a.getProperties()['rowIndex']) || Number.MAX_SAFE_INTEGER;
-                const bIndex = Number(b.getProperties()['rowIndex']) || Number.MAX_SAFE_INTEGER;
+                const aIndex =
+                  a.getProperties()['rowIndex'] !== undefined
+                    ? Number(a.getProperties()['rowIndex'])
+                    : Number.MAX_SAFE_INTEGER;
+                const bIndex =
+                  b.getProperties()['rowIndex'] !== undefined
+                    ? Number(b.getProperties()['rowIndex'])
+                    : Number.MAX_SAFE_INTEGER;
                 return aIndex - bIndex;
               });
             }
