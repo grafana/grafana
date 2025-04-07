@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import moment from 'moment';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
@@ -75,8 +74,15 @@ function getLocaleOptions(): ComboboxOption[] {
   })).sort((a, b) => {
     return a.label.localeCompare(b.label);
   });
-
-  return localeOptions;
+  
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    ...localeOptions,
+  ];
+  return options;
 }
 
 export class SharedPreferences extends PureComponent<Props, State> {
@@ -309,7 +315,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               data-testid="User preferences locale format drop down"
             >
               <Combobox 
-              value={locales.find((loc) => loc.value === locale)?.value || moment.locale()}
+              value={locales.find((loc) => loc.value === locale)?.value || ''}
               onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
               options={locales}
               placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
