@@ -563,10 +563,6 @@ export interface FeatureToggles {
   */
   sqlExpressions?: boolean;
   /**
-  * Changed the layout algorithm for the node graph
-  */
-  nodeGraphDotLayout?: boolean;
-  /**
   * Enables the group to nested table transformation
   * @default true
   */
