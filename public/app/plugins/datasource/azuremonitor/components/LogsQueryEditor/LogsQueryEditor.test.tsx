@@ -19,6 +19,10 @@ jest.mock('@grafana/runtime', () => ({
       }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 
@@ -43,6 +47,7 @@ describe('LogsQueryEditor', () => {
     delete query?.subscription;
     delete query?.azureLogAnalytics?.resources;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
     const basicLogsEnabled = false;
 
     render(
@@ -51,6 +56,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -94,6 +100,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -101,6 +108,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -129,6 +137,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -136,6 +145,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -164,6 +174,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -171,6 +182,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -203,6 +215,7 @@ describe('LogsQueryEditor', () => {
     const query = createMockQuery();
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -210,6 +223,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -233,6 +247,7 @@ describe('LogsQueryEditor', () => {
       const query = createMockQuery();
       const basicLogsEnabled = false;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       const date = dateTime(new Date());
       render(
@@ -241,6 +256,7 @@ describe('LogsQueryEditor', () => {
           datasource={mockDatasource}
           variableOptionGroup={variableOptionGroup}
           onChange={onChange}
+          onQueryChange={onQueryChange}
           setError={() => {}}
           basicLogsEnabled={basicLogsEnabled}
           data={{
@@ -274,6 +290,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -282,6 +299,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -300,6 +318,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -308,6 +327,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -328,6 +348,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = false;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -336,6 +357,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -354,6 +376,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -362,6 +385,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -382,6 +406,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -390,6 +415,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -412,6 +438,7 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
       await act(async () => {
@@ -421,6 +448,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -447,6 +475,7 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.45);
       await act(async () => {
@@ -456,6 +485,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -481,6 +511,7 @@ describe('LogsQueryEditor', () => {
           query: '',
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.5);
       await act(async () => {
@@ -490,6 +521,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -509,6 +541,7 @@ describe('LogsQueryEditor', () => {
         },
       });
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -517,6 +550,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={false}
           />
@@ -532,6 +566,7 @@ describe('LogsQueryEditor', () => {
       const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
       const query = { ...createMockQuery(), azureLogAnalytics: undefined };
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -540,6 +575,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={false}
           />

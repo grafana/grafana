@@ -8,13 +8,20 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
+import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { getDefaultVizPanel } from '../../utils/utils';
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
@@ -35,6 +42,7 @@ export interface TabItemState extends SceneObjectState {
    */
   isNew?: boolean;
   isDropTarget?: boolean;
+  conditionalRendering?: ConditionalRendering;
 }
 
 export class TabItem
@@ -58,7 +66,20 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    const deactivate = this.state.conditionalRendering?.activate();
+
+    return () => {
+      if (deactivate) {
+        deactivate();
+      }
+    };
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
@@ -90,12 +111,22 @@ export class TabItem
     layout.removeTab(this);
   }
 
+  public serialize(): TabsLayoutTabKind {
+    return serializeTab(this);
+  }
+
+  public onCopy() {
+    const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
+    clearClipboard();
+    store.set(LS_TAB_COPY_KEY, JSON.stringify({ elements, tab: this.serialize() }));
+  }
+
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
     return new TabItems(items.filter((item) => item instanceof TabItem));
   }
 
   public onDuplicate(): void {
-    this._getParentLayout().duplicateTab(this);
+    this.getParentLayout().duplicateTab(this);
   }
 
   public duplicate(): TabItem {
@@ -107,7 +138,7 @@ export class TabItem
   }
 
   public onAddTab() {
-    this._getParentLayout().addNewTab();
+    this.getParentLayout().addNewTab();
   }
 
   public onChangeTitle(title: string) {
@@ -138,19 +169,21 @@ export class TabItem
   }
 
   public getParentLayout(): TabsLayoutManager {
-    return this._getParentLayout();
-  }
-
-  private _getParentLayout(): TabsLayoutManager {
     return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
 
   public scrollIntoView(): void {
-    const tabsLayout = sceneGraph.getAncestor(this, TabsLayoutManager);
+    const tabsLayout = this.getParentLayout();
     if (tabsLayout.getCurrentTab() !== this) {
       tabsLayout.switchToTab(this);
     }
 
     scrollCanvasElementIntoView(this, this.containerRef);
+  }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
   }
 }

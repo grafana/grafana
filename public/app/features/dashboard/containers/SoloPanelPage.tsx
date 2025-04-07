@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -102,7 +103,11 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
   }
 
   if (!panel || !dashboard) {
-    return <div>Loading & initializing dashboard</div>;
+    return (
+      <div>
+        <Trans i18nKey="dashboard.solo-panel.loading-initializing-dashboard">Loading & initializing dashboard</Trans>
+      </div>
+    );
   }
 
   return (

@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -62,34 +54,6 @@ export interface FeatureToggles {
   * @default true
   */
   correlations?: boolean;
-  /**
-  * Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-  */
-  autoMigrateOldPanels?: boolean;
-  /**
-  * Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateGraphPanel?: boolean;
-  /**
-  * Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateTablePanel?: boolean;
-  /**
-  * Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigratePiechartPanel?: boolean;
-  /**
-  * Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateWorldmapPanel?: boolean;
-  /**
-  * Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateStatPanel?: boolean;
-  /**
-  * Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-  */
-  disableAngular?: boolean;
   /**
   * Allow elements nesting
   */
@@ -236,6 +200,7 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
+  * @default true
   */
   pluginsDetailsRightPanel?: boolean;
   /**
@@ -344,6 +309,7 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   /**
   * Allow core plugins to be loaded as external
+  * @default true
   */
   externalCorePlugins?: boolean;
   /**
@@ -405,6 +371,10 @@ export interface FeatureToggles {
   * Routes requests to the new query service
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Routes explore requests to the new query service
+  */
+  queryServiceFromExplore?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   */
@@ -544,7 +514,7 @@ export interface FeatureToggles {
   */
   newFolderPicker?: boolean;
   /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
@@ -663,11 +633,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
-  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;
@@ -703,7 +668,8 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a datasource has an invalid UIDs
+  * Throws an error if a data source has an invalid UIDs
+  * @default true
   */
   failWrongDSUID?: boolean;
   /**
@@ -981,10 +947,6 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enable the alerting conversion API
-  */
-  alertingConversionAPI?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -993,13 +955,17 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Load plugins from CDN synchronously
+  * Loads plugins from CDN synchronously
   */
   pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
   /**
   * Enables the alert rule version history restore feature
   * @default true
@@ -1047,12 +1013,47 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default false
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Specifies the locale so the correct format for numbers and dates can be shown
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the extension sidebar
+  */
+  extensionSidebar?: boolean;
+  /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
   /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
   */
   alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
+  /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default false
+  */
+  logsPanelControls?: boolean;
 }
