@@ -3,6 +3,7 @@ import { userEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
 import PromQlLanguageProvider from '../../language_provider';
+import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
 import { METRIC_LABEL } from './types';
@@ -83,7 +84,11 @@ const TestComponent = () => {
 
 const renderWithProvider = (ui: ReactNode) => {
   return render(
-    <MetricsBrowserProvider languageProvider={mockLanguageProvider} onChange={mockOnChange}>
+    <MetricsBrowserProvider
+      timeRange={getMockTimeRange()}
+      languageProvider={mockLanguageProvider}
+      onChange={mockOnChange}
+    >
       {ui}
     </MetricsBrowserProvider>
   );
