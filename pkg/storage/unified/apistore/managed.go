@@ -16,8 +16,6 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 		return nil
 	}
 
-	isSA := auth.GetIdentityType() == authtypes.TypeAccessPolicy || auth.GetIdentityType() == authtypes.TypeServiceAccount
-
 	switch utils.ParseManagerKindString(kind) {
 	case utils.ManagerKindUnknown:
 		return nil // not managed
@@ -30,7 +28,7 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusForbidden,
 			Reason:  metav1.StatusReasonForbidden,
-			Message: "Provisioned resources must be manaaged by the provisioing servie account",
+			Message: "Provisioned resources must be manaaged by the provisioning service account",
 		}}
 
 	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
@@ -42,31 +40,41 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 		if manager.AllowsEdits {
 			return nil // no error anyone can do it
 		}
-		if !isSA {
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusForbidden,
-				Reason:  metav1.StatusReasonForbidden,
-				Message: "Resource is not configured to allow editing",
-			}}
-		}
+		// TODO: check the kubectl+terraform resource
+		return nil
 	}
 	return nil
 }
 
 func checkManagerPropertiesOnUpdate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
-	managerNew, okNew := obj.GetManagerProperties()
-	managerOld, okOld := old.GetManagerProperties()
-	if !okNew && okNew == okOld {
+	objKind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
+	oldKind := old.GetAnnotation(utils.AnnoKeyManagerKind)
+	if objKind == "" && objKind == oldKind {
 		return nil // not managed
 	}
 
+	// Check the current settings
 	err := checkManagerPropertiesOnCreate(auth, obj)
-	if err != nil || managerNew == managerOld { // no change
+	if err != nil { // new settings failed
 		return err
 	}
 
-	// TODO??? manager properties changed???
+	managerNew, okNew := obj.GetManagerProperties()
+	managerOld, okOld := old.GetManagerProperties()
+	if managerNew == managerOld || (okNew && !okOld) { // added manager is OK
+		return nil
+	}
+
+	if !okNew && okOld {
+		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: "Can not remove resource manager check",
+			}}
+		}
+	}
 
 	return nil
 }

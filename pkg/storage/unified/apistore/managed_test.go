@@ -47,7 +47,47 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not create provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioing servie account",
+			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "user can not update provisioned resource",
+			auth: user,
+			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			obj:  &dashboard.Dashboard{},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "provisioner can remove manager flags",
+			auth: provisioner,
+			obj:  &dashboard.Dashboard{},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "provisioner can add manager flags",
+			auth: provisioner,
+			old:  &dashboard.Dashboard{},
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
