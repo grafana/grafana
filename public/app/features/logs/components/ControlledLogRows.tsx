@@ -107,7 +107,6 @@ const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range,
             showLabels={Boolean(showUniqueLabels)}
             showTime={showTime}
             wrapLogMessage={wrapLogMessage}
-            renderPreview
           />
         </InfiniteScroll>
       </div>

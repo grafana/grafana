@@ -1119,7 +1119,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     onUnpinLine={onPinToContentOutlineClick}
                     onPinLine={onPinToContentOutlineClick}
                     pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                    renderPreview
                   />
                 </InfiniteScroll>
               </div>
