@@ -10,6 +10,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -63,13 +64,18 @@ spec:
 `),
 		})
 		require.EqualError(t, err, "name.metadata.name: Required value: missing name in resource")
+	})
 
-		// Read the name from classic grafana format
-		dash, err = parser.Parse(context.Background(), &repository.FileInfo{
+	t.Run("dashboard classic format", func(t *testing.T) {
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
 		})
 		require.NoError(t, err)
-		require.Equal(t, v0alpha1.ClassicDashboard, dash.Classic)
 		require.Equal(t, "test", dash.Obj.GetName())
+		require.Equal(t, provisioning.ClassicDashboard, dash.Classic)
+		require.Equal(t, "dashboard.grafana.app", dash.GVK.Group)
+		require.Equal(t, "v0alpha1", dash.GVK.Version)
+		require.Equal(t, "dashboard.grafana.app", dash.GVR.Group)
+		require.Equal(t, "v0alpha1", dash.GVR.Version)
 	})
 }
