@@ -373,13 +373,19 @@ export function GrafanaEvaluationBehaviorStep({
                 label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
                 description={t(
                   'alerting.alert.description-missing-series-evaluations',
-                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved'
+                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
                 )}
                 invalid={!!errors.missingSeriesEvalsToResolve?.message}
                 error={errors.missingSeriesEvalsToResolve?.message}
                 className={styles.inlineField}
+                htmlFor="missing-series-resolve"
               >
                 <Input
+                  placeholder={t(
+                    'alerting.grafana-evaluation-behavior-step.missing-series-resolve-placeholder',
+                    'Default: 2'
+                  )}
+                  id="missing-series-resolve"
                   {...register('missingSeriesEvalsToResolve', {
                     pattern: { value: /^\d+$/, message: 'Must be a positive integer.' },
                   })}
