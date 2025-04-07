@@ -68,6 +68,7 @@ const formValuesForRule2Updated: RuleFormValues = {
   name: 'Rule2 updated',
   labels: [{ key: 'newLabel', value: 'newLabel' }],
   annotations: [{ key: 'summary', value: 'This grafana rule2 updated' }],
+  keepFiringFor: '1m',
 };
 const formValuesForRecordingRule4Updated: RuleFormValues = {
   ...defaultValues,
