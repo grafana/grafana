@@ -12,6 +12,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
@@ -23,6 +24,7 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 
 export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   const { watch } = useFormContext<ImportFormValues>();
+  const styles = useStyles2(getStyles);
 
   const [
     targetFolder,
@@ -46,7 +48,11 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   const { rulerRules } = useGetRulerRules(selectedDatasourceName || undefined);
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
-  const rulerRulesToPayload = filterRulerRulesConfig(rulerRules, namespace, ruleGroup);
+  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = filterRulerRulesConfig(
+    rulerRules,
+    namespace,
+    ruleGroup
+  );
 
   async function onConvertConfirm() {
     try {
@@ -88,6 +94,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       title={title}
       confirmText={confirmText}
       confirmButtonVariant="primary"
+      modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>
           <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
@@ -98,6 +105,18 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
               </Trans>
             </Text>
           </Alert>
+          {someRulesAreSkipped && (
+            <Alert
+              title={t('alerting.to-gma.confirm-modal.plugin-rules-warning', 'Some rules will be skipped')}
+              severity="info"
+            >
+              <Text variant="body">
+                <Trans i18nKey="alerting.to-gma.confirm-modal.plugin-rules-warning">
+                  We have detected that some rules are managed by plugins.These rules will not be imported.
+                </Trans>
+              </Text>
+            </Alert>
+          )}
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
               These are the list of rules that will be imported:
@@ -116,8 +135,9 @@ function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
-): RulerRulesConfigDTO {
+): { filteredConfig: RulerRulesConfigDTO; someRulesAreSkipped: boolean } {
   const filteredConfig: RulerRulesConfigDTO = {};
+  let someRulesAreSkipped = false;
 
   Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
     if (namespace && ns !== namespace) {
@@ -128,6 +148,13 @@ function filterRulerRulesConfig(
       if (groupName && group.name !== groupName) {
         return false;
       }
+      // filter out groups that contain rules with the GRAFANA_ORIGIN_LABEL
+      // this is used to prevent importing rules that are already managed by a plugin
+      const hasGrafanaOriginLabel = group.rules.some((rule) => rule.labels?.[GRAFANA_ORIGIN_LABEL]);
+      if (hasGrafanaOriginLabel) {
+        someRulesAreSkipped = true;
+        return false;
+      }
       return true;
     });
 
@@ -136,7 +163,7 @@ function filterRulerRulesConfig(
     }
   });
 
-  return filteredConfig;
+  return { filteredConfig, someRulesAreSkipped };
 }
 
 function RulesPreview({ rules }: { rules: RulerRulesConfigDTO }) {
@@ -166,6 +193,6 @@ const getStyles = () => ({
     flex: '1 1 100%',
   }),
   modal: css({
-    width: '700px',
+    width: '800px',
   }),
 });
