@@ -27,5 +27,5 @@ export const ManagedDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
       break;
   }
 
-  return <Badge color="purple" icon="exchange-alt" text={''} tooltip={text} key="provisioned-dashboard-button-badge" />;
+  return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
 };
