@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
@@ -29,7 +30,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCleanupInterval: time.Nanosecond,
 				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               "aes-cfb",
+				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}

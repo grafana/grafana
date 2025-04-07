@@ -1,5 +1,5 @@
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -60,7 +60,7 @@ interface DashboardTrackingInfo {
   settings_livenow?: boolean;
 }
 
-interface DSReferencesMapping {
+export interface DSReferencesMapping {
   panels: Map<string, Set<string>>;
   variables: Set<string>;
   annotations: Set<string>;
@@ -264,6 +264,16 @@ export class V2DashboardSerializer
         }
       }
     });
+
+    // initialize autossigned variable ds references map
+    if (saveModel?.variables) {
+      for (const variable of saveModel.variables) {
+        // for query variables that dont have a ds defined add them to the list
+        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+          this.defaultDsReferencesMap.variables.add(variable.spec.name);
+        }
+      }
+    }
   }
 
   getDSReferencesMapping() {

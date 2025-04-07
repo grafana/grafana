@@ -3,6 +3,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { Alert } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 
 const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
 
@@ -59,7 +60,10 @@ export function CloudInfoBox({ dataSource }: Props) {
               href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
               target="_blank"
               rel="noreferrer"
-              title="The free plan includes 10k active metrics and 50gb storage."
+              title={t(
+                'datasources.cloud-info-box.title-includes-active-metrics-storage',
+                'The free plan includes 10k active metrics and 50gb storage.'
+              )}
             >
               free-forever Grafana Cloud plan
             </a>

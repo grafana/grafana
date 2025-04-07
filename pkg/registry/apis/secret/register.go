@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -16,8 +18,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,7 +42,6 @@ var (
 	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider         = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
 )
 
@@ -200,6 +202,397 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return secretv0alpha1.GetOpenAPIDefinitions
 }
 
+// PostProcessOpenAPI modifies the OpenAPI spec by adding examples and descriptions.
+func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Grafana Secrets Management"
+
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+	smprefix := root + "namespaces/{namespace}"
+
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/secret/v0alpha1."
+
+	// Create Keepers path
+	sub := oas.Paths.Paths[smprefix+"/keepers"]
+	if sub != nil {
+		optionsSchema := defs[defsBase+"KeeperSpec"].Schema
+		sub.Post.Description = "create a secret keeper"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Examples: map[string]*spec3.Example{
+								"a sql keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.KeeperSpec{
+													Title: "SQL XYZ Keeper",
+													SQL: &secretv0alpha1.SQLKeeperConfig{
+														Encryption: &secretv0alpha1.Encryption{
+															Envelope: &secretv0alpha1.Envelope{},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								"an aws keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.KeeperSpec{
+													Title: "AWS XYZ Keeper",
+													AWS: &secretv0alpha1.AWSKeeperConfig{
+														AWSCredentials: secretv0alpha1.AWSCredentials{
+															AccessKeyID: secretv0alpha1.CredentialValue{
+																ValueFromEnv: "AWS_ACCESS_KEY_ID",
+															},
+															SecretAccessKey: secretv0alpha1.CredentialValue{
+																ValueFromEnv: "AWS_SECRET_ACCESS_KEY",
+															},
+															KMSKeyID: "kms-key-id",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								"an azure keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.KeeperSpec{
+													Title: "Azure XYZ Keeper",
+													Azure: &secretv0alpha1.AzureKeeperConfig{
+														AzureCredentials: secretv0alpha1.AzureCredentials{
+															KeyVaultName: "key-vault-name",
+															TenantID:     "tenant-id",
+															ClientID:     "client-id",
+															ClientSecret: secretv0alpha1.CredentialValue{
+																ValueFromConfig: "/path/to/file.json",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								"a gcp keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.KeeperSpec{
+													Title: "GCP XYZ Keeper",
+													GCP: &secretv0alpha1.GCPKeeperConfig{
+														GCPCredentials: secretv0alpha1.GCPCredentials{
+															ProjectID:       "project-id",
+															CredentialsFile: "/path/to/file.json",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								"a hashicorp keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.KeeperSpec{
+													Title: "Hashicorp XYZ Keeper",
+													HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{
+														HashiCorpCredentials: secretv0alpha1.HashiCorpCredentials{
+															Address: "vault-address",
+															Token: secretv0alpha1.CredentialValue{
+																ValueFromEnv: "VAULT_TOKEN",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"application/yaml": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"a sql keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: Keeper
+metadata:
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  title: SQL XYZ Keeper
+  sql:
+    encryption:
+      envelope:`,
+									},
+								},
+								"an aws keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: Keeper
+metadata:
+  annotations:
+    xx: XXX
+  labels:
+    aa: AAA
+spec:
+  title: AWS XYZ Keeper
+  aws:
+    accessKeyId: 
+      valueFromEnv: ACCESS_KEY_ID_XYZ
+    secretAccessKey:
+      valueFromEnv: SECRET_ACCESS_KEY_XYZ
+    kmsKeyId: kmsKeyId-xyz`,
+									},
+								},
+								"an azure keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: Keeper
+metadata:
+  annotations:
+    xx: XXX
+  labels:
+    aa: AAA
+spec:
+  title: Azure XYZ Keeper
+  azurekeyvault:
+    clientSecret:
+      valueFromConfig: "/path/to/file.json"
+    keyVaultName: key-vault-name
+    tenantId: tenant-id
+    clientId: client-id`,
+									},
+								},
+								"a gcp keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: Keeper
+metadata:
+  annotations:
+    xx: XXX
+  labels:
+    aa: AAA
+spec:
+  title: GCP XYZ Keeper
+  gcp:
+    projectId: project-id 
+    credentialsFile: /path/to/file.json`,
+									},
+								},
+								"a hashicorp keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: Keeper
+metadata:
+  annotations:
+    xx: XXX
+  labels:
+    aa: AAA
+spec:
+  title: Hashicorp XYZ Keeper
+  hashivault:
+    address: vault-address
+    token:
+      valueFromEnv: VAULT_TOKEN`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[smprefix+"/securevalues"]
+	if sub != nil {
+		optionsSchema := defs[defsBase+"SecureValueSpec"].Schema
+		sub.Post.Description = "create a secure value"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Examples: map[string]*spec3.Example{
+								"secret to store in default keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.SecureValueSpec{
+													Title:      "A secret in default",
+													Value:      "this is super duper secure",
+													Keeper:     "kp-default-sql",
+													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+												},
+											},
+										},
+									},
+								},
+								"secret to store in aws": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.SecureValueSpec{
+													Title:      "A secret in aws",
+													Value:      "this is super duper secure",
+													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+												},
+											},
+										},
+									},
+								},
+								"secret to reference in aws": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": &secretv0alpha1.SecureValueSpec{
+													Title:      "A secret from aws",
+													Ref:        "my-secret-in-aws",
+													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Decrypters: []string{"actor_k6"},
+												},
+											},
+										},
+									},
+								},
+								"secret with name specified": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"metadata": metav1.ObjectMeta{
+													Name: "xyz",
+												},
+												"spec": &secretv0alpha1.SecureValueSpec{
+													Title:      "XYZ secret",
+													Value:      "this is super duper secure",
+													Keeper:     "kp-default-sql",
+													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"application/yaml": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"secret to store in default keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: SecureValue
+metadata:
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  title: A secret value
+  keeper: kp-default-sql
+  value: this is super duper secure
+  decrypters:
+    - actor_k6 
+    - actor_synthetic-monitoring`,
+									},
+								},
+								"secret to store in aws keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: SecureValue
+metadata:
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  title: A secret value in aws
+  keeper: aws-keeper-that-must-already-exist
+  value: this is super duper secure
+  decrypters:
+    - actor_k6 
+    - actor_synthetic-monitoring`,
+									},
+								},
+								"secret to reference in aws keeper": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: SecureValue
+metadata:
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  title: A secret from aws
+  keeper: aws-keeper-that-must-already-exist
+  ref: my-secret-in-aws
+  decrypters:
+    - actor_k6`,
+									},
+								},
+								"secret with name specified": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: secret.grafana.app/v0alpha1
+kind: SecureValue
+metadata:
+  name: xyz
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  title: XYZ secret
+  keeper: kp-default-sql
+  value: this is super duper secure
+  decrypters:
+    - actor_k6 
+    - actor_synthetic-monitoring`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	return oas, nil
+}
+
 // GetAuthorizer decides whether the request is allowed, denied or no opinion based on credentials and request attributes.
 // Usually most resource are stored in folders (e.g. alerts, dashboards), which allows users to manage permissions at folder level,
 // rather than at resource level which also has the benefit of lowering the load on AuthZ side, since instead of storing access to
@@ -212,11 +605,6 @@ func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	}
 
 	return authsvc.NewResourceAuthorizer(b.accessClient)
-}
-
-// Register additional routes with the server.
-func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.

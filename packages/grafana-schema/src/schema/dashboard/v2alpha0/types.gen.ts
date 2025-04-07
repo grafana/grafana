@@ -16,7 +16,7 @@ export interface DashboardV2Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -388,6 +388,15 @@ export const defaultValueMap = (): ValueMap => ({
 	options: {},
 });
 
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+export type MappingType = "value" | "range" | "regex" | "special";
+
+export const defaultMappingType = (): MappingType => ("value");
+
 // Result used as replacement with text and color when the value matches
 export interface ValueMappingResult {
 	// Text to display when the value matches
@@ -724,14 +733,15 @@ export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
 
 export interface RowsLayoutRowSpec {
 	title?: string;
-	collapsed: boolean;
+	collapse?: boolean;
+	hideHeader?: boolean;
+	fillScreen?: boolean;
 	repeat?: RowRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
-	collapsed: false,
 	layout: defaultGridLayoutKind(),
 });
 
@@ -746,11 +756,13 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 });
 
 export interface ConditionalRenderingGroupSpec {
+	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	visibility: "show",
 	condition: "and",
 	items: [],
 });
@@ -795,72 +807,78 @@ export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataS
 	value: false,
 });
 
-export interface ConditionalRenderingTimeIntervalKind {
-	kind: "ConditionalRenderingTimeInterval";
-	spec: ConditionalRenderingTimeIntervalSpec;
+export interface ConditionalRenderingTimeRangeSizeKind {
+	kind: "ConditionalRenderingTimeRangeSize";
+	spec: ConditionalRenderingTimeRangeSizeSpec;
 }
 
-export const defaultConditionalRenderingTimeIntervalKind = (): ConditionalRenderingTimeIntervalKind => ({
-	kind: "ConditionalRenderingTimeInterval",
-	spec: defaultConditionalRenderingTimeIntervalSpec(),
+export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
+	kind: "ConditionalRenderingTimeRangeSize",
+	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
 });
 
-export interface ConditionalRenderingTimeIntervalSpec {
+export interface ConditionalRenderingTimeRangeSizeSpec {
 	value: string;
 }
 
-export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRenderingTimeIntervalSpec => ({
+export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
 });
 
-export interface ResponsiveGridLayoutKind {
-	kind: "ResponsiveGridLayout";
-	spec: ResponsiveGridLayoutSpec;
+export interface AutoGridLayoutKind {
+	kind: "AutoGridLayout";
+	spec: AutoGridLayoutSpec;
 }
 
-export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
-	kind: "ResponsiveGridLayout",
-	spec: defaultResponsiveGridLayoutSpec(),
+export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
+	kind: "AutoGridLayout",
+	spec: defaultAutoGridLayoutSpec(),
 });
 
-export interface ResponsiveGridLayoutSpec {
-	row: string;
-	col: string;
-	items: ResponsiveGridLayoutItemKind[];
+export interface AutoGridLayoutSpec {
+	maxColumnCount?: number;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
+	items: AutoGridLayoutItemKind[];
 }
 
-export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
-	row: "",
-	col: "",
+export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
+	maxColumnCount: 3,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
 	items: [],
 });
 
-export interface ResponsiveGridLayoutItemKind {
-	kind: "ResponsiveGridLayoutItem";
-	spec: ResponsiveGridLayoutItemSpec;
+export interface AutoGridLayoutItemKind {
+	kind: "AutoGridLayoutItem";
+	spec: AutoGridLayoutItemSpec;
 }
 
-export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
-	kind: "ResponsiveGridLayoutItem",
-	spec: defaultResponsiveGridLayoutItemSpec(),
+export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
+	kind: "AutoGridLayoutItem",
+	spec: defaultAutoGridLayoutItemSpec(),
 });
 
-export interface ResponsiveGridLayoutItemSpec {
+export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
-	repeat?: ResponsiveGridRepeatOptions;
+	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
-export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 	element: defaultElementReference(),
 });
 
-export interface ResponsiveGridRepeatOptions {
+export interface AutoGridRepeatOptions {
 	mode: "variable";
 	value: string;
 }
 
-export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -895,7 +913,8 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 
 export interface TabsLayoutTabSpec {
 	title?: string;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1378,15 +1397,6 @@ export interface MetricFindValue {
 export const defaultMetricFindValue = (): MetricFindValue => ({
 	text: "",
 });
-
-// Supported value mapping types
-// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-export type MappingType = "value" | "range" | "regex" | "special";
-
-export const defaultMappingType = (): MappingType => ("value");
 
 // --- Common types ---
 export interface Kind {

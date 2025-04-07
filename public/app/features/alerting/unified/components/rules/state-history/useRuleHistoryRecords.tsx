@@ -120,16 +120,25 @@ export function logRecordsToDataFrame(
           custom: { fillOpacity: 100 },
           mappings: [
             {
+              type: MappingType.RegexToText,
+              options: {
+                //  Map as a regex so we capture `Normal`, and `Normal (Updated)`
+                pattern: '/^normal/i',
+                result: { color: theme.colors.success.main },
+              },
+            },
+            {
+              type: MappingType.RegexToText,
+              options: {
+                pattern: '/Alerting/',
+                result: { color: theme.colors.error.main },
+              },
+            },
+            {
               type: MappingType.ValueToText,
               options: {
-                Alerting: {
-                  color: theme.colors.error.main,
-                },
                 Pending: {
                   color: theme.colors.warning.main,
-                },
-                Normal: {
-                  color: theme.colors.success.main,
                 },
                 NoData: {
                   color: theme.colors.info.main,

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -193,7 +194,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 				SecretKey:          "sdDkslslld",
 				EncryptionProvider: "secretKey.v1",
 				Encryption: setting.EncryptionSettings{
-					Algorithm: "aes-cfb",
+					Algorithm: cipher.AesGcm,
 				},
 			},
 		}
@@ -486,7 +487,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					Encryption: setting.EncryptionSettings{
 						DataKeysCleanupInterval: time.Nanosecond,
 						DataKeysCacheTTL:        5 * time.Minute,
-						Algorithm:               "aes-cfb",
+						Algorithm:               cipher.AesGcm,
 					},
 				},
 			}
@@ -551,7 +552,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCleanupInterval: time.Nanosecond,
 				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               "aes-cfb",
+				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}

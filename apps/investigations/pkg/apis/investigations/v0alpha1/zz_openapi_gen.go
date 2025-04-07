@@ -26,7 +26,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationIndexstatusOperatorState":  schema_pkg_apis_investigations_v0alpha1_InvestigationIndexstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationList":                      schema_pkg_apis_investigations_v0alpha1_InvestigationList(ref),
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationPerson":                    schema_pkg_apis_investigations_v0alpha1_InvestigationPerson(ref),
-		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationQuery":                     schema_pkg_apis_investigations_v0alpha1_InvestigationQuery(ref),
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationSpec":                      schema_pkg_apis_investigations_v0alpha1_InvestigationSpec(ref),
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationStatus":                    schema_pkg_apis_investigations_v0alpha1_InvestigationStatus(ref),
 		"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationTimeRange":                 schema_pkg_apis_investigations_v0alpha1_InvestigationTimeRange(ref),
@@ -64,8 +63,9 @@ func schema_pkg_apis_investigations_v0alpha1_Investigation(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationSpec"),
+							Description: "Spec is the spec of the Investigation",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationSpec"),
 						},
 					},
 					"status": {
@@ -136,8 +136,9 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationCollectable(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationQuery"),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
@@ -182,12 +183,19 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationCollectable(ref common
 							Format:  "",
 						},
 					},
+					"fieldConfig": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"id", "createdAt", "title", "origin", "type", "queries", "timeRange", "datasource", "url", "note", "noteUpdatedAt"},
+				Required: []string{"id", "createdAt", "title", "origin", "type", "queries", "timeRange", "datasource", "url", "note", "noteUpdatedAt", "fieldConfig"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationDatasourceRef", "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationQuery", "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationTimeRange"},
+			"github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationDatasourceRef", "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationTimeRange"},
 	}
 }
 
@@ -240,8 +248,9 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationIndex(ref common.Refer
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationIndexSpec"),
+							Description: "Spec is the spec of the InvestigationIndex",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1.InvestigationIndexSpec"),
 						},
 					},
 					"status": {
@@ -726,62 +735,6 @@ func schema_pkg_apis_investigations_v0alpha1_InvestigationPerson(ref common.Refe
 					},
 				},
 				Required: []string{"uid", "name", "gravatarUrl"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_investigations_v0alpha1_InvestigationQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Query represents a data query",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"refId": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"queryType": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"editorMode": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"supportingQueryType": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"legendFormat": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"expr": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"refId", "queryType", "editorMode", "supportingQueryType", "legendFormat", "expr"},
 			},
 		},
 	}

@@ -1,23 +1,8 @@
 import { useMemo, useState } from 'react';
 
-import {
-  Column,
-  CellProps,
-  Link,
-  Stack,
-  Spinner,
-  FilterInput,
-  InteractiveTable,
-  LinkButton,
-  ConfirmModal,
-  Button,
-} from '@grafana/ui';
-import {
-  Repository,
-  ResourceListItem,
-  useGetRepositoryResourcesQuery,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning';
+import { CellProps, Column, FilterInput, InteractiveTable, Link, LinkButton, Spinner, Stack } from '@grafana/ui';
+import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -34,11 +19,10 @@ export function RepositoryResources({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryResourcesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
-  const [pathToDelete, setPathToDelete] = useState<string>();
   const data = (query.data?.items ?? []).filter((Resource) =>
     Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   const columns: Array<Column<ResourceListItem>> = useMemo(
     () => [
       {
@@ -104,12 +88,19 @@ export function RepositoryResources({ repo }: RepoProps) {
           const { resource, name, path } = original;
           return (
             <Stack>
-              {resource === 'dashboards' && <LinkButton href={`/d/${name}`}>View</LinkButton>}
-              {resource === 'folders' && <LinkButton href={`/dashboards/f/${name}`}>View</LinkButton>}
-              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>History</LinkButton>
-              <Button variant="destructive" onClick={() => setPathToDelete(path)}>
-                Delete
-              </Button>
+              {resource === 'dashboards' && (
+                <LinkButton href={`/d/${name}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.view-dashboard">View</Trans>
+                </LinkButton>
+              )}
+              {resource === 'folders' && (
+                <LinkButton href={`/dashboards/f/${name}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.view-folder">View</Trans>
+                </LinkButton>
+              )}
+              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
+                <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
+              </LinkButton>
             </Stack>
           );
         },
@@ -128,26 +119,13 @@ export function RepositoryResources({ repo }: RepoProps) {
 
   return (
     <Stack grow={1} direction={'column'} gap={2}>
-      <ConfirmModal
-        isOpen={Boolean(pathToDelete?.length) || deleteFileStatus.isLoading}
-        title="Delete resource in repository?"
-        body={deleteFileStatus.isLoading ? 'Deleting resource...' : pathToDelete}
-        confirmText="Delete"
-        icon={deleteFileStatus.isLoading ? `spinner` : `exclamation-triangle`}
-        onConfirm={() => {
-          if (pathToDelete) {
-            deleteFile({
-              name: name,
-              path: pathToDelete,
-              message: `Deleted from repo test UI`,
-            });
-            setPathToDelete('');
-          }
-        }}
-        onDismiss={() => setPathToDelete('')}
-      />
       <Stack gap={2}>
-        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+        <FilterInput
+          placeholder={t('provisioning.repository-resources.placeholder-search', 'Search')}
+          autoFocus={true}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
       </Stack>
       <InteractiveTable
         columns={columns}

@@ -122,7 +122,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Name: TableNameSecureValueOutbox,
 		Columns: []*migrator.Column{
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
-			{Name: "message_type", Type: migrator.DB_TinyInt, Nullable: false},
+			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
@@ -130,7 +130,13 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{},
+		Indices: []*migrator.Index{
+			// There's only one operation per secret in the queue at all times,
+			// meaning the namespace + name combination should be unique
+			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+			// Used for sorting
+			{Cols: []string{"created"}, Type: migrator.IndexType},
+		},
 	})
 
 	// Initialize all tables

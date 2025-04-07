@@ -2,31 +2,17 @@ package contracts
 
 import (
 	"context"
-	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
-type OutboxMessageType int
+type OutboxMessageType string
 
 const (
-	CreateSecretOutboxMessage OutboxMessageType = iota + 1
-	UpdateSecretOutboxMessage
-	DeleteSecretOutboxMessage
+	CreateSecretOutboxMessage OutboxMessageType = "create"
+	UpdateSecretOutboxMessage OutboxMessageType = "update"
+	DeleteSecretOutboxMessage OutboxMessageType = "delete"
 )
-
-func (typ OutboxMessageType) String() string {
-	switch typ {
-	case CreateSecretOutboxMessage:
-		return "CreateSecret"
-	case UpdateSecretOutboxMessage:
-		return "UpdateSecret"
-	case DeleteSecretOutboxMessage:
-		return "DeleteSecret"
-	default:
-		panic(fmt.Sprintf("unhandled OutboxMessageType: %d", typ))
-	}
-}
 
 type AppendOutboxMessage struct {
 	Type            OutboxMessageType

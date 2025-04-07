@@ -114,7 +114,7 @@ func TestOutboxStore(t *testing.T) {
 
 	outbox := ProvideOutboxQueue(testDB)
 
-	appendOutboxMessage := contracts.AppendOutboxMessage{
+	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
@@ -122,12 +122,17 @@ func TestOutboxStore(t *testing.T) {
 		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
 	}
+	m2 := contracts.AppendOutboxMessage{
+		Type:            contracts.CreateSecretOutboxMessage,
+		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		KeeperName:      contracts.DefaultSQLKeeper,
+		ExternalID:      nil,
+	}
 
 	messages, err := outbox.ReceiveN(ctx, 10)
 	require.NoError(t, err)
-	require.Empty(t, messages)
 
-	messageID1, err := outbox.Append(ctx, appendOutboxMessage)
+	messageID1, err := outbox.Append(ctx, m1)
 	require.NoError(t, err)
 
 	for range 2 {
@@ -137,7 +142,7 @@ func TestOutboxStore(t *testing.T) {
 		require.Equal(t, messageID1, messages[0].MessageID)
 	}
 
-	messageID2, err := outbox.Append(ctx, appendOutboxMessage)
+	messageID2, err := outbox.Append(ctx, m2)
 	require.NoError(t, err)
 
 	messages, err = outbox.ReceiveN(ctx, 3)
@@ -170,6 +175,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 		}
 	}()
 
+	// The number of iterations was decided arbitrarily based on the time the test takes to run
 	for range 10 {
 		testDB := sqlstore.NewTestStore(t)
 		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
@@ -180,14 +186,14 @@ func TestOutboxStoreProperty(t *testing.T) {
 
 		ctx := context.Background()
 
-		for range 100 {
+		for i := range 100 {
 			n := rng.Intn(3)
 			switch n {
 			case 0:
 				message := contracts.AppendOutboxMessage{
 					Type:            contracts.CreateSecretOutboxMessage,
-					Name:            "s-1",
-					Namespace:       "n-1",
+					Name:            fmt.Sprintf("s-%d", i),
+					Namespace:       fmt.Sprintf("n-%d", i),
 					EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 					KeeperName:      contracts.DefaultSQLKeeper,
 					ExternalID:      nil,

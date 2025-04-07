@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -23,6 +24,7 @@ type TeamAPI struct {
 	preferenceService      pref.Service
 	ds                     dashboards.DashboardService
 	logger                 log.Logger
+	features               featuremgmt.FeatureToggles
 }
 
 func ProvideTeamAPI(
@@ -36,6 +38,7 @@ func ProvideTeamAPI(
 	cfg *setting.Cfg,
 	preferenceService pref.Service,
 	ds dashboards.DashboardService,
+	features featuremgmt.FeatureToggles,
 ) *TeamAPI {
 	tapi := &TeamAPI{
 		teamService:            teamService,
@@ -47,6 +50,7 @@ func ProvideTeamAPI(
 		preferenceService:      preferenceService,
 		ds:                     ds,
 		logger:                 log.New("team-api"),
+		features:               features,
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)

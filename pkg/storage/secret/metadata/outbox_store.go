@@ -39,7 +39,7 @@ func (*outboxMessageDB) TableName() string {
 }
 
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
-	assert.True(input.Type > 0, "outboxStore.Append: outbox message type is required")
+	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
 	var messageID string
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -73,21 +73,23 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rows := make([]outboxMessageDB, 0)
-			// TODO: skip locked rows, sort
-			if err := sess.Table(migrator.TableNameSecureValueOutbox).ForUpdate().Limit(int(n)).Find(&rows); err != nil {
+			// TODO: skip locked rows
+			if err := sess.Table(migrator.TableNameSecureValueOutbox).ForUpdate().OrderBy("secret_secure_value_outbox.created ASC").Limit(int(n)).Find(&rows); err != nil {
 				return fmt.Errorf("fetching rows from secure value outbox table: %w", err)
 			}
 			for _, row := range rows {
-				assert.True(row.MessageType > 0, "bug: row with no message type")
-				messages = append(messages, contracts.OutboxMessage{
-					Type:            row.MessageType,
-					MessageID:       row.MessageID,
-					Name:            row.Name,
-					Namespace:       row.Namespace,
-					EncryptedSecret: v0alpha1.ExposedSecureValue(row.EncryptedSecret),
-					KeeperName:      row.KeeperName,
-					ExternalID:      row.ExternalID,
-				})
+				msg := contracts.OutboxMessage{
+					Type:       row.MessageType,
+					MessageID:  row.MessageID,
+					Name:       row.Name,
+					Namespace:  row.Namespace,
+					KeeperName: row.KeeperName,
+					ExternalID: row.ExternalID,
+				}
+				if row.MessageType != contracts.DeleteSecretOutboxMessage {
+					msg.EncryptedSecret = v0alpha1.ExposedSecureValue(row.EncryptedSecret)
+				}
+				messages = append(messages, msg)
 			}
 			return nil
 		})

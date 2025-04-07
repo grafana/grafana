@@ -38,5 +38,5 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	encryption := cfg.Raw.Section("secrets_manager.encryption")
 	cfg.SecretsManagement.Encryption.DataKeysCacheTTL = encryption.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 	cfg.SecretsManagement.Encryption.DataKeysCleanupInterval = encryption.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
-	cfg.SecretsManagement.Encryption.Algorithm = encryption.Key("algorithm").MustString(cipher.AesCfb)
+	cfg.SecretsManagement.Encryption.Algorithm = encryption.Key("algorithm").MustString(cipher.AesGcm)
 }
