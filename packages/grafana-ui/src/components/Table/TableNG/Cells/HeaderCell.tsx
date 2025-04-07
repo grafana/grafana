@@ -9,6 +9,7 @@ import { useStyles2 } from '../../../../themes';
 import { getFieldTypeIcon } from '../../../../types';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
+import { TABLE } from '../constants';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
 
 interface HeaderCellProps {
@@ -81,7 +82,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       const lastElement = headerCellParent.lastElementChild;
       if (lastElement) {
         const handleMouseUp = () => {
-          let newWidth = headerCellParent.clientWidth;
+          let newWidth = headerCellParent.clientWidth - TABLE.CELL_PADDING * 2;
           onColumnResize?.(column.key as string, newWidth);
         };
 
