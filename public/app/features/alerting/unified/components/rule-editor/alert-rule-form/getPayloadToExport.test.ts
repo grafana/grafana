@@ -113,6 +113,7 @@ const expectedModifiedRule2 = (uid: string) => ({
     no_data_state: 'NoData',
     title: 'Rule2 updated',
     uid: uid,
+    missing_series_evals_to_resolve: 0,
   },
   labels: {
     newLabel: 'newLabel',
