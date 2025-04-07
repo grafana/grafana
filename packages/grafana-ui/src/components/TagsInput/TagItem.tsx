@@ -24,7 +24,8 @@ interface Props {
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
   const styles = useStyles2(getStyles);
 
-  // Use theme colors or random colors based on name
+  // If configured, use random colors based on name.
+  // Otherwise, a default class name will be applied to the tag.
   const tagStyle = useMemo(() => {
     if (autoColors) {
       const { color, borderColor } = getTagColorsFromName(name);
