@@ -74,7 +74,7 @@ function getLocaleOptions(): ComboboxOption[] {
   })).sort((a, b) => {
     return a.label.localeCompare(b.label);
   });
-  
+
   const options = [
     {
       value: '',
@@ -146,7 +146,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
         theme,
         language,
       });
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, locale, queryHistory, navbar });
+      await this.service.update({
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        locale,
+        queryHistory,
+        navbar,
+      });
       window.location.reload();
     }
   };
@@ -305,21 +314,24 @@ export class SharedPreferences extends PureComponent<Props, State> {
               disabled={isLoading}
               label={
                 <Label htmlFor="locale-select">
-                <span className={styles.labelText}>
-                  <Trans i18nKey="shared-preferences.fields.locale-format-label">Region format</Trans>
-                </span>
-                <FeatureBadge featureState={FeatureState.experimental} />
-              </Label>
+                  <span className={styles.labelText}>
+                    <Trans i18nKey="shared-preferences.fields.locale-format-label">Region format</Trans>
+                  </span>
+                  <FeatureBadge featureState={FeatureState.experimental} />
+                </Label>
               }
-              description={t('shared-preferences.fields.locale-format-description', 'Choose your region to see the corresponding date, time and number format')}
+              description={t(
+                'shared-preferences.fields.locale-format-description',
+                'Choose your region to see the corresponding date, time and number format'
+              )}
               data-testid="User preferences locale format drop down"
             >
-              <Combobox 
-              value={locales.find((loc) => loc.value === locale)?.value || ''}
-              onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
-              options={locales}
-              placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
-              id="locale-format-select"
+              <Combobox
+                value={locales.find((loc) => loc.value === locale)?.value || ''}
+                onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
+                options={locales}
+                placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
+                id="locale-format-select"
               />
             </Field>
           )}
