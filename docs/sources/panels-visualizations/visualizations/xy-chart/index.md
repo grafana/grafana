@@ -85,15 +85,15 @@ The following options let you control how data is displayed in an xy chart:
 | ------ | ----------- |
 | [Series mapping](#series-mapping) | Set how series data is mapped in the chart. Choose from: **Auto** and **Manual**. Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. For information on setting these specific fields, refer to the [Series mapping section](#series-mapping). |
 | Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. Required in **Manual** mode. |
-| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. Required in **Manual** mode. |
+| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the **Standard** options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. Required in **Manual** mode. |
 | [Show](#show) | Set how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. |
 | Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field). |
 | Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series. |
-| Point shape | Set the shape of the points in the chart. Choose from:<ul><li>**Circle** - Display points as circles. This is the default setting.</li><li>**Square** - Display points as squares.</li></ul> |
-| Point stroke width | Set the width of the point stroke in pixels. The default is one pixel. |
-| Fill opacity | Set the opacity of the point fill. The default is 50. |
+| Point shape | Set the shape of the points in the chart. Choose from:<ul><li>**Circle** - The default setting</li><li>**Square** </li></ul> |
+| Point stroke width | The width of the point stroke in pixels. The default is one pixel. |
+| Fill opacity | The opacity of the point fill. The default is 50. |
 | [Line style](#line-style) | Set the style of the lines that connect points. Choose from: **Solid**, **Dash**, or **Dots**. |
-| Line width | Set the width of the lines that connect points, in pixels. |
+| Line width | The width of the lines that connect points, in pixels. |
 
 <!-- prettier-ignore-end -->
 
@@ -105,7 +105,7 @@ Set how series data is mapped in the chart. Choose from:
 - **Manual** - Explicitly define the series by selecting from available data frames.
 
 Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ.
-The **Auto** and **Manual** series mapping sections describe these different options.
+These options are described in the tabs that follow:
 
 {{< tabs >}}
 {{< tab-content name="Auto series mapping options" >}}
@@ -134,7 +134,7 @@ In **Manual** mode, these fields are required:
 
 | Option | Description |
 | ------ | ----------- |
-| Frame | BSelect your data frame or dataset. You can add as many frames as you want. |
+| Frame | Select your data frame or dataset. You can add as many frames as you want. |
 | X field | Select which field x represents. |
 | Y field | Select which field y represents. |
 
@@ -143,13 +143,9 @@ In **Manual** mode, these fields are required:
 {{< /tab-content >}}
 {{< /tabs >}}
 
-#### Frame
-
-By default, an xy chart displays all data frames. You can filter to select only one frame.
-
 #### X field
 
-Select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
+In **Auto** series mapping mode, select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
 
 | a   | b   | c   |
 | --- | --- | --- |
@@ -161,7 +157,7 @@ In the resulting chart, the x-field is generated from the values in column "a" u
 
 #### Y field
 
-After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields.
+In **Auto** series mapping mode, after the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields.
 You can use this option to explicitly choose which fields to use for y.
 
 The series of the chart are generated from the y-fields.
