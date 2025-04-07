@@ -10,6 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return checkManagerPropertiesOnCreate(auth, obj)
+}
+
 func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {

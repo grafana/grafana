@@ -353,14 +353,20 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Now, we import it, such that it may exist
 	helper.SyncAndWait(t, repo, nil)
 
-	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+	_, err = helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	names := []string{}
-	for _, v := range found.Items {
-		names = append(names, v.GetName())
-	}
-	require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
+	obj, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.NoError(t, err, "all-panels dashboard should exist")
+	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	// Try writing the value directly
+	obj.SetLabels(map[string]string{"x": "y"})
+	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+
+	// Can not delete (not provisioning)
+	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
+	require.Error(t, err, "only the provisionding service should be able to delete")
 }
 
 func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
