@@ -74,8 +74,8 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_explore_query_row_copy');
   };
 
-  const onQueryAddedFromLibrary = () => {
-    reportInteraction('grafana_explore_query_added_from_library');
+  const onQueryReplacedFromLibrary = () => {
+    reportInteraction('grafana_explore_query_replaced_from_library');
   };
 
   const onQueryRemoved = () => {
@@ -97,7 +97,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryCopied={onQueryCopied}
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
-      onQueryAddedFromLibrary={onQueryAddedFromLibrary}
+      onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}

@@ -64,7 +64,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
-  onQueryAddedFromLibrary?: () => void;
+  onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
 }
@@ -356,7 +356,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, onReplace, onQueryAddedFromLibrary } = this.props;
+    const {
+      query,
+      hideHideQueryButton: hideHideQueryButton = false,
+      onReplace,
+      onQueryReplacedFromLibrary,
+    } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -379,10 +384,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           icon="copy"
           onClick={this.onCopyQuery}
         />
-        <AddQueryFromLibraryButton
-          onQueryAddedFromLibrary={onQueryAddedFromLibrary}
-          onReplace={onReplace}
-          datasourceName={datasource?.name}
+        <ReplaceQueryFromLibrary
+          datasourceFilters={datasource?.name ? [datasource.name] : []}
+          onSelectQuery={(query) => {
+            onQueryReplacedFromLibrary?.();
+            onReplace?.(query);
+          }}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -522,31 +529,26 @@ function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   return renderSaveQueryButton(props.query);
 }
 
-interface AddQueryFromLibraryButtonProps<TQuery extends DataQuery> {
-  onReplace?: (query: DataQuery) => void;
-  onQueryAddedFromLibrary?: () => void;
-  datasourceName?: string;
+interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
+  datasourceFilters: string[];
+  onSelectQuery: (query: DataQuery) => void;
 }
 
-function AddQueryFromLibraryButton<TQuery extends DataQuery>({
-  onReplace,
-  onQueryAddedFromLibrary,
-  datasourceName,
-}: AddQueryFromLibraryButtonProps<TQuery>) {
+function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
+  datasourceFilters,
+  onSelectQuery,
+}: ReplaceQueryFromLibraryProps<TQuery>) {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
-  const onAddQueryFromLibrary = () => {
-    openDrawer(datasourceName ? [datasourceName] : [], (query: DataQuery) => {
-      onQueryAddedFromLibrary?.();
-      onReplace?.(query);
-    });
+  const onReplaceQueryFromLibrary = () => {
+    openDrawer(datasourceFilters, onSelectQuery);
   };
 
-  return queryLibraryEnabled && Boolean(onReplace) ? (
+  return queryLibraryEnabled ? (
     <QueryOperationAction
-      title={t('query-operation.header.add-query-from-library', 'Add query from library')}
+      title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
       icon="book"
-      onClick={onAddQueryFromLibrary}
+      onClick={onReplaceQueryFromLibrary}
     />
   ) : null;
 }

@@ -108,7 +108,7 @@ describe('Explore QueryRows', () => {
     // waiting for the component to fully render.
     await screen.findAllByText('someDs query editor');
 
-    expect(await screen.getByLabelText(/Add query from library/i)).toBeInTheDocument();
+    expect(await screen.getByLabelText(/Replace with query from library/i)).toBeInTheDocument();
   });
 
   it('Should not contain a select query from library button when query library is disabled', async () => {
@@ -124,6 +124,6 @@ describe('Explore QueryRows', () => {
 
     await screen.findAllByText('someDs query editor');
 
-    expect(screen.queryByLabelText(/Add query from library/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Replace with query from library/i)).not.toBeInTheDocument();
   });
 });
