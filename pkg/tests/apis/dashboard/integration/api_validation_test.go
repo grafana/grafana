@@ -658,6 +658,7 @@ func getResourceClient(t *testing.T, helper *apis.K8sTestHelper, user apis.User,
 }
 
 // Get a resource client for the specified service token
+// nolint:unused
 func getServiceAccountResourceClient(t *testing.T, helper *apis.K8sTestHelper, token string, orgID int64, gvr schema.GroupVersionResource) *apis.K8sResourceClient {
 	t.Helper()
 

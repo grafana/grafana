@@ -162,8 +162,8 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 		}
 
 		return nil
-
 	})
+
 	if err != nil {
 		return false, err
 	}
