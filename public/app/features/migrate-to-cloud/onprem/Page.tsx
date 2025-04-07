@@ -134,7 +134,10 @@ interface SortParams {
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [sortParams, setSortParams] = useState({} as SortParams);
+  const [sortParams, setSortParams] = useState<SortParams>({
+    column: '',
+    order: undefined,
+  });
   const [showErrors, setShowErrors] = useState(false);
 
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
