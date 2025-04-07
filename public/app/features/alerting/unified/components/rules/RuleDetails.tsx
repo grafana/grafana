@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -90,7 +90,9 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       )}
       {every && (
         <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
-          Every {every}
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ every }}>
+            Every {{ every }}
+          </Trans>
         </DetailsField>
       )}
 
