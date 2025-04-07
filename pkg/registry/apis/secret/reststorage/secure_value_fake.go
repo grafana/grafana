@@ -114,7 +114,7 @@ func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xku
 	}, nil
 }
 
-func (storage *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
 	panic("unimplemented: fakeSecureValueMetadataStorage.SetStatusSucceeded")
 }
 
