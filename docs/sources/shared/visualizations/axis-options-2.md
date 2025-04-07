@@ -50,4 +50,6 @@ Set a **Soft min** or **soft max** option for better control of y-axis limits. B
 
 To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
 
-![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+<!-- >
+
+![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png) -->
