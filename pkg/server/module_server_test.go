@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,8 +46,9 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	ms, err := InitializeModuleServer(cfg, Options{}, api.ServerOptions{})
 	require.NoError(t, err)
 
+	errChan := make(chan error, 1)
 	go func() {
-		require.NoError(t, ms.Run())
+		errChan <- ms.Run()
 	}()
 
 	require.Eventually(t, func() bool {
@@ -57,15 +57,21 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		if err != nil {
 			return false
 		}
-		err = res.Body.Close()
-		if err != nil {
-			return false
-		}
-		return assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer res.Body.Close()
+		return res.StatusCode == http.StatusOK
 	}, 10*time.Second, 200*time.Millisecond)
 
 	err = ms.Shutdown(context.Background(), "test over")
 	require.NoError(t, err)
+
+	select {
+	case err := <-errChan:
+		if err != nil && err != context.Canceled {
+			t.Fatalf("unexpected error from module server: %v", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("timeout waiting for module server to shut down")
+	}
 }
 
 func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
