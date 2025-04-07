@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -78,6 +78,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   return (
     <>
@@ -88,7 +89,9 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       )}
       {every && (
         <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
-          Every {every}
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ every }}>
+            Every {{ every }}
+          </Trans>
         </DetailsField>
       )}
 
@@ -98,6 +101,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           horizontal={true}
         >
           {pendingPeriod}
+        </DetailsField>
+      )}
+      {keepFiringFor && (
+        <DetailsField label={t('alerting.rule-details.keep-firing-for', 'Keep firing for')} horizontal={true}>
+          {keepFiringFor}
         </DetailsField>
       )}
 
@@ -111,7 +119,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
-            <span>{`${dateTime(lastEvaluation).locale('en').fromNow(true)} ago`}</span>
+            <span>
+              {t('alerting.rule-details.last-evaluation-ago', '{{time}} ago', {
+                time: dateTime(lastEvaluation).locale('en').fromNow(true),
+              })}
+            </span>
           </Tooltip>
         </DetailsField>
       )}

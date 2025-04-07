@@ -472,6 +472,7 @@ export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) =
     .pick([
       AlertInstanceTotalState.Alerting,
       AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Recovering,
       AlertInstanceTotalState.Normal,
       AlertInstanceTotalState.NoData,
       AlertInstanceTotalState.Error,

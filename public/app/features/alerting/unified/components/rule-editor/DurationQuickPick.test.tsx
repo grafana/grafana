@@ -1,11 +1,11 @@
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
+import { DurationQuickPick } from './DurationQuickPick';
 
 describe('PendingPeriodQuickPick', () => {
   it('should render the correct default preset, set active element and allow selecting other options', async () => {
     const onSelect = jest.fn();
-    render(<PendingPeriodQuickPick onSelect={onSelect} groupEvaluationInterval={'1m'} selectedPendingPeriod={'2m'} />);
+    render(<DurationQuickPick onSelect={onSelect} groupEvaluationInterval={'1m'} selectedDuration={'2m'} />);
 
     const shouldHaveButtons = ['None', '1m', '2m', '3m', '4m', '5m'];
     const shouldNotHaveButtons = ['0s', '10s', '6m'];

@@ -8,7 +8,7 @@ import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/util
 
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { UnifiedAlertListOptions, ViewMode, GroupMode, SortOrder } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel).setPanelOptions((builder) => {
   builder
@@ -165,6 +165,12 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addBooleanSwitch({
       path: 'stateFilter.pending',
       name: 'Pending',
+      defaultValue: true,
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.recovering',
+      name: 'Recovering',
       defaultValue: true,
       category: ['Alert state filter'],
     })

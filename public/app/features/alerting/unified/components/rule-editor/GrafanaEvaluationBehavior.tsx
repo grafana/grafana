@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   Box,
   Button,
+  Divider,
   Field,
   Icon,
   Input,
@@ -38,10 +39,10 @@ import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
 
+import { DurationQuickPick } from './DurationQuickPick';
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
-import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -149,6 +150,7 @@ export function GrafanaEvaluationBehaviorStep({
     'isPaused',
     'folder',
     'evaluateEvery',
+    'keepFiringFor',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
@@ -293,6 +295,9 @@ export function GrafanaEvaluationBehaviorStep({
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+        <Divider />
+        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
+        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -542,10 +547,56 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
-      <PendingPeriodQuickPick
-        selectedPendingPeriod={currentPendingPeriod}
+      <DurationQuickPick
+        selectedDuration={currentPendingPeriod}
         groupEvaluationInterval={evaluateEvery}
         onSelect={setPendingPeriod}
+      />
+    </Stack>
+  );
+}
+
+function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useFormContext<RuleFormValues>();
+
+  const currentKeepFiringFor = watch('keepFiringFor');
+  const keepFiringForId = 'keep-firing-for-input';
+
+  const setKeepFiringFor = (keepFiringFor: string) => {
+    setValue('keepFiringFor', keepFiringFor);
+  };
+
+  return (
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+      <Field
+        label={
+          <Label
+            htmlFor={keepFiringForId}
+            description={t(
+              'alerting.rule-form.evaluation-behaviour.keep-firing-for.label-description',
+              'Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
+            )}
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for.label-text">Keep firing for</Trans>
+          </Label>
+        }
+        className={styles.inlineField}
+        error={errors.keepFiringFor?.message}
+        invalid={Boolean(errors.keepFiringFor?.message) ? true : undefined}
+        validationMessageHorizontalOverflow={true}
+      >
+        <Input id={keepFiringForId} width={8} {...register('keepFiringFor')} />
+      </Field>
+      <DurationQuickPick
+        selectedDuration={currentKeepFiringFor}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setKeepFiringFor}
       />
     </Stack>
   );
@@ -563,11 +614,14 @@ function NeedHelpInfoForConfigureNoDataError() {
         </Trans>
       </Text>
       <NeedHelpInfo
-        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        contentText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.content',
+          'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.'
+        )}
         externalLink={docsLink}
-        linkText={`Read more about this option`}
+        linkText={t('alerting.rule-form.evaluation-behaviour.info-help.link-text', `Read more about this option`)}
         title={t(
-          'alerting.need-help-info-for-configure-no-data-error.title-configure-no-data-and-error-handling',
+          'alerting.rule-form.evaluation-behaviour.info-help.link-title',
           'Configure no data and error handling'
         )}
       />
@@ -614,8 +668,11 @@ function getDescription(isGrafanaRecordingRule: boolean) {
           </>
         }
         externalLink={docsLink}
-        linkText={`Read about evaluation and alert states`}
-        title={t('alerting.get-description.title-alert-rule-evaluation', 'Alert rule evaluation')}
+        linkText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help2.link-text',
+          `Read about evaluation and alert states`
+        )}
+        title={t('alerting.rule-form.evaluation-behaviour.info-help2.link-title', 'Alert rule evaluation')}
       />
     </Stack>
   );

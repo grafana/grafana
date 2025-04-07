@@ -77,6 +77,7 @@ const SERIES_COLORS = {
   missed: 'red',
   failed: 'red',
   pending: 'yellow',
+  recovering: 'yellow',
   nodata: 'blue',
   'active evaluation': 'blue',
   normal: 'green',
@@ -239,6 +240,12 @@ function getGrafanaManagedScenes() {
                           'Firing instances',
                           'The number of currently firing alert rule instances',
                           'alerting'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Recovering instances',
+                          'The number of currently recovering alert rule instances',
+                          'recovering'
                         ),
                         getInstanceStatByStatusScene(
                           cloudUsageDs,

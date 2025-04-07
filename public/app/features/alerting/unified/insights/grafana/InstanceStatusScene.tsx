@@ -7,7 +7,7 @@ export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
   panelTitle: string,
   panelDescription: string,
-  status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
+  status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error' | 'recovering'
 ) {
   const expr = INSTANCE_ID
     ? `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}", id="${INSTANCE_ID}"})`
