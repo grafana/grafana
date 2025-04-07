@@ -224,6 +224,70 @@ RUN if [ ! `arch` = "x86_64" ]; then \
     fi
 
 # Build distroless image
+FROM scratch as cratch
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
+
+ARG GF_UID
+ARG GF_GID
+ARG GF_PATHS_HOME
+ARG GF_PATHS_CONFIG
+ARG GF_PATHS_DATA
+ARG GF_PATHS_LOGS
+ARG GF_PATHS_PLUGINS
+ARG GF_PATHS_PROVISIONING
+
+ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
+    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
+    GF_PATHS_DATA="${GF_PATHS_DATA}" \
+    GF_PATHS_HOME="${GF_PATHS_HOME}" \
+    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
+    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
+    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
+
+# Copy sh and common utils
+COPY --from=distroless-libs /bin/chmod /bin/chmod
+COPY --from=distroless-libs /bin/grep /bin/grep
+COPY --from=distroless-libs /bin/chown /bin/chown
+COPY --from=distroless-libs /bin/mkdir /bin/mkdir
+COPY --from=distroless-libs /bin /bin
+COPY --from=distroless-libs /bin/sh /bin/sh
+COPY --from=distroless-libs /bin/cp /bin/cp
+COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
+COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
+COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
+COPY --from=distroless-libs /usr/sbin/addgroup /sbin/addgroup
+
+COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
+
+COPY --from=distroless-libs /usr/lib/* /usr/lib/
+COPY --from=distroless-libs /lib/* /lib/
+
+# Copy gclib-commpat
+COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
+COPY --from=distroless-libs /lib64 /lib64
+
+# Copy Grafana files
+COPY --from=grafana-base / /
+
+# gclib-compat is only available on x86_64 arch
+RUN if [ ! `arch` = "x86_64" ]; then \
+    rm -rf /lib64 && \
+    rm -rf /usr/glibc-compat; \
+    fi
+
+WORKDIR ${GF_PATHS_HOME}
+
+RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+  cp conf/ldap.toml /etc/grafana/ldap.toml && \
+  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+
+EXPOSE 3000
+
+ENTRYPOINT [ "/run.sh" ]
+
+# Build distroless image
 FROM ${DISTROLESS_IMAGE} AS distroless
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
@@ -251,12 +315,15 @@ COPY --from=distroless-libs /bin/chmod /bin/chmod
 COPY --from=distroless-libs /bin/grep /bin/grep
 COPY --from=distroless-libs /bin/chown /bin/chown
 COPY --from=distroless-libs /bin/mkdir /bin/mkdir
+COPY --from=distroless-libs /bin /bin
 COPY --from=distroless-libs /bin/sh /bin/sh
 COPY --from=distroless-libs /bin/cp /bin/cp
 COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
 COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
 COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
 COPY --from=distroless-libs /usr/sbin/addgroup /sbin/addgroup
+
+COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
 
 COPY --from=distroless-libs /usr/lib/* /usr/lib/
 COPY --from=distroless-libs /lib/* /lib/
@@ -280,7 +347,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   addgroup -S -g $GF_GID grafana; \
   fi && \
   GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-  addduser -S -u $GF_UID -G "$GF_GID_NAME" grafana
+  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana
 
 RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
   cp conf/ldap.toml /etc/grafana/ldap.toml && \
