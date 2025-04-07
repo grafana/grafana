@@ -88,21 +88,21 @@ export function treeViewersCanEdit() {
 export function wellFormedTree() {
   let seed = 1;
 
-  // prettier-ignore so its easier to see the tree structure
-  /* prettier-ignore */ const folderA = wellFormedFolder(seed++);
-  /* prettier-ignore */ const folderA_folderA = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderB = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderB_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
-  /* prettier-ignore */ const folderA_folderB_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
-  /* prettier-ignore */ const folderA_folderC = wellFormedFolder(seed++, { level: 1},{ parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderC_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
-  /* prettier-ignore */ const folderA_folderC_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
-  /* prettier-ignore */ const folderA_dashbdD = wellFormedDashboard(seed++, { level: 1}, { parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderB = wellFormedFolder(seed++);
-  /* prettier-ignore */ const folderB_empty = wellFormedEmptyFolder(seed++);
-  /* prettier-ignore */ const folderC = wellFormedFolder(seed++);
-  /* prettier-ignore */ const dashbdD = wellFormedDashboard(seed++);
-  /* prettier-ignore */ const dashbdE = wellFormedDashboard(seed++);
+  // biome ignore so its easier to see the tree structure
+  /* biome-ignore format: readability */ const folderA = wellFormedFolder(seed++);
+  /* biome-ignore format: readability */ const folderA_folderA = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderB = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderB_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderB_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderC = wellFormedFolder(seed++, { level: 1},{ parentUID: folderA.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderC_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
+  /* biome-ignore format: readability */ const folderA_folderC_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
+  /* biome-ignore format: readability */ const folderA_dashbdD = wellFormedDashboard(seed++, { level: 1}, { parentUID: folderA.item.uid });
+  /* biome-ignore format: readability */ const folderB = wellFormedFolder(seed++);
+  /* biome-ignore format: readability */ const folderB_empty = wellFormedEmptyFolder(seed++);
+  /* biome-ignore format: readability */ const folderC = wellFormedFolder(seed++);
+  /* biome-ignore format: readability */ const dashbdD = wellFormedDashboard(seed++);
+  /* biome-ignore format: readability */ const dashbdE = wellFormedDashboard(seed++);
 
   return [
     [

@@ -10,7 +10,7 @@ import { getInputStyles } from '../Input/Input';
 
 import { CustomComponentProps } from './types';
 
-// prettier-ignore
+// biome-ignore format: the type becomes unreadable if biome is let loose here
 export type SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>> =
   BaseContainerProps<Option, isMulti, Group> & CustomComponentProps<Option, isMulti, Group>;
 

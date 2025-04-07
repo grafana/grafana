@@ -5,7 +5,6 @@ import { BreakdownLayoutType } from './Breakdown/types';
 import { TrailStepType } from './DataTrailsHistory';
 import { ActionViewType } from './shared';
 
-// prettier-ignore
 type Interactions = {
   // User selected a label to view its breakdown.
   label_selected: {
