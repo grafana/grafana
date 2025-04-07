@@ -103,6 +103,7 @@ export const ComboboxList = <T extends string | number>({
               {startingNewGroup && (
                 <div
                   role="presentation"
+                  data-testid="combobox-option-group"
                   id={groupHeaderId}
                   className={cx(
                     styles.optionGroupHeader,

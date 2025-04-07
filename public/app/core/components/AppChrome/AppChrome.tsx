@@ -4,16 +4,16 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
 import { AppChromeMenu } from './AppChromeMenu';
-import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
+import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { EXTENSION_SIDEBAR_WIDTH, ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -29,27 +29,15 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const { isOpen: isExtensionSidebarOpen, isEnabled: isExtensionSidebarEnabled } = useExtensionSidebarContext();
   const state = chrome.useState();
-  const theme = useTheme2();
   const scopes = useScopes();
 
-  const dockedMenuBreakpoint = theme.breakpoints.values.xl;
-  const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
   const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
-  useMediaQueryChange({
-    breakpoint: dockedMenuBreakpoint,
-    onChange: (e) => {
-      if (dockedMenuLocalStorageState) {
-        chrome.setMegaMenuDocked(e.matches, false);
-        chrome.setMegaMenuOpen(
-          e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.megaMenuOpen) : false
-        );
-      }
-    },
-  });
+
+  useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
   const contentClass = cx({
@@ -144,6 +132,30 @@ export function AppChrome({ children }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * When having docked mega menu we automatically undock it on smaller screens
+ */
+function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
+  const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
+  const isLargeScreen = useMediaQueryMinWidth('xl');
+
+  useEffect(() => {
+    // if undocked we do not need to do anything
+    if (!dockedMenuLocalStorageState) {
+      return;
+    }
+
+    const state = chrome.state.getValue();
+    if (isLargeScreen && !state.megaMenuDocked) {
+      chrome.setMegaMenuDocked(true, false);
+      chrome.setMegaMenuOpen(true);
+    } else if (!isLargeScreen && state.megaMenuDocked) {
+      chrome.setMegaMenuDocked(false, false);
+      chrome.setMegaMenuOpen(false);
+    }
+  }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
 const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {

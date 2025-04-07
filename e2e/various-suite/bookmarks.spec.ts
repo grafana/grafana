@@ -12,9 +12,7 @@ describe('Pin nav items', () => {
   });
 
   it('should pin the selected menu item and add it as a Bookmarks menu item child', () => {
-    // Open, dock and check if the mega menu is visible
-    cy.get('[aria-label="Open menu"]').click();
-    cy.get('[aria-label="Dock menu"]').click();
+    // Check if the mega menu is visible
     e2e.components.NavMenu.Menu().should('be.visible');
 
     // Check if the Bookmark section is visible
@@ -39,9 +37,7 @@ describe('Pin nav items', () => {
     e2e.flows.setUserPreferences({ navbar: { bookmarkUrls: ['/admin'] } });
     cy.reload();
 
-    // Open, dock and check if the mega menu is visible
-    cy.get('[aria-label="Open menu"]').click();
-    cy.get('[aria-label="Dock menu"]').click();
+    // Check if the mega menu is visible
     e2e.components.NavMenu.Menu().should('be.visible');
 
     // Check if the Bookmark section is visible and open it
