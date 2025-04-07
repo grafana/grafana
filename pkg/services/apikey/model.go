@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("API key not found")
-	// @PERCONA
+	ErrNotFound = errors.New("API key not found")
+	// ErrInvalidApiKey @PERCONA
 	ErrInvalidAuth       = errors.New("invalid Service Token/API key")
 	ErrInvalidExpiration = errors.New("negative value for SecondsToLive")
 	ErrDuplicate         = errors.New("API key, organization ID and name must be unique")
