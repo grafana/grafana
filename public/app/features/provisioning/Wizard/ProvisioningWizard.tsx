@@ -31,8 +31,8 @@ export function ProvisioningWizard() {
       },
       {
         id: 'bootstrap',
-        name: t('provisioning.wizard.step-bootstrap', 'Bootstrap'),
-        title: t('provisioning.wizard.title-bootstrap', 'Bootstrap repository'),
+        name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
+        title: t('provisioning.wizard.title-bootstrap', 'Choose what to synchronize'),
         submitOnNext: true,
       },
       {
@@ -79,9 +79,8 @@ export function ProvisioningWizard() {
 
   // Filter out migrate step if using legacy storage
   const availableSteps = useMemo(() => {
-    return requiresMigration
-      ? steps.filter((step) => step.id !== 'pull')
-      : steps.filter((step) => step.id !== 'migrate');
+    const stepToRemove = requiresMigration ? 'pull' : 'migrate';
+    return steps.filter((step) => step.id !== stepToRemove);
   }, [requiresMigration, steps]);
 
   // Calculate button text based on current step position

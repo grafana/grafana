@@ -202,7 +202,7 @@ export function WizardContent({
             onOptionSelect={onOptionSelect}
             onStepUpdate={handleStepUpdate}
             settingsData={settingsData}
-            repoName={repoName!}
+            repoName={repoName ?? ''}
           />
         )}
         {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}

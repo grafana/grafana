@@ -9,22 +9,17 @@ import { ModeOption, SystemState } from './types';
 const migrateInstance: ModeOption = {
   target: 'instance',
   operation: 'migrate',
-  label: 'Migrate instance to repository',
-  description: 'Save all Grafana resources in the repository',
-};
-
-const pullInstance: ModeOption = {
-  target: 'instance',
-  operation: 'pull',
-  label: 'Pull from repository to instance',
-  description: 'Pull resources from the repository into this Grafana instance',
+  label: 'Sync all dashboards and folders with GitHub',
+  description:
+    'Migrate all dashboards and folders from this instance to external storage. After setup, all new dashboards and changes will be saved to external storage and provisioned back into the instance. Use this option if you want all your existing dashboards to be migrated and synced.',
 };
 
 const pullFolder: ModeOption = {
   target: 'folder',
   operation: 'pull',
-  label: 'Pull from repository to folder',
-  description: 'Pull repository resources into a repository-managed Grafana folder',
+  label: 'Sync dashboards and folders to a new Grafana folder',
+  description:
+    'Dashboards  and folders in external storage will be provisioned into a new folder in Grafana. After setup, all new dashboards and folders changes in this folder will be saved to external storage and provisioned back into the instance. Use this option if you want to import the content of the GitHub repository in a folder.',
 };
 
 function getDisabledReason(action: ModeOption, resourceCount: number, folderConnected?: boolean) {
@@ -91,16 +86,11 @@ export function getState(
   if (settings?.legacyStorage) {
     const disabledReason = 'Instance must be migrated first';
     state.actions = [migrateInstance];
-    state.disabled = [
-      { ...pullInstance, disabledReason },
-      { ...pullFolder, disabledReason },
-    ];
+    state.disabled = [{ ...pullFolder, disabledReason }];
     return state;
   }
 
-  const actionsToEvaluate = resourceCount
-    ? [pullFolder, pullInstance, migrateInstance] // recommend pull when resources already exist
-    : [migrateInstance, pullInstance, pullFolder];
+  const actionsToEvaluate = [migrateInstance, pullFolder];
   actionsToEvaluate.forEach((action) => {
     const reason = getDisabledReason(action, resourceCount, folderConnected);
     if (reason) {

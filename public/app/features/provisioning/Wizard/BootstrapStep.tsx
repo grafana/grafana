@@ -93,24 +93,22 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         <Box alignItems="center" padding={4}>
           <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
             <Stack direction="column" gap={1} alignItems="center">
-              <Text variant="h4" color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana</Trans>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
               </Text>
               <Stack direction="row" gap={2}>
-                <Text variant="h3">
-                  <Text variant="h3">
-                    {state.resourceCount > 0
-                      ? state.resourceCountString
-                      : t('provisioning.bootstrap-step.empty', 'Empty')}
-                  </Text>
+                <Text variant="h4">
+                  {state.resourceCount > 0
+                    ? state.resourceCountString
+                    : t('provisioning.bootstrap-step.empty', 'Empty')}
                 </Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
-              <Text variant="h4" color="secondary">
+              <Text color="secondary">
                 <Trans i18nKey="provisioning.bootstrap-step.repository">Repository</Trans>
               </Text>
-              <Text variant="h3">
+              <Text variant="h4">
                 {state.fileCount > 0
                   ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: state.fileCount })
                   : t('provisioning.bootstrap-step.empty', 'Empty')}
