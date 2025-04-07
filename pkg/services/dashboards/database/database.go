@@ -90,8 +90,6 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 
 			if folderIdFound {
 				dash.FolderID = existing.ID // nolint:staticcheck
-			} else {
-				return dashboards.ErrDashboardFolderNotFound
 			}
 		}
 
