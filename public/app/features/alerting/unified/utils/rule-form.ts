@@ -180,7 +180,10 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
         metadata,
-        missing_series_evals_to_resolve: missingSeriesEvalsToResolve ? Number(missingSeriesEvalsToResolve) : undefined,
+        missing_series_evals_to_resolve: missingSeriesEvalsToResolve
+          ? Number(missingSeriesEvalsToResolve)
+          : // API uses 0 value to reset, as `missing_series_evals_to_resolve` cannot be 0
+            0,
       },
       annotations,
       labels,
