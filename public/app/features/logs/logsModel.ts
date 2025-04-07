@@ -39,7 +39,7 @@ import {
   toDataFrame,
   toUtc,
 } from '@grafana/data';
-import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { SIPrefix } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
@@ -102,7 +102,7 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
   }, []);
 }
 
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<LogLevel>): LogRowModel[] {
+export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<string>): LogRowModel[] {
   if (hiddenLogLevels.size === 0) {
     return logRows;
   }

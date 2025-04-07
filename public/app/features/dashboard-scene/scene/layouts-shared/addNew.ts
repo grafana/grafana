@@ -11,18 +11,19 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
-  if (layout instanceof TabsLayoutManager) {
-    const tab = layout.addNewTab();
-    layout.publishEvent(new NewObjectAddedToCanvasEvent(tab), true);
-    return tab;
-  }
-
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  const tabsLayout = TabsLayoutManager.createFromLayout(layoutParent.getLayout());
+  if (layout instanceof TabsLayoutManager) {
+    return layout.addNewTab();
+  }
+
+  // Create new tabs layout and wrap the current layout in the first tab
+  const tabsLayout = TabsLayoutManager.createEmpty();
+  tabsLayout.state.tabs[0].setState({ layout: layout.clone() });
+
   layoutParent.switchLayout(tabsLayout);
 
   const tab = tabsLayout.state.tabs[0];
@@ -37,18 +38,14 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
    */
   if (!config.featureToggles.dashboardNewLayouts) {
     if (layout instanceof DefaultGridLayoutManager) {
-      const row = layout.addNewRow();
-      layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
-      return row;
+      return layout.addNewRow();
     } else {
       throw new Error('New dashboard layouts feature not enabled but new layout found');
     }
   }
 
   if (layout instanceof RowsLayoutManager) {
-    const row = layout.addNewRow();
-    layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
-    return row;
+    return layout.addNewRow();
   }
 
   if (layout instanceof TabsLayoutManager) {
@@ -56,13 +53,13 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
     return addNewRowTo(currentTab.state.layout);
   }
 
-  // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
-  // And wrap current layout in a row
-
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
     throw new Error('Parent layout is not a LayoutParent');
   }
+
+  // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
+  // And wrap current layout in a row
 
   const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
   layoutParent.switchLayout(rowsLayout);

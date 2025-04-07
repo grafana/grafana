@@ -8,10 +8,10 @@ use (
 	./.citools/bra
 	./.citools/cog
 	./.citools/cue
-	./.citools/drone
 	./.citools/golangci-lint
 	./.citools/jb
 	./.citools/lefthook
+	./.citools/swagger
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard
@@ -19,6 +19,7 @@ use (
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
+	./pkg/apis/folder
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build

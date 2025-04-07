@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -16,7 +16,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -33,13 +33,16 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from '../../apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind, ResourceForCreate } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
+import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
+import { serializeAutoGridItem } from '../serialization/layoutSerializers/ResponsiveGridLayoutSerializer';
+import { getElement } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -62,17 +65,20 @@ import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
+import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
-import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { AutoGridItem } from './layout-responsive-grid/ResponsiveGridItem';
+import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
+import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { LayoutParent } from './types/LayoutParent';
+import { isLayoutParent, LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -105,8 +111,6 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
-  /** Controls the visibility of hidden elements like row headers */
-  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
@@ -134,6 +138,8 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   scopesBridge: SceneScopesBridge | undefined;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator?: DashboardLayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -174,6 +180,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   >;
 
+  private _layoutRestorer = new LayoutRestorer();
+
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
@@ -185,6 +193,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
+      layoutOrchestrator: config.featureToggles.dashboardNewLayouts ? new DashboardLayoutOrchestrator() : undefined,
     });
 
     this.serializer =
@@ -260,7 +269,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true, showHiddenElements: true });
+    this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
@@ -345,10 +354,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false, showHiddenElements: false });
+      this.setState({ ...this._initialState, isEditing: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false, showHiddenElements: false });
+      this.setState({ isEditing: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -365,8 +374,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public canDiscard() {
     return this._initialState !== undefined;
   }
-
-  public onToggleHiddenElements = () => this.setState({ showHiddenElements: !this.state.showHiddenElements });
 
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
@@ -490,6 +497,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      layout.addPanel(vizPanel);
+      return;
+    }
+
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
   }
@@ -513,6 +527,28 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public copyPanel(vizPanel: VizPanel) {
+    if (config.featureToggles.dashboardNewLayouts) {
+      const gridItem = vizPanel.parent;
+
+      if (gridItem instanceof AutoGridItem) {
+        const elements = getElement(gridItem, this);
+        const gridItemKind = serializeAutoGridItem(gridItem);
+
+        clearClipboard();
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ elements, gridItem: gridItemKind }));
+      } else if (gridItem instanceof DashboardGridItem) {
+        const elements = getElement(gridItem, this);
+        const gridItemKind = gridItemToGridLayoutItemKind(gridItem);
+
+        clearClipboard();
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ elements, gridItem: gridItemKind }));
+      } else {
+        console.error('Trying to copy a panel that is not DashboardGridItem child');
+        throw new Error('Trying to copy a panel that is not DashboardGridItem child');
+      }
+      return;
+    }
+
     if (!vizPanel.parent) {
       return;
     }
@@ -526,8 +562,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     const jsonData = gridItemToPanel(gridItem);
 
+    clearClipboard();
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
-    appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Use **Paste panel** toolbar action to paste.']);
   }
 
   public pastePanel() {
@@ -599,10 +635,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewRowTo(layout);
+    }
+
     return addNewRowTo(this.state.body);
   }
 
   public onCreateNewTab() {
+    const selectedObject = this.state.editPane.getSelection();
+    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
+      const layout = selectedObject.getLayout();
+      return addNewTabTo(layout);
+    }
+
     return addNewTabTo(this.state.body);
   }
 
@@ -613,8 +661,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-    layout.activateRepeaters?.();
+    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.state.body.activateRepeaters?.();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -676,7 +724,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this.serializer.initializeMapping(saveModel);
+    this.serializer.initializeElementMapping(saveModel);
+    this.serializer.initializeDSReferencesMapping(saveModel);
     const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
     this.serializer.initialSaveModel = sortedModel;
     this.serializer.metadata = meta;
@@ -694,23 +743,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getDashboardPanels() {
     return dashboardSceneGraph.getVizPanels(this);
-  }
-
-  public hasDashboardAngularPlugins() {
-    const sceneGridLayout = this.state.body;
-    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
-      return false;
-    }
-    const gridItems = sceneGridLayout.state.grid.state.children;
-    const dashboardWasAngular = gridItems.some((gridItem) => {
-      if (!(gridItem instanceof DashboardGridItem)) {
-        return false;
-      }
-      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
-      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
-      return isAngularPanel || isAngularDs;
-    });
-    return dashboardWasAngular;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
@@ -731,6 +763,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.serializer.getSaveModel(this);
   }
 
+  // Get the dashboard in native K8s form (using the appropriate apiVersion)
+  getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
+    const { meta } = this.state;
+    const spec = this.getSaveAsModel(options);
+    return {
+      apiVersion: 'dashboard.grafana.app/v1alpha1', // get from the dashboard?
+      kind: 'Dashboard',
+      metadata: {
+        ...meta.k8s,
+        name: meta.uid, // ideally the name is preserved
+        generateName: options.isNew ? 'd' : undefined,
+      },
+      spec,
+    };
+  }
+
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
     return this.serializer.getSaveAsModel(this, options);
   }
@@ -748,6 +796,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.featureToggles.provisioning) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 

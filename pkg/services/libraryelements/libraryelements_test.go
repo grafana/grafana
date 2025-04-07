@@ -18,13 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -349,7 +352,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	_, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{UID: folderUID, SignedInUser: &user, Title: folderUID + "-title"})
 	require.NoError(t, err)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -366,6 +369,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashboardPermissions)
@@ -389,7 +394,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc fold
 		store := folderimpl.ProvideStore(sc.sqlStore)
 		folderSvc = folderimpl.ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-			nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 		t.Logf("Creating folder with title %q and UID uid_for_%s", title, title)
 	}
 	ctx := identity.WithRequester(context.Background(), &sc.user)
@@ -453,12 +458,14 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, ac,
 		folderSvc, fStore,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -522,7 +529,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		folderSvc := folderimpl.ProvideService(
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 		alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 		require.NoError(t, err)
 		err = folderSvc.RegisterService(alertStore)
@@ -532,6 +539,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			features, folderPermissions, ac,
 			folderSvc, fStore,
 			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+			kvstore.NewFakeKVStore(),
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)

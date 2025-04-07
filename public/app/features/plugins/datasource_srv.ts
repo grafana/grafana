@@ -12,13 +12,13 @@ import {
   getBackendSrv,
   GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
-  getLegacyAngularInjector,
   getTemplateSrv,
   RuntimeDataSourceRegistration,
   RuntimeDataSource,
   TemplateSrv,
+  isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -183,17 +183,7 @@ export class DatasourceSrv implements DataSourceService {
         return this.datasources[key];
       }
 
-      // If there is only one constructor argument it is instanceSettings
-      const useAngular = dsPlugin.DataSourceClass.length !== 1;
-      let instance: DataSourceApi;
-
-      if (useAngular) {
-        instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings,
-        });
-      } else {
-        instance = new dsPlugin.DataSourceClass(instanceSettings);
-      }
+      const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
 

@@ -14,26 +14,42 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
+var (
+	ErrMissingSQLQuery = errutil.BadRequest("sql-missing-query").Errorf("missing SQL query")
+	ErrInvalidSQLQuery = errutil.BadRequest("sql-invalid-sql").MustTemplate(
+		"invalid SQL query: {{ .Private.query }} err: {{ .Error }}",
+		errutil.WithPublic(
+			"Invalid SQL query: {{ .Public.error }}",
+		),
+	)
+)
+
 // SQLCommand is an expression to run SQL over results
 type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
 	limit       int64
+	format      string
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
+func NewSQLCommand(refID, format, rawSQL string, limit int64) (*SQLCommand, error) {
 	if rawSQL == "" {
-		return nil, errutil.BadRequest("sql-missing-query",
-			errutil.WithPublicMessage("missing SQL query"))
+		return nil, ErrMissingSQLQuery
 	}
 	tables, err := sql.TablesList(rawSQL)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
-		return nil, errutil.BadRequest("sql-invalid-sql",
-			errutil.WithPublicMessage(fmt.Sprintf("invalid SQL query: %s", err)),
-		)
+		return nil, ErrInvalidSQLQuery.Build(errutil.TemplateData{
+			Error: err,
+			Public: map[string]any{
+				"error": err.Error(),
+			},
+			Private: map[string]any{
+				"query": rawSQL,
+			},
+		})
 	}
 	if len(tables) == 0 {
 		logger.Warn("no tables found in SQL query", "sql", rawSQL)
@@ -47,6 +63,7 @@ func NewSQLCommand(refID, rawSQL string, limit int64) (*SQLCommand, error) {
 		varsToQuery: tables,
 		refID:       refID,
 		limit:       limit,
+		format:      format,
 	}, nil
 }
 
@@ -68,7 +85,10 @@ func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
-	return NewSQLCommand(rn.RefID, expression, limit)
+	formatRaw := rn.Query["format"]
+	format, _ := formatRaw.(string)
+
+	return NewSQLCommand(rn.RefID, format, expression, limit)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -125,10 +145,24 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		return rsp, nil
 	}
 
-	rsp.Values = mathexp.Values{
-		mathexp.TableData{Frame: frame},
-	}
+	switch gr.format {
+	case "alerting":
+		numberSet, err := extractNumberSetFromSQLForAlerting(frame)
+		if err != nil {
+			rsp.Error = err
+			return rsp, nil
+		}
+		vals := make([]mathexp.Value, 0, len(numberSet))
+		for i := range numberSet {
+			vals = append(vals, numberSet[i])
+		}
+		rsp.Values = vals
 
+	default:
+		rsp.Values = mathexp.Values{
+			mathexp.TableData{Frame: frame},
+		}
+	}
 	return rsp, nil
 }
 
@@ -146,4 +180,100 @@ func totalCells(frames []*data.Frame) (total int64) {
 		}
 	}
 	return
+}
+
+// extractNumberSetFromSQLForAlerting converts a data frame produced by a SQL expression
+// into a slice of mathexp.Number values for use in alerting.
+//
+// This function enforces strict semantics: each row must have exactly one numeric value
+// and a unique label set. If any label set appears more than once, an error is returned.
+//
+// It is the responsibility of the SQL query to ensure uniqueness — for example, by
+// applying GROUP BY or aggregation clauses. This function will not deduplicate rows;
+// it will reject the entire input if any duplicates are present.
+//
+// Returns an error if:
+//   - No numeric field is found.
+//   - More than one numeric field exists.
+//   - Any label set appears more than once.
+func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, error) {
+	var (
+		numericField   *data.Field
+		numericFieldIx int
+	)
+
+	// Find the only numeric field
+	for i, f := range frame.Fields {
+		if f.Type().Numeric() {
+			if numericField != nil {
+				return nil, fmt.Errorf("expected exactly one numeric field, but found multiple")
+			}
+			numericField = f
+			numericFieldIx = i
+		}
+	}
+	if numericField == nil {
+		return nil, fmt.Errorf("no numeric field found in frame")
+	}
+
+	type row struct {
+		value  float64
+		labels data.Labels
+	}
+	rows := make([]row, 0, frame.Rows())
+	counts := map[data.Fingerprint]int{}
+	labelMap := map[data.Fingerprint]string{}
+
+	for i := 0; i < frame.Rows(); i++ {
+		val, err := numericField.FloatAt(i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read numeric value at row %d: %w", i, err)
+		}
+
+		labels := data.Labels{}
+		for j, f := range frame.Fields {
+			if j == numericFieldIx || (f.Type() != data.FieldTypeString && f.Type() != data.FieldTypeNullableString) {
+				continue
+			}
+
+			val := f.At(i)
+			switch v := val.(type) {
+			case *string:
+				if v != nil {
+					labels[f.Name] = *v
+				}
+			case string:
+				labels[f.Name] = v
+			}
+		}
+
+		fp := labels.Fingerprint()
+		counts[fp]++
+		labelMap[fp] = labels.String()
+
+		rows = append(rows, row{value: val, labels: labels})
+	}
+
+	// Check for any duplicates
+	duplicates := make([]string, 0)
+	for fp, count := range counts {
+		if count > 1 {
+			duplicates = append(duplicates, labelMap[fp])
+		}
+	}
+
+	if len(duplicates) > 0 {
+		return nil, makeDuplicateStringColumnError(duplicates)
+	}
+
+	// Build final result
+	numbers := make([]mathexp.Number, 0, len(rows))
+	for _, r := range rows {
+		n := mathexp.NewNumber(numericField.Name, r.labels)
+		n.Frame.Fields[0].Config = numericField.Config
+		n.SetValue(&r.value)
+		numbers = append(numbers, n)
+	}
+
+	return numbers, nil
 }
