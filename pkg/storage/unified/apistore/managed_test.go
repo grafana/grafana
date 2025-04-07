@@ -61,9 +61,14 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "user can not update provisioned resource",
 			auth: user,
 			err:  "Provisioned resources must be manaaged by the provisioning service account",
-			obj:  &dashboard.Dashboard{},
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
 			old: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
@@ -74,9 +79,14 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "provisioner can remove manager flags",
 			auth: provisioner,
-			obj:  &dashboard.Dashboard{},
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
 			old: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
@@ -87,9 +97,14 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "provisioner can add manager flags",
 			auth: provisioner,
-			old:  &dashboard.Dashboard{},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",

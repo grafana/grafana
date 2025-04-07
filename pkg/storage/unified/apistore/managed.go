@@ -11,10 +11,50 @@ import (
 )
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return checkManagerPropertiesOnCreate(auth, obj)
+	return enforceManagerProperties(auth, obj)
 }
 
 func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return enforceManagerProperties(auth, obj)
+}
+
+func checkManagerPropertiesOnUpdate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
+	if obj.GetGeneration() == old.GetGeneration() {
+		return nil // status updates are enforced by regular RBAC
+	}
+
+	objKind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
+	oldKind := old.GetAnnotation(utils.AnnoKeyManagerKind)
+	if objKind == "" && objKind == oldKind {
+		return nil // not managed
+	}
+
+	// Check the current settings
+	err := checkManagerPropertiesOnCreate(auth, obj)
+	if err != nil { // new settings failed
+		return err
+	}
+
+	managerNew, okNew := obj.GetManagerProperties()
+	managerOld, okOld := old.GetManagerProperties()
+	if managerNew == managerOld || (okNew && !okOld) { // added manager is OK
+		return nil
+	}
+
+	if !okNew && okOld {
+		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: "Can not remove resource manager check",
+			}}
+		}
+	}
+	return nil
+}
+
+func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
 		return nil
@@ -47,38 +87,5 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 		// TODO: check the kubectl+terraform resource
 		return nil
 	}
-	return nil
-}
-
-func checkManagerPropertiesOnUpdate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
-	objKind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
-	oldKind := old.GetAnnotation(utils.AnnoKeyManagerKind)
-	if objKind == "" && objKind == oldKind {
-		return nil // not managed
-	}
-
-	// Check the current settings
-	err := checkManagerPropertiesOnCreate(auth, obj)
-	if err != nil { // new settings failed
-		return err
-	}
-
-	managerNew, okNew := obj.GetManagerProperties()
-	managerOld, okOld := old.GetManagerProperties()
-	if managerNew == managerOld || (okNew && !okOld) { // added manager is OK
-		return nil
-	}
-
-	if !okNew && okOld {
-		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusForbidden,
-				Reason:  metav1.StatusReasonForbidden,
-				Message: "Can not remove resource manager check",
-			}}
-		}
-	}
-
 	return nil
 }
