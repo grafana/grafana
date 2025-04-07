@@ -255,13 +255,6 @@ func TestDashboardService(t *testing.T) {
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})
-
-		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
-			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
-			require.NoError(t, err)
-		})
 	})
 }
 
@@ -2168,7 +2161,7 @@ func TestCountDashboardsInOrg(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("CountInOrg", mock.Anything, mock.Anything, false).Return(nil, nil).Once()
+		fakeStore.On("CountInOrg", mock.Anything, mock.Anything, false).Return(int64(1), nil).Once()
 		_, err := service.CountDashboardsInOrg(context.Background(), 1)
 		require.NoError(t, err)
 		fakeStore.AssertExpectations(t)

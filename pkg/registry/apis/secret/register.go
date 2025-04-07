@@ -566,11 +566,6 @@ func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
-// Register additional routes with the server.
-func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
-
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
 func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()

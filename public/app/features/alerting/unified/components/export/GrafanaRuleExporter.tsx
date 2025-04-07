@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -23,7 +24,7 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
   const downloadFileName = `${alertUid}-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-rule-export-preview.text-loading', 'Loading....')} />;
   }
 
   return (

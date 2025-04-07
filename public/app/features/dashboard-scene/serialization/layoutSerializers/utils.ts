@@ -18,6 +18,7 @@ import {
   PanelKind,
   PanelQueryKind,
   QueryVariableKind,
+  TabsLayoutTabKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -31,7 +32,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
@@ -43,10 +43,6 @@ import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
 
   titleItems.push(
     new VizPanelLinks({
@@ -97,10 +93,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
 
 export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
 
   titleItems.push(
     new VizPanelLinks({
@@ -238,13 +230,16 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   return sceneState.serialize();
 }
 
-export function getConditionalRendering(item: RowsLayoutRowKind | AutoGridLayoutItemKind): ConditionalRendering {
+export function getConditionalRendering(
+  item: TabsLayoutTabKind | RowsLayoutRowKind | AutoGridLayoutItemKind
+): ConditionalRendering {
   if (!item.spec.conditionalRendering) {
     return ConditionalRendering.createEmpty();
   }
+
   const rootGroup = conditionalRenderingSerializerRegistry
     .get(item.spec.conditionalRendering.kind)
-    .serializer.deserialize(item.spec.conditionalRendering);
+    .deserialize(item.spec.conditionalRendering);
 
   if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
     throw new Error(`Conditional rendering must always start with a root group`);

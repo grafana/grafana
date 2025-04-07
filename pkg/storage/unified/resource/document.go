@@ -393,6 +393,11 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        ResourceTableColumnDefinition_INT64,
 				Description: "Deprecated legacy id of the resource",
 			},
+			{
+				Name:        SEARCH_FIELD_MANAGER_KIND,
+				Type:        ResourceTableColumnDefinition_STRING,
+				Description: "Type of manager, which is responsible for managing the resource",
+			},
 		})
 		if err != nil {
 			panic("failed to initialize standard search fields")
