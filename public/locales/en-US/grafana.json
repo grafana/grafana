@@ -6348,7 +6348,6 @@
       },
       "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
       "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
-      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to GitHub for provisioning",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {
@@ -6556,15 +6555,11 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "token-permissions-info": {
-      "access": "Access",
-      "contents": "Contents",
-      "github-instructions": "Go to <2>GitHub Personal Access Tokens</2>. Make sure to include these permissions under <4>Repository</4>:",
-      "metadata": "Metadata",
-      "permission": "Permission",
-      "pull-requests": "Pull requests",
-      "read-and-write": "Read and write",
-      "readonly": "Read-only",
-      "webhooks": "Webhooks"
+      "content-permission": "Content: <1>Read and write</1>",
+      "github-instructions": "Go to <2>GitHub Personal Access Tokens</2> and click <5>\"Fine-grained token\"</5>. Make sure to include these permissions:",
+      "metadata-permission": "Metadata: <1>Read only</1>",
+      "pull-requests-permission": "Pull requests: <1>Read and write</1>",
+      "webhooks-permission": "Webhooks: <1>Read and write</1>"
     },
     "wizard": {
       "button-finish": "Finish",
