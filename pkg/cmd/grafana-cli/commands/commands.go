@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,7 +31,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB, kv kvstore.KVStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		runner, err := initializeRunner(cmd)
@@ -40,7 +41,8 @@ func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, 
 
 		cfg := runner.Cfg
 		sqlStore := runner.SQLStore
-		if err := command(cmd, cfg, sqlStore); err != nil {
+		kv := runner.KVStore
+		if err := command(cmd, cfg, sqlStore, kv); err != nil {
 			return err
 		}
 

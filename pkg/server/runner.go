@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -19,12 +20,13 @@ type Runner struct {
 	SecretsService    *manager.SecretsService
 	SecretsMigrator   secrets.Migrator
 	UserService       user.Service
+	KVStore           kvstore.KVStore
 }
 
 func NewRunner(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provider,
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
 	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
-	userService user.Service,
+	userService user.Service, kvStore kvstore.KVStore,
 ) Runner {
 	return Runner{
 		Cfg:               cfg,
@@ -35,5 +37,6 @@ func NewRunner(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provid
 		SecretsMigrator:   secretsMigrator,
 		Features:          features,
 		UserService:       userService,
+		KVStore:           kvStore,
 	}
 }
