@@ -193,7 +193,7 @@ describe('Combobox', () => {
       await userEvent.click(input);
 
       const allHeaders = await screen.findAllByRole('presentation');
-      expect(allHeaders).toHaveLength(2);
+      expect(allHeaders).toHaveLength(4);
 
       const listbox = await screen.findByRole('listbox');
       expect(listbox).toHaveTextContent(
@@ -221,8 +221,9 @@ describe('Combobox', () => {
 
       const allHeaders = await screen.findAllByRole('presentation');
 
-      expect(allHeaders[0]).toHaveTextContent('Group 1');
-      expect(allHeaders[1]).toHaveTextContent('');
+      expect(allHeaders[0]).toHaveTextContent('');
+      expect(allHeaders[1]).toHaveTextContent('Group 1');
+      expect(allHeaders[2]).toHaveTextContent('');
     });
 
     it('does not render a top border for the first group header', async () => {
