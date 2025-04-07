@@ -150,7 +150,8 @@
       "metadata": {
         "name": "alertingConversionAPI",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-04T13:25:42Z"
       },
       "spec": {
         "description": "Enable the alerting conversion API",
