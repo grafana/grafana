@@ -16,24 +16,28 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         url: data.url || '',
         branch: data.branch,
         token: data.token,
+        path: data.path,
       };
       break;
     case 'local':
       spec.local = {
         path: data.path,
       };
+      spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
   }
 
-  return spec;
+  // We need to deep clone the data, so it doesn't become immutable
+  return structuredClone(spec);
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  return {
+  return structuredClone({
     ...spec,
     ...spec.github,
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
-  };
+    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
+  });
 };

@@ -100,6 +100,9 @@ export interface PluginMeta<T extends KeyValue = {}> {
   loadingStrategy?: PluginLoadingStrategy;
   extensions?: PluginExtensions;
   moduleHash?: string;
+
+  // Paths to the translations for the plugin
+  translations?: Record<string, string>;
 }
 
 interface PluginDependencyInfo {
@@ -236,6 +239,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   loadError?: boolean;
 
   // Config control (app/datasource)
+  /** @deprecated it will be removed in a future release */
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page

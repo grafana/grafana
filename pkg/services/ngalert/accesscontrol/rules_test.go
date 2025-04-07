@@ -515,7 +515,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should fail if user does not have access to namespace", func(t *testing.T) {
 		f := &folder.Folder{UID: "test-folder"}
 		gen := models.RuleGen
-		genWithFolder := gen.With(gen.WithNamespace(f))
+		genWithFolder := gen.With(gen.WithNamespace(f.ToFolderReference()))
 		rules := genWithFolder.GenerateManyRef(1, 5)
 
 		ac := &recordingAccessControlFake{}

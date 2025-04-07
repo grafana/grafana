@@ -18,7 +18,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
-      instanceName: this.dashboard.state.title,
+      instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
     };
   }
 
@@ -48,13 +48,14 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     const layoutCategory = useLayoutCategory(body);
 
-    return [dashboardOptions, layoutCategory];
+    return [dashboardOptions, ...layoutCategory];
   }
 
   public renderActions(): ReactNode {
     return (
       <Button
         variant="secondary"
+        size="sm"
         onClick={() => this.dashboard.onOpenSettings()}
         tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
       >

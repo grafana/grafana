@@ -144,7 +144,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, 
   const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
-    return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+    return (
+      <LoadingPlaceholder text={t('alerting.grafana-receiver-form.text-loading-notifiers', 'Loading notifiers...')} />
+    );
   }
 
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
@@ -162,7 +164,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, 
       {hasOnCallError && (
         <Alert
           severity="error"
-          title={t('alerting.contact-points.on-call-unreachable-title', 'Loading OnCall integration failed')}
+          title={t(
+            'alerting.grafana-receiver-form.title-loading-on-call-integration-failed',
+            'Loading OnCall integration failed'
+          )}
         >
           <Trans i18nKey="alerting.contact-points.on-call-unreachable">
             Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the

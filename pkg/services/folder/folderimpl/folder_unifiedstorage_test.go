@@ -362,8 +362,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := false
@@ -376,8 +375,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := true
@@ -532,6 +530,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -602,9 +601,6 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		expectedResult := model.HitList{
 			{
 				UID: "uid1",
-				// no parent folder is returned, so the general folder should be set
-				FolderID:    0,
-				FolderTitle: "General",
 				// orgID should be taken from signed in user
 				OrgID: 1,
 				// the rest should be automatically set when parsing the hit results from search
@@ -614,14 +610,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				URL:   "/dashboards/f/uid1/folder0",
 			},
 			{
-				UID:         "uid2",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/uid2/folder1",
+				UID:   "uid2",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/uid2/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -681,14 +675,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		require.NoError(t, err)
 		expectedResult := model.HitList{
 			{
-				UID:         "foo",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/foo/folder1",
+				UID:   "foo",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/foo/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -753,15 +745,13 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 
 		expectedResult := model.HitList{
 			{
-				UID:         "uid",
-				FolderID:    2,
-				FolderTitle: "parent title",
-				FolderUID:   "parent-uid",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/testing-123",
-				Title:       "testing-123",
-				URL:         "/dashboards/f/uid/testing-123",
+				UID:       "uid",
+				FolderUID: "parent-uid",
+				OrgID:     1,
+				Type:      model.DashHitFolder,
+				URI:       "db/testing-123",
+				Title:     "testing-123",
+				URL:       "/dashboards/f/uid/testing-123",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -785,6 +775,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -876,6 +867,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardService: publicDashboardFakeService,
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		tracer:                 tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)

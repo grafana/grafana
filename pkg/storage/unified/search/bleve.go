@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -173,6 +175,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			fname = b.start.Format("tmp-20060102-150405")
 		}
 		dir := filepath.Join(resourceDir, fname)
+		if !isValidPath(dir, b.opts.Root) {
+			b.log.Error("Directory is not valid", "directory", dir)
+		}
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -263,6 +268,9 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	for _, file := range files {
 		if file.IsDir() && file.Name() != skip {
 			fpath := filepath.Join(dir, file.Name())
+			if !isValidPath(dir, b.opts.Root) {
+				b.log.Error("Path is not valid", "directory", fpath, "error", err)
+			}
 			err = os.RemoveAll(fpath)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
@@ -271,6 +279,21 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			}
 		}
 	}
+}
+
+// isValidPath does a sanity check in case it tries to access a different dir
+func isValidPath(path, safeDir string) bool {
+	if path == "" || safeDir == "" {
+		return false
+	}
+	cleanPath := filepath.Clean(path)
+	cleanSafeDir := filepath.Clean(safeDir)
+
+	rel, err := filepath.Rel(cleanSafeDir, cleanPath)
+	if err != nil {
+		return false
+	}
+	return !strings.HasPrefix(rel, "..") && !strings.Contains(rel, "\\")
 }
 
 // TotalDocs returns the total number of documents across all indices
@@ -515,7 +538,16 @@ func (b *bleveIndex) Search(
 		if err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = f
+		if len(f) > 0 {
+			searchrequest.Fields = f
+		} else {
+			searchrequest.Fields = []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+				resource.SEARCH_FIELD_MANAGED_BY,
+			}
+		}
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -630,10 +662,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		fields = append(fields, f)
 	}
 
+	size, err := safeInt64ToInt(req.Limit)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+	offset, err := safeInt64ToInt(req.Offset)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    int(req.Limit),
-		From:    int(req.Offset),
+		Size:    size,
+		From:    offset,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -766,6 +807,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	}
 
 	return searchrequest, nil
+}
+
+func safeInt64ToInt(i64 int64) (int, error) {
+	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
+		return 0, fmt.Errorf("int64 value %d overflows int", i64)
+	}
+	return int(i64), nil
 }
 
 func getSortFields(req *resource.ResourceSearchRequest) []string {
@@ -991,6 +1039,15 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				if match.Expl != nil {
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
+			case resource.SEARCH_FIELD_LEGACY_ID:
+				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+				if v != nil {
+					str, ok := v.(string)
+					if ok {
+						id, _ := strconv.ParseInt(str, 10, 64)
+						row.Cells[i], err = encoders[i](id)
+					}
+				}
 			default:
 				fieldName := f.Name
 				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
@@ -1022,6 +1079,8 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		standard.Field(resource.SEARCH_FIELD_FOLDER),
 		standard.Field(resource.SEARCH_FIELD_RV),
 		standard.Field(resource.SEARCH_FIELD_CREATED),
+		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
+		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
 	}
 
 	if custom != nil {

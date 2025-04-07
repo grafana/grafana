@@ -11,7 +11,6 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -26,7 +25,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     scopesBridge,
     layoutOrchestrator,
   } = model.useState();
-  const { placeholder } = layoutOrchestrator.useState();
   const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -60,21 +58,16 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (panelSearch || panelsPerRow) {
+    if (!viewPanelScene && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
-    return (
-      <>
-        <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />
-        <bodyToRender.Component model={bodyToRender} />
-      </>
-    );
+    return <bodyToRender.Component model={bodyToRender} />;
   }
 
   return (
     <>
-      {placeholder && <placeholder.Component model={placeholder} />}
+      {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         {editPanel && <editPanel.Component model={editPanel} />}

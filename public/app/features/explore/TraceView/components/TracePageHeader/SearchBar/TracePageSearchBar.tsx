@@ -18,6 +18,7 @@ import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
+import { Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
@@ -83,7 +84,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               aria-label="Clear filters button"
               onClick={clear}
             >
-              Clear
+              <Trans i18nKey="explore.clear">Clear</Trans>
             </Button>
             <div className={styles.matchesOnly}>
               <Switch
@@ -99,7 +100,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 fill="text"
                 disabled={!spanFilterMatches?.size}
               >
-                Show matches only
+                <Trans i18nKey="explore.show-matches-only">Show matches only</Trans>
               </Button>
             </div>
             <div className={styles.matchesOnly}>
@@ -114,7 +115,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 variant="secondary"
                 fill="text"
               >
-                Show critical path only
+                <Trans i18nKey="explore.show-critical-path-only">Show critical path only</Trans>
               </Button>
             </div>
           </div>

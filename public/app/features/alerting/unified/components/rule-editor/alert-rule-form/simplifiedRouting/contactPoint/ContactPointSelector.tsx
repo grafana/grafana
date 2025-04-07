@@ -52,7 +52,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label={t('alerting.contact-points.contact-point', 'Contact point')} data-testid="contact-point-picker">
+        <Field
+          label={t('alerting.contact-point-selector.contact-point-picker-label-contact-point', 'Contact point')}
+          data-testid="contact-point-picker"
+        >
           <Controller
             render={({ field: { onChange }, fieldState: { error } }) => (
               <>

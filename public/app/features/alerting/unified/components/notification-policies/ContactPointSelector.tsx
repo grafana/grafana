@@ -71,7 +71,13 @@ export const ContactPointSelector = ({
   // TODO error handling
   if (error) {
     return (
-      <Alert title={t('alerting.contact-points.failed-loading', 'Failed to load contact points')} severity="error" />
+      <Alert
+        title={t(
+          'alerting.contact-point-selector.title-failed-to-fetch-contact-points',
+          'Failed to fetch contact points'
+        )}
+        severity="error"
+      />
     );
   }
 
@@ -89,7 +95,7 @@ export const ContactPointSelector = ({
         <IconButton
           name="sync"
           onClick={onClickRefresh}
-          tooltip={t('alerting.contact-points.refresh', 'Refresh contact points')}
+          tooltip={t('alerting.contact-point-selector.tooltip-refresh-contact-points-list', 'Refresh contact points')}
           className={cx(styles.refreshButton, {
             [styles.loading]: loaderSpinning || isLoading,
           })}
