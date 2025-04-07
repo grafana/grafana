@@ -4,11 +4,22 @@
 package sqlstore
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
+	"testing"
 	"time"
+
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
+	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
+	"cloud.google.com/go/spanner/spannertest"
+	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,7 +30,7 @@ import (
 	"xorm.io/xorm"
 )
 
-// testingTB is an interface that is implemented by *testing.T and *testing.B. Similar to testing.TB.
+// TestingTB is an interface that is implemented by *testing.T and *testing.B. Similar to testing.TB.
 type TestingTB interface {
 	// Helper marks the calling function as a test helper function. See also (*testing.T).Helper.
 	Helper()
@@ -27,7 +38,13 @@ type TestingTB interface {
 	Cleanup(func())
 	// Fatalf logs a message and marks the test as failed. The syntax is similar to that of fmt.Printf. See also (*testing.T).Fatalf.
 	Fatalf(format string, args ...any)
+	// Logf formats and logs its arguments. See also (*testing.T).Logf.
+	Logf(format string, args ...any)
+	// Context returns a context that is canceled just before Cleanup-registered functions are called. See also (*testing.T).Context.
+	Context() context.Context
 }
+
+var _ TestingTB = (testing.TB)(nil)
 
 type testOptions struct {
 	FeatureFlags     map[string]bool
@@ -252,6 +269,9 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		// SQLite doesn't have a concept of a database server, so we always create a new file with no connections required.
 		return newSQLite3DB(tb)
 	}
+	if dbType == "spanner" {
+		return newSpannerDB(tb)
+	}
 
 	// On the remaining databases, we first connect to the configured credentials, create a new database, then return this new database's info as a connection string.
 	// We use databases rather than schemas as MySQL has no concept of schemas, so this aligns them more closely.
@@ -277,9 +297,7 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		_ = engine.Close()
 	}()
 
-	// The database name has to be unique amongst all tests. It is highly unlikely we will have a collision here.
-	// The database name has to be <= 64 chars long on MySQL, and <= 31 chars on Postgres.
-	id := "grafana_test_" + randomLowerHex(18)
+	id := generateDatabaseName()
 	_, err = engine.Exec("CREATE DATABASE " + id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new database %s: %w", id, err)
@@ -303,6 +321,126 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		panic("unreachable; handled in the switch statement above")
 	}
 	return db, nil
+}
+
+func generateDatabaseName() string {
+	// The database name has to be unique amongst all tests. It is highly unlikely we will have a collision here.
+	// The database name has to be <= 64 chars long on MySQL, and <= 31 chars on Postgres.
+	// Database ID length on Spanner must be between 2 and 30 characters. (https://cloud.google.com/spanner/quotas#database-limits)
+	return "grafana_test_" + randomLowerHex(17)
+}
+
+func newSpannerDB(tb TestingTB) (*testDB, error) {
+	// See https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L56-L81 for connection string options.
+	spannerDB := env("SPANNER_DB", "emulator")
+	if spannerDB == "spannertest" {
+		// Start new in-memory spannertest instance. This is mostly useless for our tests
+		// (spannertest doesn't support many things that we use), but added for completion.
+		// Each spannertest instance is a separate db.
+		srv, err := spannertest.NewServer("localhost:0")
+		if err != nil {
+			return nil, err
+		}
+		tb.Cleanup(srv.Close)
+
+		return &testDB{
+			Driver: "spanner",
+			Conn:   fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", srv.Addr),
+		}, nil
+	}
+
+	conn := spannerDB
+	if spannerDB == "emulator" {
+		host := env("SPANNER_EMULATOR_HOST", "localhost:9010")
+		conn = fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", host)
+	}
+
+	cfg, err := spannerdriver.ExtractConnectorConfig(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	clientOptions := spannerConnectorConfigToClientOptions(cfg)
+
+	dbname := generateDatabaseName()
+	fullDbName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, dbname)
+	dbCreated := false
+
+	databaseAdminClient, err := database.NewDatabaseAdminClient(tb.Context(), clientOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database admin client: %v", err)
+	}
+	tb.Cleanup(func() {
+		if dbCreated {
+			// Drop database in the cleanup.
+			// Can't use tb.Context() here, since that is canceled before calling Cleanup functions.
+			err := databaseAdminClient.DropDatabase(context.Background(), &databasepb.DropDatabaseRequest{
+				Database: fullDbName,
+			})
+			if err != nil {
+				tb.Logf("Failed to drop Spanner database %s due to error %v", fullDbName, err)
+			} else {
+				tb.Logf("Dropped temporary Spanner database %s", fullDbName)
+			}
+		}
+
+		_ = databaseAdminClient.Close()
+	})
+
+	op, err := databaseAdminClient.CreateDatabase(tb.Context(), &databasepb.CreateDatabaseRequest{
+		Parent:          fmt.Sprintf("projects/%s/instances/%s", cfg.Project, cfg.Instance),
+		CreateStatement: fmt.Sprintf("CREATE DATABASE `%s`", dbname),
+		DatabaseDialect: databasepb.DatabaseDialect_GOOGLE_STANDARD_SQL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database: %v", err)
+	}
+	_, err = op.Wait(tb.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database: %v", err)
+	}
+	tb.Logf("Created temporary Spanner database %s", fullDbName)
+
+	dbCreated = true
+
+	// Rebuild connection string, but change database to ID of just-created database.
+	// Example: `localhost:9010/projects/test-project/instances/test-instance/databases/test-database;usePlainText=true;disableRouteToLeader=true;enableEndToEndTracing=true`
+	connString := ""
+	if cfg.Host != "" {
+		connString = fmt.Sprintf("%s/", cfg.Host)
+	}
+	// Use new DB name instead of cfg.Database.
+	connString = connString + fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, dbname)
+	for k, v := range cfg.Params {
+		connString = connString + fmt.Sprintf(";%s=%s", k, v)
+	}
+
+	return &testDB{
+		Driver: "spanner",
+		Conn:   connString,
+	}, nil
+}
+
+// This is same code as xorm.SpannerConnectorConfigToClientOptions, but we cannot use that because it's under "enterprise" build tag.
+func spannerConnectorConfigToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
+	var opts []option.ClientOption
+	if connectorConfig.Host != "" {
+		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
+	}
+	if strval, ok := connectorConfig.Params["credentials"]; ok {
+		opts = append(opts, option.WithCredentialsFile(strval))
+	}
+	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
+		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
+	}
+	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
+		if val, err := strconv.ParseBool(strval); err == nil && val {
+			opts = append(opts,
+				option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
+				option.WithoutAuthentication())
+		}
+	}
+	return opts
 }
 
 func env(name, fallback string) string {
