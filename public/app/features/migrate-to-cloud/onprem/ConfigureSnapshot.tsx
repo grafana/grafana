@@ -16,22 +16,26 @@ interface ConfigureSnapshotProps {
 }
 
 // Manual order of resource types to display in the UI for better UX.
-function resourceTypeOrder(resourceTypes: ResourceTypeId[]): ResourceTypeId[] {
-  const displayOrder: ResourceTypeId[] = [
-    'DASHBOARD',
-    'LIBRARY_ELEMENT',
-    'DATASOURCE',
-    'PLUGIN',
-    'FOLDER',
-    'ALERT_RULE_GROUP',
-    'ALERT_RULE',
-    'NOTIFICATION_POLICY',
-    'NOTIFICATION_TEMPLATE',
-    'CONTACT_POINT',
-    'MUTE_TIMING',
-  ];
+const displayOrder = [
+  'DASHBOARD',
+  'LIBRARY_ELEMENT',
+  'DATASOURCE',
+  'PLUGIN',
+  'FOLDER',
+  'ALERT_RULE_GROUP',
+  'ALERT_RULE',
+  'NOTIFICATION_POLICY',
+  'NOTIFICATION_TEMPLATE',
+  'CONTACT_POINT',
+  'MUTE_TIMING',
+] as const;
 
-  return displayOrder.filter((type) => resourceTypes.includes(type));
+// This guarantees that displayOrder includes all ResourceTypeId values.
+type IsExhaustive = Exclude<ResourceTypeId, (typeof displayOrder)[number]> extends never ? true : false;
+const hasAllResourceTypes: IsExhaustive = true; // prettier-ignore
+
+function resourceTypeOrder(resourceTypes: ResourceTypeId[]): ResourceTypeId[] {
+  return hasAllResourceTypes && displayOrder.filter((type) => resourceTypes.includes(type));
 }
 
 export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
