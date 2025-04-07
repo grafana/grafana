@@ -27,7 +27,7 @@ export enum RuleOperation {
 const icons: Record<PromAlertingRuleState, IconName> = {
   [PromAlertingRuleState.Inactive]: 'check-circle',
   [PromAlertingRuleState.Pending]: 'circle',
-  [PromAlertingRuleState.Recovering]: 'circle',
+  [PromAlertingRuleState.Recovering]: 'exclamation-circle',
   [PromAlertingRuleState.Firing]: 'exclamation-circle',
 };
 

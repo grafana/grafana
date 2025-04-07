@@ -556,7 +556,7 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   );
 }
 
-export function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
+function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,

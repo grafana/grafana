@@ -6,7 +6,6 @@ import { Trans, t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useKeepFiringFor } from '../../hooks/rules/useKeepFiringFor';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
@@ -79,7 +78,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
-  const keepFiringFor = useKeepFiringFor(rule);
+  const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   return (
     <>
