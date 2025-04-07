@@ -5,7 +5,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Counter, useStyles2 } from '@grafana/ui';
+import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
@@ -21,6 +21,10 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
   sandboxId?: string;
+  /**
+   * When set will disable category and show tooltip with disabledText on hover
+   */
+  disabledText?: string;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -37,6 +41,7 @@ export const OptionsPaneCategory = React.memo(
     itemsCount,
     isNested = false,
     sandboxId,
+    disabledText,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
@@ -96,6 +101,29 @@ export const OptionsPaneCategory = React.memo(
       [styles.bodyNested]: isNested,
     });
 
+    /**
+     * Disabled categories just show the disabled header and icon
+     */
+    if (disabledText) {
+      return (
+        <div
+          className={boxStyles}
+          data-plugin-sandbox={sandboxId}
+          data-testid={selectors.components.OptionsGroup.group(id)}
+          ref={ref}
+        >
+          <Tooltip content={disabledText}>
+            <div className={headerStyles}>
+              <h6 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+                {renderTitle(isExpanded)}
+              </h6>
+              <Icon size="sm" name="ban" className={styles.disabledIcon} />
+            </div>
+          </Tooltip>
+        </div>
+      );
+    }
+
     return (
       <div
         className={boxStyles}
@@ -107,10 +135,9 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={styles.title}>
+          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
           </h6>
-
           <Button
             data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
@@ -133,8 +160,6 @@ export const OptionsPaneCategory = React.memo(
   }
 );
 
-OptionsPaneCategory.displayName = 'OptionsPaneCategory';
-
 const getStyles = (theme: GrafanaTheme2) => ({
   box: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
@@ -149,6 +174,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: '1rem',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    color: theme.colors.text.secondary,
+  }),
+  titleExpanded: css({
+    color: theme.colors.text.primary,
   }),
   header: css({
     display: 'flex',
@@ -172,6 +201,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(1, 2, 1, 2),
+  }),
+  titleDisabled: css({
+    color: theme.colors.text.disabled,
+    cursor: 'not-allowed',
+  }),
+  disabledIcon: css({
+    color: theme.colors.text.disabled,
+    marginRight: theme.spacing(1),
   }),
   bodyNested: css({
     position: 'relative',

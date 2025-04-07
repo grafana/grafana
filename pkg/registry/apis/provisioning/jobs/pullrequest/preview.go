@@ -15,46 +15,64 @@ import (
 
 // resourcePreview represents a resource that has changed in a pull request.
 type resourcePreview struct {
-	Filename             string
-	Path                 string
-	Action               string
-	Kind                 string
-	OriginalURL          string
-	PreviewURL           string
-	PreviewScreenshotURL string
+	Filename              string
+	Path                  string
+	Action                string
+	Kind                  string
+	OriginalURL           string
+	OriginalScreenshotURL string
+	PreviewURL            string
+	PreviewScreenshotURL  string
 }
 
 const previewsCommentTemplate = `Hey there! 🎉
-Grafana spotted some changes for your resources in this pull request:
-## Summary
-| File Name | Kind | Path | Action | Links |
-|-----------|------|------|--------|-------|
-{{- range .}}
-| {{.Filename}} | {{.Kind}} | {{.Path}} | {{.Action}} | {{- if .OriginalURL}}[Original]({{.OriginalURL}}){{- end}}{{- if and .OriginalURL .PreviewURL}}, {{end}}{{- if .PreviewURL}}[Preview]({{.PreviewURL}}){{- end}} |
-{{- end}}
+Grafana spotted some changes in your dashboard.
 
-Click the preview links above to view how your changes will look and compare them with the original and current versions.
-
-{{- range .}}
-{{- if .PreviewScreenshotURL}}
+{{- if and .OriginalScreenshotURL .PreviewScreenshotURL}}
+### Side by Side Comparison of {{.Filename}}
+| Original | Preview |
+|----------|---------|
+| ![Original]({{.OriginalScreenshotURL}}) | ![Preview]({{.PreviewScreenshotURL}}) |
+{{- else if .OriginalScreenshotURL}}
+### Original of {{.Filename}}
+![Original]({{.OriginalScreenshotURL}})
+{{- else if .PreviewScreenshotURL}}
 ### Preview of {{.Filename}}
 ![Preview]({{.PreviewScreenshotURL}})
-{{- end}}{{- end}}`
+{{ end}}
+
+{{ if and .OriginalURL .PreviewURL}}
+See the [original]({{.OriginalURL}}) and [preview]({{.PreviewURL}}) of {{.Filename}}.
+{{- else if .OriginalURL}}
+See the [original]({{.OriginalURL}}) of {{.Filename}}.
+{{- else if .PreviewURL}}
+See the [preview]({{.PreviewURL}}) of {{.Filename}}.
+{{- end}}`
 
 // PreviewRenderer is an interface for rendering a preview of a file
+//
+//go:generate mockery --name PreviewRenderer --structname MockPreviewRenderer --inpackage --filename preview_renderer_mock.go --with-expecter
 type PreviewRenderer interface {
 	IsAvailable(ctx context.Context) bool
 	RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error)
 }
 
-type Previewer struct {
+// Previewer is a service for previewing dashboard changes in a pull request
+//
+//go:generate mockery --name Previewer --structname MockPreviewer --inpackage --filename previewer_mock.go --with-expecter
+type Previewer interface {
+	Preview(ctx context.Context, f repository.VersionedFileChange, namespace, repoName, base, ref, pullRequestURL string, generatePreview bool) (resourcePreview, error)
+	GenerateComment(preview resourcePreview) (string, error)
+}
+
+type previewer struct {
 	template    *template.Template
 	urlProvider func(namespace string) string
 	renderer    PreviewRenderer
 }
 
-func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) string) *Previewer {
-	return &Previewer{
+func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) string) *previewer {
+	return &previewer{
 		template:    template.Must(template.New("comment").Parse(previewsCommentTemplate)),
 		urlProvider: urlProvider,
 		renderer:    renderer,
@@ -62,16 +80,16 @@ func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) s
 }
 
 // GenerateComment creates a formatted comment for dashboard previews
-func (p *Previewer) GenerateComment(previews []resourcePreview) (string, error) {
+func (p *previewer) GenerateComment(preview resourcePreview) (string, error) {
 	var buf bytes.Buffer
-	if err := p.template.Execute(&buf, previews); err != nil {
+	if err := p.template.Execute(&buf, preview); err != nil {
 		return "", fmt.Errorf("execute previews comment template: %w", err)
 	}
 	return buf.String(), nil
 }
 
 // getOriginalURL returns the URL for the original version of the file based on the action
-func (p *Previewer) getOriginalURL(ctx context.Context, f repository.VersionedFileChange, baseURL *url.URL, repoName, base, pullRequestURL string) string {
+func (p *previewer) getOriginalURL(ctx context.Context, f repository.VersionedFileChange, baseURL *url.URL, repoName, base, pullRequestURL string) string {
 	switch f.Action {
 	case repository.FileActionCreated:
 		return "" // No original URL for new files
@@ -88,7 +106,7 @@ func (p *Previewer) getOriginalURL(ctx context.Context, f repository.VersionedFi
 }
 
 // getPreviewURL returns the URL for the preview version of the file based on the action
-func (p *Previewer) getPreviewURL(ctx context.Context, f repository.VersionedFileChange, baseURL *url.URL, repoName, ref, pullRequestURL string) string {
+func (p *previewer) getPreviewURL(ctx context.Context, f repository.VersionedFileChange, baseURL *url.URL, repoName, ref, pullRequestURL string) string {
 	switch f.Action {
 	case repository.FileActionCreated, repository.FileActionUpdated, repository.FileActionRenamed:
 		return p.previewURL(baseURL, repoName, ref, f.Path, pullRequestURL)
@@ -101,7 +119,7 @@ func (p *Previewer) getPreviewURL(ctx context.Context, f repository.VersionedFil
 }
 
 // previewURL returns the URL to preview the file in Grafana
-func (p *Previewer) previewURL(u *url.URL, repoName, ref, filePath, pullRequestURL string) string {
+func (p *previewer) previewURL(u *url.URL, repoName, ref, filePath, pullRequestURL string) string {
 	baseURL := *u
 	baseURL = *baseURL.JoinPath("/admin/provisioning", repoName, "dashboard/preview", filePath)
 
@@ -118,7 +136,7 @@ func (p *Previewer) previewURL(u *url.URL, repoName, ref, filePath, pullRequestU
 }
 
 // Preview creates a preview for a single file change
-func (p *Previewer) Preview(
+func (p *previewer) Preview(
 	ctx context.Context,
 	f repository.VersionedFileChange,
 	namespace string,
@@ -127,10 +145,10 @@ func (p *Previewer) Preview(
 	ref string,
 	pullRequestURL string,
 	generatePreview bool,
-) (*resourcePreview, error) {
+) (resourcePreview, error) {
 	baseURL, err := url.Parse(p.urlProvider(namespace))
 	if err != nil {
-		return nil, fmt.Errorf("error parsing base url: %w", err)
+		return resourcePreview{}, fmt.Errorf("error parsing base url: %w", err)
 	}
 
 	preview := resourcePreview{
@@ -142,17 +160,33 @@ func (p *Previewer) Preview(
 		PreviewURL:  p.getPreviewURL(ctx, f, baseURL, repoName, ref, pullRequestURL),
 	}
 
-	if !generatePreview && len(preview.PreviewURL) == 0 {
+	if !generatePreview {
 		logger.Info("skipping dashboard preview generation", "path", f.Path)
-		return &preview, nil
+		return preview, nil
 	}
 
-	screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
-	if err != nil {
-		return nil, fmt.Errorf("render dashboard preview: %w", err)
+	if preview.PreviewURL != "" {
+		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
+		if err != nil {
+			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
+		}
+		preview.PreviewScreenshotURL = screenshotURL
+		logger.Info("dashboard preview screenshot generated", "screenshotURL", screenshotURL)
 	}
-	preview.PreviewScreenshotURL = screenshotURL
-	logger.Info("dashboard preview generated", "screenshotURL", screenshotURL)
 
-	return &preview, nil
+	if preview.OriginalURL != "" {
+		originalPath := f.PreviousPath
+		if originalPath == "" {
+			originalPath = f.Path
+		}
+
+		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, originalPath, base)
+		if err != nil {
+			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
+		}
+		preview.OriginalScreenshotURL = screenshotURL
+		logger.Info("original dashboard screenshot generated", "screenshotURL", screenshotURL)
+	}
+
+	return preview, nil
 }

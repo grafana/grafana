@@ -19,22 +19,21 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => ({
-        ...mockDS,
-        meta: {
-          ...mockDS.meta,
-          alerting: true,
-          mixed: true,
-        },
-      }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => ({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
     }),
-  };
-});
+  }),
+}));
 
 describe('QueryGroup', () => {
   // QueryGroup relies on this being present
@@ -121,36 +120,6 @@ describe('QueryGroup', () => {
     await screen.findByRole('button', { name: /Add query/i });
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
-  });
-
-  describe('Angular deprecation', () => {
-    const deprecationText = /legacy platform based on AngularJS/i;
-
-    const oldAngularDetected = mockDS.meta.angular?.detected ?? false;
-    const oldDatasources = config.datasources;
-
-    afterEach(() => {
-      mockDS.meta.angular = { detected: oldAngularDetected, hideDeprecation: false };
-      config.datasources = oldDatasources;
-    });
-
-    it('Should render angular deprecation notice for angular plugins', async () => {
-      mockDS.meta.angular = { detected: true, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
-      });
-    });
-
-    it('Should not render angular deprecation notice for non-angular plugins', async () => {
-      mockDS.meta.angular = { detected: false, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
-      });
-    });
   });
 });
 

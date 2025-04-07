@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   Box,
   Button,
+  Divider,
   Field,
   Icon,
   Input,
@@ -25,6 +26,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
@@ -36,12 +38,11 @@ import {
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { DurationQuickPick } from './DurationQuickPick';
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
-import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -149,6 +150,7 @@ export function GrafanaEvaluationBehaviorStep({
     'isPaused',
     'folder',
     'evaluateEvery',
+    'keepFiringFor',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
@@ -199,7 +201,7 @@ export function GrafanaEvaluationBehaviorStep({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection
       stepNo={step}
-      title="Set evaluation behavior"
+      title={t('alerting.grafana-evaluation-behavior-step.title-set-evaluation-behavior', 'Set evaluation behavior')}
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
@@ -252,7 +254,9 @@ export function GrafanaEvaluationBehaviorStep({
             </Field>
           </div>
           <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">or</Text>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+            </Text>
             <Button
               onClick={onOpenEvaluationGroupCreationModal}
               type="button"
@@ -291,6 +295,9 @@ export function GrafanaEvaluationBehaviorStep({
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+        <Divider />
+        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
+        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -322,7 +329,10 @@ export function GrafanaEvaluationBehaviorStep({
           <CollapseToggle
             isCollapsed={!showErrorHandling}
             onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-            text="Configure no data and error handling"
+            text={t(
+              'alerting.grafana-evaluation-behavior-step.text-configure-no-data-and-error-handling',
+              'Configure no data and error handling'
+            )}
           />
           {showErrorHandling && (
             <>
@@ -451,7 +461,7 @@ function EvaluationGroupCreationModal({
               className={styles.formInput}
               autoFocus={true}
               id={evaluationGroupNameId}
-              placeholder="Enter a name"
+              placeholder={t('alerting.evaluation-group-creation-modal.placeholder-enter-a-name', 'Enter a name')}
               {...register('group', { required: { value: true, message: 'Required.' } })}
             />
           </Field>
@@ -459,7 +469,13 @@ function EvaluationGroupCreationModal({
           <Field
             error={formState.errors.evaluateEvery?.message}
             label={
-              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
+              <Label
+                htmlFor={evaluateEveryId}
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-often-rules-group-evaluated',
+                  'How often all rules in the group are evaluated.'
+                )}
+              >
                 <Trans i18nKey="alerting.rule-form.evaluation.group.interval">Evaluation interval</Trans>
               </Label>
             }
@@ -531,10 +547,56 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
-      <PendingPeriodQuickPick
-        selectedPendingPeriod={currentPendingPeriod}
+      <DurationQuickPick
+        selectedDuration={currentPendingPeriod}
         groupEvaluationInterval={evaluateEvery}
         onSelect={setPendingPeriod}
+      />
+    </Stack>
+  );
+}
+
+function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useFormContext<RuleFormValues>();
+
+  const currentKeepFiringFor = watch('keepFiringFor');
+  const keepFiringForId = 'keep-firing-for-input';
+
+  const setKeepFiringFor = (keepFiringFor: string) => {
+    setValue('keepFiringFor', keepFiringFor);
+  };
+
+  return (
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+      <Field
+        label={
+          <Label
+            htmlFor={keepFiringForId}
+            description={t(
+              'alerting.rule-form.evaluation-behaviour.keep-firing-for.label-description',
+              'Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
+            )}
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for.label-text">Keep firing for</Trans>
+          </Label>
+        }
+        className={styles.inlineField}
+        error={errors.keepFiringFor?.message}
+        invalid={Boolean(errors.keepFiringFor?.message) ? true : undefined}
+        validationMessageHorizontalOverflow={true}
+      >
+        <Input id={keepFiringForId} width={8} {...register('keepFiringFor')} />
+      </Field>
+      <DurationQuickPick
+        selectedDuration={currentKeepFiringFor}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setKeepFiringFor}
       />
     </Stack>
   );
@@ -552,10 +614,16 @@ function NeedHelpInfoForConfigureNoDataError() {
         </Trans>
       </Text>
       <NeedHelpInfo
-        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        contentText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.content',
+          'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.'
+        )}
         externalLink={docsLink}
-        linkText={`Read more about this option`}
-        title="Configure no data and error handling"
+        linkText={t('alerting.rule-form.evaluation-behaviour.info-help.link-text', `Read more about this option`)}
+        title={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.link-title',
+          'Configure no data and error handling'
+        )}
       />
     </Stack>
   );
@@ -600,8 +668,11 @@ function getDescription(isGrafanaRecordingRule: boolean) {
           </>
         }
         externalLink={docsLink}
-        linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
+        linkText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help2.link-text',
+          `Read about evaluation and alert states`
+        )}
+        title={t('alerting.rule-form.evaluation-behaviour.info-help2.link-title', 'Alert rule evaluation')}
       />
     </Stack>
   );

@@ -10,20 +10,18 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneDataLayerControls,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  VariableValueSelectors,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
@@ -39,7 +37,7 @@ import {
   PanelKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -63,7 +61,7 @@ import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSes
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -142,9 +140,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
+  const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   //createLayoutManager(dashboard);
 
@@ -191,7 +189,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         annotationLayers,
       }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
         }),

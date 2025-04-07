@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon, TextLink, Themeable2, withTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { Trans, t } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
@@ -59,7 +60,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
             }
           >
-            Learn more
+            <Trans i18nKey="dashboard.unthemed-dashboard-row.learn-more">Learn more</Trans>
           </TextLink>
         </div>
       );
@@ -133,7 +134,12 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               onUpdate={this.onUpdate}
               warning={this.getWarning()}
             />
-            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
+            <button
+              type="button"
+              className="pointer"
+              onClick={this.onDelete}
+              aria-label={t('dashboard.unthemed-dashboard-row.aria-label-delete-row', 'Delete row')}
+            >
               <Icon name="trash-alt" />
             </button>
           </div>
