@@ -141,7 +141,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       }
     }
 
-    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+    let jaegerInterpolated = pick(this.applyTemplateVariables(target, options.scopedVars), [
       'service',
       'operation',
       'tags',
@@ -186,12 +186,12 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: JaegerQuery, scopedVars: ScopedVars) {
     let expandedQuery = { ...query };
 
     if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
