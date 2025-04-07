@@ -28,8 +28,13 @@ func TestAllowQuery(t *testing.T) {
 			err:  nil,
 		},
 		{
-			name: "all allowed functions",
-			q:    example_all_allowed_functions,
+			name: "many allowed functions",
+			q:    example_many_allowed_functions,
+			err:  nil,
+		},
+		{
+			name: "many more allowed functions",
+			q:    example_many_more_allowed_functions,
 			err:  nil,
 		},
 		{
@@ -174,7 +179,7 @@ var example_case_statement = `SELECT
   END AS category
 FROM metrics`
 
-var example_all_allowed_functions = `WITH sample_data AS (
+var example_many_allowed_functions = `WITH sample_data AS (
   SELECT 
     100 AS value,
     'example' AS name,
@@ -261,3 +266,68 @@ var example_json_functions = `SELECT
   JSON_LENGTH('{"a": 1, "b": {"c": 3}}') AS json_len,
   JSON_SEARCH('{"a": "xyz", "b": "abc"}', 'one', 'abc') AS json_search,
   JSON_TYPE('{"a": 1}') AS json_type`
+
+var example_many_more_allowed_functions = `
+SELECT
+  -- Math functions
+  LN(10) as ln_val,
+  TRUNCATE(12.345, 2) as truncate_val,
+  SIN(0.5) as sin_val,
+  COS(0.5) as cos_val,
+  TAN(0.5) as tan_val,
+  ASIN(0.5) as asin_val,
+  ACOS(0.5) as acos_val,
+  ATAN(0.5) as atan_val,
+  ATAN2(1, 2) as atan2_val,
+  RAND() as rand_val,
+  PI() as pi_val,
+  
+  -- String functions
+  LEFT('hello', 2) as left_val,
+  RIGHT('hello', 2) as right_val,
+  LTRIM(' hello') as ltrim_val,
+  RTRIM('hello ') as rtrim_val,
+  REPLACE('hello', 'l', 'x') as replace_val,
+  REVERSE('hello') as reverse_val,
+  LCASE('HELLO') as lcase_val,
+  UCASE('hello') as ucase_val,
+  MID('hello', 2, 2) as mid_val,
+  REPEAT('a', 3) as repeat_val,
+  POSITION('l' IN 'hello') as position_val,
+  INSTR('hello', 'l') as instr_val,
+  LOCATE('l', 'hello') as locate_val,
+  ASCII('A') as ascii_val,
+  ORD('A') as ord_val,
+  CHAR(65) as char_val,
+  
+  -- Date functions
+  CURRENT_DATE() as current_date_val,
+  CURRENT_TIME() as current_time_val,
+  CURRENT_TIMESTAMP() as current_timestamp_val,
+  EXTRACT(YEAR FROM '2023-01-01') as extract_val,
+  HOUR('12:34:56') as hour_val,
+  MINUTE('12:34:56') as minute_val,
+  SECOND('12:34:56') as second_val,
+  DAYNAME('2023-01-01') as dayname_val,
+  MONTHNAME('2023-01-01') as monthname_val,
+  DAYOFWEEK('2023-01-01') as dayofweek_val,
+  DAYOFMONTH('2023-01-01') as dayofmonth_val,
+  DAYOFYEAR('2023-01-01') as dayofyear_val,
+  WEEK('2023-01-01') as week_val,
+  QUARTER('2023-01-01') as quarter_val,
+  TIME_TO_SEC('12:34:56') as time_to_sec_val,
+  SEC_TO_TIME(45296) as sec_to_time_val,
+  TIMESTAMPDIFF(HOUR, '2023-01-01', '2023-01-02') as timestampdiff_val,
+  TIMESTAMPADD(HOUR, 1, '2023-01-01') as timestampadd_val,
+  
+  -- Type conversion
+  CONVERT(12.34, CHAR) as convert_val,
+  
+  -- JSON functions
+  JSON_MERGE_PATCH('{"a": 1}', '{"b": 2}') as json_merge_patch_val,
+  JSON_VALID('{"a": 1}') as json_valid_val,
+  JSON_KEYS('{"a": 1, "b": 2}') as json_keys_val,
+  JSON_QUOTE('hello') as json_quote_val,
+  JSON_INSERT('{"a": 1}', '$.b', 2) as json_insert_val,
+  JSON_REPLACE('{"a": 1, "b": 2}', '$.b', 3) as json_replace_val
+FROM dual;`
