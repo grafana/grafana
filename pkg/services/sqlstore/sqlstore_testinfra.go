@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -406,27 +405,19 @@ func newSpannerDB(tb TestingTB) (*testDB, error) {
 
 	// Rebuild connection string, but change database to ID of just-created database.
 	// Example: `localhost:9010/projects/test-project/instances/test-instance/databases/test-database;usePlainText=true;disableRouteToLeader=true;enableEndToEndTracing=true`
-	buf := strings.Builder{}
+	connString := ""
 	if cfg.Host != "" {
-		buf.WriteString(cfg.Host)
-		buf.WriteString("/")
+		connString = fmt.Sprintf("%s/", cfg.Host)
 	}
-	buf.WriteString("projects/")
-	buf.WriteString(cfg.Project)
-	buf.WriteString("/instances/")
-	buf.WriteString(cfg.Instance)
-	buf.WriteString("/databases/")
-	buf.WriteString(dbname) // Replace with new DB name.
+	// Use new DB name instead of cfg.Database.
+	connString = connString + fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, dbname)
 	for k, v := range cfg.Params {
-		buf.WriteString(";")
-		buf.WriteString(k)
-		buf.WriteString("=")
-		buf.WriteString(v)
+		connString = connString + fmt.Sprintf(";%s=%s", k, v)
 	}
 
 	return &testDB{
 		Driver: "spanner",
-		Conn:   buf.String(),
+		Conn:   connString,
 	}, nil
 }
 
