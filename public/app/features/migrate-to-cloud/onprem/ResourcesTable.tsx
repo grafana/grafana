@@ -34,7 +34,7 @@ export function ResourcesTable({
   onChangeSort,
   page = 1,
 }: ResourcesTableProps) {
-  const [initialSortBy] = useState<TableSortByFieldState[]>([{ displayName: 'Type', desc: true }]);
+  const initialSortBy = useMemo(() => [{ id: 'resource_type', desc: true }], []);
   const [focusedResource, setfocusedResource] = useState<ResourceTableItem | undefined>();
 
   const handleShowDetailsModal = useCallback((resource: ResourceTableItem) => {
