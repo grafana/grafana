@@ -83,9 +83,20 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return fmt.Errorf("create clients: %w", err)
 	}
 
-	tree, err := r.loadFolderTree(ctx, rw, clients)
+	tree := resources.NewEmptyFolderTree()
+	folderClient, err := clients.Folder()
 	if err != nil {
-		return fmt.Errorf("load folders from API server: %w", err)
+		return fmt.Errorf("create folder client: %w", err)
+	}
+
+	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+		if tree.Count() > resources.MaxNumberOfFolders {
+			return errors.New("too many folders")
+		}
+
+		return tree.AddUnstructured(item, repo.Config().Name)
+	}); err != nil {
+		return fmt.Errorf("load folder tree: %w", err)
 	}
 
 	progress.SetMessage(ctx, "write folders to repository")
@@ -168,27 +179,4 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	return nil
-}
-
-func (r *ExportWorker) loadFolderTree(ctx context.Context, repo repository.Repository, clients resources.ResourceClients) (resources.FolderTree, error) {
-	tree := resources.NewEmptyFolderTree()
-
-	folderClient, err := clients.Folder()
-	if err != nil {
-		return nil, fmt.Errorf("create folder client: %w", err)
-	}
-
-	err = resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-		if tree.Count() > resources.MaxNumberOfFolders {
-			return errors.New("too many folders")
-		}
-
-		return tree.AddUnstructured(item, repo.Config().Name)
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("load folder tree: %w", err)
-	}
-
-	return tree, nil
 }
