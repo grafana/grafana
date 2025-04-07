@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   sceneGraph,
   SceneObject,
@@ -6,14 +8,21 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { getDefaultVizPanel } from '../../utils/utils';
+import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
+import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { clearClipboard } from '../layouts-shared/paste';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -34,6 +43,7 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
+  isNew?: boolean;
 }
 
 export class RowItem
@@ -49,6 +59,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -96,7 +107,7 @@ export class RowItem
   }
 
   public onDelete() {
-    this._getParentLayout().removeRow(this);
+    this.getParentLayout().removeRow(this);
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
@@ -104,39 +115,26 @@ export class RowItem
   }
 
   public onDuplicate() {
-    this._getParentLayout().duplicateRow(this);
+    this.getParentLayout().duplicateRow(this);
   }
 
   public duplicate(): RowItem {
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
+  public serialize(): RowsLayoutRowKind {
+    return serializeRow(this);
+  }
+
+  public onCopy() {
+    const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
+
+    clearClipboard();
+    store.set(LS_ROW_COPY_KEY, JSON.stringify({ elements, row: this.serialize() }));
+  }
+
   public onAddPanel(panel = getDefaultVizPanel()) {
     this.getLayout().addPanel(panel);
-  }
-
-  public onAddRowAbove() {
-    this._getParentLayout().addRowAbove(this);
-  }
-
-  public onAddRowBelow() {
-    this._getParentLayout().addRowBelow(this);
-  }
-
-  public onMoveUp() {
-    this._getParentLayout().moveRowUp(this);
-  }
-
-  public onMoveDown() {
-    this._getParentLayout().moveRowDown(this);
-  }
-
-  public isFirstRow(): boolean {
-    return this._getParentLayout().isFirstRow(this);
-  }
-
-  public isLastRow(): boolean {
-    return this._getParentLayout().isLastRow(this);
   }
 
   public setIsDropTarget(isDropTarget: boolean) {
@@ -161,7 +159,7 @@ export class RowItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title });
+    this.setState({ title, isNew: false });
   }
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
@@ -193,11 +191,29 @@ export class RowItem
     this.setState({ collapse: !this.state.collapse });
   }
 
-  private _getParentLayout(): RowsLayoutManager {
+  public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
   }
 
   private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
     return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
+  }
+
+  public getCollapsedState(): boolean {
+    return this.state.collapse ?? false;
+  }
+
+  public setCollapsedState(collapse: boolean) {
+    this.setState({ collapse });
+  }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
   }
 }

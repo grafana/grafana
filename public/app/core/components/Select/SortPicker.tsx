@@ -5,6 +5,8 @@ import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { t } from '../../internationalization';
+
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
   value?: string;
@@ -40,7 +42,7 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
       onChange={onChange}
       value={options.value?.find((opt) => opt.value === value) ?? null}
       options={options.value}
-      aria-label="Sort"
+      aria-label={t('sort-picker.select-aria-label', 'Sort')}
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
       isClearable={isClearable}
