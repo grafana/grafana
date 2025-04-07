@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -153,9 +154,22 @@ func (c *K8sTestHelper) Shutdown() {
 }
 
 type ResourceClientArgs struct {
-	User      User
-	Namespace string
-	GVR       schema.GroupVersionResource
+	// Provide either a user or a service account token
+	User                User
+	ServiceAccountToken string
+	Namespace           string
+	GVR                 schema.GroupVersionResource
+}
+
+// Validate ensures that either User or ServiceAccountToken is provided, but not both
+func (args ResourceClientArgs) Validate() error {
+	if (args.User != User{}) && args.ServiceAccountToken != "" {
+		return fmt.Errorf("cannot provide both User and ServiceAccountToken")
+	}
+	if (args.User == User{}) && args.ServiceAccountToken == "" {
+		return fmt.Errorf("must provide either User or ServiceAccountToken")
+	}
+	return nil
 }
 
 type K8sResourceClient struct {
@@ -168,12 +182,33 @@ type K8sResourceClient struct {
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
 
+	// Validate that either User or ServiceAccountToken is provided, but not both
+	err := args.Validate()
+	require.NoError(c.t, err)
+
 	if args.Namespace == "" {
-		args.Namespace = c.Namespacer(args.User.Identity.GetOrgID())
+		if args.User != (User{}) {
+			args.Namespace = c.Namespacer(args.User.Identity.GetOrgID())
+		} else {
+			// For service account token, we need to pass the namespace directly
+			require.NotEmpty(c.t, args.Namespace, "Namespace must be provided when using ServiceAccountToken")
+		}
 	}
 
-	client, err := dynamic.NewForConfig(args.User.NewRestConfig())
-	require.NoError(c.t, err)
+	var client dynamic.Interface
+	var clientErr error
+
+	if args.User != (User{}) {
+		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
+	} else {
+		// Use service account token for authentication
+		cfg := &rest.Config{
+			Host:        fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()),
+			BearerToken: args.ServiceAccountToken,
+		}
+		client, clientErr = dynamic.NewForConfig(cfg)
+	}
+	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
 		t:        c.t,
@@ -268,6 +303,14 @@ type OrgUsers struct {
 	Admin  User
 	Editor User
 	Viewer User
+
+	// Separate standalone service accounts with different roles
+	AdminServiceAccount       serviceaccounts.ServiceAccountDTO
+	AdminServiceAccountToken  string
+	EditorServiceAccount      serviceaccounts.ServiceAccountDTO
+	EditorServiceAccountToken string
+	ViewerServiceAccount      serviceaccounts.ServiceAccountDTO
+	ViewerServiceAccountToken string
 
 	// The team with admin+editor in it (but not viewer)
 	Staff team.Team
@@ -487,6 +530,16 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
+
+	// Create service accounts
+	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.Admin.Identity.GetOrgID(), org.RoleAdmin)
+	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.Admin.Identity.GetOrgID(), "admin-token", 0)
+
+	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.Admin.Identity.GetOrgID(), org.RoleEditor)
+	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.Admin.Identity.GetOrgID(), "editor-token", 0)
+
+	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.Admin.Identity.GetOrgID(), org.RoleViewer)
+	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.Admin.Identity.GetOrgID(), "viewer-token", 0)
 
 	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
 
@@ -743,4 +796,92 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 	})
+}
+
+// CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API
+func (c *K8sTestHelper) CreateServiceAccount(executingUser User, name string, orgID int64, role org.RoleType) serviceaccounts.ServiceAccountDTO {
+	c.t.Helper()
+
+	saForm := struct {
+		Name       string       `json:"name"`
+		Role       org.RoleType `json:"role"`
+		IsDisabled bool         `json:"isDisabled"`
+	}{
+		Name:       name,
+		Role:       role,
+		IsDisabled: false,
+	}
+
+	body, err := json.Marshal(saForm)
+	require.NoError(c.t, err)
+
+	resp := DoRequest(c, RequestParams{
+		User:   executingUser,
+		Method: http.MethodPost,
+		Path:   "/api/serviceaccounts/",
+		Body:   body,
+	}, &serviceaccounts.ServiceAccountDTO{})
+
+	require.Equal(c.t, http.StatusCreated, resp.Response.StatusCode, "failed to create service account, body: %s", string(resp.Body))
+	require.NotNil(c.t, resp.Result, "failed to parse response body: %s", string(resp.Body))
+
+	return *resp.Result
+}
+
+// CreateServiceAccountToken creates a token for the specified service account using the HTTP API
+func (c *K8sTestHelper) CreateServiceAccountToken(user User, saID int64, orgID int64, tokenName string, secondsToLive int64) string {
+	c.t.Helper()
+
+	tokenCmd := struct {
+		Name          string `json:"name"`
+		SecondsToLive int64  `json:"secondsToLive"`
+	}{
+		Name:          tokenName,
+		SecondsToLive: secondsToLive,
+	}
+
+	body, err := json.Marshal(tokenCmd)
+	require.NoError(c.t, err)
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodPost,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d/tokens", saID),
+		Body:   body,
+	}, &struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+		Key  string `json:"key"`
+	}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to create token, body: %s", string(resp.Body))
+	require.NotNil(c.t, resp.Result, "failed to parse response body: %s", string(resp.Body))
+
+	return resp.Result.Key
+}
+
+// DeleteServiceAccountToken deletes a token for the specified service account using the HTTP API
+func (c *K8sTestHelper) DeleteServiceAccountToken(user User, orgID int64, saID int64, tokenID int64) {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", saID, tokenID),
+	}, &struct{}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete token, body: %s", string(resp.Body))
+}
+
+// DeleteServiceAccount deletes a service account for the specified organization and ID using the HTTP API
+func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64) {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d", saID),
+	}, &struct{}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
 }

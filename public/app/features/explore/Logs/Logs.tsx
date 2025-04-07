@@ -1025,7 +1025,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {config.featureToggles.logsPanelControls && hasData && (
+          {config.featureToggles.logsPanelControls && visualisationType === 'logs' && hasData && (
             <div className={styles.logRowsWrapper} data-testid="logRows">
               <ControlledLogRows
                 logsTableFrames={props.logsFrames}

@@ -33,8 +33,10 @@ export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 's
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
+  setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowTime: (showTime: boolean) => void;
+  setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
 }
@@ -50,7 +52,9 @@ export const LogListContext = createContext<LogListContextData>({
   setFilterLevels: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
+  setPrettifyJSON: () => {},
   setShowTime: () => {},
+  setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
@@ -80,6 +84,8 @@ export type LogListState = Pick<
   | 'displayedFields'
   | 'filterLevels'
   | 'pinnedLogs'
+  | 'prettifyJSON'
+  | 'showUniqueLabels'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -105,7 +111,9 @@ export interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
   showControls: boolean;
+  showUniqueLabels?: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
@@ -131,8 +139,10 @@ export const LogListContextProvider = ({
   onUnpinLine,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON,
   showControls,
   showTime,
+  showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
   wrapLogMessage,
@@ -143,7 +153,9 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     pinnedLogs,
+    prettifyJSON,
     showTime,
+    showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
@@ -236,6 +248,28 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const setShowUniqueLabels = useCallback(
+    (showUniqueLabels: boolean) => {
+      setLogListState({ ...logListState, showUniqueLabels });
+      onLogOptionsChange?.('showUniqueLabels', showUniqueLabels);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.showLabels`, showUniqueLabels);
+      }
+    },
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
+  );
+
+  const setPrettifyJSON = useCallback(
+    (prettifyJSON: boolean) => {
+      setLogListState({ ...logListState, prettifyJSON });
+      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
+      }
+    },
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
+  );
+
   const setSyntaxHighlighting = useCallback(
     (syntaxHighlighting: boolean) => {
       setLogListState({ ...logListState, syntaxHighlighting });
@@ -297,16 +331,20 @@ export const LogListContextProvider = ({
         onUnpinLine,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
+        prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
         setDisplayedFields,
         setFilterLevels,
         setLogListState,
         setPinnedLogs,
+        setPrettifyJSON,
         setShowTime,
+        setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
         setWrapLogMessage,
         showTime: logListState.showTime,
+        showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         wrapLogMessage: logListState.wrapLogMessage,

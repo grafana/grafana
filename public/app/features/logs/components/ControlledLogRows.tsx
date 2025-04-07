@@ -31,9 +31,9 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logOptionsStorageKey?: string;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
-  visualisationType: LogsVisualisationType;
 
   /** Props added for Table **/
+  visualisationType: LogsVisualisationType;
   splitOpen: SplitOpen;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
@@ -42,19 +42,21 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsTableFrames: DataFrame[] | undefined;
 }
 
-export type LogRowsComponentProps = Omit<
+type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showTime' | 'logsSortOrder' | 'wrapLogMessage'
+  'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
 >;
 
 export const ControlledLogRows = ({
   deduplicatedRows,
   dedupStrategy,
+  showLabels,
   showTime,
   logsMeta,
-  logsSortOrder,
-  onLogOptionsChange,
   logOptionsStorageKey,
+  logsSortOrder,
+  prettifyLogMessage,
+  onLogOptionsChange,
   wrapLogMessage,
   ...rest
 }: ControlledLogRowsProps) => {
@@ -66,8 +68,10 @@ export const ControlledLogRows = ({
       logOptionsStorageKey={logOptionsStorageKey}
       logs={deduplicatedRows ?? []}
       logsMeta={logsMeta}
+      prettifyJSON={prettifyLogMessage}
       showControls
       showTime={showTime}
+      showUniqueLabels={showLabels}
       sortOrder={logsSortOrder || LogsSortOrder.Descending}
       onLogOptionsChange={onLogOptionsChange}
       wrapLogMessage={wrapLogMessage}
@@ -78,16 +82,9 @@ export const ControlledLogRows = ({
   );
 };
 
-// @todo move to new file
-const LogRowsComponent = ({
-  loading,
-  loadMoreLogs,
-  deduplicatedRows = [],
-  range,
-  visualisationType,
-  ...rest
-}: LogRowsComponentProps) => {
-  const { app, dedupStrategy, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
+  const { app, dedupStrategy, filterLevels, prettifyJSON, sortOrder, showTime, showUniqueLabels, wrapLogMessage } =
+    useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -129,6 +126,8 @@ const LogRowsComponent = ({
             logRows={filteredLogs}
             logsSortOrder={sortOrder}
             scrollElement={scrollElementRef.current}
+            prettifyLogMessage={Boolean(prettifyJSON)}
+            showLabels={Boolean(showUniqueLabels)}
             showTime={showTime}
             wrapLogMessage={wrapLogMessage}
             renderPreview
