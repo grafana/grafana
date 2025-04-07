@@ -62,7 +62,7 @@ export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRe
 
     // For nested folders we need to see what the folder thinks
     const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (annotatedFolderName && name) {
+    if (annotatedFolderName) {
       repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
         return {

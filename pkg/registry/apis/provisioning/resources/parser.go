@@ -21,6 +21,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ParserFactory is a factory for creating parsers for a given repository
@@ -177,8 +178,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		Checksum: info.Hash,
 	})
 
-	if obj.GetName() == "" && obj.GetGenerateName() == "" {
-		return nil, ErrMissingName
+	if obj.GetName() == "" {
+		if obj.GetGenerateName() == "" {
+			return nil, ErrMissingName
+		}
+		// Generate a new UID
+		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
 	// Calculate folder identifier from the file path
@@ -226,12 +231,6 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			DryRun: []string{"All"},
 		})
 	}
-
-	// When the name is missing (and generateName is configured) use the value from DryRun
-	if f.Obj.GetName() == "" && f.DryRunResponse != nil {
-		f.Obj.SetName(f.DryRunResponse.GetName())
-	}
-
 	return err
 }
 
