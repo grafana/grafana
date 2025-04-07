@@ -56,10 +56,15 @@ jest.mock('./layers', () => {
 describe('tooltip utils', () => {
   let panel: GeomapPanel;
   let mockEvent: MapBrowserEvent<MouseEvent>;
-  let mockFeature: Feature;
   let mockWebGLLayer: WebGLPointsLayer<VectorSource<Point>>;
   let mockVectorSource: VectorSource<Point>;
-  let mockOtherFeature: Feature;
+
+  // Consolidated feature constants
+  let feature1: Feature;
+  let feature2: Feature;
+  let feature3: Feature;
+  let feature4: Feature;
+  let differentFeature: Feature;
 
   beforeEach(() => {
     // Reset mocks
@@ -74,16 +79,34 @@ describe('tooltip utils', () => {
       },
     } as MapBrowserEvent<MouseEvent>;
 
-    // Create mock features
-    mockFeature = new Feature({
+    // Create features for testing
+    feature1 = new Feature({
       geometry: new Point([0, 0]),
       rowIndex: 1,
       frame: {} as DataFrame,
     });
 
-    mockOtherFeature = new Feature({
+    feature2 = new Feature({
       geometry: new Point([0, 0]),
       rowIndex: 2,
+      frame: {} as DataFrame,
+    });
+
+    feature3 = new Feature({
+      geometry: new Point([0, 0]),
+      rowIndex: 3,
+      frame: {} as DataFrame,
+    });
+
+    feature4 = new Feature({
+      geometry: new Point([0, 0]),
+      // No rowIndex
+      frame: {} as DataFrame,
+    });
+
+    differentFeature = new Feature({
+      geometry: new Point([1, 1]),
+      rowIndex: 4,
       frame: {} as DataFrame,
     });
 
@@ -108,7 +131,7 @@ describe('tooltip utils', () => {
     // Setup the forEachFeatureAtPixel mock
     if (panel.map) {
       (panel.map.forEachFeatureAtPixel as jest.Mock).mockImplementation((pixel, callback) => {
-        callback(mockFeature, mockWebGLLayer, null);
+        callback(feature1, mockWebGLLayer, null);
       });
     }
   });
@@ -117,7 +140,7 @@ describe('tooltip utils', () => {
     it('should add additional features at the same coordinates for WebGLPointsLayer', () => {
       // Setup the mock vector source to return multiple features at the same coordinates
       (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
-        callback(mockOtherFeature);
+        callback(feature2);
       });
 
       // Call the function
@@ -135,18 +158,11 @@ describe('tooltip utils', () => {
       // Verify that both features were added to the layer
       const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
       expect(layerHover.features.length).toBe(2);
-      expect(layerHover.features).toContain(mockFeature);
-      expect(layerHover.features).toContain(mockOtherFeature);
+      expect(layerHover.features).toContain(feature1);
+      expect(layerHover.features).toContain(feature2);
     });
 
     it('should not add features with different coordinates', () => {
-      // Create a feature with different coordinates
-      const differentFeature = new Feature({
-        geometry: new Point([1, 1]),
-        rowIndex: 3,
-        frame: {} as DataFrame,
-      });
-
       // Setup the mock vector source to return a feature with different coordinates
       (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
         callback(differentFeature);
@@ -158,14 +174,14 @@ describe('tooltip utils', () => {
       // Verify that only the original feature was added
       const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
       expect(layerHover.features.length).toBe(1);
-      expect(layerHover.features).toContain(mockFeature);
+      expect(layerHover.features).toContain(feature1);
       expect(layerHover.features).not.toContain(differentFeature);
     });
 
     it('should not add the same feature twice', () => {
       // Setup the mock vector source to return the same feature
       (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
-        callback(mockFeature);
+        callback(feature1);
       });
 
       // Call the function
@@ -174,7 +190,31 @@ describe('tooltip utils', () => {
       // Verify that the feature was only added once
       const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
       expect(layerHover.features.length).toBe(1);
-      expect(layerHover.features).toContain(mockFeature);
+      expect(layerHover.features).toContain(feature1);
+    });
+
+    it('should sort features by rowIndex when multiple features are at the same coordinates', () => {
+      // Setup the mock vector source to return multiple features
+      (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
+        callback(feature2);
+        callback(feature3);
+        callback(feature4);
+      });
+
+      // Call the function
+      pointerMoveListener(mockEvent, panel);
+
+      // Verify that the features were added and sorted by rowIndex
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features.length).toBe(4); // feature1 + 3 new features
+
+      // Check that features are sorted by rowIndex (1, 2, 3, MAX_SAFE_INTEGER)
+      // Since rowIndex is unique, we can check the exact order
+      expect(layerHover.features[0].getProperties()['rowIndex']).toBe(1); // feature1
+      expect(layerHover.features[1].getProperties()['rowIndex']).toBe(2); // feature2
+      expect(layerHover.features[2].getProperties()['rowIndex']).toBe(3); // feature3
+      // The last feature (feature4) has no rowIndex, so it should be at the end
+      expect(layerHover.features[3].getProperties()['rowIndex']).toBeUndefined();
     });
   });
 });
