@@ -5,7 +5,7 @@ import { BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
-import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './code_loader';
+import { getPluginCode, getPluginLoadData } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -181,8 +181,6 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
         },
       }),
     });
-
-    patchSandboxEnvironmentPrototype(sandboxEnvironment);
 
     // fetch plugin's code
     let pluginCode = '';
