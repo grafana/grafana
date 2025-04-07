@@ -3229,20 +3229,19 @@
         "required": [
           "name",
           "title",
-          "readOnly",
           "type",
-          "target"
+          "target",
+          "workflows"
         ],
         "properties": {
+          "branch": {
+            "description": "For git, this is the target branch",
+            "type": "string"
+          },
           "name": {
             "description": "The k8s name for this repository",
             "type": "string",
             "default": ""
-          },
-          "readOnly": {
-            "description": "Edit options within the repository",
-            "type": "boolean",
-            "default": false
           },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
@@ -3266,6 +3265,18 @@
               "github",
               "local"
             ]
+          },
+          "workflows": {
+            "description": "The supported workflows",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "branch",
+                "write"
+              ]
+            }
           }
         }
       },

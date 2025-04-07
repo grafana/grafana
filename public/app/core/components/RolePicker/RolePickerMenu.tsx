@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -237,7 +237,7 @@ export const RolePickerMenu = ({
         })
       )}
     >
-      <div className={customStyles.menu} aria-label="Role picker menu">
+      <div className={customStyles.menu} aria-label={t('role-picker.menu-aria-label', 'Role picker menu')}>
         <ScrollContainer
           maxHeight={`${MENU_MAX_HEIGHT}px`}
           // NOTE: this is a way to force hiding of the scrollbar

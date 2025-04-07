@@ -63,7 +63,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
     const isMultiSort = event.shiftKey;
-    onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
+    onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
   };
 
   // collecting header cell refs to handle manual column resize
@@ -83,7 +83,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       if (lastElement) {
         const handleMouseUp = () => {
           let newWidth = headerCellParent.clientWidth - TABLE.CELL_PADDING * 2;
-          onColumnResize?.(column.key as string, newWidth);
+          onColumnResize?.(column.key, newWidth);
         };
 
         lastElement.addEventListener('click', handleMouseUp);

@@ -1,14 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, {
-  RenderCellProps,
-  RenderRowProps,
-  Row,
-  SortColumn,
-  DataGridHandle,
-  SortDirection,
-} from 'react-data-grid';
+import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -26,7 +19,7 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { t, Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -91,7 +84,7 @@ export function TableNG(props: TableNGProps) {
 
       return {
         columnKey,
-        direction: (desc ? 'DESC' : 'ASC') as SortDirection,
+        direction: desc ? ('DESC' as const) : ('ASC' as const),
       };
     });
     return initialSort ?? [];
@@ -486,7 +479,7 @@ export function TableNG(props: TableNGProps) {
     return (
       <>
         <MenuItem
-          label="Inspect value"
+          label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
           onClick={() => {
             setIsInspecting(true);
           }}
@@ -515,7 +508,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLDivElement;
+    const target = event.currentTarget;
     scrollPositionRef.current = {
       x: target.scrollLeft,
       y: target.scrollTop,
