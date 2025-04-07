@@ -197,6 +197,7 @@ require (
 	google.golang.org/protobuf v1.36.6 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
+	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 	k8s.io/api v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.32.3 // @grafana/grafana-app-platform-squad
@@ -493,7 +494,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.13.2 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/prometheus/sigv4 v0.1.0 // indirect
+	github.com/prometheus/sigv4 v0.1.0 // @grafana/alerting-backend
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/redis/rueidis v1.0.53 // indirect
@@ -569,7 +570,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.32.3 // indirect
 	k8s.io/kms v0.32.3 // indirect
 	modernc.org/libc v1.61.13 // indirect

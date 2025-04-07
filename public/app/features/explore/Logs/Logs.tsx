@@ -52,10 +52,12 @@ import { mapMouseEventToMode } from '@grafana/ui/internal';
 import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
+import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -211,7 +213,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
-  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
+  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -227,7 +229,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logLevelsRef = useRef<LogLevel[] | null>(null);
 
   const tableHeight = getLogsTableHeight();
-  const styles = getStyles(theme, wrapLogMessage, tableHeight);
+  const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
+  const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -774,7 +777,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const onLogOptionsChange = useCallback(
     (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
-      if (option === 'sortOrder' && (value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending)) {
+      if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'filterLevels' && Array.isArray(value)) {
         if (value.length === 0) {
@@ -797,6 +800,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           toggleLegendRef.current?.(removesLevel, SeriesVisibilityChangeMode.AppendToSelection);
           setHiddenLogLevels([...hiddenLogLevels, removesLevel]);
         }
+      } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
+        setDedupStrategy(value);
       }
     },
     [hiddenLogLevels, sortOrderChanged]
@@ -886,107 +891,109 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          {visualisationType !== 'table' && !config.featureToggles.newLogsPanel && (
-            <div className={styles.logOptions}>
-              <InlineFieldRow>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-time', 'Time')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={showTime}
-                    onChange={onChangeShowTime}
-                    className={styles.horizontalInlineSwitch}
+          {visualisationType !== 'table' &&
+            !config.featureToggles.newLogsPanel &&
+            !config.featureToggles.logsPanelControls && (
+              <div className={styles.logOptions}>
+                <InlineFieldRow>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-time', 'Time')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`show-time_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={showLabels}
-                    onChange={onChangeLabels}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showTime}
+                      onChange={onChangeShowTime}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`show-time_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`unique-labels_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={wrapLogMessage}
-                    onChange={onChangeWrapLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showLabels}
+                      onChange={onChangeLabels}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`unique-labels_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`wrap-lines_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <InlineSwitch
-                    value={prettifyLogMessage}
-                    onChange={onChangePrettifyLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={wrapLogMessage}
+                      onChange={onChangeWrapLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`wrap-lines_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`prettify_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                >
-                  <RadioButtonGroup
-                    options={DEDUP_OPTIONS.map((dedupType) => ({
-                      label: capitalize(dedupType),
-                      value: dedupType,
-                      description: LogsDedupDescription[dedupType],
-                    }))}
-                    value={dedupStrategy}
-                    onChange={onChangeDedup}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
-              </InlineFieldRow>
+                  >
+                    <InlineSwitch
+                      value={prettifyLogMessage}
+                      onChange={onChangePrettifyLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`prettify_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                  >
+                    <RadioButtonGroup
+                      options={DEDUP_OPTIONS.map((dedupType) => ({
+                        label: capitalize(dedupType),
+                        value: dedupType,
+                        description: LogsDedupDescription[dedupType],
+                      }))}
+                      value={dedupStrategy}
+                      onChange={onChangeDedup}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
 
-              <div>
-                <InlineField
-                  label={t('explore.unthemed-logs.label-display-results', 'Display results')}
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                  disabled={isFlipping || loading}
-                >
-                  <RadioButtonGroup
-                    options={[
-                      {
-                        label: 'Newest first',
-                        value: LogsSortOrder.Descending,
-                        description: 'Show results newest to oldest',
-                      },
-                      {
-                        label: 'Oldest first',
-                        value: LogsSortOrder.Ascending,
-                        description: 'Show results oldest to newest',
-                      },
-                    ]}
-                    value={logsSortOrder}
-                    onChange={onChangeLogsSortOrder}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
+                <div>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-display-results', 'Display results')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                    disabled={isFlipping || loading}
+                  >
+                    <RadioButtonGroup
+                      options={[
+                        {
+                          label: 'Newest first',
+                          value: LogsSortOrder.Descending,
+                          description: 'Show results newest to oldest',
+                        },
+                        {
+                          label: 'Oldest first',
+                          value: LogsSortOrder.Ascending,
+                          description: 'Show results oldest to newest',
+                        },
+                      ]}
+                      value={logsSortOrder}
+                      onChange={onChangeLogsSortOrder}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <div ref={topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
@@ -1001,7 +1008,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {visualisationType === 'table' && hasData && (
+          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
@@ -1020,7 +1027,58 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && hasData && !config.featureToggles.newLogsPanel && (
+          {config.featureToggles.logsPanelControls && hasData && (
+            <div className={styles.logRowsWrapper} data-testid="logRows">
+              <ControlledLogRows
+                logsTableFrames={props.logsFrames}
+                width={width}
+                updatePanelState={updatePanelState}
+                panelState={panelState?.logs}
+                datasourceType={props.datasourceType}
+                splitOpen={splitOpen}
+                visualisationType={visualisationType}
+                loading={loading}
+                loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                range={props.range}
+                pinnedLogs={pinnedLogs}
+                logRows={logRows}
+                deduplicatedRows={dedupedRows}
+                dedupStrategy={dedupStrategy}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                showContextToggle={showContextToggle}
+                getRowContextQuery={getRowContextQuery}
+                showLabels={showLabels}
+                showTime={showTime}
+                enableLogDetails={true}
+                forceEscape={forceEscape}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                timeZone={timeZone}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                displayedFields={displayedFields}
+                onClickShowField={showField}
+                onClickHideField={hideField}
+                app={CoreApp.Explore}
+                onLogRowHover={onLogRowHover}
+                onOpenContext={onOpenContext}
+                onPermalinkClick={onPermalinkClick}
+                permalinkedRowId={panelState?.logs?.id}
+                scrollIntoView={scrollIntoView}
+                isFilterLabelActive={props.isFilterLabelActive}
+                onClickFilterString={props.onClickFilterString}
+                onClickFilterOutString={props.onClickFilterOutString}
+                onUnpinLine={onPinToContentOutlineClick}
+                onPinLine={onPinToContentOutlineClick}
+                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                logsMeta={logsMeta}
+                logOptionsStorageKey={SETTING_KEY_ROOT}
+                onLogOptionsChange={onLogOptionsChange}
+              />
+            </div>
+          )}
+          {!config.featureToggles.logsPanelControls && visualisationType === 'logs' && hasData && (
             <>
               <div
                 className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
@@ -1071,7 +1129,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     onUnpinLine={onPinToContentOutlineClick}
                     onPinLine={onPinToContentOutlineClick}
                     pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                    renderPreview
                   />
                 </InfiniteScroll>
               </div>
@@ -1089,40 +1146,44 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
-            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && (
-                <LogList
-                  app={CoreApp.Explore}
-                  containerElement={logsContainerRef.current}
-                  dedupStrategy={dedupStrategy}
-                  displayedFields={displayedFields}
-                  filterLevels={filterLevels}
-                  forceEscape={forceEscape}
-                  getFieldLinks={getFieldLinks}
-                  getRowContextQuery={getRowContextQuery}
-                  loadMore={loadMoreLogs}
-                  logOptionsStorageKey={SETTING_KEY_ROOT}
-                  logs={dedupedRows}
-                  logSupportsContext={showContextToggle}
-                  onLogOptionsChange={onLogOptionsChange}
-                  onLogLineHover={onLogRowHover}
-                  onOpenContext={onOpenContext}
-                  onPermalinkClick={onPermalinkClick}
-                  onPinLine={onPinToContentOutlineClick}
-                  onUnpinLine={onPinToContentOutlineClick}
-                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                  pinnedLogs={pinnedLogs}
-                  showControls
-                  showTime={showTime}
-                  sortOrder={logsSortOrder}
-                  timeRange={props.range}
-                  timeZone={timeZone}
-                  wrapLogMessage={wrapLogMessage}
-                />
-              )}
-            </div>
-          )}
+          {!config.featureToggles.logsPanelControls &&
+            visualisationType === 'logs' &&
+            hasData &&
+            config.featureToggles.newLogsPanel && (
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
+                {logsContainerRef.current && (
+                  <LogList
+                    app={CoreApp.Explore}
+                    containerElement={logsContainerRef.current}
+                    dedupStrategy={dedupStrategy}
+                    displayedFields={displayedFields}
+                    filterLevels={filterLevels}
+                    forceEscape={forceEscape}
+                    getFieldLinks={getFieldLinks}
+                    getRowContextQuery={getRowContextQuery}
+                    loadMore={loadMoreLogs}
+                    logOptionsStorageKey={SETTING_KEY_ROOT}
+                    logs={dedupedRows}
+                    logsMeta={logsMeta}
+                    logSupportsContext={showContextToggle}
+                    onLogOptionsChange={onLogOptionsChange}
+                    onLogLineHover={onLogRowHover}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    pinnedLogs={pinnedLogs}
+                    showControls
+                    showTime={showTime}
+                    sortOrder={logsSortOrder}
+                    timeRange={props.range}
+                    timeZone={timeZone}
+                    wrapLogMessage={wrapLogMessage}
+                  />
+                )}
+              </div>
+            )}
           {!loading && !hasData && !scanning && (
             <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
