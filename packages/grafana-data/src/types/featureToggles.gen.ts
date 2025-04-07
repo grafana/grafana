@@ -1001,7 +1001,8 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Disables backdrop blur
+  * Disables backdrop blur behind modals and drawers
+  * @default true
   */
   noBackdropBlur?: boolean;
   /**

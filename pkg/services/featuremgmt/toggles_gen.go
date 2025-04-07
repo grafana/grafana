@@ -912,7 +912,7 @@ const (
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
 	// FlagNoBackdropBlur
-	// Disables backdrop blur
+	// Disables backdrop blur behind modals and drawers
 	FlagNoBackdropBlur = "noBackdropBlur"
 
 	// FlagAlertingMigrationUI
