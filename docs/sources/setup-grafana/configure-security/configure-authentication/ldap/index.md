@@ -415,7 +415,7 @@ Inspect your Active Directory configuration and documentation to find the correc
 
 ## Troubleshooting
 
-To troubleshoot and get more log information, enable LDAP debug logging in the [grafana.ini or custom.ini](../../../configure-grafana/) file:
+To troubleshoot and get more log information, enable LDAP debug logging in the [`grafana.ini` or `custom.ini`](../../../configure-grafana/) file:
 
 ```bash
 [log]
