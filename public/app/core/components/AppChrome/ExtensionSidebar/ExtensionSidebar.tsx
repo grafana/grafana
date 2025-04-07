@@ -10,7 +10,9 @@ import {
   useExtensionSidebarContext,
 } from './ExtensionSidebarProvider';
 
-export const EXTENSION_SIDEBAR_WIDTH = '300px';
+export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
+export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
+export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
@@ -52,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
-      width: EXTENSION_SIDEBAR_WIDTH,
+      width: '100%',
       height: '100%',
     }),
     content: css({
