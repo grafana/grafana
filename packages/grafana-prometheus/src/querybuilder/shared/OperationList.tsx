@@ -18,7 +18,7 @@ export interface Props<T extends QueryWithOperations> {
   queryModeller: VisualQueryModeller;
   explainMode?: boolean;
   highlightedOp?: QueryBuilderOperation;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
 }
 
 export function OperationList<T extends QueryWithOperations>({
