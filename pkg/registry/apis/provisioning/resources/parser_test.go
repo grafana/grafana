@@ -2,14 +2,13 @@ package resources
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -22,8 +21,8 @@ func TestParser(t *testing.T) {
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 
 	parser := &parser{
-		repo: v0alpha1.ResourceRepositoryInfo{
-			Type:      v0alpha1.LocalRepositoryType,
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
 			Namespace: "xxx",
 			Name:      "repo",
 		},
@@ -64,6 +63,22 @@ spec:
 `),
 		})
 		require.EqualError(t, err, "name.metadata.name: Required value: missing name in resource")
+	})
+
+	t.Run("generate name will generate a name", func(t *testing.T) {
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  generateName: rand-
+spec:
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "dashboard.grafana.app", dash.GVK.Group)
+		require.Equal(t, "v0alpha1", dash.GVK.Version)
+		require.True(t, strings.HasPrefix(dash.Obj.GetName(), "rand-"), "set name")
 	})
 
 	t.Run("dashboard classic format", func(t *testing.T) {
