@@ -1230,6 +1230,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Enum:        []interface{}{"folder", "instance"},
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"workflows": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The supported workflows",

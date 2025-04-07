@@ -3234,6 +3234,10 @@
           "workflows"
         ],
         "properties": {
+          "branch": {
+            "description": "For git, this is the target branch",
+            "type": "string"
+          },
           "name": {
             "description": "The k8s name for this repository",
             "type": "string",

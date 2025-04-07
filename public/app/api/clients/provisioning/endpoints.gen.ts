@@ -1122,6 +1122,8 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type RepositoryView = {
+  /** For git, this is the target branch */
+  branch?: string;
   /** The k8s name for this repository */
   name: string;
   /** When syncing, where values are saved
