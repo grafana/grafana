@@ -297,10 +297,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings) bool {
 		return false
 	}
 
-	// Override config based on feature toggles.
-	// We pass in a no-op logger here since this function is also called during ngalert init,
-	// and we don't want to log the same info twice.
-
 	backend, err := historian.ParseBackendType(cfg.Backend)
 	if err != nil {
 		return false
