@@ -476,34 +476,24 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
+	// Early exit to avoid more expensive checks if we have already found errors
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	// Exit early if we have already found errors
 	targetError := b.verifyAgaintsExistingRepositories(cfg)
 	if targetError != nil {
-		list = append(list, targetError)
+		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
 
-	// For *create* we do a synchronous test... this can be expensive!
-	// it is the same as a full healthcheck, so should not be run on every update
-	if len(list) == 0 && a.GetOperation() == admission.Create {
-		testResults, err := repository.TestRepository(ctx, repo)
-		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec"),
-				"Repository test failed", "Unable to verify repository: "+err.Error()))
-		}
-
-		if !testResults.Success {
-			for _, err := range testResults.Errors {
-				list = append(list, field.Invalid(field.NewPath("spec"),
-					"Repository test failed", err))
-			}
-		}
-	}
-
-	if len(list) > 0 {
-		return apierrors.NewInvalid(
-			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
-			a.GetName(), list)
-	}
 	return nil
+}
+
+func invalidRepositoryError(name string, list field.ErrorList) error {
+	return apierrors.NewInvalid(
+		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+		name, list)
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go

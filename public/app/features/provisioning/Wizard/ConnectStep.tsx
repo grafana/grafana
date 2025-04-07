@@ -41,15 +41,22 @@ export function ConnectStep() {
           'Choose the type of storage for your resources'
         )}
       >
-        <Combobox
-          options={typeOptions}
-          value={type}
-          onChange={(value) => {
-            const repoType = value?.value;
-            setValue('repository.type', repoType);
-            setValue(
-              'repository.workflows',
-              getWorkflowOptions(repoType).map((v) => v.value)
+        <Controller
+          name={'repository.type'}
+          render={({ field: { ref, onChange, ...field } }) => {
+            return (
+              <Combobox
+                options={typeOptions}
+                onChange={(value) => {
+                  const repoType = value?.value;
+                  onChange(repoType);
+                  setValue(
+                    'repository.workflows',
+                    getWorkflowOptions(repoType).map((v) => v.value)
+                  );
+                }}
+                {...field}
+              />
             );
           }}
         />
