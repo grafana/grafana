@@ -354,6 +354,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
 				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
 
+				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
+				require.Equal(t, models.OK, grafanaRule.NoDataState)
+
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
 				require.Equal(t, string(originalRuleDefinition), grafanaRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)

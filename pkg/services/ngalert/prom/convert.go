@@ -72,7 +72,7 @@ var (
 	defaultConfig = Config{
 		FromTimeRange:              &defaultTimeRange,
 		EvaluationOffset:           &defaultEvaluationOffset,
-		ExecErrState:               models.ErrorErrState,
+		ExecErrState:               models.OkErrState,
 		NoDataState:                models.OK,
 		KeepOriginalRuleDefinition: util.Pointer(true),
 	}
