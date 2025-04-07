@@ -20,7 +20,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(
+	db db.DB,
+	features featuremgmt.FeatureToggles,
+	accessClient claims.AccessClient,
+	keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -37,7 +41,11 @@ func ProvideSecureValueMetadataStorage(db db.DB, features featuremgmt.FeatureTog
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &secureValueMetadataStorage{db: db, accessClient: accessClient, keepers: keepers}, nil
+	return &secureValueMetadataStorage{
+		db:           db,
+		accessClient: accessClient,
+		keepers:      keepers,
+	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
@@ -311,4 +319,46 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
+}
+
+func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
+				Where("namespace = ? AND name = ?", namespace.String(), name).
+				Cols("external_id").
+				Update(&secureValueDB{ExternalID: externalID.String()})
+
+			if modifiedCount > 1 {
+				return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+			}
+
+			if err != nil {
+				return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
+			}
+
+			return nil
+		})
+	})
+}
+
+func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
+				Where("namespace = ? AND name = ?", namespace.String(), name).
+				Cols("status_phase").
+				Update(&secureValueDB{Phase: string(secretv0alpha1.SecureValuePhaseSucceeded)})
+
+			if modifiedCount > 1 {
+				return fmt.Errorf("secureValueMetadataStorage.SetStatusSucceeded: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+			}
+
+			if err != nil {
+				return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
+			}
+
+			return nil
+		})
+	})
 }

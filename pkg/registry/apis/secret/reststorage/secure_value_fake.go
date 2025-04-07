@@ -113,3 +113,11 @@ func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xku
 		Items: l,
 	}, nil
 }
+
+func (s *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("unimplemented: fakeSecureValueMetadataStorage.SetStatusSucceeded")
+}
+
+func (s *fakeSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	panic("unimplemented: fakeSecureValueMetadataStorage.SetExternalID")
+}
