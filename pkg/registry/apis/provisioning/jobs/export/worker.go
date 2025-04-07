@@ -43,14 +43,19 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	// Can write to external branch
-	err := repository.IsWriteAllowed(repo.Config(), options.Branch)
-	if err != nil {
+	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
 		return err
+	}
+
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
 	var clone repository.ClonedRepository
 	if clonable, ok := repo.(repository.ClonableRepository); ok {
 		progress.SetMessage(ctx, "clone target")
+		var err error
 		clone, err = clonable.Clone(ctx, repository.CloneOptions{
 			PushOnWrites: false,
 			// TODO: make this configurable
@@ -70,22 +75,12 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 
-	rw, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
-	}
-
-	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
-	if err != nil {
-		return err
-	}
-
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
-	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
-		return fmt.Errorf("create repository resource client: %w", err)
+		return fmt.Errorf("create clients: %w", err)
 	}
 
 	tree, err := r.loadFolderTree(ctx, rw, clients)
@@ -94,6 +89,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "write folders to repository")
+	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("create repository resource client: %w", err)
+	}
 	err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,

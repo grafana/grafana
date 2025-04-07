@@ -65,6 +65,7 @@ type CloneOptions struct {
 	Progress io.Writer
 }
 
+//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
 type ClonableRepository interface {
 	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
 }
@@ -74,6 +75,7 @@ type PushOptions struct {
 	Progress io.Writer
 }
 
+//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
 type ClonedRepository interface {
 	ReaderWriter
 	Push(ctx context.Context, opts PushOptions) error
