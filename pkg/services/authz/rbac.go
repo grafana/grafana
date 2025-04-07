@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -98,7 +99,7 @@ func ProvideAuthZClient(
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -112,7 +113,7 @@ func ProvideStandaloneAuthZClient(
 	return newRemoteRBACClient(authCfg, tracer)
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) (authlib.AccessClient, error) {
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (authlib.AccessClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -143,7 +144,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 	return newRBACClient(conn, tracer), nil
 }
 
-func newRBACClient(conn grpc.ClientConnInterface, tracer tracing.Tracer) authlib.AccessClient {
+func newRBACClient(conn grpc.ClientConnInterface, tracer trace.Tracer) authlib.AccessClient {
 	return authzlib.NewClient(
 		conn,
 		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{

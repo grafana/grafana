@@ -20,14 +20,15 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -190,7 +191,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		grpcutils.NewAuthenticatorInterceptor(authenticator, tracer),
+		interceptors.AuthenticatorFunc(grpcutils.NewAuthenticatorInterceptor(authenticator, tracer)),
 		tracer,
 		prometheus.DefaultRegisterer,
 	)

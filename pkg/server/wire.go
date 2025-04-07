@@ -9,6 +9,8 @@ package server
 import (
 	"github.com/google/wire"
 	"github.com/stretchr/testify/mock"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -185,6 +187,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
+func otelTracer() trace.Tracer {
+	return otel.GetTracerProvider().Tracer("grafana")
+}
+
+var withOTelSet = wire.NewSet(
+	otelTracer,
+	grpcserver.ProvideService,
+	interceptors.ProvideAuthenticator,
+)
+
 var wireBasicSet = wire.NewSet(
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
@@ -265,6 +277,7 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	opentsdb.ProvideService,
@@ -355,10 +368,8 @@ var wireBasicSet = wire.NewSet(
 	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
-	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	interceptors.ProvideAuthenticator,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	teamapi.ProvideTeamAPI,
