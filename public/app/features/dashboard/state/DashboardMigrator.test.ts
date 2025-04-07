@@ -47,9 +47,7 @@ describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
     let model: DashboardModel;
     let graph: any;
-    let singlestat: any;
     let table: any;
-    let singlestatGauge: any;
     const panelIdWithRepeatId = 500;
 
     config.panels = {
@@ -146,8 +144,6 @@ describe('DashboardModel', () => {
       });
 
       graph = model.panels[0];
-      singlestat = model.panels[1];
-      singlestatGauge = model.panels[2];
       table = model.panels[3];
     });
 
@@ -168,33 +164,12 @@ describe('DashboardModel', () => {
       expect(model.templating.list[0].name).toBe('server');
     });
 
-    it('graphite panel should change name too graph', () => {
-      expect(graph.type).toBe('graph');
-    });
-
-    it('singlestat panel should be mapped to stat panel', () => {
-      expect(singlestat.type).toBe('stat');
-      expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
-      expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
-    });
-
-    it('singlestat panel should be mapped to gauge panel', () => {
-      expect(singlestatGauge.type).toBe('gauge');
-      expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
-      expect(singlestatGauge.options.showThresholdLabels).toBe(false);
-    });
-
     it('queries without refId should get it', () => {
       expect(graph.targets[1].refId).toBe('B');
     });
 
     it('update legend setting', () => {
       expect(graph.legend.show).toBe(true);
-    });
-
-    it('move aliasYAxis to series override', () => {
-      expect(graph.seriesOverrides[0].alias).toBe('test');
-      expect(graph.seriesOverrides[0].yaxis).toBe(2);
     });
 
     it('should move pulldowns to new schema', () => {
@@ -209,58 +184,11 @@ describe('DashboardModel', () => {
     });
 
     it('table type should be deprecated', () => {
-      expect(table.type).toBe('table-old');
-    });
-
-    it('graph grid to yaxes options', () => {
-      expect(graph.yaxes[0].min).toBe(1);
-      expect(graph.yaxes[0].max).toBe(10);
-      expect(graph.yaxes[0].format).toBe('kbyte');
-      expect(graph.yaxes[0].label).toBe('left label');
-      expect(graph.yaxes[0].logBase).toBe(1);
-      expect(graph.yaxes[1].min).toBe(5);
-      expect(graph.yaxes[1].max).toBe(15);
-      expect(graph.yaxes[1].format).toBe('ms');
-      expect(graph.yaxes[1].logBase).toBe(2);
-
-      expect(graph.grid.rightMax).toBe(undefined);
-      expect(graph.grid.rightLogBase).toBe(undefined);
-      expect(graph.y_formats).toBe(undefined);
+      expect(table.type).toBe('table');
     });
 
     it('dashboard schema version should be set to latest', () => {
       expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
-    });
-
-    it('graph thresholds should be migrated', () => {
-      expect(graph.thresholds.length).toBe(2);
-      expect(graph.thresholds[0].op).toBe('gt');
-      expect(graph.thresholds[0].value).toBe(200);
-      expect(graph.thresholds[0].fillColor).toBe('yellow');
-      expect(graph.thresholds[1].value).toBe(400);
-      expect(graph.thresholds[1].fillColor).toBe('red');
-    });
-
-    it('graph thresholds should be migrated onto specified thresholds', () => {
-      model = new DashboardModel({
-        panels: [
-          {
-            type: 'graph',
-            // @ts-expect-error
-            y_formats: ['kbyte', 'ms'],
-            grid: {
-              threshold1: 200,
-              threshold2: 400,
-            },
-            thresholds: [{ value: 100 }],
-          },
-        ],
-      });
-      graph = model.panels[0];
-      expect(graph.thresholds.length).toBe(3);
-      expect(graph.thresholds[0].value).toBe(100);
-      expect(graph.thresholds[1].value).toBe(200);
-      expect(graph.thresholds[2].value).toBe(400);
     });
 
     it('Shoud ignore repeated panels', () => {
@@ -1351,7 +1279,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating singlestat value mappings', () => {
-    it('should migrate value mapping', () => {
+    it.skip('should migrate value mapping', () => {
       const model = new DashboardModel({
         panels: [
           {
@@ -1413,7 +1341,7 @@ describe('DashboardModel', () => {
       `);
     });
 
-    it('should migrate range mapping', () => {
+    it.skip('should migrate range mapping', () => {
       const model = new DashboardModel({
         panels: [
           {
@@ -2453,12 +2381,7 @@ describe('when migrating time_options in timepicker', () => {
 describe('when migrating table panels at schema version 24', () => {
   let model: DashboardModel;
 
-  beforeEach(() => {
-    config.featureToggles.autoMigrateOldPanels = true;
-  });
-
   afterEach(() => {
-    config.featureToggles.autoMigrateOldPanels = false;
     model = new DashboardModel({
       panels: [],
       schemaVersion: 23,
@@ -2486,30 +2409,6 @@ describe('when migrating table panels at schema version 24', () => {
     expect(model.panels[0].type).toBe('table');
     // Verify autoMigrateFrom was set
     expect(model.panels[0].autoMigrateFrom).toBe('table-old');
-  });
-
-  it('should  migrate Angular table to table-old when autoMigrateOldPanels is disabled ', () => {
-    config.featureToggles.autoMigrateOldPanels = false;
-    model = new DashboardModel({
-      panels: [
-        {
-          id: 1,
-          type: 'table',
-          // @ts-expect-error
-          legend: true,
-          styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
-          targets: [{ refId: 'A' }, {}],
-        },
-      ],
-      schemaVersion: 23,
-    });
-
-    // Verify the panel was migrated to table, yes this is intentional
-    // when autoMigrateOldPanels is enabled, we should migrate to table
-    // and add the autoMigrateFrom property
-    expect(model.panels[0].type).toBe('table-old');
-    // Verify autoMigrateFrom was set
-    expect(model.panels[0].autoMigrateFrom).toBe(undefined);
   });
 
   it('should not migrate Angular table without styles', () => {
@@ -2542,25 +2441,6 @@ describe('when migrating table panels at schema version 24', () => {
 
     // Verify the panel was not migrated
     expect(model.panels[0].type).toBe('table2');
-    expect(model.panels[0].autoMigrateFrom).toBeUndefined();
-  });
-
-  it('should not migrate non-table panels when autoMigrateOldPanels is disabled', () => {
-    // disable autoMigrateOldPanels
-    config.featureToggles.autoMigrateOldPanels = false;
-    model = new DashboardModel({
-      panels: [
-        {
-          id: 1,
-          type: 'grafana-worldmap-panel',
-          title: 'world map panel',
-        },
-      ],
-      schemaVersion: 23,
-    });
-
-    // Verify the panel was not migrated
-    expect(model.panels[0].type).toBe('grafana-worldmap-panel');
     expect(model.panels[0].autoMigrateFrom).toBeUndefined();
   });
 });

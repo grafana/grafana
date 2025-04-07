@@ -1,7 +1,14 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
+import DataGrid, {
+  RenderCellProps,
+  RenderRowProps,
+  Row,
+  SortColumn,
+  DataGridHandle,
+  SortDirection,
+} from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -65,13 +72,29 @@ export function TableNG(props: TableNGProps) {
     fieldConfig,
     footerOptions,
     height,
+    initialSortBy,
     noHeader,
+    onCellFilterAdded,
     onColumnResize,
+    onSortByChange,
     width,
     data,
     enableSharedCrosshair,
     showTypeIcons,
   } = props;
+
+  const initialSortColumns = useMemo<SortColumn[]>(() => {
+    const initialSort = initialSortBy?.map(({ displayName, desc }) => {
+      const matchingField = data.fields.find(({ state }) => state?.displayName === displayName);
+      const columnKey = matchingField?.name || displayName;
+
+      return {
+        columnKey,
+        direction: (desc ? 'DESC' : 'ASC') as SortDirection,
+      };
+    });
+    return initialSort ?? [];
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ------------------------------- Local state ------------------------------ */
   const [revId, setRevId] = useState(0);
@@ -89,7 +112,7 @@ export function TableNG(props: TableNGProps) {
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
   const [, setReadyForRowHeightCalc] = useState(false);
-  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
+  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>(initialSortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
   const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
@@ -100,7 +123,7 @@ export function TableNG(props: TableNGProps) {
   const crossFilterRows = useRef<Record<string, TableRow[]>>({});
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   // TODO: This ref persists sortColumns between renders. setSortColumns is still used to trigger re-render
-  const sortColumnsRef = useRef(sortColumns);
+  const sortColumnsRef = useRef<SortColumn[]>(initialSortColumns);
   const prevProps = useRef(props);
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
@@ -364,9 +387,12 @@ export function TableNG(props: TableNGProps) {
           filter,
           headerCellRefs,
           isCountRowsSet,
+          onCellFilterAdded,
+          onSortByChange,
           osContext,
+          rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
-          rows: sortedRows,
+          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -436,6 +462,13 @@ export function TableNG(props: TableNGProps) {
       y: target.scrollTop,
     };
   };
+
+  // Reset sortColumns when initialSortBy changes
+  useEffect(() => {
+    if (initialSortColumns.length > 0) {
+      setSortColumns(initialSortColumns);
+    }
+  }, [initialSortColumns]);
 
   // Restore scroll position after re-renders
   useEffect(() => {
@@ -565,8 +598,11 @@ export function mapFrameToDataGrid({
     filter,
     headerCellRefs,
     isCountRowsSet,
+    onCellFilterAdded,
+    onSortByChange,
     osContext,
     rows,
+    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -574,7 +610,6 @@ export function mapFrameToDataGrid({
     sortColumnsRef,
     styles,
     textWrap,
-    fieldConfig,
     theme,
     timeRange,
     getActions,
@@ -584,9 +619,6 @@ export function mapFrameToDataGrid({
 
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
-
-  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
-  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   // If nested frames, add expansion control column
   if (hasNestedFrames) {
@@ -662,7 +694,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(rows[rowIndex].__index));
+        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -671,7 +703,7 @@ export function mapFrameToDataGrid({
 
   let fieldCountWithoutWidth = 0;
   frame.fields.map((field, fieldIndex) => {
-    if (field.type === FieldType.nestedFrames) {
+    if (field.type === FieldType.nestedFrames || field.config.custom?.hidden) {
       // Don't render nestedFrames type field
       return;
     }
@@ -708,7 +740,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={rowIdx}
+            rowIdx={sortedRows[rowIdx].__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
@@ -720,15 +752,15 @@ export function mapFrameToDataGrid({
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
                 textWrap,
-                cellInspect,
+                field,
                 cellType
               )
             }
             setIsInspecting={setIsInspecting}
             setContextMenuProps={setContextMenuProps}
-            cellInspect={cellInspect}
             getActions={getActions}
             rowBg={rowBg}
+            onCellFilterAdded={onCellFilterAdded}
           />
         );
       },
@@ -750,14 +782,22 @@ export function mapFrameToDataGrid({
           column={column}
           rows={rows}
           field={field}
-          onSort={(columnKey, direction, isMultiSort) =>
-            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef)
-          }
+          onSort={(columnKey, direction, isMultiSort) => {
+            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef);
+
+            // Update panel context with the new sort order
+            if (onSortByChange) {
+              const sortByFields = sortColumnsRef.current.map(({ columnKey, direction }) => ({
+                displayName: columnKey,
+                desc: direction === 'DESC',
+              }));
+              onSortByChange(sortByFields);
+            }
+          }}
           direction={sortDirection}
           justifyContent={justifyColumnContent}
           filter={filter}
           setFilter={setFilter}
-          filterable={filterable}
           onColumnResize={onColumnResize}
           headerCellRefs={headerCellRefs}
           crossFilterOrder={crossFilterOrder}

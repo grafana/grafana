@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
 import { UsagesToNetwork, VariableUsageTree, getVariableUsages } from '../../variables/utils';
@@ -101,7 +102,7 @@ export function VariableEditorListRow({
                   propsOnDuplicate(identifier);
                 }}
                 name="copy"
-                tooltip="Duplicate variable"
+                tooltip={t('dashboard-scene.variable-editor-list-row.tooltip-duplicate-variable', 'Duplicate variable')}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
                   variableState.name
                 )}
@@ -112,14 +113,14 @@ export function VariableEditorListRow({
                   setShowDeleteModal(true);
                 }}
                 name="trash-alt"
-                tooltip="Remove variable"
+                tooltip={t('dashboard-scene.variable-editor-list-row.tooltip-remove-variable', 'Remove variable')}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(
                   variableState.name
                 )}
               />
               <ConfirmModal
                 isOpen={showDeleteModal}
-                title="Delete variable"
+                title={t('dashboard-scene.variable-editor-list-row.title-delete-variable', 'Delete variable')}
                 body={`Are you sure you want to delete: ${variableState.name}?`}
                 confirmText="Delete variable"
                 onConfirm={onDeleteVariable}
@@ -149,7 +150,10 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
         <Icon
           name="check"
           className={styles.iconPassed}
-          aria-label="This variable is referenced by other variables or dashboard."
+          aria-label={t(
+            'dashboard-scene.variable-check-indicator.aria-label-variable-referenced-other-variables-dashboard',
+            'This variable is referenced by other variables or dashboard.'
+          )}
         />
       </Tooltip>
     );
@@ -160,7 +164,10 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
       <Icon
         name="exclamation-triangle"
         className={styles.iconFailed}
-        aria-label="This variable is not referenced by any variable or dashboard."
+        aria-label={t(
+          'dashboard-scene.variable-check-indicator.aria-label-variable-referenced-dashboard',
+          'This variable is not referenced by any variable or dashboard.'
+        )}
       />
     </Tooltip>
   );

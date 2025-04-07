@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -47,17 +48,29 @@ const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['ty
 
 const RuleEditor = () => {
   const { identifier, type } = useRuleEditorPathParams();
-  const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
+  const { copyFromIdentifier, queryDefaults, isManualRestore } = useRuleEditorQueryParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
   const getContent = useCallback(() => {
     if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-      return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+      return (
+        <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
+          <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-create-rules">
+            Sorry! You are not allowed to create rules.
+          </Trans>
+        </AlertWarning>
+      );
     }
 
     if (identifier && !canEditRules(identifier.ruleSourceName)) {
-      return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
+      return (
+        <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-edit-rules', 'Cannot edit rules')}>
+          <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-rules">
+            Sorry! You are not allowed to edit rules.
+          </Trans>
+        </AlertWarning>
+      );
     }
 
     if (identifier) {
@@ -68,8 +81,16 @@ const RuleEditor = () => {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
     // new alert rule
-    return <AlertRuleForm prefill={queryDefaults} />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
+    return <AlertRuleForm prefill={queryDefaults} isManualRestore={isManualRestore} />;
+  }, [
+    canCreateCloudRules,
+    canCreateGrafanaRules,
+    canEditRules,
+    copyFromIdentifier,
+    identifier,
+    queryDefaults,
+    isManualRestore,
+  ]);
 
   return (
     <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
@@ -97,6 +118,7 @@ function useRuleEditorQueryParams() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
   const copyFromIdentifier = ruleId.tryParse(copyFromId);
+  const isManualRestore = searchParams.has('isManualRestore');
 
   const ruleType = translateRouteParamToRuleType(type);
 
@@ -104,5 +126,5 @@ function useRuleEditorQueryParams() {
     ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
     : undefined;
 
-  return { copyFromIdentifier, queryDefaults };
+  return { copyFromIdentifier, queryDefaults, isManualRestore };
 }
