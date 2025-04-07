@@ -154,6 +154,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
 			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
+			Translations:    panel.Translations,
 		}
 	}
 
@@ -229,7 +230,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngAnalyticsParams:      hs.Cfg.ExternalUserMngAnalyticsParams,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
-		AngularSupportEnabled:            hs.Cfg.AngularSupportEnabled,
 		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
 		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
@@ -336,6 +336,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
 		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
+
+	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
@@ -487,6 +489,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			Translations:              plugin.Translations,
 		}
 
 		if ds.JsonData == nil {
@@ -569,8 +572,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
-					BaseURL: ds.BaseURL,
-					Angular: ds.Angular,
+					BaseURL:      ds.BaseURL,
+					Angular:      ds.Angular,
+					Translations: ds.Translations,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -595,6 +599,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
+		Translations:    plugin.Translations,
 	}
 
 	if settings.Enabled {

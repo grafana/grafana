@@ -37,6 +37,46 @@ func TestAllowQuery(t *testing.T) {
 			q:    `(SELECT * FROM a_table) UNION ALL (SELECT * FROM a_table2)`,
 			err:  nil,
 		},
+		{
+			name: "allows keywords 'is', 'not', 'null'",
+			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
+			err:  nil,
+		},
+		{
+			name: "null literal",
+			q:    `SELECT 1 as id, NULL as null_col`,
+			err:  nil,
+		},
+		{
+			name: "val tuple in read query",
+			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
+			err:  nil,
+		},
+		{
+			name: "group concat in read query",
+			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
+			err:  nil,
+		},
+		{
+			name: "collate in read query",
+			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
+			err:  nil,
+		},
+		{
+			name: "allow substring_index",
+			q:    `SELECT __value__, SUBSTRING_INDEX(name, '.', -1) AS code FROM A`,
+			err:  nil,
+		},
+		{
+			name: "json functions",
+			q:    example_json_functions,
+			err:  nil,
+		},
+		{
+			name: "range condition (between)",
+			q:    `SELECT '2024-04-01 15:30:00' BETWEEN '2024-04-01 15:29:00' AND '2024-04-01 15:31:00'`,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -209,3 +249,15 @@ SELECT
 FROM sample_data
 GROUP BY name, value, created_at
 LIMIT 10`
+
+var example_json_functions = `SELECT 
+  JSON_OBJECT('key1', 'value1', 'key2', 10) AS json_obj,
+  JSON_ARRAY(1, 'abc', NULL, TRUE) AS json_arr,
+  JSON_EXTRACT('{"id": 123, "name": "test"}', '$.id') AS json_ext,
+  JSON_UNQUOTE(JSON_EXTRACT('{"name": "test"}', '$.name')) AS json_unq,
+  JSON_CONTAINS('{"a": 1, "b": 2}', '{"a": 1}') AS json_contains,
+  JSON_SET('{"a": 1}', '$.b', 2) AS json_set,
+  JSON_REMOVE('{"a": 1, "b": 2}', '$.b') AS json_remove,
+  JSON_LENGTH('{"a": 1, "b": {"c": 3}}') AS json_len,
+  JSON_SEARCH('{"a": "xyz", "b": "abc"}', 'one', 'abc') AS json_search,
+  JSON_TYPE('{"a": 1}') AS json_type`
