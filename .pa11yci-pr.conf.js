@@ -133,7 +133,7 @@ var config = {
       url: '${HOST}/org',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 2,
     },
     {
       url: '${HOST}/org/apikeys',
