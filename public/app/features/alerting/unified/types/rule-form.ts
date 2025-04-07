@@ -62,7 +62,7 @@ export interface RuleFormValues {
   keepFiringForTime?: number;
   keepFiringForTimeUnit?: string;
   expression: string;
-  missingSeriesEvalsToResolve?: number | null;
+  missingSeriesEvalsToResolve?: number;
 }
 
 export type Folder = { title: string; uid: string };
