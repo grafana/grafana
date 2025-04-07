@@ -1,6 +1,6 @@
 // THIS FILE IS COPIED FROM UPSTREAM
 //
-// https://github.com/prometheus/prometheus/blob/edfc3bcd025dd6fe296c167a14a216cab1e552ee/notifier/notifier.go
+// https://github.com/prometheus/prometheus/blob/293f0c9185260165fd7dabbf8a9e8758b32abeae/notifier/notifier.go
 //
 // Copyright 2013 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +15,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// nolint
+//nolint:all
 package sender
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	config_util "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
+	"github.com/prometheus/sigv4"
+	"gopkg.in/yaml.v2"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
@@ -53,7 +57,7 @@ const (
 	alertmanagerLabel = "alertmanager"
 )
 
-var userAgent = fmt.Sprintf("Prometheus/%s", version.Version)
+var userAgent = version.PrometheusUserAgent()
 
 // Alert is a generic representation of an alert in the Prometheus eco-system.
 type Alert struct {
@@ -110,20 +114,22 @@ type Manager struct {
 
 	metrics *alertMetrics
 
-	more   chan struct{}
-	mtx    sync.RWMutex
-	ctx    context.Context
-	cancel func()
+	more chan struct{}
+	mtx  sync.RWMutex
+
+	stopOnce      *sync.Once
+	stopRequested chan struct{}
 
 	alertmanagers map[string]*alertmanagerSet
-	logger        log.Logger
+	logger        *slog.Logger
 }
 
 // Options are the configurable parameters of a Handler.
 type Options struct {
-	QueueCapacity  int
-	ExternalLabels labels.Labels
-	RelabelConfigs []*relabel.Config
+	QueueCapacity   int
+	DrainOnShutdown bool
+	ExternalLabels  labels.Labels
+	RelabelConfigs  []*relabel.Config
 	// Used for sending HTTP requests to the Alertmanager.
 	Do func(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error)
 
@@ -155,7 +161,7 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanag
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "errors_total",
-			Help:      "Total number of errors sending alert notifications.",
+			Help:      "Total number of sent alerts affected by errors.",
 		},
 			[]string{alertmanagerLabel},
 		),
@@ -216,23 +222,21 @@ func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Resp
 }
 
 // NewManager is the manager constructor.
-func NewManager(o *Options, logger log.Logger) *Manager {
-	ctx, cancel := context.WithCancel(context.Background())
-
+func NewManager(o *Options, logger *slog.Logger) *Manager {
 	if o.Do == nil {
 		o.Do = do
 	}
 	if logger == nil {
-		logger = log.NewNopLogger()
+		logger = promslog.NewNopLogger()
 	}
 
 	n := &Manager{
-		queue:  make([]*Alert, 0, o.QueueCapacity),
-		ctx:    ctx,
-		cancel: cancel,
-		more:   make(chan struct{}, 1),
-		opts:   o,
-		logger: logger,
+		queue:         make([]*Alert, 0, o.QueueCapacity),
+		more:          make(chan struct{}, 1),
+		stopRequested: make(chan struct{}),
+		stopOnce:      &sync.Once{},
+		opts:          o,
+		logger:        logger,
 	}
 
 	queueLenFunc := func() float64 { return float64(n.queueLen()) }
@@ -274,36 +278,98 @@ func (n *Manager) nextBatch() []*Alert {
 	return alerts
 }
 
-// Run dispatches notifications continuously.
+// Run dispatches notifications continuously, returning once Stop has been called and all
+// pending notifications have been drained from the queue (if draining is enabled).
+//
+// Dispatching of notifications occurs in parallel to processing target updates to avoid one starving the other.
+// Refer to https://github.com/prometheus/prometheus/issues/13676 for more details.
 func (n *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		n.targetUpdateLoop(tsets)
+	}()
+
+	go func() {
+		defer wg.Done()
+		n.sendLoop()
+		n.drainQueue()
+	}()
+
+	wg.Wait()
+	n.logger.Info("Notification manager stopped")
+}
+
+// sendLoop continuously consumes the notifications queue and sends alerts to
+// the configured Alertmanagers.
+func (n *Manager) sendLoop() {
 	for {
-		// The select is split in two parts, such as we will first try to read
-		// new alertmanager targets if they are available, before sending new
-		// alerts.
+		// If we've been asked to stop, that takes priority over sending any further notifications.
 		select {
-		case <-n.ctx.Done():
+		case <-n.stopRequested:
 			return
-		case ts := <-tsets:
-			n.reload(ts)
 		default:
 			select {
-			case <-n.ctx.Done():
+			case <-n.stopRequested:
+				return
+
+			case <-n.more:
+				n.sendOneBatch()
+
+				// If the queue still has items left, kick off the next iteration.
+				if n.queueLen() > 0 {
+					n.setMore()
+				}
+			}
+		}
+	}
+}
+
+// targetUpdateLoop receives updates of target groups and triggers a reload.
+func (n *Manager) targetUpdateLoop(tsets <-chan map[string][]*targetgroup.Group) {
+	for {
+		// If we've been asked to stop, that takes priority over processing any further target group updates.
+		select {
+		case <-n.stopRequested:
+			return
+		default:
+			select {
+			case <-n.stopRequested:
 				return
 			case ts := <-tsets:
 				n.reload(ts)
-			case <-n.more:
 			}
 		}
-		alerts := n.nextBatch()
-
-		if !n.sendAll(alerts...) {
-			n.metrics.dropped.Add(float64(len(alerts)))
-		}
-		// If the queue still has items left, kick off the next iteration.
-		if n.queueLen() > 0 {
-			n.setMore()
-		}
 	}
+}
+
+func (n *Manager) sendOneBatch() {
+	alerts := n.nextBatch()
+
+	if !n.sendAll(alerts...) {
+		n.metrics.dropped.Add(float64(len(alerts)))
+	}
+}
+
+func (n *Manager) drainQueue() {
+	if !n.opts.DrainOnShutdown {
+		if n.queueLen() > 0 {
+			n.logger.Warn("Draining remaining notifications on shutdown is disabled, and some notifications have been dropped", "count", n.queueLen())
+			n.metrics.dropped.Add(float64(n.queueLen()))
+		}
+
+		return
+	}
+
+	n.logger.Info("Draining any remaining notifications...")
+
+	for n.queueLen() > 0 {
+		n.sendOneBatch()
+	}
+
+	n.logger.Info("Remaining notifications drained")
 }
 
 func (n *Manager) reload(tgs map[string][]*targetgroup.Group) {
@@ -313,7 +379,7 @@ func (n *Manager) reload(tgs map[string][]*targetgroup.Group) {
 	for id, tgroup := range tgs {
 		am, ok := n.alertmanagers[id]
 		if !ok {
-			level.Error(n.logger).Log("msg", "couldn't sync alert manager set", "err", fmt.Sprintf("invalid id:%v", id))
+			n.logger.Error("couldn't sync alert manager set", "err", fmt.Sprintf("invalid id:%v", id))
 			continue
 		}
 		am.sync(tgroup)
@@ -326,20 +392,7 @@ func (n *Manager) Send(alerts ...*Alert) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 
-	// Attach external labels before relabelling and sending.
-	for _, a := range alerts {
-		lb := labels.NewBuilder(a.Labels)
-
-		n.opts.ExternalLabels.Range(func(l labels.Label) {
-			if a.Labels.Get(l.Name) == "" {
-				lb.Set(l.Name, l.Value)
-			}
-		})
-
-		a.Labels = lb.Labels()
-	}
-
-	alerts = n.relabelAlerts(alerts)
+	alerts = relabelAlerts(n.opts.RelabelConfigs, n.opts.ExternalLabels, alerts)
 	if len(alerts) == 0 {
 		return
 	}
@@ -349,7 +402,7 @@ func (n *Manager) Send(alerts ...*Alert) {
 	if d := len(alerts) - n.opts.QueueCapacity; d > 0 {
 		alerts = alerts[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
+		n.logger.Warn("Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
 		n.metrics.dropped.Add(float64(d))
 	}
 
@@ -358,7 +411,7 @@ func (n *Manager) Send(alerts ...*Alert) {
 	if d := (len(n.queue) + len(alerts)) - n.opts.QueueCapacity; d > 0 {
 		n.queue = n.queue[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
+		n.logger.Warn("Alert notification queue full, dropping alerts", "num_dropped", d)
 		n.metrics.dropped.Add(float64(d))
 	}
 	n.queue = append(n.queue, alerts...)
@@ -367,15 +420,24 @@ func (n *Manager) Send(alerts ...*Alert) {
 	n.setMore()
 }
 
-func (n *Manager) relabelAlerts(alerts []*Alert) []*Alert {
+func relabelAlerts(relabelConfigs []*relabel.Config, externalLabels labels.Labels, alerts []*Alert) []*Alert {
+	lb := labels.NewBuilder(labels.EmptyLabels())
 	var relabeledAlerts []*Alert
 
-	for _, alert := range alerts {
-		labels, keep := relabel.Process(alert.Labels, n.opts.RelabelConfigs...)
-		if keep {
-			alert.Labels = labels
-			relabeledAlerts = append(relabeledAlerts, alert)
+	for _, a := range alerts {
+		lb.Reset(a.Labels)
+		externalLabels.Range(func(l labels.Label) {
+			if a.Labels.Get(l.Name) == "" {
+				lb.Set(l.Name, l.Value)
+			}
+		})
+
+		keep := relabel.ProcessBuilder(lb, relabelConfigs...)
+		if !keep {
+			continue
 		}
+		a.Labels = lb.Labels()
+		relabeledAlerts = append(relabeledAlerts, a)
 	}
 	return relabeledAlerts
 }
@@ -456,10 +518,19 @@ func labelsToOpenAPILabelSet(modelLabelSet labels.Labels) models.LabelSet {
 	return apiLabelSet
 }
 
-// Stop shuts down the notification handler.
+// Stop signals the notification manager to shut down and immediately returns.
+//
+// Run will return once the notification manager has successfully shut down.
+//
+// The manager will optionally drain any queued notifications before shutting down.
+//
+// Stop is safe to call multiple times.
 func (n *Manager) Stop() {
-	level.Info(n.logger).Log("msg", "Stopping notification manager...")
-	n.cancel()
+	n.logger.Info("Stopping notification manager...")
+
+	n.stopOnce.Do(func() {
+		close(n.stopRequested)
+	})
 }
 
 // Alertmanager holds Alertmanager endpoint information.
@@ -479,11 +550,22 @@ func (a alertmanagerLabels) url() *url.URL {
 	}
 }
 
-func newAlertmanagerSet(cfg *config.AlertmanagerConfig, logger log.Logger, metrics *alertMetrics) (*alertmanagerSet, error) {
+func newAlertmanagerSet(cfg *config.AlertmanagerConfig, logger *slog.Logger, metrics *alertMetrics) (*alertmanagerSet, error) {
 	client, err := config_util.NewClientFromConfig(cfg.HTTPClientConfig, "alertmanager")
 	if err != nil {
 		return nil, err
 	}
+	t := client.Transport
+
+	if cfg.SigV4Config != nil {
+		t, err = sigv4.NewSigV4RoundTripper(cfg.SigV4Config, client.Transport)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	client.Transport = t
+
 	s := &alertmanagerSet{
 		client:  client,
 		cfg:     cfg,
@@ -502,7 +584,7 @@ func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
 	for _, tg := range tgs {
 		ams, droppedAms, err := AlertmanagerFromGroup(tg, s.cfg)
 		if err != nil {
-			level.Error(s.logger).Log("msg", "Creating discovered Alertmanagers failed", "err", err)
+			s.logger.Error("Creating discovered Alertmanagers failed", "err", err)
 			continue
 		}
 		allAms = append(allAms, ams...)
@@ -511,6 +593,7 @@ func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
+	previousAms := s.ams
 	// Set new Alertmanagers and deduplicate them along their unique URL.
 	s.ams = []alertmanager{}
 	s.droppedAms = []alertmanager{}
@@ -530,6 +613,26 @@ func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
 		seen[us] = struct{}{}
 		s.ams = append(s.ams, am)
 	}
+	// Now remove counters for any removed Alertmanagers.
+	for _, am := range previousAms {
+		us := am.url().String()
+		if _, ok := seen[us]; ok {
+			continue
+		}
+		s.metrics.latency.DeleteLabelValues(us)
+		s.metrics.sent.DeleteLabelValues(us)
+		s.metrics.errors.DeleteLabelValues(us)
+		seen[us] = struct{}{}
+	}
+}
+
+func (s *alertmanagerSet) configHash() (string, error) {
+	b, err := yaml.Marshal(s.cfg)
+	if err != nil {
+		return "", err
+	}
+	hash := md5.Sum(b)
+	return hex.EncodeToString(hash[:]), nil
 }
 
 func postPath(pre string, v config.AlertmanagerAPIVersion) string {
@@ -540,38 +643,40 @@ func postPath(pre string, v config.AlertmanagerAPIVersion) string {
 // AlertmanagerFromGroup extracts a list of alertmanagers from a target group
 // and an associated AlertmanagerConfig.
 func AlertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig) ([]alertmanager, []alertmanager, error) {
-	res := make([]alertmanager, 0, len(tg.Targets))
+	var res []alertmanager
 	var droppedAlertManagers []alertmanager
+	lb := labels.NewBuilder(labels.EmptyLabels())
 
 	for _, tlset := range tg.Targets {
-		lbls := make([]labels.Label, 0, len(tlset)+2+len(tg.Labels))
+		lb.Reset(labels.EmptyLabels())
 
 		for ln, lv := range tlset {
-			lbls = append(lbls, labels.Label{Name: string(ln), Value: string(lv)})
+			lb.Set(string(ln), string(lv))
 		}
 		// Set configured scheme as the initial scheme label for overwrite.
-		lbls = append(lbls, labels.Label{Name: model.SchemeLabel, Value: cfg.Scheme})
-		lbls = append(lbls, labels.Label{Name: pathLabel, Value: postPath(cfg.PathPrefix, cfg.APIVersion)})
+		lb.Set(model.SchemeLabel, cfg.Scheme)
+		lb.Set(pathLabel, postPath(cfg.PathPrefix, cfg.APIVersion))
 
 		// Combine target labels with target group labels.
 		for ln, lv := range tg.Labels {
 			if _, ok := tlset[ln]; !ok {
-				lbls = append(lbls, labels.Label{Name: string(ln), Value: string(lv)})
+				lb.Set(string(ln), string(lv))
 			}
 		}
 
-		lset, keep := relabel.Process(labels.New(lbls...), cfg.RelabelConfigs...)
+		preRelabel := lb.Labels()
+		keep := relabel.ProcessBuilder(lb, cfg.RelabelConfigs...)
 		if !keep {
-			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{labels.New(lbls...)})
+			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{preRelabel})
 			continue
 		}
 
-		addr := lset.Get(model.AddressLabel)
+		addr := lb.Get(model.AddressLabel)
 		if err := config.CheckTargetAddress(model.LabelValue(addr)); err != nil {
 			return nil, nil, err
 		}
 
-		res = append(res, alertmanagerLabels{lset})
+		res = append(res, alertmanagerLabels{lb.Labels()})
 	}
 	return res, droppedAlertManagers, nil
 }

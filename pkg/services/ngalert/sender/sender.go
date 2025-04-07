@@ -28,6 +28,7 @@ import (
 const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
+	defaultDrainOnShutdown  = true
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -106,8 +107,8 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
-		s.logger,
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg, DrainOnShutdown: defaultDrainOnShutdown},
+		toSlogLogger(s.logger),
 	)
 	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
 	if err != nil {
