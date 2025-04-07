@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CustomCellRendererProps } from 'src/components';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
@@ -124,6 +125,10 @@ export function TableCellNG(props: TableCellNGProps) {
       break;
     case TableCellDisplayMode.Actions:
       cell = <ActionsCell actions={actions} />;
+      break;
+    case TableCellDisplayMode.Custom:
+      const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+      cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
