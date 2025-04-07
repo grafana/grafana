@@ -39,6 +39,18 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
     expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Prettify JSON')).not.toBeInTheDocument();
+  });
+
+  test('Renders legacy controls', () => {
+    render(
+      <LogListContextProvider {...contextProps} showUniqueLabels={false} prettifyJSON={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText('Show unique labels')).toBeInTheDocument();
+    expect(screen.getByLabelText('Prettify JSON')).toBeInTheDocument();
   });
 
   test.each([CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer])(
@@ -165,6 +177,36 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText('Enable highlighting'));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('syntaxHighlighting', true);
+  });
+
+  test('Controls unique labels', async () => {
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} showUniqueLabels={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Show unique labels'));
+    rerender(
+      <LogListContextProvider {...contextProps} showUniqueLabels={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText('Hide unique labels'));
+  });
+
+  test('Controls prettify JSON', async () => {
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} prettifyJSON={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Prettify JSON'));
+    rerender(
+      <LogListContextProvider {...contextProps} showUniqueLabels={false}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText('Show original logs'));
   });
 
   test.each([
