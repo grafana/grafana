@@ -2,7 +2,7 @@
 import { css, cx } from '@emotion/css';
 import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
 
-import { isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
+import { getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
@@ -167,12 +167,17 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             initialValue={query.expr ?? ''}
             placeholder="Enter a PromQL query…"
             datasource={datasource}
+            timeRange={range ?? getDefaultTimeRange()}
           />
         </div>
       </div>
       {labelBrowserVisible && (
         <div className="gf-form">
-          <MetricsBrowserProvider languageProvider={languageProvider} onChange={onChangeLabelBrowser}>
+          <MetricsBrowserProvider
+            timeRange={range ?? getDefaultTimeRange()}
+            languageProvider={languageProvider}
+            onChange={onChangeLabelBrowser}
+          >
             <MetricsBrowser />
           </MetricsBrowserProvider>
         </div>

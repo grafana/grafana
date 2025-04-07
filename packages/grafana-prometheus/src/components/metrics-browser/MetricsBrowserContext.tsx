@@ -1,5 +1,7 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { TimeRange } from '@grafana/data';
+
 import PromQlLanguageProvider from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
@@ -46,6 +48,7 @@ interface MetricsBrowserContextType {
 const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefined>(undefined);
 
 type MetricsBrowserProviderProps = {
+  timeRange: TimeRange;
   languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
 };
@@ -61,6 +64,7 @@ const withoutMetricLabel = (ml: string) => ml !== METRIC_LABEL;
  */
 export function MetricsBrowserProvider({
   children,
+  timeRange,
   languageProvider,
   onChange,
 }: PropsWithChildren<MetricsBrowserProviderProps>) {
@@ -106,7 +110,7 @@ export function MetricsBrowserProvider({
     setErr('');
 
     languageProvider
-      .fetchLabelsWithMatch(selector)
+      .fetchLabelsWithMatch(timeRange, selector)
       .then((results) => {
         setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
       })
@@ -114,7 +118,7 @@ export function MetricsBrowserProvider({
         setErr(`Validation failed: ${error.message || 'Unknown error'}`);
         setValidationStatus('');
       });
-  }, [getSelector, languageProvider]);
+  }, [getSelector, languageProvider, timeRange]);
 
   const showAllMetrics = useCallback(() => {
     setMetrics(
@@ -151,7 +155,7 @@ export function MetricsBrowserProvider({
       const selector = buildSelector(selectedMetric, selectedLabelValues);
 
       languageProvider
-        .fetchSeriesLabelsMatch(selector)
+        .fetchSeriesLabelsMatch(timeRange, selector)
         .then((fetchedLabelKeys) => {
           setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
           setStatus('Ready');
@@ -186,7 +190,7 @@ export function MetricsBrowserProvider({
             try {
               const selector = getSelector();
               const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-              const values = await languageProvider.fetchSeriesValuesWithMatch(lk, safeSelector);
+              const values = await languageProvider.fetchSeriesValuesWithMatch(timeRange, lk, safeSelector);
               newLabelValues[lk] = values;
             } catch (error) {
               console.error(`Error fetching values for label ${lk}:`, error);
@@ -209,7 +213,7 @@ export function MetricsBrowserProvider({
     }
 
     fetchValues();
-  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys]);
+  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys, timeRange]);
 
   // Fetch metrics with new selector
   useEffect(() => {
@@ -223,7 +227,7 @@ export function MetricsBrowserProvider({
       setStatus('Fetching metrics...');
 
       try {
-        const metricsResult = await languageProvider.fetchSeriesValuesWithMatch(METRIC_LABEL, selector);
+        const metricsResult = await languageProvider.fetchSeriesValuesWithMatch(timeRange, METRIC_LABEL, selector);
         setMetrics(metricsResult.map((m) => ({ name: m, details: getMetricDetails(m) })));
         setStatus('Ready');
       } catch (error) {
