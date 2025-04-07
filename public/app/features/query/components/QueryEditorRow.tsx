@@ -1,11 +1,8 @@
-// Libraries
 import classNames from 'classnames';
-import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
+import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import * as React from 'react';
 import { PureComponent, ReactNode } from 'react';
 
-// Utils & Services
 import {
   CoreApp,
   DataSourceApi,
@@ -13,26 +10,16 @@ import {
   DataSourcePluginContextProvider,
   PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   EventBusExtended,
-  EventBusSrv,
   HistoryItem,
   LoadingState,
   PanelData,
-  PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
   getDataSourceRef,
-  toLegacyResponseData,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  AngularComponent,
-  getAngularLoader,
-  getDataSourceSrv,
-  renderLimitedComponents,
-  reportInteraction,
-  usePluginComponents,
-} from '@grafana/runtime';
+import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -45,9 +32,6 @@ import {
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { Trans, t } from 'app/core/internationalization';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
@@ -88,22 +72,17 @@ interface State<TQuery extends DataQuery> {
   queriedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
   datasourceUid?: string | null;
-  hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
-  element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope<TQuery> | null = null;
-  angularQueryEditor: AngularComponent | null = null;
   dataSourceSrv = getDataSourceSrv();
   id = '';
 
   state: State<TQuery> = {
     datasource: null,
-    hasTextEditMode: false,
     data: undefined,
     isOpen: true,
     showingHelp: false,
@@ -116,46 +95,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
-  }
-
-  componentWillUnmount() {
-    if (this.angularQueryEditor) {
-      this.angularQueryEditor.destroy();
-    }
-  }
-
-  getAngularQueryComponentScope(): AngularQueryComponentScope<TQuery> {
-    const { query, queries } = this.props;
-    const { datasource } = this.state;
-    const panel = new PanelModel({ targets: queries });
-    const dashboard = {} as DashboardModel;
-
-    const me = this;
-
-    return {
-      datasource: datasource,
-      target: query,
-      panel: panel,
-      dashboard: dashboard,
-      refresh: () => {
-        // Old angular editors modify the query model and just call refresh
-        // Important that this use this.props here so that as this function is only created on mount and it's
-        // important not to capture old prop functions in this closure
-
-        // the "hide" attribute of the queries can be changed from the "outside",
-        // it will be applied to "this.props.query.hide", but not to "query.hide".
-        // so we have to apply it.
-        if (query.hide !== me.props.query.hide) {
-          query.hide = me.props.query.hide;
-        }
-
-        this.props.onChange(query);
-        this.props.onRunQuery();
-      },
-      render: () => () => console.log('legacy render function called, it does nothing'),
-      events: this.props.eventBus || new EventBusSrv(),
-      range: getTimeSrv().timeRange(),
-    };
   }
 
   /**
@@ -190,7 +129,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
       queriedDataSourceIdentifier: interpolatedUID,
-      hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
@@ -206,56 +144,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
 
       this.setState({ data: dataFilteredByRefId });
-
-      if (this.angularScope) {
-        this.angularScope.range = getTimeSrv().timeRange();
-      }
-
-      if (this.angularQueryEditor && dataFilteredByRefId) {
-        notifyAngularQueryEditorsOfData(this.angularScope!, dataFilteredByRefId, this.angularQueryEditor);
-      }
     }
 
     // check if we need to load another datasource
     if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
-      if (this.angularQueryEditor) {
-        this.angularQueryEditor.destroy();
-        this.angularQueryEditor = null;
-      }
       this.loadDatasource();
       return;
     }
-
-    if (!this.element || this.angularQueryEditor) {
-      return;
-    }
-
-    this.renderAngularQueryEditor();
   }
 
-  renderAngularQueryEditor = () => {
-    if (!this.element) {
-      return;
-    }
-
-    if (this.angularQueryEditor) {
-      this.angularQueryEditor.destroy();
-      this.angularQueryEditor = null;
-    }
-
-    const loader = getAngularLoader();
-    const template = '<plugin-component type="query-ctrl" />';
-    const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
-
-    this.angularQueryEditor = loader.load(this.element, scopeProps, template);
-    this.angularScope = scopeProps.ctrl;
-  };
-
-  onOpen = () => {
-    this.renderAngularQueryEditor();
-  };
-
-  getReactQueryEditor(ds: DataSourceApi<TQuery>) {
+  getQueryEditor(ds: DataSourceApi<TQuery>) {
     if (!ds) {
       return;
     }
@@ -289,12 +187,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
-    if (datasource?.components?.QueryCtrl) {
-      return <div ref={(element) => (this.element = element)} />;
-    }
-
     if (datasource) {
-      let QueryEditor = this.getReactQueryEditor(datasource);
+      let QueryEditor = this.getQueryEditor(datasource);
 
       if (QueryEditor) {
         return (
@@ -324,17 +218,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         </Trans>
       </div>
     );
-  };
-
-  onToggleEditMode = (e: React.MouseEvent, props: QueryOperationRowRenderProps) => {
-    e.stopPropagation();
-    if (this.angularScope && this.angularScope.toggleEditorMode) {
-      this.angularScope.toggleEditorMode();
-      this.angularQueryEditor?.digest();
-      if (!props.isOpen) {
-        props.onOpen();
-      }
-    }
   };
 
   onRemoveQuery = () => {
@@ -394,9 +277,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return datasource.getQueryDisplayText(this.props.query);
     }
 
-    if (this.angularScope && this.angularScope.getCollapsedText) {
-      return this.angularScope.getCollapsedText();
-    }
     return null;
   }
 
@@ -475,7 +355,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
-    const { hasTextEditMode, datasource, showingHelp } = this.state;
+    const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
@@ -488,15 +368,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
-          />
-        )}
-        {hasTextEditMode && (
-          <QueryOperationAction
-            title={t('query-operation.header.toggle-edit-mode', 'Toggle text edit mode')}
-            icon="pen"
-            onClick={(e) => {
-              this.onToggleEditMode(e, props);
-            }}
           />
         )}
         {this.renderExtraActions()}
@@ -538,7 +409,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChangeDataSource={onChangeDataSource}
         dataSource={dataSource}
         hidden={query.hide}
-        onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
@@ -575,7 +445,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           index={index}
           headerElement={this.renderHeader}
           actions={hideActionButtons ? undefined : this.renderActions}
-          onOpen={this.onOpen}
         >
           <div className={rowClasses} id={this.id}>
             <ErrorBoundaryAlert>
@@ -597,36 +466,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
-}
-
-function notifyAngularQueryEditorsOfData<TQuery extends DataQuery>(
-  scope: AngularQueryComponentScope<TQuery>,
-  data: PanelData,
-  editor: AngularComponent
-) {
-  if (data.state === LoadingState.Done) {
-    const legacy = data.series.map((v) => toLegacyResponseData(v));
-    scope.events.emit(PanelEvents.dataReceived, legacy);
-  } else if (data.state === LoadingState.Error) {
-    scope.events.emit(PanelEvents.dataError, data.error);
-  }
-
-  // Some query controllers listen to data error events and need a digest
-  // for some reason this needs to be done in next tick
-  setTimeout(editor.digest);
-}
-
-export interface AngularQueryComponentScope<TQuery extends DataQuery> {
-  target: TQuery;
-  panel: PanelModel;
-  dashboard: DashboardModel;
-  events: EventBusExtended;
-  refresh: () => void;
-  render: () => void;
-  datasource: DataSourceApi<TQuery> | null;
-  toggleEditorMode?: () => void;
-  getCollapsedText?: () => string;
-  range: TimeRange;
 }
 
 /**

@@ -73,7 +73,6 @@
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.15",

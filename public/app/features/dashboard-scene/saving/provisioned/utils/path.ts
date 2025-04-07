@@ -19,11 +19,11 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
 
   if (pathFromAnnotation) {
     const hashIndex = pathFromAnnotation.indexOf('#');
-    path = hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
-  } else {
-    const pathSlug = slug || `new-dashboard-${timestamp}`;
-    path = `${pathSlug}.json`;
+    return hashIndex > 0 ? pathFromAnnotation.substring(0, hashIndex) : pathFromAnnotation;
   }
+
+  const pathSlug = slug || `new-dashboard-${timestamp}`;
+  path = `${pathSlug}.json`;
 
   // Add folder path if it exists
   if (folderPath) {
