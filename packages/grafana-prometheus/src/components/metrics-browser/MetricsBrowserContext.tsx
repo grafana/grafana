@@ -172,6 +172,27 @@ export function MetricsBrowserProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languageProvider, selectedMetric]);
 
+  // Fetch label keys when metrics updated after selecting a label value
+  useEffect(() => {
+    if (getSelector() === '{}') {
+      return;
+    }
+
+    setStatus('Fetching labels...');
+    const selector = `{__name__=~"${metrics.map((m) => m.name).join('|')}"}`;
+    languageProvider
+      .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
+      .then((fetchedLabelKeys) => {
+        setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
+        setStatus('Ready');
+      })
+      .catch((error) => {
+        setErr(`Error fetching labels: ${error.message || 'Unknown error'}`);
+        setStatus('');
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageProvider, timeRange, metrics]);
+
   // Fetch label values for selected label keys
   useEffect(() => {
     async function fetchValues() {
