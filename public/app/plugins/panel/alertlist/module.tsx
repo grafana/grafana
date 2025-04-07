@@ -1,8 +1,7 @@
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
 import { Button, Stack } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { PermissionLevelString } from 'app/types';
 
 import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
@@ -134,15 +133,13 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
         return (
-          <OldFolderPicker
-            enableReset={true}
-            showRoot={false}
-            allowEmpty={true}
-            initialTitle={props.value?.title}
-            initialFolderUid={props.value?.uid}
-            permissionLevel={PermissionLevelString.View}
-            onClear={() => props.onChange('')}
+          <NestedFolderPicker
+            clearable
+            showRootFolder={false}
             {...props}
+            onChange={(uid, title) => props.onChange({ uid, title })}
+            value={props.value?.uid}
+            permission="view"
           />
         );
       },
