@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   Box,
   Button,
+  Divider,
   Field,
   Icon,
   Input,
@@ -294,7 +295,7 @@ export function GrafanaEvaluationBehaviorStep({
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
-
+        <Divider />
         {/*Show the keepFiringFor input only for Grafana alerting rules*/}
         {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
 
