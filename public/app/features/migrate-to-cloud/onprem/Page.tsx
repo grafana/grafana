@@ -84,7 +84,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortPa
           resultLimit: PAGE_SIZE,
           resultPage: page,
           resultSortColumn: sortParams?.column ? sortParams.column : undefined,
-          resultSortOrder: sortParams?.direction,
+          resultSortOrder: sortParams?.order,
           errorsOnly: showErrors,
         }
       : skipToken;
@@ -123,7 +123,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortPa
 
 interface SortParams {
   column: string;
-  direction: string | undefined;
+  order: string | undefined;
 }
 
 export const Page = () => {
@@ -232,8 +232,8 @@ export const Page = () => {
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
-            onShowErrors={() => setShowErrors(!showErrors)}
-            isShowingErrors={showErrors}
+            onHighlightErrors={() => setShowErrors(!showErrors)}
+            isHighlightErrors={showErrors}
           />
         )}
 
@@ -274,7 +274,7 @@ export const Page = () => {
               onChangeSort={(a) =>
                 setSortParams({
                   column: a.sortBy[0]?.id,
-                  direction: a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc',
+                  order: a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc',
                 })
               }
             />

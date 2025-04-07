@@ -24,8 +24,8 @@ interface MigrationSummaryProps {
 
   showRebuildSnapshot: boolean;
 
-  onShowErrors: () => void;
-  isShowingErrors: boolean;
+  onHighlightErrors: () => void;
+  isHighlightErrors: boolean;
 }
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -51,8 +51,8 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
     showRebuildSnapshot,
 
-    isShowingErrors,
-    onShowErrors,
+    isHighlightErrors,
+    onHighlightErrors,
   } = props;
 
   const totalCount = snapshot?.stats?.total ?? 0;
@@ -94,8 +94,8 @@ export function MigrationSummary(props: MigrationSummaryProps) {
           <Space h={5} layout="inline" />
           <Checkbox
             label={t('migrate-to-cloud.summary.show-errors', 'highlight errors')}
-            value={isShowingErrors}
-            onChange={onShowErrors}
+            value={isHighlightErrors}
+            onChange={onHighlightErrors}
           />
         </MigrationInfo>
 
