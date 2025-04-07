@@ -191,11 +191,11 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 	// Create or update (we could do write!)
 	if create {
 		if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
-			return nil, fmt.Errorf("create resource in repository: %w", err)
+			return nil, fmt.Errorf("create file in repository: %w", err)
 		}
 	} else {
 		if err := r.repo.Update(ctx, path, ref, data, message); err != nil {
-			return nil, fmt.Errorf("create resource in repository: %w", err)
+			return nil, fmt.Errorf("update file in repository: %w", err)
 		}
 	}
 
