@@ -5088,6 +5088,7 @@
     "logs-controls": {
       "deduplication": "Deduplication",
       "disable-highlighting": "Disable highlighting",
+      "disable-prettify-json": "Show original logs",
       "display-level": "Display levels",
       "display-level-all": "All levels",
       "download": "Download logs",
@@ -5098,11 +5099,14 @@
       },
       "enable-highlighting": "Enable highlighting",
       "hide-timestamps": "Hide timestamps",
+      "hide-unique-labels": "Hide unique labels",
       "newest-first": "Newest logs first",
       "oldest-first": "Oldest logs first",
+      "prettify-json": "Prettify JSON",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-timestamps": "Show timestamps",
+      "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
     },

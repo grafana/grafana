@@ -262,7 +262,7 @@ export const LogListControls = ({ eventBus }: Props) => {
               tooltip={
                 showUniqueLabels
                   ? t('logs.logs-controls.hide-unique-labels', 'Hide unique labels')
-                  : t('logs.logs-controls.show-unique-timestamps', 'Show unique labels')
+                  : t('logs.logs-controls.show-unique-labels', 'Show unique labels')
               }
               size="lg"
             />
