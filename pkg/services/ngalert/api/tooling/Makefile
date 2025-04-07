@@ -1,5 +1,3 @@
-include ../../../../../.bingo/Variables.mk
-
 .DEFAULT_GOAL := openapi
 
 API_DIR = definitions
@@ -7,6 +5,9 @@ GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
+
+GO ?= $(shell which go)
+SWAGGER = GODEBUG=gotypesalias=0 $(GO) tool swagger
 
 .DEFAULT_GOAL := all
 
@@ -25,7 +26,7 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
-spec.json spec-stable.json: $(GO_PKG_FILES) $(SWAGGER)
+spec.json spec-stable.json: $(GO_PKG_FILES)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
 
 post.json: spec.json
@@ -34,10 +35,10 @@ post.json: spec.json
 api.json: spec-stable.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
-validate-stable: spec-stable.json $(SWAGGER)
+validate-stable: spec-stable.json
 	$(SWAGGER) validate $(<)
 
-validate: spec.json $(SWAGGER)
+validate: spec.json
 	$(SWAGGER) validate $(<)
 
 swagger-codegen-api:
