@@ -40,7 +40,7 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
     expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Prettify JSON')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
@@ -50,7 +50,7 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Show unique labels')).toBeInTheDocument();
-    expect(screen.getByLabelText('Prettify JSON')).toBeInTheDocument();
+    expect(screen.getByLabelText('Expand JSON logs')).toBeInTheDocument();
   });
 
   test.each([CoreApp.Dashboard, CoreApp.PanelEditor, CoreApp.PanelViewer])(
@@ -194,19 +194,19 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Hide unique labels'));
   });
 
-  test('Controls prettify JSON', async () => {
+  test('Controls Expand JSON logs', async () => {
     const { rerender } = render(
       <LogListContextProvider {...contextProps} prettifyJSON={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Prettify JSON'));
+    await userEvent.click(screen.getByLabelText('Expand JSON logs'));
     rerender(
       <LogListContextProvider {...contextProps} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    expect(screen.getByLabelText('Show original logs'));
+    expect(screen.getByLabelText('Collapse JSON logs'));
   });
 
   test.each([
