@@ -20,7 +20,7 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t } from 'app/core/internationalization';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from '../hooks';
+import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData, WorkflowOption } from '../types';
 import { dataToSpec, specToData } from '../utils/data';
 
