@@ -3,9 +3,13 @@ import { fromBaseUrl } from '../utils/support/url';
 
 describe('Pin nav items', () => {
   beforeEach(() => {
-    cy.viewport(1280, 800);
+    cy.viewport(1920, 1080);
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
-    cy.visit(fromBaseUrl('/'));
+    cy.visit(fromBaseUrl('/'), {
+      onBeforeLoad: (win) => {
+        win.localStorage.setItem('grafana.navigation.docked', 'false'); // Lines with cy.get('[aria-label="Dock menu"]') expect the menu to be undocked
+      },
+    });
   });
   afterEach(() => {
     e2e.flows.setDefaultUserPreferences();
