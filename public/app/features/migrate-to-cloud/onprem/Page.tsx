@@ -65,7 +65,11 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
 const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
-const SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES: Array<SnapshotDto['status']> = ['PROCESSING', 'FINISHED'];
+const SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES: Array<SnapshotDto['status']> = [
+  'PROCESSING',
+  'PENDING_PROCESSING',
+  'FINISHED',
+];
 
 const PAGE_SIZE = 50;
 
@@ -276,12 +280,15 @@ export const Page = () => {
               onChangePage={setPage}
               numberOfPages={numPages}
               page={page}
-              onChangeSort={(a) =>
-                setSortParams({
-                  column: a.sortBy[0]?.id,
-                  order: a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc',
-                })
-              }
+              onChangeSort={(a) => {
+                const order = a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc';
+                if (sortParams.column !== a.sortBy[0]?.id || order !== sortParams.order) {
+                  setSortParams({
+                    column: a.sortBy[0]?.id,
+                    order: order,
+                  });
+                }
+              }}
             />
             <SupportedTypesDisclosure />
           </Stack>
