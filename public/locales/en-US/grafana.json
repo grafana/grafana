@@ -2815,8 +2815,10 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "grid": "Grid",
-        "layout": "Layout"
+        "group-layout": "Group layout",
+        "group-layout-disabled": "No groups exists on this level",
+        "panel-layout": "Panel layout",
+        "panel-layout-disabled": "Select a row or tab to change panel layout options"
       }
     },
     "make-editable": {
