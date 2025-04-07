@@ -268,6 +268,7 @@ export interface PostableGrafanaRuleDefinition {
     target_datasource_uid?: string;
   };
   intervalSeconds?: number;
+  missing_series_evals_to_resolve?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
