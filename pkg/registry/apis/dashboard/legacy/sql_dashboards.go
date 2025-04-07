@@ -428,7 +428,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}, created, nil
 }
 
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard, failOnExisting bool) (*dashboard.Dashboard, bool, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, false, fmt.Errorf("no user found in context")
@@ -437,6 +437,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	cmd, created, err := a.buildSaveDashboardCommand(ctx, orgId, dash)
 	if err != nil {
 		return nil, created, err
+	}
+	if failOnExisting && !created {
+		return nil, created, dashboards.ErrDashboardWithSameUIDExists
 	}
 
 	out, err := a.dashStore.SaveDashboard(ctx, *cmd)
