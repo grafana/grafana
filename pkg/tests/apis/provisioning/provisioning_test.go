@@ -254,6 +254,18 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.NoError(t, err, "read value")
 		name, _, _ = unstructured.NestedString(obj.Object, "resource", "file", "metadata", "name")
 		require.Equal(t, allPanels, name, "read the name out of the saved file")
+
+		// Running create again should fail (the file already exists)
+		result = helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, 400, code)
+		require.Error(t, result.Error(), "should fail response (already exists)")
 	})
 
 	t.Run("fail using invalid paths", func(t *testing.T) {

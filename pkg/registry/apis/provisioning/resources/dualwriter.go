@@ -208,10 +208,19 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		if parsed.Action == provisioning.ResourceActionCreate {
+		switch parsed.Action {
+		case provisioning.ResourceActionCreate:
 			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		} else if parsed.Action == provisioning.ResourceActionUpdate {
+			if err != nil {
+				return parsed, fmt.Errorf("unable to create resource in grafana: %w", err)
+			}
+		case provisioning.ResourceActionUpdate:
 			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+			if err != nil {
+				return parsed, fmt.Errorf("unable to update resource in grafana: %w", err)
+			}
+		case provisioning.ResourceActionDelete:
+			return parsed, fmt.Errorf("delete unspoorted via create/update command")
 		}
 	}
 
