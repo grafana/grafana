@@ -42,7 +42,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsTableFrames: DataFrame[] | undefined;
 }
 
-type LogRowsComponentProps = Omit<
+export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
   'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
 >;
