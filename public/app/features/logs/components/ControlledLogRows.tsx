@@ -14,15 +14,14 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { LogsVisualisationType } from '../../explore/Logs/Logs';
-
-import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListControlOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
+import { LogsVisualisationType } from '../../explore/Logs/Logs';
+import { ControlledLogsTable } from './ControlledLogsTable';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
@@ -42,7 +41,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsTableFrames: DataFrame[] | undefined;
 }
 
-export type LogRowsComponentProps = Omit<
+type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
   'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
 >;
