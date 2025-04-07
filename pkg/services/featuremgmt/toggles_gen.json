@@ -1858,6 +1858,23 @@
     },
     {
       "metadata": {
+        "name": "logsPanelControls",
+        "resourceVersion": "1743772342343",
+        "creationTimestamp": "2025-04-04T13:11:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-04 13:12:22.343052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables a control component for the logs panel in Explore",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiExperimentalStreaming",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-06-19T10:03:51Z"
