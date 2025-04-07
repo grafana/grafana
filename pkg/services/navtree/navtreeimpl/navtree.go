@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	pc "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -163,7 +164,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			treeRoot.AddSection(alertingSection)
 		}
 
-		if aimlSection := s.buildAimlNavLinks(c); aimlSection != nil {
+		if aimlSection := s.buildAIMLNavLinks(c); aimlSection != nil {
 			treeRoot.AddSection(aimlSection)
 		}
 	}
@@ -430,7 +431,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	return dashboardChildNavs
 }
 
-func (s *ServiceImpl) buildAimlNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
@@ -463,8 +464,8 @@ func (s *ServiceImpl) buildAimlNavLinks(c *contextmodel.ReqContext) *navtree.Nav
 		return nil
 	}
 
-	// Check permissions
-	if !hasAccess(ac.EvalPermission(ac.ActionAIMLRead)) {
+	// Check if user has access to the plugin
+	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "grafana-ml-app")) {
 		return nil
 	}
 
@@ -479,7 +480,7 @@ func (s *ServiceImpl) buildAimlNavLinks(c *contextmodel.ReqContext) *navtree.Nav
 
 	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
 		Text:     "Outlier detection",
-		SubTitle: "Create an outlier",
+		SubTitle: "Create an outlier detector",
 		Id:       "ai-ml-outlier-detection",
 		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/outlier-detector",
 	})
