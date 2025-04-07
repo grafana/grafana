@@ -43,7 +43,7 @@ A contact point includes one or more contact point integrations for sending aler
 - Discord
 - Email
 - Google Chat
-- Grafana Oncall
+- Grafana IRM
 - Jira
 - Kafka REST Proxy
 - Line
