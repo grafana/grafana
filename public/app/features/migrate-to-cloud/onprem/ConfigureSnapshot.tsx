@@ -15,13 +15,32 @@ interface ConfigureSnapshotProps {
   resourceDependencies: ResourceDependencyDto[] | never[];
 }
 
+// Manual order of resource types to display in the UI for better UX.
+function resourceTypeOrder(resourceTypes: ResourceTypeId[]): ResourceTypeId[] {
+  const displayOrder: ResourceTypeId[] = [
+    'DASHBOARD',
+    'LIBRARY_ELEMENT',
+    'DATASOURCE',
+    'PLUGIN',
+    'FOLDER',
+    'ALERT_RULE_GROUP',
+    'ALERT_RULE',
+    'NOTIFICATION_POLICY',
+    'NOTIFICATION_TEMPLATE',
+    'CONTACT_POINT',
+    'MUTE_TIMING',
+  ];
+
+  return displayOrder.filter((type) => resourceTypes.includes(type));
+}
+
 export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
   const { disabled, isLoading, onClick, resourceDependencies } = props;
   const [selectedTypes, setSelectedTypes] = useState<Set<ResourceTypeId>>(new Set());
   const [includeAll, setIncludeAll] = useState(true);
 
   const { dependencyMap, dependentMap } = buildDependencyMaps(resourceDependencies);
-  const resourceTypes = Array.from(dependencyMap.keys()).sort();
+  const resourceTypes = resourceTypeOrder(Array.from(dependencyMap.keys()));
 
   // Initialize with all items selected when component mounts once.
   useEffect(() => {
