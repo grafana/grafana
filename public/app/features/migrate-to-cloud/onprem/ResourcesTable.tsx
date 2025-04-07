@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable, Pagination, Stack, Column, type FetchDataFunc } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack, Column, TableSortByFieldState, type FetchDataFunc } from '@grafana/ui';
 
 import { LocalPlugin } from '../../plugins/admin/types';
 import { MigrateDataResponseItemDto } from '../api';
@@ -34,6 +34,7 @@ export function ResourcesTable({
   onChangeSort,
   page = 1,
 }: ResourcesTableProps) {
+  const [initialSortBy] = useState<TableSortByFieldState[]>([{ displayName: 'Type', desc: true }]);
   const [focusedResource, setfocusedResource] = useState<ResourceTableItem | undefined>();
 
   const handleShowDetailsModal = useCallback((resource: ResourceTableItem) => {
@@ -60,6 +61,7 @@ export function ResourcesTable({
           data={data}
           getRowId={(r) => r.refId}
           fetchData={onChangeSort}
+          initialSortBy={initialSortBy}
         ></InteractiveTable>
 
         <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
