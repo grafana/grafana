@@ -41,8 +41,8 @@ Set the y-axis values scale. Choose from:
 - **Linear** - Divides the scale into equal parts.
 - **Logarithmic** - Use a logarithmic scale. If you select this option, in the **Log base** list, choose a binary (base 2) or common (base 10) logarithmic scale.
 - **Symlog** - Use a symmetrical logarithmic scale. If you select this option, choose also:
-   -  **Log base** - Select a binary (base 2) or common (base 10) logarithmic scale.
-   - **Linear threshold** - Set the threshold at which the scale changes from linear to logarithmic.
+  - **Log base** - Select a binary (base 2) or common (base 10) logarithmic scale.
+  - **Linear threshold** - Set the threshold at which the scale changes from linear to logarithmic.
 
 #### Soft min and soft max
 
