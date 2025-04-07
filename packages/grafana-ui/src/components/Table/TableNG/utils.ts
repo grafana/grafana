@@ -203,11 +203,7 @@ export function shouldTextOverflow(
     return false;
   }
 
-  const cellWidth = headerCellRefs.current[key].offsetWidth;
-  const cellText = String(row[key] ?? '');
-  const newCellHeight = getCellHeight(cellText, cellWidth, ctx, lineHeight, defaultRowHeight, padding);
-
-  return newCellHeight > defaultRowHeight;
+  return true;
 }
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
