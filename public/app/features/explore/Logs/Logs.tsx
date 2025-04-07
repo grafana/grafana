@@ -213,7 +213,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
-  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
+  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -229,7 +229,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logLevelsRef = useRef<LogLevel[] | null>(null);
 
   const tableHeight = getLogsTableHeight();
-  const styles = getStyles(theme, wrapLogMessage, tableHeight);
+  const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
+  const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -1007,7 +1008,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {visualisationType === 'table' && hasData && (
+          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
@@ -1026,9 +1027,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {config.featureToggles.logsPanelControls && visualisationType === 'logs' && hasData && (
+          {config.featureToggles.logsPanelControls && hasData && (
             <div className={styles.logRowsWrapper} data-testid="logRows">
               <ControlledLogRows
+                logsTableFrames={props.logsFrames}
+                width={width}
+                updatePanelState={updatePanelState}
+                panelState={panelState?.logs}
+                datasourceType={props.datasourceType}
+                splitOpen={splitOpen}
+                visualisationType={visualisationType}
                 loading={loading}
                 loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
                 range={props.range}
