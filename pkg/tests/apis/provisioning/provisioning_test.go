@@ -369,7 +369,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	// Can not delete (not provisioning)
 	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
-	require.Error(t, err, "only the provisionding service should be able to delete")
+	require.Error(t, err, "only the provisioning service should be able to delete")
 	require.True(t, apierrors.IsForbidden(err))
 }
 
