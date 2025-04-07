@@ -14,6 +14,11 @@ export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
     return [{ label: `Save`, value: 'write' }];
   }
 
+  // When a branch is configured, show it
+  if (!ref && config.branch) {
+    ref = config.branch;
+  }
+
   const availableOptions: Array<{ label: string; value: WorkflowOption }> = [
     { label: ref ? `Push to ${ref}` : 'Save', value: 'write' },
     { label: 'Push to different branch', value: 'branch' },

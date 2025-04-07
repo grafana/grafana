@@ -69,7 +69,6 @@
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
-/conf/provisioning/sample @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 
 /apps/alerting/ @grafana/alerting-backend
@@ -777,7 +776,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/community-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
-/.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
@@ -845,3 +843,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
+/conf/provisioning/sample/ @grafana/grafana-git-ui-sync-team
