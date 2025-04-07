@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,7 +19,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,7 +35,6 @@ var (
 	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider         = (*SecretAPIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
 )
 
