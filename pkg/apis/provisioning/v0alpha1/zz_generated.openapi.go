@@ -1212,14 +1212,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"readOnly": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Edit options within the repository",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
@@ -1238,8 +1230,31 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Enum:        []interface{}{"folder", "instance"},
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"workflows": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The supported workflows",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"branch", "write"},
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"name", "title", "readOnly", "type", "target"},
+				Required: []string{"name", "title", "type", "target", "workflows"},
 			},
 		},
 	}
