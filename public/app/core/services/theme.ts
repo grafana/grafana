@@ -1,4 +1,4 @@
-import { getThemeById } from '@grafana/data/src/themes/registry';
+import { getThemeById } from '@grafana/data/internal';
 import { ThemeChangedEvent } from '@grafana/runtime';
 
 import appEvents from '../app_events';
@@ -50,7 +50,7 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
 
   await service.update({
     ...currentPref,
-    theme: newTheme.colors.mode,
+    theme: themeId,
   });
 }
 

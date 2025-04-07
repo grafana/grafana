@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 interface CustomAnnotationHeaderFieldProps {
   field: { onChange: () => void; onBlur: () => void; value: string; name: string };
@@ -12,9 +13,16 @@ const CustomAnnotationHeaderField = ({ field }: CustomAnnotationHeaderFieldProps
 
   return (
     <div>
-      <span className={styles.annotationTitle}>Custom annotation name and content</span>
+      <span className={styles.annotationTitle}>
+        <Trans i18nKey="alerting.custom-annotation-header-field.custom-annotation-name-and-content">
+          Custom annotation name and content
+        </Trans>
+      </span>
       <Input
-        placeholder="Enter custom annotation name..."
+        placeholder={t(
+          'alerting.custom-annotation-header-field.placeholder-enter-custom-annotation-name',
+          'Enter custom annotation name...'
+        )}
         width={18}
         {...field}
         className={styles.customAnnotationInput}

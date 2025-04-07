@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -99,7 +100,7 @@ var (
 )
 
 func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
-	runTest := func(t *testing.T, enableLokiPaths bool) {
+	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
 
 		// Setup Grafana and its Database
@@ -108,7 +109,8 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -134,12 +136,16 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
+		postContentTypeHeader := map[string]string{
+			"Content-Type": postContentType,
+		}
+
 		t.Run("create rule groups and get them back", func(t *testing.T) {
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
 
 			// create a third group in a different namespace
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// And a non-provisioned rule in another namespace
 			namespace3UID := util.GenerateShortUID()
@@ -171,11 +177,16 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusForbidden, status, raw)
 		})
 
+		t.Run("with incorrect content-type should receive 415", func(t *testing.T) {
+			_, status, raw := apiClient.RawConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, map[string]string{"Content-Type": "application/xml"})
+			requireStatusCode(t, http.StatusUnsupportedMediaType, status, raw)
+		})
+
 		t.Run("delete one rule group", func(t *testing.T) {
 			// Create three groups
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// delete the first one
 			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name, nil)
@@ -200,13 +211,51 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		})
 	}
 
-	t.Run("with the mimirtool paths", func(t *testing.T) {
-		runTest(t, false)
-	})
+	const applicationYAML = "application/yaml"
+	const applicationJSON = "application/json"
 
-	t.Run("with the cortextool Loki paths", func(t *testing.T) {
-		runTest(t, true)
-	})
+	cases := []struct {
+		name            string
+		contentType     string
+		enableLokiPaths bool
+	}{
+		{
+			name:            "with the mimirtool paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			runTest(t, tc.enableLokiPaths, tc.contentType)
+		})
+	}
 }
 
 func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
@@ -219,7 +268,8 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -305,7 +355,8 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
@@ -392,7 +443,8 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -507,7 +559,8 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -598,6 +651,122 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 	})
 }
 
+func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		// Setup Grafana and its Database
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		// Create admin user
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		t.Run("default provenance is ProvenanceConvertedPrometheus", func(t *testing.T) {
+			namespace := "test-namespace-provenance-" + util.GenerateShortUID()
+
+			// We have to create a folder to get its UID to use in the ruler API later to fetch the rule group.
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Get the rule group using the ruler API and check its provenance
+			ruleGroup, status := adminClient.GetRulesGroup(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			for _, rule := range ruleGroup.Rules {
+				require.Equal(t, apimodels.Provenance(models.ProvenanceConvertedPrometheus), rule.GrafanaManagedAlert.Provenance)
+			}
+		})
+
+		t.Run("with disable provenance header should use ProvenanceNone", func(t *testing.T) {
+			namespace := "test-namespace-provenance-" + util.GenerateShortUID()
+
+			// We have to create a folder to get its UID to use in the ruler API later to fetch the rule group.
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create rule group with the X-Disable-Provenance header
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, headers)
+
+			// Get the rule group using the ruler API and check its provenance
+			ruleGroup, status := adminClient.GetRulesGroup(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			for _, rule := range ruleGroup.Rules {
+				require.Equal(t, apimodels.Provenance(models.ProvenanceNone), rule.GrafanaManagedAlert.Provenance)
+			}
+		})
+
+		t.Run("can delete rule groups with X-Disable-Provenance header", func(t *testing.T) {
+			namespace := "test-namespace-delete-provenance-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create a rule group
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Now try to delete with X-Disable-Provenance header
+			// This should succeed
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusDeleteRuleGroup(t, namespace, promGroup1.Name, headers)
+
+			// Verify the rule group is gone
+			_, status, _ := adminClient.GetRulesGroupWithStatus(t, namespaceUID, promGroup1.Name)
+			require.Equal(t, http.StatusNotFound, status)
+		})
+
+		t.Run("can delete namespaces with X-Disable-Provenance header", func(t *testing.T) {
+			namespace := "test-namespace-delete-ns-provenance-" + util.GenerateShortUID()
+			namespaceUID := util.GenerateShortUID()
+			adminClient.CreateFolder(t, namespaceUID, namespace)
+
+			// Create a rule group with provenance=ProvenanceConvertedPrometheus
+			adminClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
+
+			// Now delete with X-Disable-Provenance header
+			// This should succeed
+			headers := map[string]string{
+				"X-Disable-Provenance": "true",
+			}
+			adminClient.ConvertPrometheusDeleteNamespace(t, namespace, headers)
+
+			// Verify the namespace has no rule groups
+			namespaces := adminClient.ConvertPrometheusGetAllRules(t, nil)
+			_, exists := namespaces[namespace]
+			require.False(t, exists)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
 func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
@@ -608,7 +777,8 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)

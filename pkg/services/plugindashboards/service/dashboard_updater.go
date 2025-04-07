@@ -21,7 +21,6 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store, pluginD
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
 		pluginSettingsService, dashboardPluginService, dashboardService)
-	du.updateAppDashboards()
 	return du
 }
 
@@ -53,7 +52,12 @@ type DashboardUpdater struct {
 	logger                 log.Logger
 }
 
-func (du *DashboardUpdater) updateAppDashboards() {
+func (du *DashboardUpdater) Run(ctx context.Context) error {
+	du.updateAppDashboards(ctx)
+	return nil
+}
+
+func (du *DashboardUpdater) updateAppDashboards(ctx context.Context) {
 	du.logger.Debug("Looking for app dashboard updates")
 
 	pluginSettings, err := du.pluginSettingsService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
@@ -67,11 +71,11 @@ func (du *DashboardUpdater) updateAppDashboards() {
 		if !pluginSetting.Enabled {
 			continue
 		}
-		ctx, _ := identity.WithServiceIdentity(context.Background(), pluginSetting.OrgID)
 
-		if pluginDef, exists := du.pluginStore.Plugin(ctx, pluginSetting.PluginID); exists {
+		serviceCtx, _ := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
+		if pluginDef, exists := du.pluginStore.Plugin(serviceCtx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(ctx, pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(serviceCtx, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}

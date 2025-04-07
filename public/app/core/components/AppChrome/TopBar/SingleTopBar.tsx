@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -14,17 +15,17 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-
-export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -77,16 +78,18 @@ export const SingleTopBar = memo(function SingleTopBar({
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
+            <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
           </Dropdown>
         )}
         <ToolbarButton
           icon="monitor"
           className={styles.kioskToggle}
           onClick={onToggleKioskMode}
-          tooltip="Enable kiosk mode"
+          tooltip={t('navigation.kiosk.tooltip', 'Enable kiosk mode')}
         />
         {!contextSrv.user.isSignedIn && <SignInLink />}
+        {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
+        {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
         {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>

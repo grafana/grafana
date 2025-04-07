@@ -23,7 +23,7 @@ export function usePauseRuleInGroup() {
     const groupIdentifierV1 = ruleGroupIdentifierV2toV1(ruleGroup);
 
     const action = pauseRuleAction({ uid, pause });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(groupIdentifierV1, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(groupIdentifierV1, [action]);
 
     return upsertRuleGroup({
       rulerConfig,

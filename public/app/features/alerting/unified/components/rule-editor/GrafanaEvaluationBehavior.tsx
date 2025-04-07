@@ -21,22 +21,22 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
+  isProvisionedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -67,7 +67,7 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
+      const isProvisioned = isProvisionedRuleGroup(group);
       return {
         label: group.name,
         value: group.name,
@@ -79,10 +79,6 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
     })
 
     .sort(sortByLabel);
-};
-
-const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance) === true);
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -203,7 +199,7 @@ export function GrafanaEvaluationBehaviorStep({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection
       stepNo={step}
-      title="Set evaluation behavior"
+      title={t('alerting.grafana-evaluation-behavior-step.title-set-evaluation-behavior', 'Set evaluation behavior')}
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
@@ -256,7 +252,9 @@ export function GrafanaEvaluationBehaviorStep({
             </Field>
           </div>
           <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">or</Text>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+            </Text>
             <Button
               onClick={onOpenEvaluationGroupCreationModal}
               type="button"
@@ -326,7 +324,10 @@ export function GrafanaEvaluationBehaviorStep({
           <CollapseToggle
             isCollapsed={!showErrorHandling}
             onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-            text="Configure no data and error handling"
+            text={t(
+              'alerting.grafana-evaluation-behavior-step.text-configure-no-data-and-error-handling',
+              'Configure no data and error handling'
+            )}
           />
           {showErrorHandling && (
             <>
@@ -455,7 +456,7 @@ function EvaluationGroupCreationModal({
               className={styles.formInput}
               autoFocus={true}
               id={evaluationGroupNameId}
-              placeholder="Enter a name"
+              placeholder={t('alerting.evaluation-group-creation-modal.placeholder-enter-a-name', 'Enter a name')}
               {...register('group', { required: { value: true, message: 'Required.' } })}
             />
           </Field>
@@ -463,7 +464,13 @@ function EvaluationGroupCreationModal({
           <Field
             error={formState.errors.evaluateEvery?.message}
             label={
-              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
+              <Label
+                htmlFor={evaluateEveryId}
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-often-rules-group-evaluated',
+                  'How often all rules in the group are evaluated.'
+                )}
+              >
                 <Trans i18nKey="alerting.rule-form.evaluation.group.interval">Evaluation interval</Trans>
               </Label>
             }
@@ -559,7 +566,10 @@ function NeedHelpInfoForConfigureNoDataError() {
         contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
         externalLink={docsLink}
         linkText={`Read more about this option`}
-        title="Configure no data and error handling"
+        title={t(
+          'alerting.need-help-info-for-configure-no-data-error.title-configure-no-data-and-error-handling',
+          'Configure no data and error handling'
+        )}
       />
     </Stack>
   );
@@ -605,7 +615,7 @@ function getDescription(isGrafanaRecordingRule: boolean) {
         }
         externalLink={docsLink}
         linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
+        title={t('alerting.get-description.title-alert-rule-evaluation', 'Alert rule evaluation')}
       />
     </Stack>
   );

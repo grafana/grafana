@@ -9,8 +9,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -25,6 +26,36 @@ func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, err
 	dash := &dashboard.Dashboard{}
 	err := json.Unmarshal(event.Value, dash)
 	return dash, err
+}
+
+func getProvisioningDataFromEvent(event resource.WriteEvent) (*dashboards.DashboardProvisioning, error) {
+	obj, ok := event.Object.GetRuntimeObject()
+	if !ok {
+		return nil, fmt.Errorf("object is not a runtime object")
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	provisioningData, ok := meta.GetManagerProperties()
+	if !ok || (provisioningData.Kind != utils.ManagerKindClassicFP) { //nolint:staticcheck
+		return nil, nil
+	}
+	source, ok := meta.GetSourceProperties()
+	if !ok {
+		return nil, nil
+	}
+	provisioning := &dashboards.DashboardProvisioning{
+		Name:       provisioningData.Identity,
+		ExternalID: source.Path,
+		CheckSum:   source.Checksum,
+	}
+	if source.TimestampMillis > 0 {
+		provisioning.Updated = time.UnixMilli(source.TimestampMillis).Unix()
+	}
+
+	return provisioning, nil
 }
 
 func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
@@ -63,19 +94,44 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 			if err != nil {
 				return 0, err
 			}
-
-			after, _, err := a.SaveDashboard(ctx, info.OrgID, dash)
+			// In unistore, provisioning data is stored as annotations on the dashboard object. In legacy, it is stored in a separate
+			// database table. For the legacy fallback, we need to save the provisioning data in the same transaction - so we need to handle these separately.
+			// Without this, we can end up having dashboards created in legacy, unistore timing out, and then never saving the provisioning data, which
+			// results in duplicated dashboards on next startup.
+			provisioning, err := getProvisioningDataFromEvent(event)
 			if err != nil {
 				return 0, err
 			}
-			if after != nil {
-				meta, err := utils.MetaAccessor(after)
+			if provisioning != nil {
+				cmd, _, err := a.buildSaveDashboardCommand(ctx, info.OrgID, dash)
 				if err != nil {
 					return 0, err
 				}
-				rv, err = meta.GetResourceVersionInt64()
+
+				after, err := a.dashStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 				if err != nil {
 					return 0, err
+				}
+
+				// dashboard version is the RV in legacy storage
+				if after != nil {
+					rv = int64(after.Version)
+				}
+			} else {
+				failOnExisting := event.Type == resource.WatchEvent_ADDED
+				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+				if err != nil {
+					return 0, err
+				}
+				if after != nil {
+					meta, err := utils.MetaAccessor(after)
+					if err != nil {
+						return 0, err
+					}
+					rv, err = meta.GetResourceVersionInt64()
+					if err != nil {
+						return 0, err
+					}
 				}
 			}
 		}
@@ -262,11 +318,11 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

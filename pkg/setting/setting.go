@@ -129,12 +129,13 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath              string
-	ProvisioningPath      string
-	DataPath              string
-	LogsPath              string
-	PluginsPath           string
-	EnterpriseLicensePath string
+	HomePath                   string
+	ProvisioningPath           string
+	PermittedProvisioningPaths []string
+	DataPath                   string
+	LogsPath                   string
+	PluginsPath                string
+	EnterpriseLicensePath      string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -175,11 +176,13 @@ type Cfg struct {
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate           string
-	AngularSupportEnabled           bool
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
 	DataProxyWhiteList              map[string]bool
 	ActionsAllowPostURL             string
+
+	// K8s Dashboard Cleanup
+	K8sDashboardCleanup K8sDashboardCleanupSettings
 
 	TempDataLifetime time.Duration
 
@@ -294,8 +297,8 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
-	ViewersCanEdit  bool // Deprecated: no longer used
-	EditorsCanAdmin bool // Deprecated: no longer used
+	// Deprecated: no longer used
+	ViewersCanEdit bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -418,6 +421,9 @@ type Cfg struct {
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
+
+	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
+	SQLExpressionCellLimit int64
 
 	ImageUploadProvider string
 
@@ -545,8 +551,6 @@ type Cfg struct {
 	CACertPath                  string
 	HttpsSkipVerify             bool
 }
-
-const UnifiedStorageConfigKeyDashboard = "dashboards.dashboard.grafana.app"
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
@@ -780,6 +784,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1134,6 +1139,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readProvisioningSettings(iniFile); err != nil {
+		return err
+	}
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -1244,12 +1253,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
-	if err := cfg.readPluginSettings(iniFile); err != nil {
+	// nolint:staticcheck
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
 
-	// nolint:staticcheck
-	if err := cfg.readFeatureToggles(iniFile); err != nil {
+	if err := cfg.readPluginSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1287,6 +1296,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
+	cfg.readK8sDashboardCleanupSettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
@@ -1567,7 +1577,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
@@ -1729,15 +1738,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
-	// Deprecated
+	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	//nolint:staticcheck
 	if cfg.ViewersCanEdit {
 		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
-	}
-	// Deprecated
-	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
-	if cfg.EditorsCanAdmin {
-		cfg.Logger.Warn("[Deprecated] The editors_can_admin configuration setting is deprecated. Please upgrade editors to admin.")
 	}
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
@@ -2019,6 +2024,24 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 
 	cfg.LiveAllowedOrigins = originPatterns
+	return nil
+}
+
+func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+
+	provisioningPaths := strings.TrimSpace(valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", ""))
+	if provisioningPaths != "|" && provisioningPaths != "" {
+		cfg.PermittedProvisioningPaths = strings.Split(provisioningPaths, "|")
+		for i, s := range cfg.PermittedProvisioningPaths {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning path is empty in '%s' (at index %d)", provisioningPaths, i)
+			}
+			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
+		}
+	}
 	return nil
 }
 

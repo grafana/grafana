@@ -22,11 +22,29 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 
+const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
+const getResourceNames = jest.fn().mockResolvedValue([
+  {
+    id: 'foobarID',
+    name: 'foobar',
+    subscriptionId: 'subID',
+    resourceGroup: 'resourceGroup',
+    type: 'foobarType',
+    location: 'london',
+  },
+]);
 const defaultProps = {
   query: {
     refId: 'A',
@@ -39,7 +57,6 @@ const defaultProps = {
   onChange: jest.fn(),
   datasource: createMockDatasource({
     getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
-    getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
     getMetricNamespaces: jest
       .fn()
       .mockImplementation(
@@ -50,11 +67,16 @@ const defaultProps = {
           return [{ text: 'foo/custom', value: 'foo/custom' }];
         }
       ),
-    getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
     ]),
+    azureResourceGraphDatasource: {
+      getResourceGroups,
+      getResourceNames,
+    },
+    getResourceGroups,
+    getResourceNames,
   }),
 };
 
@@ -89,10 +111,10 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...defaultProps} onChange={onChange} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
-      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      await userEvent.type(screen.getByTestId('mockeditor'), '2');
       expect(onChange).toHaveBeenCalledWith({
         azureLogAnalytics: {
-          query: 'test quer',
+          query: 'test query2',
         },
         queryType: 'Azure Log Analytics',
         refId: 'A',

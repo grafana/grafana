@@ -4,5 +4,5 @@ include ../.bingo/Variables.mk
 all: dashboards
 
 .PHONY: dashboards
-dashboards: $(COG) ## Dashboards – Typescript
-	@$(COG) generate --config ./dashboard-ts.yaml
+dashboards: ## Dashboards – Typescript
+	go tool github.com/grafana/cog/cmd/cli generate --config ./dashboard-ts.yaml

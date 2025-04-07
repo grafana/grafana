@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
+import { NeedHelpInfo } from '../../NeedHelpInfo';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
@@ -57,7 +59,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" alignItems="center">
         <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
-          Alertmanager:
+          <Trans i18nKey="alerting.rule-form.simple-routing.alertmanager-label">Alertmanager:</Trans>
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>
@@ -71,11 +73,46 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       )}
       <div className={styles.routingSection}>
         <CollapsableSection
-          label="Muting, grouping and timings (optional)"
+          label={t(
+            'alerting.alert-manager-manual-routing.label-muting-grouping-and-timings-optional',
+            'Muting, grouping and timings (optional)'
+          )}
           isOpen={hasRouteSettings}
           className={styles.collapsableSection}
+          contentClassName={styles.collapsableSectionContent}
         >
           <Stack direction="column" gap={1}>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.rule-form.simple-routing.optional-settings.description">
+                  Configure how notifications for this alert rule are sent.
+                </Trans>
+              </Text>
+              <NeedHelpInfo
+                title={t(
+                  'alerting.alert-manager-manual-routing.title-muting-grouping-and-timings',
+                  'Muting, grouping, and timings'
+                )}
+                linkText={'Read about notification grouping'}
+                externalLink={
+                  'https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/group-alert-notifications/'
+                }
+                contentText={
+                  <>
+                    <p>
+                      {t(
+                        'alerting.rule-form.simple-routing.optional-settings.help-info1',
+                        'Mute timings allows you to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.'
+                      )}
+                    </p>
+                    {t(
+                      'alerting.rule-form.simple-routing.optional-settings.help-info2',
+                      'Grouping and timing options combine multiple alerts within a specific period into a single notification, allowing you to customize default options.'
+                    )}
+                  </>
+                }
+              />
+            </Stack>
             <MuteTimingFields alertmanager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
           </Stack>
@@ -109,6 +146,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css({
     width: 'fit-content',
     fontSize: theme.typography.body.fontSize,
+  }),
+  collapsableSectionContent: css({
+    padding: '0',
   }),
   routingSection: css({
     display: 'flex',
