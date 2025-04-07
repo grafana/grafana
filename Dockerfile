@@ -66,10 +66,11 @@ COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
 COPY .citools/jb .citools/jb
 COPY .citools/golangci-lint .citools/golangci-lint
-COPY .citools/swagger ./citools/swagger
+COPY .citools/swagger .citools/swagger
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/folder pkg/apis/folder
 COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery

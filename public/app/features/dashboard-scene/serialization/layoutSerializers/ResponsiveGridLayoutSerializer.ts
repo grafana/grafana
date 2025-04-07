@@ -1,104 +1,103 @@
-import { DashboardV2Spec, ResponsiveGridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultAutoGridLayoutSpec,
+  AutoGridLayoutItemKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
-import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
 import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
-  AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
   AutoGridColumnWidth,
   AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
-  ResponsiveGridLayoutManager,
+  AutoGridLayoutManager,
 } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
-export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
-    return {
-      kind: 'ResponsiveGridLayout',
-      spec: {
-        maxColumnCount: layoutManager.state.maxColumnCount,
-        fillScreen: layoutManager.state.fillScreen,
-        ...serializeAutoGridColumnWidth(layoutManager.state.columnWidth),
-        ...serializeAutoGridRowHeight(layoutManager.state.rowHeight),
-        items: layoutManager.state.layout.state.children.map((child) => {
-          if (!(child instanceof ResponsiveGridItem)) {
-            throw new Error('Expected ResponsiveGridItem');
-          }
-          // For serialization we should retrieve the original element key
-          const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(child.state?.body);
+export function serializeAutoGridLayout(layoutManager: AutoGridLayoutManager): DashboardV2Spec['layout'] {
+  const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
+  const defaults = defaultAutoGridLayoutSpec();
 
-          const layoutItem: ResponsiveGridLayoutItemKind = {
-            kind: 'ResponsiveGridLayoutItem',
-            spec: {
-              element: {
-                kind: 'ElementReference',
-                name: elementKey,
-              },
-            },
-          };
+  return {
+    kind: 'AutoGridLayout',
+    spec: {
+      maxColumnCount,
+      fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
+      ...serializeAutoGridColumnWidth(columnWidth),
+      ...serializeAutoGridRowHeight(rowHeight),
+      items: layout.state.children.map(serializeAutoGridItem),
+    },
+  };
+}
 
-          const conditionalRenderingRootGroup = child.state.conditionalRendering?.serialize();
-          // Only serialize the conditional rendering if it has items
-          if (conditionalRenderingRootGroup?.spec.items.length) {
-            layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
-          }
+export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKind {
+  // For serialization we should retrieve the original element key
+  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(item.state?.body);
 
-          if (child.state.variableName) {
-            layoutItem.spec.repeat = {
-              mode: 'variable',
-              value: child.state.variableName,
-            };
-          }
-
-          return layoutItem;
-        }),
+  const layoutItem: AutoGridLayoutItemKind = {
+    kind: 'AutoGridLayoutItem',
+    spec: {
+      element: {
+        kind: 'ElementReference',
+        name: elementKey,
       },
+    },
+  };
+
+  const conditionalRenderingRootGroup = item.state.conditionalRendering?.serialize();
+  // Only serialize the conditional rendering if it has items
+  if (conditionalRenderingRootGroup?.spec.items.length) {
+    layoutItem.spec.conditionalRendering = conditionalRenderingRootGroup;
+  }
+
+  if (item.state.variableName) {
+    layoutItem.spec.repeat = {
+      mode: 'variable',
+      value: item.state.variableName,
     };
   }
 
-  deserialize(layout: DashboardV2Spec['layout'], elements: DashboardV2Spec['elements']): DashboardLayoutManager {
-    if (layout.kind !== 'ResponsiveGridLayout') {
-      throw new Error('Invalid layout kind');
-    }
+  return layoutItem;
+}
 
-    const children = layout.spec.items.map((item) => {
-      const panel = elements[item.spec.element.name];
-      if (!panel) {
-        throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
-      }
-      return new ResponsiveGridItem({
-        key: getGridItemKeyForPanelId(panel.spec.id),
-        body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel) : buildVizPanel(panel),
-        variableName: item.spec.repeat?.value,
-        conditionalRendering: getConditionalRendering(item),
-      });
-    });
-
-    return new ResponsiveGridLayoutManager({
-      maxColumnCount: layout.spec.maxColumnCount,
-      columnWidth: layout.spec.columnWidthMode === 'custom' ? layout.spec.columnWidth : layout.spec.columnWidthMode,
-      rowHeight: layout.spec.rowHeightMode === 'custom' ? layout.spec.rowHeight : layout.spec.rowHeightMode,
-      fillScreen: layout.spec.fillScreen,
-      layout: new ResponsiveGridLayout({
-        templateColumns: getTemplateColumnsTemplate(
-          layout.spec.maxColumnCount ?? AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT,
-          layout.spec.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
-        ),
-        autoRows: getAutoRowsTemplate(
-          layout.spec.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
-          layout.spec.fillScreen ?? false
-        ),
-        children,
-      }),
-    });
+export function deserializeAutoGridLayout(
+  layout: DashboardV2Spec['layout'],
+  elements: DashboardV2Spec['elements'],
+  preload: boolean,
+  panelIdGenerator?: () => number
+): AutoGridLayoutManager {
+  if (layout.kind !== 'AutoGridLayout') {
+    throw new Error('Invalid layout kind');
   }
+
+  const defaults = defaultAutoGridLayoutSpec();
+  const { maxColumnCount, columnWidthMode, columnWidth, rowHeightMode, rowHeight, fillScreen } = layout.spec;
+
+  const children = layout.spec.items.map((item) => deserializeAutoGridItem(item, elements, panelIdGenerator));
+
+  const columnWidthCombined = columnWidthMode === 'custom' ? columnWidth : columnWidthMode;
+  const rowHeightCombined = rowHeightMode === 'custom' ? rowHeight : rowHeightMode;
+
+  return new AutoGridLayoutManager({
+    maxColumnCount,
+    columnWidth: columnWidthCombined,
+    rowHeight: rowHeightCombined,
+    fillScreen: fillScreen ?? defaults.fillScreen,
+    layout: new AutoGridLayout({
+      templateColumns: getTemplateColumnsTemplate(
+        maxColumnCount ?? defaults.maxColumnCount!,
+        columnWidthCombined ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
+      ),
+      autoRows: getAutoRowsTemplate(rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT, fillScreen ?? false),
+      children,
+    }),
+  });
 }
 
 function serializeAutoGridColumnWidth(columnWidth: AutoGridColumnWidth) {
@@ -113,4 +112,25 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
     rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
     rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
   };
+}
+
+export function deserializeAutoGridItem(
+  item: AutoGridLayoutItemKind,
+  elements: DashboardV2Spec['elements'],
+  panelIdGenerator?: () => number
+): AutoGridItem {
+  const panel = elements[item.spec.element.name];
+  if (!panel) {
+    throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
+  }
+  let id: number | undefined;
+  if (panelIdGenerator) {
+    id = panelIdGenerator();
+  }
+  return new AutoGridItem({
+    key: getGridItemKeyForPanelId(id ?? panel.spec.id),
+    body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel, id) : buildVizPanel(panel, id),
+    variableName: item.spec.repeat?.value,
+    conditionalRendering: getConditionalRendering(item),
+  });
 }

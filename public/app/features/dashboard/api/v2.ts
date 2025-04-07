@@ -1,5 +1,5 @@
 import { locationUtil } from '@grafana/data';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -149,7 +149,7 @@ export class K8sDashboardV2API
 
     return {
       uid: v.metadata.name,
-      version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
+      version: v.metadata.generation ?? 0,
       id: dashId,
       status: 'success',
       url,

@@ -166,7 +166,6 @@ export interface GrafanaConfig {
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  newPanelTitle: string;
   bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -215,7 +214,6 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
-  angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;

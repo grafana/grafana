@@ -54,17 +54,14 @@ func IsSafe(path string) error {
 	}
 
 	parts := Split(path)
-
-	// Check for path traversal attempts first
 	for _, part := range parts {
+		// Check for path traversal attempts first
 		if part == ".." || part == "." {
 			return ErrPathTraversalAttempt
 		}
-	}
 
-	// Check for hidden files/directories in any part of the path
-	for _, part := range parts {
-		if part != "" && part[0] == '.' && part != ".." && part != "." {
+		// Check for hidden files/directories in any part of the path
+		if part == "" || strings.HasPrefix(part, ".") {
 			return ErrHiddenPath
 		}
 	}
@@ -78,4 +75,42 @@ func IsSafe(path string) error {
 	}
 
 	return nil
+}
+
+// SafeSegment returns a safe part of the path
+// It ensures the path is free from traversal attempts, hidden files,
+// and other potentially dangerous patterns.
+func SafeSegment(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	parts := Split(path)
+	if len(parts) == 0 {
+		return ""
+	}
+
+	// Build up the path segment by segment, checking safety
+	var safePath string
+	for _, part := range parts {
+		// Check if this segment is safe
+		testPath := Join(safePath, part)
+		if IsSafe(testPath) != nil || part == "" {
+			// If this segment is unsafe, return the path up to but not including this segment
+			// Add trailing slash for directories
+			if safePath != "" {
+				return safePath + "/"
+			}
+			return ""
+		}
+		safePath = testPath
+	}
+
+	// If we made it through all segments, the path is safe
+	// Preserve trailing slash if original path had one
+	if IsDir(path) && safePath != "" {
+		return safePath + "/"
+	}
+
+	return safePath
 }

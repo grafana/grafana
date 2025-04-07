@@ -1,22 +1,26 @@
-import { RepositorySpec } from 'app/api/clients/provisioning';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { WorkflowOption } from 'app/features/provisioning/types';
 
-export function getDefaultWorkflow(config?: RepositorySpec) {
+export function getDefaultWorkflow(config?: RepositoryView) {
   return config?.workflows?.[0];
 }
 
-export function getWorkflowOptions(config?: RepositorySpec, ref?: string) {
+export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
   if (!config) {
     return [];
   }
 
-  if (config.local?.path) {
-    return [{ label: `Write to ${config.local.path}`, value: 'write' }];
+  if (config.type === 'local') {
+    return [{ label: `Save`, value: 'write' }];
   }
 
-  let branch = ref ?? config.github?.branch;
+  // When a branch is configured, show it
+  if (!ref && config.branch) {
+    ref = config.branch;
+  }
+
   const availableOptions: Array<{ label: string; value: WorkflowOption }> = [
-    { label: `Push to ${branch ?? 'main'}`, value: 'write' },
+    { label: ref ? `Push to ${ref}` : 'Save', value: 'write' },
     { label: 'Push to different branch', value: 'branch' },
   ];
 

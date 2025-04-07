@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { useDashboardRestore } from './useDashboardRestore';
 export interface RevertDashboardModalProps {
@@ -22,7 +23,7 @@ export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboard
   return (
     <ConfirmModal
       isOpen={true}
-      title="Restore Version"
+      title={t('dashboard.revert-dashboard-modal.title-restore-version', 'Restore version')}
       icon="history"
       onDismiss={hideModal}
       onConfirm={onRestoreDashboard}

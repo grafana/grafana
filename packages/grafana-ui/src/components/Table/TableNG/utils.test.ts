@@ -64,7 +64,7 @@ const data = createDataFrame({
       name: 'Value',
       type: FieldType.number,
       values: [],
-      display: ((v: any) => ({
+      display: ((v: unknown) => ({
         text: String(v),
         numeric: v,
         color: undefined,
@@ -105,6 +105,7 @@ const sortColumnsRef = { current: [] };
 const mockOptions = {
   osContext: null,
   rows: [],
+  sortedRows: [],
   setContextMenuProps: () => {},
   setFilter: () => {},
   setIsInspecting: () => {},
@@ -776,7 +777,7 @@ describe('TableNG utils', () => {
         config: {},
         values: [1, 22, 333, 4444],
         // No state property initially
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -820,7 +821,7 @@ describe('TableNG utils', () => {
             text: '1',
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -862,7 +863,7 @@ describe('TableNG utils', () => {
             text: '4444',
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -907,7 +908,7 @@ describe('TableNG utils', () => {
           // Or if noValue is a valid property:
           // noValue: true
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
         }),
@@ -1046,7 +1047,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: false,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1072,7 +1079,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: false,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1097,7 +1110,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         true, // textWrap ENABLED
-        false, // cellInspect
+        {
+          config: {
+            custom: {
+              inspect: true,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
@@ -1122,7 +1141,13 @@ describe('TableNG utils', () => {
         40, // defaultRowHeight
         8, // padding
         false, // textWrap
-        true, // cellInspect ENABLED
+        {
+          config: {
+            custom: {
+              inspect: true,
+            },
+          },
+        } as Field,
         TableCellDisplayMode.Auto // cellType
       );
 
