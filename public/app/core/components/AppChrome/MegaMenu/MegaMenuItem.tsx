@@ -162,6 +162,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({
     flex: 1,
     maxWidth: '100%',
+    alignItems: 'start',
   }),
   menuItem: css({
     display: 'flex',
