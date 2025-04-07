@@ -1736,9 +1736,11 @@
       "recording-rule": "Recording rule"
     },
     "rule-stats": {
-      "firing": "firing",
+      "error_one": "{{count}} error",
+      "error_other": "{{count}} errors",
+      "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
-      "nodata": "no data",
+      "nodata": "{{nodataStats}} no data",
       "paused": "{{normalStats}} normal ({{pausedStats}} paused)",
       "pending": "{{pendingStats}} pending",
       "recording": "{{recordingStats}} recording",

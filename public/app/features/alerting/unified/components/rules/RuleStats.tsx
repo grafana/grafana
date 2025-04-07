@@ -123,18 +123,30 @@ export function getComponentsFromStats(
       <Badge
         color="red"
         key="firing"
-        text={`${stats[AlertInstanceTotalState.Alerting]} ${t('alerting.rule-stats.firing', 'firing')}`}
+        text={t('alerting.rule-stats.firing', '{{alertingStats}} firing', {
+          alertingStats: stats[AlertInstanceTotalState.Alerting],
+        })}
       />
     );
   }
 
   if (stats.error) {
-    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} ${pluralize('error', stats.error)}`} />);
+    statsComponents.push(
+      <Badge
+        color="red"
+        key="errors"
+        text={t('alerting.rule-stats.error', `{{count}} errors`, { count: stats.error })}
+      />
+    );
   }
 
   if (stats.nodata) {
     statsComponents.push(
-      <Badge color="blue" key="nodata" text={`${stats.nodata} ${t('alerting.rule-stats.nodata', 'no data')}`} />
+      <Badge
+        color="blue"
+        key="nodata"
+        text={t('alerting.rule-stats.nodata', '{{nodataStats}} no data', { nodataStats: stats.nodata })}
+      />
     );
   }
 
