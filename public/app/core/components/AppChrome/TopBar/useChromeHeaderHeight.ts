@@ -46,19 +46,29 @@ function getHeaderLevelsGivenState(
     return 0;
   }
 
-  // If scopes always use two levels
+  // Always use two levels scopes is enabled
+  if (scopesEnabled) {
+    return 2;
+  }
+
+  // No actions we can always use 1 level
+  if (!chromeState.actions) {
+    return 1;
+  }
+
+  // We have actions
   // If mega menu docked always use two levels
   // If scenes disabled always use two levels (mainly because of the time range picker)
-  if (scopesEnabled || chromeState.megaMenuDocked || !config.featureToggles.dashboardScene) {
+  if (chromeState.megaMenuDocked || !config.featureToggles.dashboardScene) {
     return 2;
   }
 
-  // If we have actions and and screen is small (or unifiedNavbars is disabled) then we need two levels
-  if (chromeState.actions && (!isLargeScreen || !config.featureToggles.unifiedNavbars)) {
-    return 2;
+  // If screen is large and unifiedNavbars is not disabled then we can use 1 level
+  if (isLargeScreen && config.featureToggles.unifiedNavbars) {
+    return 1;
   }
 
-  return 1;
+  return 2;
 }
 
 /**
