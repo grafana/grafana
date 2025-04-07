@@ -14,6 +14,7 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -363,10 +364,13 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Try writing the value directly
 	obj.SetLabels(map[string]string{"x": "y"})
 	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	require.Error(t, err, "only the provisionding service should be able to update")
+	require.True(t, apierrors.IsForbidden(err))
 
 	// Can not delete (not provisioning)
 	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
 	require.Error(t, err, "only the provisionding service should be able to delete")
+	require.True(t, apierrors.IsForbidden(err))
 }
 
 func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
