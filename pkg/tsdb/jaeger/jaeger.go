@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,12 @@ type datasourceInfo struct {
 	JaegerClient JaegerClient
 }
 
+type datasourceJSONData struct {
+	TraceIdTimeParams struct {
+		Enabled bool `json:"enabled"`
+	} `json:"traceIdTimeParams"`
+}
+
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		httpClientOptions, err := settings.HTTPClientOptions(ctx)
@@ -45,8 +52,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, backend.DownstreamError(errors.New("error reading settings: url is empty"))
 		}
 
+		var jsonData datasourceJSONData
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
 		logger := logger.FromContext(ctx)
-		jaegerClient, err := New(settings.URL, httpClient, logger)
+		jaegerClient, err := New(settings.URL, httpClient, logger, jsonData.TraceIdTimeParams.Enabled)
 		return &datasourceInfo{JaegerClient: jaegerClient}, err
 	}
 }

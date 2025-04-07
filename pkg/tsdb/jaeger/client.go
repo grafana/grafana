@@ -12,9 +12,10 @@ import (
 )
 
 type JaegerClient struct {
-	logger     log.Logger
-	url        string
-	httpClient *http.Client
+	logger             log.Logger
+	url                string
+	httpClient         *http.Client
+	traceIdTimeEnabled bool
 }
 
 type ServicesResponse struct {
@@ -25,11 +26,12 @@ type ServicesResponse struct {
 	Total  int         `json:"total"`
 }
 
-func New(url string, hc *http.Client, logger log.Logger) (JaegerClient, error) {
+func New(url string, hc *http.Client, logger log.Logger, traceIdTimeEnabled bool) (JaegerClient, error) {
 	client := JaegerClient{
-		logger:     logger,
-		url:        url,
-		httpClient: hc,
+		logger:             logger,
+		url:                url,
+		httpClient:         hc,
+		traceIdTimeEnabled: traceIdTimeEnabled,
 	}
 	return client, nil
 }
@@ -104,23 +106,25 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
-	// Add time parameters if provided
-	if start > 0 || end > 0 {
-		parsedURL, err := url.Parse(traceUrl)
-		if err != nil {
-			return trace, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
-		}
+	// Add time parameters if provided and traceIdTimeEnabled is true
+	if j.traceIdTimeEnabled {
+		if start > 0 || end > 0 {
+			parsedURL, err := url.Parse(traceUrl)
+			if err != nil {
+				return trace, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+			}
 
-		query := parsedURL.Query()
-		if start > 0 {
-			query.Set("start", fmt.Sprintf("%d", start))
-		}
-		if end > 0 {
-			query.Set("end", fmt.Sprintf("%d", end))
-		}
+			query := parsedURL.Query()
+			if start > 0 {
+				query.Set("start", fmt.Sprintf("%d", start))
+			}
+			if end > 0 {
+				query.Set("end", fmt.Sprintf("%d", end))
+			}
 
-		parsedURL.RawQuery = query.Encode()
-		traceUrl = parsedURL.String()
+			parsedURL.RawQuery = query.Encode()
+			traceUrl = parsedURL.String()
+		}
 	}
 
 	res, err := j.httpClient.Get(traceUrl)
