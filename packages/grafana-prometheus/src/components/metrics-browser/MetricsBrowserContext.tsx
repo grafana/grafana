@@ -175,6 +175,7 @@ export function MetricsBrowserProvider({
   // Fetch label keys when metrics updated after selecting a label value
   useEffect(() => {
     if (getSelector() === '{}') {
+      setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
       return;
     }
 
@@ -215,7 +216,7 @@ export function MetricsBrowserProvider({
                 timeRange,
                 lk,
                 safeSelector,
-                'MetricsBrowser_LV',
+                `MetricsBrowser_LV_${lk}`,
                 validSeriesLimit(seriesLimit)
               );
               newLabelValues[lk] = values;
