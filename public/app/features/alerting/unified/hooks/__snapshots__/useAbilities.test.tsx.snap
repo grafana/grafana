@@ -6,6 +6,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
     false,
   ],
+  "delete-alert-rule-permanently": [
+    false,
+    false,
+  ],
   "duplicate-alert-rule": [
     false,
     false,
@@ -44,6 +48,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
 exports[`AlertRule abilities should report that all actions are supported for a Grafana Managed alert rule 1`] = `
 {
   "delete-alert-rule": [
+    true,
+    false,
+  ],
+  "delete-alert-rule-permanently": [
     true,
     false,
   ],

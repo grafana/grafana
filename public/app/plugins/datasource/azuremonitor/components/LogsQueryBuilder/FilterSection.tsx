@@ -166,7 +166,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     | limit 1000
   `;
 
-    const results: any = await lastValueFrom(
+    const results = await lastValueFrom(
       datasource.azureLogAnalyticsDatasource.query({
         requestId: 'azure-logs-builder-filter-values',
         interval: '',
@@ -193,7 +193,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
       return values.toArray().map(
-        (v: any): ComboboxOption<string> => ({
+        (v: unknown): ComboboxOption<string> => ({
           label: String(v),
           value: String(v),
         })

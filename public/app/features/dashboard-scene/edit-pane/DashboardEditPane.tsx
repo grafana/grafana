@@ -311,6 +311,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     overlayWrapper: css({
       right: 0,

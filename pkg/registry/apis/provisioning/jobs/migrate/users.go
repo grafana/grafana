@@ -13,15 +13,15 @@ import (
 
 const maxUsers = 10000
 
-func loadUsers(ctx context.Context, parser *resources.Parser) (map[string]repository.CommitSignature, error) {
-	client, err := parser.Clients().User()
+func loadUsers(ctx context.Context, clients resources.ResourceClients) (map[string]repository.CommitSignature, error) {
+	client, err := clients.User()
 	if err != nil {
 		return nil, err
 	}
 
 	userInfo := make(map[string]repository.CommitSignature)
 	var count int
-	err = resources.ForEachResource(ctx, client, func(item *unstructured.Unstructured) error {
+	err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 		count++
 		if count > maxUsers {
 			return errors.New("too many users")

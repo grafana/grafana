@@ -47,34 +47,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigrateOldPanels
-	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
-
-	// FlagAutoMigrateGraphPanel
-	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
-
-	// FlagAutoMigrateTablePanel
-	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"
-
-	// FlagAutoMigratePiechartPanel
-	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
-
-	// FlagAutoMigrateWorldmapPanel
-	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"
-
-	// FlagAutoMigrateStatPanel
-	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
-
-	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-	FlagDisableAngular = "disableAngular"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
@@ -607,10 +579,6 @@ const (
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
 
-	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
-	FlagDashboardRestore = "dashboardRestore"
-
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -899,10 +867,6 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
-	// FlagAlertingConversionAPI
-	// Enable the alerting conversion API
-	FlagAlertingConversionAPI = "alertingConversionAPI"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -912,7 +876,7 @@ const (
 	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagPluginsCDNSyncLoader
-	// Load plugins from CDN synchronously
+	// Loads plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
@@ -972,12 +936,20 @@ const (
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
 	// FlagLocaleFormatPreference
-	// Specify the locale so we can show the correct format for numbers and dates
+	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
 
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagExtensionSidebar
+	// Enables the extension sidebar
+	FlagExtensionSidebar = "extensionSidebar"
+
+	// FlagAlertingRulePermanentlyDelete
+	// Enables UI functionality to permanently delete alert rules
+	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules

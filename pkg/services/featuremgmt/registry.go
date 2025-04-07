@@ -93,56 +93,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "autoMigrateOldPanels",
-			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateGraphPanel",
-			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateTablePanel",
-			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigratePiechartPanel",
-			Description:  "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateWorldmapPanel",
-			Description:  "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateStatPanel",
-			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:              "disableAngular",
-			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
-			Stage:             FeatureStagePublicPreview,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "canvasPanelNesting",
 			Description:       "Allow elements nesting",
 			Stage:             FeatureStageExperimental,
@@ -1147,14 +1097,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "dashboardRestore",
-			Description:       "Enables deleted dashboard restore feature",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			Expression:        "false", // enabled by default
-		},
-		{
 			Name:              "alertingDisableSendAlertsExternal",
 			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:             FeatureStageExperimental,
@@ -1681,14 +1623,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:              "alertingConversionAPI",
-			Description:       "Enable the alerting conversion API",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:         "newLogsPanel",
 			Description:  "Enables the new logs panel in Explore",
 			Stage:        FeatureStageExperimental,
@@ -1706,7 +1640,7 @@ var (
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
-			Description: "Load plugins from CDN synchronously",
+			Description: "Loads plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
@@ -1827,7 +1761,7 @@ var (
 		},
 		{
 			Name:        "localeFormatPreference",
-			Description: "Specify the locale so we can show the correct format for numbers and dates",
+			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 		},
@@ -1838,6 +1772,23 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+		},
+		{
+			Name:         "extensionSidebar",
+			Description:  "Enables the extension sidebar",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:              "alertingRulePermanentlyDelete",
+			Description:       "Enables UI functionality to permanently delete alert rules",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "alertingRuleRecoverDeleted",

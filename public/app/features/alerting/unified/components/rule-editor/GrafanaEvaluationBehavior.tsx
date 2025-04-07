@@ -199,7 +199,7 @@ export function GrafanaEvaluationBehaviorStep({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection
       stepNo={step}
-      title="Set evaluation behavior"
+      title={t('alerting.grafana-evaluation-behavior-step.title-set-evaluation-behavior', 'Set evaluation behavior')}
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
@@ -252,7 +252,9 @@ export function GrafanaEvaluationBehaviorStep({
             </Field>
           </div>
           <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">or</Text>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+            </Text>
             <Button
               onClick={onOpenEvaluationGroupCreationModal}
               type="button"
@@ -322,7 +324,10 @@ export function GrafanaEvaluationBehaviorStep({
           <CollapseToggle
             isCollapsed={!showErrorHandling}
             onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-            text="Configure no data and error handling"
+            text={t(
+              'alerting.grafana-evaluation-behavior-step.text-configure-no-data-and-error-handling',
+              'Configure no data and error handling'
+            )}
           />
           {showErrorHandling && (
             <>
@@ -451,7 +456,7 @@ function EvaluationGroupCreationModal({
               className={styles.formInput}
               autoFocus={true}
               id={evaluationGroupNameId}
-              placeholder="Enter a name"
+              placeholder={t('alerting.evaluation-group-creation-modal.placeholder-enter-a-name', 'Enter a name')}
               {...register('group', { required: { value: true, message: 'Required.' } })}
             />
           </Field>
@@ -459,7 +464,13 @@ function EvaluationGroupCreationModal({
           <Field
             error={formState.errors.evaluateEvery?.message}
             label={
-              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
+              <Label
+                htmlFor={evaluateEveryId}
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-often-rules-group-evaluated',
+                  'How often all rules in the group are evaluated.'
+                )}
+              >
                 <Trans i18nKey="alerting.rule-form.evaluation.group.interval">Evaluation interval</Trans>
               </Label>
             }
@@ -555,7 +566,10 @@ function NeedHelpInfoForConfigureNoDataError() {
         contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
         externalLink={docsLink}
         linkText={`Read more about this option`}
-        title="Configure no data and error handling"
+        title={t(
+          'alerting.need-help-info-for-configure-no-data-error.title-configure-no-data-and-error-handling',
+          'Configure no data and error handling'
+        )}
       />
     </Stack>
   );
@@ -601,7 +615,7 @@ function getDescription(isGrafanaRecordingRule: boolean) {
         }
         externalLink={docsLink}
         linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
+        title={t('alerting.get-description.title-alert-rule-evaluation', 'Alert rule evaluation')}
       />
     </Stack>
   );
