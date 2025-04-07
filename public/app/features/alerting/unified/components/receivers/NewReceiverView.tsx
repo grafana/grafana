@@ -2,6 +2,7 @@ import { locationService } from '@grafana/runtime';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 
@@ -11,7 +12,7 @@ import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';
 const NewReceiverView = () => {
   const { selectedAlertmanager } = useAlertmanager();
   if (selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm onCreate={() => locationService.push('/alerting/notifications')} />;
+    return <GrafanaReceiverForm onCreate={() => locationService.push(createRelativeUrl('/alerting/notifications'))} />;
   } else {
     return <CloudReceiverForm alertManagerSourceName={selectedAlertmanager!} />;
   }
