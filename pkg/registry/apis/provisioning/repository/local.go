@@ -356,7 +356,12 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	}
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("file does not exist")
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusNotFound,
+			Reason:  metav1.StatusReasonNotFound,
+			Message: "file not found",
+		}}
 	}
 	return os.WriteFile(path, data, 0600)
 }

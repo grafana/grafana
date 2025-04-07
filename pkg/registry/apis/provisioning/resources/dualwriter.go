@@ -168,7 +168,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, fmt.Errorf("parse file: %w", err)
+		return nil, err
 	}
 
 	// Make sure the value is valid
@@ -188,15 +188,14 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
-	// Create or update (we could do write!)
+	// Create or update
 	if create {
-		if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
-			return nil, fmt.Errorf("create file in repository: %w", err)
-		}
+		err = r.repo.Create(ctx, path, ref, data, message)
 	} else {
-		if err := r.repo.Update(ctx, path, ref, data, message); err != nil {
-			return nil, fmt.Errorf("update file in repository: %w", err)
-		}
+		err = r.repo.Update(ctx, path, ref, data, message)
+	}
+	if err != nil {
+		return nil, err // raw error is useful
 	}
 
 	// Directly update the grafana database
