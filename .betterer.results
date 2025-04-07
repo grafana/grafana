@@ -3098,15 +3098,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/provisioning/hooks/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./useCreateOrUpdateRepositoryFile\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./useCreateOrUpdateRepository\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./useGetResourceRepository\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./useIsProvisionedNG\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./usePullRequestParam\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`./useRepositoryJobs\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`./useRepositoryList\`)", "6"]
-    ],
     "public/app/features/provisioning/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
