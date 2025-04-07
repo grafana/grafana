@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -231,30 +230,6 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-<<<<<<< HEAD
-	return parsed, err
-}
-
-// writeParsed write parsed resource to the repository and grafana database
-func (r *DualReadWriter) writeParsed(ctx context.Context, path string, parsed *ParsedResource) error {
-	// Use the provisioning identity to update the grafana database (ctx may be from user HTTP request)
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
-	if err != nil {
-		return err
-	}
-
-	if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
-		return fmt.Errorf("ensure folder path exists: %w", err)
-	}
-
-	// Update... or Create
-	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-	if err != nil && apierrors.IsNotFound(err) {
-		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-	}
-
-	return err
-=======
 		if err := parsed.Run(ctx); err != nil {
 			return nil, fmt.Errorf("run resource: %w", err)
 		}
@@ -268,5 +243,4 @@ func (r *DualReadWriter) writeParsed(ctx context.Context, path string, parsed *P
 	}
 
 	return parsed, nil
->>>>>>> origin/main
 }
