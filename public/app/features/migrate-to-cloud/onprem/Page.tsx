@@ -138,7 +138,7 @@ export const Page = () => {
     column: '',
     order: undefined,
   });
-  const [showErrors, setShowErrors] = useState(false);
+  const [highlightErrors, setHighlightErrors] = useState(false);
 
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
@@ -148,9 +148,9 @@ export const Page = () => {
   const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
   const session = useGetLatestSession();
-  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, showErrors);
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, highlightErrors);
   const numPages = Math.ceil(
-    (showErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
+    (highlightErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
   );
   useEffect(() => {
     if (numPages > 0 && page > numPages) {
@@ -243,8 +243,8 @@ export const Page = () => {
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
-            onHighlightErrors={() => setShowErrors(!showErrors)}
-            isHighlightErrors={showErrors}
+            onHighlightErrors={() => setHighlightErrors(!highlightErrors)}
+            isHighlightErrors={highlightErrors}
             showOnlyErrorsSwitch={showOnlyErrorsSwitch}
           />
         )}
