@@ -148,8 +148,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           return result;
         })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -216,8 +216,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           return result;
         })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
