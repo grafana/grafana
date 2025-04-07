@@ -9,7 +9,6 @@ import {
   SceneGridRow,
   SceneTimeRange,
   SceneVariableSet,
-  VariableValueSelectors,
   SceneRefreshPicker,
   SceneObject,
   VizPanelMenu,
@@ -17,7 +16,6 @@ import {
   VizPanelState,
   SceneGridItemLike,
   SceneDataLayerProvider,
-  SceneDataLayerControls,
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
@@ -41,7 +39,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -279,7 +276,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       $behaviors: behaviorList,
       $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: oldModel.timepicker.quick_ranges,
         }),
@@ -307,9 +303,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const titleItems: SceneObject[] = [];
 
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,
