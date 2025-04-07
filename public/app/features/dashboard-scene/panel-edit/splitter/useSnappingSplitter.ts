@@ -87,6 +87,7 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     dragPosition: options.dragPosition,
     handleSize: options.handleSize,
     initialSize: options.initialSize,
+    usePixels: true,
     onResizing,
     onSizeChanged,
   });
