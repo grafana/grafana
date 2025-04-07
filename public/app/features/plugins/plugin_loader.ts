@@ -8,10 +8,10 @@ import {
   PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/data/unstable';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { getI18next } from 'app/core/internationalization';
-import { DEFAULT_LANGUAGE } from 'app/core/internationalization/constants';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
