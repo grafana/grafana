@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
@@ -12,33 +12,29 @@ interface Props {
   name: string;
   disabled?: boolean;
   onRemove: (tag: string) => void;
-  disableColoredTags?: boolean;
+
+  /** Colours the tags 'randomly' based on the name. Defaults to true */
+  autoColors?: boolean;
 }
 
 /**
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem = ({ name, disabled, onRemove, disableColoredTags }: Props) => {
-  const theme = useTheme2();
+export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
   const styles = useStyles2(getStyles);
 
   // Use theme colors or random colors based on name
   const tagStyle = useMemo(() => {
-    if (disableColoredTags) {
-      return {
-        backgroundColor: theme.colors.background.secondary,
-        borderColor: theme.components.input.borderColor,
-        color: theme.colors.text.primary,
-      };
+    if (autoColors) {
+      const { color, borderColor } = getTagColorsFromName(name);
+      return { backgroundColor: color, borderColor };
     }
-
-    const { color, borderColor } = getTagColorsFromName(name);
-    return { backgroundColor: color, borderColor };
-  }, [name, disableColoredTags, theme]);
+    return undefined;
+  }, [name, autoColors]);
 
   return (
-    <li className={styles.itemStyle} style={tagStyle}>
+    <li className={cx(styles.itemStyle, !tagStyle && styles.defaultTagColor)} style={tagStyle}>
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
@@ -62,7 +58,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       height: `${height}px`,
       lineHeight: `${height - 2}px`,
-      color: '#fff',
       borderWidth: '1px',
       borderStyle: 'solid',
       borderRadius: theme.shape.radius.default,
@@ -71,6 +66,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       textShadow: 'none',
       fontWeight: 500,
       fontSize: theme.typography.size.sm,
+      color: '#fff',
+    }),
+    defaultTagColor: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderColor: theme.components.input.borderColor,
+      color: theme.colors.text.primary,
     }),
     nameStyle: css({
       maxWidth: '25ch',
