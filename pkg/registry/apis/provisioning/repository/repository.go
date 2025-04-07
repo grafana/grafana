@@ -98,6 +98,7 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+//go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
 type Reader interface {
 	Repository
 

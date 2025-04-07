@@ -41,7 +41,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if options == nil {
 		return errors.New("missing export settings")
 	}
-
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
 		return err
@@ -89,6 +88,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return fmt.Errorf("create folder client: %w", err)
 	}
 
+	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("create repository resource client: %w", err)
+	}
+
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
 		if tree.Count() > resources.MaxNumberOfFolders {
 			return errors.New("too many folders")
@@ -100,10 +104,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	progress.SetMessage(ctx, "write folders to repository")
-	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
-	if err != nil {
-		return fmt.Errorf("create repository resource client: %w", err)
-	}
 	err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
