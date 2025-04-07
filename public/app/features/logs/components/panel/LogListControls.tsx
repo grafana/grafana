@@ -47,13 +47,17 @@ export const LogListControls = ({ eventBus }: Props) => {
     dedupStrategy,
     downloadLogs,
     filterLevels,
+    prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setPrettifyJSON,
     setShowTime,
+    setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
     setWrapLogMessage,
     showTime,
+    showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
@@ -93,10 +97,17 @@ export const LogListControls = ({ eventBus }: Props) => {
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: showTime,
+      show_time: !showTime,
     });
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
+
+  const onShowUniqueLabelsClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
+      show_unique_labels: showUniqueLabels,
+    });
+    setShowUniqueLabels(!showUniqueLabels);
+  }, [setShowUniqueLabels, showUniqueLabels]);
 
   const onSortOrderClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_sort_order_clicked', {
@@ -104,6 +115,13 @@ export const LogListControls = ({ eventBus }: Props) => {
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
+
+  const onSetPrettifyJSONClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_prettify_json_clicked', {
+      state: !prettifyJSON,
+    });
+    setPrettifyJSON(!prettifyJSON);
+  }, [prettifyJSON, setPrettifyJSON]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -235,6 +253,20 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
+          {showUniqueLabels !== undefined && (
+            <IconButton
+              name="tag-alt"
+              aria-pressed={showUniqueLabels}
+              className={showUniqueLabels ? styles.controlButtonActive : styles.controlButton}
+              onClick={onShowUniqueLabelsClick}
+              tooltip={
+                showUniqueLabels
+                  ? t('logs.logs-controls.hide-unique-labels', 'Hide unique labels')
+                  : t('logs.logs-controls.show-unique-timestamps', 'Show unique labels')
+              }
+              size="lg"
+            />
+          )}
           <IconButton
             name="wrap-text"
             className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
@@ -247,6 +279,20 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
+          {prettifyJSON !== undefined && (
+            <IconButton
+              name="brackets-curly"
+              aria-pressed={prettifyJSON}
+              className={prettifyJSON ? styles.controlButtonActive : styles.controlButton}
+              onClick={onSetPrettifyJSONClick}
+              tooltip={
+                prettifyJSON
+                  ? t('logs.logs-controls.disable-prettify-json', 'Show original log')
+                  : t('logs.logs-controls.prettify-json', 'Prettify JSON')
+              }
+              size="lg"
+            />
+          )}
           {syntaxHighlighting !== undefined && (
             <IconButton
               name="brackets-curly"
