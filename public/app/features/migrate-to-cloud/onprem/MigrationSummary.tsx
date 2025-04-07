@@ -62,6 +62,8 @@ export function MigrationSummary(props: MigrationSummaryProps) {
   const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
   const warningCount = snapshot?.stats?.statuses?.['WARNING'] ?? 0;
 
+  const switchLabel = t('migrate-to-cloud.summary.show-errors', 'Only view errors');
+
   return (
     <Box
       borderColor="weak"
@@ -92,15 +94,18 @@ export function MigrationSummary(props: MigrationSummaryProps) {
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
-          {errorCount}
-          <Space h={5} layout="inline" />
-          {showOnlyErrorsSwitch && (
-            <Switch
-              label={t('migrate-to-cloud.summary.show-errors', 'Only view errors')}
-              value={isHighlightErrors}
-              onChange={onHighlightErrors}
-            />
-          )}
+          <Stack direction="row" alignItems="center">
+            {errorCount}
+            <Space h={1} layout="inline" />
+            {showOnlyErrorsSwitch && (
+              <Stack>
+                <Switch label={switchLabel} value={isHighlightErrors} onChange={onHighlightErrors} />
+                <Text variant="bodySmall" color="secondary">
+                  {switchLabel}
+                </Text>
+              </Stack>
+            )}
+          </Stack>
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}>

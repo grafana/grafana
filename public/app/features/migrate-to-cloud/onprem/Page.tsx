@@ -145,9 +145,11 @@ export const Page = () => {
   const numPages = Math.ceil(
     (showErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
   );
-  if (page > numPages) {
-    setPage(numPages);
-  }
+  useEffect(() => {
+    if (numPages > 0 && page > numPages) {
+      setPage(numPages);
+    }
+  }, [numPages, page]);
   useNotifySuccessful(snapshot.data);
 
   const sessionUid = session.data?.uid;

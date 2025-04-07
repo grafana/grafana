@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable, Pagination, Stack, Column, TableSortByFieldState, type FetchDataFunc } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack, Column, type FetchDataFunc } from '@grafana/ui';
 
 import { LocalPlugin } from '../../plugins/admin/types';
 import { MigrateDataResponseItemDto } from '../api';
