@@ -70,7 +70,7 @@ You'll need to create a new data source with the correct UID and update your das
 
 Open the alert rule you want to adjust and search for the data source that is being used for the query/alert condition. From there, select the new data source from the drop-down list and save the alert rule.
 
-### Enforcing stricter version compatibility checks in plugin cli install commands
+### Enforcing stricter version compatibility checks in plugin CLI install commands
 
 Since Grafana 10.2, the endpoint to check compatible versions when installing a plugin using `grafana cli plugins install` changed, which led to Grafana dependency version no longer being taken into account. This might have led to some behavior where the CLI would install plugins that are not fully compatible based on the plugins definition of compatibility via `grafanaDependency` property in the `plugin.json` file.
 
