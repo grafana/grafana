@@ -11,7 +11,7 @@ import (
 )
 
 // Convert git changes into resource file changes
-func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, folders *resources.FolderManager, resourceManager *resources.ResourcesManager, progress jobs.JobProgressRecorder) error {
+func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)
@@ -41,7 +41,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := folders.EnsureFolderPathExist(ctx, safeSegment)
+				folder, err := repositoryResources.EnsureFolderPathExist(ctx, safeSegment)
 				if err != nil {
 					return fmt.Errorf("unable to create empty file folder: %w", err)
 				}
@@ -71,7 +71,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			name, gvk, err := resourceManager.WriteResourceFromFile(ctx, change.Path, change.Ref)
+			name, gvk, err := repositoryResources.WriteResourceFromFile(ctx, change.Path, change.Ref)
 			if err != nil {
 				result.Error = fmt.Errorf("write resource: %w", err)
 			}
@@ -79,7 +79,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			result.Resource = gvk.Kind
 			result.Group = gvk.Group
 		case repository.FileActionDeleted:
-			name, gvk, err := resourceManager.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
+			name, gvk, err := repositoryResources.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
 			if err != nil {
 				result.Error = fmt.Errorf("delete resource: %w", err)
 			}
@@ -87,7 +87,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			result.Resource = gvk.Kind
 			result.Group = gvk.Group
 		case repository.FileActionRenamed:
-			name, gvk, err := resourceManager.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
+			name, gvk, err := repositoryResources.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
 				result.Error = fmt.Errorf("rename resource: %w", err)
 			}

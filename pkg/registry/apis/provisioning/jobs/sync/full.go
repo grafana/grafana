@@ -18,18 +18,14 @@ func FullSync(
 	repo repository.Reader,
 	clients resources.ResourceClients,
 	currentRef string,
-	// TODO: put folders behind RepositoryResources
-	folders *resources.FolderManager,
-	resourceManager *resources.ResourcesManager,
-	// TODO: put lister behind RepositoryResources
-	lister resources.ResourceLister,
+	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 ) error {
-	cfg := repo.Config()
-	target, err := lister.List(ctx, cfg.Namespace, cfg.Name)
+	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return fmt.Errorf("error listing current: %w", err)
 	}
+
 	source, err := repo.ReadTree(ctx, currentRef)
 	if err != nil {
 		return fmt.Errorf("error reading tree: %w", err)
@@ -44,12 +40,14 @@ func FullSync(
 		return nil
 	}
 
-	folders.SetTree(resources.NewFolderTreeFromResourceList(target))
+	// FIXME: this is a way to load in different ways the resources
+	// maybe we can structure the code in better way to avoid this
+	repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 
-	return ApplyChanges(ctx, changes, clients, folders, resourceManager, progress)
+	return ApplyChanges(ctx, changes, clients, repositoryResources, progress)
 }
 
-func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, folders *resources.FolderManager, resourceManager *resources.ResourcesManager, progress jobs.JobProgressRecorder) error {
+func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetTotal(ctx, len(changes))
 	progress.SetMessage(ctx, "replicating changes")
 
@@ -101,7 +99,7 @@ func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 				Action: change.Action,
 			}
 
-			folder, err := folders.EnsureFolderPathExist(ctx, change.Path)
+			folder, err := repositoryResources.EnsureFolderPathExist(ctx, change.Path)
 			if err != nil {
 				result.Error = fmt.Errorf("create folder: %w", err)
 				progress.Record(ctx, result)
@@ -116,7 +114,7 @@ func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			continue
 		}
 
-		name, gvk, err := resourceManager.WriteResourceFromFile(ctx, change.Path, "")
+		name, gvk, err := repositoryResources.WriteResourceFromFile(ctx, change.Path, "")
 		result := jobs.JobResourceResult{
 			Path:     change.Path,
 			Action:   change.Action,

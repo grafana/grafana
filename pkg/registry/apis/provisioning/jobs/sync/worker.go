@@ -23,14 +23,11 @@ type SyncWorker struct {
 	// Used to update the repository status with sync info
 	client client.ProvisioningV0alpha1Interface
 
-	// Lists the values saved in grafana database
-	lister resources.ResourceLister
-
-	// Parses fields saved in remore repository
-	parsers resources.ParserFactory
-
 	// Clients for the repository
 	clients resources.ClientFactory
+
+	// ResourceClients for the repository
+	repositoryResources resources.RepositoryResourcesFactory
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
@@ -38,17 +35,15 @@ type SyncWorker struct {
 
 func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
-	parsers resources.ParserFactory,
 	clients resources.ClientFactory,
-	lister resources.ResourceLister,
+	repositoryResources resources.RepositoryResourcesFactory,
 	storageStatus dualwrite.Service,
 ) *SyncWorker {
 	return &SyncWorker{
-		client:        client,
-		parsers:       parsers,
-		clients:       clients,
-		lister:        lister,
-		storageStatus: storageStatus,
+		client:              client,
+		clients:             clients,
+		repositoryResources: repositoryResources,
+		storageStatus:       storageStatus,
 	}
 }
 
@@ -88,7 +83,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage(ctx, "execute sync job")
-	syncError := r.run(ctx, rw, progress, *job.Spec.Pull)
+	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("create repository resources client: %w", err)
+	}
+
+	syncError := r.run(ctx, rw, progress, *job.Spec.Pull, repositoryResources)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 
@@ -108,7 +108,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Only add stats patch if stats are not nil
-	if stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name); err != nil {
+	if stats, err := repositoryResources.Stats(ctx); err != nil {
 		logger.Error("unable to read stats", "error", err)
 	} else if stats != nil && len(stats.Managed) == 1 {
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -127,30 +127,18 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 }
 
 // start a job and run it
-func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder, options provisioning.SyncJobOptions) error {
+func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources) error {
 	cfg := repo.Config()
-	parser, err := r.parsers.GetParser(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("get parser for %s: %w", cfg.Name, err)
-	}
 
 	clients, err := r.clients.Clients(ctx, cfg.Namespace)
 	if err != nil {
 		return fmt.Errorf("get clients for %s: %w", cfg.Name, err)
 	}
 
-	folderClient, err := clients.Folder()
-	if err != nil {
-		return fmt.Errorf("get folder client: %w", err)
-	}
-
-	folders := resources.NewFolderManager(repo, folderClient, resources.NewEmptyFolderTree())
-	resourceManager := resources.NewResourcesManager(repo, folders, parser, clients, nil)
-
 	// Ensure the configured folder exists and is managed by the repository
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
-		if err := folders.EnsureFolderExists(ctx, resources.Folder{
+		if err := repositoryResources.EnsureFolderExists(ctx, resources.Folder{
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 			Path:  "", // at the root of the repository
@@ -176,13 +164,13 @@ func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, prog
 
 			progress.SetMessage(ctx, "incremental sync")
 
-			return IncrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, folders, resourceManager, progress)
+			return IncrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress)
 		}
 	}
 
 	progress.SetMessage(ctx, "full sync")
 
-	return FullSync(ctx, repo, clients, currentRef, folders, resourceManager, r.lister, progress)
+	return FullSync(ctx, repo, clients, currentRef, repositoryResources, progress)
 }
 
 func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Repository, patchOperations []map[string]interface{}) error {

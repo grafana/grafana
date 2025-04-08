@@ -122,6 +122,7 @@ func NewAPIBuilder(
 
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	return &APIBuilder{
 		urlProvider:         urlProvider,
@@ -132,10 +133,10 @@ func NewAPIBuilder(
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		render:              render,
 		clonedir:            clonedir,
-		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
@@ -559,9 +560,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
-				b.parsers,
 				b.clients,
-				b.resourceLister,
+				b.repositoryResources,
 				b.storageStatus,
 			)
 			migrationWorker := migrate.NewMigrationWorker(
