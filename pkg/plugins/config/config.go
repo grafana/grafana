@@ -35,6 +35,7 @@ type Features struct {
 	SriChecksEnabled            bool
 	PluginsCDNSyncLoaderEnabled bool
 	LocalizationForPlugins      bool
+	ExpressPluginsEnabled       bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.

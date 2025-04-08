@@ -958,4 +958,8 @@ const (
 	// FlagLogsPanelControls
 	// Enables a control component for the logs panel in Explore
 	FlagLogsPanelControls = "logsPanelControls"
+
+	// FlagExpressPluginInstall
+	// Enables express plugin installation
+	FlagExpressPluginInstall = "expressPluginInstall"
 )

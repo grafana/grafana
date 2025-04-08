@@ -222,8 +222,17 @@ type mockManagedPlugins struct {
 	managed []string
 }
 
-func (m *mockManagedPlugins) ManagedPlugins(ctx context.Context) []string {
+func (m *mockManagedPlugins) ManagedPlugins(_ context.Context) []string {
 	return m.managed
+}
+
+func (m *mockManagedPlugins) IsManagedPlugin(pluginID string) bool {
+	for _, p := range m.managed {
+		if p == pluginID {
+			return true
+		}
+	}
+	return false
 }
 
 type mockProvisionedPlugins struct {

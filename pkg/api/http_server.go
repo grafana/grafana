@@ -201,6 +201,7 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
+	expressPluginsService        plugininstaller.Express
 
 	userService          user.Service
 	tempUserService      tempUser.Service
@@ -256,7 +257,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
-	dsGuardian guardian.DatasourceGuardianProvider,
+	dsGuardian guardian.DatasourceGuardianProvider, expressPluginsService plugininstaller.Express,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
@@ -369,6 +370,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		managedPluginsService:        managedPlugins,
+		expressPluginsService:        expressPluginsService,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,

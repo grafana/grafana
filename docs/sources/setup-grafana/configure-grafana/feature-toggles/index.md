@@ -218,6 +218,7 @@ Experimental features might be changed or removed without prior notice.
 | `localeFormatPreference`                    | Specifies the locale so the correct format for numbers and dates can be shown                                                                                                                                                                                                     |
 | `extensionSidebar`                          | Enables the extension sidebar                                                                                                                                                                                                                                                     |
 | `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
+| `expressPluginInstall`                      | Enables express plugin installation                                                                                                                                                                                                                                               |
 
 ## Development feature toggles
 

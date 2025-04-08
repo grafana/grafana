@@ -1808,6 +1808,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "expressPluginInstall",
+			Description:  "Enables express plugin installation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 

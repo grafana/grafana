@@ -1052,4 +1052,8 @@ export interface FeatureToggles {
   * @default false
   */
   logsPanelControls?: boolean;
+  /**
+  * Enables express plugin installation
+  */
+  expressPluginInstall?: boolean;
 }

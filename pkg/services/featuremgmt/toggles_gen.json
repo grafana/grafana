@@ -1126,6 +1126,18 @@
     },
     {
       "metadata": {
+        "name": "expressPluginInstall",
+        "resourceVersion": "1744016252200",
+        "creationTimestamp": "2025-04-07T08:57:32Z"
+      },
+      "spec": {
+        "description": "Enables express plugin installation",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-02-17T00:59:11Z"

@@ -1631,6 +1631,8 @@ github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a h1
 github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a/go.mod h1:K/fP4kODJmABug5b90PhACUZD6Xh/veEz2b1VRKNyuA=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a h1:NN0j9zdqYpfliR0P+au/PAJ5lqP7IZPNe8tAX5eaQNE=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a/go.mod h1:3Z958XEs20R6Wf5y4TFD07PGuGld6grB+wZ1qP/iyqg=
+github.com/grafana/grafana/pkg/build v0.0.0-20250407114828-fc099e9f0d05 h1:jE3PW4gONuyVxWx0OKrznPNyGNXX0sziz7ANU9tFgvk=
+github.com/grafana/grafana/pkg/build v0.0.0-20250407114828-fc099e9f0d05/go.mod h1:LGVnSwdrS0ZnJ2WXEl5acgDoYPm74EUSFavca1NKHI8=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 h1:wSqgLKFwI7fyeqf3djRXGClBLb/UPjZ4XPm/UsKFDB0=
