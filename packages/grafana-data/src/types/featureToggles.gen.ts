@@ -150,18 +150,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-  */
-  alertStateHistoryLokiSecondary?: boolean;
-  /**
-  * Enable a remote Loki instance as the primary source for state history reads.
-  */
-  alertStateHistoryLokiPrimary?: boolean;
-  /**
-  * Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-  */
-  alertStateHistoryLokiOnly?: boolean;
-  /**
   * Writes error logs to the request logger
   * @default true
   */

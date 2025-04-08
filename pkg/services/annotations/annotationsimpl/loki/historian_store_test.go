@@ -872,7 +872,7 @@ func TestUseStore(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -882,7 +882,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -892,7 +892,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -903,7 +903,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"annotations", "invalid-backend"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -913,7 +913,7 @@ func TestUseStore(t *testing.T) {
 			Enabled: true,
 			Backend: "annotations",
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -924,7 +924,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "loki",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -935,7 +935,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"loki"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -946,12 +946,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "loki",
 			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiOnly,
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
-			use := useStore(cfg, features)
+			use := useStore(cfg)
 			require.True(t, use)
 		})
 	})
