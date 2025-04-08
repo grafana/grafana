@@ -6,7 +6,9 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   NewObjectAddedToCanvasEvent,
@@ -156,22 +158,46 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     // When removing last tab replace ourselves with the inner tab layout
     if (this.state.tabs.length === 1) {
       ungroupLayout(this, tabToRemove.state.layout);
+      return;
     }
 
     const currentTab = this.getCurrentTab();
 
-    if (currentTab === tabToRemove) {
-      const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
-      this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
-      this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
+    const remove = () => {
+      if (currentTab === tabToRemove) {
+        const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
+        this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
+        this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
+        return;
+      }
+
+      const filteredTab = this.state.tabs.filter((tab) => tab !== tabToRemove);
+      const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+
+      this.setState({ tabs, currentTabIndex: 0 });
+    };
+
+    // If the tab has no panels, remove it immediately
+    if (tabToRemove.getLayout().getVizPanels().length === 0) {
+      remove();
       return;
     }
 
-    const filteredTab = this.state.tabs.filter((tab) => tab !== tabToRemove);
-    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
-
-    this.setState({ tabs, currentTabIndex: 0 });
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
+    // If it has panels, confirm the user wants to delete the tab
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.tabs-layout.delete-tab-title', 'Delete tab?'),
+        text: t(
+          'dashboard.tabs-layout.delete-tab-text',
+          'Deleting this tab will also remove all panels. Are you sure you want to continue?'
+        ),
+        icon: 'trash-alt',
+        yesText: t('dashboard.tabs-layout.delete-tab-yes', 'Delete'),
+        onConfirm: () => {
+          remove();
+        },
+      })
+    );
   }
 
   public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
