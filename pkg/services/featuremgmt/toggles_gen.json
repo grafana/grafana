@@ -2177,16 +2177,19 @@
     {
       "metadata": {
         "name": "noBackdropBlur",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744057771109",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-08T09:27:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-07 20:29:31.109804663 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Disables backdrop blur",
-        "stage": "experimental",
+        "description": "Disables backdrop blur behind modals and drawers",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {

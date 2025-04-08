@@ -34,7 +34,6 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       left: 0,
       backgroundColor: theme.components.overlay.background,
-      backdropFilter: 'blur(1px)',
     }),
     modalHeader: css({
       label: 'modalHeader',
