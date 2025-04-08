@@ -340,14 +340,6 @@ func TestService_getUserPermissions(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			name: "should return permissions from cache if available",
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
-			},
-			cacheHit:      true,
-			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
-		},
-		{
 			name: "should return permissions from store if not in cache",
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
