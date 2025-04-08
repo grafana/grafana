@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,14 +65,6 @@ type Service interface {
 	services.NamedService
 	registry.BackgroundService
 	registry.CanBeDisabled
-}
-
-type ExtraRunner interface {
-	Run(ctx context.Context) error
-}
-
-type ExtraRunnerConfigurator interface {
-	GetExtraRunners() []ExtraRunner
 }
 
 type service struct {
@@ -110,7 +103,7 @@ type service struct {
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 
-	extraRunners []grafanaapiserveroptions.ExtraRunner
+	extraRunners []runner.ExtraRunner
 }
 
 func ProvideService(
@@ -129,7 +122,7 @@ func ProvideService(
 	unified resource.ResourceClient,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
-	extraRunnerConfigurator grafanaapiserveroptions.ExtraRunnerConfigurator,
+	extraRunnerConfigurator runner.ExtraRunnerConfigurator,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -358,7 +351,7 @@ func (s *service) start(ctx context.Context) error {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 		// Run extra runners
 		for _, runner := range s.extraRunners {
-			aggregatorAPIServer, err := runner.Configure(s.options, serverConfig, delegate, groupVersions)
+			aggregatorAPIServer, err := runner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 			if err != nil {
 				return err
 			}
