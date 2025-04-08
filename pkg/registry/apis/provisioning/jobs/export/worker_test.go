@@ -162,13 +162,24 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 
 	mockRepo := repository.NewMockReader(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
 	})
 
-	r := NewExportWorker(nil, nil)
-	err := r.Process(context.Background(), mockRepo, job, nil)
+	resourceClients := resources.NewMockResourceClients(t)
+	mockClients := resources.NewMockClientFactory(t)
+	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+	resourceClients.On("Folder").Return(nil, nil)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetMessage", context.Background(), "read folder tree from API server").Return()
+
+	r := NewExportWorker(mockClients, nil)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
 }
 
