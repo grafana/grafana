@@ -16,18 +16,11 @@ func WrapWithCloneAndPushIfPossible(
 	repo Repository,
 	cloneOptions CloneOptions,
 	pushOptions PushOptions,
-	beforeClone func(repo Repository) error,
-	execute func(repo Repository, cloned bool) error,
-	beforePush func(repo Repository) error,
+	fn func(repo Repository, cloned bool) error,
 ) error {
 	clonable, ok := repo.(ClonableRepository)
 	if !ok {
-		return execute(repo, false)
-	}
-
-	err := beforeClone(repo)
-	if err != nil {
-		return err
+		return fn(repo, false)
 	}
 
 	clone, err := clonable.Clone(ctx, cloneOptions)
@@ -43,13 +36,7 @@ func WrapWithCloneAndPushIfPossible(
 		}
 	}()
 
-	err = execute(clone, true)
-	if err != nil {
-		return err
-	}
-
-	err = beforePush(clone)
-	if err != nil {
+	if err := fn(clone, true); err != nil {
 		return err
 	}
 

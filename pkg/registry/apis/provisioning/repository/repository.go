@@ -63,6 +63,9 @@ type CloneOptions struct {
 
 	// Progress is the writer to report progress to
 	Progress io.Writer
+
+	// BeforeFn is called before the clone operation starts
+	BeforeFn func() error
 }
 
 //go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
@@ -73,6 +76,7 @@ type ClonableRepository interface {
 type PushOptions struct {
 	Timeout  time.Duration
 	Progress io.Writer
+	BeforeFn func() error
 }
 
 //go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter

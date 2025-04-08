@@ -48,27 +48,24 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	cloneOptions := repository.CloneOptions{
+		Timeout:      10 * time.Minute,
 		PushOnWrites: false,
-		// TODO: make this configurable
-		Timeout: 10 * time.Minute,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "clone target")
+			return nil
+		},
 	}
 
 	pushOptions := repository.PushOptions{
 		Timeout:  10 * time.Minute,
 		Progress: os.Stdout,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "push changes")
+			return nil
+		},
 	}
 
-	beforeClone := func(repo repository.Repository) error {
-		progress.SetMessage(ctx, "clone target")
-		return nil
-	}
-
-	beforePush := func(repo repository.Repository) error {
-		progress.SetMessage(ctx, "push changes")
-		return nil
-	}
-
-	afterClone := func(repo repository.Repository, cloned bool) error {
+	fn := func(repo repository.Repository, cloned bool) error {
 		if cloned {
 			options.Branch = "" // :( the branch is now baked into the repo
 		}
@@ -180,5 +177,5 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return nil
 	}
 
-	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, beforeClone, afterClone, beforePush)
+	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
 }

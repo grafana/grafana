@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -1112,7 +1113,17 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			createRepo: func(t *testing.T) *MockClonableRepository {
 				cloned := repository.NewMockClonedRepository(t)
 				clonable := repository.NewMockClonableRepository(t)
-				clonable.On("Clone", mock.Anything, mock.Anything).Return(cloned, nil)
+				clonable.On("Clone", mock.Anything, mock.MatchedBy(func(opts repository.CloneOptions) bool {
+					if opts.PushOnWrites || opts.Timeout != 10*time.Minute {
+						return false
+					}
+
+					if opts.BeforeFn != nil {
+						require.NoError(t, opts.BeforeFn())
+					}
+
+					return true
+				})).Return(cloned, nil)
 
 				return &MockClonableRepository{
 					MockClonedRepository:   cloned,
@@ -1147,7 +1158,17 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 						Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 					},
 				})
-				repo.On("Push", mock.Anything, mock.Anything).Return(nil)
+				repo.On("Push", mock.Anything, mock.MatchedBy(func(opts repository.PushOptions) bool {
+					if opts.Timeout != 10*time.Minute {
+						return false
+					}
+
+					if opts.BeforeFn != nil {
+						require.NoError(t, opts.BeforeFn())
+					}
+
+					return true
+				})).Return(nil)
 				repo.On("Remove", mock.Anything).Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
@@ -1171,7 +1192,13 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			createRepo: func(t *testing.T) *MockClonableRepository {
 				cloned := repository.NewMockClonedRepository(t)
 				clonable := repository.NewMockClonableRepository(t)
-				clonable.On("Clone", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("failed to clone repository"))
+				clonable.On("Clone", mock.Anything, mock.MatchedBy(func(opts repository.CloneOptions) bool {
+					if opts.BeforeFn != nil {
+						require.NoError(t, opts.BeforeFn())
+					}
+
+					return true
+				})).Return(nil, fmt.Errorf("failed to clone repository"))
 
 				return &MockClonableRepository{
 					MockClonedRepository:   cloned,
@@ -1199,7 +1226,13 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			createRepo: func(t *testing.T) *MockClonableRepository {
 				cloned := repository.NewMockClonedRepository(t)
 				clonable := repository.NewMockClonableRepository(t)
-				clonable.On("Clone", mock.Anything, mock.Anything).Return(cloned, nil)
+				clonable.On("Clone", mock.Anything, mock.MatchedBy(func(opts repository.CloneOptions) bool {
+					if opts.BeforeFn != nil {
+						require.NoError(t, opts.BeforeFn())
+					}
+
+					return true
+				})).Return(cloned, nil)
 
 				return &MockClonableRepository{
 					MockClonedRepository:   cloned,
