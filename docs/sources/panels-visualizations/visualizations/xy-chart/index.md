@@ -59,6 +59,8 @@ refs:
 
 # XY chart
 
+{{< docs/public-preview product="The xy chart visualization" featureFlag="`autoMigrateXYChartPanel`" >}}
+
 XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.6.png" max-width="750px" alt="An xy chart showing height weight distribution" >}}
