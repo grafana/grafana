@@ -119,7 +119,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 
 	r := NewExportWorker(nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "Only github supports writing to a branch")
+	require.EqualError(t, err, "this repository does not support the branch workflow")
 }
 
 func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
