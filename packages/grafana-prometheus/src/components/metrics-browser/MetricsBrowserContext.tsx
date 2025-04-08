@@ -370,6 +370,8 @@ export function MetricsBrowserProvider({
    * Clear all selections
    */
   const onClearClick = useCallback(() => {
+    localStorage.setItem(LAST_USED_LABELS_KEY, '[]');
+
     setSelectedMetric('');
     setSelectedLabelKeys([]);
     setSelectedLabelValues({});
