@@ -381,6 +381,51 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 				repoResources.AssertExpectations(t)
 			},
 		},
+		{
+			name: "too many errors",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				list := &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "FolderList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "folder-1",
+								Annotations: map[string]string{
+									"folder.grafana.app/uid": "folder-1-uid",
+								},
+							},
+						},
+					},
+				}
+				return true, list, nil
+			},
+			expectedError: "write folders to repository: too many errors encountered",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("Record", mock.Anything, mock.Anything).Return()
+				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 1
+				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+					require.Error(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
+					return true
+				})).Return(fmt.Errorf("too many errors encountered"))
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
 	}
 
 	for _, tt := range tests {
