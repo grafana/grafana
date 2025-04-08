@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,8 +40,6 @@ type legacyStorage struct {
 	tableConverter rest.TableConvertor
 	cfg            *setting.Cfg
 	features       featuremgmt.FeatureToggles
-	// Temporary fix to support adding default permissions AfterCreate
-	permissions apistore.DefaultPermissionSetter
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -221,17 +217,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	grv := r.GroupVersionKind()
-	err = s.permissions(ctx, &resource.ResourceKey{
-		Namespace: accessor.GetNamespace(),
-		Group:     grv.Group,
-		Resource:  "folders",
-		Name:      r.Name,
-	}, user, accessor)
-	if err != nil {
-		return nil, err
-	}
-
 	return r, nil
 }
 

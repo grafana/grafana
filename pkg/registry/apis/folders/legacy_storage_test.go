@@ -12,7 +12,6 @@ import (
 
 	"encoding/base64"
 
-	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestLegacyStorageList(t *testing.T) {
@@ -41,9 +39,6 @@ func TestLegacyStorageList(t *testing.T) {
 	ls := legacyStorage{
 		service:    folderService,
 		namespacer: func(_ int64) string { return "1" },
-		permissions: func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-			return nil
-		},
 	}
 
 	ll, err := ls.List(ctx, &metainternalversion.ListOptions{})
@@ -76,9 +71,6 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 	storage := legacyStorage{
 		service:    folderService,
 		namespacer: func(_ int64) string { return "1" },
-		permissions: func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-			return nil
-		},
 	}
 
 	t.Run("should set correct continue token", func(t *testing.T) {
