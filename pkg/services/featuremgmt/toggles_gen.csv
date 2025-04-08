@@ -1,7 +1,5 @@
 Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false
-live-service-web-worker,experimental,@grafana/dashboards-squad,false,false,true
-queryOverLive,experimental,@grafana/dashboards-squad,false,false,true
 panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
 publicDashboardsScene,GA,@grafana/sharing-squad,false,false,true
@@ -239,3 +237,4 @@ alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
+logsPanelControls,privatePreview,@grafana/observability-logs,false,false,true
