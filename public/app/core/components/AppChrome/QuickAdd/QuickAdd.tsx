@@ -13,7 +13,6 @@ export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
-
   const [isOpen, setIsOpen] = useState(false);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
   const showQuickAdd = createActions.length > 0;

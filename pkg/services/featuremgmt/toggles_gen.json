@@ -1726,7 +1726,8 @@
       "metadata": {
         "name": "live-service-web-worker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "deletionTimestamp": "2025-04-07T09:56:17Z"
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
@@ -1854,6 +1855,23 @@
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "logsPanelControls",
+        "resourceVersion": "1743772342343",
+        "creationTimestamp": "2025-04-04T13:11:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-04 13:12:22.343052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables a control component for the logs panel in Explore",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2571,7 +2589,8 @@
       "metadata": {
         "name": "queryOverLive",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "deletionTimestamp": "2025-04-07T09:56:17Z"
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",

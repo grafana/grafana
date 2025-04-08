@@ -49,7 +49,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     const layoutCategory = useLayoutCategory(body);
 
-    return [dashboardOptions, layoutCategory];
+    return [dashboardOptions, ...layoutCategory];
   }
 
   public renderActions(): ReactNode {
