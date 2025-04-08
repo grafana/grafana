@@ -772,7 +772,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
-        name: meta.uid, // ideally the name is preserved
+        name: meta.uid ?? meta.k8s?.name,
         generateName: options.isNew ? 'd' : undefined,
       },
       spec,

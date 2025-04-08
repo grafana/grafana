@@ -7,7 +7,7 @@
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --default-authentication-plugin=mysql_native_password]
 
   fake-mysql-data:
     image: grafana/fake-data-gen
