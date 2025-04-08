@@ -109,7 +109,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(filePath)
 		if r.Method == http.MethodGet && isDir {
-			files, err := c.listFolderFiles(ctx, filePath, ref, readWriter)
+			files, err := listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
 			}
@@ -201,7 +201,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // listFolderFiles returns a list of files in a folder
-func (s *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+func listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {
 		return nil, apierrors.NewBadRequest("folder navigation not yet supported")
