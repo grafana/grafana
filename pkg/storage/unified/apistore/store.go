@@ -31,6 +31,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -219,6 +220,11 @@ func (s *Storage) Delete(
 	_ runtime.Object,
 	opts storage.DeleteOptions,
 ) error {
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return errors.New("missing auth info")
+	}
+
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -250,6 +256,15 @@ func (s *Storage) Delete(
 			return err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(out)
+	if err != nil {
+		return fmt.Errorf("unable to read object %w", err)
+	}
+	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
