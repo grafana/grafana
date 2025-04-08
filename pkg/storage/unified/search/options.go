@@ -4,13 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer tracing.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
+func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
 	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {

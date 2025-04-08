@@ -937,8 +937,9 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 					},
 					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The specific commit hash that triggered this notice",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"url": {
@@ -1228,6 +1229,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"folder", "instance"},
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"workflows": {

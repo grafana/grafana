@@ -196,13 +196,6 @@ class DataSourceWithBackend<
       to: range?.to.valueOf().toString(),
     };
 
-    if (config.featureToggles.queryOverLive) {
-      return getGrafanaLiveSrv().getQueryData({
-        request,
-        body,
-      });
-    }
-
     const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
