@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -168,7 +167,7 @@ func (r *ExportWorker) exportResources(ctx context.Context, clients resources.Re
 			return err
 		}
 
-		if err := r.exportResource(ctx, kind, client, options, repositoryResources, progress); err != nil {
+		if err := r.exportResource(ctx, client, options, repositoryResources, progress); err != nil {
 			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
@@ -176,12 +175,13 @@ func (r *ExportWorker) exportResources(ctx context.Context, clients resources.Re
 	return nil
 }
 
-func (r *ExportWorker) exportResource(ctx context.Context, kind schema.GroupVersionResource, client dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func (r *ExportWorker) exportResource(ctx context.Context, client dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
-			Resource: kind.Resource,
-			Group:    kind.Group,
+			Resource: gvk.Kind,
+			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
 		}
 
