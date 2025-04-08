@@ -40,9 +40,7 @@ type SyncWorker struct {
 	patchStatus RepositoryPatchFn
 
 	// Sync functions
-	fullSync        FullSyncFn
-	incrementalSync IncrementalSyncFn
-	compare         CompareFn
+	syncer Syncer
 }
 
 func NewSyncWorker(
@@ -50,18 +48,14 @@ func NewSyncWorker(
 	repositoryResources resources.RepositoryResourcesFactory,
 	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
-	fullSync FullSyncFn,
-	incrementalSync IncrementalSyncFn,
-	compare CompareFn,
+	syncer Syncer,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
 		repositoryResources: repositoryResources,
 		patchStatus:         patchStatus,
 		storageStatus:       storageStatus,
-		fullSync:            fullSync,
-		incrementalSync:     incrementalSync,
-		compare:             compare,
+		syncer:              syncer,
 	}
 }
 
@@ -106,7 +100,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("create repository resources client: %w", err)
 	}
 
-	syncError := r.run(ctx, rw, progress, *job.Spec.Pull, repositoryResources)
+	clients, err := r.clients.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return fmt.Errorf("get clients for %s: %w", cfg.Name, err)
+	}
+
+	syncError := r.syncer.Sync(ctx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 
@@ -142,51 +141,4 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	return syncError
-}
-
-// start a job and run it
-func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources) error {
-	cfg := repo.Config()
-
-	clients, err := r.clients.Clients(ctx, cfg.Namespace)
-	if err != nil {
-		return fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-	}
-
-	// Ensure the configured folder exists and is managed by the repository
-	rootFolder := resources.RootFolder(cfg)
-	if rootFolder != "" {
-		if err := repositoryResources.EnsureFolderExists(ctx, resources.Folder{
-			ID:    rootFolder, // will not change if exists
-			Title: cfg.Spec.Title,
-			Path:  "", // at the root of the repository
-		}, ""); err != nil {
-			return fmt.Errorf("create root folder: %w", err)
-		}
-	}
-
-	var currentRef string
-	versionedRepo, _ := repo.(repository.Versioned)
-	if versionedRepo != nil {
-		currentRef, err = versionedRepo.LatestRef(ctx)
-		if err != nil {
-			return fmt.Errorf("get latest ref: %w", err)
-		}
-		progress.SetRef(currentRef)
-
-		if cfg.Status.Sync.LastRef != "" && options.Incremental {
-			if currentRef == cfg.Status.Sync.LastRef {
-				progress.SetFinalMessage(ctx, "same commit as last sync")
-				return nil
-			}
-
-			progress.SetMessage(ctx, "incremental sync")
-
-			return r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress)
-		}
-	}
-
-	progress.SetMessage(ctx, "full sync")
-
-	return r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress)
 }
