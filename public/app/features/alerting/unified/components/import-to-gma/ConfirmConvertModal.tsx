@@ -22,6 +22,22 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
   isOpen: boolean;
 };
 
+const AlertSomeRulesSkipped = () => (
+  <Alert
+    title={t(
+      'alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.title',
+      'Some rules are excluded from import'
+    )}
+    severity="info"
+  >
+    <Text variant="body">
+      <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.text">
+        We have detected that some rules are managed by plugins. These rules will not be imported.
+      </Trans>
+    </Text>
+  </Alert>
+);
+
 export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   const { watch } = useFormContext<ImportFormValues>();
   const styles = useStyles2(getStyles);
@@ -84,6 +100,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       );
     }
   }
+
   const noRulesToImport = isEmpty(rulerRulesToPayload);
   if (noRulesToImport) {
     return (
@@ -94,21 +111,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         onClickBackdrop={onDismiss}
       >
         <Stack direction="column" gap={2}>
-          {someRulesAreSkipped && (
-            <Alert
-              title={t(
-                'alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.title',
-                'Some rules are excluded from import'
-              )}
-              severity="info"
-            >
-              <Text variant="body">
-                <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.text">
-                  We have detected that some rules are managed by plugins. These rules will not be imported.
-                </Trans>
-              </Text>
-            </Alert>
-          )}
+          {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text>
             {t(
               'alerting.import-to-gma.confirm-modal.no-rules-body',
@@ -140,18 +143,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
               </Trans>
             </Text>
           </Alert>
-          {someRulesAreSkipped && (
-            <Alert
-              title={t('alerting.to-gma.confirm-modal.plugin-rules-warning.title', 'Some rules will be skipped')}
-              severity="info"
-            >
-              <Text variant="body">
-                <Trans i18nKey="alerting.to-gma.confirm-modal.plugin-rules-warning.text">
-                  We have detected that some rules are managed by plugins. These rules will not be imported.
-                </Trans>
-              </Text>
-            </Alert>
-          )}
+          {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
               These are the list of rules that will be imported:
