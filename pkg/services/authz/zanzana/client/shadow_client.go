@@ -71,6 +71,7 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	zanzanaItemCheckerChan := make(chan authlib.ItemChecker, 1)
 	go func() {
 		if c.zanzanaClient == nil {
+			zanzanaItemCheckerChan <- nil
 			return
 		}
 
