@@ -15,7 +15,6 @@ import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
 import { ExportDashboardButton } from './actions/ExportDashboardButton';
-import { KioskToggleButton } from './actions/KioskToggleButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
@@ -52,12 +51,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
     <ToolbarButtonRow alignment="right" className={styles.container}>
       {renderActionElements(
         [
-          {
-            key: 'dashboard-settings',
-            component: KioskToggleButton,
-            group: '',
-            condition: !isEditingDashboard,
-          },
           // This adds the presence indicators in enterprise
           // Leaving group empty here as these are sometimes not rendered leaving separators with blank space between them
           ...getDynamicActions(dynamicDashNavActions.right, '', !isEditingPanel && !isEditingDashboard),
