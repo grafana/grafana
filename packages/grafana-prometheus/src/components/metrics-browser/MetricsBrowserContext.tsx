@@ -152,6 +152,7 @@ export function MetricsBrowserProvider({
     languageProvider
       .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
       .then((fetchedLabelKeys) => {
+        setSelectedLabelKeysFromLocalStorage();
         setLabelKeys(Object.keys(fetchedLabelKeys));
         setStatus('Ready');
       })
@@ -365,12 +366,17 @@ export function MetricsBrowserProvider({
    */
   const onClearClick = useCallback(() => {
     setSelectedMetric('');
-    setSelectedLabelKeysFromLocalStorage();
+    setSelectedLabelKeys([]);
     setSelectedLabelValues({});
+
+    showAllMetrics();
+    setSelectedLabelKeysFromLocalStorage();
+    showAllLabelKeys();
+
     setErr('');
     setStatus('Ready');
     setValidationStatus('');
-  }, [setSelectedLabelKeysFromLocalStorage]);
+  }, [setSelectedLabelKeysFromLocalStorage, showAllLabelKeys, showAllMetrics]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo(
