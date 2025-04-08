@@ -53,6 +53,7 @@ const tooltipMessage = (
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
   options: Role[];
+  isFiltered?: boolean;
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
@@ -70,6 +71,7 @@ interface RolePickerMenuProps {
 export const RolePickerMenu = ({
   basicRole,
   options,
+  isFiltered,
   appliedRoles,
   showGroups,
   basicRoleDisabled,
@@ -259,6 +261,7 @@ export const RolePickerMenu = ({
             <RoleMenuGroupsSection
               key={groupId}
               roles={collection.roles}
+              isFiltered={isFiltered}
               renderedName={collection.renderedName}
               showGroups={showGroups}
               optionGroups={collection.optionGroup}

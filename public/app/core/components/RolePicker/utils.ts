@@ -19,3 +19,9 @@ export const addDisplayNameForFixedRole = (role: Role) => {
   }
   return role;
 };
+
+// Adds a display name for use when the list of roles is filtered
+export const addFilteredDisplayName = (role: Role) => {
+  role.filteredDisplayName = role.group + ':' + role.displayName;
+  return role;
+};

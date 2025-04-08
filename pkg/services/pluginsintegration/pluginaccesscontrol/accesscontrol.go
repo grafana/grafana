@@ -60,7 +60,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 	PluginsWriter := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:writer",
-			DisplayName: "Plugin Writer",
+			DisplayName: "Writer",
 			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
@@ -72,7 +72,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:maintainer",
-			DisplayName: "Plugin Maintainer",
+			DisplayName: "Maintainer",
 			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
