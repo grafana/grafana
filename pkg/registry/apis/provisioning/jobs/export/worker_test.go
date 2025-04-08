@@ -382,6 +382,74 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 			},
 		},
 		{
+			name: "successful folder migration with resource export errors",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				list := &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "FolderList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "folder-1",
+								Annotations: map[string]string{
+									"folder.grafana.app/uid": "folder-1-uid",
+								},
+							},
+						},
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "folder-2",
+								Annotations: map[string]string{
+									"folder.grafana.app/uid": "folder-2-uid",
+								},
+							},
+						},
+					},
+				}
+				return true, list, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "folder-1-uid" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "didn't work"
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "folder-2-uid" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 2
+				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+					require.NoError(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, errors.New("didn't work")))
+					require.NoError(t, fn(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+
+					return true
+				})).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
+		{
 			name: "too many errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				list := &metav1.PartialObjectMetadataList{
