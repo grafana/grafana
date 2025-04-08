@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, MultiCombobox, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Checkbox, Field, Input, MultiCombobox, Stack, Switch, Text, TextLink } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
@@ -21,7 +19,6 @@ export function FinishStep() {
   const hasImageRenderer = checkImageRenderer();
   // Enable sync by default
   const { setValue } = useFormContext<WizardFormData>();
-  const style = useStyles2(getStyles);
 
   if (!isPublic || !hasImageRenderer) {
     if (formState.defaultValues?.repository) {
@@ -107,46 +104,39 @@ export function FinishStep() {
         </Field>
       )}
 
-      {isGithub && (
-        <Field
-          useLabel
-          label={
-            <span>
-              {t(
-                'provisioning.finish-step.label-enable-dashboard-previews',
-                'Enable dashboard previews in pull requests'
-              )}{' '}
-              <span className={style.explanation}>
-                {t('provisioning.finish-step.text-requires-image-rendering', '(Requires image rendering.')}{' '}
-                <a className={style.explanationLink} href="https://grafana.com">
-                  {t('provisioning.finish-step.link-setup-image-rendering', 'Set up image rendering')}
-                </a>
-                {')'}
-              </span>
-            </span>
-          }
-          description={t(
-            'provisioning.finish-step.description-dashboard-previews',
-            'Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.'
-          )}
-          disabled={!hasImageRenderer || !isPublic}
-        >
-          <Switch {...register('repository.generateDashboardPreviews')} id="repository.generateDashboardPreviews" />
-        </Field>
-      )}
+      <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={0}>
+          <Text element="h4">Enhance your GitHub experience</Text>
+          <Text color="secondary" variant="bodySmall">
+            You can always set this up later
+          </Text>
+        </Stack>
+        {isGithub && (
+          <Field>
+            <Checkbox
+              disabled={!hasImageRenderer || !isPublic}
+              label={'Enable dashboard previews in pull requests'}
+              description={
+                <>
+                  Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be
+                  shared in your Git repository and visible to anyone with repository access.
+                  <Text italic>
+                    Requires image rendering.{' '}
+                    <TextLink
+                      variant="bodySmall"
+                      external
+                      href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+                    >
+                      Set up image rendering
+                    </TextLink>
+                  </Text>
+                </>
+              }
+              {...register('repository.generateDashboardPreviews')}
+            />
+          </Field>
+        )}
+      </Stack>
     </Stack>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    explanation: css({
-      color: theme.colors.text.disabled,
-      fontStyle: 'italic',
-    }),
-    explanationLink: css({
-      color: theme.colors.text.link,
-      fontStyle: 'italic',
-    }),
-  };
 }

@@ -53,7 +53,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       token: '',
       url: '',
       branch: 'main',
-      generateDashboardPreviews: true,
+      generateDashboardPreviews: false,
       workflows: ['branch', 'write'],
       path: 'grafana/',
       sync: {
