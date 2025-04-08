@@ -122,7 +122,7 @@ interface Props {
 }
 
 export default function GettingStarted({ items }: Props) {
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
