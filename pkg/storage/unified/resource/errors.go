@@ -18,6 +18,17 @@ var (
 	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
+var (
+	ErrResourceAlreadyExists error = &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Reason:  metav1.StatusReasonAlreadyExists,
+			Message: "the resource already exists",
+			Code:    http.StatusConflict,
+		},
+	}
+)
+
 func NewBadRequestError(msg string) *ErrorResult {
 	return &ErrorResult{
 		Message: msg,

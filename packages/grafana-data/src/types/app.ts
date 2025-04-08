@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { throwIfAngular } from '../utils/throwIfAngular';
+
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
@@ -85,9 +87,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   setComponentsFromLegacyExports(pluginExports: System.Module) {
-    if (pluginExports.ConfigCtrl) {
-      this.angularConfigCtrl = pluginExports.ConfigCtrl;
-    }
+    throwIfAngular(pluginExports);
 
     if (this.meta && this.meta.includes) {
       for (const include of this.meta.includes) {

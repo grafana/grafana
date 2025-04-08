@@ -230,7 +230,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngAnalyticsParams:      hs.Cfg.ExternalUserMngAnalyticsParams,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
-		AngularSupportEnabled:            hs.Cfg.AngularSupportEnabled,
 		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
 		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,

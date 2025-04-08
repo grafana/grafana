@@ -2,7 +2,11 @@
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "Built-in role picker",
+      "level-aria-label": "Permission level",
+      "permissions-aria-label": "Permissions slider",
       "role-label": "Role",
+      "role-select-aria-label": "Role to add new permission to",
       "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
@@ -15,7 +19,9 @@
       "permission": "Permission"
     },
     "permission-list-item": {
-      "inherited": "Inherited from folder"
+      "inherited": "Inherited from folder",
+      "locked-aria-label": "Locked permission indicator",
+      "remove-aria-label": "Remove permission for {{identifier}}"
     },
     "permissions": {
       "add-label": "Add a permission",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
+      "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
       "get-stage-cell": {
         "beta": "Beta",
         "deprecated": "Deprecated",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": "Role"
       },
+      "delete-aria-label": "Delete user: {{name}}",
       "title-delete": "Delete"
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": "Edit user"
       },
+      "edit-aria-label": "Edit user: {{name}}",
+      "edit-tooltip": "Edit user",
       "last-seen-never": "Never",
       "no-licensed-roles": "Not assigned"
     }
@@ -280,16 +291,22 @@
     }
   },
   "alerting": {
+    "add-button": {
+      "add-more": "Add more"
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
+      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
+      "keep-firing-for": "Keep firing for",
       "last-evaluated": "Last evaluated",
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
       "last-updated-by": "Last updated by",
+      "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
       "pending-period": "Pending period",
       "rule": "Rule",
@@ -298,6 +315,48 @@
       "state-error-timeout": "Alert state if execution error or timeout",
       "state-no-data": "Alert state if no data or all values are null",
       "target-datasource-uid": "Target data source"
+    },
+    "alert-details": {
+      "manage-silences": "Manage silences",
+      "silence": "Silence"
+    },
+    "alert-group": {
+      "no-grouping": "No grouping"
+    },
+    "alert-group-filter": {
+      "clear-filters": "Clear filters"
+    },
+    "alert-groups": {
+      "no-results": "No results.",
+      "text-loading-notifications": "Loading notifications",
+      "title-grafana-alerts-delivered-alertmanager": "Grafana alerts are not delivered to Grafana Alertmanager"
+    },
+    "alert-instance-details": {
+      "label-value": "Value"
+    },
+    "alert-instance-extension-point": {
+      "aria-label-actions": "Actions"
+    },
+    "alert-instance-modal-selector": {
+      "add-alert-data-to-payload": "Add alert data to payload",
+      "placeholder-search-alert-rule": "Search alert rule",
+      "text-loading-rule": "Loading rule...",
+      "text-loading-rules": "Loading rules...",
+      "title-search-alert-rule": "Search alert rule",
+      "title-select-alert-instances": "Select alert instances"
+    },
+    "alert-instance-state-filter": {
+      "state": "State"
+    },
+    "alert-label": {
+      "tooltip-remove-label": "Remove label"
+    },
+    "alert-labels": {
+      "aria-label-labels": "Labels"
+    },
+    "alert-manager-manual-routing": {
+      "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
+      "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-menu": {
       "copy-link": "Copy link",
@@ -313,17 +372,77 @@
         }
       }
     },
+    "alert-rule-form": {
+      "action-buttons": {
+        "delete": "Delete",
+        "edit-yaml": "Edit YAML"
+      },
+      "title-delete-rule": "Delete rule"
+    },
+    "alert-rule-name-and-metric": {
+      "aria-label-name": "name",
+      "label-metric": "Metric",
+      "label-name": "Name",
+      "metric-aria-label-metric": "metric"
+    },
     "alert-rules": {
       "firing-for": "Firing for",
       "next-evaluation": "Next evaluation",
       "next-evaluation-in": "next evaluation in",
       "rule-definition": "Rule definition"
     },
+    "alert-rules-drawer": {
+      "text-loading-alert-rules": "Loading alert rules",
+      "title-alert-rules": "Alert rules"
+    },
+    "alert-rules-drawer-content": {
+      "text-loading-alert-rules": "Loading alert rules"
+    },
+    "alert-state-filter": {
+      "suppressed-the-alert-has-been-silenced": "Suppressed: The alert has been silenced."
+    },
+    "alert-warning": {
+      "to-rule-list": "To rule list"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
         "recording": "Add labels to your rule."
       }
+    },
+    "alertmanager-card": {
+      "disable": "Disable",
+      "enable": "Enable",
+      "not-receiving-grafana-managed-alerts": "Not receiving Grafana managed alerts",
+      "text-activation-in-progress": "Activation in progress",
+      "text-failed-to-adopt-alertmanager": "Failed to adopt Alertmanager",
+      "text-inconclusive": "Inconclusive",
+      "text-receiving-grafanamanaged-alerts": "Receiving Grafana-managed alerts",
+      "title-alerting-settings": "Alerting settings"
+    },
+    "alertmanager-config": {
+      "reset": "Reset",
+      "resetting-configuration-might-while": "Resetting configuration, this might take a while.",
+      "title-failed-to-load-alertmanager-configuration": "Failed to load Alertmanager configuration",
+      "title-oops-something-went-wrong": "Oops, something went wrong",
+      "title-reset-alertmanager-configuration": "Reset Alertmanager configuration",
+      "title-resetting-alertmanager-configuration": "Resetting Alertmanager configuration"
+    },
+    "alertmanager-configuration-version-manager": {
+      "columns": {
+        "compare": "Compare",
+        "restore": "Restore",
+        "text-latest": "Latest"
+      },
+      "this-might-take-a-while": "This might take a while...",
+      "title-failed-to-load-configuration-history": "Failed to load configuration history",
+      "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
+    },
+    "alerts-folder-view": {
+      "aria-label-sort": "Sort",
+      "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
+      "name-filter-placeholder-search-alert-rules-by-name": "Search alert rules by name",
+      "no-alert-rules-found": "No alert rules found"
     },
     "alertVersionHistory": {
       "alerting": "Alerting",
@@ -367,9 +486,50 @@
       "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
       "warning-restore-manually-title": "Restoring rule manually"
     },
+    "am-root-route-form": {
+      "am-group-interval-label-group-interval": "Group interval",
+      "am-group-select-label-group-by": "Group by",
+      "am-group-wait-label-group-wait": "Group wait",
+      "am-repeat-interval-label-repeat-interval": "Repeat interval",
+      "aria-label-group-by": "Group by",
+      "aria-label-group-interval": "Group interval",
+      "aria-label-group-wait": "Group wait",
+      "aria-label-repeat-interval": "Repeat interval",
+      "create-a-contact-point": "Create a contact point",
+      "label-default-contact-point": "Default contact point",
+      "label-timing-options": "Timing options",
+      "or": "or"
+    },
+    "am-routes-expanded-form": {
+      "add-matcher": "Add matcher",
+      "am-mute-timing-select-description-add-mute-timing-to-policy": "Add mute timing to policy",
+      "am-mute-timing-select-label-mute-timings": "Mute timings",
+      "aria-label-group-by": "Group by",
+      "aria-label-operator": "Operator",
+      "label-contact-point": "Contact point",
+      "label-continue-matching-subsequent-sibling-nodes": "Continue matching subsequent sibling nodes",
+      "label-group-by": "Group by",
+      "label-label": "Label",
+      "label-override-general-timings": "Override general timings",
+      "label-override-grouping": "Override grouping",
+      "label-value": "Value",
+      "matching-labels": "Matching labels",
+      "placeholder-label": "label",
+      "placeholder-value": "value",
+      "remove": "Remove",
+      "tooltip-remove-matcher": "Remove matcher"
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
+    },
+    "annotations-step": {
+      "add-custom-annotation": "Add custom annotation",
+      "aria-label-delete-annotation": "delete annotation",
+      "get-annotations-section-description": {
+        "title-annotations": "Annotations"
+      },
+      "link-dashboard-and-panel": "Link dashboard and panel"
     },
     "central-alert-history": {
       "details": {
@@ -390,7 +550,8 @@
           "error": "Error",
           "no-data": "No data",
           "normal": "Normal",
-          "pending": "Pending"
+          "pending": "Pending",
+          "recovering": "Recovering"
         },
         "state-transitions": "State transition",
         "unknown-event-state": "Unknown",
@@ -413,6 +574,41 @@
         "title": "Unable to display all events"
       }
     },
+    "channel-sub-form": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "label-integration": "Integration",
+      "label-notification-settings": "Notification settings",
+      "test": "Test"
+    },
+    "classic-condition-viewer": {
+      "of": "OF"
+    },
+    "clone-rule-button": {
+      "title-copy": "Copy"
+    },
+    "clone-rule-editor": {
+      "text-loading-the-rule": "Loading the rule...",
+      "title-cannot-exist": "Cannot copy the rule. The rule does not exist",
+      "title-error": "Error"
+    },
+    "cloud-alert-preview": {
+      "alerts-preview": "Alerts preview",
+      "info": "Info",
+      "labels": "Labels",
+      "state": "State"
+    },
+    "cloud-common-channel-settings": {
+      "description-whether-notify-about-resolved-alerts": "Whether or not to notify about resolved alerts.",
+      "label-send-resolved": "Send resolved"
+    },
+    "cloud-evaluation-behavior": {
+      "label-pending-period": "Pending period",
+      "title-set-evaluation-behavior": "Set evaluation behavior"
+    },
+    "cloud-receiver-form": {
+      "title-info": "Info"
+    },
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
@@ -426,6 +622,21 @@
         "notification-templates": "Notification Templates"
       },
       "view": "View"
+    },
+    "compare-versions": {
+      "restore": "Restore",
+      "return": "Return"
+    },
+    "contact-point-header": {
+      "export-label-export": "Export",
+      "label-delete": "Delete",
+      "label-manage-permissions": "Manage permissions"
+    },
+    "contact-point-selector": {
+      "aria-label-refresh-contact-points": "Refresh contact points",
+      "contact-point-picker-label-contact-point": "Contact point",
+      "title-failed-to-fetch-contact-points": "Failed to fetch contact points",
+      "tooltip-refresh-contact-points-list": "Refresh contact points list"
     },
     "contact-points": {
       "create": "Create contact point",
@@ -464,13 +675,76 @@
       "used-by-rules_one": "Used by {{ count }} alert rule",
       "used-by-rules_other": "Used by {{ count }} alert rule"
     },
+    "contact-points-filter": {
+      "aria-label-clear": "clear",
+      "aria-label-search-contact-points": "search contact points",
+      "clear": "Clear",
+      "label-search-by-name-or-type": "Search by name or type",
+      "placeholder-search": "Search"
+    },
+    "contact-points-page-contents": {
+      "label-contact-points": "Contact Points",
+      "label-notification-templates": "Notification Templates"
+    },
+    "contact-points-tab": {
+      "aria-label-add-contact-point": "add contact point",
+      "aria-label-export-all": "export all",
+      "export-all": "Export all",
+      "text-loading": "Loading...",
+      "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
+    },
     "contactPointFilter": {
       "label": "Contact point"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "create-metadata": {
+      "view-dashboard": "View dashboard",
+      "view-panel": "View panel"
+    },
+    "create-new-folder": {
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "name": "Folder name"
+      },
+      "new-folder": "New folder",
+      "placeholder-enter-a-name": "Enter a name",
+      "title-new-folder": "New folder"
+    },
+    "custom-annotation-header-field": {
+      "custom-annotation-name-and-content": "Custom annotation name and content",
+      "placeholder-enter-custom-annotation-name": "Enter custom annotation name..."
+    },
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
+    },
+    "dashboard-picker": {
+      "confirm": "Confirm",
+      "placeholder-search-dashboard": "Search dashboard",
+      "placeholder-search-panel": "Search panel",
+      "select-dashboard-available-panels": "Select a dashboard to get a list of available panels",
+      "text-loading-dashboard": "Loading dashboard...",
+      "text-loading-dashboards": "Loading dashboards...",
+      "title-current-selection": "Current selection",
+      "title-search-dashboard": "Search dashboard",
+      "title-search-panel": "Search panel",
+      "title-select-dashboard-and-panel": "Select dashboard and panel"
+    },
+    "data-source-section": {
+      "import-to-grafana": "Import to Grafana rules"
+    },
+    "datasource-not-found": {
+      "remove-query": "Remove query",
+      "show-details": "Show details",
+      "this-datasource-has-been-removed": "This datasource has been removed",
+      "update-datasource": "Update datasource"
+    },
+    "declare-incident-button": {
+      "declare-incident": "Declare Incident"
+    },
+    "declare-incident-menu-item": {
+      "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
       "title": "Delete rule",
@@ -478,8 +752,16 @@
       "without-soft-delete": "Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
     },
     "deleted-rules": {
+      "delete-modal": {
+        "body": "Are you sure you want to permanently delete this alert rule? This action cannot be undone.",
+        "confirm": "Yes, permanently delete",
+        "error": "Could not permanently delete alert rule",
+        "success": "Alert rule permanently deleted",
+        "title": "Permanently delete alert rule"
+      },
       "empty-state-title": "No recently deleted rules found",
       "errorloading": "Failed to load alert deleted rules",
+      "permanently-delete": "Permanently delete",
       "restore": "Restore",
       "restore-deleted-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the deleted rule by editing the rule and saving it.",
       "restore-modal": {
@@ -507,11 +789,99 @@
       "group-deleting": "The group is being deleted",
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
+    "duplicate-message-template": {
+      "text-loading-notification-template": "Loading notification template",
+      "title-error-loading-notification-template": "Error loading notification template"
+    },
+    "edit-contact-point": {
+      "text-loading": "Loading...",
+      "title-failed-to-fetch-contact-point": "Failed to fetch contact point",
+      "title-receiver-not-found": "Receiver not found"
+    },
+    "edit-message-template": {
+      "text-loading-template": "Loading template...",
+      "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
+    },
+    "error-modal": {
+      "failed-to-update-your-configuration": "Failed to update your configuration:"
+    },
+    "error-summary-button": {
+      "error": "1 error"
+    },
+    "evaluation-behavior-summary": {
+      "evaluate": "Every {{every}}",
+      "label-evaluate": "Evaluate",
+      "label-evaluation-time": "Evaluation time",
+      "label-last-evaluation": "Last evaluation",
+      "label-metric": "Metric",
+      "label-pending-period": "Pending period"
+    },
+    "evaluation-group": {
+      "label-delete": "Delete",
+      "label-export": "Export",
+      "label-reorder-rules": "Re-order rules",
+      "text-provisioned": "Provisioned"
+    },
+    "evaluation-group-creation-modal": {
+      "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
+      "placeholder-enter-a-name": "Enter a name"
+    },
+    "evaluation-group-loader": {
+      "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
+    },
+    "evaluation-interval-limit-exceeded": {
+      "title-global-evaluation-interval-limit-exceeded": "Global evaluation interval limit exceeded"
+    },
+    "existing-rule-editor": {
+      "sorry-permission": "Sorry! You do not have permission to edit this rule.",
+      "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
+      "text-loading-rule": "Loading rule...",
+      "title-cannot-edit-rule": "Cannot edit rule",
+      "title-failed-to-load-rule": "Failed to load rule",
+      "title-rule-not-found": "Rule not found"
+    },
+    "existing-silence-editor": {
+      "text-loading-existing-silence-information": "Loading existing silence information..."
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
         "one-format": "Download the file or copy the contents to clipboard"
       }
+    },
+    "export-new-rule-button": {
+      "tooltip-export-new-grafana-rule": "Export new grafana rule"
+    },
+    "expression": {
+      "title-expression-failed": "Expression failed",
+      "title-expression-warning": "Expression warning"
+    },
+    "expression-editor": {
+      "preview-alerts": "Preview alerts",
+      "there-firing-alerts-query": "There are no firing alerts for your query.",
+      "title-alerts-preview": "Alerts preview"
+    },
+    "expression-preview": {
+      "title-expression-failed": "Expression failed"
+    },
+    "expression-result": {
+      "aria-label-nextpage": "next-page",
+      "aria-label-previouspage": "previous-page",
+      "no-data": "No data"
+    },
+    "federated-rule-warning": {
+      "read-documentation": "Read documentation",
+      "title-federated-group": "This rule is part of a federated rule group."
+    },
+    "file-export-preview": {
+      "copy-code": "Copy code",
+      "download": "Download"
+    },
+    "filter-view-results": {
+      "aria-label-filteredrulelist": "filtered-rule-list"
+    },
+    "folder-selector": {
+      "description-select-folder": "Select a folder to store your rule in."
     },
     "folderAndGroup": {
       "evaluation": {
@@ -523,6 +893,89 @@
         }
       }
     },
+    "generate-alert-data-modal": {
+      "add-alert-data": "Add alert data",
+      "add-alert-data-to-payload": "Add alert data to payload",
+      "review-alert-payload": " Review alert data to add to the payload:"
+    },
+    "get-preview-results": {
+      "title-error": "Error"
+    },
+    "getting-started": {
+      "condition-breached-alert-instance-fires": "If the condition is breached, an alert instance fires",
+      "get-started": "Get started",
+      "how-it-works": "How it works"
+    },
+    "global-config": {
+      "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
+    },
+    "global-config-alert": {
+      "title-global-config-for-contact-points": "Global config for contact points"
+    },
+    "global-config-form": {
+      "save-global-config": "Save global config",
+      "saving": "Saving...",
+      "title-error-saving-receiver": "Error saving receiver"
+    },
+    "grafana-alertmanager-delivery-warning": {
+      "title-grafana-alerts-delivered-alertmanager": "Grafana alerts are not delivered to Grafana Alertmanager",
+      "title-you-have-additional-alertmanagers-to-configure": "You have additional Alertmanagers to configure"
+    },
+    "grafana-common-channel-settings": {
+      "label-disable-resolved-message": "Disable resolved message"
+    },
+    "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "Default: 2",
+      "or": "or",
+      "text-configure-no-data-and-error-handling": "Configure no data and error handling",
+      "title-set-evaluation-behavior": "Set evaluation behavior"
+    },
+    "grafana-folder-and-labels-step": {
+      "title-add-folder-and-labels": "Add folder and labels"
+    },
+    "grafana-modify-export": {
+      "title-invalid-rule-id": "Invalid rule ID"
+    },
+    "grafana-mute-timing-exporter-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-mute-timings-exporter-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-policies-exporter-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-receiver-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-receiver-form": {
+      "text-loading-notifiers": "Loading notifiers...",
+      "title-loading-on-call-integration-failed": "Loading OnCall integration failed"
+    },
+    "grafana-receivers-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-rule-design-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-rule-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-rule-folder-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-rule-group-export-preview": {
+      "text-loading": "Loading...."
+    },
+    "grafana-rules": {
+      "export-all-grafana-rules-aria-label-export-all-grafana-rules": "export all grafana rules",
+      "export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules": "Export all Grafana-managed rules",
+      "no-rules-found": "No rules found.",
+      "tooltip-create-new-grafanamanaged-recording-rule": "Create new Grafana-managed recording rule"
+    },
+    "grafana-rules-export-preview": {
+      "text-loading": "Loading...."
+    },
     "group-actions": {
       "actions-trigger": "Rule group actions",
       "details": "Details",
@@ -531,6 +984,13 @@
     "group-actions-menu": {
       "group-load-failed": "Failed to load group details",
       "unknown-error": "Unknown error"
+    },
+    "group-and-namespace-fields": {
+      "group-picker-label-group": "Group",
+      "namespace-picker-label-namespace": "Namespace"
+    },
+    "group-by": {
+      "placeholder-group-by": "Group by"
     },
     "group-details": {
       "ds-features-error": "Error loading data source details",
@@ -574,6 +1034,69 @@
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
+    "home": {
+      "label-get-started": "Get started",
+      "label-insights": "Insights",
+      "title-alerting": "Alerting"
+    },
+    "import-from-dsrules": {
+      "description-folder-import-rules": "The folder to import the rules to"
+    },
+    "import-to-gma": {
+      "action-button": "Import",
+      "additional-settings": "Additional settings",
+      "alert-rules": "Alert rules",
+      "confirm-modal": {
+        "confirm": "Yes, import",
+        "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-title": "No rules to import",
+        "plugin-rules-warning": {
+          "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
+          "title": "Some rules are excluded from import"
+        },
+        "title": "Confirm import"
+      },
+      "datasource": {
+        "label": "Data source",
+        "required-message": "Please select a data source"
+      },
+      "error": "Failed to import alert rules: {{error}}",
+      "group": {
+        "description": "Type to search for an existing group",
+        "label": "Group"
+      },
+      "import-location-and-filters": "Import location and filters",
+      "namespace": {
+        "description": "Type to search for an existing namespace",
+        "label": "Namespace"
+      },
+      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
+      "pause": {
+        "label": "Pause imported alerting rules"
+      },
+      "pause-recording": {
+        "label": "Pause imported recording rules"
+      },
+      "recording-rules": "Recording rules",
+      "success": "Successfully imported alert rules to Grafana-managed rules.",
+      "target-folder": {
+        "label": "Target folder"
+      }
+    },
+    "insights-menu-button-renderer": {
+      "aria-label-rate-this-panel": "Rate this panel",
+      "menu": {
+        "label-explore": "Explore",
+        "label-rate-this-panel": "Rate this panel"
+      },
+      "modal": {
+        "i-like-it": "I like it",
+        "title-rate-this-panel": "Rate this panel"
+      }
+    },
+    "inspector-yaml-tab": {
+      "apply": "Apply"
+    },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
       "disabled-description": "Enable Grafana IRM to use this integration",
@@ -591,6 +1114,45 @@
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
     },
+    "key-value-map-input": {
+      "name": "Name",
+      "value": "Value"
+    },
+    "key-value-template-data-table": {
+      "arguments": "Arguments",
+      "keyvalue-methods": "Key-value methods",
+      "name": "Name",
+      "notes": "Notes",
+      "returns": "Returns"
+    },
+    "labels-editor-modal": {
+      "title-edit-labels": "Edit labels"
+    },
+    "labels-field": {
+      "labels": "Labels",
+      "title-labels": "Labels"
+    },
+    "labels-field-in-form": {
+      "add-labels": "Add labels",
+      "edit-labels": "Edit labels",
+      "labels": "Labels",
+      "no-labels-selected": "No labels selected",
+      "title-labels": "Labels"
+    },
+    "labels-sub-form": {
+      "save": "Save"
+    },
+    "labels-with-suggestions": {
+      "text-loading-existing-labels": "Loading existing labels"
+    },
+    "labels-without-suggestions": {
+      "placeholder-key": "key",
+      "placeholder-value": "value"
+    },
+    "link-to-contact-points": {
+      "aria-label-view-or-create-contact-points": "View or create contact points",
+      "view-or-create-contact-points": "View or create contact points"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -599,6 +1161,8 @@
         "new-recording-rule": "New recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
+      "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
+      "no-rules": "No rules found.",
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -609,12 +1173,58 @@
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
-        }
+        },
+        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_other": "Loading rules from {{count}} sources"
       }
+    },
+    "log-record-viewer-by-timestamp": {
+      "aria-label-state-history-by-timestamp": "State history by timestamp"
+    },
+    "loki-state-history": {
+      "clear-filters": "Clear filters",
+      "common-labels": "Common labels",
+      "loading": "Loading...",
+      "title-error-fetching-the-state-history": "Error fetching the state history"
     },
     "manage-permissions": {
       "button": "Manage permissions",
       "title": "Manage permissions"
+    },
+    "matcher-filter": {
+      "search-by-label": "Search by label",
+      "search-query-input-placeholder-search": "Search"
+    },
+    "matchers-field": {
+      "add-matcher": "Add matcher",
+      "aria-label-operator": "operator",
+      "aria-label-remove-matcher": "Remove matcher",
+      "label-alert-rule": "Alert rule",
+      "label-label": "Label",
+      "label-operator": "Operator",
+      "label-refine-affected-alerts": "Refine affected alerts",
+      "label-value": "Value",
+      "placeholder-label": "label",
+      "placeholder-value": "value",
+      "remove": "Remove",
+      "tooltip-refine-which-alert-instances-silenced-selecting": "Refine which alert instances are silenced by selecting label matchers"
+    },
+    "math-expression-viewer": {
+      "input": "Input"
+    },
+    "max-data-points-option": {
+      "label-max-data-points": "Max data points"
+    },
+    "migrate-to-gmabutton": {
+      "aria-label-new": "new"
+    },
+    "min-interval-option": {
+      "label-interval": "Interval"
+    },
+    "modify-export-rule-form": {
+      "action-buttons": {
+        "export": "Export"
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -622,19 +1232,120 @@
         "title": "Error loading mute timings"
       }
     },
+    "mute-timing-actions-buttons": {
+      "text-disabled": "Disabled",
+      "title-delete-mute-timing": "Delete mute timing"
+    },
+    "mute-timing-fields": {
+      "am-mute-timing-select-label-mute-timings": "Mute timings"
+    },
+    "mute-timing-form": {
+      "description-unique-timing": "A unique name for the mute timing",
+      "label-name": "Name",
+      "text-loading-mute-timing": "Loading mute timing",
+      "title-no-matching-mute-timing-found": "No matching mute timing found"
+    },
+    "mute-timing-time-interval": {
+      "add-another-time-interval": "Add another time interval",
+      "label-days-of-the-month": "Days of the month",
+      "label-days-of-the-week": "Days of the week",
+      "label-disable": "Disable",
+      "label-location": "Location",
+      "label-months": "Months",
+      "label-time-intervals": "Time intervals",
+      "label-years": "Years",
+      "mute-timing-days-placeholder-example": "Example: 1, 14:16, -1",
+      "mute-timing-months-placeholder-example-mayaugust-december": "Example: 1:3, may:august, december",
+      "mute-timing-years-placeholder-example": "Example: 2021:2022, 2030",
+      "remove-time-interval": "Remove time interval"
+    },
+    "mute-timing-time-range": {
+      "add-another-time-range": "Add another time range",
+      "label-end-time": "End time",
+      "label-start-time": "Start time",
+      "label-time-range": "Time range",
+      "mute-timing-ends-at-placeholder-hhmm": "HH:mm",
+      "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
+      "title-remove": "Remove",
+      "tooltip-remove-time-range": "Remove time range"
+    },
     "mute-timings": {
       "add-mute-timing": "Add mute timing",
       "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
       "save": "Save mute timing",
       "saving": "Saving mute timing"
     },
+    "mute-timings-selector": {
+      "aria-label-mute-timings": "Mute timings",
+      "placeholder-select-mute-timings": "Select mute timings..."
+    },
+    "mute-timings-table": {
+      "text-havent-created-timings": "You haven't created any mute timings yet",
+      "text-loading-mute-timings": "Loading mute timings...",
+      "text-no-mute-timings-configured": "No mute timings configured"
+    },
+    "namespace": {
+      "title-alert-rules": "Alert rules"
+    },
+    "namespace-and-group-filter": {
+      "select-group": "Select group",
+      "select-namespace": "Select namespace"
+    },
+    "need-help-info": {
+      "need-help": "Need help?"
+    },
+    "need-help-info-for-contactpoint": {
+      "title-notify-by-selecting-a-contact-point": "Notify by selecting a contact point"
+    },
+    "need-help-info-for-notification-policy": {
+      "title-notification-routing": "Notification routing"
+    },
+    "new-rule-from-panel-button": {
+      "new-alert-rule": "New alert rule",
+      "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "no-alert-managers-available": {
+      "title-no-alertmanager-found": "No Alertmanager found"
+    },
+    "notification-policies-filter": {
+      "label-search-by-contact-point": "Search by contact point",
+      "search-query-input-placeholder-search": "Search"
+    },
+    "notification-policies-list": {
+      "title-error-loading-alertmanager-config": "Error loading Alertmanager config",
+      "title-notification-policies-have-changed": "Notification policies have changed"
+    },
+    "notification-policy-matchers": {
+      "default-policy": "Default policy",
+      "no-matchers": "No matchers"
+    },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
       "preview-routing": "Preview routing",
+      "text-loading-preview": "Loading preview...",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+    },
+    "notification-preview-by-alert-manager": {
+      "text-loading-routing-preview": "Loading routing preview..."
+    },
+    "notification-route": {
+      "no-labels": "No labels",
+      "no-matching-labels": "No matching labels"
+    },
+    "notification-route-details-modal": {
+      "alert-instances-routed-follows": "Your alert instances are routed as follows.",
+      "close": "Close",
+      "default-policy": "Default policy",
+      "notification-policy-path": "Notification policy path",
+      "title-routing-details": "Routing details"
+    },
+    "notification-route-header": {
+      "aria-label-expand-policy-route": "Expand policy route",
+      "delivered-to": "@ Delivered to",
+      "see-details": "See details"
     },
     "notification-templates": {
       "duplicate": {
@@ -648,7 +1359,37 @@
       "new": {
         "subTitle": "Create a new group of notification templates",
         "title": "New notification template group"
-      }
+      },
+      "text-loading-notification-templates": "Loading notification templates",
+      "title-failed-to-fetch-notification-templates": "Failed to fetch notification templates"
+    },
+    "notification-templates-tab": {
+      "add-notification-template-group": "Add notification template group",
+      "create-notification-templates-customize-notifications": "Create notification templates to customize your notifications."
+    },
+    "notifications-step": {
+      "labels-better-manage-recording-rules": "Add labels to help you better manage your recording rules.",
+      "recipient": "Recipient"
+    },
+    "option-customfield": {
+      "label-custom-template": "Custom template"
+    },
+    "other-alert-managers-available": {
+      "title-selected-alertmanager-not-found": "Selected Alertmanager not found."
+    },
+    "panel-alert-tab-content": {
+      "alert": {
+        "title-errors-loading-rules": "Errors loading rules"
+      },
+      "text-loading-rules": "Loading rules...",
+      "title-dashboard-not-saved": "Dashboard not saved"
+    },
+    "payload-editor": {
+      "edit-payload": "Edit payload",
+      "label-add-custom-alert-instance": "Add custom alert instance",
+      "label-payload": "Payload",
+      "label-use-existing-alert-instances": "Use existing alert instances",
+      "reference": "Reference"
     },
     "policies": {
       "default-policy": {
@@ -711,9 +1452,56 @@
         "title": "Error saving notification policy"
       }
     },
+    "policy": {
+      "label-new-child-policy": "New child policy",
+      "label-new-sibling-above": "New sibling above",
+      "label-new-sibling-below": "New sibling below"
+    },
+    "policy-path": {
+      "default-policy": "Default policy",
+      "no-matchers": "No matchers"
+    },
+    "preview-rule": {
+      "preview-alerts": "Preview alerts",
+      "title-preview-is-not-available": "Preview is not available"
+    },
+    "preview-rule-result": {
+      "loading-preview": "Loading preview..."
+    },
+    "preview-summary": {
+      "no-series": "No series"
+    },
+    "prom-duration-docs": {
+      "example": "Example",
+      "multiple-units-combined": "Multiple units combined",
+      "symbol": "Symbol",
+      "time-unit": "Time unit"
+    },
+    "prometheus-consistency-check": {
+      "title-unable-to-check-the-rule-status": "Unable to check the rule status"
+    },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
+    },
+    "provisioning-badge": {
+      "badge": {
+        "text-provisioned": "Provisioned"
+      }
+    },
+    "query-and-expressions-step": {
+      "add-query": "Add query",
+      "expressions": "Expressions",
+      "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
+      "title-deactivate-advanced-options": "Deactivate advanced options",
+      "title-queries-expressions-configured": "No queries or expressions have been configured"
+    },
+    "query-box": {
+      "text-alert-condition": "Alert condition",
+      "view-in-explore": "View in Explore"
+    },
+    "query-options": {
+      "label-time-range": "Time Range"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -722,9 +1510,93 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "receiver-form": {
+      "add-contact-point-integration": "Add contact point integration",
+      "label-name": "Name",
+      "name-placeholder-name": "Name",
+      "save-contact-point": "Save contact point",
+      "saving": "Saving...",
+      "title-attention": "Attention",
+      "title-manage-contact-point-permissions": "Manage contact point permissions"
+    },
+    "receivers-section": {
+      "new-menu": {
+        "label-export-all": "Export all"
+      }
+    },
     "recording-rules": {
-      "description-target-data-source": "The Prometheus data source to store the recording rule in",
+      "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source"
+    },
+    "recording-rules-name-space-and-group-step": {
+      "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule."
+    },
+    "redirect-to-clone-rule": {
+      "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
+    },
+    "redirect-to-rule-viewer": {
+      "text-loading-rule": "Loading rule...",
+      "title-could-not-view-rule": "Could not view rule"
+    },
+    "reduce-condition-viewer": {
+      "function": "Function",
+      "input": "Input",
+      "mode": "Mode"
+    },
+    "remove-button": {
+      "aria-label-delete-label": "delete label"
+    },
+    "resample-expression-viewer": {
+      "downsample": "Downsample",
+      "input": "Input",
+      "resample-to": "Resample to",
+      "upsample": "Upsample"
+    },
+    "routing": {
+      "routing": "Routing"
+    },
+    "routing-settings": {
+      "aria-label-group-by": "Group by",
+      "label-group-by": "Group by",
+      "label-override-grouping": "Override grouping",
+      "label-override-timings": "Override timings"
+    },
+    "rule-actions-buttons": {
+      "title-edit": "Edit",
+      "title-view": "View"
+    },
+    "rule-details": {
+      "keep-firing-for": "Keep firing for",
+      "label-instances": "Instances",
+      "label-labels": "Labels",
+      "last-evaluation-ago": "{{time}} ago"
+    },
+    "rule-details-buttons": {
+      "go-to-dashboard": "Go to dashboard",
+      "go-to-panel": "Go to panel",
+      "see-graph": "See graph",
+      "show-state-history": "Show state history",
+      "view-runbook": "View runbook"
+    },
+    "rule-details-data-sources": {
+      "label-data-source": "Data source"
+    },
+    "rule-details-expression": {
+      "label-expression": "Expression"
+    },
+    "rule-details-federated-sources": {
+      "label-tenant-sources": "Tenant sources"
+    },
+    "rule-editor": {
+      "get-content": {
+        "sorry-allowed-create-rules": "Sorry! You are not allowed to create rules.",
+        "sorry-allowed-rules": "Sorry! You are not allowed to edit rules.",
+        "title-cannot-create-rules": "Cannot create rules",
+        "title-cannot-edit-rules": "Cannot edit rules"
+      }
+    },
+    "rule-editor-section": {
+      "label-advanced-options": "Advanced options"
     },
     "rule-form": {
       "annotations": {
@@ -753,7 +1625,18 @@
           "text": "Define how the alert rule is evaluated."
         },
         "info-help": {
+          "content": "These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.",
+          "link-text": "Read more about this option",
+          "link-title": "Configure no data and error handling",
           "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        },
+        "info-help2": {
+          "link-text": "Read about evaluation and alert states",
+          "link-title": "Alert rule evaluation"
+        },
+        "keep-firing-for": {
+          "label-description": "Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting \"None\" means the alert will be back to normal immediately.",
+          "label-text": "Keep firing for"
         },
         "pending-period": "Pending period"
       },
@@ -765,14 +1648,7 @@
         "validation": "Pending period must be greater than or equal to the evaluation interval."
       },
       "folder": {
-        "cancel": "Cancel",
-        "create": "Create",
-        "create-folder": "Create a new folder to store your alert rule in.",
-        "creating-new-folder": "Creating new folder",
-        "label": "Folder",
-        "name": "Folder name",
-        "new-folder": "New folder",
-        "new-folder-or": "or"
+        "label": "Folder"
       },
       "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
@@ -827,6 +1703,12 @@
         "success": "Successfully updated rule group"
       }
     },
+    "rule-health": {
+      "error": "error"
+    },
+    "rule-inspector": {
+      "title-inspect-alert-rule": "Inspect Alert rule"
+    },
     "rule-list": {
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
@@ -837,6 +1719,10 @@
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
+      "import-to-gma": {
+        "new-badge": "New!",
+        "text": "Import to Grafana-managed rules"
       },
       "more": "More",
       "new-alert-rule": "New alert rule",
@@ -853,11 +1739,33 @@
       "rulerrule-loading-error": "Failed to load the rule",
       "unknown-rule-type": "Unknown rule type"
     },
+    "rule-list-errors": {
+      "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules"
+    },
+    "rule-modify-export": {
+      "text-loading-the-rule": "Loading the rule...",
+      "title-cannot-exist": "Cannot load the rule. The rule does not exist",
+      "title-cannot-load-modify-export": "Cannot load modify export",
+      "title-grafanamanaged-alert": "This rule is not a Grafana-managed alert rule",
+      "title-unknown-error": "Unknown error"
+    },
     "rule-state": {
       "creating": "Creating",
       "deleting": "Deleting",
+      "na": "n/a",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-stats": {
+      "error_one": "{{count}} error",
+      "error_other": "{{count}} errors",
+      "firing": "{{alertingStats}} firing",
+      "inactive": "{{normalStats}} normal",
+      "nodata": "{{nodataStats}} no data",
+      "paused": "{{normalStats}} normal ({{pausedStats}} paused)",
+      "pending": "{{pendingStats}} pending",
+      "recording": "{{recordingStats}} recording",
+      "recovering": "{{recoveringStats}} recovering"
     },
     "rule-view": {
       "query": {
@@ -872,7 +1780,8 @@
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
-      }
+      },
+      "title-something-wrong-evaluating-alert": "Something went wrong when evaluating this alert rule"
     },
     "rules": {
       "add-rule": {
@@ -891,6 +1800,31 @@
         "success": "Rule updated successfully"
       }
     },
+    "rules-filter": {
+      "clear-filters": "Clear filters",
+      "dashboard": "Dashboard",
+      "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
+      "filter-options": {
+        "aria-label-show-filters": "Show filters"
+      },
+      "health": "Health",
+      "placeholder-all-data-sources": "All data sources",
+      "plugin-rules": "Plugin rules",
+      "rule-type": "Rule type",
+      "rulesSearchInput-placeholder-search": "Search",
+      "search": "Search",
+      "search-by-data-sources": "Search by data sources",
+      "state": "State",
+      "title-search-help": "Search help",
+      "view-as": "View as"
+    },
+    "rules-group": {
+      "text-federated": "Federated",
+      "text-provisioned": "Provisioned"
+    },
+    "saved-searches": {
+      "text-default": "Default"
+    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -904,13 +1838,134 @@
       },
       "save-query": "Save current search"
     },
+    "search-field-input": {
+      "clear": "Clear",
+      "filter-instances": "Filter instances",
+      "instancesSearchInput-placeholder-filter-instances": "Filter instances"
+    },
+    "search-query-help": {
+      "expression": "Expression",
+      "filter-type": "Filter type",
+      "title-contact-point": "Contact point",
+      "title-dashboard-uid": "Dashboard UID",
+      "title-datasources": "Datasources",
+      "title-folder-namespace": "Folder/Namespace",
+      "title-group": "Group",
+      "title-health": "Health",
+      "title-labels": "Labels",
+      "title-rule": "Rule",
+      "title-state": "State",
+      "title-type": "Type"
+    },
+    "settings-content": {
+      "add-new-alertmanager": "Add new Alertmanager",
+      "builtin-alertmanager": "Built-in Alertmanager",
+      "other-alertmanagers": "Other Alertmanagers",
+      "title-alerting-settings": "Alerting settings"
+    },
+    "silence-details": {
+      "affected-alerts": "Affected alerts",
+      "comment": "Comment",
+      "created-by": "Created by",
+      "duration": "Duration",
+      "schedule": "Schedule"
+    },
+    "silence-grafana-rule-drawer": {
+      "title-silence-alert-rule": "Silence alert rule"
+    },
+    "silence-period": {
+      "label-silence-start-and-end": "Silence start and end"
+    },
+    "silenced-instances-preview": {
+      "no-firing-alert-instances-found": "No firing alert instances found",
+      "text-loading-affected-alert-rule-instances": "Loading affected alert rule instances...",
+      "title-preview-not-available": "Preview not available",
+      "valid-matcher-affected-alerts": "Add a valid matcher to see affected alerts"
+    },
     "silences": {
       "affected-instances": "Affected alert instances",
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
+    "silences-editor": {
+      "comment-placeholder-details-about-the-silence": "Details about the silence",
+      "label-comment": "Comment",
+      "label-created-by": "Created By",
+      "label-duration": "Duration",
+      "placeholder-whos-creating-the-silence": "Who's creating the silence",
+      "save-silence": "Save silence",
+      "saving": "Saving..."
+    },
+    "silences-filter": {
+      "search-query-input-placeholder-search": "Search"
+    },
+    "silences-table": {
+      "text-loading-silences": "Loading silences...",
+      "title-error-loading-silences": "Error loading silences",
+      "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
+    },
+    "simple-condition-editor": {
+      "label-when": "WHEN"
+    },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "smart-alert-type-detector": {
+      "data-sourcemanaged-alert-rules": "Data source-managed alert rules",
+      "grafanamanaged-alert-rules": "Grafana-managed alert rules",
+      "rule-type": "Rule type",
+      "select-where-alert-managed": "Select where the alert rule will be managed.",
+      "title-alert-rule-types": "Alert rule types"
+    },
+    "state-history": {
+      "filter-group": "Filter group",
+      "placeholder-search": "Search"
+    },
+    "string-array-input": {
+      "add": "Add",
+      "tooltip-delete": "delete"
+    },
+    "subform-array-field": {
+      "add": "Add",
+      "tooltip-delete": "delete"
+    },
+    "subform-field": {
+      "add": "Add",
+      "tooltip-delete": "delete"
+    },
+    "template-content-and-preview": {
+      "label-preview-with-the-default-payload": "Preview with the default payload",
+      "label-template-content": "Template content"
+    },
+    "template-data-table": {
+      "name": "Name",
+      "notes": "Notes",
+      "type": "Type"
+    },
+    "template-form": {
+      "aria-label-template-form": "Template form",
+      "label-template-group": "Template group",
+      "label-template-group-name": "Template group name",
+      "new-template-name-placeholder-give-your-template-group-a-name": "Give your template group a name",
+      "title-error-saving-template": "Error saving template",
+      "title-templating-cheat-sheet": "Templating cheat sheet"
+    },
+    "template-preview": {
+      "aria-label-refresh-preview": "Refresh preview",
+      "label-preview": "Preview",
+      "refresh": "Refresh"
+    },
+    "template-row": {
+      "tooltip-copy-template-group": "Copy template group",
+      "tooltip-delete-template-group": "Delete template group",
+      "tooltip-edit-template-group": "Edit template group",
+      "tooltip-view-template": "view template"
+    },
+    "template-selector": {
+      "error-loading-templates": "Error loading templates",
+      "existing-templates-selector-aria-label-choose-notification-template": "Choose notification template",
+      "existing-templates-selector-placeholder-choose-notification-template": "Choose notification template",
+      "loading": "Loading..."
     },
     "templates": {
       "editor": {
@@ -925,8 +1980,91 @@
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     },
+    "templates-table": {
+      "actions": "Actions",
+      "no-templates-defined": "No templates defined.",
+      "template-group": "Template group",
+      "title-delete-template-group": "Delete template group"
+    },
+    "test-contact-point-modal": {
+      "notification-message": "Notification message",
+      "send-test-notification": "Send test notification"
+    },
     "threshold": {
       "to": "TO"
+    },
+    "threshold-expression-viewer": {
+      "input": "Input",
+      "stop-alerting-when": "Stop alerting when "
+    },
+    "timeseries-row": {
+      "time-series-data": "Time series data",
+      "timestamp": "Timestamp",
+      "value": "Value"
+    },
+    "to-gma": {
+      "confirm-modal": {
+        "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
+        "summary": "These are the list of rules that will be imported:",
+        "title-warning": "Warning"
+      }
+    },
+    "unused-contact-point-badge": {
+      "aria-label-unused": "unused",
+      "text-unused": "Unused"
+    },
+    "use-add-policy-modal": {
+      "modal-element": {
+        "title-add-notification-policy": "Add notification policy"
+      }
+    },
+    "use-columns": {
+      "title-edit": "Edit",
+      "title-recreate": "Recreate",
+      "title-unsilence": "Unsilence"
+    },
+    "use-create-dropdown-menu-actions": {
+      "label-delete": "Delete",
+      "label-edit": "Edit",
+      "label-export": "Export"
+    },
+    "use-delete-contact-point-modal": {
+      "modal-element": {
+        "delete-contact-point": "Are you sure you want to delete this contact point?",
+        "deleting-contact-point-permanently-remove": "Deleting this contact point will permanently remove it.",
+        "title-delete-contact-point": "Delete contact point"
+      }
+    },
+    "use-delete-policy-modal": {
+      "modal-element": {
+        "title-delete-notification-policy": "Delete notification policy"
+      }
+    },
+    "use-edit-configuration-drawer": {
+      "drawer": {
+        "label-json-model": "JSON Model",
+        "label-versions": "Versions"
+      }
+    },
+    "use-edit-policy-modal": {
+      "modal-element": {
+        "title-edit-notification-policy": "Edit notification policy"
+      }
+    },
+    "use-state-history-modal": {
+      "state-history-modal": {
+        "title-state-history": "State history"
+      }
+    },
+    "viz-wrapper": {
+      "table": "Table"
+    },
+    "welcome-header": {
+      "description-configure-firing-alert-instances-routed-contact": "Configure how firing alert instances are routed to contact points",
+      "description-configure-receives-notifications": "Configure who receives notifications and how they are sent",
+      "title-alert-rules": "Alert rules",
+      "title-contact-points": "Contact points",
+      "title-notification-policies": "Notification policies"
     }
   },
   "annotations": {
@@ -1161,6 +2299,9 @@
       "success": "Copied"
     }
   },
+  "close-button": {
+    "tooltip": "Close"
+  },
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -1371,6 +2512,10 @@
     "actions": {
       "open-settings": "Settings"
     },
+    "add-library-panel-widget": {
+      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
+      "tooltip-close-widget": "Close widget"
+    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -1380,6 +2525,29 @@
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
+    },
+    "annotation-settings-edit": {
+      "apply": "Apply",
+      "delete": "Delete",
+      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
+      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "label-color": "Color",
+      "label-data-source": "Data source",
+      "label-enabled": "Enabled",
+      "label-hidden": "Hidden",
+      "label-name": "Name",
+      "label-show-in": "Show in",
+      "placeholder-choose-panels": "Choose panels",
+      "preview-in-dashboard": "Preview in dashboard",
+      "query": "Query",
+      "title-annotation-support-source": "No annotation support for this data source"
+    },
+    "annotation-settings-list": {
+      "data-source": "Data source",
+      "new-query": "New query",
+      "query-name": "Query name",
+      "tooltip-move-down": "Move down",
+      "tooltip-move-up": "Move up"
     },
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
@@ -1417,47 +2585,97 @@
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
       "new-row": "New row",
-      "new-tab": "New tab"
+      "new-tab": "New tab",
+      "paste-row": "Paste row",
+      "paste-tab": "Paste tab",
+      "un-group-panels": "Ungroup"
     },
     "conditional-rendering": {
-      "data": {
-        "disable": "Disable",
-        "enable": "Enable",
-        "label": "Data"
-      },
-      "group": {
-        "add": {
-          "button": "Add condition based on",
-          "data": "Data",
-          "interval": "Interval",
-          "variable": "Variable value"
+      "conditions": {
+        "data": {
+          "disable": "No data",
+          "enable": "Has data",
+          "info": "Show or hide the {{type}} based on query results.",
+          "label": "Query result"
         },
-        "condition": {
-          "label": "Evaluate conditions",
-          "meet-all": "Meet all",
-          "meet-any": "Meet any"
+        "group": {
+          "add": {
+            "button": "Add rule",
+            "data": "Query result",
+            "time-range-size": "Time range less than",
+            "variable": "Template variable"
+          },
+          "condition": {
+            "all": "Match all (AND)",
+            "any": "Match any (OR)",
+            "label": "Match rules"
+          },
+          "label": "Group",
+          "visibility": {
+            "hide": "Hide",
+            "label": "{{type}} visibility",
+            "show": "Show"
+          }
         },
-        "label": "Group"
-      },
-      "interval": {
-        "input-label": "Value",
-        "invalid-message": "Invalid interval",
-        "label": "Time range interval"
-      },
-      "shared": {
-        "delete-condition": "Delete Condition"
-      },
-      "title": "Conditional rendering options",
-      "variable": {
-        "label": "Variable",
-        "operator": {
-          "equals": "Equals",
-          "not-equal": "Not equal"
+        "shared": {
+          "delete-condition": "Delete Condition",
+          "unsupported-item-type": "This condition is not supported by the element, hence it will be ignored."
         },
-        "select-operator": "Operator",
-        "select-variable": "Select variable",
-        "value-input": "Value"
+        "time-range-size": {
+          "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
+          "invalid-message": "Invalid interval",
+          "label": "Time range less than",
+          "values": {
+            "days": "{{value}} days",
+            "hour": "{{value}} hour",
+            "hours": "{{value}} hours",
+            "minutes": "{{value}} minutes",
+            "months": "{{value}} months",
+            "year": "{{value}} year",
+            "years": "{{value}} years"
+          }
+        },
+        "variable": {
+          "info": "Show or hide the {{type}} dynamically based on the variable value.",
+          "label": "Template variable",
+          "name": "Name",
+          "operator": {
+            "equals": "Equals",
+            "not-equals": "Not equals"
+          },
+          "value": "Value"
+        }
+      },
+      "overlay": {
+        "tooltip": "Element is hidden due to conditional rendering."
+      },
+      "root": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
+        "title": "Show / hide rules"
       }
+    },
+    "confirm-plugin-dashboard-save-modal": {
+      "cancel": "Cancel",
+      "overwrite": "Overwrite",
+      "title-plugin-dashboard": "Plugin dashboard"
+    },
+    "dash-nav": {
+      "render-left-actions": {
+        "text-public": "Public"
+      }
+    },
+    "dashboard-loading": {
+      "cancel-loading-dashboard": "Cancel loading dashboard"
+    },
+    "dashboard-settings": {
+      "actions": {
+        "close": "Close"
+      }
+    },
+    "dashboard-validation": {
+      "title-checking-dashboard-validity": "Checking dashboard validity",
+      "title-dashboard-failed-schema-validation": "Dashboard failed schema validation",
+      "title-error-checking-dashboard-validity": "Error checking dashboard validity"
     },
     "default-layout": {
       "description": "Position and size each panel individually",
@@ -1513,30 +2731,12 @@
         "title": "Row options"
       }
     },
+    "dynamic-config-value-editor": {
+      "render-label": {
+        "tooltip-remove-property": "Remove property"
+      }
+    },
     "edit-pane": {
-      "add": {
-        "lib-panel": {
-          "heading": "Library panel",
-          "title": "Library panels allow you share and reuse panels between dashboards"
-        },
-        "panel": {
-          "heading": "Panel",
-          "title": "A container for visualizations and other content"
-        },
-        "paste-panel": {
-          "heading": "Paste panel",
-          "title": "Paste a panel from the clipboard"
-        },
-        "row": {
-          "heading": "Row",
-          "title": "A group of panels with an optional header"
-        },
-        "tab": {
-          "heading": "Tab",
-          "title": "Break up your dashboard into different horizontal tabs"
-        },
-        "title": "Add element"
-      },
       "elements": {
         "dashboard": "Dashboard",
         "objects": "Objects",
@@ -1568,6 +2768,24 @@
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
+    },
+    "gen-aihistory": {
+      "aria-label-send-custom-feedback": "Send custom feedback",
+      "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
+    },
+    "get-field-override-categories": {
+      "label-add-field-override": "Add field override",
+      "label-add-override-property": "Add override property"
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Copy to clipboard",
+      "label-obfuscate-data": "Obfuscate data",
+      "label-support-snapshot": "Support snapshot",
+      "label-template": "Template",
+      "randomize-field-names-label-field-names": "Field names",
+      "randomize-labels-label-labels": "Labels",
+      "randomize-string-values-label-string-values": "String values",
+      "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard"
     },
     "inspect": {
       "data-tab": "Data",
@@ -1627,17 +2845,33 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "grid": "Grid",
-        "layout": "Layout"
+        "group-layout": "Group layout",
+        "group-layout-disabled": "No groups exists on this level",
+        "panel-layout": "Panel layout",
+        "panel-layout-disabled": "Select a row or tab to change panel layout options"
       }
     },
+    "make-editable": {
+      "dashboard-not-editable": "Dashboard not editable",
+      "make-editable": "Make editable"
+    },
+    "minimalistic-pagination": {
+      "tooltip-next": "Next",
+      "tooltip-previous": "Previous"
+    },
     "new-panel": {
-      "configure-button": "Configure panel"
+      "configure-button": "Configure",
+      "configure-button-menu": "Toggle menu",
+      "menu-open-panel-editor": "Configure",
+      "menu-use-library-panel": "Use library panel"
     },
     "new-panel-title": "New panel",
     "options": {
       "description": "Description",
       "title-option": "Title"
+    },
+    "options-pane-options": {
+      "Recent options-title-recent-options": "Recent options"
     },
     "outline": {
       "tree": {
@@ -1646,11 +2880,60 @@
         }
       }
     },
+    "override-category-title": {
+      "aria-label-remove-override": "Remove override",
+      "tooltip-remove-override": "Remove override"
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
-      }
+      },
+      "only-overrides-button-tooltip": "Show only overrides",
+      "placeholder-search-options": "Search options",
+      "visualization-button-label": "Visualization",
+      "visualization-button-tooltip": "Search options"
+    },
+    "panel-editor-table-view": {
+      "title-raw-data": "Raw data"
+    },
+    "panel-editor-unconnected": {
+      "editor-actions": {
+        "apply": "Apply",
+        "discard": "Discard",
+        "save": "Save",
+        "save-library-panel": "Save library panel",
+        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
+        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
+        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
+        "title-undo-all-changes": "Undo all changes"
+      },
+      "table-view-label-table-view": "Table view",
+      "unlink": "Unlink"
+    },
+    "panel-links": {
+      "aria-label-panel-links": "Panel links"
+    },
+    "panel-not-supported": {
+      "go-back-to-queries": "Go back to Queries"
+    },
+    "public-dashboard-not-available": {
+      "try-again-later": "Try again later"
+    },
+    "revert-dashboard-modal": {
+      "title-restore-version": "Restore version"
+    },
+    "row-options-button": {
+      "aria-label-row-options": "Row options"
+    },
+    "row-options-form": {
+      "cancel": "Cancel",
+      "label-repeat-for": "Repeat for",
+      "label-title": "Title",
+      "update": "Update"
+    },
+    "row-options-modal": {
+      "title-row-options": "Row options"
     },
     "rows-layout": {
       "description": "Collapsable panel groups with headings",
@@ -1678,8 +2961,53 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
+      },
+      "row-warning": {
+        "title-not-unique": "This title is not unique"
       }
+    },
+    "save-dashboard-as-button": {
+      "save-as": "Save as"
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-button": "Save dashboard button",
+      "aria-label-save-dashboard-description-field": "Save dashboard description field",
+      "aria-label-save-dashboard-title-field": "Save dashboard title field",
+      "cancel": "Cancel",
+      "description": "Description",
+      "label-copy-tags": "Copy tags",
+      "label-folder": "Folder",
+      "title": "Title"
+    },
+    "save-dashboard-button": {
+      "save-dashboard": "Save dashboard"
+    },
+    "save-dashboard-diff": {
+      "full-json-diff": "Full JSON diff",
+      "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON"
+    },
+    "save-dashboard-error-proxy": {
+      "title-conflict": "Conflict"
+    },
+    "save-dashboard-form": {
+      "cancel": "Cancel",
+      "label-current-range-dashboard-default": "Save current time range as dashboard default",
+      "label-current-variable-values-dashboard-default": "Save current variable values as dashboard default",
+      "no-changes-to-save": "No changes to save",
+      "placeholder-describe-changes": "Add a note to describe your changes."
+    },
+    "save-provisioned-dashboard-form": {
+      "cancel": "Cancel",
+      "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "save-json-to-file": "Save JSON to file"
+    },
+    "solo-panel": {
+      "loading-initializing-dashboard": "Loading & initializing dashboard"
+    },
+    "sub-menu-un-connected": {
+      "aria-label-template-variables": "Template variables"
     },
     "tabs-layout": {
       "description": "Organize panels into horizontal tabs",
@@ -1688,13 +3016,26 @@
         "new": "New tab"
       },
       "tab-options": {
+        "title-not-unique": "Title should be unique",
         "title-option": "Title"
+      },
+      "tab-warning": {
+        "title-not-unique": "This title is not unique"
       }
     },
     "toolbar": {
       "add": "Add",
       "add-new": {
-        "tooltip": "Add panels and other elements"
+        "button": {
+          "label": "Add",
+          "tooltip": "Add panels and other elements"
+        },
+        "menu": {
+          "lib-panel": "Library panel",
+          "panel": "Panel",
+          "row": "Row",
+          "tab": "Tab"
+        }
       },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
@@ -1802,15 +3143,81 @@
         "tooltip": "Share dashboard"
       },
       "share-button": "Share",
-      "switch-old-dashboard": "Switch to old dashboard page",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
+    },
+    "transformation-editor": {
+      "input-data": "Input data",
+      "output-data": "Output data",
+      "title-debug-transformation": "Debug transformation"
+    },
+    "transformation-filter": {
+      "label-apply-transformation-to": "Apply transformation to"
+    },
+    "transformation-operation-row": {
+      "render-actions": {
+        "title-debug": "Debug",
+        "title-disable-transformation": "Disable transformation",
+        "title-filter": "Filter",
+        "title-remove": "Remove",
+        "title-show-transform-help": "Show transform help"
+      }
+    },
+    "transformation-picker": {
+      "placeholder-search-for-transformation": "Search for transformation",
+      "read-more": "Read more",
+      "title-transformations": "Transformations"
+    },
+    "transformation-picker-ng": {
+      "placeholder-search-for-transformation": "Search for transformation",
+      "show-images": "Show images",
+      "title-add-another-transformation": "Add another transformation"
+    },
+    "un-themed-transformations-editor": {
+      "actions": {
+        "add-another-transformation": "Add another transformation"
+      },
+      "delete-all-transformations": "Delete all transformations",
+      "title-delete-all-transformations": "Delete all transformations?",
+      "tooltip-clear-search": "Clear search",
+      "tooltip-close-picker": "Close picker"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Cancel",
+      "changes": "Do you want to save your changes?",
+      "discard": "Discard",
+      "title-unsaved-changes": "Unsaved changes"
+    },
+    "unthemed-dashboard-row": {
+      "aria-label-delete-row": "Delete row",
+      "learn-more": "Learn more"
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": "View JSON diff"
+    },
+    "version-history-table": {
+      "date": "Date",
+      "notes": "Notes",
+      "restore": "Restore",
+      "updated-by": "Updated by",
+      "version": "Version"
+    },
+    "view-json-modal": {
+      "title-json": "JSON"
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Change visualization",
+      "tooltip-click-to-change-visualization": "Click to change visualization"
+    },
+    "visualization-select-pane": {
+      "placeholder-search-for": "Search for...",
+      "title-close": "Close"
     },
     "viz-panel": {
       "options": {
@@ -1902,9 +3309,6 @@
     "custom-variable-form": {
       "custom-options": "Custom options",
       "selection-options": "Selection options"
-    },
-    "dashboard-add-pane": {
-      "aria-label-close-add-pane": "Close add pane"
     },
     "dashboard-edit-pane-renderer": {
       "outline": "Outline"
@@ -2019,9 +3423,6 @@
     },
     "panel-inspect-renderer": {
       "title-panel-plugin-not-loaded": "Panel plugin not loaded"
-    },
-    "panel-options-pane": {
-      "placeholder-search-options": "Search options"
     },
     "panel-viz-type-picker": {
       "placeholder-search-for": "Search for...",
@@ -2285,11 +3686,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Open JSON editor",
-      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
-      "angular-deprecation-heading": "Panel options"
-    },
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
@@ -2945,10 +4341,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders"
+    "clear-folder-button": "Clear folders",
+    "select-aria-label": "Folder filter",
+    "select-placeholder": "Filter by folder"
   },
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
+    "input-placeholder": "Press enter to confirm new folder",
     "loading": "Loading folders..."
   },
   "folder-repo": {
@@ -2957,18 +4356,25 @@
   "forgot-password": {
     "back-button": "Back to login",
     "change-password": {
+      "confirm-label": "Confirm new password",
+      "default-password-alert": "Continuing to use the default password exposes you to security risks.",
+      "new-password-label": "New password",
       "skip-button": "Skip",
       "submit-button": "Submit"
     },
     "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
     "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
     "reset-password-header": "Reset password",
-    "send-email-button": "Send reset email"
+    "send-email-button": "Send reset email",
+    "user-field-description": "Enter your information to get a reset link sent to you",
+    "user-field-label": "User",
+    "user-field-placeholder": "Email or username"
   },
   "form-prompt": {
     "continue-button": "Continue editing",
     "description": "Changes that you made may not be saved.",
-    "discard-button": "Discard unsaved changes"
+    "discard-button": "Discard unsaved changes",
+    "title": "Leave page?"
   },
   "frontendtests": {
     "test-key": "test-key not found"
@@ -3238,6 +4644,7 @@
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
+      "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
       "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
@@ -3247,8 +4654,10 @@
       "filter-popup-cancel": "Cancel",
       "filter-popup-clear": "Clear filter",
       "filter-popup-heading": "Filter by values:",
+      "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
+      "inspect-menu-label": "Inspect value",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
@@ -3389,6 +4798,16 @@
       "placeholder-password": "Password",
       "placeholder-username": "Username",
       "sign-up": "Sign up"
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "Drag and drop to reorder",
+      "duplicate-tooltip": "Duplicate",
+      "remove-tooltip": "Remove"
+    },
+    "layer-name": {
+      "edit-layer-title": "Edit layer name"
     }
   },
   "ldap-drawer": {
@@ -3649,10 +5068,10 @@
       "email-placeholder": "email",
       "email-required": "Email is required",
       "name-label": "Name",
-      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
+      "passwordless-username-label": "Username",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
@@ -3734,6 +5153,31 @@
       "disable-popover-message": {
         "shortcut": "alt+select to enable again"
       }
+    },
+    "logs-controls": {
+      "deduplication": "Deduplication",
+      "disable-highlighting": "Disable highlighting",
+      "disable-prettify-json": "Collapse JSON logs",
+      "display-level": "Display levels",
+      "display-level-all": "All levels",
+      "download": "Download logs",
+      "download-logs": {
+        "csv": "csv",
+        "json": "json",
+        "txt": "txt"
+      },
+      "enable-highlighting": "Enable highlighting",
+      "hide-timestamps": "Hide timestamps",
+      "hide-unique-labels": "Hide unique labels",
+      "newest-first": "Newest logs first",
+      "oldest-first": "Oldest logs first",
+      "prettify-json": "Expand JSON logs",
+      "scroll-bottom": "Scroll to bottom",
+      "scroll-top": "Scroll to top",
+      "show-timestamps": "Show timestamps",
+      "show-unique-labels": "Show unique labels",
+      "unwrap-lines": "Unwrap lines",
+      "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
       "newer-logs": "Newer logs",
@@ -3892,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Error cancelling creating snapshot",
+      "create-snapshot-error-duplicate-resource-type": "Duplicate resource type. See the Grafana server logs for more details",
+      "create-snapshot-error-empty-resource-types": "You need to provide at least one resource type for snapshot creation",
+      "create-snapshot-error-missing-dependency": "Missing dependency. See the Grafana server logs for more details",
       "create-snapshot-error-title": "Error creating snapshot",
+      "create-snapshot-error-unknown-resource-type": "Unknown resource type. See the Grafana server logs for more details",
       "disconnect-error-title": "Error disconnecting",
       "error-see-server-logs": "See the Grafana server logs for more details",
       "get-session-error-title": "Error loading migration configuration",
@@ -3989,6 +5437,7 @@
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
+      "show-errors": "Only view errors",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
@@ -3998,7 +5447,7 @@
       "upload-migration": "Upload snapshot"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack. <2>Learn about migrating other settings.</2>"
+      "text": "Resources are copied to your Grafana Cloud stack. <2>Learn more</2> about the full set of supported resources and migrating other settings."
     },
     "token-status": {
       "active": "Token created and active",
@@ -4375,6 +5824,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": "Breadcrumbs"
+    },
+    "help": {
+      "aria-label": "Help"
+    },
     "invite-user": {
       "invite-button": "Invite",
       "invite-tooltip": "Invite new member"
@@ -4393,12 +5848,26 @@
       "open": "Open menu",
       "undock": "Undock menu"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "Collapse section: {{sectionName}}",
+      "expand-aria-label": "Expand section: {{sectionName}}"
+    },
+    "org-switcher": {
+      "aria-label": "Change organization"
+    },
+    "profile": {
+      "aria-label": "Profile"
+    },
+    "quick-add": {
+      "aria-label": "New"
+    },
     "rss-button": "Latest from the blog"
   },
   "news": {
     "drawer": {
-      "close": "Close Drawer"
+      "close": "Close drawer"
     },
+    "link-title": "Go to Grafana labs blog",
     "title": "Latest from the blog"
   },
   "notifications": {
@@ -4423,6 +5892,17 @@
       "error": "Login provider denied login request"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": "Clear settings"
+    },
+    "field-color": {
+      "color-by-label": "Color series by"
+    },
+    "units": {
+      "clear-tooltip": "Clear unit selection"
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "Create",
@@ -4442,6 +5922,14 @@
       "placeholder-optional": "(optional)",
       "role": "Role",
       "submit": "Submit"
+    }
+  },
+  "org-picker": {
+    "select-placeholder": "Select organization"
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": "Edit title"
     }
   },
   "panel": {
@@ -4491,7 +5979,10 @@
     "unsupported-layout": "Unsupported layout"
   },
   "panel-type-filter": {
-    "clear-button": "Clear types"
+    "clear-button": "Clear types",
+    "select-aria-label": "Panel type filter",
+    "select-no-options": "No panel types found",
+    "select-placeholder": "Filter by type"
   },
   "playlist": {
     "start-modal": {
@@ -4555,24 +6046,6 @@
     }
   },
   "plugins": {
-    "angular-deprecation-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "try-migration": "Try migration"
-    },
-    "angular-deprecation-plugin-notice": {
-      "deprecation-notice-migration-advice": "Read our deprecation notice and migration advice.",
-      "title-angular-plugin": "Angular plugin",
-      "view-plugin-details": "View plugin details"
-    },
-    "angular-migration-notice": {
-      "report-issue": "Report issue",
-      "revert-migration": "Revert migration"
-    },
-    "app-config-ctrl-wrapper": {
-      "disable": "Disable",
-      "enable": "Enable",
-      "update": "Update"
-    },
     "app-root-page": {
       "access-denied": {
         "permission": "You do not have permission to see this page.",
@@ -4718,6 +6191,7 @@
     },
     "plugin-help": {
       "error": "An error occurred when loading help.",
+      "loading": "Loading help...",
       "not-found": "No query help could be found."
     },
     "plugin-installed-badge": {
@@ -4762,6 +6236,7 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
+    "enable-kiosk-mode": "Enable kiosk mode",
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
     },
@@ -4788,7 +6263,6 @@
       "files-count_other": "{{count}} files",
       "grafana": "Grafana",
       "include-history": "Include history",
-      "include-identifiers": "Include identifiers",
       "label-display-name": "Display name",
       "label-migrate-options": "Migrate options",
       "placeholder-my-repository-connection": "My repository connection",
@@ -4797,14 +6271,14 @@
       "text-loading-resource-information": "Loading resource information...",
       "title-files-exist-in-the-target": "Files exist in the target",
       "title-note": "Note",
-      "tooltip-include-history": "Include complete dashboard version history",
-      "tooltip-include-identifiers": "Include unique identifiers for each dashboard to maintain references"
+      "tooltip-include-history": "Include complete dashboard version history"
     },
     "check-repository": {
       "check": "Check"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
+      "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-branch": "Create a branch (and pull request) for changes",
@@ -4815,6 +6289,7 @@
       "description-workflows-makes-repository": "No workflows makes the repository read only",
       "description-write": "Allow writing updates to the remote repository",
       "error-required": "This field is required.",
+      "error-save-repository": "Failed to save repository settings",
       "error-valid-github-url": "Please enter a valid GitHub repository URL",
       "label-automatic-pulling": "Automatic pulling",
       "label-branch": "Branch",
@@ -4859,10 +6334,9 @@
       "title-webhook-will-be-created": "Webhook will be created"
     },
     "connect-repository-button": {
-      "connect-to-repository": "Connect to repository",
-      "max-repositories-exist": "Maximum repositories exist ({{count}})",
-      "tooltip-max-repos_one": "Max repositories already created ({{count}})",
-      "tooltip-max-repos_other": "Max repositories already created ({{count}})"
+      "configure-file": "Configure file provisioning",
+      "configure-git-sync": "Configure GitSync",
+      "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "connect-step": {
       "description-choose-storage-resources": "Choose the type of storage for your resources",
@@ -4888,6 +6362,7 @@
     "delete-repository-button": {
       "button-delete": "Delete",
       "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
       "title-delete-repository": "Delete repository config",
       "tooltip-delete-this-repository": "Delete this repository"
@@ -4900,13 +6375,14 @@
       "no-jobs": "No jobs..."
     },
     "enhanced-features": {
+      "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
       "description-visual-previews-dashboard-updates-directly-requests": "See visual previews of dashboard updates directly in pull requests",
+      "header": "Enhance your GitHub experience",
       "set-up-image-rendering": "Set up image rendering",
-      "set-up-public-access": "Set up public access",
-      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks",
-      "title-visual-previews-in-pull-requests": "Visual previews in pull requests",
-      "unlock-enhanced-functionality-for-git-hub": "Unlock enhanced functionality for GitHub"
+      "set-up-public-webhooks": "Set up public webhooks",
+      "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
+      "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "expanded-row": {
       "job-specification": "Job Specification",
@@ -4917,13 +6393,10 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
-      "automatically-provision-and-update-dashboards": "Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository",
-      "learn-more": "Learn more",
-      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code and provision updates automatically",
-      "manage-your-dashboards-with-remote-provisioning": "Manage your dashboards with remote provisioning",
-      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to storage for provisioning",
-      "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking",
-      "visual-previews-in-pull-requests": "Visual previews in pull requests to review your changes before going live"
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
+      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to GitHub for provisioning",
+      "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
@@ -4976,8 +6449,8 @@
       "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
     },
     "getting-started-page": {
-      "subtitle-provisioning-feature": "Provisioning is a feature that allows you to manage your dashboards using GitHub and other storage systems",
-      "text-remote-provisioning": "Remote provisioning"
+      "header": "Provisioning",
+      "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
     "history-view": {
       "not-found": "Not found"
@@ -4986,28 +6459,26 @@
       "button-delete-repositories": "Delete repositories",
       "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
       "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
+      "error-delete-all-repositories": "Failed to delete all repositories",
       "remove-all-configured-repositories": "Remove all configured repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
-      "tab-files": "Files",
-      "tab-files-title": "The raw file list from the repository",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
-      "tab-overview": "Overview",
-      "tab-overview-title": "Repository overview",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "tab-resources": "Resources",
-      "tab-resources-title": "Resources saved in Grafana database",
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
     "job-status": {
       "error-unknown": "An unknown error occurred",
       "label-view-details": "View details",
+      "loading-finished-job": "Loading finished job...",
+      "no-job-found": "No job found",
+      "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
       "starting": "Starting...",
       "status": {
-        "title-error-running-job": "error running job",
+        "title-error-running-job": "Error running job",
         "title-job-completed-successfully": "Job completed successfully"
       },
       "summary": "Summary"
@@ -5160,10 +6631,7 @@
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-submitting": "Submitting...",
-      "error-failed-to-delete": "Failed to delete repository. Please try again.",
       "error-instance-repository-exists": "Instance repository already exists",
-      "success-repository-deleted": "Repository deleted",
-      "success-repository-saved": "Repository saved",
       "title-repository-verification-failed": "Repository verification failed"
     }
   },
@@ -5400,14 +6868,14 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode"
+      "replace-query-from-library": "Replace with query from library",
+      "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Delete permanently",
+      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
@@ -5483,9 +6951,13 @@
       "clear-button": "Clear all",
       "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
     },
+    "menu-aria-label": "Role picker menu",
+    "menu-group-option-aria-label": "Role picker option",
+    "menu-option-aria-label": "Role picker option",
     "sub-menu": {
       "clear-button": "Clear"
     },
+    "sub-menu-aria-label": "Role picker submenu",
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -5493,10 +6965,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Basic Roles"
-    }
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana has likely been updated. Please try reloading the page.",
+    "error-title": "Error details",
+    "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
@@ -5612,6 +7087,10 @@
     "role": {
       "label": "Role"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "Service account picker",
+    "select-placeholder": "Start typing to search for service accounts"
   },
   "service-accounts": {
     "empty-state": {
@@ -5881,10 +7360,19 @@
   },
   "sign-up": {
     "back-button": "Back to login",
+    "confirm-password-label": "Confirm password",
+    "email-label": "Email",
+    "org-name-label": "Org. name",
+    "password-label": "Password",
     "submit-button": "Submit",
+    "user-name-label": "Your name",
+    "user-name-placeholder": "(optional)",
+    "verification-code-label": "Email verification code (sent to your email)",
     "verify": {
       "back-button": "Back to login",
       "complete-button": "Complete signup",
+      "email-description": "Enter your email address to get a verification link sent to you",
+      "email-label": "Email",
       "header": "Verify email",
       "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
       "send-button": "Send verification email"
@@ -5942,6 +7430,9 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "sort-picker": {
+    "select-aria-label": "Sort"
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "New support bundle"
@@ -5969,7 +7460,13 @@
     "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
-    "placeholder": "Filter by tag"
+    "placeholder": "Filter by tag",
+    "select-aria-label": "Tag filter",
+    "tag-option-label": "Tag option"
+  },
+  "team-picker": {
+    "select-aria-label": "Team picker",
+    "select-placeholder": "Select a team"
   },
   "teams": {
     "create-team": {
@@ -6423,6 +7920,10 @@
     "role-column": "Role",
     "select-org-button": "Select organisation",
     "title": "Organizations"
+  },
+  "user-picker": {
+    "select-aria-label": "User picker",
+    "select-placeholder": "Start typing to search for user"
   },
   "user-profile": {
     "fields": {

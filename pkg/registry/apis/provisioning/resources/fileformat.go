@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-var ErrUnableToReadResourceBytes = errors.New("unable to read bytes as a resource")
-var ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+var (
+	ErrUnableToReadResourceBytes       = errors.New("unable to read bytes as a resource")
+	ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+)
 
 // This reads a "classic" file format and will convert it to an unstructured k8s resource
 // The file path may determine how the resource is parsed
@@ -35,7 +37,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 	} else {
-		return nil, nil, "", fmt.Errorf("yaml not yet implemented")
+		return nil, nil, "", fmt.Errorf("classic resource must be JSON")
 	}
 
 	// regular version headers exist

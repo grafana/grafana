@@ -5,7 +5,7 @@ import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
@@ -103,7 +103,7 @@ export const SimpleConditionEditor = ({
         </header>
         <InlineFieldRow className={styles.condition.container}>
           {simpleCondition.whenField && (
-            <InlineField label="WHEN">
+            <InlineField label={t('alerting.simple-condition-editor.label-when', 'WHEN')}>
               <Select
                 options={reducerTypes}
                 value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
