@@ -922,7 +922,7 @@ func TestService_CacheCheck(t *testing.T) {
 	t.Run("Fallback to the database on cache miss", func(t *testing.T) {
 		s := setupService()
 
-		// Populate databse permission but not the cache
+		// Populate database permission but not the cache
 		store := &fakeStore{
 			userID:          userID,
 			userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
@@ -932,6 +932,32 @@ func TestService_CacheCheck(t *testing.T) {
 		s.permissionStore = store
 
 		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash2",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Fallback to the database on outdated cache", func(t *testing.T) {
+		s := setupService()
+
+		store := &fakeStore{
+			userID:          userID,
+			userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+		}
+
+		s.store = store
+		s.permissionStore = store
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		// The cache does not have the permission for dash2 (outdated)
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": true})
 
 		resp, err := s.Check(ctx, &authzv1.CheckRequest{
 			Namespace: "org-12",
