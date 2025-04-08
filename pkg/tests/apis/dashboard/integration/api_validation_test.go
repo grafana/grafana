@@ -735,6 +735,9 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-",
+				"annotations": map[string]interface{}{
+					"grafana.app/grant-permissions": "default",
+				},
 			},
 			"spec": map[string]interface{}{
 				"title": title,

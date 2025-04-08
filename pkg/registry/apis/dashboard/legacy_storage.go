@@ -14,6 +14,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -71,6 +72,19 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 			// skip the linter error for deprecated function
 			meta.SetDeprecatedInternalID(access.DashboardID) //nolint:staticcheck
 		}
+	}
+
+	meta, metaErr := utils.MetaAccessor(obj)
+	if metaErr == nil {
+		// Reconstruc the same UID as done at the storage level
+		// https://github.com/grafana/grafana/blob/a84e96fba29c3a1bb384fdbad1c9c658cc79ec8f/pkg/registry/apis/dashboard/legacy/sql_dashboards.go#L287
+		// This is necessary because the UID generated during the creation via legacy storage is actually never stored in the database
+		// and the one returned here is wrong.
+		meta.SetUID(gapiutil.CalculateClusterWideUID(obj))
+	}
+
+	if metaErr != nil {
+		return obj, metaErr
 	}
 
 	return obj, err
