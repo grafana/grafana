@@ -243,7 +243,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
       <Field
         label={t('provisioning.config-form.label-workflows', 'Workflows')}
-        required
         error={errors?.workflows?.message}
         invalid={!!errors?.workflows}
         description={t(
@@ -254,7 +253,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Controller
           name={'workflows'}
           control={control}
-          rules={{ required: t('provisioning.config-form.error-required', 'This field is required.') }}
           render={({ field: { ref, onChange, ...field } }) => (
             <MultiCombobox
               options={getWorkflowOptions(type)}
