@@ -28,8 +28,8 @@ func (id ProviderID) Kind() (string, error) {
 	return parts[0], nil
 }
 
-func KeyLabel(scope string, providerID ProviderID) string {
-	return fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, providerID)
+func KeyLabel(providerID ProviderID) string {
+	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
 }
 
 type ProviderMap map[ProviderID]Provider

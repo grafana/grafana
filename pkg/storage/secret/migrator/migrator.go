@@ -94,28 +94,27 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Name: TableNameDataKey,
 		Columns: []*migrator.Column{
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // in this table, it isn't used by k8s, but we will track it for added security
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
-			{Name: "active", Type: migrator.DB_Bool},
-			{Name: "scope", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
+			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
 			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
-		Indices: []*migrator.Index{},
+		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
 	})
 
 	tables = append(tables, migrator.Table{
 		Name: TableNameEncryptedValue,
 		Columns: []*migrator.Column{
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},     // Fixed size of a UUID.
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{},
+		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
 	})
 
 	tables = append(tables, migrator.Table{

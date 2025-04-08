@@ -33,7 +33,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Store")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
 	if err != nil {
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
@@ -79,7 +79,7 @@ func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
 	if err != nil {
 		return fmt.Errorf("unable to encrypt value: %w", err)
 	}
