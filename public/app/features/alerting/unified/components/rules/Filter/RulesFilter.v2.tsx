@@ -113,6 +113,7 @@ const FilterOptions = () => {
             { label: 'All', value: '*' },
             { label: 'Normal', value: 'normal' },
             { label: 'Pending', value: 'pending' },
+            { label: 'Recovering', value: 'recovering' },
             { label: 'Firing', value: 'firing' },
           ]}
         />

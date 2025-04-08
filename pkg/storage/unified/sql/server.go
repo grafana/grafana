@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,7 +19,7 @@ import (
 
 // Creates a new ResourceServer
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient,
+	tracer trace.Tracer, reg prometheus.Registerer, ac types.AccessClient,
 	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
