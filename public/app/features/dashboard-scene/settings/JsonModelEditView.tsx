@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans, t } from 'app/core/internationalization';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import {
   NameAlreadyExistsError,
@@ -17,10 +19,10 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene, isV2Dashboard } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -46,9 +48,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     return getDashboardSceneFor(this);
   }
 
-  public getSaveModel(): Dashboard {
-    const dashboard = this.getDashboard();
-    return transformSceneToSaveModel(dashboard);
+  public getSaveModel(): Dashboard | DashboardV2Spec {
+    return this.getDashboard().getSaveModel();
   }
 
   public getJsonText(): string {
@@ -60,21 +61,34 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     this.setState({ jsonText: value });
   };
 
-  public onSaveSuccess = (result: SaveDashboardResponseDTO) => {
-    const jsonModel = JSON.parse(this.state.jsonText);
+  public onSaveSuccess = async (result: SaveDashboardResponseDTO) => {
+    const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
-    jsonModel.version = result.version;
 
-    const rsp: DashboardDTO = {
-      dashboard: jsonModel,
-      meta: dashboard.state.meta,
-    };
-    const newDashboardScene = transformSaveModelToScene(rsp);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+    const isV2 = isV2Dashboard(jsonModel);
+    let newDashboardScene: DashboardScene;
 
-    dashboard.pauseTrackingChanges();
-    dashboard.setInitialSaveModel(rsp.dashboard);
-    dashboard.setState(newState);
+    if (isV2) {
+      // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
+      const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
+      newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+
+      dashboard.pauseTrackingChanges();
+      dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      dashboard.setState(newState);
+    } else {
+      jsonModel.version = result.version;
+      newDashboardScene = transformSaveModelToScene({
+        dashboard: jsonModel,
+        meta: dashboard.state.meta,
+      });
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+
+      dashboard.pauseTrackingChanges();
+      dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
+      dashboard.setState(newState);
+    }
 
     this.setState({ jsonText: this.getJsonText() });
   };
@@ -94,11 +108,12 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         folderUid: dashboard.state.meta.folderUid,
         overwrite,
         rawDashboardJSON: JSON.parse(model.state.jsonText),
+        k8s: dashboard.state.meta.k8s,
       });
 
       setIsSaving(true);
       if (result.status === 'success') {
-        model.onSaveSuccess(result);
+        await model.onSaveSuccess(result);
         setIsSaving(false);
       } else {
         setIsSaving(true);

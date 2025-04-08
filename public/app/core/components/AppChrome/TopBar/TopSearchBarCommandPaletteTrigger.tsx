@@ -1,32 +1,22 @@
 import { css } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 export function TopSearchBarCommandPaletteTrigger() {
-  const theme = useTheme2();
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
     kbarIsOpen: kbarState.visualState === VisualState.showing,
   }));
 
-  const breakpoint = theme.breakpoints.values.lg;
-
-  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
-
-  useMediaQueryChange({
-    breakpoint,
-    onChange: (e) => {
-      setIsSmallScreen(!e.matches);
-    },
-  });
+  const isSmallScreen = !useMediaQueryMinWidth('lg');
 
   const onOpenSearch = () => {
     kbar.toggle();
