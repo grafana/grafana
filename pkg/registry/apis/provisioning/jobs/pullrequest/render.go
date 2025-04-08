@@ -39,6 +39,10 @@ func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
 
 func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, namespace, repoName, req string) (string, error) {
 	u, err := url.Parse(req)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL %w", err)
+	}
+
 	query := u.RawQuery
 	if query == "" {
 		query = "kiosk"
