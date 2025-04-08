@@ -25,7 +25,7 @@ weight: 600
 
 **Ensure that your data source UIDs follow the correct standard**
 
-We've had a standard ways to define UIDs for Grafana objects for years (at least [since Grafana v5](https://github.com/grafana/grafana/issues/7883)). While all of our internal code complies to this format, we didn't yet have strict enforcement of this format in REST APIs and provisioning paths that allow the creation and update of data sources.
+We've had standard ways to define UIDs for Grafana objects for years (at least [since Grafana v5](https://github.com/grafana/grafana/issues/7883)). While all of our internal code complies to this format, we haven't strictly enforced this format in REST APIs and provisioning paths that allow the creation and update of data sources.
 
 In Grafana v11.1, we [introduced](https://github.com/grafana/grafana/pull/86598) a warning that is sent to Grafana server logs every time a data source instance is being created or updated using an invalid UID format.
 
