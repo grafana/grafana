@@ -41,6 +41,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	cfg.HTTPPort = "3001"
 	cfg.GRPCServer.Network = "tcp"
 	cfg.GRPCServer.Address = "localhost:10000"
+	cfg.Env = setting.Dev
 
 	clientAuth, err := cfg.Raw.NewSection("grpc_client_authentication")
 	require.NoError(t, err)
@@ -49,6 +50,13 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	_, err = clientAuth.NewKey("token", "some-token")
 	require.NoError(t, err)
 	_, err = clientAuth.NewKey("token_namespace", "stacks-123")
+	require.NoError(t, err)
+
+	grpcServerAuth, err := cfg.Raw.NewSection("grpc_server_authentication")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("signing_keys_url", "http://<placeholder>/api/signing-keys/keys")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
 
 	addStorageServerToConfig(t, cfg, dbType)
