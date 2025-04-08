@@ -58,6 +58,16 @@ const config: ConfigFile = {
       filterEndpoints: ['getFolder'],
       tag: true,
     },
+    '../public/app/api/clients/dashboard/v2/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/dashboard/v2/baseAPI.ts',
+      schemaFile: '../data/openapi/dashboard.grafana.app-v2alpha1.json',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getDashboard'],
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      hooks: true,
+    },
   },
 };
 
