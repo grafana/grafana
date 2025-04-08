@@ -729,6 +729,7 @@ export type MigrateJobOptions = {
   history?: boolean;
 };
 export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -1122,6 +1123,8 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type RepositoryView = {
+  /** For git, this is the target branch */
+  branch?: string;
   /** The k8s name for this repository */
   name: string;
   /** When syncing, where values are saved
