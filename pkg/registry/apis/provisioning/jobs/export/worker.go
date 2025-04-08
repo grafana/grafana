@@ -58,7 +58,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			Timeout: 10 * time.Minute,
 		})
 		if err != nil {
-			return fmt.Errorf("unable to clone target: %w", err)
+			return fmt.Errorf("clone target: %w", err)
 		}
 		defer func() {
 			if err := clone.Remove(ctx); err != nil {
