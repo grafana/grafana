@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -80,6 +81,11 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	// Delete the file in the grafana database
 	if ref == "" {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+		if err != nil {
+			return parsed, err
+		}
+
 		// FIXME: empty folders with no repository files will remain in the system
 		// until the next reconciliation.
 		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
