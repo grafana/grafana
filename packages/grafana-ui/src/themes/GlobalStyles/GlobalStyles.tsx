@@ -4,7 +4,6 @@ import { useTheme2 } from '../ThemeContext';
 
 import { getAccessibilityStyles } from './accessibility';
 import { getAlertingStyles } from './alerting';
-import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
 import { getDashboardGridStyles } from './dashboardGrid';
@@ -39,7 +38,6 @@ export function GlobalStyles(props: GlobalStylesProps) {
     <Global
       styles={[
         getAccessibilityStyles(theme),
-        getAgularPanelStyles(theme),
         getAlertingStyles(theme),
         getCodeStyles(theme),
         getDashDiffStyles(theme),

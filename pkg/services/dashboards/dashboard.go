@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -36,13 +37,17 @@ type DashboardService interface {
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
+	SetDefaultPermissions(ctx context.Context, dto *SaveDashboardDTO, dash *Dashboard, provisioned bool)
+	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
+	ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error
+	ValidateBasicDashboardProperties(title string, uid string, message string) error
 }
 
 type PermissionsRegistrationService interface {
 	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 
 	// Used to apply default permissions in unified storage after create
-	SetDefaultPermissions(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+	SetDefaultPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 }
 
 // PluginService is a service for operating on plugin dashboards.

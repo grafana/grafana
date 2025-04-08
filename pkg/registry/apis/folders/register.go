@@ -156,15 +156,15 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		tableConverter: resourceInfo.TableConverter(),
 		features:       b.features,
 		cfg:            b.cfg,
-		permissions:    b.dashboardPermissions.SetDefaultPermissions,
+		permissions:    b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
 	}
 
-	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
-		RequireDeprecatedInternalID: true,
+	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
+		RequireDeprecatedInternalID: true,
 
 		// Will set default permissions for root folders
-		Permissions: b.dashboardPermissions.SetDefaultPermissions,
+		Permissions: b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
 	})
 
 	storage[resourceInfo.StoragePath()] = legacyStore
@@ -195,15 +195,7 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	// The plugin description
 	oas.Info.Description = "Grafana folders"
-
-	// The root api URL
-	root := "/apis/" + b.GetGroupVersion().String() + "/"
-
-	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+v0alpha1.FolderResourceInfo.GroupResource().Resource)
-
 	return oas, nil
 }
 

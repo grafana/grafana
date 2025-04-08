@@ -25,7 +25,7 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
             href="https://grafana.com/blog/"
             target="_blank"
             rel="noreferrer"
-            title="Go to Grafana labs blog"
+            title={t('news.link-title', 'Go to Grafana labs blog')}
             className={styles.grot}
           >
             <img src="public/img/grot-news.svg" alt="Grot reading news" />
@@ -36,7 +36,7 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
               variant="secondary"
               onClick={onClose}
               data-testid={selectors.components.Drawer.General.close}
-              tooltip={t(`news.drawer.close`, 'Close Drawer')}
+              tooltip={t(`news.drawer.close`, 'Close drawer')}
             />
           </div>
         </div>
