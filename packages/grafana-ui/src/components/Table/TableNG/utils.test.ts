@@ -101,6 +101,7 @@ const sortColumnsRef = { current: [] };
 
 const mockOptions = {
   ctx: null as unknown as CanvasRenderingContext2D,
+  textWraps: {},
   rows: [],
   sortedRows: [],
   setContextMenuProps: () => {},
@@ -136,7 +137,7 @@ const mockOptions = {
   crossFilterOrder,
   crossFilterRows,
   isCountRowsSet: false,
-  styles: { cell: '' },
+  styles: { cell: '', cellWrapped: '' },
   theme: createTheme(),
   setSortColumns: () => {},
   sortColumnsRef,
