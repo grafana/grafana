@@ -1066,7 +1066,7 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-			mockRepoResources.On("Client", context.Background(), mockRepo).Return(repoResources, nil)
+			mockRepoResources.On("Client", mock.Anything, mockRepo).Return(repoResources, nil)
 
 			r := NewExportWorker(mockClientFactory, mockRepoResources)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -1078,6 +1078,157 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 			}
 
 			tt.verifyMocks(t, mockProgress, repoResources)
+		})
+	}
+}
+
+type MockClonableRepository struct {
+	*repository.MockClonedRepository
+}
+
+func (m *MockClonableRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+	return m.MockClonedRepository, nil
+}
+
+func TestExportWorker_ClonableRepository(t *testing.T) {
+	tests := []struct {
+		name           string
+		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
+		setupRepo      func(repo *repository.MockClonedRepository)
+		setupResources func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind)
+		setupProgress  func(progress *jobs.MockJobProgressRecorder)
+		expectedError  string
+	}{
+		{
+			name: "successful clone and push",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					// Return empty folder list
+					return true, &metav1.PartialObjectMetadataList{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "FolderList",
+						},
+					}, nil
+				}
+				// Return empty dashboard list
+				return true, &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+				}, nil
+			},
+			setupRepo: func(repo *repository.MockClonedRepository) {
+				repo.On("Push", mock.Anything, mock.Anything).Return(nil)
+				repo.On("Remove", mock.Anything).Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+			},
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "clone target").Return()
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("SetMessage", mock.Anything, "push changes").Return()
+			},
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPush,
+					Push: &v0alpha1.ExportJobOptions{
+						Path: "grafana",
+					},
+				},
+			}
+			mockCloned := repository.NewMockClonedRepository(t)
+			mockRepo := &MockClonableRepository{mockCloned}
+
+			mockCloned.On("Config").Return(&v0alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "test-namespace",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+				},
+			})
+
+			tt.setupRepo(mockCloned)
+
+			scheme := runtime.NewScheme()
+			require.NoError(t, metav1.AddMetaToScheme(scheme))
+			listGVK := schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    "FolderList",
+			}
+			listGVKDashboard := schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    "DashboardList",
+			}
+
+			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(listGVKDashboard, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    resources.FolderResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    resources.DashboardResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+
+			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+				resources.FolderResource:    listGVK.Kind,
+				resources.DashboardResource: listGVKDashboard.Kind,
+			})
+			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
+
+			resourceClients := resources.NewMockResourceClients(t)
+			resourceClients.On("Folder").Return(fakeFolderClient, nil)
+
+			mockClientFactory := resources.NewMockClientFactory(t)
+			mockClientFactory.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
+
+			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
+			fakeDynamicClient.PrependReactor("list", "dashboards", tt.reactorFunc)
+
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			tt.setupProgress(mockProgress)
+
+			repoResources := resources.NewMockRepositoryResources(t)
+			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
+			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResources.On("Client", mock.Anything, mock.MatchedBy(func(repo repository.ReaderWriter) bool {
+				// compare only pointers
+				return repo == mockCloned
+			})).Return(repoResources, nil)
+
+			r := NewExportWorker(mockClientFactory, mockRepoResources)
+			err := r.Process(context.Background(), mockRepo, job, mockProgress)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockProgress.AssertExpectations(t)
+			repoResources.AssertExpectations(t)
 		})
 	}
 }

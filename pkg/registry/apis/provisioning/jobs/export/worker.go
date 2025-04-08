@@ -41,14 +41,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if options == nil {
 		return errors.New("missing export settings")
 	}
-	// Can write to external branch
-	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
-		return err
-	}
 
-	rw, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
+	cfg := repo.Config()
+	// Can write to external branch
+	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
+		return err
 	}
 
 	var clone repository.ClonedRepository
@@ -77,7 +74,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
-	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
+	clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 	if err != nil {
 		return fmt.Errorf("create clients: %w", err)
 	}
@@ -86,6 +83,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	folderClient, err := clients.Folder()
 	if err != nil {
 		return fmt.Errorf("create folder client: %w", err)
+	}
+
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
 	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
@@ -98,7 +100,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return errors.New("too many folders")
 		}
 
-		return tree.AddUnstructured(item, repo.Config().Name)
+		return tree.AddUnstructured(item, cfg.Name)
 	}); err != nil {
 		return fmt.Errorf("load folder tree: %w", err)
 	}
