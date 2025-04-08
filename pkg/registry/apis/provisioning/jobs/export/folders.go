@@ -24,6 +24,7 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			return errors.New("too many folders")
 		}
 
+		// FIXME: repoName should be part of skip folder export
 		return tree.AddUnstructured(item, repoName)
 	}); err != nil {
 		return fmt.Errorf("load folder tree: %w", err)
