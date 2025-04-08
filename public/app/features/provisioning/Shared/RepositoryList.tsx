@@ -13,7 +13,7 @@ interface Props {
   items: Repository[];
 }
 
-export function FolderRepositoryList({ items }: Props) {
+export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const { instanceConnected } = checkSyncSettings(items);
