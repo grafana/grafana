@@ -799,5 +799,3 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 		})
 	}
 }
-
-// TODO: YOU ARE MISSING A TEST FOR THE CASE WHERE s.getUser return error
