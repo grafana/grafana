@@ -102,7 +102,7 @@ If you want to configure the role for all users in the Okta directory, you can a
 ## Configure Okta authentication client using the Grafana UI
 
 {{< admonition type="note" >}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
+Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
 {{< /admonition >}}
 
 As a Grafana Admin, you can configure Okta OAuth2 client from within Grafana using the Okta UI. To do this, navigate to **Administration > Authentication > Okta** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
@@ -120,7 +120,7 @@ Refer to [configuration options](#configuration-options) for more information.
 ## Configure Okta authentication client using the Terraform provider
 
 {{< admonition type="note" >}}
-Supported in the Terraform provider since v2.12.0.
+Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
 {{< /admonition >}}
 
 ```terraform
