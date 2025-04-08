@@ -78,9 +78,9 @@ func (_c *MockPreviewer_GenerateComment_Call) RunAndReturn(run func(resourcePrev
 	return _c
 }
 
-// Preview provides a mock function with given fields: ctx, f, base, ref, pullRequestURL, generatePreview
-func (_m *MockPreviewer) Preview(ctx context.Context, f *resources.ParsedResource, base string, ref string, pullRequestURL string, generatePreview bool) (resourcePreview, error) {
-	ret := _m.Called(ctx, f, base, ref, pullRequestURL, generatePreview)
+// Preview provides a mock function with given fields: ctx, f, pullRequestURL, generatePreview
+func (_m *MockPreviewer) Preview(ctx context.Context, f *resources.ParsedResource, pullRequestURL string, generatePreview bool) (resourcePreview, error) {
+	ret := _m.Called(ctx, f, pullRequestURL, generatePreview)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Preview")
@@ -88,17 +88,17 @@ func (_m *MockPreviewer) Preview(ctx context.Context, f *resources.ParsedResourc
 
 	var r0 resourcePreview
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *resources.ParsedResource, string, string, string, bool) (resourcePreview, error)); ok {
-		return rf(ctx, f, base, ref, pullRequestURL, generatePreview)
+	if rf, ok := ret.Get(0).(func(context.Context, *resources.ParsedResource, string, bool) (resourcePreview, error)); ok {
+		return rf(ctx, f, pullRequestURL, generatePreview)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *resources.ParsedResource, string, string, string, bool) resourcePreview); ok {
-		r0 = rf(ctx, f, base, ref, pullRequestURL, generatePreview)
+	if rf, ok := ret.Get(0).(func(context.Context, *resources.ParsedResource, string, bool) resourcePreview); ok {
+		r0 = rf(ctx, f, pullRequestURL, generatePreview)
 	} else {
 		r0 = ret.Get(0).(resourcePreview)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *resources.ParsedResource, string, string, string, bool) error); ok {
-		r1 = rf(ctx, f, base, ref, pullRequestURL, generatePreview)
+	if rf, ok := ret.Get(1).(func(context.Context, *resources.ParsedResource, string, bool) error); ok {
+		r1 = rf(ctx, f, pullRequestURL, generatePreview)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -114,17 +114,15 @@ type MockPreviewer_Preview_Call struct {
 // Preview is a helper method to define mock.On call
 //   - ctx context.Context
 //   - f *resources.ParsedResource
-//   - base string
-//   - ref string
 //   - pullRequestURL string
 //   - generatePreview bool
-func (_e *MockPreviewer_Expecter) Preview(ctx interface{}, f interface{}, base interface{}, ref interface{}, pullRequestURL interface{}, generatePreview interface{}) *MockPreviewer_Preview_Call {
-	return &MockPreviewer_Preview_Call{Call: _e.mock.On("Preview", ctx, f, base, ref, pullRequestURL, generatePreview)}
+func (_e *MockPreviewer_Expecter) Preview(ctx interface{}, f interface{}, pullRequestURL interface{}, generatePreview interface{}) *MockPreviewer_Preview_Call {
+	return &MockPreviewer_Preview_Call{Call: _e.mock.On("Preview", ctx, f, pullRequestURL, generatePreview)}
 }
 
-func (_c *MockPreviewer_Preview_Call) Run(run func(ctx context.Context, f *resources.ParsedResource, base string, ref string, pullRequestURL string, generatePreview bool)) *MockPreviewer_Preview_Call {
+func (_c *MockPreviewer_Preview_Call) Run(run func(ctx context.Context, f *resources.ParsedResource, pullRequestURL string, generatePreview bool)) *MockPreviewer_Preview_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*resources.ParsedResource), args[2].(string), args[3].(string), args[4].(string), args[5].(bool))
+		run(args[0].(context.Context), args[1].(*resources.ParsedResource), args[2].(string), args[3].(bool))
 	})
 	return _c
 }
@@ -134,7 +132,7 @@ func (_c *MockPreviewer_Preview_Call) Return(_a0 resourcePreview, _a1 error) *Mo
 	return _c
 }
 
-func (_c *MockPreviewer_Preview_Call) RunAndReturn(run func(context.Context, *resources.ParsedResource, string, string, string, bool) (resourcePreview, error)) *MockPreviewer_Preview_Call {
+func (_c *MockPreviewer_Preview_Call) RunAndReturn(run func(context.Context, *resources.ParsedResource, string, bool) (resourcePreview, error)) *MockPreviewer_Preview_Call {
 	_c.Call.Return(run)
 	return _c
 }
