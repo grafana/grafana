@@ -24,7 +24,7 @@ func LogGroupsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqC
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}
 
-	logGroups, err := service.GetLogGroups(ctx, request)
+	logGroups, err := service.GetLogGroupsWithContext(ctx, request)
 	if err != nil {
 		return nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
 	}

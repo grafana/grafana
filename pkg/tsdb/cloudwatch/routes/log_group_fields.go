@@ -22,7 +22,7 @@ func LogGroupFieldsHandler(ctx context.Context, pluginCtx backend.PluginContext,
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}
 
-	logGroupFields, err := service.GetLogGroupFields(ctx, request)
+	logGroupFields, err := service.GetLogGroupFieldsWithContext(ctx, request)
 	if err != nil {
 		return nil, models.NewHttpError("GetLogGroupFields error", http.StatusInternalServerError, err)
 	}
