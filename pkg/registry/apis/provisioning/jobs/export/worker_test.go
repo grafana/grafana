@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
@@ -627,27 +628,233 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 			}, &metav1.PartialObjectMetadata{})
 
 			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
-				resources.FolderResource: listGVK.Kind,
+				resources.FolderResource:    listGVK.Kind,
+				resources.DashboardResource: listGVKDashboard.Kind,
 			})
 			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
 
 			resourceClients := resources.NewMockResourceClients(t)
 			resourceClients.On("Folder").Return(fakeFolderClient, nil)
 
-			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
+			mockClientFactory := resources.NewMockClientFactory(t)
+			mockClientFactory.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 
-			mockClients := resources.NewMockClientFactory(t)
-			mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
+			fakeDynamicClient.PrependReactor("list", "dashboards", tt.reactorFunc)
+
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			tt.setupProgress(mockProgress)
 
 			repoResources := resources.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 			mockRepoResources.On("Client", context.Background(), mockRepo).Return(repoResources, nil)
 
+			r := NewExportWorker(mockClientFactory, mockRepoResources)
+			err := r.Process(context.Background(), mockRepo, job, mockProgress)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			tt.verifyMocks(t, mockProgress, repoResources)
+		})
+	}
+}
+
+func TestExportWorker_ProcessDashboards(t *testing.T) {
+	tests := []struct {
+		name           string
+		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
+		expectedError  string
+		setupProgress  func(progress *jobs.MockJobProgressRecorder)
+		setupResources func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind)
+		verifyMocks    func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources)
+	}{
+		{
+			name: "successful dashboard export",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					// Return empty folder list
+					return true, &metav1.PartialObjectMetadataList{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "FolderList",
+						},
+					}, nil
+				}
+				// Return dashboard list
+				return true, &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "dashboard-1",
+							},
+						},
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "dashboard-2",
+							},
+						},
+					},
+				}, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "dashboard-1" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+
+				options := resources.WriteOptions{
+					Path: "grafana",
+					// TODO: add tests for branch
+					Ref: "",
+				}
+
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "dashboard-1"
+				}), options).Return("dashboard-1.json", nil)
+
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "dashboard-2"
+				}), options).Return("dashboard-2.json", nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
+		{
+			name: "dashboard list error",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					// Return empty folder list
+					return true, &metav1.PartialObjectMetadataList{}, nil
+				}
+				// Return error for dashboard list
+				return true, nil, fmt.Errorf("failed to list dashboards")
+			},
+			expectedError: "export dashboards: error executing list: failed to list dashboards",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPush,
+					Push: &v0alpha1.ExportJobOptions{
+						Path: "grafana",
+					},
+				},
+			}
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&v0alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "test-namespace",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+				},
+			})
+
+			scheme := runtime.NewScheme()
+			require.NoError(t, metav1.AddMetaToScheme(scheme))
+			listGVK := schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    "FolderList",
+			}
+			listGVKDashboard := schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    "DashboardList",
+			}
+
+			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(listGVKDashboard, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    resources.FolderResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    resources.DashboardResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+
+			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+				resources.FolderResource:    listGVK.Kind,
+				resources.DashboardResource: listGVKDashboard.Kind,
+			})
+			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
+
+			resourceClients := resources.NewMockResourceClients(t)
+			resourceClients.On("Folder").Return(fakeFolderClient, nil)
+
+			mockClientFactory := resources.NewMockClientFactory(t)
+			mockClientFactory.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+
+			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
+			fakeDynamicClient.PrependReactor("list", "dashboards", tt.reactorFunc)
+
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 			tt.setupProgress(mockProgress)
 
-			r := NewExportWorker(mockClients, mockRepoResources)
+			repoResources := resources.NewMockRepositoryResources(t)
+			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
+			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResources.On("Client", context.Background(), mockRepo).Return(repoResources, nil)
+
+			r := NewExportWorker(mockClientFactory, mockRepoResources)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 			if tt.expectedError != "" {

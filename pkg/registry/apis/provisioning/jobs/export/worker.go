@@ -168,7 +168,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}
 			return nil
 		}); err != nil {
-			return fmt.Errorf("error exporting %s %w", kind.Resource, err)
+			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
 
@@ -179,7 +179,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			Timeout:  10 * time.Minute,
 			Progress: os.Stdout,
 		}); err != nil {
-			return fmt.Errorf("error pushing changes: %w", err)
+			return fmt.Errorf("push changes: %w", err)
 		}
 	}
 
