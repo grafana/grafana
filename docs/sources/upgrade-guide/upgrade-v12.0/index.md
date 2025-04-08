@@ -29,7 +29,7 @@ We've had standard ways to define UIDs for Grafana objects for years (at least [
 
 In Grafana v11.1, we [introduced](https://github.com/grafana/grafana/pull/86598) a warning that is sent to Grafana server logs every time a data source instance is created or updated using an invalid UID format.
 
-In Grafana v11.2, we [added](https://github.com/grafana/grafana/pull/89363/files) a new feature flag called `failWrongDSUID` that is turned off by default. When enabled, the REST APIs and provisioning start rejecting any requests to create or update data source instances that have an incorrect UID.
+In Grafana v11.2, we [added](https://github.com/grafana/grafana/pull/89363/files) a new feature flag called `failWrongDSUID` that is turned off by default. When enabled, the REST APIs and provisioning reject any requests to create or update data source instances that have an incorrect UID.
 
 In Grafana v12.0, we're truning the feature flag `failWrongDSUID` on by default.
 
