@@ -83,6 +83,11 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
+
 	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add team member.", err)
@@ -129,6 +134,11 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 	}
 	orgId := c.SignedInUser.GetOrgID()
 
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
+
 	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), orgId, teamId, userId)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update team member.", err)
@@ -167,6 +177,11 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 	orgId := c.SignedInUser.GetOrgID()
+
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
 
 	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgId, teamId, cmd, c.SignedInUser)
 	if err != nil {
@@ -273,6 +288,19 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
+
+	existingTeam, err := tapi.getTeamDTOByID(c, teamId)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned {
+		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)

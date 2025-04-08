@@ -89,6 +89,19 @@ func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	existingTeam, err := tapi.getTeamDTOByID(c, cmd.ID)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned && existingTeam.Name != cmd.Name {
+		return response.Error(http.StatusBadRequest, "Team name cannot be changed for provisioned teams", err)
+	}
+
 	if err := tapi.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusBadRequest, "Team name taken", err)
@@ -114,6 +127,11 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	resp := tapi.validateTeam(c, teamID, "Cannot delete provisioned teams")
+	if resp != nil {
+		return resp
 	}
 
 	if err := tapi.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
@@ -391,4 +409,31 @@ func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
 	prefix string, resourceID string) accesscontrol.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
+}
+
+func (tapi *TeamAPI) getTeamDTOByID(c *contextmodel.ReqContext, teamID int64) (*team.TeamDTO, error) {
+	query := team.GetTeamByIDQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		ID:           teamID,
+		SignedInUser: c.SignedInUser,
+	}
+
+	return tapi.teamService.GetTeamByID(c.Req.Context(), &query)
+}
+
+func (tapi *TeamAPI) validateTeam(c *contextmodel.ReqContext, teamID int64, provisionedMessage string) *response.NormalResponse {
+	teamDTO, err := tapi.getTeamDTOByID(c, teamID)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if teamDTO.IsProvisioned {
+		return response.Error(http.StatusBadRequest, provisionedMessage, err)
+	}
+
+	return nil
 }
