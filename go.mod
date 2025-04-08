@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.24.1
+go 1.24.2
 
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
@@ -580,6 +580,8 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 )
+
+require github.com/grafana/grafana/pkg/build v0.0.0-20250408155245-27e9422f2420
 
 require sigs.k8s.io/yaml v1.4.0 // indirect
 
