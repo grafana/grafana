@@ -6403,19 +6403,18 @@
       "placeholder-search": "Search"
     },
     "finish-step": {
-      "description-dashboard-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
+      "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-enable-webhooks": "Enable webhooks to automatically notify Grafana when a change occurs in the repository. This will allow Grafana to pull changes as soon as they are made.",
+      "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
       "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
       "description-select-workflows-allowed-within-repository": "Select the workflows that are allowed within this repository",
       "error-field-required": "This field is required.",
-      "label-enable-dashboard-previews": "Enable dashboard previews in pull requests",
+      "label-enable-previews": "Enable dashboard previews in pull requests",
       "label-enable-webhooks": "Enable webhooks on changes",
       "label-update-instance-interval-seconds": "Update instance interval (seconds)",
       "label-workflows": "Workflows",
-      "link-setup-image-rendering": "Set up image rendering",
       "placeholder": "60",
-      "placeholder-readonly-repository": "Read-only repository",
-      "text-requires-image-rendering": "(Requires image rendering."
+      "placeholder-readonly-repository": "Read-only repository"
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No results matching your query",
@@ -6606,11 +6605,12 @@
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
       "step-resources": "Resources",
+      "step-synchronize": "Synchronize",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
-      "title-finish": "Finish setup",
-      "title-migrate": "Migrate resources",
-      "title-pull": "Pull resources"
+      "title-finish": "Choose additional settings",
+      "title-pull": "Pull resources",
+      "title-synchronize": "Synchronize with external storage"
     },
     "wizard-content": {
       "button-cancel": "Cancel",

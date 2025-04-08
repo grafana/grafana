@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Checkbox, Field, Input, MultiCombobox, Stack, Switch, Text, TextLink } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
@@ -115,20 +115,24 @@ export function FinishStep() {
           <Field>
             <Checkbox
               disabled={!hasImageRenderer || !isPublic}
-              label={'Enable dashboard previews in pull requests'}
+              label={t('provisioning.finish-step.label-enable-previews', 'Enable dashboard previews in pull requests')}
               description={
                 <>
-                  Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be
-                  shared in your Git repository and visible to anyone with repository access.
+                  <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                    Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will
+                    be shared in your Git repository and visible to anyone with repository access.
+                  </Trans>{' '}
                   <Text italic>
-                    Requires image rendering.{' '}
-                    <TextLink
-                      variant="bodySmall"
-                      external
-                      href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-                    >
-                      Set up image rendering
-                    </TextLink>
+                    <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                      Requires image rendering.{' '}
+                      <TextLink
+                        variant="bodySmall"
+                        external
+                        href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+                      >
+                        Set up image rendering
+                      </TextLink>
+                    </Trans>
                   </Text>
                 </>
               }

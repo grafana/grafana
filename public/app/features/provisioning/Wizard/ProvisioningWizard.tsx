@@ -37,16 +37,16 @@ export function ProvisioningWizard() {
       },
       {
         id: 'migrate',
-        name: t('provisioning.wizard.step-resources', 'Synchronize'),
-        title: t('provisioning.wizard.title-migrate', 'Synchronize with external storage'),
+        name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
+        title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
         submitOnNext: false,
       },
-      {
-        id: 'pull',
-        name: t('provisioning.wizard.step-resources', 'Resources'),
-        title: t('provisioning.wizard.title-pull', 'Pull resources'),
-        submitOnNext: false,
-      },
+      // {
+      //   id: 'pull',
+      //   name: t('provisioning.wizard.step-resources', 'Resources'),
+      //   title: t('provisioning.wizard.title-pull', 'Pull resources'),
+      //   submitOnNext: false,
+      // },
       {
         id: 'finish',
         name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
