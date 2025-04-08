@@ -55,6 +55,22 @@ var (
 		"user.sync.empty-externalUID",
 		errutil.WithPublicMessage("Empty externalUID"),
 	)
+	errUnableToRetrieveUserOrAuthInfo = errutil.Internal(
+		"user.sync.unable-to-retrieve-user-or-authinfo",
+		errutil.WithPublicMessage("Unable to retrieve user or authInfo for validation"),
+	)
+	errUnableToRetrieveUser = errutil.Internal(
+		"user.sync.unable-to-retrieve-user",
+		errutil.WithPublicMessage("Unable to retrieve user for validation"),
+	)
+	errUserNotProvisioned = errutil.Forbidden(
+		"user.sync.user-not-provisioned",
+		errutil.WithPublicMessage("User is not provisioned"),
+	)
+	errUserExternalUIDMismatch = errutil.Unauthorized(
+		"user.sync.user-externalUID-mismatch",
+		errutil.WithPublicMessage("User externalUID mismatch"),
+	)
 )
 
 var (
