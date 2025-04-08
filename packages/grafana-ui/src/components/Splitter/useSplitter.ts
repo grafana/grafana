@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { clamp, throttle } from 'lodash';
-import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { clamp } from 'lodash';
+import { useCallback, useId, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -50,7 +50,14 @@ const propsForDirection = {
 } as const;
 
 export function useSplitter(options: UseSplitterOptions) {
-  const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged, usePixels } = options;
+  const {
+    direction,
+    initialSize = options.usePixels ? 300 : 0.5,
+    dragPosition = 'middle',
+    onResizing,
+    onSizeChanged,
+    usePixels,
+  } = options;
 
   const handleSize = getPixelSize(options.handleSize);
   const splitterRef = useRef<HTMLDivElement | null>(null);
@@ -181,7 +188,6 @@ export function useSplitter(options: UseSplitterOptions) {
       primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
       containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
 
-      console.log('sizeChange', sizeChange);
       onUpdateSize(sizeChange);
 
       keysLastHandledAt.current = time;
@@ -246,10 +252,11 @@ export function useSplitter(options: UseSplitterOptions) {
       pressedKeys.current.delete(e.key);
 
       if (primarySizeRef.current !== null) {
-        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+        const secondPanePixels = containerSize.current! - primarySizeRef.current - handleSize;
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current, secondPanePixels);
       }
     },
-    [direction, onSizeChanged]
+    [direction, onSizeChanged, handleSize]
   );
 
   const onDoubleClick = useCallback(() => {
@@ -257,15 +264,15 @@ export function useSplitter(options: UseSplitterOptions) {
       return;
     }
 
-    firstPaneRef.current.style.flexGrow = '0.5';
-    secondPaneRef.current.style.flexGrow = '0.5';
-
-    const dim = measureElement(firstPaneRef.current);
-
-    referencePaneSize.current = dim;
-    primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
-    splitterRef.current!.ariaValueNow = `${ariaValue(primarySizeRef.current, dim[minDimProp], dim[maxDimProp])}`;
-  }, [maxDimProp, measurementProp, minDimProp]);
+    if (usePixels) {
+      secondPaneRef.current.style.flexBasis = `${initialSize}px`;
+    } else {
+      firstPaneRef.current.style.flexGrow = '0.5';
+      secondPaneRef.current.style.flexGrow = '0.5';
+      primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
+      splitterRef.current!.ariaValueNow = `50`;
+    }
+  }, [measurementProp, usePixels, initialSize]);
 
   const onBlur = useCallback(() => {
     // If focus is lost while keys are held, stop changing panel sizes
@@ -274,10 +281,11 @@ export function useSplitter(options: UseSplitterOptions) {
       dragStart.current = null;
 
       if (typeof primarySizeRef.current === 'number') {
-        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+        const secondPanePixels = containerSize.current! - primarySizeRef.current - handleSize;
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current, secondPanePixels);
       }
     }
-  }, [onSizeChanged]);
+  }, [onSizeChanged, handleSize]);
 
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
@@ -285,7 +293,7 @@ export function useSplitter(options: UseSplitterOptions) {
   const id = useId();
 
   const primaryStyles: React.CSSProperties = {
-    flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+    flexGrow: clamp(initialSize, 0, 1),
     [minDimProp]: 'min-content',
   };
 
