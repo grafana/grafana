@@ -11,14 +11,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagLiveServiceWebWorker
-	// This will use a webworker thread to processes events rather than the main thread
-	FlagLiveServiceWebWorker = "live-service-web-worker"
-
-	// FlagQueryOverLive
-	// Use Grafana Live WebSocket to execute backend queries
-	FlagQueryOverLive = "queryOverLive"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -134,18 +126,6 @@ const (
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
-
-	// FlagAlertStateHistoryLokiSecondary
-	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
-
-	// FlagAlertStateHistoryLokiPrimary
-	// Enable a remote Loki instance as the primary source for state history reads.
-	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
-
-	// FlagAlertStateHistoryLokiOnly
-	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -506,10 +486,6 @@ const (
 	// FlagSqlExpressions
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
-
-	// FlagNodeGraphDotLayout
-	// Changed the layout algorithm for the node graph
-	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
@@ -918,10 +894,6 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
-
-	// FlagNoBackdropBlur
-	// Disables backdrop blur
-	FlagNoBackdropBlur = "noBackdropBlur"
 
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules

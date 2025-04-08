@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -100,7 +101,7 @@ func ProvideUnifiedStorageGrpcService(
 	}
 
 	// This will be used when running as a dskit service
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.StorageServer)
+	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil
 }
@@ -257,4 +258,12 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 		}
 		return a.Authenticate(ctx)
 	}
+}
+
+func (s *service) stopping(err error) error {
+	if err != nil && !errors.Is(err, context.Canceled) {
+		s.log.Error("stopping unified storage grpc service", "error", err)
+		return err
+	}
+	return nil
 }
