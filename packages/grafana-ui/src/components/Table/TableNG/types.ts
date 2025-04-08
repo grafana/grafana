@@ -81,6 +81,15 @@ export interface TableRow {
   [columnName: string]: TableCellValue;
 }
 
+export interface CustomCellRendererProps {
+  field: Field;
+  rowIndex: number;
+  frame: DataFrame;
+  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
+  // types could be propagated here.
+  value: unknown;
+}
+
 export interface CustomHeaderRendererProps {
   field: Field;
   defaultContent: React.ReactNode;
