@@ -122,6 +122,11 @@ func (p *previewer) Preview(
 		return resourcePreview{}, fmt.Errorf("only dashboards are supported")
 	}
 
+	err = f.DryRun(ctx)
+	if err != nil {
+		return resourcePreview{}, fmt.Errorf("error running dry run: %w", err)
+	}
+
 	preview := resourcePreview{
 		Filename:  path.Base(f.Info.Path),
 		Path:      f.Info.Path,
@@ -130,13 +135,23 @@ func (p *previewer) Preview(
 		TargetURL: fmt.Sprintf("%sd/%s/%s", baseURL.String(), f.Obj.GetName(), f.Meta.FindTitle("")),
 	}
 
-	if f.Action != provisioning.ResourceActionUpdate {
+	if f.Action != provisioning.ResourceActionDelete {
 		preview.PreviewURL = p.previewURL(baseURL, f.Repo.Name, f.Info.Ref, f.Info.Path, pullRequestURL)
 	}
 
 	if !generatePreview {
 		logger.Info("skipping dashboard preview generation", "path", f.Info.Path)
 		return preview, nil
+	}
+
+	// Render the *before* image
+	if preview.TargetURL != "" && f.Action == provisioning.ResourceActionUpdate {
+		screenshotURL, err := p.renderer.RenderScreenshot(ctx, namespace, f.Repo.Name, preview.TargetURL)
+		if err != nil {
+			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
+		}
+		preview.TargetScreenshotURL = screenshotURL
+		logger.Info("target dashboard screenshot generated", "screenshotURL", screenshotURL)
 	}
 
 	if preview.PreviewURL != "" {
@@ -146,15 +161,6 @@ func (p *previewer) Preview(
 		}
 		preview.PreviewScreenshotURL = screenshotURL
 		logger.Info("dashboard preview screenshot generated", "screenshotURL", screenshotURL)
-	}
-
-	if preview.TargetURL != "" {
-		screenshotURL, err := p.renderer.RenderScreenshot(ctx, namespace, f.Repo.Name, preview.TargetURL)
-		if err != nil {
-			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)
-		}
-		preview.TargetScreenshotURL = screenshotURL
-		logger.Info("target dashboard screenshot generated", "screenshotURL", screenshotURL)
 	}
 
 	return preview, nil
