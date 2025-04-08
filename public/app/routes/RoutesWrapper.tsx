@@ -6,7 +6,6 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
-  config,
   locationService,
   LocationServiceProvider,
   useChromeHeaderHeight,
