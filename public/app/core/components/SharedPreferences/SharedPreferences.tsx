@@ -304,7 +304,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <span className={styles.labelText}>
                   <Trans i18nKey="shared-preferences.fields.language-preference-label">Language</Trans>
                 </span>
-                <FeatureBadge featureState={FeatureState.beta} />
+                <FeatureBadge featureState={FeatureState.preview} />
               </Label>
             }
             data-testid="User preferences language drop down"
