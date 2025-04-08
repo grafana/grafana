@@ -23,6 +23,8 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 import { RowItem } from './RowItem';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
+import { ShowConfirmModalEvent } from 'app/types/events';
+import appEvents from 'app/core/app_events';
 
 interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
@@ -141,9 +143,33 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       return;
     }
 
-    const rows = this.state.rows.filter((r) => r !== row);
-    this.setState({ rows });
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(row), true);
+    const remove = () => {
+      const rows = this.state.rows.filter((r) => r !== row);
+      this.setState({ rows });
+      this.publishEvent(new ObjectRemovedFromCanvasEvent(row), true);
+    };
+
+    // If the row has no panels, remove it immediately
+    if (row.getLayout().getVizPanels().length === 0) {
+      remove();
+      return;
+    }
+
+    // If it has panels, confirm the user wants to delete the row
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.rows-layout.delete-row-title', 'Delete row?'),
+        text: t(
+          'dashboard.rows-layout.delete-row-text',
+          'Deleting this row will also remove all panels. Are you sure you want to continue?'
+        ),
+        icon: 'trash-alt',
+        yesText: t('dashboard.rows-layout.delete-row-yes', 'Delete'),
+        onConfirm: () => {
+          remove();
+        },
+      })
+    );
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
