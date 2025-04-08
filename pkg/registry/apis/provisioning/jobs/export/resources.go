@@ -24,7 +24,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
 		client, _, err := clients.ForResource(kind)
 		if err != nil {
-			return err
+			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
 		}
 
 		if err := exportResource(ctx, options, client, repositoryResources, progress); err != nil {

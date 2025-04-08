@@ -89,6 +89,20 @@ func TestExportResources(t *testing.T) {
 			},
 		},
 		{
+			name: "client error",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				return true, nil, fmt.Errorf("shouldn't happen")
+			},
+			expectedError: "get client for dashboards: didn't work",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, fmt.Errorf("didn't work"))
+			},
+		},
+		{
 			name: "dashboard list error",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				return true, nil, fmt.Errorf("failed to list dashboards")
