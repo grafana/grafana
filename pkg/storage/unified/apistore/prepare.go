@@ -67,7 +67,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if s.opts.RequireDeprecatedInternalID {
