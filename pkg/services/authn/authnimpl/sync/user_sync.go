@@ -142,6 +142,9 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// Retrieve user and authinfo from database
 	usr, authInfo, err := s.getUser(ctx, id)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil
+		}
 		log.Error("Failed to fetch user for validation", "error", err)
 		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
 	}
@@ -504,6 +507,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	// Check user table to grab existing user
 	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
 	if err != nil {
+		fmt.Println("err", err)
 		return nil, nil, err
 	}
 
