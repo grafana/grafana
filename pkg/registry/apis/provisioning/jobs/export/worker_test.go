@@ -494,6 +494,88 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 				repoResources.AssertExpectations(t)
 			},
 		},
+		{
+			name: "successful nested folder migration",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				list := &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "FolderList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "parent-folder",
+							},
+						},
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "child-folder",
+								Annotations: map[string]string{
+									"grafana.app/folder": "parent-folder",
+								},
+							},
+						},
+					},
+				}
+				return true, list, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "parent-uid" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "child-uid" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					expectedFolders := []resources.Folder{
+						{ID: "parent-folder", Path: "parent-folder"},
+						{ID: "child-folder", Path: "parent-folder/child-folder"},
+					}
+
+					if tree.Count() != len(expectedFolders) {
+						return false
+					}
+
+					for _, folder := range expectedFolders {
+						dir, ok := tree.DirPath(folder.ID, "")
+						if !ok || dir.Path != folder.Path {
+							return false
+						}
+					}
+
+					return true
+				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+					// Parent folder should be processed first
+					require.NoError(t, fn(resources.Folder{ID: "parent-uid", Path: "grafana/parent-folder"}, true, nil))
+					// Then child folder with nested path
+					require.NoError(t, fn(resources.Folder{ID: "child-uid", Path: "grafana/parent-folder/child-folder"}, true, nil))
+					return true
+				})).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
 	}
 
 	for _, tt := range tests {
