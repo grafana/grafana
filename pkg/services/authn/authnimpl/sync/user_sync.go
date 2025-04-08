@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -63,29 +64,86 @@ var (
 )
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
-	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 ) *UserSync {
+	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		userService:           userService,
-		authInfoService:       authInfoService,
-		userProtectionService: userProtectionService,
-		quotaService:          quotaService,
-		log:                   log.New("user.sync"),
-		tracer:                tracer,
-		features:              features,
-		lastSeenSF:            &singleflight.Group{},
+		allowedNonProvisionedUsers: scimSection.Key("allowed_non_provisioned_users").MustBool(false),
+		isUserProvisioningEnabled:  scimSection.Key("user_sync_enabled").MustBool(false),
+		userService:                userService,
+		authInfoService:            authInfoService,
+		userProtectionService:      userProtectionService,
+		quotaService:               quotaService,
+		log:                        log.New("user.sync"),
+		tracer:                     tracer,
+		features:                   features,
+		lastSeenSF:                 &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	userService           user.Service
-	authInfoService       login.AuthInfoService
-	userProtectionService login.UserProtectionService
-	quotaService          quota.Service
-	log                   log.Logger
-	tracer                tracing.Tracer
-	features              featuremgmt.FeatureToggles
-	lastSeenSF            *singleflight.Group
+	allowedNonProvisionedUsers bool
+	isUserProvisioningEnabled  bool
+	userService                user.Service
+	authInfoService            login.AuthInfoService
+	userProtectionService      login.UserProtectionService
+	quotaService               quota.Service
+	log                        log.Logger
+	tracer                     tracing.Tracer
+	features                   featuremgmt.FeatureToggles
+	lastSeenSF                 *singleflight.Group
+}
+
+// ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	s.log.FromContext(ctx).Debug("Validating user provisioning", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
+	defer span.End()
+
+	// Skip validation if user provisioning is disabled
+	if !s.isUserProvisioningEnabled {
+		s.log.FromContext(ctx).Debug("User provisioning is disabled, skipping validation")
+		return nil
+	}
+
+	// Skip validation if non-provisioned users are allowed
+	if s.allowedNonProvisionedUsers {
+		s.log.FromContext(ctx).Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+		return nil
+	}
+
+	// Skip validation if the auth module is GrafanaComAuthModule
+	if id.AuthenticatedBy == login.GrafanaComAuthModule {
+		s.log.FromContext(ctx).Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return nil
+	}
+
+	// Does user exist in the database?
+	usr, _, err := s.getUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			s.log.FromContext(ctx).Debug("User not found, skipping validation")
+			return nil
+		}
+		s.log.FromContext(ctx).Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		return errSyncUserInternal.Errorf("unable to retrieve user for validation")
+	}
+
+	// Skip validation if the user is provisioned
+	if usr.IsProvisioned {
+		s.log.FromContext(ctx).Debug("User is provisioned, grant access")
+		return nil
+	}
+
+	// Skip validation if allowedNonProvisionedUsers is enabled
+	if s.allowedNonProvisionedUsers {
+		s.log.FromContext(ctx).Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+		return nil
+	}
+
+	// Reject non-provisioned users
+	s.log.FromContext(ctx).Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	return errSyncUserForbidden.Errorf("user is not provisioned")
 }
 
 // SyncUserHook syncs a user with the database
