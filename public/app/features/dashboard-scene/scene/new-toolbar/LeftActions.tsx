@@ -9,7 +9,7 @@ import { ManagedDashboardBadge } from './actions/ManagedDashboardBadge';
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';
 import { PublicDashboardBadge } from './actions/PublicDashboardBadge';
 import { StarButton } from './actions/StarButton';
-import { getDynamicActions, renderActionElements, useIsManagedRepository } from './utils';
+import { getDynamicActions, renderActionElements } from './utils';
 
 export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const styles = useStyles2(getStyles);
@@ -25,7 +25,6 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const canStar = Boolean(meta.canStar);
   const isSnapshot = Boolean(meta.isSnapshot);
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
-  const isManagedRepository = useIsManagedRepository(dashboard);
 
   const elements = renderActionElements(
     [
@@ -47,7 +46,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         key: 'managed-dashboard-badge',
         component: ManagedDashboardBadge,
         group: 'actions',
-        condition: isManagedRepository && canEdit,
+        condition: dashboard.isManaged() && canEdit,
       },
       {
         key: 'open-snapshot-origin-button',
