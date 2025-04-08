@@ -7,9 +7,6 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
-
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -94,11 +91,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		if err := r.exportFolders(ctx, cfg.Name, folderClient, *options, repositoryResources, progress); err != nil {
+		if err := ExportFolders(ctx, cfg.Name, *options, folderClient, repositoryResources, progress); err != nil {
 			return err
 		}
 
-		if err := r.exportResources(ctx, clients, *options, repositoryResources, progress); err != nil {
+		if err := ExportResources(ctx, *options, clients, repositoryResources, progress); err != nil {
 			return err
 		}
 
@@ -106,103 +103,4 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
-}
-
-func (r *ExportWorker) exportFolders(ctx context.Context, repoName string, folderClient dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	// Load and write all folders
-	// FIXME: we load the entire tree in memory
-	progress.SetMessage(ctx, "read folder tree from API server")
-
-	tree := resources.NewEmptyFolderTree()
-	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-		if tree.Count() >= resources.MaxNumberOfFolders {
-			return errors.New("too many folders")
-		}
-
-		return tree.AddUnstructured(item, repoName)
-	}); err != nil {
-		return fmt.Errorf("load folder tree: %w", err)
-	}
-
-	progress.SetMessage(ctx, "write folders to repository")
-	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
-		result := jobs.JobResourceResult{
-			Action:   repository.FileActionCreated,
-			Name:     folder.ID,
-			Resource: resources.FolderResource.Resource,
-			Group:    resources.FolderResource.Group,
-			Path:     folder.Path,
-			Error:    err,
-		}
-
-		if !created {
-			result.Action = repository.FileActionIgnored
-		}
-
-		progress.Record(ctx, result)
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("write folders to repository: %w", err)
-	}
-
-	return nil
-}
-
-func (r *ExportWorker) exportResources(ctx context.Context, clients resources.ResourceClients, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	progress.SetMessage(ctx, "start resource export")
-	for _, kind := range resources.SupportedProvisioningResources {
-		// skip from folders as we do them first... so only dashboards
-		if kind == resources.FolderResource {
-			continue
-		}
-
-		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-		client, _, err := clients.ForResource(kind)
-		if err != nil {
-			return err
-		}
-
-		if err := r.exportResource(ctx, client, options, repositoryResources, progress); err != nil {
-			return fmt.Errorf("export %s: %w", kind.Resource, err)
-		}
-	}
-
-	return nil
-}
-
-func (r *ExportWorker) exportResource(ctx context.Context, client dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-		fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-			Path: options.Path,
-			Ref:  options.Branch,
-		})
-
-		gvk := item.GroupVersionKind()
-		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
-			Resource: gvk.Kind,
-			Group:    gvk.Group,
-			Action:   repository.FileActionCreated,
-			Path:     fileName,
-		}
-
-		if errors.Is(err, resources.ErrAlreadyInRepository) {
-			result.Action = repository.FileActionIgnored
-		} else if err != nil {
-			result.Action = repository.FileActionIgnored
-			result.Error = err
-		}
-
-		progress.Record(ctx, result)
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
