@@ -6,9 +6,6 @@ import (
 	"net/http"
 	"path"
 
-
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -33,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	aggregatorapiserver "github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
@@ -71,6 +67,14 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+type ExtraRunner interface {
+	Run(ctx context.Context) error
+}
+
+type ExtraRunnerConfigurator interface {
+	GetExtraRunners() []ExtraRunner
+}
+
 type service struct {
 	services.NamedService
 
@@ -106,6 +110,8 @@ type service struct {
 	unified         resource.ResourceClient
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
+
+	extraRunners []grafanaapiserveroptions.ExtraRunner
 }
 
 func ProvideService(
@@ -124,6 +130,7 @@ func ProvideService(
 	unified resource.ResourceClient,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	extraRunnerConfigurator grafanaapiserveroptions.ExtraRunnerConfigurator,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -149,7 +156,9 @@ func ProvideService(
 		storageStatus:                     storageStatus,
 		unified:                           unified,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
+		extraRunners:                      extraRunnerConfigurator.GetExtraRunners(),
 	}
+
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
@@ -350,23 +359,10 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	delegate := server
-	var aggregatorServer *aggregatorapiserver.APIAggregator
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		aggregatorServer, err = s.createKubeAggregator(serverConfig, server, s.metrics)
-		if err != nil {
-			return err
-		}
-		delegate = aggregatorServer.GenericAPIServer
-	}
-
 	var runningServer *genericapiserver.GenericAPIServer
+
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
-		if err != nil {
-			return err
-		}
-	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startKubeAggregator(ctx, transport, aggregatorServer)
 		if err != nil {
 			return err
 		}
@@ -388,6 +384,15 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	// Run extra runners
+	for _, runner := range s.extraRunners {
+		go func(r grafanaapiserveroptions.ExtraRunner) {
+			if err := r.Run(ctx); err != nil {
+				s.log.Error("extra runner failed", "error", err)
+			}
+		}(runner)
+	}
 
 	return nil
 }
@@ -455,45 +460,6 @@ func (s *service) startDataplaneAggregator(
 
 	go func() {
 		s.stoppedCh <- prepared.RunWithContext(ctx)
-	}()
-
-	return aggregatorServer.GenericAPIServer, nil
-}
-
-func (s *service) createKubeAggregator(
-	serverConfig *genericapiserver.RecommendedConfig,
-	server *genericapiserver.GenericAPIServer,
-	reg prometheus.Registerer,
-) (*aggregatorapiserver.APIAggregator, error) {
-	namespaceMapper := request.GetNamespaceMapper(s.cfg)
-
-	aggregatorConfig, err := kubeaggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
-	if err != nil {
-		return nil, err
-	}
-
-	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
-}
-
-func (s *service) startKubeAggregator(
-	ctx context.Context,
-	transport *roundTripperFunc,
-	aggregatorServer *aggregatorapiserver.APIAggregator,
-) (*genericapiserver.GenericAPIServer, error) {
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		s.stoppedCh <- prepared.Run(ctx)
 	}()
 
 	return aggregatorServer.GenericAPIServer, nil

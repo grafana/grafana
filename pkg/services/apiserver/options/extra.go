@@ -1,10 +1,14 @@
 package options
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 	"strconv"
 
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -13,20 +17,37 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
+	"k8s.io/apiserver/pkg/server/options"
 )
 
 type ExtraOptions struct {
+	*options.RecommendedOptions
+	ExtraRunners    []ExtraRunner
+	GroupVersions   []schema.GroupVersion
+	CodecFactory    serializer.CodecFactory
 	DevMode         bool
 	ExternalAddress string
 	APIURL          string
 	Verbosity       int
 }
 
-func NewExtraOptions() *ExtraOptions {
-	return &ExtraOptions{
-		DevMode:   false,
-		Verbosity: 0,
+type ExtraRunner interface {
+	Run(ctx context.Context) error
+	GetHandler() http.Handler
+}
+
+func NewExtraOptions(codecs serializer.CodecFactory, groupVersions []schema.GroupVersion, extraRunners ...ExtraRunner) *ExtraOptions {
+	o := &ExtraOptions{
+		RecommendedOptions: options.NewRecommendedOptions(
+			"/registry/grafana.app",
+			codecs.LegacyCodec(groupVersions...),
+		),
+		ExtraRunners:  extraRunners,
+		GroupVersions: groupVersions,
+		CodecFactory:  codecs,
 	}
+	o.RecommendedOptions.Etcd = nil
+	return o
 }
 
 func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
@@ -37,10 +58,24 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (o *ExtraOptions) Validate() []error {
-	return nil
+	if o == nil {
+		return nil
+	}
+
+	errs := []error{}
+	errs = append(errs, o.RecommendedOptions.Validate()...)
+	return errs
 }
 
-func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
+func (o *ExtraOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	if o == nil {
+		return nil
+	}
+
+	if err := o.RecommendedOptions.ApplyTo(config); err != nil {
+		return err
+	}
+
 	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
@@ -53,6 +88,6 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)
 	}
-	c.ExternalAddress = o.ExternalAddress
+	config.ExternalAddress = o.ExternalAddress
 	return nil
 }

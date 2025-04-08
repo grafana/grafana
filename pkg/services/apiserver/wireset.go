@@ -3,6 +3,7 @@ package apiserver
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/extensions/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -13,4 +14,5 @@ var WireSet = wire.NewSet(
 	ProvideService,
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(builder.APIRegistrar), new(*service)),
+	aggregator.ProvideKubernetesAggregatorConfigurator,
 )
