@@ -168,6 +168,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 
@@ -210,6 +215,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 
@@ -463,6 +473,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 }
@@ -600,11 +615,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
   ): Promise<T> {
     try {
-      const result = await operation(this.activeManager);
-      // need to sync the state of the active manager with the unified manager
-      // in cases when components are subscribed to unified manager's state
-      this.setState(this.activeManager.state);
-      return result;
+      return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
         const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
@@ -613,6 +624,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       } else {
         throw error;
       }
+    } finally {
+      // need to sync the state of the active manager with the unified manager
+      // in cases when components are subscribed to unified manager's state
+      this.setState(this.activeManager.state);
     }
   }
 
@@ -623,7 +638,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
-    return this.withVersionHandling((manager) => manager.reloadDashboard(params));
+    return this.withVersionHandling((manager) => manager.reloadDashboard.call(this, params));
   }
 
   public getDashboardFromCache(uid: string) {
@@ -682,6 +697,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } else {
       this.v1Manager.setDashboardCache(cacheKey, dashboard);
     }
+  }
+
+  public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
+    return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 }
 
