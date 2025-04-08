@@ -638,7 +638,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
-    return this.withVersionHandling((manager) => manager.reloadDashboard(params));
+    return this.withVersionHandling((manager) => manager.reloadDashboard.call(this, params));
   }
 
   public getDashboardFromCache(uid: string) {
@@ -700,7 +700,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
-    return this.withVersionHandling((manager) => manager.loadDashboard(options));
+    return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 }
 
