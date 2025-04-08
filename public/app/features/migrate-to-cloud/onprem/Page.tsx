@@ -126,10 +126,13 @@ interface SortParams {
 }
 
 export const Page = () => {
-  const session = useGetLatestSession();
   const [page, setPage] = useState(1);
-  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
-  const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
+  const [sortParams, setSortParams] = useState<SortParams>({
+    column: '',
+    order: undefined,
+  });
+  const [highlightErrors, setHighlightErrors] = useState(false);
+
   const { data: resourceDependencies = { resourceDependencies: [] } } = useGetResourceDependenciesQuery();
   const [reconfiguring, setReconfiguring] = useState(false);
   const [lastSnapshotUid, setLastSnapshotUid] = useState<string | undefined>(undefined);
@@ -138,6 +141,19 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
+
+  const session = useGetLatestSession();
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, highlightErrors);
+  const numPages = Math.ceil(
+    (highlightErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
+  );
+  useEffect(() => {
+    if (numPages > 0 && page > numPages) {
+      setPage(numPages);
+    }
+  }, [numPages, page]);
 
   const [uiState, setUiState] = useState<'loading' | 'configure' | 'building' | 'built' | 'uploading' | 'uploaded'>(
     'loading'
@@ -151,11 +167,11 @@ export const Page = () => {
 
   // isBusy is not a loading state, but indicates that the system is doing *something* and all buttons should be disabled.
   const isBusy =
-    session.isLoading ||
-    snapshot.isLoading ||
     createSnapshotResult.isLoading ||
     uploadSnapshotResult.isLoading ||
     cancelSnapshotResult.isLoading ||
+    session.isLoading ||
+    snapshot.isLoading ||
     disconnectResult.isLoading;
 
   // Because we don't delete the previous snapshot if it exists, we need to keep track of the last snapshot.
@@ -251,6 +267,7 @@ export const Page = () => {
     if (
       !reconfiguring &&
       (uiState === 'built' || uiState === 'uploaded') &&
+      snapshotStatus !== 'FINISHED' &&
       (snapshot.data?.results?.length === 0 || snapshot.isUninitialized)
     ) {
       setReconfiguring(true);
@@ -368,6 +385,9 @@ export const Page = () => {
           onUploadSnapshot={handleUploadSnapshot}
           showRebuildSnapshot={['built', 'uploading', 'uploaded'].includes(uiState)}
           onRebuildSnapshot={handleRebuildSnapshot}
+          onHighlightErrors={() => setHighlightErrors(!highlightErrors)}
+          isHighlightErrors={highlightErrors}
+          showOnlyErrorsSwitch={['uploading', 'uploaded'].includes(uiState)}
         />
 
         {(['built', 'uploaded'].includes(uiState) || !!createSnapshotResult?.error) && error && (
@@ -403,8 +423,17 @@ export const Page = () => {
                 resources={snapshot.data.results}
                 localPlugins={localPlugins}
                 onChangePage={setPage}
-                numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+                numberOfPages={numPages}
                 page={page}
+                onChangeSort={(a) => {
+                  const order = a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc';
+                  if (sortParams.column !== a.sortBy[0]?.id || order !== sortParams.order) {
+                    setSortParams({
+                      column: a.sortBy[0]?.id,
+                      order: order,
+                    });
+                  }
+                }}
               />
               <SupportedTypesDisclosure />
             </Stack>
