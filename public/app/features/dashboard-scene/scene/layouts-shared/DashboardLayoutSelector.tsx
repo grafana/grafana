@@ -38,7 +38,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   }));
 
   return (
-    <Box paddingBottom={1} display="flex" grow={1} alignItems="center">
+    <Box paddingBottom={2} display="flex" grow={1} alignItems="center">
       <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
     </Box>
   );
