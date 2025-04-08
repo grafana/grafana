@@ -31,9 +31,6 @@ export interface ThemeComponents {
   };
   overlay: {
     background: string;
-
-    /* pixel strength for backdrop blurs */
-    blur?: number;
   };
   dashboard: {
     background: string;
