@@ -24,14 +24,11 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 
 const AlertSomeRulesSkipped = () => (
   <Alert
-    title={t(
-      'alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.title',
-      'Some rules are excluded from import'
-    )}
+    title={t('alerting.import-to-gma.confirm-modal.plugin-rules-warning.title', 'Some rules are excluded from import')}
     severity="info"
   >
     <Text variant="body">
-      <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.text">
+      <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.text">
         We have detected that some rules are managed by plugins. These rules will not be imported.
       </Trans>
     </Text>
