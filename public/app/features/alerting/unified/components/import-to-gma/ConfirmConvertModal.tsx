@@ -112,7 +112,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
             >
               <Text variant="body">
                 <Trans i18nKey="alerting.to-gma.confirm-modal.plugin-rules-warning.text">
-                  We have detected that some rules are managed by plugins.These rules will not be imported.
+                  We have detected that some rules are managed by plugins. These rules will not be imported.
                 </Trans>
               </Text>
             </Alert>
