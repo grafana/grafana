@@ -908,6 +908,62 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 				repoResources.AssertExpectations(t)
 			},
 		},
+		{
+			name: "ignores existing dashboards",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					return true, &metav1.PartialObjectMetadataList{}, nil
+				}
+				return true, &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "existing-dashboard",
+							},
+						},
+					},
+				}, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+				})).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+
+				options := resources.WriteOptions{
+					Path: "grafana",
+					Ref:  "",
+				}
+
+				// Return true to indicate the file already exists, and provide the updated path
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "existing-dashboard"
+				}), options).Return("", resources.ErrAlreadyInRepository)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
 	}
 
 	for _, tt := range tests {
