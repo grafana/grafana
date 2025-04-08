@@ -7,6 +7,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -21,10 +22,34 @@ type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
 	folders *FolderManager
+	access  authlib.AccessChecker
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+}
+
+func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     parsed.GVR.Group,
+		Resource:  parsed.GVR.Resource,
+		Namespace: parsed.Obj.GetNamespace(),
+		Name:      parsed.Obj.GetName(),
+		Folder:    parsed.Meta.GetFolder(),
+		Verb:      verb,
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to see embedded file"))
+	}
+	return nil
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -41,6 +66,11 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
 		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	// Authorize the parsed resource
+	if err = r.authorize(ctx, parsed, "GET"); err != nil {
+		return nil, err
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
@@ -71,6 +101,10 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 	parsed, err := r.parser.Parse(ctx, file)
 	if err != nil {
 		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	if err = r.authorize(ctx, parsed, "DELETE"); err != nil {
+		return nil, err
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -167,6 +201,10 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
+	if err = r.authorize(ctx, parsed, "CREATE"); err != nil {
+		return nil, err
+	}
+
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
@@ -216,6 +254,10 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
 		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	if err = r.authorize(ctx, parsed, "UPDATE"); err != nil {
+		return nil, err
 	}
 
 	data, err = parsed.ToSaveBytes()

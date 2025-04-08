@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,6 +100,7 @@ type APIBuilder struct {
 	unified          resource.ResourceClient
 	secrets          secrets.Service
 	client           client.ProvisioningV0alpha1Interface
+	access           authlib.AccessChecker
 }
 
 // NewAPIBuilder creates an API builder.
@@ -116,6 +119,7 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
+	access authlib.AccessChecker,
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
@@ -140,6 +144,7 @@ func NewAPIBuilder(
 		storageStatus:       storageStatus,
 		unified:             unified,
 		secrets:             secrets,
+		access:              access,
 	}
 }
 
@@ -155,6 +160,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
+	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
@@ -179,7 +185,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc),
+		secrets.NewSingleTenant(secretsSvc), access,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -372,7 +378,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,

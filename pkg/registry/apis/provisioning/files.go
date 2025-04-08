@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -24,12 +25,13 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
+	access  authlib.AccessChecker
 	parsers resources.ParserFactory
 	clients resources.ClientFactory
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access authlib.AccessChecker) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -56,10 +58,10 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 // TODO: document the synchronous write and delete on the API Spec
-func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := s.getter.GetRepository(ctx, name)
+	repo, err := c.getter.GetRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
@@ -70,12 +72,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
-	parser, err := s.parsers.GetParser(ctx, readWriter)
+	parser, err := c.parsers.GetParser(ctx, readWriter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
-	clients, err := s.clients.Clients(ctx, repo.Config().Namespace)
+	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
@@ -85,7 +87,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders)
+	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
@@ -107,7 +109,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(filePath)
 		if r.Method == http.MethodGet && isDir {
-			files, err := s.listFolderFiles(ctx, filePath, ref, readWriter)
+			files, err := c.listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
 			}
