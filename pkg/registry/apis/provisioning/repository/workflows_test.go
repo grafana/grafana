@@ -37,7 +37,54 @@ func TestIsWriteAllowed(t *testing.T) {
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 				},
 			},
+			ref:     "",
 			wantErr: false,
+		},
+		{
+			name: "write allowed for configured branch of github repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "write not allowed for configured branch of github repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:         "feature-branch",
+			wantErr:     true,
+			expectedErr: "this repository does not support the write workflow",
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			name: "write workflow not allowed for github repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:         "",
+			wantErr:     true,
+			expectedErr: "this repository does not support the write workflow",
+			statusCode:  http.StatusBadRequest,
 		},
 		{
 			name: "write workflow not allowed",
@@ -60,8 +107,8 @@ func TestIsWriteAllowed(t *testing.T) {
 			},
 			ref:         "feature-branch",
 			wantErr:     true,
-			expectedErr: "Only github supports writing to a branch",
-			statusCode:  http.StatusPreconditionFailed,
+			expectedErr: "this repository does not support the branch workflow",
+			statusCode:  http.StatusBadRequest,
 		},
 		{
 			name: "branch workflow allowed on github repository",
