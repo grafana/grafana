@@ -27,10 +27,16 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
-  const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
-    label: t.name,
-    value: t.name,
-  }));
+  const tableOptions: Array<SelectableValue<string>> = [
+    ...tables.map((t) => ({
+      label: t.name,
+      value: t.name,
+    })),
+    ...variableOptionGroup.options.map((opt) => ({
+      label: opt.label,
+      value: opt.value,
+    })),
+  ];  
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -43,7 +49,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     value: '__all_columns__',
   };
 
-  const selectableOptions: Array<SelectableValue<string>> = [selectAllOption, ...columnOptions, variableOptionGroup];
+  const selectableOptions: Array<SelectableValue<string>> = [selectAllOption, ...columnOptions];
 
   const handleTableChange = (selected: SelectableValue<string>) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
