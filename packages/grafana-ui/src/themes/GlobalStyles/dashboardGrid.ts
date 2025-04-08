@@ -91,6 +91,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-canvas-add-button': {
+      display: 'flex',
       opacity: 0.5,
       transition: theme.transitions.create('opacity'),
       filter: `grayscale(100%)`,
