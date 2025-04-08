@@ -131,8 +131,7 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
-      const urlLanguage = getUrlParam('lang');
-      const initI18nPromise = initializeI18n(urlLanguage ?? config.bootData.user.language);
+      const initI18nPromise = initializeI18n(config.bootData.user.language);
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
@@ -450,12 +449,6 @@ function handleRedirectTo(): void {
   } else {
     locationService.replace(decodedRedirectTo);
   }
-}
-
-function getUrlParam(value: string) {
-  const params = new URLSearchParams(window.location.search);
-  const param = params.get(value);
-  return param;
 }
 
 export default new GrafanaApp();

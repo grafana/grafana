@@ -240,7 +240,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     overrideFeatureTogglesFromLocalStorage(this);
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
-    this.theme2 = getThemeById(getUrlParam('theme') ?? this.bootData.user.theme);
+    this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
   }
@@ -295,12 +295,6 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       }
     }
   });
-}
-
-function getUrlParam(value: string) {
-  const params = new URLSearchParams(window.location.search);
-  const param = params.get(value);
-  return param;
 }
 
 const bootData = (window as any).grafanaBootData || {
