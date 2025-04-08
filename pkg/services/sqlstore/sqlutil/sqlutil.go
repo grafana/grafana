@@ -191,7 +191,7 @@ func spannerTestDB() (*TestDB, error) {
 		//  $ curl "localhost:9020/v1/projects/grafanatest/instances/grafanatest/databases" --data '{"createStatement": "CREATE DATABASE `grafanatest`"}'
 		return &TestDB{
 			DriverName: "spanner",
-			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", host),
+			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true;inMemSequenceGenerator=true", host),
 			Cleanup:    func() {},
 		}, nil
 	}
