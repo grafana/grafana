@@ -219,7 +219,10 @@ export function TableNG(props: TableNGProps) {
     // Set default widths from field config if they exist
     props.data.fields.forEach(({ name, config }) => {
       const configWidth = config?.custom?.width;
-      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
+      const totalWidth = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
+      // subtract out padding and 1px right border
+      const contentWidth = totalWidth - 2 * TABLE.CELL_PADDING - 1;
+      widths[name] = contentWidth;
     });
 
     // Measure actual widths if available
@@ -227,8 +230,7 @@ export function TableNG(props: TableNGProps) {
       const headerCell = headerCellRefs.current[key];
 
       if (headerCell.offsetWidth > 0) {
-        // Subtract 1 to account for the border
-        widths[key] = headerCell.offsetWidth - 1;
+        widths[key] = headerCell.offsetWidth;
       }
     });
 
