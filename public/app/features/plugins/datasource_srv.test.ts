@@ -61,7 +61,7 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('../plugin_loader', () => ({
+jest.mock('./plugin_loader', () => ({
   importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },
@@ -90,17 +90,17 @@ describe('datasource_srv', () => {
       meta: { metrics: true, annotations: true },
     },
     '-- Grafana --': {
-      type: 'grafana',
+      type: 'datasource',
       name: '-- Grafana --',
       meta: { builtIn: true, metrics: true, id: 'grafana' },
     },
     '-- Dashboard --': {
-      type: 'dashboard',
+      type: 'datasource',
       name: '-- Dashboard --',
       meta: { builtIn: true, metrics: true, id: 'dashboard' },
     },
     '-- Mixed --': {
-      type: 'test-db',
+      type: 'datasource',
       name: '-- Mixed --',
       meta: { builtIn: true, metrics: true, id: 'mixed' },
     },
@@ -144,6 +144,7 @@ describe('datasource_srv', () => {
     TestData: {
       type: 'grafana-testdata-datasource',
       name: 'TestData',
+      uid: 'testdata',
       meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
     },
   };
@@ -312,6 +313,20 @@ describe('datasource_srv', () => {
       });
     });
 
+    describe('when getting datasource by type', () => {
+      it('should return the first value of each type', async () => {
+        const jaeger = await dataSourceSrv.get({ type: `jaeger-db` });
+        const testdata = await dataSourceSrv.get({ type: `grafana-testdata-datasource` });
+        expect(jaeger.uid).toBe('uid-code-Jaeger');
+        expect(testdata.uid).toBe('testdata');
+      });
+
+      it('should prefer the default value', async () => {
+        const api = await dataSourceSrv.get({ type: `test-db` });
+        expect(api.uid).toBe('uid-code-BBB');
+      });
+    });
+
     it('Should by default filter out data sources that cannot be queried', () => {
       const list = dataSourceSrv.getList({});
       expect(list.find((x) => x.name === 'no-query')).toBeUndefined();
@@ -407,7 +422,7 @@ describe('datasource_srv', () => {
             },
             "name": "TestData",
             "type": "grafana-testdata-datasource",
-            "uid": "TestData",
+            "uid": "testdata",
           },
           {
             "meta": {
@@ -424,7 +439,7 @@ describe('datasource_srv', () => {
               "metrics": true,
             },
             "name": "-- Mixed --",
-            "type": "test-db",
+            "type": "datasource",
             "uid": "-- Mixed --",
           },
           {
@@ -434,7 +449,7 @@ describe('datasource_srv', () => {
               "metrics": true,
             },
             "name": "-- Dashboard --",
-            "type": "dashboard",
+            "type": "datasource",
             "uid": "-- Dashboard --",
           },
           {
@@ -444,7 +459,7 @@ describe('datasource_srv', () => {
               "metrics": true,
             },
             "name": "-- Grafana --",
-            "type": "grafana",
+            "type": "datasource",
             "uid": "-- Grafana --",
           },
         ]
