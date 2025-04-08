@@ -382,3 +382,37 @@ func TestExportWorker_ProcessWrapWithCloneFnError(t *testing.T) {
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "clone failed")
 }
+
+func TestExportWorker_ProcessBranchNotAllowedForClonableRepositories(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push: &v0alpha1.ExportJobOptions{
+				Branch: "somebranch",
+			},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		Spec: v0alpha1.RepositorySpec{
+			Type:      v0alpha1.GitHubRepositoryType,
+			Workflows: []v0alpha1.Workflow{v0alpha1.BranchWorkflow},
+		},
+	})
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
+	mockCloneFn := NewMockWrapWithCloneFn(t)
+	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		if cloneOpts.BeforeFn != nil {
+			return cloneOpts.BeforeFn()
+		}
+
+		return fn(repo, true)
+	})
+
+	r := NewExportWorker(nil, nil, nil, mockCloneFn.Execute)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "branch is not supported for clonable repositories")
+}

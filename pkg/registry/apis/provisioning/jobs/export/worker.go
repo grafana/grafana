@@ -63,6 +63,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		PushOnWrites: false,
 		BeforeFn: func() error {
 			progress.SetMessage(ctx, "clone target")
+			// :( the branch is now baked into the repo
+			if options.Branch != "" {
+				return fmt.Errorf("branch is not supported for clonable repositories")
+			}
+
 			return nil
 		},
 	}
@@ -76,11 +81,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		},
 	}
 
-	fn := func(repo repository.Repository, cloned bool) error {
-		if cloned {
-			options.Branch = "" // :( the branch is now baked into the repo
-		}
-
+	fn := func(repo repository.Repository, _ bool) error {
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
 			return fmt.Errorf("create clients: %w", err)
