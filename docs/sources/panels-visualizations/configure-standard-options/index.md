@@ -199,11 +199,12 @@ To display timestamps that are in seconds since epoch, multiply your timestamp v
 1. Set the following options:
 
    - **Mode** - **Binary operation**
-   - **Operation** 
-      - Select your timestamp field
-      - Select the asterisk (`*`) for multiply by
-      - Enter 1000 in the **Field or Number** field 
-  - Toggle the **Replace all fields** switch on if you want to see the calculated field.
+   - **Operation**
+     - Select your timestamp field
+     - Select the asterisk (`*`) for multiply by
+     - Enter 1000 in the **Field or Number** field
+
+- Toggle the **Replace all fields** switch on if you want to see the calculated field.
 
 #### Control unit scaling
 
