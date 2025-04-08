@@ -170,71 +170,76 @@ export function WizardContent({
   };
 
   return (
-    <form className={styles.form}>
-      <Stepper
-        steps={availableSteps}
-        activeStep={activeStep}
-        visitedSteps={completedSteps}
-        validationResults={{
-          connection: { valid: true },
-          bootstrap: { valid: true },
-          migrate: { valid: true },
-          pull: { valid: true },
-          finish: { valid: true },
-        }}
-      />
-      <Box marginBottom={2}>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Text element="h2">
-          {currentStepIndex + 1}. {currentStep?.title}
-        </Text>
-      </Box>
+    <Stack gap={6} direction="row" alignItems="flex-start">
+      <Stepper steps={availableSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+      <div className={styles.divider} />
+      <form className={styles.form}>
+        <Stack direction="column">
+          <Box marginBottom={2}>
+            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+            <Text element="h2">
+              {currentStepIndex + 1}. {currentStep?.title}
+            </Text>
+          </Box>
 
-      <RequestErrorAlert
-        request={saveRequest}
-        title={t('provisioning.wizard-content.title-repository-verification-failed', 'Repository verification failed')}
-      />
-
-      <div className={styles.content}>
-        {activeStep === 'connection' && <ConnectStep />}
-        {activeStep === 'bootstrap' && (
-          <BootstrapStep
-            onOptionSelect={onOptionSelect}
-            onStepUpdate={handleStepUpdate}
-            settingsData={settingsData}
-            repoName={repoName ?? ''}
+          <RequestErrorAlert
+            request={saveRequest}
+            title={t(
+              'provisioning.wizard-content.title-repository-verification-failed',
+              'Repository verification failed'
+            )}
           />
-        )}
-        {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
-        {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
-        {activeStep === 'finish' && <FinishStep />}
-      </div>
 
-      {stepError && <Alert severity="error" title={stepError} />}
+          <div className={styles.content}>
+            {activeStep === 'connection' && <ConnectStep />}
+            {activeStep === 'bootstrap' && (
+              <BootstrapStep
+                onOptionSelect={onOptionSelect}
+                onStepUpdate={handleStepUpdate}
+                settingsData={settingsData}
+                repoName={repoName ?? ''}
+              />
+            )}
+            {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
+            {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
+            {activeStep === 'finish' && <FinishStep />}
+          </div>
 
-      <Stack gap={2} justifyContent="flex-end">
-        <Button
-          variant={stepStatus === 'error' ? 'primary' : 'secondary'}
-          onClick={handleCancel}
-          disabled={isSubmitting || isCancelling}
-        >
-          {isCancelling
-            ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
-            : t('provisioning.wizard-content.button-cancel', 'Cancel')}
-        </Button>
-        <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
-          {isSubmitting
-            ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
-            : getNextButtonText(activeStep)}
-        </Button>
-      </Stack>
-    </form>
+          {stepError && <Alert severity="error" title={stepError} />}
+
+          <Stack gap={2} justifyContent="flex-end">
+            <Button
+              variant={stepStatus === 'error' ? 'primary' : 'secondary'}
+              onClick={handleCancel}
+              disabled={isSubmitting || isCancelling}
+            >
+              {isCancelling
+                ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
+                : t('provisioning.wizard-content.button-cancel', 'Cancel')}
+            </Button>
+            <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
+              {isSubmitting
+                ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
+                : getNextButtonText(activeStep)}
+            </Button>
+          </Stack>
+        </Stack>
+      </form>
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
     maxWidth: '900px',
+    flexGrow: 1,
+  }),
+  divider: css({
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: theme.colors.border.weak,
+    // align the with the button row
+    marginBottom: theme.spacing(13),
   }),
   content: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
