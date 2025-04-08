@@ -70,6 +70,10 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -87,10 +91,6 @@ interface AutoSize extends BaseProps {
 interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
-  /**
-   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
-   */
-  showMenuAlways?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
