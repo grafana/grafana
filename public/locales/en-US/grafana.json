@@ -5829,7 +5829,6 @@
       "remove-bookmark": "Remove from Bookmarks"
     },
     "kiosk": {
-      "tooltip": "Enable kiosk mode",
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
@@ -6227,6 +6226,7 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
+    "enable-kiosk-mode": "Enable kiosk mode",
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
     },
