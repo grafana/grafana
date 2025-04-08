@@ -5,6 +5,7 @@ import { ComponentSize, DragHandlePosition, useSplitter } from '@grafana/ui';
 export interface UseSnappingSplitterOptions {
   /**
    * The initial size of the primary pane between 0-1, defaults to 0.5
+   * If `usePixels` is true, this is the initial size in pixels of the second pane.
    */
   initialSize?: number;
   direction: 'row' | 'column';
@@ -14,6 +15,7 @@ export interface UseSnappingSplitterOptions {
   // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
   // pushing the left pane content left.
   handleSize?: ComponentSize;
+  usePixels?: boolean;
 }
 
 interface PaneOptions {
@@ -26,27 +28,31 @@ interface PaneState {
   snapSize?: number;
 }
 
-export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
-  const { paneOptions } = options;
-
+export function useSnappingSplitter({
+  direction,
+  initialSize,
+  dragPosition,
+  paneOptions,
+  collapsed,
+  handleSize,
+  usePixels,
+}: UseSnappingSplitterOptions) {
   const [state, setState] = useState<PaneState>({
-    collapsed: options.collapsed ?? false,
-    snapSize: options.collapsed ? 0 : undefined,
+    collapsed: collapsed ?? false,
+    snapSize: collapsed ? 0 : undefined,
   });
 
   const onResizing = useCallback(
-    (flexSize: number, pixelSize: number) => {
-      if (flexSize <= 0 && pixelSize <= 0) {
+    (flexSize: number, firstPanePixels: number, secondPanePixels: number) => {
+      if (flexSize <= 0 && firstPanePixels <= 0 && secondPanePixels <= 0) {
         return;
       }
 
-      const optionsPixelSize = (pixelSize / flexSize) * (1 - flexSize);
-
-      if (state.collapsed && optionsPixelSize > paneOptions.collapseBelowPixels) {
+      if (state.collapsed && secondPanePixels > paneOptions.collapseBelowPixels) {
         setState({ collapsed: false });
       }
 
-      if (!state.collapsed && optionsPixelSize < paneOptions.collapseBelowPixels) {
+      if (!state.collapsed && secondPanePixels < paneOptions.collapseBelowPixels) {
         setState({ collapsed: true });
       }
     },
@@ -83,11 +89,11 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
   }, [state.collapsed]);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
-    direction: options.direction,
-    dragPosition: options.dragPosition,
-    handleSize: options.handleSize,
-    initialSize: options.initialSize,
-    usePixels: true,
+    direction: direction,
+    dragPosition: dragPosition,
+    handleSize: handleSize,
+    initialSize: initialSize,
+    usePixels: usePixels,
     onResizing,
     onSizeChanged,
   });

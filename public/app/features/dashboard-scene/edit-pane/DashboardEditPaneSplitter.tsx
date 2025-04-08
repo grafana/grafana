@@ -44,6 +44,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     dragPosition: 'end',
     initialSize: 300,
     handleSize: 'sm',
+    usePixels: true,
     //collapsed: isCollapsed,
     // paneOptions: {
     //   collapseBelowPixels: 150,
