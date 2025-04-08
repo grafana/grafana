@@ -297,6 +297,7 @@
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
+      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
@@ -305,6 +306,7 @@
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
       "last-updated-by": "Last updated by",
+      "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
       "pending-period": "Pending period",
       "rule": "Rule",
@@ -923,6 +925,7 @@
       "label-disable-resolved-message": "Disable resolved message"
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "Default: 2",
       "or": "or",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -1045,6 +1048,12 @@
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
+        "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-title": "No rules to import",
+        "plugin-rules-warning": {
+          "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
+          "title": "Some rules are excluded from import"
+        },
         "title": "Confirm import"
       },
       "datasource": {
@@ -3134,7 +3143,6 @@
         "tooltip": "Share dashboard"
       },
       "share-button": "Share",
-      "switch-old-dashboard": "Switch to old dashboard page",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -5328,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Error cancelling creating snapshot",
+      "create-snapshot-error-duplicate-resource-type": "Duplicate resource type. See the Grafana server logs for more details",
+      "create-snapshot-error-empty-resource-types": "You need to provide at least one resource type for snapshot creation",
+      "create-snapshot-error-missing-dependency": "Missing dependency. See the Grafana server logs for more details",
       "create-snapshot-error-title": "Error creating snapshot",
+      "create-snapshot-error-unknown-resource-type": "Unknown resource type. See the Grafana server logs for more details",
       "disconnect-error-title": "Error disconnecting",
       "error-see-server-logs": "See the Grafana server logs for more details",
       "get-session-error-title": "Error loading migration configuration",
@@ -5425,6 +5437,7 @@
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
+      "show-errors": "Only view errors",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
@@ -5434,7 +5447,7 @@
       "upload-migration": "Upload snapshot"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack. <2>Learn about migrating other settings.</2>"
+      "text": "Resources are copied to your Grafana Cloud stack. <2>Learn more</2> about the full set of supported resources and migrating other settings."
     },
     "token-status": {
       "active": "Token created and active",
@@ -5826,7 +5839,6 @@
       "remove-bookmark": "Remove from Bookmarks"
     },
     "kiosk": {
-      "tooltip": "Enable kiosk mode",
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
@@ -6224,6 +6236,7 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
+    "enable-kiosk-mode": "Enable kiosk mode",
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
     },
@@ -6855,6 +6868,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "replace-query-from-library": "Replace with query from library",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"

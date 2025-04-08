@@ -7,9 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -20,7 +18,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, gro
 		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
 	}
 
-	nonEmptyRows := make([][]cloudwatchlogstypes.ResultField, 0)
+	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
 	for _, row := range response.Results {
 		// Sometimes CloudWatch can send empty rows
 		if len(row) == 0 {
@@ -117,20 +115,26 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, gro
 
 	queryStats := make([]data.QueryStat, 0)
 	if response.Statistics != nil {
-		queryStats = append(queryStats, data.QueryStat{
-			FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
-			Value:       response.Statistics.BytesScanned,
-		})
+		if response.Statistics.BytesScanned != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+				Value:       *response.Statistics.BytesScanned,
+			})
+		}
 
-		queryStats = append(queryStats, data.QueryStat{
-			FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
-			Value:       response.Statistics.RecordsScanned,
-		})
+		if response.Statistics.RecordsScanned != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+				Value:       *response.Statistics.RecordsScanned,
+			})
+		}
 
-		queryStats = append(queryStats, data.QueryStat{
-			FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
-			Value:       response.Statistics.RecordsMatched,
-		})
+		if response.Statistics.RecordsMatched != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+				Value:       *response.Statistics.RecordsMatched,
+			})
+		}
 	}
 
 	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
@@ -143,8 +147,10 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, gro
 		frame.Meta.Stats = queryStats
 	}
 
-	frame.Meta.Custom = map[string]any{
-		"Status": string(response.Status),
+	if response.Status != nil {
+		frame.Meta.Custom = map[string]any{
+			"Status": *response.Status,
+		}
 	}
 
 	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
@@ -152,7 +158,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, gro
 	return frame, nil
 }
 
-func changeToStringField(lengthOfValues int, rows [][]cloudwatchlogstypes.ResultField, logEventField string) []*string {
+func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultField, logEventField string) []*string {
 	fieldValuesAsStrings := make([]*string, lengthOfValues)
 	for i, resultFields := range rows {
 		for _, field := range resultFields {

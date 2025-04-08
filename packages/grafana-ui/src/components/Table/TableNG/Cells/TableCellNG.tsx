@@ -144,12 +144,11 @@ export function TableCellNG(props: TableCellNGProps) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
       const div = divWidthRef.current;
       const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('position', 'absolute');
-      tableCellDiv?.style.setProperty('top', '0');
       tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
-      tableCellDiv?.style.setProperty('white-space', 'normal');
-      tableCellDiv?.style.setProperty('min-height', `${height}px`);
-      tableCellDiv?.style.setProperty('width', `${divWidth}px`);
+      tableCellDiv?.style.setProperty('white-space', 'pre-line');
+      tableCellDiv?.style.setProperty('min-height', `100%`);
+      tableCellDiv?.style.setProperty('height', `fit-content`);
+      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
     }
   };
 
@@ -159,10 +158,11 @@ export function TableCellNG(props: TableCellNGProps) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
       const div = divWidthRef.current;
       const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('position', 'relative');
-      tableCellDiv?.style.removeProperty('top');
       tableCellDiv?.style.removeProperty('z-index');
-      tableCellDiv?.style.setProperty('white-space', 'nowrap');
+      tableCellDiv?.style.removeProperty('white-space');
+      tableCellDiv?.style.removeProperty('min-height');
+      tableCellDiv?.style.removeProperty('height');
+      tableCellDiv?.style.removeProperty('background');
     }
   };
 
@@ -227,7 +227,6 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
-    '&:hover': { background: color.bgHoverColor },
   }),
   cellActions: css({
     display: 'flex',
