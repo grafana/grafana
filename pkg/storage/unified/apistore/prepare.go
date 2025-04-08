@@ -66,6 +66,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if grantPermisions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
+	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+		return nil, err
+	}
 
 	if s.opts.RequireDeprecatedInternalID {
 		// nolint:staticcheck
@@ -168,6 +171,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetGeneration(previous.GetGeneration() + 1)
 		obj.SetUpdatedBy(info.GetUID())
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+
+		// Only validate when the generation has changed
+		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+			return nil, err
+		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))

@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -29,6 +28,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/bwmarrin/snowflake"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -237,6 +238,11 @@ func (s *Storage) Delete(
 	_ runtime.Object,
 	opts storage.DeleteOptions,
 ) error {
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return errors.New("missing auth info")
+	}
+
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -268,6 +274,15 @@ func (s *Storage) Delete(
 			return err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(out)
+	if err != nil {
+		return fmt.Errorf("unable to read object %w", err)
+	}
+	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
