@@ -179,19 +179,28 @@ function filterRulerRulesConfig(
       return;
     }
 
-    const filteredGroups = groups.filter((group) => {
-      if (groupName && group.name !== groupName) {
-        return false;
-      }
-      // filter out groups that contain rules with the GRAFANA_ORIGIN_LABEL
-      // this is used to prevent importing rules that are already managed by a plugin
-      const hasGrafanaOriginLabel = group.rules.some((rule) => rule.labels?.[GRAFANA_ORIGIN_LABEL]);
-      if (hasGrafanaOriginLabel) {
-        someRulesAreSkipped = true;
-        return false;
-      }
-      return true;
-    });
+    const filteredGroups = groups
+      .map((group) => {
+        if (groupName && group.name !== groupName) {
+          return group;
+        }
+
+        // Filter out rules that have the GRAFANA_ORIGIN_LABEL
+        const filteredRules = group.rules.filter((rule) => {
+          const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
+          if (hasGrafanaOriginLabel) {
+            someRulesAreSkipped = true;
+            return false;
+          }
+          return true;
+        });
+
+        return {
+          ...group,
+          rules: filteredRules,
+        };
+      })
+      .filter((group) => group.rules.length > 0);
 
     if (filteredGroups.length > 0) {
       filteredConfig[ns] = filteredGroups;
