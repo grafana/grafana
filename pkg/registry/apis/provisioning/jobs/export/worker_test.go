@@ -58,7 +58,7 @@ func TestExportWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := NewExportWorker(nil, nil)
+			r := NewExportWorker(nil, nil, nil)
 			got := r.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.want, got)
 		})
@@ -72,7 +72,7 @@ func TestExportWorker_ProcessNoExportSettings(t *testing.T) {
 		},
 	}
 
-	r := NewExportWorker(nil, nil)
+	r := NewExportWorker(nil, nil, nil)
 	err := r.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "missing export settings")
 }
@@ -95,7 +95,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 		},
 	})
 
-	r := NewExportWorker(nil, nil)
+	r := NewExportWorker(nil, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "this repository is read only")
 }
@@ -118,7 +118,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 		},
 	})
 
-	r := NewExportWorker(nil, nil)
+	r := NewExportWorker(nil, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "this repository does not support the branch workflow")
 }
@@ -144,7 +144,7 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 
 	mockClients := resources.NewMockClientFactory(t)
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(nil, errors.New("failed to create clients"))
-	r := NewExportWorker(mockClients, nil)
+	r := NewExportWorker(mockClients, nil, nil)
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
@@ -177,7 +177,7 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	resourceClients.On("Folder").Return(nil, nil)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	r := NewExportWorker(mockClients, nil)
+	r := NewExportWorker(mockClients, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
 }
@@ -207,7 +207,7 @@ func TestExportWorker_ProcessFolderClientError(t *testing.T) {
 	resourceClients.On("Folder").Return(nil, fmt.Errorf("failed to create folder client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	r := NewExportWorker(mockClients, nil)
+	r := NewExportWorker(mockClients, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create folder client: failed to create folder client")
 }
@@ -240,7 +240,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	mockRepoResources.On("Client", context.Background(), mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	r := NewExportWorker(mockClients, mockRepoResources)
+	r := NewExportWorker(mockClients, mockRepoResources, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
 }
@@ -686,7 +686,8 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 			mockRepoResources.On("Client", mock.Anything, mockRepo).Return(repoResources, nil)
 
-			r := NewExportWorker(mockClientFactory, mockRepoResources)
+			// FIXME: move this test to folders_test.go
+			r := NewExportWorker(mockClientFactory, mockRepoResources, ExportAll)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 			if tt.expectedError != "" {
@@ -1073,7 +1074,8 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 			mockRepoResources.On("Client", mock.Anything, mockRepo).Return(repoResources, nil)
 
-			r := NewExportWorker(mockClientFactory, mockRepoResources)
+			// FIXME: move this test to dashboards_test.go
+			r := NewExportWorker(mockClientFactory, mockRepoResources, ExportAll)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 			if tt.expectedError != "" {
@@ -1094,13 +1096,13 @@ type MockClonableRepository struct {
 
 func TestExportWorker_ClonableRepository(t *testing.T) {
 	tests := []struct {
-		name           string
-		createRepo     func(t *testing.T) *MockClonableRepository
-		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
-		setupRepo      func(repo *repository.MockClonedRepository)
-		setupResources func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind)
-		setupProgress  func(progress *jobs.MockJobProgressRecorder)
-		expectedError  string
+		name          string
+		createRepo    func(t *testing.T) *MockClonableRepository
+		setupRepo     func(repo *repository.MockClonedRepository)
+		setupProgress func(progress *jobs.MockJobProgressRecorder)
+		exportRun     bool
+		exportErr     error
+		expectedError string
 	}{
 		{
 			name: "successful clone and push",
@@ -1123,24 +1125,6 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 					MockClonedRepository:   cloned,
 					MockClonableRepository: clonable,
 				}
-			},
-			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
-				if action.GetResource() == resources.FolderResource {
-					// Return empty folder list
-					return true, &metav1.PartialObjectMetadataList{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: resources.FolderResource.GroupVersion().String(),
-							Kind:       "FolderList",
-						},
-					}, nil
-				}
-				// Return empty dashboard list
-				return true, &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.DashboardResource.GroupVersion().String(),
-						Kind:       "DashboardList",
-					},
-				}, nil
 			},
 			setupRepo: func(repo *repository.MockClonedRepository) {
 				repo.On("Config").Return(&v0alpha1.Repository{
@@ -1165,21 +1149,12 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				})).Return(nil)
 				repo.On("Remove", mock.Anything).Return(nil)
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
-					return tree.Count() == 0
-				}), mock.Anything).Return(nil)
-				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
-			},
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "clone target").Return()
-				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
-				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
-				progress.On("SetMessage", mock.Anything, "start resource export").Return()
-				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 				progress.On("SetMessage", mock.Anything, "push changes").Return()
 			},
 			expectedError: "",
+			exportRun:     true,
 		},
 		{
 			name: "clone failure",
@@ -1214,6 +1189,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "clone target").Return()
 			},
 			expectedError: "clone repository: failed to clone repository",
+			exportRun:     false,
 		},
 		{
 			name: "any other failure cleans up the cloned repository",
@@ -1233,15 +1209,10 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 					MockClonableRepository: clonable,
 				}
 			},
-			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
-				return true, nil, fmt.Errorf("some error")
-			},
-			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
-				// nothing special to do here
-			},
+			exportErr: fmt.Errorf("some error"),
+			exportRun: true,
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "clone target").Return()
-				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 			},
 			setupRepo: func(repo *repository.MockClonedRepository) {
 				repo.On("Config").Return(&v0alpha1.Repository{
@@ -1255,7 +1226,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				})
 				repo.On("Remove", mock.Anything).Maybe().Return(nil)
 			},
-			expectedError: "load folder tree: error executing list: some error",
+			expectedError: "some error",
 		},
 	}
 
@@ -1280,28 +1251,16 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				Version: resources.FolderResource.Version,
 				Kind:    "FolderList",
 			}
-			listGVKDashboard := schema.GroupVersionKind{
-				Group:   resources.DashboardResource.Group,
-				Version: resources.DashboardResource.Version,
-				Kind:    "DashboardList",
-			}
 
 			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
-			scheme.AddKnownTypeWithName(listGVKDashboard, &metav1.PartialObjectMetadataList{})
 			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
 				Group:   resources.FolderResource.Group,
 				Version: resources.FolderResource.Version,
 				Kind:    resources.FolderResource.Resource,
 			}, &metav1.PartialObjectMetadata{})
-			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
-				Group:   resources.DashboardResource.Group,
-				Version: resources.DashboardResource.Version,
-				Kind:    resources.DashboardResource.Resource,
-			}, &metav1.PartialObjectMetadata{})
 
 			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
-				resources.FolderResource:    listGVK.Kind,
-				resources.DashboardResource: listGVKDashboard.Kind,
+				resources.FolderResource: listGVK.Kind,
 			})
 			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
 
@@ -1310,25 +1269,24 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 			mockClientFactory := resources.NewMockClientFactory(t)
-			var repoResources *resources.MockRepositoryResources
 
-			if tt.setupResources != nil {
-				resourceClients := resources.NewMockResourceClients(t)
+			resourceClients := resources.NewMockResourceClients(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+			mockExportFn := NewMockExportFn(t)
+
+			if tt.exportRun {
 				resourceClients.On("Folder").Return(fakeFolderClient, nil)
 
-				fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
-				fakeDynamicClient.PrependReactor("list", "dashboards", tt.reactorFunc)
 				mockClientFactory.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
 
-				repoResources = resources.NewMockRepositoryResources(t)
-				tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
 				mockRepoResources.On("Client", mock.Anything, mock.MatchedBy(func(repo repository.ReaderWriter) bool {
 					// compare only pointers
 					return repo == mockRepo.MockClonedRepository
 				})).Return(repoResources, nil)
+				mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.exportErr)
 			}
 
-			r := NewExportWorker(mockClientFactory, mockRepoResources)
+			r := NewExportWorker(mockClientFactory, mockRepoResources, mockExportFn.Execute)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 
 			if tt.expectedError != "" {
@@ -1340,10 +1298,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 			mockRepoResources.AssertExpectations(t)
 			mockClientFactory.AssertExpectations(t)
-
-			if repoResources != nil {
-				repoResources.AssertExpectations(t)
-			}
+			repoResources.AssertExpectations(t)
 		})
 	}
 }

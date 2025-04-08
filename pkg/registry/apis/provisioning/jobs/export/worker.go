@@ -11,20 +11,27 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"k8s.io/client-go/dynamic"
 )
+
+//go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
+type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, folderClient dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error
 
 type ExportWorker struct {
 	clientFactory       resources.ClientFactory
 	repositoryResources resources.RepositoryResourcesFactory
+	exportFn            ExportFn
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
+	exportFn ExportFn,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
+		exportFn:            exportFn,
 	}
 }
 
@@ -88,7 +95,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		return ExportAll(ctx, cfg.Name, *options, clients, repositoryResources, folderClient, progress)
+		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, folderClient, progress)
 	}
 
 	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
