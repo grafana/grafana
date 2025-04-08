@@ -19,7 +19,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Save
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
 
-  const defaultValues = useDefaultValues({ meta, defaultTitle, defaultDescription });
+  const defaultValues = useDefaultValues({ meta, defaultTitle, defaultDescription, loadedFromRef });
 
   if (!defaultValues) {
     return null;

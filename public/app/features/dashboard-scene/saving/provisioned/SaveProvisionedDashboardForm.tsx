@@ -82,7 +82,9 @@ export function SaveProvisionedDashboardForm({
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
 
-      if (workflow === 'branch' && ref !== '' && path !== '') {
+      const { ref, path } = request.data;
+
+      if (workflow === 'branch' && ref && path) {
         dashboard.closeModal();
         panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages

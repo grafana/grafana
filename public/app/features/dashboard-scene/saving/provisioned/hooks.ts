@@ -10,9 +10,10 @@ interface UseDefaultValuesParams {
   meta: DashboardMeta;
   defaultTitle: string;
   defaultDescription?: string;
+  loadedFromRef?: string;
 }
 
-export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
+export function useDefaultValues({ meta, defaultTitle, defaultDescription, loadedFromRef }: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
@@ -48,7 +49,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repository),
+      workflow: getDefaultWorkflow(repository, loadedFromRef),
     },
     isNew: !meta.k8s?.name,
     isGitHub: repository?.type === 'github',

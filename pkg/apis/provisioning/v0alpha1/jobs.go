@@ -105,8 +105,10 @@ type PullRequestJobOptions struct {
 	Ref string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR   int    `json:"pr,omitempty"`
-	Hash string `json:"hash,omitempty"` // used in PR code... not sure it is necessary
+	PR int `json:"pr,omitempty"`
+
+	// The specific commit hash that triggered this notice
+	Hash string `json:"hash,omitempty"`
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
