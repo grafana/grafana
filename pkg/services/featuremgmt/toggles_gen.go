@@ -487,10 +487,6 @@ const (
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
-	// FlagNodeGraphDotLayout
-	// Changed the layout algorithm for the node graph
-	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
-
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
 	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"

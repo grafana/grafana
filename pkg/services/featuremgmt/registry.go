@@ -920,13 +920,6 @@ var (
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
 		{
-			Name:         "nodeGraphDotLayout",
-			Description:  "Changed the layout algorithm for the node graph",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "groupToNestedTableTransformation",
 			Description:  "Enables the group to nested table transformation",
 			Stage:        FeatureStageGeneralAvailability,
