@@ -19,7 +19,7 @@ export enum Annotation {
   alertId = '__alertId__',
   dashboardUID = '__dashboardUid__',
   panelID = '__panelId__',
-  logzioRCA = '__logzioRCA__', // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
+  logzioRCA = '__logzioAlertRCA__', // LOGZ.IO GRAFANA CHANGE :: DEV-48578 - rca checkbox
 }
 
 export const annotationLabels: Record<Annotation, string> = {
