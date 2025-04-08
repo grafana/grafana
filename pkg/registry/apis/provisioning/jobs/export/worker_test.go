@@ -1094,15 +1094,8 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 }
 
 type MockClonableRepository struct {
+	*repository.MockClonableRepository
 	*repository.MockClonedRepository
-	cloneErr error
-}
-
-func (m *MockClonableRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	if m.cloneErr != nil {
-		return nil, m.cloneErr
-	}
-	return m.MockClonedRepository, nil
 }
 
 func TestExportWorker_ClonableRepository(t *testing.T) {
@@ -1118,7 +1111,14 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 		{
 			name: "successful clone and push",
 			createRepo: func(t *testing.T) *MockClonableRepository {
-				return &MockClonableRepository{MockClonedRepository: repository.NewMockClonedRepository(t)}
+				cloned := repository.NewMockClonedRepository(t)
+				clonable := repository.NewMockClonableRepository(t)
+				clonable.On("Clone", mock.Anything, mock.Anything).Return(cloned, nil)
+
+				return &MockClonableRepository{
+					MockClonedRepository:   cloned,
+					MockClonableRepository: clonable,
+				}
 			},
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				if action.GetResource() == resources.FolderResource {
@@ -1170,9 +1170,13 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 		{
 			name: "clone failure",
 			createRepo: func(t *testing.T) *MockClonableRepository {
+				cloned := repository.NewMockClonedRepository(t)
+				clonable := repository.NewMockClonableRepository(t)
+				clonable.On("Clone", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("failed to clone repository"))
+
 				return &MockClonableRepository{
-					MockClonedRepository: repository.NewMockClonedRepository(t),
-					cloneErr:             fmt.Errorf("failed to clone repository"),
+					MockClonedRepository:   cloned,
+					MockClonableRepository: clonable,
 				}
 			},
 			setupRepo: func(repo *repository.MockClonedRepository) {
@@ -1194,7 +1198,14 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 		{
 			name: "any other failure cleans up the cloned repository",
 			createRepo: func(t *testing.T) *MockClonableRepository {
-				return &MockClonableRepository{MockClonedRepository: repository.NewMockClonedRepository(t)}
+				cloned := repository.NewMockClonedRepository(t)
+				clonable := repository.NewMockClonableRepository(t)
+				clonable.On("Clone", mock.Anything, mock.Anything).Return(cloned, nil)
+
+				return &MockClonableRepository{
+					MockClonedRepository:   cloned,
+					MockClonableRepository: clonable,
+				}
 			},
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				return true, nil, fmt.Errorf("some error")
