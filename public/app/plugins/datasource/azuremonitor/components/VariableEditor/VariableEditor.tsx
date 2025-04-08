@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';
 
+import UrlBuilder from '../../azure_monitor/url_builder';
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
@@ -35,6 +37,8 @@ const VariableEditor = (props: Props) => {
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
     { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
+    { label: 'Custom Namespaces', value: AzureQueryType.CustomNamespacesQuery },
+    { label: 'Custom Metric Names', value: AzureQueryType.CustomMetricNamesQuery },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     // Add the option for the GrafanaTemplateVariableFn only if it's already in use
@@ -53,10 +57,12 @@ const VariableEditor = (props: Props) => {
   const [hasRegion, setHasRegion] = useState(false);
   const [requireResourceGroup, setRequireResourceGroup] = useState(false);
   const [requireNamespace, setRequireNamespace] = useState(false);
+  const [requireCustomNamespace, setRequireCustomNamespace] = useState(false);
   const [requireResource, setRequireResource] = useState(false);
   const [subscriptions, setSubscriptions] = useState<SelectableValue[]>([]);
   const [resourceGroups, setResourceGroups] = useState<SelectableValue[]>([]);
   const [namespaces, setNamespaces] = useState<SelectableValue[]>([]);
+  const [customNamespaces, setCustomNamespaces] = useState<SelectableValue[]>([]);
   const [resources, setResources] = useState<SelectableValue[]>([]);
   const [regions, setRegions] = useState<SelectableValue[]>([]);
   const [errorMessage, setError] = useLastError();
@@ -77,6 +83,7 @@ const VariableEditor = (props: Props) => {
     setRequireResourceGroup(false);
     setRequireNamespace(false);
     setRequireResource(false);
+    setRequireCustomNamespace(false);
     switch (queryType) {
       case AzureQueryType.ResourceGroupsQuery:
       case AzureQueryType.WorkspacesQuery:
@@ -101,6 +108,19 @@ const VariableEditor = (props: Props) => {
       case AzureQueryType.LocationsQuery:
         setRequireSubscription(true);
         break;
+      case AzureQueryType.CustomNamespacesQuery:
+        setRequireSubscription(true);
+        setRequireResourceGroup(true);
+        setRequireNamespace(true);
+        setRequireResource(true);
+        break;
+      case AzureQueryType.CustomMetricNamesQuery:
+        setRequireSubscription(true);
+        setRequireResourceGroup(true);
+        setRequireResource(true);
+        setRequireNamespace(true);
+        setRequireCustomNamespace(true);
+        break;
     }
   }, [queryType]);
 
@@ -117,6 +137,7 @@ const VariableEditor = (props: Props) => {
     });
   }, [datasource, queryType]);
 
+  // Always retrieve subscriptions first as they're used in most template variable queries
   useEffectOnce(() => {
     datasource.getSubscriptions().then((subs) => {
       setSubscriptions(subs.map((s) => ({ label: s.text, value: s.value })));
@@ -124,6 +145,7 @@ const VariableEditor = (props: Props) => {
   });
 
   const subscription = typeof query === 'object' && query.subscription;
+  // When subscription is set, retrieve resource groups
   useEffect(() => {
     if (subscription) {
       datasource.getResourceGroups(subscription).then((rgs) => {
@@ -133,14 +155,16 @@ const VariableEditor = (props: Props) => {
   }, [datasource, subscription]);
 
   const resourceGroup = (typeof query === 'object' && query.resourceGroup) || '';
+  // When resource group is set, retrieve metric namespaces (aka resource types for a custom metric and custom metric namespace query)
   useEffect(() => {
-    if (subscription) {
+    if (subscription && resourceGroup) {
       datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
         setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup]);
 
+  // When subscription is set also retrieve locations
   useEffect(() => {
     if (subscription) {
       datasource.azureMonitorDatasource.getLocations([subscription]).then((rgs) => {
@@ -152,13 +176,30 @@ const VariableEditor = (props: Props) => {
   }, [datasource, subscription, resourceGroup]);
 
   const namespace = (typeof query === 'object' && query.namespace) || '';
+  // When subscription, resource group, and namespace are all set, retrieve resource names
   useEffect(() => {
-    if (subscription) {
+    if (subscription && resourceGroup && namespace) {
       datasource.getResourceNames(subscription, resourceGroup, namespace).then((rgs) => {
         setResources(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
     }
   }, [datasource, subscription, resourceGroup, namespace]);
+
+  const resource = (typeof query === 'object' && query.resource) || '';
+  // When subscription, resource group, namespace, and resource name are all set, retrieve custom metric namespaces
+  useEffect(() => {
+    if (subscription && resourceGroup && namespace && resource) {
+      const resourceUri = UrlBuilder.buildResourceUri(getTemplateSrv(), {
+        subscription,
+        resourceGroup,
+        metricNamespace: namespace,
+        resourceName: resource,
+      });
+      datasource.getMetricNamespaces(subscription, resourceGroup, resourceUri, true).then((rgs) => {
+        setCustomNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+      });
+    }
+  }, [datasource, subscription, resourceGroup, namespace, resource]);
 
   if (typeof query === 'string') {
     // still migrating the query
@@ -225,6 +266,13 @@ const VariableEditor = (props: Props) => {
     onChange(queryChange);
   };
 
+  const onChangeCustomNamespace = (selectableValue: SelectableValue) => {
+    onChange({
+      ...query,
+      customNamespace: selectableValue.value,
+    });
+  };
+
   return (
     <>
       <Field label="Query Type" data-testid={selectors.components.variableEditor.queryType.input}>
@@ -289,7 +337,14 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {(requireNamespace || hasNamespace) && (
-        <Field label="Namespace" data-testid={selectors.components.variableEditor.namespace.input}>
+        <Field
+          label={
+            queryType === AzureQueryType.CustomNamespacesQuery || queryType === AzureQueryType.CustomMetricNamesQuery
+              ? 'Resource Type'
+              : 'Namespace'
+          }
+          data-testid={selectors.components.variableEditor.namespace.input}
+        >
           <Select
             aria-label="select namespace"
             onChange={onChangeNamespace}
@@ -324,6 +379,22 @@ const VariableEditor = (props: Props) => {
             options={resources.concat(variableOptionGroup)}
             width={25}
             value={query.resource || null}
+          />
+        </Field>
+      )}
+      {requireCustomNamespace && (
+        <Field label={'Custom Namespace'} data-testid={selectors.components.variableEditor.customNamespace.input}>
+          <Select
+            aria-label="select custom namespace"
+            onChange={onChangeCustomNamespace}
+            options={
+              requireCustomNamespace
+                ? customNamespaces.concat(variableOptionGroup)
+                : customNamespaces.concat(variableOptionGroup, removeOption)
+            }
+            width={25}
+            value={query.customNamespace || null}
+            placeholder={requireCustomNamespace ? undefined : 'Optional'}
           />
         </Field>
       )}
