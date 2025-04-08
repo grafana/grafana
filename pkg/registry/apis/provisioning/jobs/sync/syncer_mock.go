@@ -29,21 +29,31 @@ func (_m *MockSyncer) EXPECT() *MockSyncer_Expecter {
 }
 
 // Sync provides a mock function with given fields: ctx, repo, options, repositoryResources, clients, progress
-func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) error {
+func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) (string, error) {
 	ret := _m.Called(ctx, repo, options, repositoryResources, clients, progress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Sync")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) error); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) (string, error)); ok {
+		return rf(ctx, repo, options, repositoryResources, clients, progress)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) string); ok {
 		r0 = rf(ctx, repo, options, repositoryResources, clients, progress)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) error); ok {
+		r1 = rf(ctx, repo, options, repositoryResources, clients, progress)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockSyncer_Sync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Sync'
@@ -69,12 +79,12 @@ func (_c *MockSyncer_Sync_Call) Run(run func(ctx context.Context, repo repositor
 	return _c
 }
 
-func (_c *MockSyncer_Sync_Call) Return(_a0 error) *MockSyncer_Sync_Call {
-	_c.Call.Return(_a0)
+func (_c *MockSyncer_Sync_Call) Return(_a0 string, _a1 error) *MockSyncer_Sync_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) error) *MockSyncer_Sync_Call {
+func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder) (string, error)) *MockSyncer_Sync_Call {
 	_c.Call.Return(run)
 	return _c
 }
