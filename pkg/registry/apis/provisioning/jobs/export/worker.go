@@ -68,9 +68,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			options.Branch = "" // :( the branch is now baked into the repo
 		}
 
-		// Load and write all folders
-		// FIXME: we load the entire tree in memory
-		progress.SetMessage(ctx, "read folder tree from API server")
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
 			return fmt.Errorf("create clients: %w", err)
@@ -91,15 +88,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		if err := ExportFolders(ctx, cfg.Name, *options, folderClient, repositoryResources, progress); err != nil {
-			return err
-		}
-
-		if err := ExportResources(ctx, *options, clients, repositoryResources, progress); err != nil {
-			return err
-		}
-
-		return nil
+		return ExportAll(ctx, cfg.Name, *options, clients, repositoryResources, folderClient, progress)
 	}
 
 	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)

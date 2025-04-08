@@ -147,7 +147,6 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 	r := NewExportWorker(mockClients, nil)
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockProgress.On("SetMessage", context.Background(), "read folder tree from API server").Return()
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create clients: failed to create clients")
@@ -177,7 +176,6 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 	resourceClients.On("Folder").Return(nil, nil)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockProgress.On("SetMessage", context.Background(), "read folder tree from API server").Return()
 
 	r := NewExportWorker(mockClients, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -209,8 +207,6 @@ func TestExportWorker_ProcessFolderClientError(t *testing.T) {
 	resourceClients.On("Folder").Return(nil, fmt.Errorf("failed to create folder client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockProgress.On("SetMessage", context.Background(), "read folder tree from API server").Return()
-
 	r := NewExportWorker(mockClients, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create folder client: failed to create folder client")
@@ -244,8 +240,6 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	mockRepoResources.On("Client", context.Background(), mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockProgress.On("SetMessage", context.Background(), "read folder tree from API server").Return()
-
 	r := NewExportWorker(mockClients, mockRepoResources)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
