@@ -168,28 +168,26 @@ function filterRulerRulesConfig(
       return;
     }
 
-    const filteredGroups = groups
-      .map((group) => {
-        if (groupName && group.name !== groupName) {
-          return group;
+    const filteredGroups = groups.filter((group) => {
+      if (groupName && group.name !== groupName) {
+        return false;
+      }
+
+      // Filter out rules that have the GRAFANA_ORIGIN_LABEL
+      const filteredRules = group.rules.filter((rule) => {
+        const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
+        if (hasGrafanaOriginLabel) {
+          someRulesAreSkipped = true;
+          return false;
         }
+        return true;
+      });
 
-        // Filter out rules that have the GRAFANA_ORIGIN_LABEL
-        const filteredRules = group.rules.filter((rule) => {
-          const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
-          if (hasGrafanaOriginLabel) {
-            someRulesAreSkipped = true;
-            return false;
-          }
-          return true;
-        });
-
-        return {
-          ...group,
-          rules: filteredRules,
-        };
-      })
-      .filter((group) => group.rules.length > 0);
+      return {
+        ...group,
+        rules: filteredRules,
+      };
+    });
 
     if (filteredGroups.length > 0) {
       filteredConfig[ns] = filteredGroups;
