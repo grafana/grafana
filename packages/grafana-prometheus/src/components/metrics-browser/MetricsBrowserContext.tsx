@@ -1,4 +1,3 @@
-import { useWhatChanged } from '@simbathesailor/use-what-changed';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
@@ -195,8 +194,6 @@ export function MetricsBrowserProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metrics]);
 
-  useWhatChanged([selectedLabelKeys]);
-
   // Fetch label values for selected label keys
   useEffect(() => {
     async function fetchValues() {
@@ -228,7 +225,15 @@ export function MetricsBrowserProvider({
             `MetricsBrowser_LV_${lk}`,
             validSeriesLimit(seriesLimit)
           );
-          newLabelValues[lk] = lastSelectedLabelKey === lk ? labelValues[lk] : values;
+          // We don't want to discard values from last selected list.
+          // User might want to select more.
+          if (lastSelectedLabelKey === lk) {
+            newLabelValues[lk] = labelValues[lk];
+          } else {
+            // If there are already selected values merge them with the fetched values.
+            const mergedValues = new Set([...(selectedLabelValues[lk] ?? []), ...values]);
+            newLabelValues[lk] = Array.from(mergedValues);
+          }
         } catch (error) {
           console.error(`Error fetching values for label ${lk}:`, error);
           newLabelValues[lk] = [];
