@@ -5437,7 +5437,7 @@
       "upload-migration": "Upload snapshot"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack. <2>Learn about migrating other settings.</2>"
+      "text": "Resources are copied to your Grafana Cloud stack. <2>Learn more</2> about the full set of supported resources and migrating other settings."
     },
     "token-status": {
       "active": "Token created and active",
