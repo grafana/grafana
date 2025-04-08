@@ -183,20 +183,20 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               </Trans>
             )}
             {/* search is in progress */}
-            {!doneSearching && (
+            {!doneSearching && !loadingAborted && (
               <Trans i18nKey="alerting.rule-list.filter-view.results-loading">
                 Searching – found {{ numberOfRules }} rules
               </Trans>
             )}
           </Text>
-          {!doneSearching && (
+          {!doneSearching && !loadingAborted && (
             <Button variant="secondary" size="sm" onClick={() => cancelSearch()}>
               Cancel search
             </Button>
           )}
         </Card>
       )}
-      {!doneSearching && !loading && <LoadMoreHelper handleLoad={loadResultPage} />}
+      {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }
