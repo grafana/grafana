@@ -1094,18 +1094,10 @@ func (m *MockClonableRepository) Clone(ctx context.Context, opts repository.Clon
 	return m.MockClonedRepository, nil
 }
 
-func (m *MockClonableRepository) UnderlyingMock() *repository.MockClonedRepository {
-	return m.MockClonedRepository
-}
-
-type mockWithUnderlyingRepo interface {
-	UnderlyingMock() *repository.MockClonedRepository
-}
-
 func TestExportWorker_ClonableRepository(t *testing.T) {
 	tests := []struct {
 		name           string
-		createRepo     func(t *testing.T) repository.Repository
+		createRepo     func(t *testing.T) *MockClonableRepository
 		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
 		setupRepo      func(repo *repository.MockClonedRepository)
 		setupResources func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind)
@@ -1114,18 +1106,8 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 	}{
 		{
 			name: "successful clone and push",
-			createRepo: func(t *testing.T) repository.Repository {
-				mockCloned := repository.NewMockClonedRepository(t)
-				mockCloned.On("Config").Return(&v0alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
-					Spec: v0alpha1.RepositorySpec{
-						Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
-					},
-				})
-				return &MockClonableRepository{MockClonedRepository: mockCloned}
+			createRepo: func(t *testing.T) *MockClonableRepository {
+				return &MockClonableRepository{MockClonedRepository: repository.NewMockClonedRepository(t)}
 			},
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				if action.GetResource() == resources.FolderResource {
@@ -1146,6 +1128,15 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				}, nil
 			},
 			setupRepo: func(repo *repository.MockClonedRepository) {
+				repo.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+					},
+				})
 				repo.On("Push", mock.Anything, mock.Anything).Return(nil)
 				repo.On("Remove", mock.Anything).Return(nil)
 			},
@@ -1167,9 +1158,14 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 		},
 		{
 			name: "clone failure",
-			createRepo: func(t *testing.T) repository.Repository {
-				mockCloned := repository.NewMockClonedRepository(t)
-				mockCloned.On("Config").Return(&v0alpha1.Repository{
+			createRepo: func(t *testing.T) *MockClonableRepository {
+				return &MockClonableRepository{
+					MockClonedRepository: repository.NewMockClonedRepository(t),
+					cloneErr:             fmt.Errorf("failed to clone repository"),
+				}
+			},
+			setupRepo: func(repo *repository.MockClonedRepository) {
+				repo.On("Config").Return(&v0alpha1.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "test-namespace",
@@ -1178,23 +1174,40 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 						Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 					},
 				})
-				return &MockClonableRepository{
-					MockClonedRepository: mockCloned,
-					cloneErr:             fmt.Errorf("failed to clone repository"),
-				}
-			},
-			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
-				return true, &metav1.PartialObjectMetadataList{}, nil
-			},
-			setupRepo: func(repo *repository.MockClonedRepository) {
-				// Setup basic expectations that would be needed if clone succeeded
-				repo.On("Push", mock.Anything, mock.Anything).Maybe().Return(nil)
-				repo.On("Remove", mock.Anything).Maybe().Return(nil)
 			},
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "clone target").Return()
 			},
 			expectedError: "clone target: failed to clone repository",
+		},
+		{
+			name: "any other failure cleans up the cloned repository",
+			createRepo: func(t *testing.T) *MockClonableRepository {
+				return &MockClonableRepository{MockClonedRepository: repository.NewMockClonedRepository(t)}
+			},
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				return true, nil, fmt.Errorf("some error")
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				// nothing special to do here
+			},
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "clone target").Return()
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+			},
+			setupRepo: func(repo *repository.MockClonedRepository) {
+				repo.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+					},
+				})
+				repo.On("Remove", mock.Anything).Maybe().Return(nil)
+			},
+			expectedError: "load folder tree: error executing list: some error",
 		},
 	}
 
@@ -1210,10 +1223,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			}
 
 			mockRepo := tt.createRepo(t)
-			mockWithUnderlying, ok := mockRepo.(mockWithUnderlyingRepo)
-			require.True(t, ok, "mock repository must implement mockWithUnderlyingRepo")
-
-			tt.setupRepo(mockWithUnderlying.UnderlyingMock())
+			tt.setupRepo(mockRepo.MockClonedRepository)
 
 			scheme := runtime.NewScheme()
 			require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -1266,7 +1276,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 				tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
 				mockRepoResources.On("Client", mock.Anything, mock.MatchedBy(func(repo repository.ReaderWriter) bool {
 					// compare only pointers
-					return repo == mockWithUnderlying.UnderlyingMock()
+					return repo == mockRepo.MockClonedRepository
 				})).Return(repoResources, nil)
 			}
 
