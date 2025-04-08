@@ -560,7 +560,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 
 			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
-			syncer := sync.NewSyncer(b.clients, sync.Changes, sync.FullSync, sync.IncrementalSync)
+			syncer := sync.NewSyncer(sync.Changes, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
