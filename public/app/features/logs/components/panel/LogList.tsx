@@ -3,18 +3,9 @@ import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import {
-  AbsoluteTimeRange,
-  CoreApp,
-  DataFrame,
-  EventBus,
-  Field,
-  LinkModel,
-  LogRowModel,
-  LogsSortOrder,
-  TimeRange,
-} from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
@@ -30,8 +21,6 @@ import {
   ScrollToLogsEvent,
   storeLogLineSize,
 } from './virtualization';
-
-export type GetFieldLinksFn = (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
 
 interface Props {
   app: CoreApp;

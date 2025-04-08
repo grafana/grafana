@@ -16,10 +16,8 @@ import {
   RawTimeRange,
   DataQueryResponse,
   LogRowContextOptions,
-  LinkModel,
   EventBus,
   ExplorePanelsState,
-  Field,
   TimeRange,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -61,6 +59,7 @@ import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
@@ -118,7 +117,7 @@ interface Props extends Themeable2 {
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
-  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks: GetFieldLinksFn;
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;
