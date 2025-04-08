@@ -164,7 +164,9 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
         <Stack gap={1} direction={'column'} grow={1}>
           <Stack gap={1} direction={'row'} grow={1} justifyContent={'space-between'} alignItems={'start'}>
             <Stack gap={1}>
-              {controls?.map((control) => <control.Component key={control.state.key} model={control} />)}
+              {controls?.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
             </Stack>
 
             <LinkButton

@@ -808,9 +808,9 @@ describe('removeQuotesIfExist', () => {
   });
 
   it('handles strings with nested quotes correctly', () => {
-    const input = '"nested \"quotes\""';
+    const input = '"nested "quotes""';
     const result = removeQuotesIfExist(input);
-    expect(result).toBe('nested \"quotes\"');
+    expect(result).toBe('nested "quotes"');
   });
 
   it('removes quotes from a numeric string wrapped in quotes', () => {

@@ -38,7 +38,7 @@ export interface PlaylistItem {
    * Type of the item.
    */
   type: // Use an explicit dashboard
-  | 'dashboard_by_uid'
+    | 'dashboard_by_uid'
     // find all dashboards with a given tag
     | 'dashboard_by_tag'
     // @deprecated use a dashboard with a given internal id

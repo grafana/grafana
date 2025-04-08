@@ -647,7 +647,7 @@ def lint_frontend_step():
             "yarn-install",
         ],
         "commands": [
-            "yarn run prettier:check",
+            "yarn run format:check",
             "yarn run lint",
             "yarn run typecheck",
         ],

@@ -20,7 +20,7 @@ import {
   DataHoverClearEvent,
   DataFrame,
   FieldType,
-  colorManipulator
+  colorManipulator,
 } from '@grafana/data';
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';

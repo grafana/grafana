@@ -3,7 +3,7 @@
 }
 
 .background {
-  background-color: #FFF;
+  background-color: #fff;
   border: 1px solid #e4e5e6;
 }
 
@@ -16,11 +16,12 @@
 }
 
 .well {
-  background-color: #F4F5F5;
+  background-color: #f4f5f5;
   border: 1px solid #e4e5e6;
 }
 
-.txt div, .token div {
+.txt div,
+.token div {
   color: #24292e;
 }
 
@@ -29,7 +30,7 @@
 }
 
 .token {
-  background-color: #F4F5F5;
+  background-color: #f4f5f5;
   border: 1px solid #e4e5e6;
 
   padding: 10px 25px;

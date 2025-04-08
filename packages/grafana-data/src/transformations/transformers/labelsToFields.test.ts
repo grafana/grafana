@@ -347,8 +347,9 @@ describe('Labels as Columns', () => {
     });
 
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
-      expect(received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values })) })))
-        .toMatchInlineSnapshot(`
+      expect(
+        received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values })) }))
+      ).toMatchInlineSnapshot(`
         [
           {
             "fields": [
@@ -410,8 +411,9 @@ describe('Labels as Columns', () => {
     });
 
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
-      expect(received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values })) })))
-        .toMatchInlineSnapshot(`
+      expect(
+        received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values })) }))
+      ).toMatchInlineSnapshot(`
         [
           {
             "fields": [

@@ -8,14 +8,7 @@ import { Fill, Stroke, Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  PluginState,
-  EventBus,
-} from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState, EventBus } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 import { findField } from 'app/features/dimensions';
 
@@ -27,7 +20,6 @@ import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
-
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
@@ -78,7 +70,12 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
    * @param options
    * @param theme
    */
-  create: async (map: OlMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OlMap,
+    options: MapLayerOptions<DynamicGeoJSONMapperConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -226,7 +223,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
               layerInfo,
             },
             defaultValue: defaultOptions.style,
-          })
+          });
       },
     };
   },

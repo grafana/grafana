@@ -15,7 +15,7 @@ export function distribute(numItems: number, sizeFactor: number, justify: number
   let space = 1 - sizeFactor;
 
   /* eslint-disable no-multi-spaces */
-  // prettier-ignore
+  // biome-ignore format: easier to read
   let gap = (
     justify === SPACE_BETWEEN ? space / (numItems - 1) :
     justify === SPACE_AROUND  ? space / (numItems  )   :
@@ -26,7 +26,7 @@ export function distribute(numItems: number, sizeFactor: number, justify: number
     gap = 0;
   }
 
-  // prettier-ignore
+  // biome-ignore format: easier to read
   let offs = (
     justify === SPACE_BETWEEN ? 0       :
     justify === SPACE_AROUND  ? gap / 2 :

@@ -162,7 +162,6 @@ describe('type guards', () => {
   // This structure is typed (because the key is a const string union) to ensure that we always
   // test every type of variable, as new variables are added
   type ExtraVariableTypes = 'org' | 'dashboard' | 'user';
-  // prettier-ignore
   const variableFactsObj: Record<VariableType | ExtraVariableTypes, VariableFacts> = {
     query: { variable: createQueryVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
     adhoc: { variable: createAdhocVariable(), isMulti: false, hasOptions: false, hasCurrent: false },

@@ -95,11 +95,13 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
 export function migrateAdHocFilters(urlFilter: UrlQueryValue, filters: AdHocVariableFilter[]) {
   if (
     !(
-      urlFilter && // is present
-      Array.isArray(urlFilter) && // is an array
-      urlFilter.length > 0 && // has values
-      urlFilter[0] !== '' && // empty vars can contain ''
-      urlFilter.every((r) => r && typeof r === 'string') // vars are of any type but ours are all strings
+      (
+        urlFilter && // is present
+        Array.isArray(urlFilter) && // is an array
+        urlFilter.length > 0 && // has values
+        urlFilter[0] !== '' && // empty vars can contain ''
+        urlFilter.every((r) => r && typeof r === 'string')
+      ) // vars are of any type but ours are all strings
     )
   ) {
     return filters;

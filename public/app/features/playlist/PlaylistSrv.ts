@@ -25,10 +25,10 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
   private urls: string[] = []; // the URLs we need to load
   private index = 0;
-  declare private interval: number;
-  declare private startUrl: string;
+  private declare interval: number;
+  private declare startUrl: string;
   private numberOfLoops = 0;
-  declare private validPlaylistUrl: string;
+  private declare validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
   private api: PlaylistAPI;
 

@@ -44,7 +44,9 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
       allAttributes &&
       typeof allAttributes === 'string' &&
       // if the label chosen is a resource attribute, add it to the otel resource variable
-      allAttributes?.split(',').includes(labelName)
+      allAttributes
+        ?.split(',')
+        .includes(labelName)
     ) {
       // This is different than the first non-promoted labels on data trail. In data trail we look at all labels
       // for all metrics. In breakdown, we look at one metric.

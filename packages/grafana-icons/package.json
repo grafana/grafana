@@ -31,7 +31,6 @@
     "generate": "yarn clean && npx @svgr/cli ./svg --silent && mv ./src/icons-gen/index.ts ./src",
     "typecheck": "yarn generate && tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
-    "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
     "build": "yarn generate && rollup -c rollup.config.ts --configPlugin esbuild"
   },
   "devDependencies": {
@@ -43,14 +42,12 @@
     "@svgr/cli": "^8.1.0",
     "@svgr/core": "8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
-    "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
     "@types/node": "22.12.0",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "esbuild": "0.25.0",
-    "prettier": "3.4.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",

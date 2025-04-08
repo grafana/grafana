@@ -7,10 +7,10 @@ interface RepositoryJobsArgs {
   watch?: boolean;
 }
 
-export function useRepositoryJobs({ name, watch = true }: RepositoryJobsArgs = {}): [
-  Job[] | undefined,
-  ReturnType<typeof useListJobQuery>,
-] {
+export function useRepositoryJobs({
+  name,
+  watch = true,
+}: RepositoryJobsArgs = {}): [Job[] | undefined, ReturnType<typeof useListJobQuery>] {
   const query = useListJobQuery(
     name
       ? {

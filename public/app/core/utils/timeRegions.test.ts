@@ -298,7 +298,7 @@ describe('timeRegions', () => {
 
   describe('various scenarios (regions)', () => {
     /* eslint-disable */
-    // prettier-ignore
+    // biome-ignore format: the table is manually formatted to be readable
     let tests: TestDef[] = [
       ['from every day (time before) to every day (time after)',  _, '10:27', _, '14:27', '27 10 * * *', '4h'],
       ['from every day (time after)  to every day (time before)', _, '22:27', _, '02:27', '27 22 * * *', '4h'],
@@ -332,7 +332,7 @@ describe('timeRegions', () => {
 
   describe('various scenarios (points)', () => {
     /* eslint-disable */
-    // prettier-ignore
+    // biome-ignore format: the table is manually formatted to be readable
     let tests: TestDef[] = [
       ['from every day (time)',                            _, '10:03', _, _,       '3 10 * * *', ''],
       ['from every day (time)        to every day (time)', _, '10:03', _, '10:03', '3 10 * * *', ''],

@@ -2567,7 +2567,7 @@ steps:
   image: node:22.11.0-alpine
   name: yarn-install
 - commands:
-  - yarn run prettier:check
+  - yarn run format:check
   - yarn run lint
   - yarn run typecheck
   depends_on:
@@ -5210,6 +5210,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: efb7a251f741df9b3497b3c09683604b25752f1f52488aff7175fff4802e8ce3
+hmac: c8abec65473863572a9cd02b39cb8a3af10a2d05c33a59cab3683eca76434352
 
 ...
