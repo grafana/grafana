@@ -31,7 +31,7 @@ In Grafana v11.1, we [introduced](https://github.com/grafana/grafana/pull/86598)
 
 In Grafana v11.2, we [added](https://github.com/grafana/grafana/pull/89363/files) a new feature flag called `failWrongDSUID` that is turned off by default. When enabled, the REST APIs and provisioning reject any requests to create or update data source instances that have an incorrect UID.
 
-In Grafana v12.0, we're truning the feature flag `failWrongDSUID` on by default.
+In Grafana v12.0, we're turning the feature flag `failWrongDSUID` on by default.
 
 #### Correct UID format
 
