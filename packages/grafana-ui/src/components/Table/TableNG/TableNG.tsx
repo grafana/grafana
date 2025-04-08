@@ -227,7 +227,8 @@ export function TableNG(props: TableNGProps) {
       const headerCell = headerCellRefs.current[key];
 
       if (headerCell.offsetWidth > 0) {
-        widths[key] = headerCell.offsetWidth;
+        // Subtract 1 to account for the border
+        widths[key] = headerCell.offsetWidth - 1;
       }
     });
 
