@@ -342,7 +342,6 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
 export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Spec> {
   async makeExportable(dashboard: DashboardV2Spec) {
     const variableLookup: { [key: string]: any } = {};
-    const libraryPanels: LibraryPanelImport[] = [];
 
     for (const variable of dashboard.variables) {
       variableLookup[variable.spec.name] = variable.spec;
@@ -409,8 +408,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       };
 
       templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
-
-      libraryPanels.push(exportableLibPanel);
     };
 
     try {
