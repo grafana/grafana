@@ -39,6 +39,7 @@ interface RuleBase {
   evaluationTime?: number;
   lastError?: string;
   uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {
@@ -59,7 +60,6 @@ export interface AlertingRule extends RuleBase {
   totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp
-  folderUid?: string;
 }
 
 export interface RecordingRule extends RuleBase {
