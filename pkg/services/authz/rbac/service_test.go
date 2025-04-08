@@ -1262,6 +1262,40 @@ func TestService_List(t *testing.T) {
 	})
 }
 
+func TestService_CacheList(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	t.Run("List based on cached permissions", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		s.permCache.Set(ctx,
+			userPermCacheKey("org-12", "test-uid", "dashboards:read"),
+			map[string]bool{"dashboards:uid:dash1": true, "dashboards:uid:dash2": true, "folders:uid:fold1": true},
+		)
+		s.identityStore = &fakeIdentityStore{}
+
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "list",
+		})
+
+		require.NoError(t, err)
+		require.ElementsMatch(t, resp.Items, []string{"dash1", "dash2"})
+		require.ElementsMatch(t, resp.Folders, []string{"fold1"})
+	})
+}
+
 func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
