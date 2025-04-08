@@ -21,7 +21,7 @@ type syncer struct {
 	incrementalSync IncrementalSyncFn
 }
 
-func NewSyncer(clients resources.ClientFactory, compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn) Syncer {
 	return &syncer{
 		compare:         compare,
 		fullSync:        fullSync,
@@ -44,8 +44,8 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 	}
 
 	var currentRef string
-	versionedRepo, _ := repo.(repository.Versioned)
-	if versionedRepo != nil {
+	versionedRepo, ok := repo.(repository.Versioned)
+	if ok && versionedRepo != nil {
 		var err error
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {

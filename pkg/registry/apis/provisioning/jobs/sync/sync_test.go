@@ -12,12 +12,25 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type mockReaderWriter struct {
 	*repository.MockRepository
 	*repository.MockVersioned
+}
+
+// FIXME: understand how the MockRepository was generated as it seems
+// stale and it's causing collisions for the embedded
+func (m *mockReaderWriter) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
+	return m.MockVersioned.History(ctx, path, ref)
+}
+
+func (m *mockReaderWriter) LatestRef(ctx context.Context) (string, error) {
+	return m.MockVersioned.LatestRef(ctx)
+}
+
+func (m *mockReaderWriter) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
+	return m.MockVersioned.CompareFiles(ctx, base, ref)
 }
 
 func TestSyncer_Sync(t *testing.T) {
@@ -44,22 +57,10 @@ func TestSyncer_Sync(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.MatchedBy(func(folder resources.Folder) bool {
-					return folder.Title == "test-repo" && folder.ID == "test-repo"
-				}), "").Return(nil)
-
-				repoResources.On("SetTree", mock.Anything).Return()
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).Return("", nil)
-				repoResources.On("WriteResourceFromFile", mock.Anything, mock.Anything, mock.Anything).Return("", schema.GroupVersionKind{}, nil)
-				repoResources.On("RemoveResourceFromFile", mock.Anything, mock.Anything, mock.Anything).Return("", schema.GroupVersionKind{}, nil)
-				repoResources.On("RenameResourceFile", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", schema.GroupVersionKind{}, nil)
-				repoResources.On("Stats", mock.Anything).Return(&provisioning.ResourceStats{}, nil)
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "", mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -170,14 +171,12 @@ func TestSyncer_Sync(t *testing.T) {
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn, fullSyncFn, incrementalSyncFn)
 
 			syncer := NewSyncer(
-				nil,
 				compareFn.Execute,
 				fullSyncFn.Execute,
 				incrementalSyncFn.Execute,
 			)
 
 			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress)
-
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {
