@@ -256,6 +256,8 @@ export function MetricsBrowserProvider({
 
     fetchValues();
 
+    // when label keys are changed we will fetch the values of selected label keys.
+    // some label values need special handling so we will handle those cases too.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelKeys, selectedLabelKeys]);
 
@@ -287,6 +289,9 @@ export function MetricsBrowserProvider({
     }
 
     fetchMetrics();
+
+    // When selected label values changed (select/deselect a value)
+    // we need to update the metric list based on the new query
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLabelValues]);
 
