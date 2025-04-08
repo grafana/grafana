@@ -11,7 +11,9 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -35,6 +37,8 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onUpdateDatasources?: (datasource: DataSourceRef) => void;
+  onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
 
@@ -55,6 +59,32 @@ export class QueryEditorRows extends PureComponent<Props> {
         return item;
       })
     );
+  }
+
+  onReplaceQuery(query: DataQuery, index: number) {
+    const { queries, onQueriesChange, onUpdateDatasources, dsSettings } = this.props;
+
+    // Replace old query with new query
+    const newQueries = queries.map((item, itemIndex) => {
+      if (itemIndex === index) {
+        return query;
+      }
+      return item;
+    });
+    onQueriesChange(newQueries);
+
+    // Update datasources based on the new query set
+    if (query.datasource?.uid) {
+      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+      const isMixed = uniqueDatasources.size > 1;
+      const newDatasourceRef = {
+        uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+      };
+      const shouldChangeDatasource = dsSettings.uid !== newDatasourceRef.uid;
+      if (shouldChangeDatasource) {
+        onUpdateDatasources?.(newDatasourceRef);
+      }
+    }
   }
 
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
@@ -143,6 +173,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryCopied,
       onQueryRemoved,
       onQueryToggled,
+      onQueryReplacedFromLibrary,
       queryRowWrapper,
     } = this.props;
 
@@ -168,12 +199,14 @@ export class QueryEditorRows extends PureComponent<Props> {
                       dataSource={dataSourceSettings}
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
+                      onReplace={(query) => this.onReplaceQuery(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={onAddQuery}
                       onRunQuery={onRunQueries}
                       onQueryCopied={onQueryCopied}
                       onQueryRemoved={onQueryRemoved}
                       onQueryToggled={onQueryToggled}
+                      onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
                       queries={queries}
                       app={app}
                       range={getTimeSrv().timeRange()}
