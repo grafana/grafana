@@ -79,6 +79,10 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 		}
 	}
 
+	if err != nil {
+		return obj, err
+	}
+
 	meta, metaErr := utils.MetaAccessor(obj)
 	if metaErr == nil {
 		// Reconstruc the same UID as done at the storage level
@@ -92,7 +96,7 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 		return obj, metaErr
 	}
 
-	return obj, err
+	return obj, nil
 }
 
 // Update will update the dashboard using legacy storage and make sure the internal ID is set on the return object
