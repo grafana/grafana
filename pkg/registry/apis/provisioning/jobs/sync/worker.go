@@ -15,11 +15,15 @@ import (
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
 type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, ops []map[string]interface{}) error
 
+//go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
+type FullSyncFn func(ctx context.Context, repo repository.Reader, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+
+//go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
+type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
 type SyncWorker struct {
-	patchStatus RepositoryPatchFn
-
 	// Clients for the repository
 	clients resources.ClientFactory
 
@@ -28,19 +32,30 @@ type SyncWorker struct {
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
+
+	// Patch status for the repository
+	patchStatus RepositoryPatchFn
+
+	// Sync functions
+	fullSync        FullSyncFn
+	incrementalSync IncrementalSyncFn
 }
 
 func NewSyncWorker(
 	clients resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
-	patchStatus RepositoryPatchFn,
 	storageStatus dualwrite.Service,
+	patchStatus RepositoryPatchFn,
+	fullSync FullSyncFn,
+	incrementalSync IncrementalSyncFn,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
 		repositoryResources: repositoryResources,
 		patchStatus:         patchStatus,
 		storageStatus:       storageStatus,
+		fullSync:            fullSync,
+		incrementalSync:     incrementalSync,
 	}
 }
 
@@ -161,11 +176,11 @@ func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, prog
 
 			progress.SetMessage(ctx, "incremental sync")
 
-			return IncrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress)
+			return r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress)
 		}
 	}
 
 	progress.SetMessage(ctx, "full sync")
 
-	return FullSync(ctx, repo, clients, currentRef, repositoryResources, progress)
+	return r.fullSync(ctx, repo, clients, currentRef, repositoryResources, progress)
 }
