@@ -7,46 +7,26 @@ import (
 	"os"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 type ExportWorker struct {
-	// Tempdir for repo clones
-	clonedir string
-
-	// required to create clients
-	clientFactory *resources.ClientFactory
-
-	// Check where values are currently saved
-	storageStatus dualwrite.Service
-
-	// Decrypt secrets in config
-	secrets secrets.Service
-
-	parsers *resources.ParserFactory
+	clientFactory       resources.ClientFactory
+	repositoryResources resources.RepositoryResourcesFactory
 }
 
-func NewExportWorker(clientFactory *resources.ClientFactory,
-	storageStatus dualwrite.Service,
-	secrets secrets.Service,
-	clonedir string,
-	parsers *resources.ParserFactory,
+func NewExportWorker(
+	clientFactory resources.ClientFactory,
+	repositoryResources resources.RepositoryResourcesFactory,
 ) *ExportWorker {
 	return &ExportWorker{
-		clonedir,
-		clientFactory,
-		storageStatus,
-		secrets,
-		parsers,
+		clientFactory:       clientFactory,
+		repositoryResources: repositoryResources,
 	}
 }
 
@@ -61,134 +41,141 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
+	cfg := repo.Config()
 	// Can write to external branch
-	err := repository.IsWriteAllowed(repo.Config(), options.Branch)
-	if err != nil {
+	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
 		return err
 	}
 
-	// Use the existing clone if already checked out
-	buffered, ok := repo.(*gogit.GoGitRepo)
-	if !ok && repo.Config().Spec.GitHub != nil {
-		progress.SetMessage(ctx, "clone target")
-		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
-			Root:                   r.clonedir,
-			SingleCommitBeforePush: true,
-			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, r.secrets, os.Stdout)
+	cloneOptions := repository.CloneOptions{
+		Timeout:      10 * time.Minute,
+		PushOnWrites: false,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "clone target")
+			return nil
+		},
+	}
+
+	pushOptions := repository.PushOptions{
+		Timeout:  10 * time.Minute,
+		Progress: os.Stdout,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "push changes")
+			return nil
+		},
+	}
+
+	fn := func(repo repository.Repository, cloned bool) error {
+		if cloned {
+			options.Branch = "" // :( the branch is now baked into the repo
+		}
+
+		// Load and write all folders
+		// FIXME: we load the entire tree in memory
+		progress.SetMessage(ctx, "read folder tree from API server")
+		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
-			return fmt.Errorf("unable to clone target: %w", err)
+			return fmt.Errorf("create clients: %w", err)
 		}
 
-		repo = buffered // send all writes to the buffered repo
-		defer func() {
-			if err := buffered.Remove(ctx); err != nil {
-				logging.FromContext(ctx).Error("failed to remove cloned repository after export", "err", err)
+		tree := resources.NewEmptyFolderTree()
+		folderClient, err := clients.Folder()
+		if err != nil {
+			return fmt.Errorf("create folder client: %w", err)
+		}
+
+		rw, ok := repo.(repository.ReaderWriter)
+		if !ok {
+			return errors.New("export job submitted targeting repository that is not a ReaderWriter")
+		}
+
+		repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+		if err != nil {
+			return fmt.Errorf("create repository resource client: %w", err)
+		}
+
+		if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+			if tree.Count() >= resources.MaxNumberOfFolders {
+				return errors.New("too many folders")
 			}
-		}()
 
-		options.Branch = "" // :( the branch is now baked into the repo
-	}
-
-	rw, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
-	}
-
-	clients, err := r.clientFactory.Clients(ctx, repo.Config().Namespace)
-	if err != nil {
-		return err
-	}
-
-	// Load and write all folders
-	// FIXME: we load the entire tree in memory
-	progress.SetMessage(ctx, "read folder tree from API server")
-	client, err := clients.Folder()
-	if err != nil {
-		return fmt.Errorf("failed to get folder client: %w", err)
-	}
-
-	folders := resources.NewFolderManager(rw, client, resources.NewEmptyFolderTree())
-	if err := folders.LoadFromServer(ctx); err != nil {
-		return fmt.Errorf("failed to load folders from API server: %w", err)
-	}
-
-	progress.SetMessage(ctx, "write folders to repository")
-	err = folders.EnsureTreeExists(ctx, options.Branch, options.Path, func(folder resources.Folder, created bool, err error) error {
-		result := jobs.JobResourceResult{
-			Action:   repository.FileActionCreated,
-			Name:     folder.ID,
-			Resource: resources.FolderResource.Resource,
-			Group:    resources.FolderResource.Group,
-			Path:     folder.Path,
-			Error:    err,
+			return tree.AddUnstructured(item, cfg.Name)
+		}); err != nil {
+			return fmt.Errorf("load folder tree: %w", err)
 		}
 
-		if !created {
-			result.Action = repository.FileActionIgnored
-		}
-
-		progress.Record(ctx, result)
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("write folders to repository: %w", err)
-	}
-
-	progress.SetMessage(ctx, "start resource export")
-	parser, err := r.parsers.GetParser(ctx, rw)
-	if err != nil {
-		return fmt.Errorf("failed to get parser: %w", err)
-	}
-
-	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, nil)
-	for _, kind := range resources.SupportedResources {
-		// skip from folders as we do them first
-		if kind == resources.FolderResource {
-			continue
-		}
-
-		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := clients.ForEachResource(ctx, kind, func(_ dynamic.ResourceInterface, item *unstructured.Unstructured) error {
+		progress.SetMessage(ctx, "write folders to repository")
+		err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 			result := jobs.JobResourceResult{
-				Name:     item.GetName(),
-				Resource: kind.Resource,
-				Group:    kind.Group,
 				Action:   repository.FileActionCreated,
+				Name:     folder.ID,
+				Resource: resources.FolderResource.Resource,
+				Group:    resources.FolderResource.Group,
+				Path:     folder.Path,
+				Error:    err,
 			}
 
-			fileName, err := resourceManager.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-				Path:       options.Path,
-				Ref:        options.Branch,
-				Identifier: options.Identifier,
-			})
-			if errors.Is(err, resources.ErrAlreadyInRepository) {
+			if !created {
 				result.Action = repository.FileActionIgnored
-			} else if err != nil {
-				result.Error = fmt.Errorf("export resource: %w", err)
 			}
-			result.Path = fileName
-			progress.Record(ctx, result)
 
+			progress.Record(ctx, result)
 			if err := progress.TooManyErrors(); err != nil {
 				return err
 			}
+
 			return nil
-		}); err != nil {
-			return fmt.Errorf("error exporting %s %w", kind.Resource, err)
+		})
+
+		if err != nil {
+			return fmt.Errorf("write folders to repository: %w", err)
 		}
+
+		progress.SetMessage(ctx, "start resource export")
+		for _, kind := range resources.SupportedProvisioningResources {
+			// skip from folders as we do them first... so only dashboards
+			if kind == resources.FolderResource {
+				continue
+			}
+
+			progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
+			client, _, err := clients.ForResource(kind)
+			if err != nil {
+				return err
+			}
+
+			if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+				result := jobs.JobResourceResult{
+					Name:     item.GetName(),
+					Resource: kind.Resource,
+					Group:    kind.Group,
+					Action:   repository.FileActionCreated,
+				}
+
+				fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
+					Path: options.Path,
+					Ref:  options.Branch,
+				})
+				if errors.Is(err, resources.ErrAlreadyInRepository) {
+					result.Action = repository.FileActionIgnored
+				} else if err != nil {
+					result.Action = repository.FileActionIgnored
+					result.Error = err
+				}
+				result.Path = fileName
+				progress.Record(ctx, result)
+
+				if err := progress.TooManyErrors(); err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return fmt.Errorf("export %s: %w", kind.Resource, err)
+			}
+		}
+
+		return nil
 	}
 
-	if buffered != nil {
-		progress.SetMessage(ctx, "push changes")
-		if err := buffered.Push(ctx, gogit.GoGitPushOptions{
-			// TODO: make this configurable
-			Timeout: 10 * time.Minute,
-		}, os.Stdout); err != nil {
-			return fmt.Errorf("error pushing changes: %w", err)
-		}
-	}
-
-	return nil
+	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
 }

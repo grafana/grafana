@@ -135,7 +135,7 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (isManaged && meta.canEdit) {
+  if (dashboard.isManaged() && meta.canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
@@ -144,23 +144,6 @@ export function ToolbarActions({ dashboard }: Props) {
       },
     });
   }
-
-  const isDevEnv = config.buildInfo.env === 'development';
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={t('dashboard.toolbar.switch-old-dashboard', 'Switch to old dashboard page')}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
 
   toolbarActions.push({
     group: 'icon-actions',

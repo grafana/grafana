@@ -1,4 +1,4 @@
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 /**
  * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)
@@ -24,6 +24,11 @@ export interface DashboardLayoutItem extends SceneObject {
    * When coming out of panel edit
    */
   editingCompleted?(withChanges: boolean): void;
+
+  /**
+   * Change inner body / viz panel
+   */
+  setElementBody(body: VizPanel): void;
 }
 
 export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {

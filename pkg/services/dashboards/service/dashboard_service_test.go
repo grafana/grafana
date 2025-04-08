@@ -255,13 +255,6 @@ func TestDashboardService(t *testing.T) {
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})
-
-		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
-			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
-			require.NoError(t, err)
-		})
 	})
 }
 
@@ -2084,119 +2077,6 @@ func TestGetDashboardTags(t *testing.T) {
 	})
 }
 
-func TestGetDashboardsSharedWithUser(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
-	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
-		folderService:  &foldertest.FakeService{},
-	}
-
-	user := &user.SignedInUser{
-		OrgID: 1,
-		Permissions: map[int64]map[string][]string{
-			1: {
-				dashboards.ActionDashboardsRead: {
-					dashboards.ScopeDashboardsPrefix + "dashboard1",
-					dashboards.ScopeDashboardsPrefix + "dashboard2",
-				},
-			},
-		},
-	}
-
-	expectedDashboards := []*dashboards.Dashboard{
-		{
-			UID:       "dashboard1",
-			Slug:      "dashboard-1",
-			FolderUID: "folder1",
-		},
-		{
-			UID:       "dashboard2",
-			Slug:      "dashboard-2",
-			FolderUID: "folder2",
-		},
-	}
-
-	expectedFolderRefs := []*dashboards.DashboardRef{
-		{
-			UID:       "dashboard1",
-			Slug:      "dashboard-1",
-			FolderUID: "folder1",
-		},
-		{
-			UID:       "dashboard2",
-			Slug:      "dashboard-2",
-			FolderUID: "folder2",
-		},
-	}
-
-	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetDashboards", mock.Anything, &dashboards.GetDashboardsQuery{
-			DashboardUIDs: []string{"dashboard1", "dashboard2"},
-			OrgID:         1,
-		}).Return(expectedDashboards, nil).Once()
-
-		result, err := service.GetDashboardsSharedWithUser(context.Background(), user)
-		require.NoError(t, err)
-		require.Equal(t, expectedFolderRefs, result)
-		fakeStore.AssertExpectations(t)
-	})
-
-	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sCliMock := setupK8sDashboardTests(service)
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
-
-		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "name" &&
-				slices.Equal(req.Options.Fields[0].Values, []string{"dashboard1", "dashboard2"})
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resource.ResourceTableRow{
-					{
-						Key: &resource.ResourceKey{
-							Name:     "dashboard1",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-						},
-					},
-					{
-						Key: &resource.ResourceKey{
-							Name:     "dashboard2",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 2"),
-							[]byte("folder2"),
-						},
-					},
-				},
-			},
-			TotalHits: 2,
-		}, nil)
-
-		result, err := service.GetDashboardsSharedWithUser(ctx, user)
-		require.NoError(t, err)
-		require.Equal(t, expectedFolderRefs, result)
-		k8sCliMock.AssertExpectations(t)
-	})
-}
-
 func TestQuotaCount(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
@@ -2281,7 +2161,7 @@ func TestCountDashboardsInOrg(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("CountInOrg", mock.Anything, mock.Anything, false).Return(nil, nil).Once()
+		fakeStore.On("CountInOrg", mock.Anything, mock.Anything, false).Return(int64(1), nil).Once()
 		_, err := service.CountDashboardsInOrg(context.Background(), 1)
 		require.NoError(t, err)
 		fakeStore.AssertExpectations(t)

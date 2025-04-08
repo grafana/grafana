@@ -8,6 +8,7 @@ import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
@@ -91,11 +92,17 @@ export const ExpressionEditor = ({
             onClick={onRunQueriesClick}
             disabled={alertPreview?.data.state === LoadingState.Loading}
           >
-            Preview alerts
+            <Trans i18nKey="alerting.expression-editor.preview-alerts">Preview alerts</Trans>
           </Button>
           {previewLoaded && !previewHasAlerts && (
-            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-              There are no firing alerts for your query.
+            <Alert
+              title={t('alerting.expression-editor.title-alerts-preview', 'Alerts preview')}
+              severity="info"
+              className={styles.previewAlert}
+            >
+              <Trans i18nKey="alerting.expression-editor.there-firing-alerts-query">
+                There are no firing alerts for your query.
+              </Trans>
             </Alert>
           )}
           {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}

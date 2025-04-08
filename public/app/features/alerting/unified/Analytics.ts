@@ -225,6 +225,14 @@ export const trackDeletedRuleRestoreFail = async () => {
   reportInteraction('grafana_alerting_deleted_rule_restore_error');
 };
 
+export const trackImportToGMASuccess = async () => {
+  reportInteraction('grafana_alerting_import_to_gma_success');
+};
+
+export const trackImportToGMAError = async () => {
+  reportInteraction('grafana_alerting_import_to_gma_error');
+};
+
 interface RulesSearchInteractionPayload {
   filter: string;
   triggeredBy: 'typing' | 'component';

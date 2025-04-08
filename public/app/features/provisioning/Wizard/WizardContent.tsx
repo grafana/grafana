@@ -11,9 +11,10 @@ import {
   useDeleteRepositoryMutation,
   useGetFrontendSettingsQuery,
 } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
-import { useCreateOrUpdateRepository } from '../hooks';
+import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 
@@ -79,7 +80,9 @@ export function WizardContent({
   if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
     appEvents.publish({
       type: AppEvents.alertError.name,
-      payload: ['Instance repository already exists'],
+      payload: [
+        t('provisioning.wizard-content.error-instance-repository-exists', 'Instance repository already exists'),
+      ],
     });
     if (repoName) {
       console.warn('Should we delete the pending repo?', repoName);
@@ -91,17 +94,12 @@ export function WizardContent({
   const handleRepositoryDeletion = async (name: string) => {
     try {
       await deleteRepository({ name });
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Repository deleted'],
-      });
-      // Wait before redirecting to ensure deletion is indexed
-      setTimeout(() => navigate(PROVISIONING_URL), 1500);
+      // Wait before redirecting to ensure deletion is processed
+      setTimeout(() => {
+        settingsQuery.refetch();
+        navigate(PROVISIONING_URL);
+      }, 1500);
     } catch (error) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to delete repository. Please try again.'],
-      });
       setIsCancelling(false);
     }
   };
@@ -163,10 +161,6 @@ export function WizardContent({
       const newName = saveRequest.data?.metadata?.name;
       if (newName) {
         setValue('repositoryName', newName);
-        appEvents.publish({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Repository saved'],
-        });
         handleStatusChange(true);
       }
     } else if (saveRequest.isError) {
@@ -193,12 +187,16 @@ export function WizardContent({
         }}
       />
       <Box marginBottom={2}>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <Text element="h2">
           {currentStepIndex + 1}. {currentStep?.title}
         </Text>
       </Box>
 
-      <RequestErrorAlert request={saveRequest} title="Repository verification failed" />
+      <RequestErrorAlert
+        request={saveRequest}
+        title={t('provisioning.wizard-content.title-repository-verification-failed', 'Repository verification failed')}
+      />
 
       <div className={styles.content}>
         {activeStep === 'connection' && <ConnectStep />}
@@ -223,10 +221,14 @@ export function WizardContent({
           onClick={handleCancel}
           disabled={isSubmitting || isCancelling}
         >
-          {isCancelling ? 'Cancelling...' : 'Cancel'}
+          {isCancelling
+            ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
+            : t('provisioning.wizard-content.button-cancel', 'Cancel')}
         </Button>
         <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
-          {isSubmitting ? 'Submitting...' : getNextButtonText(activeStep)}
+          {isSubmitting
+            ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
+            : getNextButtonText(activeStep)}
         </Button>
       </Stack>
     </form>

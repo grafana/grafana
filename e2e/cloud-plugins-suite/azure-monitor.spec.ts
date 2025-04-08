@@ -6,8 +6,8 @@ import { selectors as rawSelectors } from '@grafana/e2e-selectors';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData,
   AzureQueryType,
 } from '../../public/app/plugins/datasource/azuremonitor/types';
 import { e2e } from '../utils';
@@ -16,8 +16,8 @@ const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
-  secureJsonData: AzureDataSourceSecureJsonData;
-  jsonData: AzureDataSourceJsonData;
+  secureJsonData: AzureMonitorDataSourceSecureJsonData;
+  jsonData: AzureMonitorDataSourceJsonData;
 };
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
