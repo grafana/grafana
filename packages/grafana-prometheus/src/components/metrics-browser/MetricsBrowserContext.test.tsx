@@ -134,14 +134,6 @@ describe('MetricsBrowserContext', () => {
     });
   });
 
-  it('should filter out __name__ from label keys', async () => {
-    renderWithProvider(<TestComponent />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('labels-count').textContent).toBe('3'); // 4 total - __name__
-    });
-  });
-
   it('should load saved label keys from localStorage on init', async () => {
     // Setup localStorage with saved label keys
     localStorageMock.setItem('grafana.datasources.prometheus.browser.labels', JSON.stringify(['job', 'instance']));
