@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -1059,4 +1051,9 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default false
+  */
+  logsPanelControls?: boolean;
 }

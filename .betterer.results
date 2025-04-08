@@ -1349,9 +1349,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rules/RuleConfigStatus.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/alerting/unified/components/rules/RuleDetails.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsMatchingInstances.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -1371,14 +1368,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleStats.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RulesGroup.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2345,9 +2335,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/features/explore/Logs/LogsMetaRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/explore/Logs/LogsSamplePanel.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
@@ -2655,9 +2642,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/live/centrifuge/channel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/live/centrifuge/serviceWorkerProxy.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/live/dashboard/DashboardChangedModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
