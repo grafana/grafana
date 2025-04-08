@@ -507,7 +507,6 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	// Check user table to grab existing user
 	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
 	if err != nil {
-		fmt.Println("err", err)
 		return nil, nil, err
 	}
 
