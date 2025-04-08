@@ -75,8 +75,7 @@ func TestExportResources(t *testing.T) {
 				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
 				options := resources.WriteOptions{
 					Path: "grafana",
-					// TODO: add tests for branch
-					Ref: "",
+					Ref:  "feature/branch",
 				}
 
 				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
@@ -163,7 +162,7 @@ func TestExportResources(t *testing.T) {
 				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
 				options := resources.WriteOptions{
 					Path: "grafana",
-					Ref:  "",
+					Ref:  "feature/branch",
 				}
 
 				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
@@ -209,7 +208,7 @@ func TestExportResources(t *testing.T) {
 				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
 				options := resources.WriteOptions{
 					Path: "grafana",
-					Ref:  "",
+					Ref:  "feature/branch",
 				}
 
 				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
@@ -251,7 +250,7 @@ func TestExportResources(t *testing.T) {
 				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
 				options := resources.WriteOptions{
 					Path: "grafana",
-					Ref:  "",
+					Ref:  "feature/branch",
 				}
 
 				// Return true to indicate the file already exists, and provide the updated path
@@ -293,7 +292,8 @@ func TestExportResources(t *testing.T) {
 			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVK)
 
 			options := v0alpha1.ExportJobOptions{
-				Path: "grafana",
+				Path:   "grafana",
+				Branch: "feature/branch",
 			}
 
 			err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress)
