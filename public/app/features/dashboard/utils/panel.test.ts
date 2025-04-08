@@ -86,7 +86,7 @@ describe('applyPanelTimeOverrides', () => {
   it('Calculate panel height with panel plugin zeroChromePadding', async () => {
     const panelModel = new PanelModel({});
     await panelModel.pluginLoaded(
-      getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>, null).setNoPadding()
+      getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>).setNoPadding()
     );
 
     const height = calculateInnerPanelHeight(panelModel, 100);

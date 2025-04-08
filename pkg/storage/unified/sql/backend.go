@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -352,6 +353,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
+			Generation:  event.Object.GetGeneration(),
 			GUID:        guid,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
@@ -397,6 +399,12 @@ func isRowAlreadyExistsError(err error) bool {
 		return pg.Code == "23505" // unique_violation
 	}
 
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		// https://www.postgresql.org/docs/current/errcodes-appendix.html
+		return pqerr.Code == "23505" // unique_violation
+	}
+
 	var mysqlerr *mysql.MySQLError
 	if errors.As(err, &mysqlerr) {
 		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
@@ -434,6 +442,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -487,6 +496,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  0, // object does not exist
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -521,22 +531,19 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 
 	// TODO: validate key ?
 
+	if req.ResourceVersion > 0 {
+		return b.readHistory(ctx, req.Key, req.ResourceVersion)
+	}
+
 	readReq := &sqlResourceReadRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Request:     req,
 		Response:    NewReadResponse(),
 	}
-
-	sr := sqlResourceRead
-	if req.ResourceVersion > 0 {
-		// read a specific version
-		sr = sqlResourceHistoryRead
-	}
-
 	var res *resource.BackendReadResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
+		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
 		return err
 	})
 
@@ -745,7 +752,38 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	return iter.listRV, err
 }
 
-// getHistory fetches the resources from the resource table.
+// readHistory fetches the resource history from the resource_history table.
+func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64) *resource.BackendReadResponse {
+	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
+	defer span.End()
+
+	readReq := &sqlResourceHistoryReadRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request: &historyReadRequest{
+			Key:             key,
+			ResourceVersion: rv,
+		},
+		Response: NewReadResponse(),
+	}
+
+	var res *resource.BackendReadResponse
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		res, err = dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, readReq)
+		return err
+	})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return &resource.BackendReadResponse{Error: resource.NewNotFoundError(key)}
+	}
+	if err != nil {
+		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+	}
+
+	return res
+}
+
+// getHistory fetches the resource history from the resource_history table.
 func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
 	defer span.End()
@@ -784,11 +822,22 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		listReq.MinRV = req.ResourceVersion
 	}
 
+	// Ignore last deleted history record when listing the trash, using exact matching or not older than matching with a specific RV
+	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact
+
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
+		}
+
+		if useLatestDeletionAsMinRV {
+			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resource.WatchEvent_DELETED)
+			if err != nil {
+				return err
+			}
+			listReq.MinRV = latestDeletedRV + 1
 		}
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
@@ -855,6 +904,26 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("get resource version: %w", err)
+	}
+	return res.ResourceVersion, nil
+}
+
+// fetchLatestHistoryRV returns the current maximum RV in the resource_history table
+func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey, eventType resource.WatchEvent_Type) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestHistoryRV")
+	defer span.End()
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryReadLatestRV, sqlResourceHistoryReadLatestRVRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Request: &historyReadLatestRVRequest{
+			Key:       key,
+			EventType: eventType,
+		},
+		Response: new(resourceHistoryReadLatestRVResponse),
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
 	} else if err != nil {
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
