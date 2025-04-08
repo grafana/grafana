@@ -789,6 +789,35 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			},
 			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
 		},
+		{
+			desc: "it should skip validation if identity is incomplete because it's not from the SAML auth flow",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "",
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, tt := range tests {
