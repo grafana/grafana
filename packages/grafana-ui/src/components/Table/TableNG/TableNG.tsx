@@ -219,10 +219,7 @@ export function TableNG(props: TableNGProps) {
     // Set default widths from field config if they exist
     props.data.fields.forEach(({ name, config }) => {
       const configWidth = config?.custom?.width;
-      widths[name] =
-        typeof configWidth === 'number'
-          ? configWidth + TABLE.CELL_PADDING * 2
-          : COLUMN.DEFAULT_WIDTH - TABLE.CELL_PADDING * 2;
+      widths[name] = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
     });
 
     // Measure actual widths if available
@@ -861,7 +858,7 @@ export function mapFrameToDataGrid({
         />
       ),
       // Plus 1 to account for the border
-      width: (fieldTableOptions.width ?? COLUMN.DEFAULT_WIDTH) + TABLE.CELL_PADDING * 2 + 1,
+      width: (fieldTableOptions.width ?? COLUMN.DEFAULT_WIDTH) + 1,
       minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
     });
   });

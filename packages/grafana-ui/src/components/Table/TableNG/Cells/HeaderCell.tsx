@@ -82,7 +82,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       const lastElement = headerCellParent.lastElementChild;
       if (lastElement) {
         const handleMouseUp = () => {
-          let newWidth = headerCellParent.clientWidth - TABLE.CELL_PADDING * 2;
+          let newWidth = headerCellParent.clientWidth;
           onColumnResize?.(column.key, newWidth);
         };
 
