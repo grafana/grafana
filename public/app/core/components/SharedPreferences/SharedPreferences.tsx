@@ -88,6 +88,8 @@ function getLocaleOptions(): ComboboxOption[] {
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
+  languageOptions: ComboboxOption[];
+  localeOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -106,11 +108,15 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     const themes = getSelectableThemes();
 
+    // Options are translated, so must be called after init but call them
+    // in constructor to avoid memo-break of array changing every render
     this.themeOptions = themes.map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
       group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
     }));
+    this.languageOptions = getLanguageOptions();
+    this.localeOptions = getLocaleOptions();
 
     // Add default option
     this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -198,14 +204,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onLocaleChanged = (locale: string) => {
     this.setState({ locale });
+
+    reportInteraction('grafana_preferences_locale_changed', {
+      toLocale: locale,
+      preferenceType: this.props.preferenceType,
+    });
   };
 
   render() {
     const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
-    const languages = getLanguageOptions();
-    const locales = getLocaleOptions();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
@@ -301,9 +310,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid="User preferences language drop down"
           >
             <Combobox
-              value={languages.find((lang) => lang.value === language)?.value || ''}
+              value={this.languageOptions.find((lang) => lang.value === language)?.value || ''}
               onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
-              options={languages}
+              options={this.languageOptions}
               placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
               id="locale-select"
             />
@@ -327,9 +336,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
               data-testid="User preferences locale format drop down"
             >
               <Combobox
-                value={locales.find((loc) => loc.value === locale)?.value || ''}
+                value={this.localeOptions.find((loc) => loc.value === locale)?.value || ''}
                 onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
-                options={locales}
+                options={this.localeOptions}
                 placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
                 id="locale-format-select"
               />
