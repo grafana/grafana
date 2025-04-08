@@ -37,9 +37,9 @@ type LargeObjectSupport interface {
 var _ LargeObjectSupport = (*BasicLargeObjectSupport)(nil)
 
 type BasicLargeObjectSupport struct {
-	TheGroupResource   schema.GroupResource
-	ThresholdSizeBytes int
-	MaxByteSize        int
+	TheGroupResource schema.GroupResource
+	ThresholdBytes   int
+	MaxBytes         int
 
 	// Mutate the spec so it only has the small properties
 	ReduceSpec func(obj runtime.Object) error
@@ -55,12 +55,12 @@ func (s *BasicLargeObjectSupport) GroupResource() schema.GroupResource {
 
 // Threshold implements LargeObjectSupport.
 func (s *BasicLargeObjectSupport) Threshold() int {
-	return s.ThresholdSizeBytes
+	return s.ThresholdBytes
 }
 
 // MaxSize implements LargeObjectSupport.
 func (s *BasicLargeObjectSupport) MaxSize() int {
-	return s.MaxByteSize
+	return s.MaxBytes
 }
 
 // Deconstruct implements LargeObjectSupport.
