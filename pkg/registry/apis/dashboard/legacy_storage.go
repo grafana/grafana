@@ -64,7 +64,12 @@ type storeWrapper struct {
 func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx = legacy.WithLegacyAccess(ctx)
 
-	obj, err := s.Store.Create(ctx, obj, createValidation, options)
+	_, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err = s.Store.Create(ctx, obj, createValidation, options)
 	access := legacy.GetLegacyAccess(ctx)
 	if access != nil && access.DashboardID > 0 {
 		meta, _ := utils.MetaAccessor(obj)
