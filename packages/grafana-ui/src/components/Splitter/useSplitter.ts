@@ -358,7 +358,7 @@ function measureElement<T extends HTMLElement>(ref: T, usePixels?: boolean): Mea
   document.body.style.overflow = 'hidden';
 
   ref.style.flexGrow = '0';
-  ref.style.flexBasis = 'unset';
+  ref.style.flexBasis = '0';
 
   const { width: minWidth, height: minHeight } = ref.getBoundingClientRect();
 

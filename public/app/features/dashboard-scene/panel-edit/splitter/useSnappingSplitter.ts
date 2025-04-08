@@ -10,17 +10,12 @@ export interface UseSnappingSplitterOptions {
   initialSize?: number;
   direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
-  paneOptions: PaneOptions;
   collapsed?: boolean;
   // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
   // pushing the left pane content left.
   handleSize?: ComponentSize;
   usePixels?: boolean;
-}
-
-interface PaneOptions {
   collapseBelowPixels: number;
-  snapOpenToPixels?: number;
 }
 
 interface PaneState {
@@ -32,7 +27,7 @@ export function useSnappingSplitter({
   direction,
   initialSize,
   dragPosition,
-  paneOptions,
+  collapseBelowPixels,
   collapsed,
   handleSize,
   usePixels,
@@ -48,40 +43,38 @@ export function useSnappingSplitter({
         return;
       }
 
-      if (state.collapsed && secondPanePixels > paneOptions.collapseBelowPixels) {
+      if (state.collapsed && secondPanePixels > collapseBelowPixels) {
         setState({ collapsed: false });
       }
 
-      if (!state.collapsed && secondPanePixels < paneOptions.collapseBelowPixels) {
+      if (!state.collapsed && secondPanePixels < collapseBelowPixels) {
         setState({ collapsed: true });
       }
     },
-    [state, paneOptions.collapseBelowPixels]
+    [state, collapseBelowPixels]
   );
 
   const onSizeChanged = useCallback(
-    (flexSize: number, pixelSize: number) => {
-      if (flexSize <= 0 && pixelSize <= 0) {
+    (flexSize: number, firstPanePixels: number, secondPanePixels: number) => {
+      if (flexSize <= 0 && firstPanePixels <= 0 && secondPanePixels <= 0) {
         return;
       }
 
-      const newSecondPaneSize = 1 - flexSize;
       const isSnappedClosed = state.snapSize === 0;
-      const sizeOfBothPanes = pixelSize / flexSize;
-      const snapOpenToPixels = paneOptions.snapOpenToPixels ?? sizeOfBothPanes / 2;
-      const snapSize = snapOpenToPixels / sizeOfBothPanes;
 
-      if (state.collapsed) {
-        if (isSnappedClosed) {
-          setState({ snapSize: Math.max(newSecondPaneSize, snapSize), collapsed: false });
+      if (state.collapsed && !isSnappedClosed) {
+        setState({ snapSize: 0, collapsed: state.collapsed });
+      } else if (state.collapsed && isSnappedClosed) {
+        if (usePixels) {
+          const snapSize = Math.max(secondPanePixels, initialSize ?? 200);
+          setState({ snapSize, collapsed: !state.collapsed });
         } else {
-          setState({ snapSize: 0, collapsed: true });
+          const snapSize = Math.max(1 - (initialSize ?? 0.5), 1 - flexSize);
+          setState({ snapSize, collapsed: !state.collapsed });
         }
-      } else if (isSnappedClosed) {
-        setState({ snapSize: newSecondPaneSize, collapsed: false });
       }
     },
-    [state, paneOptions.snapOpenToPixels]
+    [state, initialSize, usePixels]
   );
 
   const onToggleCollapse = useCallback(() => {
@@ -104,17 +97,26 @@ export function useSnappingSplitter({
   secondaryProps.style.minHeight = 'unset';
 
   if (state.snapSize) {
-    primaryProps.style = {
-      ...primaryProps.style,
-      flexGrow: 1 - state.snapSize,
-    };
-    secondaryProps.style.flexGrow = state.snapSize;
+    if (usePixels) {
+      secondaryProps.style.flexBasis = `${state.snapSize}px`;
+    } else {
+      primaryProps.style = {
+        ...primaryProps.style,
+        flexGrow: 1 - state.snapSize,
+      };
+      secondaryProps.style.flexGrow = state.snapSize;
+    }
   } else if (state.snapSize === 0) {
-    primaryProps.style.flexGrow = 1;
-    secondaryProps.style.flexGrow = 0;
-    secondaryProps.style.minWidth = 'unset';
-    secondaryProps.style.minHeight = 'unset';
+    secondaryProps.style.minWidth = 'min-content';
+    secondaryProps.style.minHeight = 'min-content';
     secondaryProps.style.overflow = 'unset';
+
+    if (usePixels) {
+      secondaryProps.style.flexBasis = '0px';
+    } else {
+      primaryProps.style.flexGrow = 1;
+      secondaryProps.style.flexGrow = 0;
+    }
   }
 
   return { containerProps, primaryProps, secondaryProps, splitterProps, splitterState: state, onToggleCollapse };

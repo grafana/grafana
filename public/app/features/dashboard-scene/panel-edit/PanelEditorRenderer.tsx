@@ -28,10 +28,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       initialSize: 300,
       usePixels: true,
       collapsed: isCollapsed,
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
+      collapseBelowPixels: 250,
     });
 
   useEffect(() => {
@@ -84,9 +81,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       direction: 'column',
       dragPosition: 'start',
       initialSize: 0.5,
-      paneOptions: {
-        collapseBelowPixels: 150,
-      },
+      collapseBelowPixels: 150,
     });
 
   containerProps.className = cx(containerProps.className, styles.container);
