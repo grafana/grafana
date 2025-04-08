@@ -177,18 +177,19 @@ func (r *ExportWorker) exportResources(ctx context.Context, clients resources.Re
 
 func (r *ExportWorker) exportResource(ctx context.Context, client dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+		fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
+			Path: options.Path,
+			Ref:  options.Branch,
+		})
+
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
 			Resource: gvk.Kind,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
+			Path:     fileName,
 		}
-
-		fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-			Path: options.Path,
-			Ref:  options.Branch,
-		})
 
 		if errors.Is(err, resources.ErrAlreadyInRepository) {
 			result.Action = repository.FileActionIgnored
@@ -196,9 +197,8 @@ func (r *ExportWorker) exportResource(ctx context.Context, client dynamic.Resour
 			result.Action = repository.FileActionIgnored
 			result.Error = err
 		}
-		result.Path = fileName
-		progress.Record(ctx, result)
 
+		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
