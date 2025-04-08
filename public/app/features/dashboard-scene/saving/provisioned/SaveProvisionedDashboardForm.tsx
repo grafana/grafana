@@ -82,13 +82,13 @@ export function SaveProvisionedDashboardForm({
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
 
-      // Redirect to the provisioning preview pages
-      if (workflow === 'branch' && request.data.ref !== '' && request.data.path !== '') {
+      const { ref, path } = request.data;
+
+      if (workflow === 'branch' && ref && path) {
         dashboard.closeModal();
         panelEditor?.onDiscard();
-        navigate(
-          `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${request.data.path}?ref=${request.data.ref}`
-        );
+        // Redirect to the provisioning preview pages
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
       }
 
