@@ -810,16 +810,21 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 		return nil, err
 	}
 
-	// TODO: Remove once the underlying issue is fixed:
-	// https://raintank-corp.slack.com/archives/C05FYAPEPKP/p1743111830777889
-	// This only happens in mode 0.
+	// Fetch the generated object to ensure we're not running into any caching or UID mismatch issues
 	databaseDash, err := client.Resource.Get(context.Background(), createdDash.GetName(), v1.GetOptions{})
 	if err != nil {
-		return nil, err
+		t.Errorf("Potential caching issue: Unable to retrieve newly created dashboard: %v", err)
 	}
-	require.NotEqual(t, createdDash.GetUID(), databaseDash.GetUID(), "The underlying UID mismatch bug has been fixed, please remove the redundant read!")
 
-	return databaseDash, nil
+	createdMeta, _ := utils.MetaAccessor(createdDash)
+	databaseMeta, _ := utils.MetaAccessor(databaseDash)
+
+	require.Equal(t, createdDash.GetUID(), databaseDash.GetUID(), "Created and retrieved UID mismatch")
+	require.Equal(t, createdDash.GetName(), databaseDash.GetName(), "Created and retrieved name mismatch")
+	require.Equal(t, createdDash.GetResourceVersion(), databaseDash.GetResourceVersion(), "Created and retrieved resource version mismatch")
+	require.Equal(t, createdMeta.FindTitle("A"), databaseMeta.FindTitle("B"), "Created and retrieved title mismatch")
+
+	return createdDash, nil
 }
 
 // Update a dashboard
