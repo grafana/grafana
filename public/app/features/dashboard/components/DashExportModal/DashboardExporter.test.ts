@@ -2,14 +2,12 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   DashboardKind,
   DatasourceVariableKind,
-  ImportableResources,
-  LibraryPanelImport,
   QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -560,15 +558,14 @@ describe('DashboardExporter', () => {
 
     const setup = async () => {
       const exporter = getDashboardExporter();
-      const exported = (await exporter.makeExportable(handyTestingSchema)) as ImportableResources;
-      const dashboardKind = exported.spec.resources[0] as DashboardKind;
+      const dashboardKind = (await exporter.makeExportable(handyTestingSchema)) as DashboardKind;
 
-      return { dashboardKind, exported };
+      return { dashboardKind };
     };
 
-    it('exports ImportableResources kind', async () => {
-      const { exported } = await setup();
-      expect(exported.kind).toBe('ImportableResources');
+    it('exports Dashboard kind', async () => {
+      const { dashboardKind } = await setup();
+      expect(dashboardKind.kind).toBe('Dashboard');
     });
 
     it('dashboard spec is part of Dashboard kind', async () => {
@@ -580,7 +577,7 @@ describe('DashboardExporter', () => {
     it('should replace datasource in a query variable', async () => {
       const { dashboardKind } = await setup();
       const variable = dashboardKind.spec.variables[0] as QueryVariableKind;
-      expect(variable.spec.datasource?.uid).toBe('${DS_GFDB}');
+      expect(variable.spec.datasource?.uid).toBeUndefined();
     });
 
     it('do not expose datasource name and id in datasource variable', async () => {
@@ -594,71 +591,7 @@ describe('DashboardExporter', () => {
       const { dashboardKind } = await setup();
       const annotationQuery = dashboardKind.spec.annotations[0];
 
-      expect(annotationQuery.spec.datasource?.uid).toBe('${DS_GFDB}');
-    });
-
-    it('should replace datasource ref in library panel', async () => {
-      const { exported } = await setup();
-      const libraryPanel = exported.spec.resources[1] as LibraryPanelImport;
-
-      expect(libraryPanel.kind).toBe('LibraryPanelImport');
-      expect(libraryPanel.spec.model.datasource.uid).toBe('${DS_GFDB}');
-    });
-
-    it('should add datasource to required', async () => {
-      const { exported } = await setup();
-      const required = exported.spec.requirements[1];
-
-      expect(required).toEqual({
-        name: 'TestDB',
-        id: 'testdb',
-        type: 'datasource',
-        version: '1.2.1',
-      });
-    });
-
-    it('should not add built in datasources to required', async () => {
-      const { exported } = await setup();
-      const required = exported.spec.requirements.find((r) => r.name === 'Mixed');
-      expect(required).toBeUndefined();
-    });
-
-    it('should add timeseries panel to required', async () => {
-      const { exported } = await setup();
-      const required = exported.spec.requirements[2];
-      expect(required).toEqual({
-        name: 'Time series',
-        id: 'timeseries',
-        type: 'panel',
-        version: '1.1.0',
-      });
-    });
-
-    it('should add grafana version', async () => {
-      const { exported } = await setup();
-      const required = exported.spec.requirements[0];
-
-      expect(required).toEqual({
-        name: 'Grafana',
-        id: 'grafana',
-        type: 'grafana',
-        version: '11.6.0',
-      });
-    });
-
-    it('add library panels as resources', async () => {
-      const { exported } = await setup();
-      const libraryPanel = exported.spec.resources[1] as LibraryPanelImport;
-
-      expect(libraryPanel.kind).toBe('LibraryPanelImport');
-      expect(libraryPanel.spec).toEqual({
-        name: 'Testing lib panel 1',
-        uid: 'abc-123',
-        model: {
-          type: 'graph',
-          datasource: { type: 'testdb', uid: '${DS_GFDB}' },
-        },
-      });
+      expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
     });
   });
 });

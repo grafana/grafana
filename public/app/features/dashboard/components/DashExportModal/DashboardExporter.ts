@@ -382,7 +382,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         });
     };
 
-    const templateizeDatasourceUsage = (
+    const removeDataSourceRefs = (
       obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
     ) => {
       obj.datasource = undefined;
@@ -391,7 +391,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     const processPanel = (panel: PanelKind) => {
       if (panel.spec.data.spec.queries) {
         for (const query of panel.spec.data.spec.queries) {
-          templateizeDatasourceUsage(query.spec);
+          removeDataSourceRefs(query.spec);
         }
       }
     };
@@ -428,7 +428,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       // templatize template vars
       for (const variable of dashboard.variables) {
         if (variable.kind === 'QueryVariable') {
-          templateizeDatasourceUsage(variable.spec);
+          removeDataSourceRefs(variable.spec);
           variable.spec.options = [];
           variable.spec.current = {} as unknown as VariableOption;
         } else if (variable.kind === 'DatasourceVariable') {
@@ -441,7 +441,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
       // templatize annotations vars
       for (const annotation of dashboard.annotations) {
-        await templateizeDatasourceUsage(annotation.spec);
+        await removeDataSourceRefs(annotation.spec);
       }
 
       const importableDashboard: DashboardKind = {
