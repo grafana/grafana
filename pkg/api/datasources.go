@@ -407,7 +407,7 @@ func validateLBACHeader(headervalue string) bool {
 		return false
 	}
 	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
-	if match == nil || len(match) < 2 {
+	if len(match) < 2 {
 		return false
 	}
 	_, err = parser.ParseMetricSelector(string(match[1]))
