@@ -544,6 +544,8 @@ export interface LibraryPanelRef {
 	name: string;
 	// Library panel uid
 	uid: string;
+	// Library panel model - used for export
+	model?: any;
 }
 
 export const defaultLibraryPanelRef = (): LibraryPanelRef => ({

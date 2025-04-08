@@ -3,14 +3,13 @@ import { defaults, each, sortBy } from 'lodash';
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  DashboardV2Spec,
-  LibraryPanelImport,
+  Spec as DashboardV2Spec,
   LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
   AnnotationQueryKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -348,36 +347,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     }
 
     const templateizeLibraryPanelDatasourceUsage = (obj: any) => {
-      if (obj.datasource === undefined) {
-        return;
-      }
-
-      let datasource = obj.datasource;
-      const datasourceUid: string | undefined = obj.datasource.uid;
-      const match = datasourceUid && variableRegex.exec(datasourceUid);
-
-      const { datasourceVariable, datasourceMatch: dataSourceMatch } = getDatasourceFromMatch(match, datasource);
-
-      if (dataSourceMatch) {
-        datasource = dataSourceMatch;
-      }
-
-      return getDataSourceSrv()
-        .get(datasource)
-        .then((ds) => {
-          if (ds.meta?.builtIn) {
-            return;
-          }
-
-          if (datasourceVariable) {
-            return;
-          }
-
-          const libraryPanel = obj.libraryPanel;
-          const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
-          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
-          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
-        });
+      obj.datasource = undefined;
     };
 
     const removeDataSourceRefs = (
@@ -398,16 +368,9 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const { uid } = panel.spec.libraryPanel;
 
       const libPanel = await getLibraryPanel(uid, true);
-      const exportableLibPanel: LibraryPanelImport = {
-        kind: 'LibraryPanelImport',
-        spec: {
-          name: libPanel.name,
-          uid: libPanel.uid,
-          model: libPanel.model,
-        },
-      };
+      panel.spec.libraryPanel.model = libPanel.model;
 
-      templateizeLibraryPanelDatasourceUsage(exportableLibPanel.spec.model);
+      templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
     };
 
     try {
@@ -441,7 +404,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
       // process annotations vars
       for (const annotation of dashboard.annotations) {
-        await removeDataSourceRefs(annotation.spec);
+        removeDataSourceRefs(annotation.spec);
       }
 
       return dashboard;
@@ -450,18 +413,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       return {
         error: err,
       };
-    }
-
-    function getDatasourceFromMatch(match: string | RegExpExecArray | null | undefined, datasource: any) {
-      let datasourceVariable: any = null;
-      if (match) {
-        const varName = match[1] || match[2] || match[4];
-        const datasourceVariable = variableLookup[varName];
-        if (datasourceVariable && datasourceVariable.current) {
-          datasource = datasourceVariable.current.value;
-        }
-      }
-      return { datasourceVariable, datasourceMatch: datasource };
     }
   }
 }

@@ -51,12 +51,6 @@ DashboardV2Spec: {
   variables: [...VariableKind]
 }
 
-// DashboardKind - used for importing/exporting dashboards
-DashboardKind: {
-  kind: "Dashboard"
-  spec: DashboardV2Spec
-}
-
 // Supported dashboard elements
 Element: PanelKind | LibraryPanelKind // |* more element types in the future
 
@@ -80,14 +74,6 @@ LibraryPanelSpec: {
 LibraryPanelRef: {
   name: string
   uid: string
-}
-
-// Portable (can be exported and imported) library panel - we need to load the full model when exporting a dashboard
-LibraryPanelImport: {
-  kind: "LibraryPanelImport"
-  spec: LibraryPanelRef & {
-  model: _
-  }
 }
 
 AnnotationPanelFilter: {

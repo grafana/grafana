@@ -4,10 +4,10 @@ import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariab
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
-  DashboardKind,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -558,38 +558,99 @@ describe('DashboardExporter', () => {
 
     const setup = async () => {
       const exporter = getDashboardExporter();
-      const dashboardKind = (await exporter.makeExportable(handyTestingSchema)) as DashboardKind;
+      const dashboard = (await exporter.makeExportable(handyTestingSchema)) as DashboardV2Spec;
+      // add a library panel to the dashboard
+      dashboard.elements['library_panel_1'] = {
+        kind: 'LibraryPanel',
+        spec: {
+          id: 1,
+          title: 'Library Panel',
+          libraryPanel: {
+            name: 'Library Panel',
+            uid: 'library_panel_uid',
+            model: {
+              description: '',
+              fieldConfig: {
+                defaults: {
+                  thresholds: {
+                    mode: 'absolute',
+                    steps: [
+                      {
+                        color: 'green',
+                        value: null,
+                      },
+                      {
+                        color: 'red',
+                        value: 80,
+                      },
+                    ],
+                  },
+                },
+              },
+              options: {
+                legend: {
+                  calcs: [],
+                  displayMode: 'list',
+                  placement: 'bottom',
+                  showLegend: true,
+                },
+                tooltip: {
+                  mode: 'single',
+                  sort: 'none',
+                },
+              },
+              pluginVersion: '11.5.0-pre',
+              targets: [
+                {
+                  datasource: {
+                    type: 'cloudwatch',
+                    uid: 'test-uid',
+                  },
+                  dimensions: {},
+                  expression: '',
+                  id: '',
+                  label: '',
+                  logGroups: [],
+                  matchExact: true,
+                  metricEditorMode: 0,
+                  metricName: 'Errors',
+                  metricQueryType: 0,
+                  namespace: 'AWS/Lambda',
+                  period: '',
+                  queryLanguage: 'CWLI',
+                  queryMode: 'Metrics',
+                  refId: 'A',
+                  region: 'default',
+                  sqlExpression: '',
+                  statistic: 'Sum',
+                },
+              ],
+              title: 'AWS Lambda Errors',
+              type: 'timeseries',
+            },
+          },
+        },
+      };
 
-      return { dashboardKind };
+      return { dashboard };
     };
 
-    it('exports Dashboard kind', async () => {
-      const { dashboardKind } = await setup();
-      expect(dashboardKind.kind).toBe('Dashboard');
-    });
-
-    it('dashboard spec is part of Dashboard kind', async () => {
-      const { dashboardKind } = await setup();
-
-      expect(dashboardKind.kind).toBe('Dashboard');
-    });
-
     it('should replace datasource in a query variable', async () => {
-      const { dashboardKind } = await setup();
-      const variable = dashboardKind.spec.variables[0] as QueryVariableKind;
+      const { dashboard } = await setup();
+      const variable = dashboard.variables[0] as QueryVariableKind;
       expect(variable.spec.datasource?.uid).toBeUndefined();
     });
 
     it('do not expose datasource name and id in datasource variable', async () => {
-      const { dashboardKind } = await setup();
-      const variable = dashboardKind.spec.variables[2] as DatasourceVariableKind;
+      const { dashboard } = await setup();
+      const variable = dashboard.variables[2] as DatasourceVariableKind;
       expect(variable.kind).toBe('DatasourceVariable');
       expect(variable.spec.current).toEqual({ text: '', value: '' });
     });
 
     it('should replace datasource in annotation query', async () => {
-      const { dashboardKind } = await setup();
-      const annotationQuery = dashboardKind.spec.annotations[0];
+      const { dashboard } = await setup();
+      const annotationQuery = dashboard.annotations[0];
 
       expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
     });

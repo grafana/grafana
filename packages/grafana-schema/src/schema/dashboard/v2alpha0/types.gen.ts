@@ -1396,36 +1396,6 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 	text: "",
 });
 
-// DashboardKind - used for importing/exporting dashboards
-export interface DashboardKind {
-	kind: "Dashboard";
-	spec: DashboardV2Spec;
-}
-
-export const defaultDashboardKind = (): DashboardKind => ({
-	kind: "Dashboard",
-	spec: defaultDashboardV2Spec(),
-});
-
-// Portable (can be exported and imported) library panel - we need to load the full model when exporting a dashboard
-export interface LibraryPanelImport {
-	kind: "LibraryPanelImport";
-	spec: {
-		name: string;
-		model: any;
-		uid: string;
-	};
-}
-
-export const defaultLibraryPanelImport = (): LibraryPanelImport => ({
-	kind: "LibraryPanelImport",
-	spec: {
-	name: "",
-	model: {},
-	uid: "",
-},
-});
-
 // --- Common types ---
 export interface Kind {
 	kind: string;

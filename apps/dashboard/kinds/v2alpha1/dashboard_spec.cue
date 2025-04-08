@@ -72,6 +72,8 @@ LibraryPanelRef: {
 	name: string
 	// Library panel uid
 	uid: string
+	// Library panel model - used for export
+	model?: _
 }
 
 AnnotationPanelFilter: {

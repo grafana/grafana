@@ -663,6 +663,8 @@ type DashboardLibraryPanelRef struct {
 	Name string `json:"name"`
 	// Library panel uid
 	Uid string `json:"uid"`
+	// Library panel model - used for export
+	Model interface{} `json:"model,omitempty"`
 }
 
 // NewDashboardLibraryPanelRef creates a new DashboardLibraryPanelRef object.
