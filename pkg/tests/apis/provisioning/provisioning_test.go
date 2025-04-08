@@ -219,14 +219,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Update(ctx,
+	_, err := helper.Repositories.Resource.Create(ctx,
 		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repo,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 			"Path":        "grafana/",
 		}),
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 
@@ -243,6 +243,9 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
 	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete values")
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
