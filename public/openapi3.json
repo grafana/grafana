@@ -1803,6 +1803,16 @@
         },
         "description": "(empty)"
       },
+      "resourceDependenciesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResourceDependenciesResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "resourcePermissionsDescription": {
         "content": {
           "application/json": {
@@ -4413,6 +4423,30 @@
             ],
             "example": "Admin",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateSnapshotRequestDTO": {
+        "properties": {
+          "resourceTypes": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -9759,6 +9793,57 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceDependenciesResponseDTO": {
+        "properties": {
+          "resourceDependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceDependencyDTO": {
+        "properties": {
+          "dependencies": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resourceType": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ],
             "type": "string"
           }
         },
@@ -15978,6 +16063,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSnapshotRequestDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/createSnapshotResponse"
@@ -16247,6 +16343,20 @@
           }
         },
         "summary": "Get a list of snapshots for a session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/resources/dependencies": {
+      "get": {
+        "operationId": "getResourceDependencies",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resourceDependenciesResponse"
+          }
+        },
+        "summary": "Get the resource dependencies graph for the current set of migratable resources.",
         "tags": [
           "migrations"
         ]
