@@ -81,7 +81,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
       const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
       const rulesBatchIterator = iterable
         .pipe(
-          bufferCountOrTime(FRONTENT_PAGE_SIZE, 2500),
+          bufferCountOrTime(FRONTENT_PAGE_SIZE, 1000),
           onFinished(() => setDoneSearching(true))
         )
         [Symbol.asyncIterator]();
@@ -107,15 +107,18 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }, 'alerting.rule-list.filter-view.load-result-page')
   );
 
-  /* When we unmount the component we make sure to abort all iterables and stop making HTTP requests */
-  useUnmount(() => {
-    iteration.current?.abortController.abort();
-  });
-
   const loading = isLoading(state) || transitionPending;
   const numberOfRules = rules.length;
   const noRulesFound = numberOfRules === 0 && !loading;
   const loadingAborted = iteration.current?.abortController.signal.aborted;
+  const cancelSearch = useCallback(() => {
+    iteration.current?.abortController.abort();
+  }, []);
+
+  /* When we unmount the component we make sure to abort all iterables and stop making HTTP requests */
+  useUnmount(() => {
+    cancelSearch();
+  });
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
@@ -187,13 +190,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
             )}
           </Text>
           {!doneSearching && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                iteration.current?.abortController.abort();
-              }}
-            >
+            <Button variant="secondary" size="sm" onClick={() => cancelSearch()}>
               Cancel search
             </Button>
           )}
