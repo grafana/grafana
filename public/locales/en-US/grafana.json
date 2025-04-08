@@ -1048,6 +1048,12 @@
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
+        "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-title": "No rules to import",
+        "plugin-rules-warning": {
+          "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
+          "title": "Some rules are excluded from import"
+        },
         "title": "Confirm import"
       },
       "datasource": {
@@ -3137,7 +3143,6 @@
         "tooltip": "Share dashboard"
       },
       "share-button": "Share",
-      "switch-old-dashboard": "Switch to old dashboard page",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -5428,6 +5433,7 @@
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
+      "show-errors": "Only view errors",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
@@ -5437,7 +5443,7 @@
       "upload-migration": "Upload snapshot"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack. <2>Learn about migrating other settings.</2>"
+      "text": "Resources are copied to your Grafana Cloud stack. <2>Learn more</2> about the full set of supported resources and migrating other settings."
     },
     "token-status": {
       "active": "Token created and active",
@@ -5829,7 +5835,6 @@
       "remove-bookmark": "Remove from Bookmarks"
     },
     "kiosk": {
-      "tooltip": "Enable kiosk mode",
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
@@ -6227,6 +6232,7 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
+    "enable-kiosk-mode": "Enable kiosk mode",
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
     },
@@ -6858,6 +6864,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "replace-query-from-library": "Replace with query from library",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
