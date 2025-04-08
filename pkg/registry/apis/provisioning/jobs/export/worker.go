@@ -53,7 +53,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	cfg := repo.Config()
+	cfg := repo.Config()
 	// Can write to external branch
+	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
 		return err
 	}
@@ -84,6 +86,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	fn := func(repo repository.Repository, _ bool) error {
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
+			return fmt.Errorf("create clients: %w", err)
 			return fmt.Errorf("create clients: %w", err)
 		}
 
