@@ -107,11 +107,11 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
           </Alert>
           {someRulesAreSkipped && (
             <Alert
-              title={t('alerting.to-gma.confirm-modal.plugin-rules-warning', 'Some rules will be skipped')}
+              title={t('alerting.to-gma.confirm-modal.plugin-rules-warning.title', 'Some rules will be skipped')}
               severity="info"
             >
               <Text variant="body">
-                <Trans i18nKey="alerting.to-gma.confirm-modal.plugin-rules-warning">
+                <Trans i18nKey="alerting.to-gma.confirm-modal.plugin-rules-warning.text">
                   We have detected that some rules are managed by plugins.These rules will not be imported.
                 </Trans>
               </Text>
