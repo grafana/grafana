@@ -174,7 +174,6 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
         bottom: 0,
         left: 0,
         background: theme.components.overlay.background,
-        backdropFilter: theme.components.overlay.blur ? `blur(${theme.components.overlay.blur}px)` : undefined,
       },
     }),
     animator: css({

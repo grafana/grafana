@@ -2179,6 +2179,7 @@
         "name": "noBackdropBlur",
         "resourceVersion": "1744057771109",
         "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-08T09:27:30Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-07 20:29:31.109804663 +0000 UTC"
         }

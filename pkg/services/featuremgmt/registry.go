@@ -1713,14 +1713,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:         "noBackdropBlur",
-			Description:  "Disables backdrop blur behind modals and drawers",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
-			FrontendOnly: true,
-		},
-		{
 			Name:              "alertingMigrationUI",
 			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
 			FrontendOnly:      true,

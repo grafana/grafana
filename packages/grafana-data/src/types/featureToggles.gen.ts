@@ -1001,11 +1001,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Disables backdrop blur behind modals and drawers
-  * @default true
-  */
-  noBackdropBlur?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
   */
   alertingMigrationUI?: boolean;

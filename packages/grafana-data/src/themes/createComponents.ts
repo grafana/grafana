@@ -55,14 +55,6 @@ export interface ThemeComponents {
   };
 }
 
-function shouldBlurBackdrops() {
-  try {
-    return !(window.grafanaBootData?.settings?.featureToggles?.noBackdropBlur ?? false);
-  } catch (error) {
-    return true;
-  }
-}
-
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
@@ -98,14 +90,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: colors.background.canvas,
       padding: 1,
     },
-    overlay: shouldBlurBackdrops()
-      ? {
-          background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
-          blur: 1,
-        }
-      : {
-          background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)', // new
-        },
+    overlay: {
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',
+    },
     sidemenu: {
       width: 57,
     },
