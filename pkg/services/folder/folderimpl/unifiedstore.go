@@ -51,13 +51,6 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	// Add the default permissions annotation for users and service accounts
-	user, _ := claims.AuthInfoFrom(ctx)
-	if user != nil && (user.GetIdentityType() == claims.TypeUser || user.GetIdentityType() == claims.TypeServiceAccount) {
-		meta, _ := utils.MetaAccessor(obj)
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
-	}
-
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err
