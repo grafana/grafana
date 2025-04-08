@@ -407,13 +407,11 @@ async function initEchoSrv() {
  * like PerformanceMark or PerformancePaintTiming (e.g. created with performance.mark, or first-contentful-paint)
  */
 function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = ''): void {
-  /*
   const metric = performance.getEntriesByName(metricName).at(0);
   if (metric) {
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
-    */
 }
 
 function handleRedirectTo(): void {
