@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -40,7 +41,12 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External) {
     return (
-      <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
+      <Alert
+        title={t(
+          'alerting.grafana-alertmanager-delivery-warning.title-grafana-alerts-delivered-alertmanager',
+          'Grafana alerts are not delivered to Grafana Alertmanager'
+        )}
+      >
         Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
         will not affect delivery of your alerts.
         <div className={styles.adminHint}>
@@ -53,7 +59,13 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
     return (
-      <Alert title="You have additional Alertmanagers to configure" severity="warning">
+      <Alert
+        title={t(
+          'alerting.grafana-alertmanager-delivery-warning.title-you-have-additional-alertmanagers-to-configure',
+          'You have additional Alertmanagers to configure'
+        )}
+        severity="warning"
+      >
         Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
         will not affect the others.
         <div className={styles.adminHint}>
