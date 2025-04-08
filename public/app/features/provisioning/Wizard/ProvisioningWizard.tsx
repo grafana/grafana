@@ -88,11 +88,10 @@ export function ProvisioningWizard() {
     (currentStep: WizardStep) => {
       const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
       if (currentStep === 'bootstrap') {
-        return t('provisioning.wizard.button-start', 'Start');
+        return t('provisioning.wizard.button-start', 'Begin synchronization');
       }
-      return stepIndex === availableSteps.length - 1
-        ? t('provisioning.wizard.button-finish', 'Finish')
-        : t('provisioning.wizard.button-next', 'Next');
+
+      return availableSteps[stepIndex + 1].name;
     },
     [availableSteps]
   );
