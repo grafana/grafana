@@ -154,7 +154,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
 		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
-			log.Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, grant access")
