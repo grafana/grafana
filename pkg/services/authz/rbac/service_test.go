@@ -890,6 +890,85 @@ func TestService_Check(t *testing.T) {
 	})
 }
 
+func TestService_CacheCheck(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+	userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+
+	t.Run("Allow based on cached permissions", func(t *testing.T) {
+		s := setupService()
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": true})
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Fallback to the database on cache miss", func(t *testing.T) {
+		s := setupService()
+
+		// Populate databse permission but not the cache
+		store := &fakeStore{
+			userID:          userID,
+			userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+		}
+
+		s.store = store
+		s.permissionStore = store
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash2",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Should deny on explicit cache deny entry", func(t *testing.T) {
+		s := setupService()
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+
+		// Explicitly deny access to the dashboard
+		s.permDenialCache.Set(ctx, userPermDenialCacheKey("org-12", "test-uid", "dashboards:read", "dash1", "fold1"), true)
+
+		// Allow access to the dashboard to prove this is not checked
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": false})
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+			Folder:    "fold1",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed)
+	})
+}
+
 func TestService_List(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
