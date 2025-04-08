@@ -44,24 +44,10 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (o *ExtraOptions) Validate() []error {
-	if o == nil {
-		return nil
-	}
-
-	errs := []error{}
-	errs = append(errs, o.RecommendedOptions.Validate()...)
-	return errs
+	return nil
 }
 
-func (o *ExtraOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error {
-	if o == nil {
-		return nil
-	}
-
-	if err := o.RecommendedOptions.ApplyTo(config); err != nil {
-		return err
-	}
-
+func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
@@ -74,6 +60,6 @@ func (o *ExtraOptions) ApplyTo(config *genericapiserver.RecommendedConfig) error
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)
 	}
-	config.ExternalAddress = o.ExternalAddress
+	c.ExternalAddress = o.ExternalAddress
 	return nil
 }
