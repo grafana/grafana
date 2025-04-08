@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -131,51 +133,65 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("write folders to repository: %w", err)
 		}
 
-		progress.SetMessage(ctx, "start resource export")
-		for _, kind := range resources.SupportedProvisioningResources {
-			// skip from folders as we do them first... so only dashboards
-			if kind == resources.FolderResource {
-				continue
-			}
-
-			progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-			client, _, err := clients.ForResource(kind)
-			if err != nil {
-				return err
-			}
-
-			if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-				result := jobs.JobResourceResult{
-					Name:     item.GetName(),
-					Resource: kind.Resource,
-					Group:    kind.Group,
-					Action:   repository.FileActionCreated,
-				}
-
-				fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-					Path: options.Path,
-					Ref:  options.Branch,
-				})
-				if errors.Is(err, resources.ErrAlreadyInRepository) {
-					result.Action = repository.FileActionIgnored
-				} else if err != nil {
-					result.Action = repository.FileActionIgnored
-					result.Error = err
-				}
-				result.Path = fileName
-				progress.Record(ctx, result)
-
-				if err := progress.TooManyErrors(); err != nil {
-					return err
-				}
-				return nil
-			}); err != nil {
-				return fmt.Errorf("export %s: %w", kind.Resource, err)
-			}
+		if err := r.exportResources(ctx, clients, *options, repositoryResources, progress); err != nil {
+			return err
 		}
 
 		return nil
 	}
 
 	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
+}
+
+func (r *ExportWorker) exportResources(ctx context.Context, clients resources.ResourceClients, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	progress.SetMessage(ctx, "start resource export")
+	for _, kind := range resources.SupportedProvisioningResources {
+		// skip from folders as we do them first... so only dashboards
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
+		client, _, err := clients.ForResource(kind)
+		if err != nil {
+			return err
+		}
+
+		if err := r.exportResource(ctx, kind, client, options, repositoryResources, progress); err != nil {
+			return fmt.Errorf("export %s: %w", kind.Resource, err)
+		}
+	}
+
+	return nil
+}
+
+func (r *ExportWorker) exportResource(ctx context.Context, kind schema.GroupVersionResource, client dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: kind.Resource,
+			Group:    kind.Group,
+			Action:   repository.FileActionCreated,
+		}
+
+		fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
+			Path: options.Path,
+			Ref:  options.Branch,
+		})
+
+		if errors.Is(err, resources.ErrAlreadyInRepository) {
+			result.Action = repository.FileActionIgnored
+		} else if err != nil {
+			result.Action = repository.FileActionIgnored
+			result.Error = err
+		}
+		result.Path = fileName
+		progress.Record(ctx, result)
+
+		if err := progress.TooManyErrors(); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
