@@ -155,7 +155,7 @@ export function MetricsBrowserProvider({
     setStatus('Fetching labels...');
 
     if (selectedMetric !== '') {
-      const selector = buildSelector(selectedMetric, selectedLabelValues);
+      const selector = getSelector();
 
       languageProvider
         .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
@@ -178,6 +178,8 @@ export function MetricsBrowserProvider({
   }, [languageProvider, selectedMetric]);
 
   // Fetch label keys when metrics updated after selecting a label value
+  // When we select single/multiple label value without selecting a metric name
+  // We get new metrics based on that selection. Based on this we need to re-fetch the label keys
   useEffect(() => {
     if (getSelector() === '{}') {
       setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
@@ -255,7 +257,7 @@ export function MetricsBrowserProvider({
 
     fetchValues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getSelector, labelKeys, languageProvider, selectedLabelKeys, seriesLimit, timeRange]);
+  }, [labelKeys, languageProvider, selectedLabelKeys, seriesLimit, timeRange]);
 
   // Fetch metrics with new selector
   useEffect(() => {
