@@ -9,7 +9,6 @@ import { useStyles2 } from '../../../../themes';
 import { getFieldTypeIcon } from '../../../../types';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
-import { TABLE } from '../constants';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
 
 interface HeaderCellProps {
