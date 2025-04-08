@@ -80,7 +80,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create clients: %w", err)
 		}
 
-		tree := resources.NewEmptyFolderTree()
 		folderClient, err := clients.Folder()
 		if err != nil {
 			return fmt.Errorf("create folder client: %w", err)
@@ -96,41 +95,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-			if tree.Count() >= resources.MaxNumberOfFolders {
-				return errors.New("too many folders")
-			}
-
-			return tree.AddUnstructured(item, cfg.Name)
-		}); err != nil {
-			return fmt.Errorf("load folder tree: %w", err)
-		}
-
-		progress.SetMessage(ctx, "write folders to repository")
-		err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
-			result := jobs.JobResourceResult{
-				Action:   repository.FileActionCreated,
-				Name:     folder.ID,
-				Resource: resources.FolderResource.Resource,
-				Group:    resources.FolderResource.Group,
-				Path:     folder.Path,
-				Error:    err,
-			}
-
-			if !created {
-				result.Action = repository.FileActionIgnored
-			}
-
-			progress.Record(ctx, result)
-			if err := progress.TooManyErrors(); err != nil {
-				return err
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return fmt.Errorf("write folders to repository: %w", err)
+		if err := r.exportFolders(ctx, cfg.Name, folderClient, *options, repositoryResources, progress); err != nil {
+			return err
 		}
 
 		if err := r.exportResources(ctx, clients, *options, repositoryResources, progress); err != nil {
@@ -141,6 +107,51 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
+}
+
+func (r *ExportWorker) exportFolders(ctx context.Context, repoName string, folderClient dynamic.ResourceInterface, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	// Load and write all folders
+	// FIXME: we load the entire tree in memory
+	progress.SetMessage(ctx, "read folder tree from API server")
+
+	tree := resources.NewEmptyFolderTree()
+	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+		if tree.Count() >= resources.MaxNumberOfFolders {
+			return errors.New("too many folders")
+		}
+
+		return tree.AddUnstructured(item, repoName)
+	}); err != nil {
+		return fmt.Errorf("load folder tree: %w", err)
+	}
+
+	progress.SetMessage(ctx, "write folders to repository")
+	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
+		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
+			Name:     folder.ID,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
+		}
+
+		if !created {
+			result.Action = repository.FileActionIgnored
+		}
+
+		progress.Record(ctx, result)
+		if err := progress.TooManyErrors(); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("write folders to repository: %w", err)
+	}
+
+	return nil
 }
 
 func (r *ExportWorker) exportResources(ctx context.Context, clients resources.ResourceClients, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
