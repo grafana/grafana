@@ -1,7 +1,8 @@
 import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useRef, useState, useTransition } from 'react';
+import { useUnmount } from 'react-use';
 
-import { Card, EmptyState, Stack, Text } from '@grafana/ui';
+import { Button, Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { withPerformanceLogging } from '../Analytics';
@@ -54,7 +55,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
+  const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
 
   const iteration = useRef<{
     rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
@@ -66,13 +67,17 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   // Lazy initialization of useRef
   // https://18.react.dev/reference/react/useRef#how-to-avoid-null-checks-when-initializing-use-ref-later
-  const getRulesBatchIterator = () => {
+  const getRulesBatchIterator = useCallback(() => {
     if (!iteration.current) {
       /**
        * This an iterator that we can use to populate the search results.
        * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
        * callback function to detect when we've exhausted the source.
-       * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
+       * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results
+       *
+       * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
+       * and the iterator will allow us to exhaust the iterable in a stateful way
+       */
       const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
       const rulesBatchIterator = iterable
         .pipe(
@@ -83,7 +88,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
       iteration.current = { rulesBatchIterator: rulesBatchIterator, abortController };
     }
     return iteration.current.rulesBatchIterator;
-  };
+  }, [filterState, getFilteredRulesIterator]);
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(
@@ -102,18 +107,15 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }, 'alerting.rule-list.filter-view.load-result-page')
   );
 
-  /* When we unmount the component we make sure to abort all iterables */
-  useEffect(() => {
-    const currentAbortController = iteration.current?.abortController;
-
-    return () => {
-      currentAbortController?.abort();
-    };
-  }, []);
+  /* When we unmount the component we make sure to abort all iterables and stop making HTTP requests */
+  useUnmount(() => {
+    iteration.current?.abortController.abort();
+  });
 
   const loading = isLoading(state) || transitionPending;
   const numberOfRules = rules.length;
   const noRulesFound = numberOfRules === 0 && !loading;
+  const loadingAborted = iteration.current?.abortController.signal.aborted;
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
@@ -162,13 +164,39 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           </>
         )}
       </ul>
-      {doneSearching && !noRulesFound && (
+      {!noRulesFound && (
         <Card>
           <Text color="secondary">
-            <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">
-              No more results – showing {{ numberOfRules }} rules
-            </Trans>
+            {/* done searching everything and found some results */}
+            {doneSearching && !loadingAborted && (
+              <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">
+                No more results – found {{ numberOfRules }} rules
+              </Trans>
+            )}
+            {/* user has cancelled the search */}
+            {loadingAborted && (
+              <Trans i18nKey="alerting.rule-list.filter-view.results-with-cancellation">
+                Search cancelled – found {{ numberOfRules }} rules
+              </Trans>
+            )}
+            {/* search is in progress */}
+            {!doneSearching && (
+              <Trans i18nKey="alerting.rule-list.filter-view.results-loading">
+                Searching – found {{ numberOfRules }} rules
+              </Trans>
+            )}
           </Text>
+          {!doneSearching && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                iteration.current?.abortController.abort();
+              }}
+            >
+              Cancel search
+            </Button>
+          )}
         </Card>
       )}
       {!doneSearching && !loading && <LoadMoreHelper handleLoad={loadResultPage} />}

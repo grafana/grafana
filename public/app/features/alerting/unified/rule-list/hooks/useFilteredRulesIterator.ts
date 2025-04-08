@@ -64,6 +64,7 @@ export function useFilteredRulesIteratorProvider() {
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     const grafanaRulesGenerator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      withAbort(abortController.signal),
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
@@ -71,7 +72,6 @@ export function useFilteredRulesIteratorProvider() {
           .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
           .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
-      withAbort(abortController.signal),
       catchError(() => empty())
     );
 
@@ -88,6 +88,7 @@ export function useFilteredRulesIteratorProvider() {
     // Create a generator for each data source
     const dataSourceGenerators = externalRulesSourcesToFetchFrom.map((dataSourceIdentifier) => {
       const promGroupsGenerator = from(prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)).pipe(
+        withAbort(abortController.signal),
         concatMap((groups) =>
           groups
             .filter((group) => groupFilter(group, normalizedFilterState))
@@ -95,7 +96,6 @@ export function useFilteredRulesIteratorProvider() {
             .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
             .map(([group, rule]) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
         ),
-        withAbort(abortController.signal),
         catchError(() => empty())
       );
 
@@ -109,7 +109,7 @@ export function useFilteredRulesIteratorProvider() {
     };
   };
 
-  return { getFilteredRulesIterator: getFilteredRulesIterable };
+  return getFilteredRulesIterable;
 }
 
 /**
