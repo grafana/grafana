@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { getWorkflowOptions } from '../Config/ConfigForm';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
@@ -13,55 +12,17 @@ export function ConnectStep() {
   const {
     register,
     control,
-    watch,
     setValue,
     formState: { errors },
+    getValues,
   } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
-
-  const typeOptions = useMemo<Array<ComboboxOption<'github' | 'local'>>>(
-    () => [
-      { label: t('provisioning.connect-step.storage-type-github', 'GitHub'), value: 'github' },
-      { label: t('provisioning.connect-step.storage-type-local', 'Local'), value: 'local' },
-    ],
-    []
-  );
-
+  const type = getValues('repository.type');
   const isGithub = type === 'github';
 
   return (
     <Stack direction="column">
-      <Field
-        label={t('provisioning.connect-step.label-storage-type', 'Storage type')}
-        required
-        description={t(
-          'provisioning.connect-step.description-choose-storage-resources',
-          'Choose the type of storage for your resources'
-        )}
-      >
-        <Controller
-          name={'repository.type'}
-          render={({ field: { ref, onChange, ...field } }) => {
-            return (
-              <Combobox
-                options={typeOptions}
-                onChange={(value) => {
-                  const repoType = value?.value;
-                  onChange(repoType);
-                  setValue(
-                    'repository.workflows',
-                    getWorkflowOptions(repoType).map((v) => v.value)
-                  );
-                }}
-                {...field}
-              />
-            );
-          }}
-        />
-      </Field>
-
       {isGithub && (
         <>
           <TokenPermissionsInfo />

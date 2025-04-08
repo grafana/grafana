@@ -10,9 +10,9 @@ import { PROVISIONING_URL } from '../constants';
 
 import { Step } from './Stepper';
 import { WizardContent } from './WizardContent';
-import { WizardFormData, WizardStep } from './types';
+import { RepoType, WizardFormData, WizardStep } from './types';
 
-export function ProvisioningWizard() {
+export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
@@ -59,7 +59,7 @@ export function ProvisioningWizard() {
 
   const methods = useForm<WizardFormData>({
     defaultValues: {
-      repository: values,
+      repository: { ...values, type },
       migrate: {
         history: true,
         identifier: true, // Keep the same URLs
