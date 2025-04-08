@@ -5,8 +5,6 @@ import (
 	"strconv"
 
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -15,14 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
-	"k8s.io/apiserver/pkg/server/options"
 )
 
 type ExtraOptions struct {
-	*options.RecommendedOptions
-	ExtraRunners    []ExtraRunner
-	GroupVersions   []schema.GroupVersion
-	CodecFactory    serializer.CodecFactory
 	DevMode         bool
 	ExternalAddress string
 	APIURL          string
