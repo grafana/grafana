@@ -1,6 +1,6 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError, withAbort } from 'ix/asynciterable/operators';
+import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 import { isEmpty } from 'lodash';
 
 import {
@@ -46,7 +46,7 @@ export interface PromRuleWithOrigin {
 }
 
 interface GetIteratorResult {
-  iterator: AsyncIterableX<RuleWithOrigin>;
+  iterable: AsyncIterableX<RuleWithOrigin>;
   abortController: AbortController;
 }
 
@@ -56,20 +56,23 @@ export function useFilteredRulesIteratorProvider() {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
-  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
+  const getFilteredRulesIterable = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
-    // Create the generator for Grafana rules
-    const grafanaRulesGenerator = filterGrafanaRules(
-      from(grafanaGroupsGenerator(groupLimit)).pipe(
-        withAbort(abortController.signal),
-        catchError(() => empty())
+    const grafanaRulesGenerator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      concatMap((groups) =>
+        groups
+          .filter((group) => groupFilter(group, normalizedFilterState))
+          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
+          .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
+          .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
-      normalizedFilterState
+      withAbort(abortController.signal),
+      catchError(() => empty())
     );
 
     // Determine which data sources to use
@@ -79,79 +82,34 @@ export function useFilteredRulesIteratorProvider() {
 
     // If no data sources, just return Grafana rules
     if (isEmpty(externalRulesSourcesToFetchFrom)) {
-      return {
-        iterator: from(grafanaRulesGenerator),
-        abortController,
-      };
+      return { iterable: grafanaRulesGenerator, abortController };
     }
 
     // Create a generator for each data source
     const dataSourceGenerators = externalRulesSourcesToFetchFrom.map((dataSourceIdentifier) => {
       const promGroupsGenerator = from(prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)).pipe(
+        concatMap((groups) =>
+          groups
+            .filter((group) => groupFilter(group, normalizedFilterState))
+            .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
+            .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
+            .map(([group, rule]) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
+        ),
         withAbort(abortController.signal),
         catchError(() => empty())
       );
 
-      return filteredDataSourceRulesGenerator(promGroupsGenerator, dataSourceIdentifier, normalizedFilterState);
+      return promGroupsGenerator;
     });
 
     // Merge all generators
     return {
-      iterator: merge(grafanaRulesGenerator, ...dataSourceGenerators),
+      iterable: merge<RuleWithOrigin>(grafanaRulesGenerator, ...dataSourceGenerators),
       abortController,
     };
   };
 
-  return { getFilteredRulesIterator };
-}
-
-/**
- * Flattens groups to rules and filters them
- */
-async function* filterGrafanaRules(
-  groupsGenerator: AsyncIterable<GrafanaPromRuleGroupDTO[]>,
-  filterState: RulesFilter
-): AsyncGenerator<RuleWithOrigin, void, unknown> {
-  for await (const groups of groupsGenerator) {
-    for (const group of groups) {
-      if (!groupFilter(group, filterState)) {
-        continue;
-      }
-
-      for (const rule of group.rules) {
-        if (!ruleFilter(rule, filterState)) {
-          continue;
-        }
-
-        yield mapGrafanaRuleToRuleWithOrigin(group, rule);
-      }
-    }
-  }
-}
-
-/**
- * Flattens groups to rules and filters them
- */
-async function* filteredDataSourceRulesGenerator(
-  groupsGenerator: AsyncIterableX<PromRuleGroupDTO[]>,
-  dataSourceIdentifier: DataSourceRulesSourceIdentifier,
-  filterState: RulesFilter
-): AsyncGenerator<RuleWithOrigin, void, unknown> {
-  for await (const groups of groupsGenerator) {
-    for (const group of groups) {
-      if (!groupFilter(group, filterState)) {
-        continue;
-      }
-
-      for (const rule of group.rules) {
-        if (!ruleFilter(rule, filterState)) {
-          continue;
-        }
-
-        yield mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule);
-      }
-    }
-  }
+  return { getFilteredRulesIterator: getFilteredRulesIterable };
 }
 
 /**

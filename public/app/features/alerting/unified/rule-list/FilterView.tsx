@@ -1,11 +1,10 @@
-import { AsyncIterableX, empty } from 'ix/asynciterable';
-import { catchError, take, tap } from 'ix/asynciterable/operators';
+import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { logError, withPerformanceLogging } from '../Analytics';
+import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
@@ -56,51 +55,48 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
+
   const iteration = useRef<{
-    rulesIterator: AsyncIterableX<RuleWithOrigin>;
+    rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
     abortController: AbortController;
   } | null>(null);
 
-  // To call getFilteredRulesIterator only once we need to check if the iterator has already been created
-  // If not, we create it and store it in the iteration ref
-  // Using getFilteredRulesIterator as init value for the useRef would call it on every render
-  if (iteration.current === null) {
-    /**
-     * This an iterator that we can use to populate the search results.
-     * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
-     * callback function to detect when we've exhausted the source.
-     * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-    const { iterator, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
-    const rulesIterator = iterator.pipe(onFinished(() => setDoneSearching(true)));
-    iteration.current = { rulesIterator, abortController };
-  }
   const [rules, setRules] = useState<KeyedRuleWithOrigin[]>([]);
   const [doneSearching, setDoneSearching] = useState(false);
+
+  // Lazy initialization of useRef
+  // https://18.react.dev/reference/react/useRef#how-to-avoid-null-checks-when-initializing-use-ref-later
+  const getRulesBatchIterator = () => {
+    if (!iteration.current) {
+      /**
+       * This an iterator that we can use to populate the search results.
+       * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
+       * callback function to detect when we've exhausted the source.
+       * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
+      const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
+      const rulesBatchIterator = iterable
+        .pipe(
+          bufferCountOrTime(FRONTENT_PAGE_SIZE, 2500),
+          onFinished(() => setDoneSearching(true))
+        )
+        [Symbol.asyncIterator]();
+      iteration.current = { rulesBatchIterator: rulesBatchIterator, abortController };
+    }
+    return iteration.current.rulesBatchIterator;
+  };
 
   /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(
     withPerformanceLogging(async () => {
-      const rulesIterator = iteration.current?.rulesIterator;
-      if (!rulesIterator) {
-        logError(new Error('Filtered rules iterator has not been initialized'));
+      const rulesIterator = getRulesBatchIterator();
+
+      const nextRulesBatch = await rulesIterator.next();
+      if (nextRulesBatch.done) {
         return;
       }
-
-      const pageIterator = rulesIterator.pipe(
-        // grab <FRONTENT_PAGE_SIZE> from the rules iterable
-        take(FRONTENT_PAGE_SIZE),
-        // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
-        catchError((error) => {
-          logError(error);
-          return empty();
-        })
-      );
-
-      for await (const rule of pageIterator) {
+      if (nextRulesBatch.value) {
         startTransition(() => {
-          // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
-          // It's a not trivial computation because it involves hashing the rule
-          setRules((rules) => rules.concat({ key: getRuleKey(rule), ...rule }));
+          setRules((rules) => rules.concat(nextRulesBatch.value.map((rule) => ({ key: getRuleKey(rule), ...rule }))));
         });
       }
     }, 'alerting.rule-list.filter-view.load-result-page')
