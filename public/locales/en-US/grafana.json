@@ -1976,7 +1976,7 @@
       "confirm-modal": {
         "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
         "plugin-rules-warning": {
-          "text": "We have detected that some rules are managed by plugins.These rules will not be imported.",
+          "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules will be skipped"
         },
         "summary": "These are the list of rules that will be imported:",
