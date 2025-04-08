@@ -25,6 +25,7 @@ import (
 
 type URLPrefs struct {
 	Language string
+	Locale   string
 	Theme    string
 }
 
@@ -32,9 +33,11 @@ type URLPrefs struct {
 func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
+	locale := c.Query("locale")
 
 	return URLPrefs{
 		Language: language,
+		Locale:   locale,
 		Theme:    theme,
 	}
 }
@@ -82,7 +85,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		if prefs.JSONData.Locale != "" {
+		if urlPrefs.Locale != "" {
+			locale = urlPrefs.Locale
+		} else if prefs.JSONData.Locale != "" {
 			locale = prefs.JSONData.Locale
 		}
 	}
