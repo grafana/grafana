@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-const maxFolders = 10000
+const MaxNumberOfFolders = 10000
 
 type FolderManager struct {
 	repo   repository.ReaderWriter
@@ -147,8 +147,8 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
-func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string, fn func(folder Folder, created bool, err error) error) error {
-	return fm.tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
 		p := folder.Path
 		if path != "" {
 			p = safepath.Join(path, p)
@@ -170,15 +170,5 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 		}
 
 		return fn(folder, true, nil)
-	})
-}
-
-func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
-	return ForEach(ctx, fm.client, func(item *unstructured.Unstructured) error {
-		if fm.tree.Count() > maxFolders {
-			return errors.New("too many folders")
-		}
-
-		return fm.tree.AddUnstructured(item, fm.repo.Config().Name)
 	})
 }

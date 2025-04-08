@@ -76,15 +76,16 @@ type APIBuilder struct {
 	webhookSecretKey string
 	isPublic         bool
 
-	features          featuremgmt.FeatureToggles
-	getter            rest.Getter
-	localFileResolver *repository.LocalFolderResolver
-	render            rendering.Service
-	parsers           resources.ParserFactory
-	clients           resources.ClientFactory
-	ghFactory         *github.Factory
-	clonedir          string // where repo clones are managed
-	jobs              interface {
+	features            featuremgmt.FeatureToggles
+	getter              rest.Getter
+	localFileResolver   *repository.LocalFolderResolver
+	render              rendering.Service
+	parsers             resources.ParserFactory
+	repositoryResources resources.RepositoryResourcesFactory
+	clients             resources.ClientFactory
+	ghFactory           *github.Factory
+	clonedir            string // where repo clones are managed
+	jobs                interface {
 		jobs.Queue
 		jobs.Store
 	}
@@ -118,24 +119,27 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
 	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
 
 	return &APIBuilder{
-		urlProvider:       urlProvider,
-		localFileResolver: local,
-		webhookSecretKey:  webhookSecretKey,
-		isPublic:          isPublic,
-		features:          features,
-		ghFactory:         ghFactory,
-		clients:           clients,
-		parsers:           resources.NewParserFactory(clients),
-		render:            render,
-		clonedir:          clonedir,
-		resourceLister:    resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
-		legacyMigrator:    legacyMigrator,
-		storageStatus:     storageStatus,
-		unified:           unified,
-		secrets:           secrets,
+		urlProvider:         urlProvider,
+		localFileResolver:   local,
+		webhookSecretKey:    webhookSecretKey,
+		isPublic:            isPublic,
+		features:            features,
+		ghFactory:           ghFactory,
+		clients:             clients,
+		parsers:             parsers,
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		render:              render,
+		clonedir:            clonedir,
+		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		legacyMigrator:      legacyMigrator,
+		storageStatus:       storageStatus,
+		unified:             unified,
+		secrets:             secrets,
 	}
 }
 
@@ -551,8 +555,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			exportWorker := export.NewExportWorker(
 				b.clients,
-				b.storageStatus,
-				b.parsers,
+				b.repositoryResources,
 			)
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),

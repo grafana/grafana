@@ -40,6 +40,7 @@ type clientFactory struct {
 	configProvider apiserver.RestConfigProvider
 }
 
+// TODO: Rename to NamespacedClients
 // ResourceClients provides access to clients within a namespace
 //
 //go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter

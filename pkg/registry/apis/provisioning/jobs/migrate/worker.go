@@ -153,9 +153,9 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		return fmt.Errorf("error getting folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(rw, folderClient, reader.Tree())
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
 	progress.SetMessage(ctx, "exporting legacy folders")
-	err = folders.EnsureTreeExists(ctx, "", "", func(folder resources.Folder, created bool, err error) error {
+	err = folders.EnsureFolderTreeExists(ctx, "", "", reader.Tree(), func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
 			Name:     folder.ID,
