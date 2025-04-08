@@ -130,6 +130,9 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				require.NoError(t, err, "failed to delete")
 			})
 		}
+
+		err := helper.Repositories.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err, "remove all repositories")
 	})
 
 	// Viewer can see settings listing
