@@ -76,4 +76,4 @@ Since Grafana 10.2, the endpoint to check compatible versions when installing a 
 
 #### What to do if I want to ignore the compatibility check?
 
-We definitely do not recommend doing it. But if you really have to force install a plugin despite it being declared as incompatible - please follow the [Installing a plugin from a ZIP](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-plugin-from-a-zip-file) guidance.
+We _do not_ recommend installing plugins declared as incompatible. But if you really have to force install a plugin despite it being declared as incompatible, refer to the [Installing a plugin from a ZIP](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-plugin-from-a-zip-file) guidance.
