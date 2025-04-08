@@ -322,7 +322,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               }
               description={t(
                 'shared-preferences.fields.locale-format-description',
-                'Choose your region to see the corresponding date, time and number format'
+                'Choose your region to see the corresponding date, time, and number format'
               )}
               data-testid="User preferences locale format drop down"
             >
