@@ -317,6 +317,16 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 		{
 			name: "successful folder migration",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.DashboardResource {
+					// Return empty dashboard list
+					return true, &metav1.PartialObjectMetadataList{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.DashboardResource.GroupVersion().String(),
+							Kind:       "FolderList",
+						},
+					}, nil
+				}
+
 				list := &metav1.PartialObjectMetadataList{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: resources.FolderResource.GroupVersion().String(),
@@ -385,6 +395,16 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 		{
 			name: "successful folder migration with resource export errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.DashboardResource {
+					// Return empty dashboard list
+					return true, &metav1.PartialObjectMetadataList{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.DashboardResource.GroupVersion().String(),
+							Kind:       "FolderList",
+						},
+					}, nil
+				}
+
 				list := &metav1.PartialObjectMetadataList{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: resources.FolderResource.GroupVersion().String(),
@@ -453,6 +473,7 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 		{
 			name: "too many errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+
 				list := &metav1.PartialObjectMetadataList{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: resources.FolderResource.GroupVersion().String(),
@@ -498,6 +519,16 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 		{
 			name: "successful nested folder migration",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.DashboardResource {
+					// Return empty dashboard list
+					return true, &metav1.PartialObjectMetadataList{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: resources.DashboardResource.GroupVersion().String(),
+							Kind:       "FolderList",
+						},
+					}, nil
+				}
+
 				list := &metav1.PartialObjectMetadataList{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: resources.FolderResource.GroupVersion().String(),
