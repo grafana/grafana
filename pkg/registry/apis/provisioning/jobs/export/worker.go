@@ -119,6 +119,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 
 		progress.Record(ctx, result)
+		if err := progress.TooManyErrors(); err != nil {
+			return fmt.Errorf("too many folder export errors: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -159,7 +163,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			progress.Record(ctx, result)
 
 			if err := progress.TooManyErrors(); err != nil {
-				return err
+				return fmt.Errorf("too many resource export errors: %w", err)
 			}
 			return nil
 		}); err != nil {

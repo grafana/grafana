@@ -362,6 +362,8 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 					return result.Name == "folder-2-uid" && result.Action == repository.FileActionCreated
 				})).Return()
 				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
