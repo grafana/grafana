@@ -6600,10 +6600,11 @@
       "webhooks-permission": "Webhooks: <1>Read and write</1>"
     },
     "wizard": {
+      "button-next": "Finish",
       "button-start": "Begin synchronization",
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
-      "step-finish": "Finish",
+      "step-finish": "Choose additional settings",
       "step-resources": "Resources",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",

@@ -37,8 +37,8 @@ export function ProvisioningWizard() {
       },
       {
         id: 'migrate',
-        name: t('provisioning.wizard.step-resources', 'Resources'),
-        title: t('provisioning.wizard.title-migrate', 'Migrate resources'),
+        name: t('provisioning.wizard.step-resources', 'Synchronize'),
+        title: t('provisioning.wizard.title-migrate', 'Synchronize with external storage'),
         submitOnNext: false,
       },
       {
@@ -49,8 +49,8 @@ export function ProvisioningWizard() {
       },
       {
         id: 'finish',
-        name: t('provisioning.wizard.step-finish', 'Finish'),
-        title: t('provisioning.wizard.title-finish', 'Finish setup'),
+        name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
+        title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
         submitOnNext: true,
       },
     ],
@@ -89,6 +89,11 @@ export function ProvisioningWizard() {
       const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
       if (currentStep === 'bootstrap') {
         return t('provisioning.wizard.button-start', 'Begin synchronization');
+      }
+
+      // Guard against index out of bounds
+      if (stepIndex === -1 || stepIndex >= availableSteps.length - 1) {
+        return t('provisioning.wizard.button-next', 'Finish');
       }
 
       return availableSteps[stepIndex + 1].name;
