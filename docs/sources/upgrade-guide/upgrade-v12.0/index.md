@@ -72,7 +72,7 @@ Open the alert rule you want to adjust and search for the data source that is be
 
 ### Enforcing stricter version compatibility checks in plugin cli install commands
 
-Since Grafana 10.2, the endpoint to check compatible versions when installing a plugin using `grafana cli plugins install` changed, which led to Grafana dependency version no longer being taken into account. This might have led to some buggy behavior where the cli would install plugins that are not fully compatible based on the plugins definition of compatibility via `grafanaDependency` property in the `plugin.json` file.
+Since Grafana 10.2, the endpoint to check compatible versions when installing a plugin using `grafana cli plugins install` changed, which led to Grafana dependency version no longer being taken into account. This might have led to some behavior where the CLI would install plugins that are not fully compatible based on the plugins definition of compatibility via `grafanaDependency` property in the `plugin.json` file.
 
 #### What to do if I want to ignore the compatibility check?
 
