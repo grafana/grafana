@@ -858,8 +858,7 @@ export function mapFrameToDataGrid({
           showTypeIcons={showTypeIcons}
         />
       ),
-      // Plus 1 to account for the border
-      width: (fieldTableOptions.width ?? COLUMN.DEFAULT_WIDTH) + 1,
+      width: fieldTableOptions.width ?? COLUMN.DEFAULT_WIDTH,
       minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
     });
   });
