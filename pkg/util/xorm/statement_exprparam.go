@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"xorm.io/builder"
+	"github.com/grafana/grafana/pkg/util/xorm/builder"
 )
 
 type ErrUnsupportedExprType struct {

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/builder"
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/builder"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 func (engine *Engine) buildConds(table *core.Table, bean any,

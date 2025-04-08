@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"xorm.io/builder"
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/builder"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // Engine is the major struct of xorm, it means a database manager.
