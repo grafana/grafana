@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -83,6 +83,41 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         })
       );
     }
+  }
+  const noRulesToImport = isEmpty(rulerRulesToPayload);
+  if (noRulesToImport) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        title={t('alerting.import-to-gma.confirm-modal.no-rules-title', 'No rules to import')}
+        onDismiss={onDismiss}
+        onClickBackdrop={onDismiss}
+      >
+        <Stack direction="column" gap={2}>
+          {someRulesAreSkipped && (
+            <Alert
+              title={t(
+                'alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.title',
+                'Some rules are excluded from import'
+              )}
+              severity="info"
+            >
+              <Text variant="body">
+                <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.no-rules.text">
+                  We have detected that some rules are managed by plugins. These rules will not be imported.
+                </Trans>
+              </Text>
+            </Alert>
+          )}
+          <Text>
+            {t(
+              'alerting.import-to-gma.confirm-modal.no-rules-body',
+              'There are no rules to import. Please select a different namespace or rule group.'
+            )}
+          </Text>
+        </Stack>
+      </Modal>
+    );
   }
 
   // translations for texts in the modal
