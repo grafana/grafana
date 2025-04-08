@@ -148,8 +148,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
 	sources.ProvideService,
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
-	plugininstaller.ProvideExpressService,
-	wire.Bind(new(plugininstaller.Express), new(*plugininstaller.ExpressService)),
+	plugininstaller.ProvideNoopExpressService,
+	wire.Bind(new(plugininstaller.Express), new(*plugininstaller.NoopExpressService)),
 )
 
 func ProvideClientWithMiddlewares(

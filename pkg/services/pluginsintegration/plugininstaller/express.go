@@ -11,16 +11,16 @@ type Express interface {
 	Source(ctx context.Context, pluginID, pluginVersion string) (plugins.PluginSource, bool)
 }
 
-type ExpressService struct{}
+type NoopExpressService struct{}
 
-func ProvideExpressService() *ExpressService {
-	return &ExpressService{}
+func ProvideNoopExpressService() *NoopExpressService {
+	return &NoopExpressService{}
 }
 
-func (es *ExpressService) Plugins(_ context.Context) []string {
+func (es *NoopExpressService) Plugins(_ context.Context) []string {
 	return []string{}
 }
 
-func (es *ExpressService) Source(_ context.Context, _, _ string) (plugins.PluginSource, bool) {
+func (es *NoopExpressService) Source(_ context.Context, _, _ string) (plugins.PluginSource, bool) {
 	return nil, false
 }
