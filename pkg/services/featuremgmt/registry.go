@@ -1695,15 +1695,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:              "noBackdropBlur",
-			Description:       "Disables backdrop blur",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaFrontendPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
 			Name:              "alertingMigrationUI",
 			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
 			FrontendOnly:      true,
