@@ -1190,7 +1190,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 
 // (sometimes) called by the k8s storage engine after creating an object
 func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey, id claims.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
+	ctx, span := tracer.Start(ctx, "dashboards.service.SetDefaultPermissionsAfterCreate")
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
