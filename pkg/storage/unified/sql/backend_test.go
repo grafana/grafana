@@ -11,7 +11,6 @@ import (
 	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
@@ -251,7 +250,7 @@ func TestBackend_create(t *testing.T) {
 
 		// Then we try to insert the same resource again. This should fail.
 		_, err = b.create(ctx, event)
-		require.ErrorIs(t, err, unifiedbackend.ErrResourceAlreadyExists)
+		require.ErrorIs(t, err, resource.ErrResourceAlreadyExists)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {

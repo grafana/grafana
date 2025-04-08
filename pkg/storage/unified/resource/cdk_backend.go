@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/backend"
 )
 
 type CDKBackendOptions struct {
@@ -124,7 +123,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 			return 0, GetError(resp.Error)
 		}
 		if resp.Value != nil {
-			return 0, backend.ErrResourceAlreadyExists
+			return 0, ErrResourceAlreadyExists
 		}
 	}
 

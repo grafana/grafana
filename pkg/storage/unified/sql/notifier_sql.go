@@ -7,7 +7,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -31,7 +31,7 @@ type pollingNotifier struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log            log.Logger
+	log            logging.Logger
 	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
@@ -47,7 +47,7 @@ type pollingNotifierConfig struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log            log.Logger
+	log            logging.Logger
 	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
