@@ -44,11 +44,15 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
               </Trans>
             </Text>
           </Box>
-          {!hasPublicAccess && (
-            <LinkButton fill="outline" variant="secondary" onClick={onSetupPublicAccess}>
-              <Trans i18nKey="provisioning.enhanced-features.set-up-public-webhooks">Set up public webhooks</Trans>
-            </LinkButton>
-          )}
+          <LinkButton
+            fill="outline"
+            variant="secondary"
+            onClick={onSetupPublicAccess}
+            disabled={hasPublicAccess}
+            icon={hasPublicAccess ? 'check' : undefined}
+          >
+            <Trans i18nKey="provisioning.enhanced-features.set-up-public-webhooks">Set up public webhooks</Trans>
+          </LinkButton>
         </Box>
 
         <div className={style.separator} />
@@ -73,16 +77,15 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
               </Trans>
             </Text>
           </Box>
-          {!hasImageRenderer && (
-            <LinkButton
-              fill="outline"
-              variant="secondary"
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-              icon="external-link-alt"
-            >
-              <Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">Set up image rendering</Trans>
-            </LinkButton>
-          )}
+          <LinkButton
+            fill="outline"
+            variant="secondary"
+            href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+            icon={hasImageRenderer ? 'check' : 'external-link-alt'}
+            disabled={hasImageRenderer}
+          >
+            <Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">Set up image rendering</Trans>
+          </LinkButton>
         </Box>
       </Stack>
     </Stack>
