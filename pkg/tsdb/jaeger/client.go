@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type JaegerClient struct {
@@ -87,4 +88,50 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 
 	operations = response.Data
 	return operations, err
+}
+
+func (j *JaegerClient) Search(query *jaegerQuery) (*data.Frame, error) {
+	jaegerURL, err := url.Parse(j.url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Jaeger URL: %w", err)
+	}
+	jaegerURL.Path = "/api/traces"
+
+	queryParams := map[string]string{
+		"service":     query.Service,
+		"operation":   query.Operation,
+		"tags":        query.Tags,
+		"minDuration": query.MinDuration,
+		"maxDuration": query.MaxDuration,
+	}
+
+	urlQuery := jaegerURL.Query()
+	if query.Limit > 0 {
+		urlQuery.Set("limit", fmt.Sprintf("%d", query.Limit))
+	}
+
+	for key, value := range queryParams {
+		if value != "" {
+			urlQuery.Set(key, value)
+		}
+	}
+
+	jaegerURL.RawQuery = urlQuery.Encode()
+	resp, err := j.httpClient.Get(jaegerURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request to Jaeger: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Jaeger API returned non-200 status code: %d", resp.StatusCode)
+	}
+
+	var result jaegerResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
+	}
+
+	frame := transformSearchResponse(result)
+	return frame, nil
 }
