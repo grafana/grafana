@@ -114,7 +114,14 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
               type={['prometheus', 'loki', 'grafana']}
               noDefault
               current={props.value}
-              onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
+              onChange={(ds: DataSourceInstanceSettings) => {
+                // If we're changing the datasource, clear the folder selection
+                // as otherwise we might still be accidentally filtering out alerts
+                if (ds.uid !== 'grafana') {
+                  props.context.options.folder = null;
+                }
+                return props.onChange(ds.name);
+              }}
             />
             <Button variant="secondary" onClick={() => props.onChange(null)}>
               Clear
