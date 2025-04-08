@@ -8,14 +8,18 @@ import { useEffect, useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, FilterPill, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterRecentDashboardsActions,
+  useRegisterScopesActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -32,6 +36,7 @@ export function CommandPalette() {
 
   useRegisterStaticActions();
   useRegisterRecentDashboardsActions(searchQuery);
+  useRegisterScopesActions(searchQuery, currentRootActionId);
 
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
@@ -48,6 +53,11 @@ export function CommandPalette() {
     showing && reportInteraction('command_palette_opened');
   }, [showing]);
 
+  const ancestorActions = currentRootActionId
+    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
+    : [];
+
+  console.log('ancestorActions', ancestorActions);
   return (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
@@ -56,9 +66,9 @@ export function CommandPalette() {
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
                 <Icon name="search" size="md" />
-                {currentRootActionId ? (
-                  <FilterPill label={actions[currentRootActionId].name} selected={false} onClick={() => {}} />
-                ) : null}
+                {ancestorActions.map((action) => {
+                  return <span className={styles.ancestorsPills}>{action.name}</span>;
+                })}
                 <KBarSearch
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
@@ -233,6 +243,20 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       paddingBottom: theme.spacing(1),
       borderTop: 'none',
       marginTop: 0,
+    }),
+    ancestorsPills: css({
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      border: `1px solid ${theme.colors.background.secondary}`,
+      whiteSpace: 'nowrap',
     }),
   };
 };

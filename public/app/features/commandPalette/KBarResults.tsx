@@ -122,7 +122,10 @@ export const KBarResults = (props: KBarResultsProps) => {
 
       if (item.command) {
         item.command.perform(item);
-        query.toggle();
+        // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
+        if (!item.id.startsWith('scopes/')) {
+          query.toggle();
+        }
       } else if (url) {
         if (!(ev.ctrlKey || ev.metaKey || ev.shiftKey)) {
           query.toggle();
