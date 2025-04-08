@@ -458,7 +458,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
 	defer span.End()
 
-	// Check auth info fist
+	// Check auth info first
 	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
