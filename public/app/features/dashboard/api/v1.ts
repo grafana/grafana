@@ -58,11 +58,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       };
     }
 
+    // for v1 in g12, we will ignore the schema version validation from all default clients,
+    // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
@@ -108,13 +110,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
-          version: dash.metadata.generation,
+          version: parseInt(dash.metadata.resourceVersion, 10),
         },
-        dashboard: {
-          ...dash.spec,
-          version: dash.metadata.generation,
-          uid: dash.metadata.name,
-        },
+        dashboard: dash.spec,
       };
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
