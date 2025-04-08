@@ -175,7 +175,7 @@ export const TeamList = ({
           if (!hasFetched) {
             return <Skeleton width={240} />;
           }
-          return !!value && <Tag colorIndex={14} name={'Provisioned'} />
+          return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
         },
       },
       {
@@ -193,7 +193,9 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) && !original.isProvisioned;
+          const canDelete =
+            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
+            !original.isProvisioned;
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
