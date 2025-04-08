@@ -16,6 +16,7 @@ import (
 func FullSync(
 	ctx context.Context,
 	repo repository.Reader,
+	compare CompareFn,
 	clients resources.ResourceClients,
 	currentRef string,
 	repositoryResources resources.RepositoryResources,

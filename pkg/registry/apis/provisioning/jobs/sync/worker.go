@@ -16,7 +16,10 @@ import (
 type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, ops []map[string]interface{}) error
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+
+//go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
+type CompareFn func(source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error)
 
 //go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
 type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
@@ -39,6 +42,7 @@ type SyncWorker struct {
 	// Sync functions
 	fullSync        FullSyncFn
 	incrementalSync IncrementalSyncFn
+	compare         CompareFn
 }
 
 func NewSyncWorker(
@@ -48,6 +52,7 @@ func NewSyncWorker(
 	patchStatus RepositoryPatchFn,
 	fullSync FullSyncFn,
 	incrementalSync IncrementalSyncFn,
+	compare CompareFn,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -56,6 +61,7 @@ func NewSyncWorker(
 		storageStatus:       storageStatus,
 		fullSync:            fullSync,
 		incrementalSync:     incrementalSync,
+		compare:             compare,
 	}
 }
 
@@ -182,5 +188,5 @@ func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, prog
 
 	progress.SetMessage(ctx, "full sync")
 
-	return r.fullSync(ctx, repo, clients, currentRef, repositoryResources, progress)
+	return r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress)
 }
