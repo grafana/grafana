@@ -55,10 +55,11 @@ func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.Storage
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:      apiserverCfg.Key("address").MustString(""), // client address
-		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
+		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:           apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:            apiserverCfg.Key("address").MustString(""), // client address
+		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
+		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
 	if err == nil {
 		// Used to get the folder stats
