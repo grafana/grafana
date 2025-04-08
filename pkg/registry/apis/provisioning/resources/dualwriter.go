@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -69,7 +70,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	}
 
 	// Authorize the parsed resource
-	if err = r.authorize(ctx, parsed, "GET"); err != nil {
+	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +104,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err = r.authorize(ctx, parsed, "DELETE"); err != nil {
+	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
 		return nil, err
 	}
 
@@ -201,7 +202,7 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err = r.authorize(ctx, parsed, "CREATE"); err != nil {
+	if err = r.authorize(ctx, parsed, utils.VerbCreate); err != nil {
 		return nil, err
 	}
 
@@ -256,7 +257,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err = r.authorize(ctx, parsed, "UPDATE"); err != nil {
+	if err = r.authorize(ctx, parsed, utils.VerbUpdate); err != nil {
 		return nil, err
 	}
 
