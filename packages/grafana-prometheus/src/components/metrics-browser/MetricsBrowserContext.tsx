@@ -173,6 +173,11 @@ export function MetricsBrowserProvider({
       return;
     }
 
+    if (metrics.length === 0) {
+      setLabelKeys([]);
+      return;
+    }
+
     setStatus('Fetching labels...');
     const selector = `{__name__=~"${metrics.map((m) => m.name).join('|')}"}`;
     languageProvider
