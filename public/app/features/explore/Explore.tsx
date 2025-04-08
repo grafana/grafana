@@ -661,7 +661,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
-    const showSpinner = queryBuilderOnly && hideQueryEditor && !graphResult;
+    const showSpinner = queryBuilderOnly && hideQueryEditor && !graphResult && !showTrace;
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         {!hideQueryEditor && <ExploreToolbar
