@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Box, Button, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -44,17 +45,17 @@ export function TemplatePreview({
   return (
     <div className={cx(styles.container, className)}>
       <EditorColumnHeader
-        label="Preview"
+        label={t('alerting.template-preview.label-preview', 'Preview')}
         actions={
           <Button
             disabled={isLoading}
             icon="sync"
-            aria-label="Refresh preview"
+            aria-label={t('alerting.template-preview.aria-label-refresh-preview', 'Refresh preview')}
             onClick={onPreview}
             size="sm"
             variant="secondary"
           >
-            Refresh
+            <Trans i18nKey="alerting.template-preview.refresh">Refresh</Trans>
           </Button>
         }
       />
@@ -152,7 +153,7 @@ export function getPreviewResults(
   return (
     <>
       {errorToRender && (
-        <Alert severity="error" title="Error">
+        <Alert severity="error" title={t('alerting.get-preview-results.title-error', 'Error')}>
           {errorToRender}
         </Alert>
       )}

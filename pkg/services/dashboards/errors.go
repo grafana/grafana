@@ -117,6 +117,11 @@ var (
 		StatusCode: 400,
 		Status:     "bad-request",
 	}
+	ErrQuotaReached = dashboardaccess.DashboardErr{
+		Reason:     "Dashboard quota reached",
+		StatusCode: 403,
+		Status:     "quota-reached",
+	}
 
 	ErrFolderNotFound             = errors.New("folder not found")
 	ErrFolderVersionMismatch      = errors.New("the folder has been changed by someone else")

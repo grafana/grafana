@@ -21,7 +21,7 @@ var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 // TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator
-	parser    *resources.Parser
+	parser    resources.Parser
 	progress  jobs.JobProgressRecorder
 	namespace string
 	kind      schema.GroupResource
@@ -29,7 +29,7 @@ type legacyResourceResourceMigrator struct {
 	resources *resources.ResourcesManager
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser *resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,
@@ -57,7 +57,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system
 		Data: value,
-	}, false)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
@@ -69,9 +69,8 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here
 	fileName, err := r.resources.CreateResourceFileFromObject(ctx, parsed.Obj, resources.WriteOptions{
-		Path:       "",
-		Ref:        "",
-		Identifier: r.options.Identifier,
+		Path: "",
+		Ref:  "",
 	})
 
 	result := jobs.JobResourceResult{

@@ -8,10 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	spannerclient "cloud.google.com/go/spanner"
 	_ "github.com/googleapis/go-sql-spanner"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"xorm.io/core"
 )
@@ -424,4 +426,8 @@ func SpannerConnectorConfigToClientOptions(connectorConfig spannerdriver.Connect
 			option.WithoutAuthentication())
 	}
 	return opts
+}
+
+func (s *spanner) RetryOnError(err error) bool {
+	return err != nil && spannerclient.ErrCode(spannerclient.ToSpannerError(err)) == codes.Aborted
 }
