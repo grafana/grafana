@@ -269,6 +269,13 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting internal ID: %w", err)
 	}
 
+	// Validate folder existence if specified
+	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+			return err
+		}
+	}
+
 	// Validate quota
 	if !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
@@ -350,10 +357,7 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	_, err := b.folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 
 	if err != nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) {
-			return err
-		}
-		return fmt.Errorf("error checking folder existence: %w", err)
+		return err
 	}
 
 	return nil
