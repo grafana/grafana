@@ -484,7 +484,6 @@ func TestExportWorker_ProcessFolders(t *testing.T) {
 		{
 			name: "too many errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
-
 				list := &metav1.PartialObjectMetadataList{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: resources.FolderResource.GroupVersion().String(),

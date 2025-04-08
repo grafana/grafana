@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -143,12 +144,15 @@ func TestIsWriteAllowed(t *testing.T) {
 				require.Error(t, err)
 				require.Equal(t, tt.expectedErr, err.Error())
 
-				if statusErr, ok := err.(*apierrors.StatusError); ok {
+				var (
+					statusErr *apierrors.StatusError
+					apiStatus apierrors.APIStatus
+				)
+				switch {
+				case errors.As(err, &statusErr):
 					require.Equal(t, tt.statusCode, statusErr.Status().Code)
-				} else {
-					statusErr, ok := err.(apierrors.APIStatus)
-					require.True(t, ok, "error should implement APIStatus")
-					require.Equal(t, tt.statusCode, statusErr.Status().Code)
+				case errors.As(err, &apiStatus):
+					require.Equal(t, tt.statusCode, apiStatus.Status().Code)
 				}
 			} else {
 				require.NoError(t, err)
