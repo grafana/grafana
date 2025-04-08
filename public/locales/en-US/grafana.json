@@ -7299,7 +7299,7 @@
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
-      "locale-format-description": "Choose your region to see the corresponding date, time and number format",
+      "locale-format-description": "Choose your region to see the corresponding date, time, and number format",
       "locale-format-label": "Region format",
       "locale-format-placeholder": "Choose region",
       "locale-label": "Language",
