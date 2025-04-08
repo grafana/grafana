@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -255,4 +257,128 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	r := NewExportWorker(mockClients, mockRepoResources, nil, mockCloneFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
+}
+
+func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push:   &v0alpha1.ExportJobOptions{},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+		},
+	})
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	// Verify progress messages are set
+	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
+	mockProgress.On("SetMessage", mock.Anything, "push changes").Return()
+
+	mockClients := resources.NewMockClientFactory(t)
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+	mockResourceClients.On("Folder").Return(nil, nil)
+
+	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+	mockExportFn := NewMockExportFn(t)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	mockCloneFn := NewMockWrapWithCloneFn(t)
+	// Verify clone and push options
+	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.CloneOptions) bool {
+		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites && opts.BeforeFn != nil
+	}), mock.MatchedBy(func(opts repository.PushOptions) bool {
+		return opts.Timeout == 10*time.Minute && opts.Progress == os.Stdout && opts.BeforeFn != nil
+	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		// Execute both BeforeFn functions to verify progress messages
+		cloneOpts.BeforeFn()
+		pushOpts.BeforeFn()
+		return fn(repo, true)
+	})
+
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+}
+
+func TestExportWorker_ProcessExportFnError(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push:   &v0alpha1.ExportJobOptions{},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+		},
+	})
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockClients := resources.NewMockClientFactory(t)
+	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+	mockResourceClients.On("Folder").Return(nil, nil)
+
+	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+	mockExportFn := NewMockExportFn(t)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
+
+	mockCloneFn := NewMockWrapWithCloneFn(t)
+	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		return fn(repo, true)
+	})
+
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "export failed")
+}
+
+func TestExportWorker_ProcessWrapWithCloneFnError(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionPush,
+			Push:   &v0alpha1.ExportJobOptions{},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+		},
+	})
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockCloneFn := NewMockWrapWithCloneFn(t)
+	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("clone failed"))
+
+	r := NewExportWorker(nil, nil, nil, mockCloneFn.Execute)
+	err := r.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "clone failed")
 }
