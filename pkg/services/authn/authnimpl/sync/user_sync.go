@@ -112,11 +112,11 @@ type UserSync struct {
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
 func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	s.log.FromContext(ctx).Debug("Validating user provisioning", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+
+	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
-
-	log := s.log.FromContext(ctx)
 
 	// Skip validation if user provisioning is disabled
 	if !s.isUserProvisioningEnabled {
@@ -142,19 +142,19 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// Retrieve user and authinfo from database
 	usr, authInfo, err := s.getUser(ctx, id)
 	if err != nil {
-		log.Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		log.Error("Failed to fetch user for validation", "error", err)
 		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
 	}
 
 	if usr == nil {
-		log.Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		log.Error("Failed to fetch user for validation", "error", err)
 		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
 	}
 
 	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
 		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
-			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, grant access")
@@ -162,7 +162,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	}
 
 	// Reject non-provisioned users
-	log.Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	log.Error("Failed to access user, user is not provisioned")
 	return errUserNotProvisioned.Errorf("user is not provisioned")
 }
 
