@@ -41,9 +41,10 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				QueryOffset: util.Pointer(prommodel.Duration(1 * time.Minute)),
 				Rules: []PrometheusRule{
 					{
-						Alert: "alert-1",
-						Expr:  "cpu_usage > 80",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Alert:         "alert-1",
+						Expr:          "cpu_usage > 80",
+						For:           util.Pointer(prommodel.Duration(5 * time.Minute)),
+						KeepFiringFor: util.Pointer(prommodel.Duration(60 * time.Second)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -126,24 +127,6 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
-		},
-		{
-			name:      "rules with keep_firing_for are not supported",
-			orgID:     1,
-			namespace: "namespaceUID",
-			promGroup: PrometheusRuleGroup{
-				Name:     "test-group-1",
-				Interval: prommodel.Duration(1 * time.Minute),
-				Rules: []PrometheusRule{
-					{
-						Alert:         "alert-1",
-						Expr:          "up == 0",
-						KeepFiringFor: util.Pointer(prommodel.Duration(5 * time.Minute)),
-					},
-				},
-			},
-			expectError: true,
-			errorMsg:    "keep_firing_for is not supported",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -330,6 +313,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				}
 				require.Equal(t, expectedFor, grafanaRule.For, tc.name)
 
+				var expectedKeepFiringFor time.Duration
+				if promRule.KeepFiringFor != nil {
+					expectedKeepFiringFor = time.Duration(*promRule.KeepFiringFor)
+				}
+				require.Equal(t, expectedKeepFiringFor, grafanaRule.KeepFiringFor, tc.name)
+
 				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
 				maps.Copy(expectedLabels, tc.promGroup.Labels)
 				maps.Copy(expectedLabels, promRule.Labels)
@@ -353,6 +342,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
 				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
+
+				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
+				require.Equal(t, models.OK, grafanaRule.NoDataState)
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
