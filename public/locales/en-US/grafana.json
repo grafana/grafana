@@ -5427,6 +5427,7 @@
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
+      "show-errors": "Only view errors",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
