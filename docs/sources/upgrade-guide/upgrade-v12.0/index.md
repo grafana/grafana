@@ -35,7 +35,7 @@ In Grafana v12.0, we're turning the feature flag `failWrongDSUID` on by default.
 
 #### Correct UID format
 
-You can find the exact regex definition [in the grafana repository](https://github.com/grafana/grafana/blob/c92f5169d1c83508beb777f71a93336179fe426e/pkg/util/shortid_generator.go#L32-L45).
+You can find the exact regex definition [in the `grafana/grafana` repository](https://github.com/grafana/grafana/blob/c92f5169d1c83508beb777f71a93336179fe426e/pkg/util/shortid_generator.go#L32-L45).
 
 A data source UID can only contain:
 
