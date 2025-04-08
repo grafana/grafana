@@ -25,7 +25,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 300,
+      initialSize: 330,
       usePixels: true,
       collapsed: isCollapsed,
       collapseBelowPixels: 250,
