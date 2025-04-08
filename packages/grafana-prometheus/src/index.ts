@@ -9,7 +9,7 @@ export { PromQueryEditorByApp } from './components/PromQueryEditorByApp';
 export { MonacoQueryFieldLazy } from './components/monaco-query-field/MonacoQueryFieldLazy';
 export { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 export { PromCheatSheet } from './components/PromCheatSheet';
-export { PrometheusMetricsBrowser } from './components/PrometheusMetricsBrowser';
+export { PrometheusMetricsBrowser } from './components/metrics-browser/PrometheusMetricsBrowser';
 export { PromExemplarField } from './components/PromExemplarField';
 export { PromExploreExtraField } from './components/PromExploreExtraField';
 export { PromQueryEditorForAlerting } from './components/PromQueryEditorForAlerting';
