@@ -116,21 +116,23 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
+	log := s.log.FromContext(ctx)
+
 	// Skip validation if user provisioning is disabled
 	if !s.isUserProvisioningEnabled {
-		s.log.FromContext(ctx).Debug("User provisioning is disabled, skipping validation")
+		log.Debug("User provisioning is disabled, skipping validation")
 		return nil
 	}
 
 	// Skip validation if non-provisioned users are allowed
 	if s.allowNonProvisionedUsers {
-		s.log.FromContext(ctx).Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
 		return nil
 	}
 
 	// Skip validation if the auth module is GrafanaComAuthModule
 	if id.AuthenticatedBy == login.GrafanaComAuthModule {
-		s.log.FromContext(ctx).Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
 		return nil
 	}
 
@@ -140,27 +142,27 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// Retrieve user and authinfo from database
 	usr, authInfo, err := s.getUser(ctx, id)
 	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		log.Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
 	}
 
 	if usr == nil {
-		s.log.FromContext(ctx).Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		log.Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
 	}
 
 	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
 		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
-			s.log.FromContext(ctx).Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			log.Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
-		s.log.FromContext(ctx).Debug("User is provisioned, grant access")
+		log.Debug("User is provisioned, grant access")
 		return nil
 	}
 
 	// Reject non-provisioned users
-	s.log.FromContext(ctx).Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+	log.Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 	return errUserNotProvisioned.Errorf("user is not provisioned")
 }
 
