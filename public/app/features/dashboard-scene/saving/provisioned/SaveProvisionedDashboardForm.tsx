@@ -82,14 +82,13 @@ export function SaveProvisionedDashboardForm({
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
 
-      // Redirect to the provisioning preview pages
       const { ref, path } = request.data;
 
       if (workflow === 'branch' && ref && path) {
         dashboard.closeModal();
         panelEditor?.onDiscard();
-        const previewUrl = `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`;
-        navigate(previewUrl);
+        // Redirect to the provisioning preview pages
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
       }
 
