@@ -44,17 +44,17 @@ func (n *Node) addChild(child *Node) {
 	}
 }
 
-func countParams(path string) uint16 {
-	var n uint16
+func countParams(path string) int {
+	var n int
 	s := StringToBytes(path)
-	n += uint16(bytes.Count(s, strColon))
-	n += uint16(bytes.Count(s, strStar))
+	n += bytes.Count(s, strColon)
+	n += bytes.Count(s, strStar)
 	return n
 }
 
-func countSections(path string) uint16 {
+func countSections(path string) int {
 	s := StringToBytes(path)
-	return uint16(bytes.Count(s, strSlash))
+	return bytes.Count(s, strSlash)
 }
 
 type nodeType uint8
@@ -80,8 +80,8 @@ type Node struct {
 	children    []*Node // child nodes, at most 1 :param style Node at the end of the array
 	handler     Handler
 	fullPath    string
-	maxParams   uint16
-	maxSections uint16
+	maxParams   int
+	maxSections int
 }
 
 type skippedNode struct {

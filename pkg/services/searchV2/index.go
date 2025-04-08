@@ -463,6 +463,7 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 		return
 	}
 
+	//nolint:gosec // G115
 	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
 }
 

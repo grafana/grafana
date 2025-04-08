@@ -73,6 +73,7 @@ func getResourceVersion() (*uint64, error) {
 	}
 
 	snowflakeNumber := node.Generate().Int64()
+	//nolint:gosec // G115: freshly generated number. it doesn't matter if it was negative.
 	resourceVersion := uint64(snowflakeNumber)
 	return &resourceVersion, nil
 }
@@ -154,6 +155,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {
+		//nolint:gosec // G115: the ttl is safe to trust
 		time.AfterFunc(time.Second*time.Duration(ttl), func() {
 			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
 				panic(err)
@@ -317,6 +319,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		if err != nil {
 			return err
 		}
+		//nolint:gosec // G115: the rv is safe to trust
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 

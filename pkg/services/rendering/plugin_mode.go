@@ -35,6 +35,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 		}
 	}
 
+	//nolint:gosec // G115: if we pass a negative value, it'll return an error
 	req := &pluginextensionv2.RenderRequest{
 		Url:               rs.getURL(opts.Path),
 		Width:             int32(opts.Width),

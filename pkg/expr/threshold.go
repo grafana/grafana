@@ -129,8 +129,16 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 	case ThresholdIsBelow:
 		exp = fmt.Sprintf("${%s} < %f", referenceVar, args[0])
 	case ThresholdIsWithinRange:
+		if len(args) < 2 {
+			// avoid panic
+			return "", fmt.Errorf("incorrect number of arguments: got %d but need 2", len(args))
+		}
 		exp = fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1])
 	case ThresholdIsOutsideRange:
+		if len(args) < 2 {
+			// avoid panic
+			return "", fmt.Errorf("incorrect number of arguments: got %d but need 2", len(args))
+		}
 		exp = fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1])
 	default:
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)

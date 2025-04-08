@@ -59,7 +59,9 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		return fmt.Errorf("query is empty")
 	}
 
+	//nolint:gosec // G115
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
+	//nolint:gosec // G115
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
 	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config

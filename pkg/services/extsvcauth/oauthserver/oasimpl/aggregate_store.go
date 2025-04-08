@@ -72,8 +72,8 @@ func (s *OAuth2ServiceImpl) DeleteAccessTokenSession(ctx context.Context, signat
 	return s.memstore.DeleteAccessTokenSession(ctx, signature)
 }
 
-func (s *OAuth2ServiceImpl) CreateRefreshTokenSession(ctx context.Context, signature string, request fosite.Requester) (err error) {
-	return s.memstore.CreateRefreshTokenSession(ctx, signature, request)
+func (s *OAuth2ServiceImpl) CreateRefreshTokenSession(ctx context.Context, signature, accessTokenSignature string, request fosite.Requester) (err error) {
+	return s.memstore.CreateRefreshTokenSession(ctx, signature, accessTokenSignature, request)
 }
 
 func (s *OAuth2ServiceImpl) GetRefreshTokenSession(ctx context.Context, signature string, session fosite.Session) (request fosite.Requester, err error) {
@@ -105,8 +105,12 @@ func (s *OAuth2ServiceImpl) RevokeRefreshToken(ctx context.Context, requestID st
 //
 // If the Refresh Token grace period is greater than zero in configuration the token
 // will have its expiration time set as UTCNow + GracePeriod.
-func (s *OAuth2ServiceImpl) RevokeRefreshTokenMaybeGracePeriod(ctx context.Context, requestID string, signature string) error {
-	return s.memstore.RevokeRefreshTokenMaybeGracePeriod(ctx, requestID, signature)
+func (s *OAuth2ServiceImpl) RevokeRefreshTokenMaybeGracePeriod(ctx context.Context, requestID string) error {
+	return s.memstore.RevokeRefreshToken(ctx, requestID)
+}
+
+func (s *OAuth2ServiceImpl) RotateRefreshToken(ctx context.Context, requestID, refreshTokenSignature string) error {
+	return s.memstore.RotateRefreshToken(ctx, requestID, refreshTokenSignature)
 }
 
 // RevokeAccessToken revokes an access token as specified in:

@@ -648,6 +648,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 				if !ok {
 					// using HTTP error codes for WS errors too.
 					code, text := subscribeStatusToHTTPError(backend.SubscribeStreamStatusPermissionDenied)
+					//nolint:gosec // G115: the http code isn't sensitive
 					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
@@ -693,6 +694,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 		// using HTTP error codes for WS errors too.
 		code, text := subscribeStatusToHTTPError(status)
 		logger.Debug("Return custom subscribe error", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "code", code)
+		//nolint:gosec // G115: the http code isn't sensitive
 		return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 	}
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
@@ -744,12 +746,14 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 				if !ok {
 					// using HTTP error codes for WS errors too.
 					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					//nolint:gosec // G115: the http code isn't sensitive
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			} else {
 				if !user.HasRole(org.RoleAdmin) {
 					// using HTTP error codes for WS errors too.
 					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					//nolint:gosec // G115
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
@@ -787,6 +791,7 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 		// using HTTP error codes for WS errors too.
 		code, text := publishStatusToHTTPError(status)
 		logger.Debug("Return custom publish error", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "code", code)
+		//nolint:gosec // G115
 		return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 	}
 	centrifugeReply := centrifuge.PublishReply{

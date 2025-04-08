@@ -100,7 +100,8 @@ func timestampFromProto(ts *types.Timestamp) (time.Time, error) {
 func timestampProto(t time.Time) (types.Timestamp, error) {
 	ts := types.Timestamp{
 		Seconds: t.Unix(),
-		Nanos:   int32(t.Nanosecond()),
+		//nolint:gosec // G115: we verify the security in validateTimestamp
+		Nanos: int32(t.Nanosecond()),
 	}
 	return ts, validateTimestamp(&ts)
 }

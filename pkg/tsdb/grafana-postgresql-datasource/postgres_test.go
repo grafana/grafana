@@ -640,9 +640,12 @@ func TestIntegrationPostgres(t *testing.T) {
 				tInitial = t
 			}
 			tSeconds := t.Unix()
+			//nolint:gosec // G115
 			tSecondsInt32 := int32(tSeconds)
+			//nolint:gosec // G115
 			tSecondsFloat32 := float32(tSeconds)
 			tMilliseconds := tSeconds * 1e3
+			//nolint:gosec // G115
 			tMillisecondsFloat := float64(tMilliseconds)
 			first := metric_values{
 				Time:                t,

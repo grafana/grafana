@@ -115,11 +115,13 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		})
 
 		state := &State{
-			OrgID:             rand.Int63(),
-			AlertRuleUID:      util.GenerateShortUID(),
-			CacheID:           data.Fingerprint(rand.Int63()).String(),
-			State:             eval.Alerting,
-			StateReason:       "TEST",
+			OrgID:        rand.Int63(),
+			AlertRuleUID: util.GenerateShortUID(),
+			//nolint:gosec // G115
+			CacheID:     data.Fingerprint(rand.Int63()).String(),
+			State:       eval.Alerting,
+			StateReason: "TEST",
+			//nolint:gosec // G115
 			ResultFingerprint: data.Fingerprint(rand.Int63()),
 			Results: []Evaluation{
 				{

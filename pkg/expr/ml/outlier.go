@@ -102,6 +102,7 @@ func unmarshalOutlierCommand(expr CommandConfiguration, appURL string) (*Outlier
 
 	interval := defaultInterval
 	if expr.IntervalMs != nil {
+		//nolint:gosec // G115
 		i := time.Duration(*expr.IntervalMs) * time.Millisecond
 		if i > 0 {
 			interval = i

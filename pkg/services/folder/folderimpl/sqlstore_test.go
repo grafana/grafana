@@ -864,7 +864,9 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	t.Run("get folders by UIDs and ancestor UIDs should work as expected", func(t *testing.T) {
 		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
+		//nolint:gosec // G115
 		q.ancestorUIDs = make([]string, 0, int(q.BatchSize)+1)
+		//nolint:gosec // G115
 		for i := 0; i < int(q.BatchSize); i++ {
 			q.ancestorUIDs = append(q.ancestorUIDs, uuid.New().String())
 		}

@@ -146,6 +146,7 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 		if d == nil {
 			_, _ = h.Write([]byte{255})
 		} else {
+			//nolint:gosec // G115
 			binary.LittleEndian.PutUint64(tmp, uint64(*d))
 			_, _ = h.Write(tmp)
 			_, _ = h.Write([]byte{255})

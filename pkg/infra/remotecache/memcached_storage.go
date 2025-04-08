@@ -39,6 +39,7 @@ func (s *memcachedStorage) Set(ctx context.Context, key string, data []byte, exp
 		expiresInSeconds = int64(expires) / int64(time.Second)
 	}
 
+	//nolint:gosec // G115
 	memcachedItem := newItem(key, data, int32(expiresInSeconds))
 	return s.c.Set(memcachedItem)
 }
