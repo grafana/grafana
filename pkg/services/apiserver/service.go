@@ -298,7 +298,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// setup loopback transport for the aggregator server
-	transport := &roundTripperFunc{ready: make(chan struct{})}
+	transport := &grafanaapiserveroptions.RoundTripperFunc{Ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
@@ -361,6 +361,21 @@ func (s *service) start(ctx context.Context) error {
 	delegate := server
 	var runningServer *genericapiserver.GenericAPIServer
 
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		// Run extra runners
+		for _, runner := range s.extraRunners {
+			aggregatorAPIServer, err := runner.Configure(s.options, serverConfig, delegate, groupVersions)
+			if err != nil {
+				return err
+			}
+			delegate = aggregatorAPIServer
+			if err = runner.Run(ctx, transport, s.stoppedCh); err != nil {
+				s.log.Error("extra runner failed", "error", err)
+				return err
+			}
+		}
+	}
+
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
 		if err != nil {
@@ -385,27 +400,20 @@ func (s *service) start(ctx context.Context) error {
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
 
-	// Run extra runners
-	for _, runner := range s.extraRunners {
-		if err := runner.Run(ctx, s.options, serverConfig, groupVersions); err != nil {
-			s.log.Error("extra runner failed", "error", err)
-		}
-	}
-
 	return nil
 }
 
 func (s *service) startCoreServer(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
+	close(transport.Ready)
 
 	prepared := server.PrepareRun()
 	go func() {
@@ -417,7 +425,7 @@ func (s *service) startCoreServer(
 
 func (s *service) startDataplaneAggregator(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
@@ -448,8 +456,8 @@ func (s *service) startDataplaneAggregator(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.Ready)
 
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {
@@ -465,8 +473,8 @@ func (s *service) startDataplaneAggregator(
 
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	return &clientrest.Config{
-		Transport: &roundTripperFunc{
-			fn: func(req *http.Request) (*http.Response, error) {
+		Transport: &grafanaapiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
 				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
@@ -502,18 +510,6 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
-}
-
-type roundTripperFunc struct {
-	ready chan struct{}
-	fn    func(req *http.Request) (*http.Response, error)
-}
-
-func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	if f.fn == nil {
-		<-f.ready
-	}
-	return f.fn(req)
 }
 
 type pluginContextProvider struct {
