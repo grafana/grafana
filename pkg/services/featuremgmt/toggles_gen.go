@@ -11,14 +11,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagLiveServiceWebWorker
-	// This will use a webworker thread to processes events rather than the main thread
-	FlagLiveServiceWebWorker = "live-service-web-worker"
-
-	// FlagQueryOverLive
-	// Use Grafana Live WebSocket to execute backend queries
-	FlagQueryOverLive = "queryOverLive"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -867,10 +859,6 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
-	// FlagAlertingConversionAPI
-	// Enable the alerting conversion API
-	FlagAlertingConversionAPI = "alertingConversionAPI"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -923,10 +911,6 @@ const (
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
-	// FlagNoBackdropBlur
-	// Disables backdrop blur
-	FlagNoBackdropBlur = "noBackdropBlur"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -970,6 +954,10 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagLogsPanelControls
+	// Enables a control component for the logs panel in Explore
+	FlagLogsPanelControls = "logsPanelControls"
 
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules

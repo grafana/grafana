@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,13 +39,13 @@ type resourceID struct {
 type ResourcesManager struct {
 	repo            repository.ReaderWriter
 	folders         *FolderManager
-	parser          *Parser
+	parser          Parser
 	clients         ResourceClients
 	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
@@ -161,18 +163,25 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	r.resourcesLookup[id] = path
 
-	// Make sure the parent folders exist
-	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
-	if err != nil {
-		return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+	// For resources that exist in folders, set the header annotation
+	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
+		// Make sure the parent folders exist
+		folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+		if err != nil {
+			return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+		}
+		parsed.Meta.SetFolder(folder)
 	}
 
-	parsed.Meta.SetFolder(folder)
-	parsed.Meta.SetUID("")             // clear identifiers
-	parsed.Meta.SetResourceVersion("") // clear identifiers
+	// Clear any saved identifiers
+	parsed.Meta.SetUID("")
+	parsed.Meta.SetResourceVersion("")
 
-	// Update will also create (for resources we care about)
-	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	// Update or Create resource
+	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	if apierrors.IsNotFound(err) {
+		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+	}
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }

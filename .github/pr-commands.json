@@ -248,10 +248,19 @@
       "/pkg/services/alerting/**/*",
       "/public/app/features/alerting/**/*",
       "/pkg/tests/api/alerting/**/*",
-      "/pkg/tests/alertmanager/**/*"
+      "/pkg/tests/alertmanager/**/*",
+      "/public/app/features/alerting/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"
+  },
+  {
+    "type": "label",
+    "name": "area/alerting",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/52"
+    }
   },
   {
     "type": "author",

@@ -6,7 +6,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositorySpec } from 'app/api/clients/provisioning';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
@@ -43,7 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
   isGitHub: boolean;
-  repositoryConfig?: RepositorySpec;
+  repository?: RepositoryView;
   loadedFromRef?: string;
 }
 
@@ -54,7 +54,7 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repositoryConfig,
+  repository,
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
@@ -82,7 +82,9 @@ export function SaveProvisionedDashboardForm({
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
 
-      if (workflow === 'branch' && ref !== '' && path !== '') {
+      const { ref, path } = request.data;
+
+      if (workflow === 'branch' && ref && path) {
         dashboard.closeModal();
         panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
@@ -154,12 +156,12 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const workflowOptions = getWorkflowOptions(repositoryConfig, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repositoryConfig?.workflows.length && (
+        {!repository?.workflows?.length && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',

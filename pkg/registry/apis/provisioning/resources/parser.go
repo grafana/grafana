@@ -21,13 +21,32 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-type ParserFactory struct {
-	ClientFactory *ClientFactory
+// ParserFactory is a factory for creating parsers for a given repository
+//
+//go:generate mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
+type ParserFactory interface {
+	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
-func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
+// Parser is a parser for a given repository
+//
+//go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
+type Parser interface {
+	Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error)
+}
+
+type parserFactory struct {
+	ClientFactory ClientFactory
+}
+
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
+}
+
+func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
 	config := repo.Config()
 
 	clients, err := f.ClientFactory.Clients(ctx, config.GetNamespace())
@@ -36,7 +55,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
-	return &Parser{
+	return &parser{
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
@@ -48,7 +67,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}, nil
 }
 
-type Parser struct {
+type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
 
@@ -101,12 +120,7 @@ type ParsedResource struct {
 	Errors []string
 }
 
-// FIXME: eliminate clients from parser (but be careful that we can use the same cache/resolved GVK+GVR)
-func (r *Parser) Clients() ResourceClients {
-	return r.clients
-}
-
-func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
+func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
@@ -164,8 +178,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		Checksum: info.Hash,
 	})
 
-	if obj.GetName() == "" && obj.GetGenerateName() == "" {
-		return nil, ErrMissingName
+	if obj.GetName() == "" {
+		if obj.GetGenerateName() == "" {
+			return nil, ErrMissingName
+		}
+		// Generate a new UID
+		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
 	// Calculate folder identifier from the file path
@@ -213,12 +231,6 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			DryRun: []string{"All"},
 		})
 	}
-
-	// When the name is missing (and generateName is configured) use the value from DryRun
-	if f.Obj.GetName() == "" && f.DryRunResponse != nil {
-		f.Obj.SetName(f.DryRunResponse.GetName())
-	}
-
 	return err
 }
 
