@@ -160,7 +160,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
-		log.Debug("User is provisioned, grant access")
+		log.Debug("User is provisioned, access granted")
 		return nil
 	}
 
@@ -402,7 +402,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		attribute.String("identity.ExternalUID", id.ExternalUID),
 	)
 	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id,UID", id.UID)
+		s.log.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
