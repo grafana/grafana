@@ -15,15 +15,6 @@ import (
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
 type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, ops []map[string]interface{}) error
 
-//go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
-
-//go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
-type CompareFn func(source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error)
-
-//go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
-type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
-
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
 type SyncWorker struct {
@@ -94,7 +85,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
-	progress.SetMessage(ctx, "execute sync job")
 	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("create repository resources client: %w", err)
@@ -105,6 +95,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("get clients for %s: %w", cfg.Name, err)
 	}
 
+	progress.SetMessage(ctx, "execute sync job")
 	syncError := r.syncer.Sync(ctx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
