@@ -300,9 +300,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={
-              <Label htmlFor="locale-select">
+              <Label htmlFor="language-preference-select">
                 <span className={styles.labelText}>
-                  <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
+                  <Trans i18nKey="shared-preferences.fields.language-preference-label">Language</Trans>
                 </span>
                 <FeatureBadge featureState={FeatureState.beta} />
               </Label>
@@ -313,8 +313,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
               value={this.languageOptions.find((lang) => lang.value === language)?.value || ''}
               onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={this.languageOptions}
-              placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-              id="locale-select"
+              placeholder={t('shared-preferences.fields.language-preference-placeholder', 'Choose language')}
+              id="language-preference-select"
             />
           </Field>
           {config.featureToggles.localeFormatPreference && (
@@ -322,25 +322,25 @@ export class SharedPreferences extends PureComponent<Props, State> {
               loading={isLoading}
               disabled={isLoading}
               label={
-                <Label htmlFor="locale-select">
+                <Label htmlFor="locale-preference">
                   <span className={styles.labelText}>
-                    <Trans i18nKey="shared-preferences.fields.locale-format-label">Region format</Trans>
+                    <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
                   </span>
                   <FeatureBadge featureState={FeatureState.experimental} />
                 </Label>
               }
               description={t(
-                'shared-preferences.fields.locale-format-description',
+                'shared-preferences.fields.locale-preference-description',
                 'Choose your region to see the corresponding date, time, and number format'
               )}
-              data-testid="User preferences locale format drop down"
+              data-testid="User preferences locale drop down"
             >
               <Combobox
                 value={this.localeOptions.find((loc) => loc.value === locale)?.value || ''}
                 onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
                 options={this.localeOptions}
-                placeholder={t('shared-preferences.fields.locale-format-placeholder', 'Choose region')}
-                id="locale-format-select"
+                placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
+                id="locale-preference-select"
               />
             </Field>
           )}
