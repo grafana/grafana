@@ -3718,6 +3718,7 @@ __metadata:
     typescript: "npm:5.7.3"
     uplot: "npm:1.6.32"
     uuid: "npm:11.0.5"
+    uwrap: "npm:0.1.1"
     webpack: "npm:5.97.1"
   peerDependencies:
     react: ^18.0.0
@@ -30508,6 +30509,13 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
+  languageName: node
+  linkType: hard
+
+"uwrap@npm:0.1.1":
+  version: 0.1.1
+  resolution: "uwrap@npm:0.1.1"
+  checksum: 10/d5d02cb2f0e7fd997862913458d67e0c7fa9fd5bc1025baca9e183ac87046be9148942e59440fef8d01a34d5674c0395bb46b13e00359602ea3155b305466090
   languageName: node
   linkType: hard
 
