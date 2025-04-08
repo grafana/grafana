@@ -34,7 +34,7 @@ import (
 	apiregistration "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1"
 
-	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
 func TestAPIs(t *testing.T) {

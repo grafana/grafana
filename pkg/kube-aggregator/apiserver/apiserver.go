@@ -56,7 +56,7 @@ import (
 	apiservicerest "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 
-	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
 // making sure we only register metrics once into legacy registry

@@ -45,7 +45,7 @@ import (
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
 
-	"github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
+	"k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
 var APIRegistrationGroupVersion metav1.GroupVersion = metav1.GroupVersion{Group: "apiregistration.k8s.io", Version: "v1"}

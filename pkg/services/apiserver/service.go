@@ -369,10 +369,6 @@ func (s *service) start(ctx context.Context) error {
 				return err
 			}
 			delegate = aggregatorAPIServer
-			if err = runner.Run(ctx, transport, s.stoppedCh); err != nil {
-				s.log.Error("extra runner failed", "error", err)
-				return err
-			}
 		}
 	}
 
@@ -380,6 +376,14 @@ func (s *service) start(ctx context.Context) error {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
 		if err != nil {
 			return err
+		}
+	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		for _, runner := range s.extraRunners {
+			runningServer, err = runner.Run(ctx, transport, s.stoppedCh)
+			if err != nil {
+				s.log.Error("extra runner failed", "error", err)
+				return err
+			}
 		}
 	} else {
 		runningServer, err = s.startCoreServer(ctx, transport, server)

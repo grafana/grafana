@@ -15,8 +15,8 @@ import (
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	aggregatorapiserver "github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
-	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
 // KubeAggregatorOptions contains the state for the aggregator apiserver

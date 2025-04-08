@@ -41,7 +41,7 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
-	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 
 	"github.com/prometheus/client_golang/prometheus"
 

@@ -15,8 +15,8 @@ import (
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 
 	"github.com/grafana/grafana/pkg/kube-aggregator/apiserver"
-	aggregatorscheme "github.com/grafana/grafana/pkg/kube-aggregator/apiserver/scheme"
 	"github.com/stretchr/testify/require"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
