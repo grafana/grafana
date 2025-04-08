@@ -22,6 +22,7 @@ import { SceneShareTabState, ShareView } from './types';
 
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
+  isSharingV2Resource?: boolean;
   isViewingJSON?: boolean;
 }
 
@@ -29,13 +30,14 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
 
-  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardKind> =
+  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> =
     getDashboardExporter();
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
       isSharingExternally: false,
       isViewingJSON: false,
+      isSharingV2Resource: false,
       ...state,
     });
   }
@@ -50,6 +52,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     });
   };
 
+  public onShareV2ResourceChange = () => {
+    this.setState({
+      isSharingV2Resource: !this.state.isSharingV2Resource,
+    });
+  };
+
   public onViewJSON = () => {
     this.setState({
       isViewingJSON: !this.state.isViewingJSON,
@@ -61,7 +69,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   }
 
   public getExportableDashboardJson = async () => {
-    const { isSharingExternally } = this.state;
+    const { isSharingExternally, isSharingV2Resource } = this.state;
 
     // TODO: once we deprecate the old arch, DashboardExporter.makeExportable
     // can just take dashboardScene as a prop and handle all this logic
@@ -69,11 +77,25 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     if (config.featureToggles.dashboardNewLayouts) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
-      const dashboard: DashboardKind = {
-        kind: 'Dashboard',
-        spec: saveModelV2,
-      };
-      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : dashboard;
+
+      if (isSharingV2Resource) {
+        const dashboard: DashboardKind = {
+          kind: 'Dashboard',
+          spec: saveModelV2,
+        };
+        if (isSharingExternally) {
+          const dash = await this._exporter.makeExportable(saveModelV2);
+          if ('error' in dash) {
+            return { error: dash.error };
+          }
+          if ('elements' in dash) {
+            dashboard.spec = dash;
+          }
+        }
+        return dashboard;
+      }
+
+      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : saveModelV2;
     }
 
     const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));

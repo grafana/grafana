@@ -796,6 +796,9 @@ export const versionedPages = {
       exportExternallyToggle: {
         '11.3.0': 'data-testid export as json externally switch',
       },
+      exportResourceToggle: {
+        '12.0.0': 'data-testid export as json resource switch',
+      },
       saveToFileButton: {
         '11.3.0': 'data-testid export as json save to file button',
       },

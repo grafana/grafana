@@ -7,6 +7,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
@@ -27,12 +28,12 @@ export class ExportAsJson extends ShareExportTab {
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const styles = useStyles2(getStyles);
 
-  const { isSharingExternally } = model.useState();
+  const { isSharingExternally, isSharingV2Resource } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
     return JSON.stringify(json, null, 2);
-  }, [isSharingExternally]);
+  }, [isSharingExternally, isSharingV2Resource]);
 
   const onClickDownload = async () => {
     await model.onSaveAsFile();
@@ -40,7 +41,8 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     dispatch(notifyApp(createSuccessNotification(message)));
   };
 
-  const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
+  const switchExportLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
+  const switchResourceLabel = t('export.json.export-resource-label', 'Export the dashboard as a resource');
 
   return (
     <div data-testid={selector.container} className={styles.container}>
@@ -51,14 +53,26 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
       </p>
       <Stack gap={1} alignItems="center">
         <Switch
-          label={switchLabel}
+          label={switchExportLabel}
           data-testid={selector.exportExternallyToggle}
           id="export-externally-toggle"
           value={isSharingExternally}
           onChange={model.onShareExternallyChange}
         />
-        <Label>{switchLabel}</Label>
+        <Label>{switchExportLabel}</Label>
       </Stack>
+      {config.featureToggles.dashboardNewLayouts && (
+        <Stack gap={1} alignItems="center">
+          <Switch
+            label={switchResourceLabel}
+            data-testid={selector.exportResourceToggle}
+            id="export-resource-toggle"
+            value={isSharingV2Resource}
+            onChange={model.onShareV2ResourceChange}
+          />
+          <Label>{switchResourceLabel}</Label>
+        </Stack>
+      )}
       <div className={styles.codeEditorBox}>
         <AutoSizer data-testid={selector.codeEditor}>
           {({ width, height }) => {

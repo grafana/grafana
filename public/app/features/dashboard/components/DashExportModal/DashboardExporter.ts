@@ -3,7 +3,6 @@ import { defaults, each, sortBy } from 'lodash';
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  DashboardKind,
   DashboardV2Spec,
   LibraryPanelImport,
   LibraryPanelKind,
@@ -340,7 +339,7 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
   }
 }
 
-export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardKind> {
+export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Spec> {
   async makeExportable(dashboard: DashboardV2Spec) {
     const variableLookup: { [key: string]: any } = {};
     const libraryPanels: LibraryPanelImport[] = [];
@@ -417,6 +416,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     try {
       const elements = dashboard.elements;
 
+      // process elements
       for (const element of Object.values(elements)) {
         if (element.kind === 'Panel') {
           processPanel(element);
@@ -425,12 +425,15 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         }
       }
 
-      // templatize template vars
+      // process template variables
       for (const variable of dashboard.variables) {
         if (variable.kind === 'QueryVariable') {
           removeDataSourceRefs(variable.spec);
           variable.spec.options = [];
-          variable.spec.current = {} as unknown as VariableOption;
+          variable.spec.current = {
+            text: '',
+            value: '',
+          };
         } else if (variable.kind === 'DatasourceVariable') {
           variable.spec.current = {
             text: '',
@@ -439,17 +442,12 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         }
       }
 
-      // templatize annotations vars
+      // process annotations vars
       for (const annotation of dashboard.annotations) {
         await removeDataSourceRefs(annotation.spec);
       }
 
-      const importableDashboard: DashboardKind = {
-        kind: 'Dashboard',
-        spec: dashboard,
-      };
-
-      return importableDashboard;
+      return dashboard;
     } catch (err) {
       console.error('Export failed:', err);
       return {
@@ -473,7 +471,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
 export function getDashboardExporter(): DashboardExporterLike<
   DashboardModel | DashboardV2Spec,
-  DashboardJson | DashboardKind
+  DashboardJson | DashboardV2Spec
 > {
   return config.featureToggles.dashboardNewLayouts ? new DashboardExporterV2() : new DashboardExporterV1();
 }
