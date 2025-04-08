@@ -89,7 +89,7 @@ export const getStylesSelectorActions = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    width: '50%',
+    width: '100%',
     right: 0,
     textAlign: 'right',
     opacity: 0,

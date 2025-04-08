@@ -233,11 +233,10 @@ export function MetricsBrowserProvider({
           // We don't want to discard values from last selected list.
           // User might want to select more.
           if (lastSelectedLabelKey === lk) {
-            newLabelValues[lk] = labelValues[lk];
+            newLabelValues[lk] = Array.from(new Set([...labelValues[lk], ...values]));
           } else {
             // If there are already selected values merge them with the fetched values.
-            const mergedValues = new Set([...(selectedLabelValues[lk] ?? []), ...values]);
-            newLabelValues[lk] = Array.from(mergedValues);
+            newLabelValues[lk] = Array.from(new Set([...(selectedLabelValues[lk] ?? []), ...values]));
           }
         } catch (error) {
           console.error(`Error fetching values for label ${lk}:`, error);
@@ -258,12 +257,12 @@ export function MetricsBrowserProvider({
     fetchValues();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLabelKeys]);
+  }, [labelKeys, selectedLabelKeys]);
 
   // Fetch metrics with new selector
   useEffect(() => {
     async function fetchMetrics() {
-      const selector = buildSelector(selectedMetric, selectedLabelValues);
+      const selector = getSelector();
       if (selector === EMPTY_SELECTOR) {
         showAllMetrics();
         return;
