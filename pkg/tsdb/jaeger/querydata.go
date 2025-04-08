@@ -100,20 +100,20 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 
 func transformSearchResponse(response jaegerResponse) *data.Frame {
 	frame := data.NewFrame("traces",
-	data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
-		DisplayName: "Trace ID",
-	}),
-	data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
-		DisplayName: "Trace name",
-	}),
-	data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{
-		DisplayName: "Start time",
-	}),
-	data.NewField("duration", nil, []int64{}).SetConfig(&data.FieldConfig{
-		DisplayName: "Duration",
-		Unit:        "µs",
-	}),
-)
+		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace ID",
+		}),
+		data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace name",
+		}),
+		data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Start time",
+		}),
+		data.NewField("duration", nil, []int64{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Duration",
+			Unit:        "µs",
+		}),
+	)
 
 	frame.Meta = &data.FrameMeta{
 		PreferredVisualization: "table",
@@ -125,15 +125,15 @@ func transformSearchResponse(response jaegerResponse) *data.Frame {
 		}
 
 		rootSpan := trace.Spans[0]
-	
+
 		serviceName := ""
 		if process, ok := trace.Processes[rootSpan.ProcessID]; ok {
 			serviceName = process.ServiceName
 		}
-	
+
 		traceName := fmt.Sprintf("%s: %s", serviceName, rootSpan.OperationName)
 		startTime := time.Unix(0, rootSpan.StartTime*1000)
-	
+
 		frame.AppendRow(
 			trace.TraceID,
 			traceName,

@@ -119,12 +119,22 @@ func (j *JaegerClient) Search(query *jaegerQuery) (*data.Frame, error) {
 	jaegerURL.RawQuery = urlQuery.Encode()
 	resp, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request to Jaeger: %w", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	if resp != nil && resp.StatusCode/100 != 2 {
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Jaeger API returned non-200 status code: %d", resp.StatusCode)
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
 	}
 
 	var result jaegerResponse
