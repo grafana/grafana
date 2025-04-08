@@ -27,36 +27,36 @@ export function ValueSelector() {
         />
       </div>
       <div className={styles.valueListArea}>
-        {Object.entries(labelValues).map(([labelKey, labelValues]) => (
-          <div role="list" key={labelKey} aria-label={`Values for ${labelKey}`} className={styles.valueListWrapper}>
+        {Object.entries(labelValues).map(([lk, lv]) => (
+          <div role="list" key={lk} aria-label={`Values for ${lk}`} className={styles.valueListWrapper}>
             <div className={styles.valueTitle}>
               <PromLabel
-                name={labelKey}
+                name={lk}
                 loading={false}
                 active={true}
                 hidden={false}
                 // If no facets, we want to show number of all label values
-                facets={labelValues.length}
+                facets={lv.length}
                 onClick={onLabelKeyClick}
               />
             </div>
             <FixedSizeList
-              height={Math.min(200, LIST_ITEM_SIZE * (labelValues.length || 0))}
-              itemCount={labelValues.length || 0}
+              height={Math.min(200, LIST_ITEM_SIZE * (lv.length || 0))}
+              itemCount={lv.length || 0}
               itemSize={28}
-              itemKey={(i) => labelValues[i]}
+              itemKey={(i) => lv[i]}
               width={200}
               className={styles.valueList}
             >
               {({ index, style }) => {
-                const value = labelValues[index];
+                const value = lv[index];
                 return (
                   <div style={style}>
                     <PromLabel
                       name={value}
                       value={value}
-                      active={selectedLabelValues[labelKey]?.includes(value)}
-                      onClick={(name) => onLabelValueClick(labelKey, name)}
+                      active={selectedLabelValues[lk]?.includes(value)}
+                      onClick={(name) => onLabelValueClick(lk, name)}
                       searchTerm={valueSearchTerm}
                     />
                   </div>

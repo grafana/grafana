@@ -5,6 +5,7 @@ import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesLabelSelector } from './styles';
+import { METRIC_LABEL } from './types';
 
 export function LabelSelector() {
   const styles = useStyles2(getStylesLabelSelector);
@@ -12,7 +13,9 @@ export function LabelSelector() {
   const { labelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 
   const filteredLabelKeys = useMemo(() => {
-    return labelKeys.filter((lk) => selectedLabelKeys.includes(lk) || lk.includes(labelSearchTerm));
+    return labelKeys.filter(
+      (lk) => lk !== METRIC_LABEL && (selectedLabelKeys.includes(lk) || lk.includes(labelSearchTerm))
+    );
   }, [labelKeys, labelSearchTerm, selectedLabelKeys]);
 
   return (

@@ -1,3 +1,4 @@
+import { useWhatChanged } from '@simbathesailor/use-what-changed';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
@@ -54,11 +55,6 @@ type MetricsBrowserProviderProps = {
 };
 
 /**
- * Filter function to exclude the metric label
- */
-const withoutMetricLabel = (ml: string) => ml !== METRIC_LABEL;
-
-/**
  * Provider component for the Metrics Browser context
  * Manages state and data fetching for metrics, labels, and values
  */
@@ -102,25 +98,6 @@ export function MetricsBrowserProvider({
     [languageProvider.metricsMetadata]
   );
 
-  /**
-   * Validate the current selector by checking how many labels it matches
-   */
-  const onValidationClick = useCallback(() => {
-    const selector = getSelector();
-    setValidationStatus(`Validating selector ${selector}`);
-    setErr('');
-
-    languageProvider
-      .fetchLabelsWithMatch(timeRange, selector)
-      .then((results) => {
-        setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
-      })
-      .catch((error) => {
-        setErr(`Validation failed: ${error.message || 'Unknown error'}`);
-        setValidationStatus('');
-      });
-  }, [getSelector, languageProvider, timeRange]);
-
   const showAllMetrics = useCallback(() => {
     setMetrics(
       languageProvider.metrics.map((m) => ({
@@ -130,6 +107,13 @@ export function MetricsBrowserProvider({
     );
   }, [getMetricDetails, languageProvider.metrics]);
 
+  const showAllLabelKeys = useCallback(() => {
+    setLabelKeys([...languageProvider.labelKeys]);
+  }, [languageProvider.labelKeys]);
+
+  /**
+   * Set the selected label keys on initialization
+   */
   const setSelectedLabelKeysFromLocalStorage = useCallback(() => {
     try {
       const savedLabelsJson = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
@@ -144,10 +128,9 @@ export function MetricsBrowserProvider({
   // Initialize component with metrics and saved labels
   useEffect(() => {
     showAllMetrics();
-
-    setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
-
+    showAllLabelKeys();
     setSelectedLabelKeysFromLocalStorage();
+
     // We want this to be run only once in the beginning
     // so we keep the dependency array empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,24 +140,25 @@ export function MetricsBrowserProvider({
   useEffect(() => {
     setStatus('Fetching labels...');
 
-    if (selectedMetric !== '') {
-      const selector = getSelector();
-
-      languageProvider
-        .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
-        .then((fetchedLabelKeys) => {
-          setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
-          setStatus('Ready');
-        })
-        .catch((error) => {
-          setErr(`Error fetching labels: ${error.message || 'Unknown error'}`);
-          setStatus('');
-        });
-    } else {
+    if (selectedMetric === '') {
       showAllMetrics();
-      setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
+      showAllLabelKeys();
       setStatus('Ready');
+      return;
     }
+
+    const selector = getSelector();
+
+    languageProvider
+      .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
+      .then((fetchedLabelKeys) => {
+        setLabelKeys(Object.keys(fetchedLabelKeys));
+        setStatus('Ready');
+      })
+      .catch((error) => {
+        setErr(`Error fetching labels: ${error.message || 'Unknown error'}`);
+        setStatus('');
+      });
 
     // When a selectedMetric changed we should fetch the labels
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,7 +169,7 @@ export function MetricsBrowserProvider({
   // We get new metrics based on that selection. Based on this we need to re-fetch the label keys
   useEffect(() => {
     if (getSelector() === '{}') {
-      setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
+      showAllLabelKeys();
       return;
     }
 
@@ -193,8 +177,11 @@ export function MetricsBrowserProvider({
     const selector = `{__name__=~"${metrics.map((m) => m.name).join('|')}"}`;
     languageProvider
       .fetchSeriesLabelsMatch(timeRange, selector, validSeriesLimit(seriesLimit))
-      .then((fetchedLabelKeys) => {
-        setLabelKeys(Object.keys(fetchedLabelKeys).filter(withoutMetricLabel));
+      .then((fetchedLabelKeysRecord) => {
+        const fetchedLabelKeys = Object.keys(fetchedLabelKeysRecord);
+        const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
+        setSelectedLabelKeys(newSelectedLabelKeys);
+        setLabelKeys(fetchedLabelKeys);
         setStatus('Ready');
       })
       .catch((error) => {
@@ -205,7 +192,9 @@ export function MetricsBrowserProvider({
     // We need to fetch values only when metrics list has changed.
     // That means we have new set of metrics and labels so we need to update the values.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languageProvider, timeRange, metrics]);
+  }, [metrics]);
+
+  useWhatChanged([selectedLabelKeys]);
 
   // Fetch label values for selected label keys
   useEffect(() => {
@@ -217,50 +206,48 @@ export function MetricsBrowserProvider({
 
       setStatus('Fetching label values...');
       const newLabelValues: Record<string, string[]> = {};
-      // We don't want to remove values from the last selected value list.
-      // So by keeping track of the label key, when we fetch the values we don't override the list
-      if (lastSelectedLabelKey !== '') {
-        newLabelValues[lastSelectedLabelKey] = [...labelValues[lastSelectedLabelKey]];
-      }
+
       let hasErrors = false;
 
-      try {
-        for (const lk of selectedLabelKeys) {
-          if (labelKeys.includes(lk) && lk !== lastSelectedLabelKey) {
-            try {
-              const selector = getSelector();
-              const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-              const values = await languageProvider.fetchSeriesValuesWithMatch(
-                timeRange,
-                lk,
-                safeSelector,
-                `MetricsBrowser_LV_${lk}`,
-                validSeriesLimit(seriesLimit)
-              );
-              newLabelValues[lk] = values;
-            } catch (error) {
-              console.error(`Error fetching values for label ${lk}:`, error);
-              newLabelValues[lk] = [];
-              hasErrors = true;
-            }
-          }
+      for (const lk of selectedLabelKeys) {
+        // If the key is not in current labelKey list or if it is hidden
+        // we don't even try to fetch its values
+        if (!labelKeys.includes(lk)) {
+          continue;
         }
 
-        setLabelValues(newLabelValues);
+        const selector = getSelector();
+        const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
 
-        if (hasErrors) {
-          setErr('Some label values could not be loaded');
-        } else {
-          setStatus('Ready');
+        try {
+          const values = await languageProvider.fetchSeriesValuesWithMatch(
+            timeRange,
+            lk,
+            safeSelector,
+            `MetricsBrowser_LV_${lk}`,
+            validSeriesLimit(seriesLimit)
+          );
+          newLabelValues[lk] = lastSelectedLabelKey === lk ? labelValues[lk] : values;
+        } catch (error) {
+          console.error(`Error fetching values for label ${lk}:`, error);
+          newLabelValues[lk] = [];
+          hasErrors = true;
         }
-      } catch (error) {
-        setErr(`Error fetching label values: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+
+      setLabelValues(newLabelValues);
+
+      if (hasErrors) {
+        setErr('Some label values could not be loaded');
+      } else {
+        setStatus('Ready');
       }
     }
 
     fetchValues();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [labelKeys, languageProvider, selectedLabelKeys, seriesLimit, timeRange]);
+  }, [selectedLabelKeys]);
 
   // Fetch metrics with new selector
   useEffect(() => {
@@ -291,7 +278,7 @@ export function MetricsBrowserProvider({
 
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languageProvider, selectedLabelValues, seriesLimit]);
+  }, [selectedLabelValues]);
 
   /**
    * Handle click on a metric name to toggle selection
@@ -353,6 +340,25 @@ export function MetricsBrowserProvider({
     },
     [lastSelectedLabelKey, selectedLabelValues]
   );
+
+  /**
+   * Validate the current selector by checking how many labels it matches
+   */
+  const onValidationClick = useCallback(() => {
+    const selector = getSelector();
+    setValidationStatus(`Validating selector ${selector}`);
+    setErr('');
+
+    languageProvider
+      .fetchLabelsWithMatch(timeRange, selector)
+      .then((results) => {
+        setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
+      })
+      .catch((error) => {
+        setErr(`Validation failed: ${error.message || 'Unknown error'}`);
+        setValidationStatus('');
+      });
+  }, [getSelector, languageProvider, timeRange]);
 
   /**
    * Clear all selections
