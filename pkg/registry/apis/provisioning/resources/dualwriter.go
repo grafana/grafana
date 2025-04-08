@@ -177,6 +177,12 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+
 	// Make sure the value is valid
 	if err := parsed.DryRun(ctx); err != nil {
 		logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
