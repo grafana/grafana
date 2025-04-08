@@ -134,32 +134,34 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 		return nil
 	}
 
-	// Does user exist in the database?
-	usr, _, err := s.getUser(ctx, id)
+	// In order to guarantee the provisioned user is the same as the identity,
+	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
+
+	// Retrieve user and authinfo from database
+	usr, authInfo, err := s.getUser(ctx, id)
 	if err != nil {
-		if errors.Is(err, user.ErrUserNotFound) {
-			s.log.FromContext(ctx).Debug("User not found, skipping validation")
-			return nil
-		}
 		s.log.FromContext(ctx).Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-		return errSyncUserInternal.Errorf("unable to retrieve user for validation")
+		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
 	}
 
-	// Skip validation if the user is provisioned
+	if usr == nil {
+		s.log.FromContext(ctx).Error("Failed to fetch user for validation", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
+	}
+
+	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+			s.log.FromContext(ctx).Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+		}
 		s.log.FromContext(ctx).Debug("User is provisioned, grant access")
-		return nil
-	}
-
-	// Skip validation if allowedNonProvisionedUsers is enabled
-	if s.allowedNonProvisionedUsers {
-		s.log.FromContext(ctx).Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
 		return nil
 	}
 
 	// Reject non-provisioned users
 	s.log.FromContext(ctx).Error("Failed to access user, user is not provisioned", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-	return errSyncUserForbidden.Errorf("user is not provisioned")
+	return errUserNotProvisioned.Errorf("user is not provisioned")
 }
 
 // SyncUserHook syncs a user with the database
