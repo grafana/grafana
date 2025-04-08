@@ -2,26 +2,23 @@ package sync
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
+//go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
+type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, ops []map[string]interface{}) error
+
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
 type SyncWorker struct {
-	// Used to update the repository status with sync info
-	client client.ProvisioningV0alpha1Interface
+	patchStatus RepositoryPatchFn
 
 	// Clients for the repository
 	clients resources.ClientFactory
@@ -34,15 +31,15 @@ type SyncWorker struct {
 }
 
 func NewSyncWorker(
-	client client.ProvisioningV0alpha1Interface,
 	clients resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
+	patchStatus RepositoryPatchFn,
 	storageStatus dualwrite.Service,
 ) *SyncWorker {
 	return &SyncWorker{
-		client:              client,
 		clients:             clients,
 		repositoryResources: repositoryResources,
+		patchStatus:         patchStatus,
 		storageStatus:       storageStatus,
 	}
 }
@@ -171,19 +168,4 @@ func (r *SyncWorker) run(ctx context.Context, repo repository.ReaderWriter, prog
 	progress.SetMessage(ctx, "full sync")
 
 	return FullSync(ctx, repo, clients, currentRef, repositoryResources, progress)
-}
-
-func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Repository, patchOperations []map[string]interface{}) error {
-	patch, err := json.Marshal(patchOperations)
-	if err != nil {
-		return fmt.Errorf("unable to marshal patch data: %w", err)
-	}
-
-	_, err = r.client.Repositories(repo.Namespace).
-		Patch(ctx, repo.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
-	if err != nil {
-		return fmt.Errorf("unable to update repo with job status: %w", err)
-	}
-
-	return nil
 }

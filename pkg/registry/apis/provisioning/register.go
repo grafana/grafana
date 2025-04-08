@@ -558,10 +558,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				b.repositoryResources,
 			)
+
+			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
 			syncWorker := sync.NewSyncWorker(
-				b.GetClient(),
 				b.clients,
 				b.repositoryResources,
+				statusPatcher.Patch,
 				b.storageStatus,
 			)
 			migrationWorker := migrate.NewMigrationWorker(
