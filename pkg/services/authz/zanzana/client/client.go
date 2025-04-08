@@ -3,11 +3,10 @@ package client
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
-
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
