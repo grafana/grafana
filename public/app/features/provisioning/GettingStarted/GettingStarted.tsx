@@ -5,6 +5,7 @@ import { Alert, Stack, Text } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
+import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
 import { SetupModal } from './SetupModal';
 import { getConfigurationStatus } from './features';
@@ -123,8 +124,8 @@ interface Props {
 export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery();
   const legacyStorage = settingsQuery.data?.legacyStorage;
-
-  const { hasRequiredFeatures } = getConfigurationStatus();
+  const hasItems = Boolean(settingsQuery.data?.items?.length);
+  const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
 
@@ -144,31 +145,43 @@ export default function GettingStarted({ items }: Props) {
           </Trans>
         </Alert>
       )}
-      <Stack gap={6} alignItems="center">
-        <FeaturesList
-          repos={items}
-          hasRequiredFeatures={hasRequiredFeatures}
-          onSetupFeatures={() => {
-            setSetupType('required-features');
-            setShowModal(true);
-          }}
-        />
-        <div
-          className={css({
-            height: 360,
-            width: '50%',
-            background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
-            borderRadius: `4px`,
-            padding: `16px`,
-            display: `flex`,
-            alignItems: `center`,
-            justifyContent: `center`,
-          })}
-        >
-          <Text variant="h2">
-            <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
-          </Text>
-        </div>
+      <Stack direction="column" gap={6} wrap="wrap">
+        <Stack gap={6} alignItems="center">
+          <FeaturesList
+            repos={items}
+            hasRequiredFeatures={hasRequiredFeatures}
+            onSetupFeatures={() => {
+              setSetupType('required-features');
+              setShowModal(true);
+            }}
+          />
+          <div
+            className={css({
+              height: 360,
+              width: '50%',
+              background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
+              borderRadius: `4px`,
+              padding: `16px`,
+              display: `flex`,
+              alignItems: `center`,
+              justifyContent: `center`,
+            })}
+          >
+            <Text variant="h2">
+              <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
+            </Text>
+          </div>
+        </Stack>
+        {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
+          <EnhancedFeatures
+            hasPublicAccess={hasPublicAccess}
+            hasImageRenderer={hasImageRenderer}
+            onSetupPublicAccess={() => {
+              setSetupType('public-access');
+              setShowModal(true);
+            }}
+          />
+        )}
       </Stack>
       {showInstructionsModal && setupType && (
         <SetupModal

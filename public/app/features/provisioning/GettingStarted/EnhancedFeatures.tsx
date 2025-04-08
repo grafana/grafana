@@ -16,7 +16,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
   const style = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={5}>
       <Stack direction="column">
         <Text variant="h4">
           <Trans i18nKey="provisioning.enhanced-features.header">Enhance your GitHub experience</Trans>
@@ -28,7 +28,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
         </Text>
       </Stack>
       <Stack gap={2} direction="row" height="100%">
-        <Box width="40%" height="100%" padding={2} display="flex" direction="column" gap={2} alignItems="flex-start">
+        <Box width="40%" height="100%" display="flex" direction="column" gap={2} alignItems="flex-start">
           <Stack gap={2}>
             <IconCircle icon="sync" color="blue" />
             <IconCircle icon="code-branch" color="purple" />
@@ -53,7 +53,15 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
 
         <div className={style.separator} />
 
-        <Box width="40%" height="100%" padding={2} display="flex" direction="column" gap={2} alignItems="flex-start">
+        <Box
+          width="40%"
+          height="100%"
+          paddingLeft={2}
+          display="flex"
+          direction="column"
+          gap={2}
+          alignItems="flex-start"
+        >
           <IconCircle icon="camera" color="orange" />
           <Trans i18nKey="provisioning.enhanced-features.title-visual-previews-in-pull-requests">
             Visual previews in pull requests with image rendering
@@ -65,7 +73,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
               </Trans>
             </Text>
           </Box>
-          {hasImageRenderer && (
+          {!hasImageRenderer && (
             <LinkButton
               fill="outline"
               variant="secondary"
