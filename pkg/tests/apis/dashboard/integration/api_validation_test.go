@@ -51,7 +51,7 @@ func TestIntegrationValidation(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode4}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -264,7 +264,8 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 		// Test generation conflict when updating concurrently
 		t.Run("reject update with version conflict", func(t *testing.T) {
-			ctx.skipIfMode(t, "Default permissions are not propagated in mode 4", rest.Mode4)
+			// Depends on https://github.com/grafana/grafana/pull/102527
+			ctx.skipIfMode(t, "Default permissions are not set yet in unified storage", rest.Mode3, rest.Mode4, rest.Mode5)
 
 			// Create a dashboard with admin
 			dash, err := createDashboard(t, adminClient, "Dashboard for Version Conflict Test", nil, nil)
