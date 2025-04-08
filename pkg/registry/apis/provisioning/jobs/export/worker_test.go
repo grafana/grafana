@@ -1192,7 +1192,7 @@ func TestExportWorker_ClonableRepository(t *testing.T) {
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "clone target").Return()
 			},
-			expectedError: "clone target: failed to clone repository",
+			expectedError: "clone repository: failed to clone repository",
 		},
 		{
 			name: "any other failure cleans up the cloned repository",
