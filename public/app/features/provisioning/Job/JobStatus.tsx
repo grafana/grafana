@@ -1,19 +1,9 @@
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect } from 'react';
+import { Spinner, Stack, Text } from '@grafana/ui';
+import { Job, useListJobQuery } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
-import { Alert, ControlledCollapse, LinkButton, Spinner, Stack, Text } from '@grafana/ui';
-import {
-  Job,
-  useGetRepositoryJobsWithPathQuery,
-  useGetRepositoryQuery,
-  useListJobQuery,
-} from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
-
-import ProgressBar from '../Shared/ProgressBar';
-import { getRepoHref } from '../utils/git';
-
-import { JobSummary } from './JobSummary';
+import { ActiveJobStatus } from './ActiveJobStatus';
+import { FinishedJobStatus } from './FinishedJobStatus';
 
 export interface JobStatusProps {
   watch: Job;
@@ -28,143 +18,52 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     watch: true,
   });
   const activeJob = activeQuery?.data?.items?.[0];
-  const finishedQuery = useGetRepositoryJobsWithPathQuery(
-    activeJob
-      ? skipToken
-      : {
-          name: watch.metadata?.labels?.['provisioning.grafana.app/repository']!,
-          uid: watch.metadata?.uid!,
-        }
-  );
+  const repoLabel = watch.metadata?.labels?.['provisioning.grafana.app/repository'];
 
-  const job = activeJob || finishedQuery.data;
+  // Only initialize finished query if we've checked active jobs and found none
+  const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
+  const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
 
-  useEffect(() => {
-    if (!job) {
-      finishedQuery.refetch();
-    }
-  }, [finishedQuery, job]);
-
-  useEffect(() => {
-    if (onStatusChange && job?.status?.state === 'success') {
-      onStatusChange(true);
-      if (onRunningChange) {
-        onRunningChange(false);
-      }
-    }
-    if (onErrorChange && job?.status?.state === 'error') {
-      onErrorChange(job.status.message ?? t('provisioning.job-status.error-unknown', 'An unknown error occurred'));
-      if (onRunningChange) {
-        onRunningChange(false);
-      }
-    }
-  }, [job, onStatusChange, onErrorChange, onRunningChange]);
-
-  if (!job || activeQuery.isLoading) {
+  if (activeQuery.isLoading) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
         <Spinner size={24} />
-        <Text element="h4" weight="bold">
+        <Text element="h4" color="secondary">
           <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
         </Text>
       </Stack>
     );
   }
 
-  const status = () => {
-    switch (job.status?.state) {
-      case 'success':
-        return (
-          <Alert
-            severity="success"
-            title={t('provisioning.job-status.status.title-job-completed-successfully', 'Job completed successfully')}
-          />
-        );
-      case 'error':
-        return (
-          <Alert
-            severity="error"
-            title={t('provisioning.job-status.status.title-error-running-job', 'error running job')}
-          >
-            {job.status.message}
-          </Alert>
-        );
-    }
+  if (activeJob) {
     return (
-      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        {!job.status?.progress && <Spinner size={24} />}
-        <Text element="h4" color="secondary">
-          {job.status?.message ?? job.status?.state ?? ''}
-        </Text>
-      </Stack>
+      <ActiveJobStatus
+        job={activeJob}
+        onStatusChange={onStatusChange}
+        onRunningChange={onRunningChange}
+        onErrorChange={onErrorChange}
+      />
     );
-  };
-
-  return (
-    <Stack direction="column" gap={2}>
-      {job.status && (
-        <Stack direction="column" gap={2}>
-          {status()}
-
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-            <ProgressBar progress={job.status.progress} />
-          </Stack>
-
-          {job.status.summary && (
-            <Stack direction="column" gap={2}>
-              <Text variant="h3">
-                <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>
-              </Text>
-              <JobSummary summary={job.status.summary} />
-            </Stack>
-          )}
-          {job.status.state === 'success' ? (
-            <RepositoryLink name={job.metadata?.labels?.repository} />
-          ) : (
-            <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
-              <pre>{JSON.stringify(job, null, ' ')}</pre>
-            </ControlledCollapse>
-          )}
-        </Stack>
-      )}
-    </Stack>
-  );
-}
-
-type RepositoryLinkProps = {
-  name?: string;
-};
-
-function RepositoryLink({ name }: RepositoryLinkProps) {
-  const repoQuery = useGetRepositoryQuery(name ? { name } : skipToken);
-  const repo = repoQuery.data;
-
-  if (!repo || repoQuery.isLoading || repo.spec?.type !== 'github' || !repo.spec?.github?.url) {
-    return null;
   }
 
-  const repoHref = getRepoHref(repo.spec?.github);
-  const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
-
-  if (!repoHref) {
-    return null;
+  if (shouldCheckFinishedJobs) {
+    return (
+      <FinishedJobStatus
+        jobUid={watch.metadata?.uid!}
+        repositoryName={repoLabel}
+        onStatusChange={onStatusChange}
+        onRunningChange={onRunningChange}
+        onErrorChange={onErrorChange}
+      />
+    );
   }
 
   return (
-    <Stack direction="column" gap={1}>
-      <Text>
-        <Trans i18nKey="provisioning.repository-link.grafana-repository">
-          Grafana and your repository are now in sync.
-        </Trans>
+    <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+      <Spinner size={24} />
+      <Text element="h4" weight="bold">
+        <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
       </Text>
-      <Stack direction="row" gap={2}>
-        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
-          <Trans i18nKey="provisioning.repository-link.view-repository">View repository</Trans>
-        </LinkButton>
-        <LinkButton fill="outline" href={folderHref} icon="folder-open">
-          <Trans i18nKey="provisioning.repository-link.view-folder">View folder</Trans>
-        </LinkButton>
-      </Stack>
     </Stack>
   );
 }

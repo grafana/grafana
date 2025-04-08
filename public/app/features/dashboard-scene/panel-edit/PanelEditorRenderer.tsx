@@ -207,6 +207,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      marginTop: theme.spacing(2),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     expandOptionsWrapper: css({
       display: 'flex',

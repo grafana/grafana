@@ -600,8 +600,9 @@ TabsLayoutTabKind: {
 }
 
 TabsLayoutTabSpec: {
-	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	title?:                string
+	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {
@@ -924,8 +925,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+	visibility: "show" | "hide"
 	condition: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -948,11 +950,11 @@ ConditionalRenderingDataSpec: {
 	value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-	kind: "ConditionalRenderingTimeInterval"
-	spec: ConditionalRenderingTimeIntervalSpec
+ConditionalRenderingTimeRangeSizeKind: {
+	kind: "ConditionalRenderingTimeRangeSize"
+	spec: ConditionalRenderingTimeRangeSizeSpec
 }
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
 }

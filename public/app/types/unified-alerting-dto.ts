@@ -12,12 +12,14 @@ export enum PromAlertingRuleState {
   Firing = 'firing',
   Inactive = 'inactive',
   Pending = 'pending',
+  Recovering = 'recovering',
 }
 
 export enum GrafanaAlertState {
   Normal = 'Normal',
   Alerting = 'Alerting',
   Pending = 'Pending',
+  Recovering = 'Recovering',
   NoData = 'NoData',
   Error = 'Error',
 }
@@ -266,6 +268,7 @@ export interface PostableGrafanaRuleDefinition {
     target_datasource_uid?: string;
   };
   intervalSeconds?: number;
+  missing_series_evals_to_resolve?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
@@ -290,6 +293,7 @@ export type GrafanaRecordingRuleDefinition = GrafanaRuleDefinition & {
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
   for?: string;
+  keep_firing_for?: string;
   annotations: Annotations;
   labels: Labels;
 }

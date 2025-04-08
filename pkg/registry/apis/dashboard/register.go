@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -37,13 +37,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 var (
@@ -51,6 +58,11 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+)
+
+const (
+	dashboardSpecTitle           = "title"
+	dashboardSpecRefreshInterval = "refresh"
 )
 
 // This is used just so wire has something unique to return
@@ -64,6 +76,13 @@ type DashboardsAPIBuilder struct {
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
+	dashStore                    dashboards.Store
+	folderStore                  folder.FolderStore
+	QuotaService                 quota.Service
+	ProvisioningService          provisioning.ProvisioningService
+	cfg                          *setting.Cfg
+	dualWriter                   dualwrite.Service
+	folderClient                 client.K8sHandler
 
 	log log.Logger
 	reg prometheus.Registerer
@@ -84,11 +103,15 @@ func RegisterAPIService(
 	unified resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
+	quotaService quota.Service,
+	folderStore folder.FolderStore,
+	restConfigProvider apiserver.RestConfigProvider,
+	userService user.Service,
 ) *DashboardsAPIBuilder {
-	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folderv0alpha1.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 
@@ -98,9 +121,17 @@ func RegisterAPIService(
 		unified:                      unified,
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
+		dashStore:                    dashStore,
+		folderStore:                  folderStore,
+		QuotaService:                 quotaService,
+		ProvisioningService:          provisioning,
+		cfg:                          cfg,
+		dualWriter:                   dual,
+		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access: legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
+			DashboardService: dashboardService,
 		},
 		reg: reg,
 	}
@@ -145,40 +176,209 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
-// Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
+// Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
-	if op == admission.Delete {
-		obj := a.GetOperationOptions()
-		deleteOptions, ok := obj.(*metav1.DeleteOptions)
-		if !ok {
-			return fmt.Errorf("expected v1.DeleteOptions")
+
+	// Handle different operations
+	switch op {
+	case admission.Delete:
+		return b.validateDelete(ctx, a)
+	case admission.Create:
+		return b.validateCreate(ctx, a, o)
+	case admission.Update:
+		return b.validateUpdate(ctx, a, o)
+	case admission.Connect:
+		return nil
+	}
+
+	return nil
+}
+
+// validateDelete checks if a dashboard can be deleted
+func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+	obj := a.GetOperationOptions()
+	deleteOptions, ok := obj.(*metav1.DeleteOptions)
+	if !ok {
+		return fmt.Errorf("expected v1.DeleteOptions")
+	}
+
+	// Skip validation for forced deletions (grace period = 0)
+	if deleteOptions.GracePeriodSeconds != nil && *deleteOptions.GracePeriodSeconds == 0 {
+		return nil
+	}
+
+	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	// The name of the resource is the dashboard UID
+	dashboardUID := a.GetName()
+
+	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
+			errors.Is(err, dashboards.ErrDashboardNotFound) ||
+			apierrors.IsNotFound(err) {
+			return nil
 		}
 
-		if deleteOptions.GracePeriodSeconds == nil || *deleteOptions.GracePeriodSeconds != 0 {
-			nsInfo, err := claims.ParseNamespace(a.GetNamespace())
-			if err != nil {
-				return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-			}
+		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
+	}
 
-			provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
-			if err != nil {
-				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-					errors.Is(err, dashboards.ErrDashboardNotFound) ||
-					apierrors.IsNotFound(err) {
-					return nil
-				}
+	if provisioningData != nil {
+		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
+	}
 
-				return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
-			}
+	return nil
+}
 
-			if provisioningData != nil {
-				return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
-			}
+// validateCreate validates dashboard creation
+func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// Get the dashboard object
+	dashObj := a.GetObject()
+
+	title, refresh, err := getDashboardProperties(dashObj)
+	if err != nil {
+		return fmt.Errorf("error extracting dashboard properties: %w", err)
+	}
+
+	accessor, err := utils.MetaAccessor(dashObj)
+	if err != nil {
+		return fmt.Errorf("error getting meta accessor: %w", err)
+	}
+
+	// Basic validations
+	if err := b.dashboardService.ValidateBasicDashboardProperties(title, accessor.GetName(), accessor.GetMessage()); err != nil {
+		return err
+	}
+
+	// Validate refresh interval
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+		return err
+	}
+
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting requester: %w", err)
+	}
+
+	internalId, err := id.GetInternalID()
+	if err != nil {
+		return fmt.Errorf("error getting internal ID: %w", err)
+	}
+
+	// Validate quota
+	if !a.IsDryRun() {
+		params := &quota.ScopeParameters{}
+		params.OrgID = id.GetOrgID()
+		params.UserID = internalId
+
+		quotaReached, err := b.QuotaService.CheckQuotaReached(ctx, dashboards.QuotaTargetSrv, params)
+		if err != nil && !errors.Is(err, quota.ErrDisabled) {
+			return err
+		}
+		if quotaReached {
+			return dashboards.ErrQuotaReached
 		}
 	}
 
 	return nil
+}
+
+// validateUpdate validates dashboard updates
+func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// Get the new and old dashboards
+	newDashObj := a.GetObject()
+	oldDashObj := a.GetOldObject()
+
+	title, refresh, err := getDashboardProperties(newDashObj)
+	if err != nil {
+		return fmt.Errorf("error extracting dashboard properties: %w", err)
+	}
+
+	oldAccessor, err := utils.MetaAccessor(oldDashObj)
+	if err != nil {
+		return fmt.Errorf("error getting old dash meta accessor: %w", err)
+	}
+
+	newAccessor, err := utils.MetaAccessor(newDashObj)
+	if err != nil {
+		return fmt.Errorf("error getting new dash meta accessor: %w", err)
+	}
+
+	// Parse namespace for old dashboard
+	nsInfo, err := claims.ParseNamespace(oldAccessor.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("failed to parse namespace: %w", err)
+	}
+
+	// Basic validations
+	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
+		return err
+	}
+
+	// Validate folder existence if specified and changed
+	if !a.IsDryRun() && newAccessor.GetFolder() != "" && newAccessor.GetFolder() != oldAccessor.GetFolder() {
+		if err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
+			return err
+		}
+	}
+
+	// Validate refresh interval
+	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
+		return err
+	}
+
+	allowOverwrite := false // TODO: Add support for overwrite flag
+	// check for is someone else has written in between
+	if newAccessor.GetGeneration() != oldAccessor.GetGeneration() {
+		if allowOverwrite {
+			newAccessor.SetGeneration(oldAccessor.GetGeneration())
+		} else {
+			return dashboards.ErrDashboardVersionMismatch
+		}
+	}
+
+	return nil
+}
+
+// validateFolderExists checks if a folder exists
+func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
+	// Check if folder exists using the folder store
+	_, err := b.folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
+
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return err
+		}
+		return fmt.Errorf("error checking folder existence: %w", err)
+	}
+
+	return nil
+}
+
+// getDashboardProperties extracts title and refresh interval from any dashboard version
+func getDashboardProperties(obj runtime.Object) (string, string, error) {
+	var title, refresh string
+
+	// Extract properties based on the object's type
+	switch d := obj.(type) {
+	case *v0alpha1.Dashboard:
+		title = d.Spec.GetNestedString(dashboardSpecTitle)
+		refresh = d.Spec.GetNestedString(dashboardSpecRefreshInterval)
+	case *v1alpha1.Dashboard:
+		title = d.Spec.GetNestedString(dashboardSpecTitle)
+		refresh = d.Spec.GetNestedString(dashboardSpecRefreshInterval)
+	case *v2alpha1.Dashboard:
+		title = d.Spec.Title
+		refresh = d.Spec.TimeSettings.AutoRefresh
+	default:
+		return "", "", fmt.Errorf("unsupported dashboard version: %T", obj)
+	}
+
+	return title, refresh, nil
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -190,15 +390,15 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
 	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme)
+		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
-	opts.StorageOptions(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
+	opts.StorageOptsRegister(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v0alpha1.DashboardResourceInfo,
-		v0alpha1.LibraryPanelResourceInfo,
+		&v0alpha1.LibraryPanelResourceInfo,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v0alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v0alpha1.Dashboard)
@@ -216,7 +416,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// v1alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v1alpha1.DashboardResourceInfo,
-		v1alpha1.LibraryPanelResourceInfo,
+		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v1alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v1alpha1.Dashboard)
@@ -234,7 +434,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// v2alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		v2alpha1.DashboardResourceInfo,
-		v2alpha1.LibraryPanelResourceInfo,
+		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &v2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*v2alpha1.Dashboard)
@@ -257,7 +457,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	opts builder.APIGroupOptions,
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
-	libraryPanels utils.ResourceInfo,
+	libraryPanels *utils.ResourceInfo,
 	newDTOFunc dtoBuilder,
 ) error {
 	// Register the versioned storage
@@ -295,9 +495,11 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	// Expose read only library panels
-	storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
-		Access:       b.legacy.Access,
-		ResourceInfo: libraryPanels,
+	if libraryPanels != nil {
+		storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
+			Access:       b.legacy.Access,
+			ResourceInfo: *libraryPanels,
+		}
 	}
 
 	return nil
@@ -313,27 +515,15 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	// The plugin description
 	oas.Info.Description = "Grafana dashboards as resources"
-
-	for _, gv := range b.GetGroupVersions() {
-		version := gv.Version
-		// Hide cluster-scoped resources
-		root := path.Join("/apis/", v0alpha1.GROUP, version)
-		delete(oas.Paths.Paths, path.Join(root, "dashboards"))
-		delete(oas.Paths.Paths, path.Join(root, "watch", "dashboards"))
-
-		if version == v0alpha1.VERSION {
-			sub := oas.Paths.Paths[path.Join(root, "search", "{name}")]
-			oas.Paths.Paths[path.Join(root, "search")] = sub
-			delete(oas.Paths.Paths, path.Join(root, "search", "{name}"))
-		}
-	}
-
 	return oas, nil
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	if gv.Version != v0alpha1.VERSION {
+		return nil // Only show the custom routes for v0
+	}
+
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
 }

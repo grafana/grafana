@@ -370,6 +370,10 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	col := getQueryCol(c.Query("resultSortColumn"), cloudmigration.SortColumnID)
 	order := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
 	errorsOnly := c.QueryBool("errorsOnly")
+	// Don't allow the user to reverse-sort by ID
+	if col == cloudmigration.SortColumnID && order == cloudmigration.SortOrderDesc {
+		order = cloudmigration.SortOrderAsc
+	}
 
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
