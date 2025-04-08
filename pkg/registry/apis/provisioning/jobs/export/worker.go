@@ -17,21 +17,27 @@ import (
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
 type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, folderClient dynamic.ResourceInterface, progress jobs.JobProgressRecorder) error
 
+//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
+type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+
 type ExportWorker struct {
 	clientFactory       resources.ClientFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	exportFn            ExportFn
+	wrapWithCloneFn     WrapWithCloneFn
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
 	exportFn ExportFn,
+	wrapWithCloneFn WrapWithCloneFn,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
 		exportFn:            exportFn,
+		wrapWithCloneFn:     wrapWithCloneFn,
 	}
 }
 
@@ -98,5 +104,5 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, folderClient, progress)
 	}
 
-	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
+	return r.wrapWithCloneFn(ctx, repo, cloneOptions, pushOptions, fn)
 }

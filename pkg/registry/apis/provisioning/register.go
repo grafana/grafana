@@ -557,7 +557,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,
