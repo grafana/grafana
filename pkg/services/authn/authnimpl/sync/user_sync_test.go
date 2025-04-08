@@ -619,7 +619,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip validation if allowedNonProvisionedUsers is enabled",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = true
+				userSyncService.allowNonProvisionedUsers = true
 				userSyncService.isUserProvisioningEnabled = true
 				return userSyncService
 			},
@@ -632,7 +632,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should skip validation if the user is authenticated via GrafanaComAuthModule",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				return userSyncService
 			},
@@ -645,7 +645,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, unexpected error",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedError: errors.New("random error"),
@@ -663,7 +663,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the identity with the provisioned user, no user found",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{}
 				return userSyncService
@@ -679,7 +679,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - empty ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -707,7 +707,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - different ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -736,7 +736,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should successfully validate the provisioned user.ExternalUID with the identity.ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{
@@ -764,7 +764,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			desc: "it should failed to validate a non provisioned user when retrieved from the database",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
-				userSyncService.allowedNonProvisionedUsers = false
+				userSyncService.allowNonProvisionedUsers = false
 				userSyncService.isUserProvisioningEnabled = true
 				userSyncService.userService = &usertest.FakeUserService{
 					ExpectedUser: &user.User{

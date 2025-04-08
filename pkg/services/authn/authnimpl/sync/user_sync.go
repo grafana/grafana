@@ -84,30 +84,30 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		allowedNonProvisionedUsers: scimSection.Key("allowed_non_provisioned_users").MustBool(false),
-		isUserProvisioningEnabled:  scimSection.Key("user_sync_enabled").MustBool(false),
-		userService:                userService,
-		authInfoService:            authInfoService,
-		userProtectionService:      userProtectionService,
-		quotaService:               quotaService,
-		log:                        log.New("user.sync"),
-		tracer:                     tracer,
-		features:                   features,
-		lastSeenSF:                 &singleflight.Group{},
+		allowNonProvisionedUsers:  scimSection.Key("allowed_non_provisioned_users").MustBool(false),
+		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		userService:               userService,
+		authInfoService:           authInfoService,
+		userProtectionService:     userProtectionService,
+		quotaService:              quotaService,
+		log:                       log.New("user.sync"),
+		tracer:                    tracer,
+		features:                  features,
+		lastSeenSF:                &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	allowedNonProvisionedUsers bool
-	isUserProvisioningEnabled  bool
-	userService                user.Service
-	authInfoService            login.AuthInfoService
-	userProtectionService      login.UserProtectionService
-	quotaService               quota.Service
-	log                        log.Logger
-	tracer                     tracing.Tracer
-	features                   featuremgmt.FeatureToggles
-	lastSeenSF                 *singleflight.Group
+	allowNonProvisionedUsers  bool
+	isUserProvisioningEnabled bool
+	userService               user.Service
+	authInfoService           login.AuthInfoService
+	userProtectionService     login.UserProtectionService
+	quotaService              quota.Service
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	features                  featuremgmt.FeatureToggles
+	lastSeenSF                *singleflight.Group
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
@@ -123,7 +123,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	}
 
 	// Skip validation if non-provisioned users are allowed
-	if s.allowedNonProvisionedUsers {
+	if s.allowNonProvisionedUsers {
 		s.log.FromContext(ctx).Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
 		return nil
 	}
