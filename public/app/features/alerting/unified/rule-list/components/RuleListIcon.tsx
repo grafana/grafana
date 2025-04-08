@@ -27,12 +27,14 @@ export enum RuleOperation {
 const icons: Record<PromAlertingRuleState, IconName> = {
   [PromAlertingRuleState.Inactive]: 'check-circle',
   [PromAlertingRuleState.Pending]: 'circle',
+  [PromAlertingRuleState.Recovering]: 'exclamation-circle',
   [PromAlertingRuleState.Firing]: 'exclamation-circle',
 };
 
 const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning'> = {
   [PromAlertingRuleState.Inactive]: 'success',
   [PromAlertingRuleState.Pending]: 'warning',
+  [PromAlertingRuleState.Recovering]: 'warning',
   [PromAlertingRuleState.Firing]: 'error',
 };
 
@@ -40,6 +42,7 @@ const stateNames: Record<PromAlertingRuleState, string> = {
   [PromAlertingRuleState.Inactive]: 'Normal',
   [PromAlertingRuleState.Pending]: 'Pending',
   [PromAlertingRuleState.Firing]: 'Firing',
+  [PromAlertingRuleState.Recovering]: 'Recovering',
 };
 
 const operationIcons: Record<RuleOperation, IconName> = {
