@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -90,6 +91,7 @@ type alertmanagerSet struct {
 // sendAll sends the alerts to all configured Alertmanagers concurrently.
 // It returns true if the alerts could be sent successfully to at least one Alertmanager.
 // Extension: passing headers from each ams to sendOne
+// Extension: treat context cancellations as a success
 func (n *Manager) sendAll(alerts ...*Alert) bool {
 	if len(alerts) == 0 {
 		return true
@@ -177,7 +179,8 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			// Extension: added headers parameter.
 			go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header) {
 				err := n.sendOne(ctx, client, url, payload, headers)
-				if err != nil {
+				// Extension: Treat cancellations as a success, so that we don't increment error or dropped counters.
+				if err != nil && !errors.Is(err, context.Canceled) {
 					n.logger.Error("Error sending alerts", "alertmanager", url, "count", count, "err", err)
 					n.metrics.errors.WithLabelValues(url).Add(float64(count))
 				} else {
