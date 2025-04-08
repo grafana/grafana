@@ -145,6 +145,8 @@ export function MetricsBrowserProvider({
       setSelectedLabelKeys([]);
     }
 
+    // We want this to be run only once in the beginning
+    // so we keep the dependency array empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -170,6 +172,8 @@ export function MetricsBrowserProvider({
       setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
       setStatus('Ready');
     }
+
+    // When a selectedMetric changed we should fetch the labels
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languageProvider, selectedMetric]);
 
@@ -192,6 +196,9 @@ export function MetricsBrowserProvider({
         setErr(`Error fetching labels: ${error.message || 'Unknown error'}`);
         setStatus('');
       });
+
+    // We need to fetch values only when metrics list has changed.
+    // That means we have new set of metrics and labels so we need to update the values.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languageProvider, timeRange, metrics]);
 
