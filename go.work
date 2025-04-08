@@ -39,10 +39,6 @@ replace xorm.io/xorm => ./pkg/util/xorm
 
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
 
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250331083058-4563aec7a975
 
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
-
-// Can be removed once Bleve releases v2.5.0.
-// We've pinned this for: https://github.com/blevesearch/bleve/commit/af9e3111dadfedf9d30f0448506b4a57fecc8550
-replace github.com/blevesearch/bleve/v2 => github.com/blevesearch/bleve/v2 v2.4.4-0.20250319135056-b82baf10b205

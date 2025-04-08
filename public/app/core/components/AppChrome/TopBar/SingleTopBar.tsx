@@ -78,19 +78,13 @@ export const SingleTopBar = memo(function SingleTopBar({
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
+            <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
           </Dropdown>
         )}
-        <ToolbarButton
-          icon="monitor"
-          className={styles.kioskToggle}
-          onClick={onToggleKioskMode}
-          tooltip="Enable kiosk mode"
-        />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {config.featureToggles.inviteUserExperimental && <InviteUserButton />}
         {config.featureToggles.extensionSidebar && <ExtensionToolbarItem />}
-        {profileNode && <ProfileButton profileNode={profileNode} />}
+        {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
       </Stack>
     </div>
   );

@@ -30,7 +30,10 @@ type SyncWorker struct {
 	lister resources.ResourceLister
 
 	// Parses fields saved in remore repository
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
+
+	// Clients for the repository
+	clients resources.ClientFactory
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
@@ -38,13 +41,15 @@ type SyncWorker struct {
 
 func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
+	clients resources.ClientFactory,
 	lister resources.ResourceLister,
 	storageStatus dualwrite.Service,
 ) *SyncWorker {
 	return &SyncWorker{
 		client:        client,
 		parsers:       parsers,
+		clients:       clients,
 		lister:        lister,
 		storageStatus: storageStatus,
 	}
@@ -137,7 +142,12 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	folderClient, err := parser.Clients().Folder()
+	clients, err := r.clients.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients for %s: %w", cfg.Name, err)
+	}
+
+	folderClient, err := clients.Folder()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get folder client: %w", err)
 	}
@@ -148,8 +158,8 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter
 		progress:        progress,
 		lister:          r.lister,
 		folders:         folders,
-		clients:         parser.Clients(),
-		resourceManager: resources.NewResourcesManager(repo, folders, parser, parser.Clients(), nil),
+		clients:         clients,
+		resourceManager: resources.NewResourcesManager(repo, folders, parser, clients, nil),
 	}
 
 	return job, nil
@@ -175,8 +185,8 @@ type syncJob struct {
 	repository      repository.Reader
 	progress        jobs.JobProgressRecorder
 	lister          resources.ResourceLister
+	clients         resources.ResourceClients
 	folders         *resources.FolderManager
-	clients         *resources.ResourceClients
 	resourceManager *resources.ResourcesManager
 }
 
@@ -309,14 +319,12 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 		name, gvk, err := r.resourceManager.WriteResourceFromFile(ctx, change.Path, "")
 		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-			Name:   name,
-			Error:  err,
-		}
-		if gvk != nil {
-			result.Resource = gvk.Kind
-			result.Group = gvk.Group
+			Path:     change.Path,
+			Action:   change.Action,
+			Name:     name,
+			Error:    err,
+			Resource: gvk.Kind,
+			Group:    gvk.Group,
 		}
 		r.progress.Record(ctx, result)
 	}
@@ -392,30 +400,24 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 				result.Error = fmt.Errorf("write resource: %w", err)
 			}
 			result.Name = name
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
+			result.Resource = gvk.Kind
+			result.Group = gvk.Group
 		case repository.FileActionDeleted:
 			name, gvk, err := r.resourceManager.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
 			if err != nil {
 				result.Error = fmt.Errorf("delete resource: %w", err)
 			}
 			result.Name = name
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
+			result.Resource = gvk.Kind
+			result.Group = gvk.Group
 		case repository.FileActionRenamed:
 			name, gvk, err := r.resourceManager.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
 				result.Error = fmt.Errorf("rename resource: %w", err)
 			}
 			result.Name = name
-			if gvk != nil {
-				result.Resource = gvk.Kind
-				result.Group = gvk.Group
-			}
+			result.Resource = gvk.Kind
+			result.Group = gvk.Group
 		case repository.FileActionIgnored:
 			// do nothing
 		}

@@ -95,21 +95,20 @@ spec:
 		info.Data, err = os.ReadFile(path.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := &Parser{
+		parser := &parser{
 			repo: provisioning.ResourceRepositoryInfo{
 				Name: "test",
 			},
 		}
 
-		// try to validate (and lint)
-		validate := true
-
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), info, validate)
-		require.Error(t, err) // no clients configured!
+		parsed, err := parser.Parse(context.Background(), info)
+		require.EqualError(t, err, "no clients configured")
+		err = parsed.DryRun(context.Background())
+		require.EqualError(t, err, "no client configured")
 
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
-		require.Equal(t, &schema.GroupVersionKind{
+		require.Equal(t, schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
 			Version: "v0alpha1",
 			Kind:    "Dashboard",

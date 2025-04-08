@@ -169,9 +169,41 @@ func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 	})
 }
 
+func TestUpdateTeamMembersFromProvisionedTeam(t *testing.T) {
+	server := SetupAPITestServer(t, &teamtest.FakeService{
+		ExpectedIsMember: true,
+		ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001", IsProvisioned: true},
+	})
+
+	t.Run("should not be able to update team member from a provisioned team", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodPut, "/api/teams/1/members/1", strings.NewReader("{\"permission\": 1}")),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to update team member from a provisioned team by team UID", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodPut, "/api/teams/a00001/members/1", strings.NewReader("{\"permission\": 1}")),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}
+
 func TestDeleteTeamMembersAPIEndpoint(t *testing.T) {
 	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
+		hs.teamService = &teamtest.FakeService{
+			ExpectedIsMember: true,
+			ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001"},
+		}
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
 	})
 
@@ -193,6 +225,27 @@ func TestDeleteTeamMembersAPIEndpoint(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}
+
+func TestDeleteTeamMembersFromProvisionedTeam(t *testing.T) {
+	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
+		hs.teamService = &teamtest.FakeService{
+			ExpectedIsMember: true,
+			ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001", IsProvisioned: true},
+		}
+		hs.teamPermissionsService = &actest.FakePermissionsService{}
+	})
+
+	t.Run("should not be able to delete team member from a provisioned team", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodDelete, "/api/teams/1/members/1", nil),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
 }

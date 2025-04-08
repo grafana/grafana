@@ -28,20 +28,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:         "live-service-web-worker",
-			Description:  "This will use a webworker thread to processes events rather than the main thread",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:         "queryOverLive",
-			Description:  "Use Grafana Live WebSocket to execute backend queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:              "panelTitleSearch",
 			Description:       "Search for dashboards using panel title",
 			Stage:             FeatureStagePublicPreview,
@@ -91,56 +77,6 @@ var (
 			Owner:          grafanaDatavizSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
-		},
-		{
-			Name:         "autoMigrateOldPanels",
-			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateGraphPanel",
-			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateTablePanel",
-			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigratePiechartPanel",
-			Description:  "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateWorldmapPanel",
-			Description:  "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateStatPanel",
-			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:              "disableAngular",
-			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
-			Stage:             FeatureStagePublicPreview,
-			FrontendOnly:      true,
-			Owner:             grafanaDatavizSquad,
-			HideFromAdminPage: true,
 		},
 		{
 			Name:              "canvasPanelNesting",
@@ -1673,14 +1609,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:              "alertingConversionAPI",
-			Description:       "Enable the alerting conversion API",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:         "newLogsPanel",
 			Description:  "Enables the new logs panel in Explore",
 			Stage:        FeatureStageExperimental,
@@ -1785,15 +1713,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:              "noBackdropBlur",
-			Description:       "Disables backdrop blur",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaFrontendPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
 			Name:              "alertingMigrationUI",
 			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
 			FrontendOnly:      true,
@@ -1880,6 +1799,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:         "logsPanelControls",
+			Description:  "Enables a control component for the logs panel in Explore",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "false",
 		},
 	}
 )

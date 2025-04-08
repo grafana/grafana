@@ -90,7 +90,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
-{{< shared id="create-dashboard" >}}
+<section id="create-dashboard">
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
@@ -98,7 +98,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-{{< /shared >}}
+</section>
 
 1. In the dialog box that opens, do one of the following:
 

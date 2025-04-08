@@ -22,8 +22,6 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { getPanelIdForVizPanel } from '../../utils/utils';
 
-import { AngularEditorLoader } from './AngularEditorLoader';
-
 type Props = {
   annotation: AnnotationQuery;
   editIndex: number;
@@ -273,13 +271,6 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           <StandardAnnotationQueryEditor
             datasource={ds}
             datasourceInstanceSettings={dsi}
-            annotation={annotation}
-            onChange={(annotation) => onUpdate(annotation, editIndex)}
-          />
-        )}
-        {ds && !ds.annotations && (
-          <AngularEditorLoader
-            datasource={ds}
             annotation={annotation}
             onChange={(annotation) => onUpdate(annotation, editIndex)}
           />

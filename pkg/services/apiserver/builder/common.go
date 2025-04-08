@@ -16,6 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -64,7 +65,7 @@ type APIGroupValidation interface {
 
 type APIGroupRouteProvider interface {
 	// Support direct HTTP routes from an APIGroup
-	GetAPIRoutes() *APIRoutes
+	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
 type APIGroupPostStartHookProvider interface {
@@ -73,11 +74,12 @@ type APIGroupPostStartHookProvider interface {
 }
 
 type APIGroupOptions struct {
-	Scheme           *runtime.Scheme
-	OptsGetter       generic.RESTOptionsGetter
-	DualWriteBuilder grafanarest.DualWriteBuilder
-	MetricsRegister  prometheus.Registerer
-	StorageOptions   apistore.StorageOptionsRegister
+	Scheme              *runtime.Scheme
+	OptsGetter          generic.RESTOptionsGetter
+	DualWriteBuilder    grafanarest.DualWriteBuilder
+	MetricsRegister     prometheus.Registerer
+	StorageOptsRegister apistore.StorageOptionsRegister
+	StorageOpts         *options.StorageOptions
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
