@@ -42,7 +42,7 @@ To download your Grafana Enterprise license:
 1. Sign in to your [Grafana Cloud](/) account.
 1. Go to **My Account** and select an organization from the drop-down menu at the top left of the page. On the Overview page for each organization, you can see a section for Grafana Enterprise licenses. Click **Details** next to a license.
 1. If the license shows "License not configured" or if the URL is listed as "-", you need to update the details. This requires the Admin role.
-   1. Click **Update** next to License Details. _(If the Update button is not visible, contact the Grafana account team.)_
+   1. Click **Update** next to License Details. _If the **Update** button isn't visible, contact the Grafana account team._
    1. Enter the URL. It must match the effective [root_url](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) configuration setting (including trailing slash) of the Grafana Enterprise instance. It should be the URL that users type in their browsers to access the frontend, not the node hostname. The URL must start with https://, and it cannot be `localhost` or contain wildcards.
    1. Optionally you may edit the license name. The name is only used for display purposes.
    1. Click **Save**.
