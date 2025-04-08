@@ -105,8 +105,10 @@ type PullRequestJobOptions struct {
 	Ref string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR   int    `json:"pr,omitempty"`
-	Hash string `json:"hash,omitempty"` // used in PR code... not sure it is necessary
+	PR int `json:"pr,omitempty"`
+
+	// The specific commit hash that triggered this notice
+	Hash string `json:"hash,omitempty"`
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
@@ -126,17 +128,11 @@ type ExportJobOptions struct {
 
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 // The job status

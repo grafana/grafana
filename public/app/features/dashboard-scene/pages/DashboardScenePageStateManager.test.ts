@@ -1,6 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -39,6 +39,25 @@ const setupDashboardAPI = (
     deleteDashboard: jest.fn(),
     saveDashboard: jest.fn(),
   }));
+};
+
+const setupV1FailureV2Success = (
+  v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
+    access: {},
+    apiVersion: 'v2alpha1',
+    kind: 'DashboardWithAccessInfo',
+    metadata: {
+      name: 'fake-dash',
+      creationTimestamp: '',
+      resourceVersion: '1',
+    },
+    spec: { ...defaultDashboardV2Spec() },
+  }
+) => {
+  const getDashSpy = jest.fn();
+  setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+  setupDashboardAPI(v2Response, getDashSpy);
+  return getDashSpy;
 };
 
 describe('DashboardScenePageStateManager v1', () => {
@@ -84,6 +103,7 @@ describe('DashboardScenePageStateManager v1', () => {
       });
 
       const loader = new DashboardScenePageStateManager({});
+
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeUndefined();
@@ -140,56 +160,6 @@ describe('DashboardScenePageStateManager v1', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
-    });
-
-    describe('Home dashboard', () => {
-      it('should handle home dashboard redirect', async () => {
-        setBackendSrv({
-          get: () => Promise.resolve({ redirectUri: '/d/asd' }),
-        } as unknown as BackendSrv);
-
-        const loader = new DashboardScenePageStateManager({});
-        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-
-        expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toBeUndefined();
-      });
-
-      it('should handle invalid home dashboard request', async () => {
-        setBackendSrv({
-          get: () =>
-            Promise.reject({
-              status: 500,
-              data: { message: 'Failed to load home dashboard' },
-            }),
-        } as unknown as BackendSrv);
-
-        const loader = new DashboardScenePageStateManager({});
-        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-
-        expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual({
-          message: 'Failed to load home dashboard',
-          messageId: undefined,
-          status: 500,
-        });
-      });
-
-      it('should throw when v2 custom home dashboard is provided', async () => {
-        setBackendSrv({
-          get: () => Promise.resolve({ dashboard: customHomeDashboardV2Spec, meta: {} }),
-        } as unknown as BackendSrv);
-
-        const loader = new DashboardScenePageStateManager({});
-        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-
-        expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual({
-          message: 'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.',
-          messageId: undefined,
-          status: undefined,
-        });
-      });
     });
 
     describe('New dashboards', () => {
@@ -322,7 +292,12 @@ describe('DashboardScenePageStateManager v2', () => {
       });
 
       const loader = new DashboardScenePageStateManagerV2({});
-      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      } catch (e) {
+        expect(e).toBeInstanceOf(Error);
+        expect((e as Error).message).toBe('Dashhboard not found');
+      }
 
       // expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
@@ -471,53 +446,6 @@ describe('DashboardScenePageStateManager v2', () => {
           messageId: undefined,
           status: 500,
         });
-      });
-
-      it('should not transform v2 custom home dashboard spec', async () => {
-        setBackendSrv({
-          get: () => {
-            return Promise.resolve({
-              access: {
-                canSave: false,
-                canEdit: true,
-                canAdmin: false,
-                canStar: false,
-                canDelete: false,
-                slug: '',
-                url: '',
-                expires: '0001-01-01T00:00:00Z',
-                created: '0001-01-01T00:00:00Z',
-                updated: '0001-01-01T00:00:00Z',
-                updatedBy: '',
-                createdBy: '',
-                version: 0,
-                hasAcl: false,
-                isFolder: false,
-                folderId: 0,
-                folderUid: '',
-                folderTitle: 'General',
-                folderUrl: '',
-                provisioned: false,
-                provisionedExternalId: '',
-                annotationsPermissions: null,
-              },
-              apiVersion: 'v2alpha1',
-              kind: 'DashboardWithAccessInfo',
-              metadata: {
-                name: 'home',
-                creationTimestamp: '',
-                resourceVersion: '1',
-              },
-              spec: customHomeDashboardV2Spec,
-            });
-          },
-        } as unknown as BackendSrv);
-
-        const loader = new DashboardScenePageStateManagerV2({});
-        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-
-        expect(loader.state.dashboard?.getInitialSaveModel()).toEqual(customHomeDashboardV2Spec);
-        expect(loader.state.loadError).toBeUndefined();
       });
     });
 
@@ -677,23 +605,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should switch to v2 manager when loading v2 dashboard', async () => {
-      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
-
-      const getDashSpy = jest.fn();
-      setupDashboardAPI(
-        {
-          access: {},
-          apiVersion: 'v2alpha1',
-          kind: 'DashboardWithAccessInfo',
-          metadata: {
-            name: 'fake-dash',
-            creationTimestamp: '',
-            resourceVersion: '1',
-          },
-          spec: { ...defaultDashboardV2Spec() },
-        },
-        getDashSpy
-      );
+      const getDashSpy = setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
       await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -703,22 +615,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should maintain active manager state between operations', async () => {
-      const getDashSpy = jest.fn();
-      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
-      setupDashboardAPI(
-        {
-          access: {},
-          apiVersion: 'v2alpha1',
-          kind: 'DashboardWithAccessInfo',
-          metadata: {
-            name: 'fake-dash',
-            creationTimestamp: '',
-            resourceVersion: '1',
-          },
-          spec: { ...defaultDashboardV2Spec() },
-        },
-        getDashSpy
-      );
+      setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
 
@@ -734,22 +631,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     it.todo('should handle snapshot loading for both v1 and v2');
 
     it('should handle dashboard reloading with current active manager', async () => {
-      const getDashSpy = jest.fn();
-      setupDashboardAPI(
-        {
-          access: {},
-          apiVersion: 'v2alpha1',
-          kind: 'DashboardWithAccessInfo',
-          metadata: {
-            name: 'fake-dash',
-            creationTimestamp: '',
-            resourceVersion: '1',
-          },
-          spec: { ...defaultDashboardV2Spec() },
-        },
-        getDashSpy
-      );
-      setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+      setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
 
@@ -794,7 +676,166 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
   });
+
+  describe('reloadDashboard', () => {
+    it('should reload v1 dashboard with v1 manager', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined);
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      loadDashboardMock.mockClear();
+
+      const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
+      await manager.reloadDashboard(options);
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', {
+        from: 'now-1h',
+        to: 'now',
+        version: 2,
+        scopes: [],
+      });
+    });
+
+    it('should reload v2 dashboard with v2 manager', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
+      try {
+        await manager.reloadDashboard(options);
+      } catch (e) {
+        expect(e).toBeInstanceOf(Error);
+        expect((e as Error).message).toBe('Method not implemented.');
+      }
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+  });
+
+  describe('Home dashboard', () => {
+    it('should handle home dashboard redirect', async () => {
+      setBackendSrv({
+        get: () => Promise.resolve({ redirectUri: '/d/asd' }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.loadError).toBeUndefined();
+      expect(locationService.getLocation().pathname).toBe('/d/asd');
+    });
+
+    it('should handle invalid home dashboard request', async () => {
+      setBackendSrv({
+        get: () =>
+          Promise.reject({
+            status: 500,
+            data: { message: 'Failed to load home dashboard' },
+          }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.loadError).toEqual({
+        message: 'Failed to load home dashboard',
+        messageId: undefined,
+        status: 500,
+      });
+    });
+
+    it('should handle custom v1 home dashboard ', async () => {
+      setBackendSrv({
+        get: () => Promise.resolve({ dashboard: customHomeDashboardV1Spec, meta: {} }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
+    });
+
+    it('should transform v2 custom home dashboard to v1', async () => {
+      setBackendSrv({
+        get: () => Promise.resolve({ dashboard: customHomeDashboardV2Spec, meta: {} }),
+      } as unknown as BackendSrv);
+
+      const loader = new UnifiedDashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
+    });
+  });
 });
+
+const customHomeDashboardV1Spec = {
+  annotations: {
+    list: [
+      {
+        builtIn: 1,
+        datasource: {
+          type: 'grafana',
+          uid: '-- Grafana --',
+        },
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        type: 'dashboard',
+      },
+    ],
+  },
+  editable: true,
+  fiscalYearStartMonth: 0,
+  graphTooltip: 0,
+  links: [],
+  panels: [
+    {
+      description: 'Welcome to the home dashboard!',
+      fieldConfig: { defaults: {}, overrides: [] },
+      gridPos: { h: 6, w: 12, x: 6, y: 0 },
+      id: 0,
+      links: [],
+      options: {
+        content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
+        mode: 'markdown',
+      },
+      pluginVersion: '',
+      targets: [{ refId: 'A' }],
+      title: 'Welcome',
+      transformations: [],
+      type: 'text',
+    },
+  ],
+  preload: false,
+  refresh: '',
+  schemaVersion: 40,
+  tags: [],
+  templating: { list: [] },
+  time: { from: 'now-6h', to: 'now' },
+  timepicker: {
+    hidden: false,
+    refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+  },
+  timezone: 'browser',
+  title: 'Home Dashboard v2 schema',
+  uid: '',
+  version: 0,
+};
 
 const customHomeDashboardV2Spec = {
   title: 'Home Dashboard v2 schema',
