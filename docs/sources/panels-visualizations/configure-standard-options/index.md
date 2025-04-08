@@ -187,6 +187,19 @@ You can also paste a native emoji in the **Unit** drop-down and select it as a c
 
 ![A time series visualization using custom thumbs up emoji units](/media/docs/grafana/panels-visualizations/thumbsup_panel_v11.0.png)
 
+#### Time format units
+
+All Date & time format units in Grafana (such as "Datetime ISO", "Datetime US", etc.) expect input values to be in **milliseconds** since the Unix epoch (January 1, 1970). If your data source provides timestamps in seconds, these will be incorrectly interpreted as dates very close to January 1, 1970.
+
+To display timestamps that are in seconds since epoch, you need to multiply your timestamp values by 1000 using a transformation:
+
+- Add a "Calculate field" transformation
+- Set "Mode" to "Binary operation"
+- Set "Operation" to "Multiply by"
+- Set "Field name" to your timestamp field
+- Set "Use" to "Numeric value" and enter "1000"
+- Check "Replace all fields" if you only want to see the calculated field
+
 #### Control unit scaling
 
 By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have values of 0.14kW and 3000kW, Grafana displays them as 140W and 3MW, respectively. You can use custom units to control this behavior by setting a prefix, suffix, or custom SI unit.
