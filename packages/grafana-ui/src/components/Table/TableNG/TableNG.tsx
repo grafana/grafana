@@ -35,7 +35,6 @@ import {
   FilterType,
   TableRow,
   TableSummaryRow,
-  ColumnTypes,
   TableColumnResizeActionCallback,
   TableColumn,
   TableFieldOptionsType,
@@ -84,7 +83,7 @@ export function TableNG(props: TableNGProps) {
 
       return {
         columnKey,
-        direction: desc ? ('DESC' as const) : ('ASC' as const),
+        direction: desc ? 'DESC' : 'ASC',
       };
     });
     return initialSort ?? [];
@@ -194,17 +193,17 @@ export function TableNG(props: TableNGProps) {
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create a map of column key to column type
-  const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+  const columnTypes: Record<string, FieldType> = useMemo(
+    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
-  const textWraps = useMemo(
+  const textWraps: Record<string, boolean> = useMemo(
     () =>
       props.data.fields.reduce(
         (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
+        {}
       ),
     [props.data.fields]
   );
@@ -241,16 +240,12 @@ export function TableNG(props: TableNGProps) {
     return props.data.fields.length;
   }, [props.data.fields]);
 
-  const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+  const fieldDisplayType: Record<string, TableCellDisplayMode> = useMemo(() => {
+    return props.data.fields.reduce((acc, { config, name }) => {
+      // @ts-ignore
+      acc[name] = config.custom.cellOptions.type;
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
