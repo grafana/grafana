@@ -781,6 +781,133 @@ func TestExportWorker_ProcessDashboards(t *testing.T) {
 				repoResources.AssertExpectations(t)
 			},
 		},
+		{
+			name: "dashboard export with errors",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					return true, &metav1.PartialObjectMetadataList{}, nil
+				}
+				return true, &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "dashboard-1",
+							},
+						},
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "dashboard-2",
+							},
+						},
+					},
+				}, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "failed to export dashboard"
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+
+				options := resources.WriteOptions{
+					Path: "grafana",
+					Ref:  "",
+				}
+
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "dashboard-1"
+				}), options).Return("", fmt.Errorf("failed to export dashboard"))
+
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "dashboard-2"
+				}), options).Return("dashboard-2.json", nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
+		{
+			name: "dashboard export too many errors",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				if action.GetResource() == resources.FolderResource {
+					return true, &metav1.PartialObjectMetadataList{}, nil
+				}
+				return true, &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "dashboard-1",
+							},
+						},
+					},
+				}, nil
+			},
+			expectedError: "export dashboards: too many errors encountered",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "failed to export dashboard"
+				})).Return()
+				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 0
+				}), mock.Anything).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+
+				options := resources.WriteOptions{
+					Path: "grafana",
+					Ref:  "",
+				}
+
+				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "dashboard-1"
+				}), options).Return("", fmt.Errorf("failed to export dashboard"))
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
 	}
 
 	for _, tt := range tests {

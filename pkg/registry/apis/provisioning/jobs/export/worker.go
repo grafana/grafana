@@ -158,7 +158,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			if errors.Is(err, resources.ErrAlreadyInRepository) {
 				result.Action = repository.FileActionIgnored
 			} else if err != nil {
-				result.Error = fmt.Errorf("export resource: %w", err)
+				result.Action = repository.FileActionIgnored
+				result.Error = err
 			}
 			result.Path = fileName
 			progress.Record(ctx, result)
