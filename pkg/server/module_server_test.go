@@ -48,6 +48,8 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	require.NoError(t, err)
 	_, err = clientAuth.NewKey("token", "some-token")
 	require.NoError(t, err)
+	_, err = clientAuth.NewKey("token_namespace", "stacks-123")
+	require.NoError(t, err)
 
 	addStorageServerToConfig(t, cfg, dbType)
 	cfg.Target = []string{modules.StorageServer}
@@ -78,13 +80,6 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 	s, err := cfg.Raw.NewSection("resource_api")
 	require.NoError(t, err)
 	_, err = s.NewKey("db_type", dbType)
-	require.NoError(t, err)
-
-	clientAuth, err := cfg.Raw.NewSection("grpc_client_authentication")
-	require.NoError(t, err)
-	_, err = clientAuth.NewKey("token_exchange_url", "token-url")
-	require.NoError(t, err)
-	_, err = clientAuth.NewKey("token", "some-token")
 	require.NoError(t, err)
 
 	if dbType == "postgres" {
