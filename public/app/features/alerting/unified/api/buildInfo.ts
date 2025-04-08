@@ -40,7 +40,9 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
     type !== 'grafana-azureprometheus-datasource' &&
     type !== 'loki'
   ) {
-    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+    throw new Error(
+      `The build info request is not available for ${type}. Only 'prometheus', 'amazon prometheus', 'azure prometheus' and 'loki' are supported`
+    );
   }
 
   return discoverDataSourceFeatures({ name, url, type });

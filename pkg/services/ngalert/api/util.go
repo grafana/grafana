@@ -53,7 +53,7 @@ func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheSer
 		}
 	case apimodels.LoTexRulerBackend:
 		if ds.Type != "loki" && ds.Type != "prometheus" && ds.Type != "grafana-amazonprometheus-datasource" && ds.Type != "grafana-azureprometheus-datasource" {
-			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
 		}
 	default:
 		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
