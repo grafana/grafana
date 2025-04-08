@@ -2,7 +2,11 @@
   "_comment": "Kód představuje zdroj skutečností pro anglické fráze. Měly by být aktualizovány přímo v komponentách a tento soubor by měl obsahovat varianty množného čísla.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Role",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Účet služby",
       "team-label": "Tým",
       "title": "Přidat oprávnění pro",
@@ -15,7 +19,9 @@
       "permission": "Oprávnění"
     },
     "permission-list-item": {
-      "inherited": "Zděděno ze složky"
+      "inherited": "Zděděno ze složky",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Přidat oprávnění",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Nikdy",
       "no-licensed-roles": "Nepřiřazeno"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Stav výstrahy",
       "annotations": "Vysvětlivky",
+      "description-missing-series-evaluations": "",
       "evaluation": "Hodnocení",
       "evaluation-paused": "Hodnocení výstrah je aktuálně pozastaveno",
       "evaluation-paused-description": "Oznámení pro toto pravidlo nebudou aktivována a nebudou vytvořeny žádné instance oznámení, dokud nebude pravidlo znovu aktivováno.",
+      "keep-firing-for": "",
       "last-evaluated": "Poslední hodnocení",
       "last-evaluation-duration": "Doba trvání posledního hodnocení",
       "last-updated-at": "Poslední aktualizace v",
       "last-updated-by": "Naposledy upraveno uživatelem",
+      "missing-series-resolve": "",
       "no-annotations": "Žádné vysvětlivky",
       "pending-period": "Čekající období",
       "rule": "Pravidlo",
@@ -536,7 +550,8 @@
           "error": "Chyba",
           "no-data": "Žádná data",
           "normal": "Normální",
-          "pending": "Nevyřízeno"
+          "pending": "Nevyřízeno",
+          "recovering": ""
         },
         "state-transitions": "Změna stavu",
         "unknown-event-state": "Neznámý",
@@ -798,6 +813,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -886,9 +902,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -916,6 +929,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1158,7 +1172,10 @@
           "new-recording-rule": "Nové pravidlo nahrávání",
           "title": "Spravováno Grafanou"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_few": "",
+        "loading-rules_many": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1276,9 +1293,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1556,8 +1570,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1613,7 +1629,18 @@
           "text": "Definujte, jak se vyhodnotí pravidlo výstrahy."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Definujte chování výstrahy, když hodnocení selže nebo dotaz nevrátí žádná data."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Čekající období"
       },
@@ -1732,6 +1759,19 @@
       "na": "",
       "paused": "Pozastaveno",
       "recording-rule": "Pravidlo nahrávání"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_few": "",
+      "error_many": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2274,6 +2314,9 @@
     "inline-toast": {
       "success": "Zkopírováno"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2818,8 +2861,10 @@
         "copy-or-duplicate": "Kopírovat nebo duplikovat",
         "delete": "Odstranit",
         "duplicate": "Duplikovat",
-        "grid": "Mřížka",
-        "layout": "Rozvržení"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -4313,10 +4358,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Vymazat složky"
+    "clear-folder-button": "Vymazat složky",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Stisknutím klávesy Enter vytvoříte novou složku.",
+    "input-placeholder": "",
     "loading": "Načítání složek…"
   },
   "folder-repo": {
@@ -4325,18 +4373,25 @@
   "forgot-password": {
     "back-button": "Zpět na přihlášení",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Přeskočit",
       "submit-button": "Odeslat"
     },
     "contact-admin": "Zapomněli jste uživatelské jméno nebo e-mail? Obraťte se na správce Grafany.",
     "email-sent": "Na e-mailovou adresu byl odeslán e-mail s odkazem na obnovení. Brzy byste ho měli obdržet.",
     "reset-password-header": "Obnovit heslo",
-    "send-email-button": "Odeslat e-mail s obnovením hesla"
+    "send-email-button": "Odeslat e-mail s obnovením hesla",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Pokračovat v úpravách",
     "description": "Provedené změny nemusí být uloženy.",
-    "discard-button": "Zahodit neuložené změny"
+    "discard-button": "Zahodit neuložené změny",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4606,6 +4661,7 @@
       "cell-filter-on": "Filtrovat podle hodnoty",
       "cell-filter-out": "Odfiltrovat hodnotu",
       "cell-inspect": "Zkontrolovat hodnotu",
+      "cell-inspect-tooltip": "",
       "copy": "Kopírovat do schránky",
       "count": "",
       "csv-counts": "Řádky:{{rows}}, sloupce:{{columns}}  <5></5>",
@@ -4615,8 +4671,10 @@
       "filter-popup-cancel": "Zrušit",
       "filter-popup-clear": "Vymazat filtr",
       "filter-popup-heading": "Filtrovat podle hodnot:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
       "inspect-drawer-title": "Zkontrolovat hodnotu",
+      "inspect-menu-label": "",
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
     },
@@ -4757,6 +4815,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -5019,10 +5087,10 @@
       "email-placeholder": "e-mail",
       "email-required": "E-mail je povinný",
       "name-label": "Název",
-      "name-placeholder": "název",
       "password-label": "Heslo",
       "password-placeholder": "heslo",
       "password-required": "Heslo je povinné",
+      "passwordless-username-label": "",
       "submit-label": "Přihlásit se",
       "submit-loading-label": "Přihlašování…",
       "username-label": "E-mail nebo uživatelské jméno",
@@ -5108,15 +5176,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5760,6 +5838,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Pozvat",
       "invite-tooltip": "Pozvat nového člena"
@@ -5769,6 +5853,7 @@
       "remove-bookmark": "Odebrat ze záložek"
     },
     "kiosk": {
+      "tooltip": "",
       "tv-alert": "Stisknutím klávesy ESC ukončíte režim kiosku"
     },
     "megamenu": {
@@ -5778,12 +5863,26 @@
       "open": "Otevřít nabídku",
       "undock": "Odpojit nabídku"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Novinky z blogu"
   },
   "news": {
     "drawer": {
-      "close": "Zavřít zásuvku"
+      "close": ""
     },
+    "link-title": "",
     "title": "Novinky z blogu"
   },
   "notifications": {
@@ -5808,6 +5907,17 @@
       "error": "Poskytovatel přihlášení zamítl žádost o přihlášení"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5827,6 +5937,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5876,7 +5994,10 @@
     "unsupported-layout": "Nepodporované rozvržení"
   },
   "panel-type-filter": {
-    "clear-button": "Vymazat typy"
+    "clear-button": "Vymazat typy",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6085,6 +6206,7 @@
     },
     "plugin-help": {
       "error": "Při načítání nápovědy došlo k chybě.",
+      "loading": "",
       "not-found": "Nebyla nalezena žádná nápověda k dotazu."
     },
     "plugin-installed-badge": {
@@ -6852,9 +6974,13 @@
       "clear-button": "Vymazat vše",
       "tooltip": "Teď můžete vybrat možnost „Žádná základní role“ a přidat oprávnění k vlastním potřebám. Více informací najdete v <1>naší dokumentaci</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Vymazat"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Přiřaďte role uživatelům, abyste zajistili podrobnou kontrolu nad přístupem k funkcím a zdrojům Grafana. Další informace najdete v naší <2>dokumentaci</2>."
     }
@@ -6862,10 +6988,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Základní role"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana byla pravděpodobně aktualizována. Zkuste stránku znovu načíst.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Znovu načíst",
     "title": "Soubor aplikace nelze najít"
   },
@@ -6981,6 +7110,10 @@
     "role": {
       "label": "Role"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7250,10 +7383,19 @@
   },
   "sign-up": {
     "back-button": "Zpět na přihlášení",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Odeslat",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Zpět na přihlášení",
       "complete-button": "Dokončit registraci",
+      "email-description": "",
+      "email-label": "",
       "header": "Ověřit e-mail",
       "info": "Na e-mailovou adresu byl odeslán e-mail s ověřovacím odkazem. Brzy byste ho měli obdržet.",
       "send-button": "Odeslat ověřovací e-mail"
@@ -7311,6 +7453,9 @@
     "url-column-header": "Adresa URL snímku",
     "view-button": "Zobrazit"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7338,7 +7483,13 @@
     "clear-button": "Vymazat tagy",
     "loading": "Načítání…",
     "no-tags": "Nebyly nalezeny žádné tagy",
-    "placeholder": "Filtrovat podle tagu"
+    "placeholder": "Filtrovat podle tagu",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7792,6 +7943,10 @@
     "role-column": "Role",
     "select-org-button": "Vyberte organizaci",
     "title": "Organizace"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {
