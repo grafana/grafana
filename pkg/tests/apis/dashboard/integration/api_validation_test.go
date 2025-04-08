@@ -48,7 +48,7 @@ type TestContext struct {
 // TestIntegrationValidation tests the dashboard K8s API
 func TestIntegrationValidation(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test")
+		t.Skip("skipping integration test2")
 	}
 
 	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
@@ -531,32 +531,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		})
 	})
-}
-
-// skipIfMode skips the current test if running in any of the specified modes
-// Usage: skipIfMode(t, rest.Mode1, rest.Mode4)
-// or with a message: skipIfMode(t, "Known issue with conflict detection", rest.Mode1, rest.Mode4)
-func (c *TestContext) skipIfMode(t *testing.T, args ...interface{}) {
-	t.Helper()
-
-	message := "Test not supported in this dual writer mode"
-	modes := []rest.DualWriterMode{}
-
-	// Parse args - first string is considered a message, all rest.DualWriterMode values are modes to skip
-	for _, arg := range args {
-		if msg, ok := arg.(string); ok {
-			message = msg
-		} else if mode, ok := arg.(rest.DualWriterMode); ok {
-			modes = append(modes, mode)
-		}
-	}
-
-	// Check if current mode is in the list of modes to skip
-	for _, mode := range modes {
-		if c.DualWriterMode == mode {
-			t.Skipf("%s (mode %d)", message, c.DualWriterMode)
-		}
-	}
 }
 
 // Run tests for quota validation
