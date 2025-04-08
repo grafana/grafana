@@ -37,7 +37,7 @@ describe('Pin nav items', () => {
         // Check if the Administration menu item is visible in the Bookmarks section
         cy.get('@bookmarksItem').within(() => {
           // Expand the Bookmarks section
-          cy.get('button[aria-label="Expand section Bookmarks"]').should('exist').click({ force: true });
+          cy.get('button[aria-label="Expand section: Bookmarks"]').should('exist').click({ force: true });
           cy.get('a').should('contain.text', 'Administration').should('be.visible');
         });
       });
@@ -63,7 +63,7 @@ describe('Pin nav items', () => {
         cy.get('@bookmarksItem').should('contain.text', 'Bookmarks');
         cy.get('@bookmarksItem').within(() => {
           // Expand the Bookmarks section
-          cy.get('button[aria-label="Expand section Bookmarks"]').should('exist').click({ force: true });
+          cy.get('button[aria-label="Expand section: Bookmarks"]').should('exist').click({ force: true });
           cy.get('a').should('contain.text', 'Administration').should('be.visible');
           cy.get('button[aria-label="Remove from Bookmarks"]').should('exist').click({ force: true });
         });

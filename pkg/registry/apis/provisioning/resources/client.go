@@ -24,6 +24,9 @@ var (
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
+
+	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
+	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
 // ClientFactory is a factory for creating clients for a given namespace
@@ -37,6 +40,7 @@ type clientFactory struct {
 	configProvider apiserver.RestConfigProvider
 }
 
+// TODO: Rename to NamespacedClients
 // ResourceClients provides access to clients within a namespace
 //
 //go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter

@@ -30,7 +30,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
 }
 
 export function OperationEditor({
