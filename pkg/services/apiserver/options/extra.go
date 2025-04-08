@@ -1,9 +1,7 @@
 package options
 
 import (
-	"context"
 	"log/slog"
-	"net/http"
 	"strconv"
 
 	"github.com/spf13/pflag"
@@ -31,23 +29,11 @@ type ExtraOptions struct {
 	Verbosity       int
 }
 
-type ExtraRunner interface {
-	Run(ctx context.Context) error
-	GetHandler() http.Handler
-}
-
-func NewExtraOptions(codecs serializer.CodecFactory, groupVersions []schema.GroupVersion, extraRunners ...ExtraRunner) *ExtraOptions {
-	o := &ExtraOptions{
-		RecommendedOptions: options.NewRecommendedOptions(
-			"/registry/grafana.app",
-			codecs.LegacyCodec(groupVersions...),
-		),
-		ExtraRunners:  extraRunners,
-		GroupVersions: groupVersions,
-		CodecFactory:  codecs,
+func NewExtraOptions() *ExtraOptions {
+	return &ExtraOptions{
+		DevMode:   false,
+		Verbosity: 0,
 	}
-	o.RecommendedOptions.Etcd = nil
-	return o
 }
 
 func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
