@@ -20,7 +20,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
+    useIsConditionallyHidden(currentTab);
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -66,11 +67,12 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
           </div>
         </DragDropContext>
       </TabsBar>
+
       <div className={conditionalRenderingClass}>
         <TabContent className={styles.tabContentContainer}>
           {currentTab && <layout.Component model={layout} />}
         </TabContent>
-        {conditionalRenderingOverlay}
+        {isEditing && conditionalRenderingOverlay}
       </div>
     </div>
   );
