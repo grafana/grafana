@@ -243,7 +243,7 @@ func (s *service) start(ctx context.Context) error {
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
 	// Install schemas
-	for i, b := range builders {
+	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
 		if len(gvs) == 0 {
@@ -254,12 +254,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for j, gv := range pvs {
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
-			}
-
+		for _, gv := range pvs {
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()
 				if auth != nil {
