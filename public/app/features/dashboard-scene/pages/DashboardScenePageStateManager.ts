@@ -425,10 +425,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       params,
     };
 
-    // We shouldn't check all params since:
-    // - version doesn't impact the new dashboard, and it's there for increased compatibility
-    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
-    // - other params don't affect the dashboard content
     if (
       isEqual(options.params?.variables, stateOptions.params?.variables) &&
       isEqual(options.params?.scopes, stateOptions.params?.scopes)
@@ -473,8 +469,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
-      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
-      // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
         throw err;
       }
@@ -602,10 +596,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       params,
     };
 
-    // We shouldn't check all params since:
-    // - version doesn't impact the new dashboard, and it's there for increased compatibility
-    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
-    // - other params don't affect the dashboard content
     if (
       isEqual(options.params?.variables, stateOptions.params?.variables) &&
       isEqual(options.params?.scopes, stateOptions.params?.scopes)
@@ -650,8 +640,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           status,
         },
       });
-      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
-      // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
         throw err;
       }

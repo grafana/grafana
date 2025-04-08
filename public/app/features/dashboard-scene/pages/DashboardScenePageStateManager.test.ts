@@ -680,7 +680,6 @@ describe('DashboardScenePageStateManager v2', () => {
         expect(getDashSpy).toHaveBeenCalledTimes(1);
         const initialDashboard = loader.state.dashboard;
 
-        // Create a mock dashboard with the same generation
         const mockDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
           access: {},
           apiVersion: 'v2alpha1',
@@ -694,23 +693,18 @@ describe('DashboardScenePageStateManager v2', () => {
           spec: { ...defaultDashboardV2Spec() },
         };
 
-        // Mock the fetchDashboard method using jest.spyOn
         const fetchDashboardSpy = jest.spyOn(loader, 'fetchDashboard').mockResolvedValue(mockDashboard);
 
-        // Try to reload with the same parameters
         const options = { version: 1, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
         await loader.reloadDashboard(options);
 
-        // fetchDashboard should be called, but the dashboard should not be reloaded
         expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
         expect(loader.state.dashboard).toBe(initialDashboard);
 
-        // Restore the original method
         fetchDashboardSpy.mockRestore();
       });
 
       it('should handle errors during reload', async () => {
-        // First load a dashboard successfully
         const getDashSpy = jest.fn();
         setupDashboardAPI(
           {
@@ -731,12 +725,10 @@ describe('DashboardScenePageStateManager v2', () => {
         const loader = new DashboardScenePageStateManagerV2({});
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-        // Create a mock dashboard loader that rejects with an error
         const mockLoader = {
           loadDashboard: jest.fn().mockRejectedValue(new Error('Failed to load dashboard')),
         };
 
-        // Replace the dashboardLoader in the instance
         loader['dashboardLoader'] = mockLoader as unknown as DashboardLoaderSrvV2;
 
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
@@ -747,7 +739,6 @@ describe('DashboardScenePageStateManager v2', () => {
       });
 
       it('should handle DashboardVersionError during reload', async () => {
-        // First load a dashboard successfully
         const getDashSpy = jest.fn();
         setupDashboardAPI(
           {
@@ -768,17 +759,14 @@ describe('DashboardScenePageStateManager v2', () => {
         const loader = new DashboardScenePageStateManagerV2({});
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-        // Create a mock dashboard loader that rejects with a DashboardVersionError
         const mockLoader = {
           loadDashboard: jest.fn().mockRejectedValue(new DashboardVersionError('v2alpha1')),
         };
 
-        // Replace the dashboardLoader in the instance
         loader['dashboardLoader'] = mockLoader as unknown as DashboardLoaderSrvV2;
 
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
 
-        // Should throw the error
         await expect(loader.reloadDashboard(options)).rejects.toThrow(DashboardVersionError);
       });
     });
