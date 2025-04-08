@@ -231,6 +231,15 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	return statusError
 }
 
+func (c *K8sTestHelper) EnsureStatusError(err error, expectedHttpStatus int, expectedMessage string) {
+	statusError := c.AsStatusError(err)
+	require.NotNil(c.t, statusError)
+	require.Equal(c.t, int32(expectedHttpStatus), statusError.ErrStatus.Code)
+	if expectedMessage != "" {
+		require.Equal(c.t, expectedMessage, statusError.ErrStatus.Message)
+	}
+}
+
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
 	c.t.Helper()
 
