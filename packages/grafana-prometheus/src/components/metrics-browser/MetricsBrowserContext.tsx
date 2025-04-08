@@ -130,12 +130,7 @@ export function MetricsBrowserProvider({
     );
   }, [getMetricDetails, languageProvider.metrics]);
 
-  // Initialize component with metrics and saved labels
-  useEffect(() => {
-    showAllMetrics();
-
-    setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
-
+  const setSelectedLabelKeysFromLocalStorage = useCallback(() => {
     try {
       const savedLabelsJson = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
       const selectedLabelsFromStorage: string[] = JSON.parse(savedLabelsJson);
@@ -144,7 +139,15 @@ export function MetricsBrowserProvider({
       console.error('Failed to load saved label keys:', error);
       setSelectedLabelKeys([]);
     }
+  }, []);
 
+  // Initialize component with metrics and saved labels
+  useEffect(() => {
+    showAllMetrics();
+
+    setLabelKeys([...languageProvider.labelKeys.filter(withoutMetricLabel)]);
+
+    setSelectedLabelKeysFromLocalStorage();
     // We want this to be run only once in the beginning
     // so we keep the dependency array empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -356,12 +359,12 @@ export function MetricsBrowserProvider({
    */
   const onClearClick = useCallback(() => {
     setSelectedMetric('');
-    setSelectedLabelKeys([]);
+    setSelectedLabelKeysFromLocalStorage();
     setSelectedLabelValues({});
     setErr('');
     setStatus('Ready');
     setValidationStatus('');
-  }, []);
+  }, [setSelectedLabelKeysFromLocalStorage]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo(
