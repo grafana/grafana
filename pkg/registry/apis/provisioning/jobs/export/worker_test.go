@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -303,8 +304,9 @@ func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
 		return opts.Timeout == 10*time.Minute && opts.Progress == os.Stdout && opts.BeforeFn != nil
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
 		// Execute both BeforeFn functions to verify progress messages
-		cloneOpts.BeforeFn()
-		pushOpts.BeforeFn()
+		assert.NoError(t, cloneOpts.BeforeFn())
+		assert.NoError(t, pushOpts.BeforeFn())
+
 		return fn(repo, true)
 	})
 
