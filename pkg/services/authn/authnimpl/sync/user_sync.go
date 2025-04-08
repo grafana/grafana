@@ -210,11 +210,6 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	if usr.IsProvisioned && id.ExternalUID != userAuth.ExternalUID {
-		s.log.Error("mismatched externalUID", "provisioned_externalUID", userAuth.ExternalUID, "identity_externalUID", id.ExternalUID)
-		return errMismatchedExternalUID.Errorf("externalUID mistmatch")
-	}
-
 	syncUserToIdentity(usr, id)
 	return nil
 }
