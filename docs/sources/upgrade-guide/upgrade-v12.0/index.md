@@ -62,7 +62,7 @@ You'll need to create a new data source with the correct UID and update your das
 1. Go to the dashboard using the data source and update it by selecting the new or updated data source from the picker below your panel.
 1. Update the dashboard's JSON model directly using search and replace.
 
-   Navigate to [dashboard json model](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/) and carefully replace all the instances of old `uid` with the newly created `uid`.
+   Navigate to [dashboard json model](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/) and carefully replace all the instances of the old `uid` with the newly created `uid`.
 
    {{< figure src="/media/docs/grafana/screenshot-grafana-11-datasource-uid-enforcement.png" alt="Updating JSON Model of a Dashboard">}}
 
