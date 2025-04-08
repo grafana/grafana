@@ -238,13 +238,14 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
 }
 
-func TestExportWorker_ProcessFolderErrors(t *testing.T) {
+func TestExportWorker_ProcessFolders(t *testing.T) {
 	tests := []struct {
 		name           string
 		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
 		expectedError  string
 		setupProgress  func(progress *jobs.MockJobProgressRecorder)
-		setupResources func(repoResources *resources.MockRepositoryResources)
+		setupResources func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind)
+		verifyMocks    func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources)
 	}{
 		{
 			name: "list folders error",
@@ -255,7 +256,10 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+			},
 		},
 		{
 			name: "too many folders",
@@ -284,7 +288,12 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
 		},
 		{
 			name: "ensure folder tree error",
@@ -296,8 +305,78 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("failed to ensure folder tree"))
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.Anything, mock.Anything).Return(fmt.Errorf("failed to ensure folder tree"))
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
+			},
+		},
+		{
+			name: "successful folder migration",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				list := &metav1.PartialObjectMetadataList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "FolderList",
+					},
+					Items: []metav1.PartialObjectMetadata{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "folder-1",
+								Annotations: map[string]string{
+									"folder.grafana.app/uid": "folder-1-uid",
+								},
+							},
+						},
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.FolderResource.GroupVersion().String(),
+								Kind:       "Folder",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "folder-2",
+								Annotations: map[string]string{
+									"folder.grafana.app/uid": "folder-2-uid",
+								},
+							},
+						},
+					},
+				}
+				return true, list, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
+				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "folder-1-uid" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "folder-2-uid" && result.Action == repository.FileActionCreated
+				})).Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+					return tree.Count() == 2
+				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+					require.NoError(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil))
+					require.NoError(t, fn(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+
+					return true
+				})).Return(nil)
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+			},
+			verifyMocks: func(t *testing.T, progress *jobs.MockJobProgressRecorder, repoResources *resources.MockRepositoryResources) {
+				progress.AssertExpectations(t)
+				repoResources.AssertExpectations(t)
 			},
 		},
 	}
@@ -331,11 +410,23 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 				Version: resources.FolderResource.Version,
 				Kind:    "FolderList",
 			}
+			listGVKDashboard := schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    "DashboardList",
+			}
+
 			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(listGVKDashboard, &metav1.PartialObjectMetadataList{})
 			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
 				Group:   resources.FolderResource.Group,
 				Version: resources.FolderResource.Version,
 				Kind:    resources.FolderResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.DashboardResource.Group,
+				Version: resources.DashboardResource.Version,
+				Kind:    resources.DashboardResource.Resource,
 			}, &metav1.PartialObjectMetadata{})
 
 			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
@@ -352,7 +443,7 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 			mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 
 			repoResources := resources.NewMockRepositoryResources(t)
-			tt.setupResources(repoResources)
+			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVKDashboard)
 			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 			mockRepoResources.On("Client", context.Background(), mockRepo).Return(repoResources, nil)
 
@@ -361,7 +452,14 @@ func TestExportWorker_ProcessFolderErrors(t *testing.T) {
 
 			r := NewExportWorker(mockClients, mockRepoResources)
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
-			require.EqualError(t, err, tt.expectedError)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			tt.verifyMocks(t, mockProgress, repoResources)
 		})
 	}
 }

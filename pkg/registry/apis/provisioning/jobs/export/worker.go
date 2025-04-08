@@ -132,7 +132,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			continue
 		}
 
-		progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
+		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
 		client, _, err := clients.ForResource(kind)
 		if err != nil {
 			return err
