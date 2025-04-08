@@ -1,26 +1,25 @@
-import { useEffect, useState } from 'react';
-
-import { useSelector } from 'app/types';
+import { useRegisterActions } from 'kbar';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
-import getStaticActions from './staticActions';
+import { useStaticActions } from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
-export default function useActions(searchQuery: string) {
-  const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
-  const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
+export function useRegisterStaticActions() {
   const extensionActions = useExtensionActions();
+  const staticActions = useStaticActions();
 
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const navTreeActions = useMemo(() => {
+    return [...staticActions, ...extensionActions];
+  }, [staticActions, extensionActions]);
 
-  // Load standard static actions
-  useEffect(() => {
-    const staticActionsResp = getStaticActions(navBarTree, extensionActions);
-    setNavTreeActions(staticActionsResp);
-  }, [navBarTree, extensionActions]);
+  useRegisterActions(navTreeActions, [navTreeActions]);
+}
 
+export function useRegisterRecentDashboardsActions(searchQuery: string) {
+  const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
   // Load recent dashboards - we don't want them to reload when the nav tree changes
   useEffect(() => {
     if (!searchQuery) {
@@ -32,5 +31,5 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions];
+  useRegisterActions(recentDashboardActions, [recentDashboardActions]);
 }

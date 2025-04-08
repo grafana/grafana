@@ -2,28 +2,20 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import {
-  KBarAnimator,
-  KBarPortal,
-  KBarPositioner,
-  KBarSearch,
-  VisualState,
-  useRegisterActions,
-  useKBar,
-  ActionImpl,
-} from 'kbar';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, FilterPill, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
+import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import useActions from './actions/useActions';
+import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -31,13 +23,16 @@ export function CommandPalette() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery } = useKBar((state) => ({
+  const { query, showing, searchQuery, currentRootActionId, actions } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
+    currentRootActionId: state.currentRootActionId,
+    actions: state.actions,
   }));
 
-  const actions = useActions(searchQuery);
-  useRegisterActions(actions, [actions]);
+  useRegisterStaticActions();
+  useRegisterRecentDashboardsActions(searchQuery);
+
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +48,7 @@ export function CommandPalette() {
     showing && reportInteraction('command_palette_opened');
   }, [showing]);
 
-  return actions.length > 0 ? (
+  return (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
@@ -61,6 +56,9 @@ export function CommandPalette() {
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
                 <Icon name="search" size="md" />
+                {currentRootActionId ? (
+                  <FilterPill label={actions[currentRootActionId].name} selected={false} onClick={() => {}} />
+                ) : null}
                 <KBarSearch
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
@@ -77,7 +75,7 @@ export function CommandPalette() {
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>
-  ) : null;
+  );
 }
 
 interface RenderResultsProps {
