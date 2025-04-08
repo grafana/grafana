@@ -50,7 +50,6 @@ func TestSyncer_Sync(t *testing.T) {
 				}), "").Return(nil)
 
 				repoResources.On("SetTree", mock.Anything).Return()
-				repoResources.On("EnsureFolderPathExist", mock.Anything, mock.Anything).Return("", nil)
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).Return("", nil)
 				repoResources.On("WriteResourceFromFile", mock.Anything, mock.Anything, mock.Anything).Return("", schema.GroupVersionKind{}, nil)
@@ -81,8 +80,6 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").Return(nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
 				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -106,8 +103,6 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("same-ref", nil)
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").Return(nil)
 				progress.On("SetFinalMessage", mock.Anything, "same commit as last sync").Return()
 			},
 			expectedRef:      "same-ref",
@@ -125,6 +120,9 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolder,
+						},
 					},
 				})
 
@@ -150,8 +148,6 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("", fmt.Errorf("failed to get latest ref"))
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").Return(nil)
 			},
 			expectedError: "get latest ref: failed to get latest ref",
 		},
