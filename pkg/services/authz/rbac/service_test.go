@@ -1202,6 +1202,7 @@ func setupService() *Service {
 		metrics:         newMetrics(nil),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
