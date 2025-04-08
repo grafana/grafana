@@ -387,11 +387,9 @@ func (s *service) start(ctx context.Context) error {
 
 	// Run extra runners
 	for _, runner := range s.extraRunners {
-		go func(r grafanaapiserveroptions.ExtraRunner) {
-			if err := r.Run(ctx); err != nil {
-				s.log.Error("extra runner failed", "error", err)
-			}
-		}(runner)
+		if err := runner.Run(ctx, s.options, serverConfig, groupVersions); err != nil {
+			s.log.Error("extra runner failed", "error", err)
+		}
 	}
 
 	return nil
