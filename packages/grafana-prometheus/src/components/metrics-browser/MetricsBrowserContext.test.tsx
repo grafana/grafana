@@ -216,7 +216,13 @@ describe('MetricsBrowserContext', () => {
 
     await waitFor(() => {
       // Should call fetchSeriesValuesWithMatch with the current selector
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith('job', 'metric1{}');
+      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        'job',
+        'metric1{}',
+        'MetricsBrowser_LV_job',
+        40000
+      );
     });
   });
 
@@ -229,7 +235,13 @@ describe('MetricsBrowserContext', () => {
 
     await waitFor(() => {
       // Should call fetchSeriesValuesWithMatch with undefined instead of '{}'
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith('job', undefined);
+      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        'job',
+        undefined,
+        'MetricsBrowser_LV_job',
+        40000
+      );
     });
   });
 
@@ -240,7 +252,7 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-metric'));
 
     await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith('metric1{}');
+      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith(expect.anything(), 'metric1{}', 40000);
     });
   });
 
@@ -278,7 +290,7 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('validate'));
 
     await waitFor(() => {
-      expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith('{job="grafana"}');
+      expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
       expect(screen.getByTestId('validation-status').textContent).toContain('Selector is valid');
     });
   });
@@ -305,7 +317,13 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-label-value'));
 
     await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(METRIC_LABEL, '{job="grafana"}');
+      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        METRIC_LABEL,
+        '{job="grafana"}',
+        'MetricsBrowser_M',
+        40000
+      );
     });
   });
 
