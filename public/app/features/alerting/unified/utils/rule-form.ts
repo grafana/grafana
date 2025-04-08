@@ -128,12 +128,14 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
+
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
     simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -141,6 +143,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     noDataState,
     execErrState,
     evaluateFor,
+    keepFiringFor,
     queries,
     isPaused,
     contactPoints,
@@ -148,6 +151,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     type,
     metric,
     targetDatasourceUid,
+    missingSeriesEvalsToResolve,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -177,12 +181,17 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
         metadata,
+        missing_series_evals_to_resolve: missingSeriesEvalsToResolve
+          ? Number(missingSeriesEvalsToResolve)
+          : // API uses 0 value to reset, as `missing_series_evals_to_resolve` cannot be 0
+            0,
       },
       annotations,
       labels,
 
       // Alerting rule specific
       for: evaluateFor,
+      keep_firing_for: keepFiringFor,
     };
   } else if (wantsRecordingRule) {
     return {
@@ -299,6 +308,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           group: group.name,
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: rule.for || '0',
+          keepFiringFor: rule.keep_firing_for || '0',
           noDataState: ga.no_data_state,
           execErrState: ga.exec_err_state,
           queries: ga.data,
@@ -312,6 +322,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           manualRouting: Boolean(routingSettings),
 
           editorSettings: getEditorSettingsFromDTO(ga),
+
+          missingSeriesEvalsToResolve: ga.missing_series_evals_to_resolve,
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');
@@ -371,6 +383,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   const ga = rule.grafana_alert;
   const duration = rule.for;
+  const keepFiringFor = rule.keep_firing_for;
   const annotations = rule.annotations;
   const labels = rule.labels;
 
@@ -403,6 +416,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       type: RuleFormType.grafana,
       group: ga.rule_group,
       evaluateFor: duration || '0',
+      keepFiringFor: keepFiringFor || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
 

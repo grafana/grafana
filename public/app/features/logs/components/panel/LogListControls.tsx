@@ -2,24 +2,21 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { MouseEvent, useCallback, useMemo } from 'react';
 
-import {
-  CoreApp,
-  EventBus,
-  GrafanaTheme2,
-  LogLevel,
-  LogsDedupDescription,
-  LogsDedupStrategy,
-  LogsSortOrder,
-} from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+
+import { LogsVisualisationType } from '../../../explore/Logs/Logs';
+import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
   eventBus: EventBus;
+  visualisationType?: LogsVisualisationType;
 };
 
 const DEDUP_OPTIONS = [
@@ -38,19 +35,24 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.critical,
 ];
 
-export const LogListControls = ({ eventBus }: Props) => {
+export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     app,
     dedupStrategy,
+    downloadLogs,
     filterLevels,
+    prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setPrettifyJSON,
     setShowTime,
+    setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
     setWrapLogMessage,
     showTime,
+    showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
@@ -90,10 +92,17 @@ export const LogListControls = ({ eventBus }: Props) => {
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: showTime,
+      show_time: !showTime,
     });
     setShowTime(!showTime);
   }, [setShowTime, showTime]);
+
+  const onShowUniqueLabelsClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
+      show_unique_labels: showUniqueLabels,
+    });
+    setShowUniqueLabels(!showUniqueLabels);
+  }, [setShowUniqueLabels, showUniqueLabels]);
 
   const onSortOrderClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_sort_order_clicked', {
@@ -101,6 +110,13 @@ export const LogListControls = ({ eventBus }: Props) => {
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
+
+  const onSetPrettifyJSONClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_prettify_json_clicked', {
+      state: !prettifyJSON,
+    });
+    setPrettifyJSON(!prettifyJSON);
+  }, [prettifyJSON, setPrettifyJSON]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -159,18 +175,40 @@ export const LogListControls = ({ eventBus }: Props) => {
     [filterLevels, onFilterLevelClick, styles.menuItemActive]
   );
 
+  const downloadMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.txt', 'txt')}
+          onClick={() => downloadLogs(DownloadFormat.Text)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.json', 'json')}
+          onClick={() => downloadLogs(DownloadFormat.Json)}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.download-logs.csv', 'csv')}
+          onClick={() => downloadLogs(DownloadFormat.CSV)}
+        />
+      </Menu>
+    ),
+    [downloadLogs]
+  );
+
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
 
   return (
     <div className={styles.navContainer}>
-      <IconButton
-        name="arrow-down"
-        className={styles.controlButton}
-        variant="secondary"
-        onClick={onScrollToBottomClick}
-        tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
-        size="lg"
-      />
+      {visualisationType === 'logs' && (
+        <IconButton
+          name="arrow-down"
+          className={styles.controlButton}
+          variant="secondary"
+          onClick={onScrollToBottomClick}
+          tooltip={t('logs.logs-controls.scroll-bottom', 'Scroll to bottom')}
+          size="lg"
+        />
+      )}
       {!inDashboard ? (
         <>
           <IconButton
@@ -184,58 +222,110 @@ export const LogListControls = ({ eventBus }: Props) => {
             }
             size="lg"
           />
-          <Dropdown overlay={deduplicationMenu} placement="auto-end">
-            <IconButton
-              name={'filter'}
-              className={dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton}
-              tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
-              size="lg"
-            />
-          </Dropdown>
-          <Dropdown overlay={filterLevelsMenu} placement="auto-end">
-            <IconButton
-              name={'gf-logs'}
-              className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
-              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-              size="lg"
-            />
-          </Dropdown>
-          <IconButton
-            name="clock-nine"
-            aria-pressed={showTime}
-            className={showTime ? styles.controlButtonActive : styles.controlButton}
-            onClick={onShowTimestampsClick}
-            tooltip={
-              showTime
-                ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-            }
-            size="lg"
-          />
-          <IconButton
-            name="wrap-text"
-            className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-            aria-pressed={wrapLogMessage}
-            onClick={onWrapLogMessageClick}
-            tooltip={
-              wrapLogMessage
-                ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-                : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-            }
-            size="lg"
-          />
-          <IconButton
-            name="brackets-curly"
-            className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
-            aria-pressed={syntaxHighlighting}
-            onClick={onSyntaxHightlightingClick}
-            tooltip={
-              syntaxHighlighting
-                ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
-                : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
-            }
-            size="lg"
-          />
+          {visualisationType === 'logs' && (
+            <>
+              <Dropdown overlay={deduplicationMenu} placement="auto-end">
+                <IconButton
+                  name={'filter'}
+                  className={
+                    dedupStrategy !== LogsDedupStrategy.none ? styles.controlButtonActive : styles.controlButton
+                  }
+                  tooltip={t('logs.logs-controls.deduplication', 'Deduplication')}
+                  size="lg"
+                />
+              </Dropdown>
+              <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+                <IconButton
+                  name={'gf-logs'}
+                  className={
+                    filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton
+                  }
+                  tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+                  size="lg"
+                />
+              </Dropdown>
+              <IconButton
+                name="clock-nine"
+                aria-pressed={showTime}
+                className={showTime ? styles.controlButtonActive : styles.controlButton}
+                onClick={onShowTimestampsClick}
+                tooltip={
+                  showTime
+                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                }
+                size="lg"
+              />
+              {showUniqueLabels !== undefined && (
+                <IconButton
+                  name="tag-alt"
+                  aria-pressed={showUniqueLabels}
+                  className={showUniqueLabels ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onShowUniqueLabelsClick}
+                  tooltip={
+                    showUniqueLabels
+                      ? t('logs.logs-controls.hide-unique-labels', 'Hide unique labels')
+                      : t('logs.logs-controls.show-unique-labels', 'Show unique labels')
+                  }
+                  size="lg"
+                />
+              )}
+              <IconButton
+                name="wrap-text"
+                className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+                aria-pressed={wrapLogMessage}
+                onClick={onWrapLogMessageClick}
+                tooltip={
+                  wrapLogMessage
+                    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+                    : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+                }
+                size="lg"
+              />
+              {prettifyJSON !== undefined && (
+                <IconButton
+                  name="brackets-curly"
+                  aria-pressed={prettifyJSON}
+                  className={prettifyJSON ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onSetPrettifyJSONClick}
+                  tooltip={
+                    prettifyJSON
+                      ? t('logs.logs-controls.disable-prettify-json', 'Collapse JSON logs')
+                      : t('logs.logs-controls.prettify-json', 'Expand JSON logs')
+                  }
+                  size="lg"
+                />
+              )}
+              {syntaxHighlighting !== undefined && (
+                <IconButton
+                  name="brackets-curly"
+                  className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={syntaxHighlighting}
+                  onClick={onSyntaxHightlightingClick}
+                  tooltip={
+                    syntaxHighlighting
+                      ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
+                      : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+                  }
+                  size="lg"
+                />
+              )}
+            </>
+          )}
+          {!config.exploreHideLogsDownload && (
+            <>
+              <div className={styles.divider} />
+              <Dropdown overlay={downloadMenu} placement="auto-end">
+                <IconButton
+                  name="download-alt"
+                  className={styles.controlButton}
+                  aria-pressed={wrapLogMessage}
+                  tooltip={t('logs.logs-controls.download', 'Download logs')}
+                  size="lg"
+                />
+              </Dropdown>
+            </>
+          )}
         </>
       ) : (
         <Dropdown overlay={filterLevelsMenu} placement="auto-end">
@@ -247,15 +337,17 @@ export const LogListControls = ({ eventBus }: Props) => {
           />
         </Dropdown>
       )}
-      <IconButton
-        name="arrow-up"
-        data-testid="scrollToTop"
-        className={styles.scrollToTopButton}
-        variant="secondary"
-        onClick={onScrollToTopClick}
-        tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
-        size="lg"
-      />
+      {visualisationType === 'logs' && (
+        <IconButton
+          name="arrow-up"
+          data-testid="scrollToTop"
+          className={styles.scrollToTopButton}
+          variant="secondary"
+          onClick={onScrollToTopClick}
+          tooltip={t('logs.logs-controls.scroll-top', 'Scroll to top')}
+          size="lg"
+        />
+      )}
     </div>
   );
 };
@@ -276,11 +368,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     scrollToTopButton: css({
       margin: 0,
       marginTop: 'auto',
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
     }),
     controlButton: css({
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+    }),
+    divider: css({
+      borderTop: `solid 1px ${theme.colors.border.medium}`,
+      height: 1,
+      marginTop: theme.spacing(-0.25),
+      marginBottom: theme.spacing(-1.75),
     }),
     controlButtonActive: css({
       margin: 0,
