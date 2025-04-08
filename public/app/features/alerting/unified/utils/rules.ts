@@ -278,10 +278,10 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
       rules.forEach((rule) => {
         if (rule.promRule && isAlertingRule(rule.promRule)) {
           acc.push({
-            ...rule,
             dataSourceName: getRulesSourceName(rulesSource),
             namespaceName,
             groupName,
+            ...rule,
             namespace: { ...rule.namespace, uid: rule.promRule.folderUid },
           });
         }
