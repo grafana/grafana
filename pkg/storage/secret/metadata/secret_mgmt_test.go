@@ -162,6 +162,26 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 	})
 }
 
+func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s := setupTestService(t).(*secureValueMetadataStorage)
+
+	t.Run("get default sql keeper config", func(t *testing.T) {
+		keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, "default", "kp-default-sql")
+		require.NoError(t, err)
+		require.Equal(t, contracts.SQLKeeperType, keeperType)
+		require.Nil(t, keeperConfig)
+	})
+
+	t.Run("get test keeper config", func(t *testing.T) {
+		keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, "default", "kp-test")
+		require.NoError(t, err)
+		require.Equal(t, contracts.SQLKeeperType, keeperType)
+		require.NotNil(t, keeperConfig)
+	})
+}
+
 func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -224,7 +244,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService, keeperMetadataStorage)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage
