@@ -3,7 +3,6 @@ import { fromBaseUrl } from '../utils/support/url';
 
 describe('Pin nav items', () => {
   beforeEach(() => {
-    cy.viewport(1920, 1080);
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
