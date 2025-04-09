@@ -25,16 +25,16 @@ type PullRequestRepo interface {
 
 type PullRequestWorker struct {
 	parsers   resources.ParserFactory
-	previewer Previewer
+	commenter CommentGenerator
 }
 
 func NewPullRequestWorker(
 	parsers resources.ParserFactory,
-	previewer Previewer,
+	commenter CommentGenerator,
 ) *PullRequestWorker {
 	return &PullRequestWorker{
 		parsers:   parsers,
-		previewer: previewer,
+		commenter: commenter,
 	}
 }
 
@@ -42,7 +42,6 @@ func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Jo
 	return job.Spec.Action == provisioning.JobActionPullRequest
 }
 
-//nolint:gocyclo
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
@@ -68,11 +67,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
 	}
 
-	parser, err := c.parsers.GetParser(ctx, reader)
-	if err != nil {
-		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
-	}
-
 	logger := logging.FromContext(ctx).With("pr", options.PR)
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
@@ -84,59 +78,45 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("failed to list pull request files: %s", err.Error())
 	}
 
-	progress.SetMessage(ctx, "clearing pull request comments")
-	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
-		return fmt.Errorf("failed to clear pull request comments: %+v", err)
-	}
+	files = onlySupportedFiles(files)
 
 	if len(files) == 0 {
 		progress.SetFinalMessage(ctx, "no files to process")
 		return nil
 	}
 
-	if len(files) > 1 {
-		progress.SetFinalMessage(ctx, "too many files to preview")
-		return nil
+	progress.SetMessage(ctx, "clearing pull request comments")
+	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
+		return fmt.Errorf("failed to clear pull request comments: %+v", err)
 	}
 
-	f := files[0]
-	progress.SetMessage(ctx, "processing file preview")
-
-	if err := resources.IsPathSupported(f.Path); err != nil {
-		progress.SetFinalMessage(ctx, "file path is not supported")
-		return nil
-	}
-
-	fileInfo, err := prRepo.Read(ctx, f.Path, options.Ref)
+	parser, err := c.parsers.GetParser(ctx, reader)
 	if err != nil {
-		return fmt.Errorf("read file: %w", err)
+		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	obj, err := parser.Parse(ctx, fileInfo)
+	changes, err := c.commenter.PrepareChanges(ctx, CommentOptions{
+		PullRequest: *options,
+		Changes:     files,
+		Parser:      parser,
+		Reader:      reader,
+		Progress:    progress,
+
+		// Should we render images
+		GeneratePreview: repo.Config().Spec.GitHub.GenerateDashboardPreviews,
+	})
 	if err != nil {
-		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-			progress.SetFinalMessage(ctx, "file changes is not valid resource")
-			return nil
-		} else {
-			return fmt.Errorf("parse resource: %w", err)
-		}
+		return fmt.Errorf("unable to calculate changes: %w", err)
 	}
 
-	preview, err := c.previewer.Preview(ctx, obj, options.URL, cfg.GitHub.GenerateDashboardPreviews)
+	comment, err := c.commenter.GenerateComment(ctx, changes)
 	if err != nil {
-		return fmt.Errorf("generate preview: %w", err)
-	}
-
-	progress.SetMessage(ctx, "generating previews comment")
-	comment, err := c.previewer.GenerateComment(preview)
-	if err != nil {
-		return fmt.Errorf("generate comment: %w", err)
+		return fmt.Errorf("unable to generate comment text: %w", err)
 	}
 
 	if err := prRepo.CommentPullRequest(ctx, options.PR, comment); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
 	logger.Info("preview comment added")
-
 	return nil
 }
