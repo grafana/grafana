@@ -55,7 +55,11 @@ export const MuteTimingsTable = () => {
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
-    return <LoadingPlaceholder text="Loading mute timings..." />;
+    return (
+      <LoadingPlaceholder
+        text={t('alerting.mute-timings-table.text-loading-mute-timings', 'Loading mute timings...')}
+      />
+    );
   }
 
   if (error) {
@@ -107,7 +111,10 @@ export const MuteTimingsTable = () => {
         <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} />
       ) : !hideActions ? (
         <EmptyAreaWithCTA
-          text="You haven't created any mute timings yet"
+          text={t(
+            'alerting.mute-timings-table.text-havent-created-timings',
+            "You haven't created any mute timings yet"
+          )}
           buttonLabel="Add mute timing"
           buttonIcon="plus"
           buttonSize="lg"
@@ -115,7 +122,11 @@ export const MuteTimingsTable = () => {
           showButton={allowedToCreateMuteTiming}
         />
       ) : (
-        <EmptyAreaWithCTA text="No mute timings configured" buttonLabel={''} showButton={false} />
+        <EmptyAreaWithCTA
+          text={t('alerting.mute-timings-table.text-no-mute-timings-configured', 'No mute timings configured')}
+          buttonLabel={''}
+          showButton={false}
+        />
       )}
     </div>
   );

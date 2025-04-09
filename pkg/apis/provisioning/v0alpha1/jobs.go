@@ -81,10 +81,11 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action"`
+	Action JobAction `json:"action,omitempty"`
 
 	// The the repository reference (for now also in labels)
-	Repository string `json:"repository"`
+	// This value is required, but will be popuplated from the job making the request
+	Repository string `json:"repository,omitempty"`
 
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
@@ -125,17 +126,11 @@ type ExportJobOptions struct {
 
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 // The job status

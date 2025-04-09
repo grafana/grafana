@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -320,7 +321,7 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.Folder
+type Namespace folder.FolderReference
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
@@ -993,13 +994,22 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 
 type RulesGroup []*AlertRule
 
+func RulesGroupComparer(a, b *AlertRule) int {
+	if a.RuleGroupIndex < b.RuleGroupIndex {
+		return -1
+	} else if a.RuleGroupIndex > b.RuleGroupIndex {
+		return 1
+	}
+	if a.ID < b.ID {
+		return -1
+	} else if a.ID > b.ID {
+		return 1
+	}
+	return 0
+}
+
 func (g RulesGroup) SortByGroupIndex() {
-	sort.Slice(g, func(i, j int) bool {
-		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
-			return g[i].ID < g[j].ID
-		}
-		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
-	})
+	slices.SortFunc(g, RulesGroupComparer)
 }
 
 func SortAlertRulesByGroupIndex(rules []AlertRule) {

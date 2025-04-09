@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
+import { useToggle } from 'react-use';
 
 import {
   FieldConfigSource,
@@ -8,11 +9,10 @@ import {
   isStandardFieldProp,
   PanelPluginMeta,
   restoreCustomOverrideRules,
-  PluginType,
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -22,24 +22,12 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import {
-  Button,
-  Card,
-  FilterInput,
-  RadioButtonGroup,
-  ScrollContainer,
-  Stack,
-  ToolbarButton,
-  useStyles2,
-} from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
-
-import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -137,63 +125,56 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { pluginId } = panel.useState();
     const { data } = sceneGraph.getData(panel).useState();
     const styles = useStyles2(getStyles);
-    const isAngularPanel = isUsingAngularPanelPlugin(panel);
     const isSearching = searchQuery.length > 0;
-    const showSearchRadioButtons = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
+    const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
+    const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
+    const onlyOverrides = listMode === OptionFilter.Overrides;
+
     return (
       <>
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
-              <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
-              <FilterInput
-                className={styles.searchOptions}
-                value={searchQuery}
-                placeholder="Search options"
-                onChange={model.onSetSearchQuery}
-              />
-              {showSearchRadioButtons && (
-                <RadioButtonGroup
-                  options={model.getOptionRadioFilters()}
-                  value={listMode}
-                  fullWidth
-                  onChange={model.onSetListMode}
+              <Field
+                label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')}
+                className={styles.vizField}
+              >
+                <Stack gap={1}>
+                  <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
+                  <Button
+                    icon="search"
+                    variant="secondary"
+                    onClick={setIsSearchingOptions}
+                    tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
+                  />
+                  {hasFieldConfig && (
+                    <ToolbarButton
+                      icon="filter"
+                      tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
+                      variant={onlyOverrides ? 'active' : 'canvas'}
+                      onClick={() => {
+                        model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
+                      }}
+                    />
+                  )}
+                </Stack>
+              </Field>
+
+              {isSearchingOptions && (
+                <FilterInput
+                  className={styles.searchOptions}
+                  value={searchQuery}
+                  placeholder={t('dashboard.panel-edit.placeholder-search-options', 'Search options')}
+                  onChange={model.onSetSearchQuery}
+                  autoFocus={true}
+                  onBlur={() => {
+                    if (searchQuery.length === 0) {
+                      setIsSearchingOptions(false);
+                    }
+                  }}
                 />
               )}
             </div>
-            {isAngularPanel && (
-              <div className={styles.angularDeprecationContainer}>
-                <AngularDeprecationPluginNotice
-                  showPluginDetailsLink={true}
-                  pluginId={pluginId}
-                  pluginType={PluginType.panel}
-                  angularSupportEnabled={config?.angularSupportEnabled}
-                  interactionElementId="panel-options"
-                >
-                  <Card.Heading>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Panel options</Trans>
-                  </Card.Heading>
-                  <Card.Description>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
-                      Angular panels options can only be edited using the JSON editor.
-                    </Trans>
-                  </Card.Description>
-                  <Card.Actions>
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      onClick={() => {
-                        model.onOpenPanelJSON(panel);
-                      }}
-                    >
-                      <Trans i18nKey="dashboards.panel-edit.angular-deprecation-button-open-panel-json">
-                        Open JSON editor
-                      </Trans>
-                    </Button>
-                  </Card.Actions>
-                </AngularDeprecationPluginNotice>
-              </div>
-            )}
             <ScrollContainer>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </ScrollContainer>
@@ -217,7 +198,7 @@ function getStyles(theme: GrafanaTheme2) {
     top: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2, 1),
+      padding: theme.spacing(1, 2, 2, 2),
       gap: theme.spacing(2),
     }),
     searchOptions: css({
@@ -227,17 +208,10 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2, 2, 2, 0),
     }),
     vizField: css({
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(0),
     }),
     rotateIcon: css({
       rotate: '180deg',
-    }),
-    angularDeprecationContainer: css({
-      label: 'angular-deprecation-container',
-      padding: theme.spacing(1),
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-end',
     }),
   };
 }
@@ -260,21 +234,22 @@ export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonPro
   }
 
   return (
-    <Stack gap={1}>
-      <ToolbarButton
-        className={styles.vizButton}
-        tooltip="Click to change visualization"
-        imgSrc={pluginMeta.info.logos.small}
-        onClick={onOpen}
-        data-testid={selectors.components.PanelEditor.toggleVizPicker}
-        aria-label="Change Visualization"
-        variant="canvas"
-        isOpen={false}
-        fullWidth
-      >
-        {pluginMeta.name}
-      </ToolbarButton>
-    </Stack>
+    <ToolbarButton
+      className={styles.vizButton}
+      tooltip={t(
+        'dashboard-scene.visualization-button.tooltip-click-to-change-visualization',
+        'Click to change visualization'
+      )}
+      imgSrc={pluginMeta.info.logos.small}
+      onClick={onOpen}
+      data-testid={selectors.components.PanelEditor.toggleVizPicker}
+      aria-label={t('dashboard-scene.visualization-button.aria-label-change-visualization', 'Change visualization')}
+      variant="canvas"
+      isOpen={false}
+      fullWidth
+    >
+      {pluginMeta.name}
+    </ToolbarButton>
   );
 }
 

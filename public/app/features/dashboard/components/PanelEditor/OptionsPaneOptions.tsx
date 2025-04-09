@@ -3,13 +3,11 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
+import { t } from 'app/core/internationalization';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
-import { AngularPanelOptions } from './AngularPanelOptions';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -21,7 +19,7 @@ import { getRecentOptions } from './state/getRecentOptions';
 import { OptionPaneRenderProps } from './types';
 
 export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
-  const { plugin, dashboard, panel } = props;
+  const { plugin, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
@@ -56,15 +54,6 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
-
-    // If searching for angular panel, then we need to add notice that results are limited
-    if (props.plugin.angularPanelCtrl) {
-      mainBoxElements.push(
-        <div className={styles.searchNotice} key="Search notice">
-          This is an old visualization type that does not support searching all options.
-        </div>
-      );
-    }
   } else {
     switch (listMode) {
       case OptionFilter.All:
@@ -74,12 +63,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         }
         // Panel frame options second
         mainBoxElements.push(panelFrameOptions.render());
-        // If angular add those options next
-        if (props.plugin.angularPanelCtrl) {
-          mainBoxElements.push(
-            <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
-          );
-        }
+
         // Then add all panel and field defaults
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
@@ -96,7 +80,12 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         break;
       case OptionFilter.Recent:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={true}>
+          <OptionsPaneCategory
+            id="Recent options"
+            title={t('dashboard.options-pane-options.Recent options-title-recent-options', 'Recent options')}
+            key="Recent options"
+            forceOpen={true}
+          >
             {getRecentOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );
@@ -110,16 +99,6 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
-          <AngularDeprecationPluginNotice
-            className={styles.angularDeprecationWrapper}
-            showPluginDetailsLink={true}
-            pluginId={plugin.meta.id}
-            pluginType={plugin.meta.type}
-            angularSupportEnabled={config?.angularSupportEnabled}
-            interactionElementId="panel-options"
-          />
-        )}
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
