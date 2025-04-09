@@ -29,7 +29,7 @@ Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/la
 
 For example, if you want to understand which parts of a program consume the most resources, such as CPU time, memory, or I/O operations, you can use a flame graph to visualize and analyze where potential performance issues are:
 
-{{< figure src="/static/img/docs/flame-graph-panel/flame-graph-dark-mode.png" max-width="750px" alt="A flame graph visualization for a system profile with both flame graph and top table mode." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-v12.0.png" max-width="750px" alt="A flame graph visualization for a system profile with both flame graph and top table mode." >}}
 
 You can use a flame graph visualization if you need to:
 
