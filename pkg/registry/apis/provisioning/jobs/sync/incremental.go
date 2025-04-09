@@ -12,6 +12,11 @@ import (
 
 // Convert git changes into resource file changes
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	if previousRef == currentRef {
+		progress.SetFinalMessage(ctx, "same commit as last time")
+		return nil
+	}
+
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)

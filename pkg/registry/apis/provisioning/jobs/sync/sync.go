@@ -53,13 +53,7 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 		}
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental {
-			if currentRef == cfg.Status.Sync.LastRef {
-				progress.SetFinalMessage(ctx, "same commit as last sync")
-				return currentRef, nil
-			}
-
 			progress.SetMessage(ctx, "incremental sync")
-
 			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress)
 		}
 	}

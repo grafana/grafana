@@ -136,28 +136,6 @@ func TestSyncer_Sync(t *testing.T) {
 			expectedMessages: []string{"incremental sync"},
 		},
 		{
-			name: "no changes in incremental sync",
-			options: provisioning.SyncJobOptions{
-				Incremental: true,
-			},
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
-							LastRef: "same-ref",
-						},
-					},
-				})
-				repo.MockVersioned.On("LatestRef", mock.Anything).Return("same-ref", nil)
-				progress.On("SetFinalMessage", mock.Anything, "same commit as last sync").Return()
-			},
-			expectedRef:      "same-ref",
-			expectedFinalMsg: "same commit as last sync",
-		},
-		{
 			name: "latest ref error",
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
