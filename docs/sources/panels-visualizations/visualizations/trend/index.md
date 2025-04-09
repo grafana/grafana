@@ -64,7 +64,13 @@ Use this option to select a field that contains increasing numeric values.
 
 ### Graph styles options
 
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
+
+{{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Axis options
+
+{{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Standard options
 
