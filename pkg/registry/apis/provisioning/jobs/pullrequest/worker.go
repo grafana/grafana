@@ -95,7 +95,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	changes, err := c.commenter.PrepareChanges(ctx, CommentOptions{
+	changes, err := c.commenter.PrepareChanges(ctx, ChangeOptions{
 		PullRequest: *options,
 		Changes:     files,
 		Parser:      parser,

@@ -8,10 +8,13 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
 type changeInfo struct {
 	GrafanaBaseURL string
@@ -24,7 +27,7 @@ type changeInfo struct {
 
 	// Requested image render, but it is not avaliable
 	MissingImageRenderer bool
-	HasImages            bool
+	HasScreenshot        bool
 }
 
 type fileChangeInfo struct {
@@ -46,7 +49,7 @@ type fileChangeInfo struct {
 	PreviewScreenshotURL string
 }
 
-func (g *generator) PrepareChanges(ctx context.Context, opts CommentOptions) (changeInfo, error) {
+func (g *generator) PrepareChanges(ctx context.Context, opts ChangeOptions) (changeInfo, error) {
 	info := changeInfo{
 		GrafanaBaseURL: g.urlProvider(opts.Reader.Config().Namespace),
 	}
@@ -81,6 +84,10 @@ func (g *generator) PrepareChanges(ctx context.Context, opts CommentOptions) (ch
 				if v.Error == "" {
 					v.Error = "Error running image rendering"
 				}
+
+				if v.GrafanaScreenshotURL != "" || v.PreviewScreenshotURL != "" {
+					info.HasScreenshot = true
+				}
 			}
 		}
 
@@ -89,7 +96,7 @@ func (g *generator) PrepareChanges(ctx context.Context, opts CommentOptions) (ch
 	return info, nil
 }
 
-func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logger, baseURL string, change repository.VersionedFileChange, opts CommentOptions) (fileChangeInfo, error) {
+func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logger, baseURL string, change repository.VersionedFileChange, opts ChangeOptions) (fileChangeInfo, error) {
 	if change.Action == repository.FileActionDeleted {
 		return g.calculateDeleteInfo(ctx, baseURL, change, opts)
 	}
@@ -124,7 +131,7 @@ func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logg
 	// Dashboards get special handling
 	if info.Parsed.GVK.Kind == dashboardKind {
 		info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(), info.Title)
-		info.PreviewURL = path.Join(baseURL, "admin/provisioning",
+		info.PreviewURL = baseURL + path.Join("admin/provisioning",
 			info.Parsed.Repo.Name, "dashboard/preview", info.Parsed.Info.Path)
 
 		query := url.Values{}
@@ -138,7 +145,7 @@ func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logg
 	return info, nil
 }
 
-func (g *generator) calculateDeleteInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts CommentOptions) (fileChangeInfo, error) {
+func (g *generator) calculateDeleteInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts ChangeOptions) (fileChangeInfo, error) {
 	// TODO -- read the old?
 	return fileChangeInfo{Change: change}, nil
 }

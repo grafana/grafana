@@ -212,6 +212,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
+	if f.DryRunResponse != nil {
+		return nil // this already ran (and helpful for testing)
+	}
+
 	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
 		return fmt.Errorf("no client configured")
