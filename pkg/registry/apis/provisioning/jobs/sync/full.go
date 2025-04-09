@@ -51,7 +51,6 @@ func FullSync(
 
 func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetTotal(ctx, len(changes))
-	progress.SetMessage(ctx, "replicating changes")
 
 	for _, change := range changes {
 		if ctx.Err() != nil {
@@ -129,8 +128,6 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		}
 		progress.Record(ctx, result)
 	}
-
-	progress.SetMessage(ctx, "changes replicated")
 
 	return nil
 }

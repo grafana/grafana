@@ -201,9 +201,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 3).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-
 				// First call returns nil, second call returns error
 				progress.On("TooManyErrors").Return(nil).Once()
 				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors")).Once()
@@ -231,9 +228,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
@@ -258,9 +252,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
@@ -286,9 +277,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
@@ -313,9 +301,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
@@ -341,9 +326,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
@@ -367,9 +349,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				repoResources.On(
@@ -403,9 +382,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -465,9 +441,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -523,9 +496,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
 					Action: repository.FileActionDeleted,
@@ -545,9 +515,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
 					Action: repository.FileActionDeleted,
@@ -571,9 +538,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				clients.On("ForResource", schema.GroupVersionResource{
@@ -606,9 +570,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -668,9 +629,6 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -736,6 +694,7 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				},
 			})
 
+			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
