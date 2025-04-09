@@ -56,7 +56,7 @@ import {
   getRangeSnapInterval,
 } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
-import { getInitHints, getQueryHints } from './query_hints';
+import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
@@ -775,10 +775,6 @@ export class PrometheusDatasource
 
   getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
-  }
-
-  getInitHints() {
-    return getInitHints(this);
   }
 
   async loadRules() {

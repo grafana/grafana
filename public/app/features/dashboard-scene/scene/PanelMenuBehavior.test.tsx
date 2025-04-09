@@ -9,7 +9,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -47,24 +47,17 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/services/context_srv');
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
-}));
-
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
+jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
+  createPluginExtensionsGetter: () => getPluginExtensionsMock,
+}));
 
 describe('panelMenuBehavior', () => {
-  beforeEach(() => {
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
-  });
-
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
@@ -133,7 +126,7 @@ describe('panelMenuBehavior', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -172,7 +165,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate menu item title to 25 chars', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -213,7 +206,7 @@ describe('panelMenuBehavior', () => {
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -299,7 +292,7 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should pass context with default time zone values when configuring extension', async () => {
@@ -356,11 +349,11 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should contain menu item with category', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -405,7 +398,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate category to 25 chars', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -450,7 +443,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should contain menu item with category and append items without category after divider', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',

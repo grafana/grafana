@@ -62,7 +62,10 @@ function UnconfiguredPanelComp(props: PanelProps) {
             <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
           </Button>
           <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-            <Button aria-label="dashboard.new-panel.configure-button-menu" icon={isOpen ? 'angle-up' : 'angle-down'} />
+            <Button
+              aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
+              icon={isOpen ? 'angle-up' : 'angle-down'}
+            />
           </Dropdown>
         </ButtonGroup>
       </Box>

@@ -15,7 +15,6 @@ import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
-import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
@@ -63,7 +62,6 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   async componentDidMount() {
-    await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
     $('.preloader').remove();
 
