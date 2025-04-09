@@ -2571,7 +2571,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
     "public/app/features/migrate-to-cloud/onprem/ConfigureSnapshot.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/migrate-to-cloud/onprem/NameCell.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
