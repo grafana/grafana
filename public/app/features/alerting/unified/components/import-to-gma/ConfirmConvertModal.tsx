@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { ComponentProps } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -161,7 +162,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>
-          {targetFolderHasRules && <TargetFolderNotEmptyWarning />}
+          {targetFolderHasRules && rulerNamespace && <TargetFolderNotEmptyWarning targetFolderRules={rulerNamespace} />}
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
@@ -262,15 +263,28 @@ function hasRules(folderRules: RulerRulesConfigDTO) {
   return false;
 }
 
-function TargetFolderNotEmptyWarning() {
+function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
+  const [showTargetRules, toggleShowTargetRules] = useToggle(false);
   return (
-    <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
-      <Text variant="body">
-        <Trans i18nKey="alerting.to-gma.confirm-modal.body">
-          The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import
-          these alert rules to Grafana-managed rules?
-        </Trans>
-      </Text>
-    </Alert>
+    <Stack direction="column" gap={2}>
+      <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
+        <Text variant="body">
+          <Trans i18nKey="alerting.to-gma.confirm-modal.body">
+            The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import
+            these alert rules to Grafana-managed rules?
+          </Trans>
+        </Text>
+      </Alert>
+      {targetFolderRules && (
+        <Collapse
+          label={t('alerting.import-to-gma.confirm-modal.target-folder-rules', 'Target folder rules')}
+          isOpen={showTargetRules}
+          onToggle={toggleShowTargetRules}
+          collapsible={true}
+        >
+          <RulesPreview rules={targetFolderRules} />
+        </Collapse>
+      )}
+    </Stack>
   );
 }

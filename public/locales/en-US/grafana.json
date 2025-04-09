@@ -1056,6 +1056,7 @@
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
         },
+        "target-folder-rules": "Target folder rules",
         "title": "Confirm import"
       },
       "datasource": {
