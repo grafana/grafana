@@ -173,14 +173,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Update(ctx,
+	_, err := helper.Repositories.Resource.Create(ctx,
 		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repo,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 			"Path":        "grafana/",
 		}),
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 
@@ -197,6 +197,55 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
 	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete values")
+
+	t.Run("github url cleanup", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			input  string
+			output string
+		}{
+			{
+				name:   "simple-url",
+				input:  "https://github.com/dprokop/grafana-git-sync-test",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-dot-git",
+				input:  "https://github.com/dprokop/grafana-git-sync-test.git",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-slash",
+				input:  "https://github.com/dprokop/grafana-git-sync-test/",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name": test.name,
+					"URL":  test.input,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				require.NoError(t, err, "failed to create resource")
+
+				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+				require.NoError(t, err, "failed to read back resource")
+
+				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
+				require.NoError(t, err, "failed to read URL")
+				require.Equal(t, test.output, url)
+
+				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
+				require.NoError(t, err, "failed to delete")
+			})
+		}
+	})
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
