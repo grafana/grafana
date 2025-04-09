@@ -8239,7 +8239,7 @@
       "VariablesUnknownButton-tooltip-show-usages": "Show usages"
     },
     "variables-unknown-table": {
-      "collapse-label": "Renamed or missing variables<1><0></0></1>",
+      "collapse-label": "Renamed or missing variables",
       "collapse-tooltip": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "loading": "Loading..."
     }
