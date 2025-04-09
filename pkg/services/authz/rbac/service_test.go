@@ -1191,6 +1191,121 @@ func TestService_List(t *testing.T) {
 	})
 }
 
+func TestService_getAnonymousPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		permissions   []accesscontrol.Permission
+		action        string
+		actionSets    []string
+		cacheHit      bool
+		expectedPerms map[string]bool
+		expectedError bool
+		anonRole      string
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return permissions from cache if available",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			actionSets:    []string{},
+			cacheHit:      true,
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should return permissions from store if not in cache",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			actionSets:    []string{},
+			cacheHit:      false,
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name:          "should return error if store fails",
+			permissions:   nil,
+			action:        "dashboards:read",
+			actionSets:    []string{},
+			cacheHit:      false,
+			expectedPerms: nil,
+			expectedError: true,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should handle wildcard permissions",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "*", Kind: "*"},
+			},
+			action:        "dashboards:read",
+			actionSets:    []string{},
+			cacheHit:      false,
+			expectedPerms: map[string]bool{"*": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should use custom anonymous role when specified",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			actionSets:    []string{},
+			cacheHit:      false,
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Editor",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			s := setupService()
+			if tc.anonRole != "" {
+				s.settings.AnonOrgRole = tc.anonRole
+			}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			store := &fakeStore{
+				userPermissions: tc.permissions,
+				err:             tc.expectedError,
+				disableNsCheck:  true,
+			}
+			s.store = store
+			s.permissionStore = store
+			if tc.cacheHit {
+				s.permCache.Set(ctx, anonymousPermCacheKey(ns.Value, tc.action), tc.expectedPerms)
+			}
+
+			perms, err := s.getAnonymousPermissions(ctx, ns, tc.action, tc.actionSets)
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPerms, perms)
+
+			// should only be called if not a cache hit
+			if tc.cacheHit {
+				require.Zero(t, store.calls)
+			} else {
+				require.Equal(t, 1, store.calls)
+			}
+
+			// cache should then be set
+			cached, ok := s.permCache.Get(ctx, anonymousPermCacheKey(ns.Value, tc.action))
+			require.True(t, ok)
+			require.Equal(t, tc.expectedPerms, cached)
+		})
+	}
+}
+
 func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
@@ -1205,6 +1320,7 @@ func setupService() *Service {
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		settings:        RBACSettings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
 		folderStore:     fStore,

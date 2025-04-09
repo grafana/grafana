@@ -86,7 +86,7 @@ type Requester interface {
 }
 
 // IntIdentifier converts a typeID to an int64.
-// Applicable for users, service accounts, api keys and renderer service.
+// Applicable for users (including anonymous users), service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if type is not recognized.
 func IntIdentifier(typedID string) (int64, error) {
 	typ, id, err := claims.ParseTypeID(typedID)
@@ -94,7 +94,7 @@ func IntIdentifier(typedID string) (int64, error) {
 		return 0, err
 	}
 
-	return intIdentifier(typ, id, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService)
+	return intIdentifier(typ, id, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous)
 }
 
 // UserIdentifier converts a typeID to an int64.
@@ -114,10 +114,6 @@ func intIdentifier(typ claims.IdentityType, id string, expected ...claims.Identi
 		id, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", typ, err)
-		}
-
-		if id < 1 {
-			return 0, ErrIdentifierNotInitialized
 		}
 
 		return id, nil
