@@ -92,7 +92,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
         </Text>
         <Text color="secondary">
           <Trans i18nKey="migrate-to-cloud.configure-snapshot.description">
-            Select which resources you want to include in the snapshot.
+            Select which resources you want to include in the snapshot to migrate.
           </Trans>
           <br />
           <Text weight="bold">

@@ -5341,7 +5341,7 @@
       "title": "Can I move this installation to Grafana Cloud?"
     },
     "configure-snapshot": {
-      "description": "Select which resources you want to include in the snapshot.",
+      "description": "Select which resources you want to include in the snapshot to migrate.",
       "description-sub-line": "Some resources may depend on others and will be automatically selected or deselected.",
       "resource-include-all": "Include all",
       "title": "Configure snapshot"
