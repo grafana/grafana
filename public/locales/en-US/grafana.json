@@ -7427,8 +7427,11 @@
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
-      "locale-label": "Language",
-      "locale-placeholder": "Choose language",
+      "language-preference-label": "Language",
+      "language-preference-placeholder": "Choose language",
+      "locale-preference-description": "Choose your region to see the corresponding date, time, and number format",
+      "locale-preference-label": "Region format",
+      "locale-preference-placeholder": "Choose region",
       "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
