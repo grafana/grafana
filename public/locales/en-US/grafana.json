@@ -2739,6 +2739,10 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "multiple-elements": "Multiple elements",
+        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
+        "multiple-panels": "Multiple panels",
+        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
         "objects": "Objects",
         "panel": "Panel",
         "panels": "Panels",
@@ -3226,6 +3230,9 @@
       "title-close": "Close"
     },
     "viz-panel": {
+      "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
+      "delete-panel-title": "Delete panel?",
+      "delete-panel-yes": "Delete",
       "options": {
         "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",

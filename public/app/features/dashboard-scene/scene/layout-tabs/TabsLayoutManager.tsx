@@ -178,6 +178,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
 
     this.setState({ tabs, currentTabIndex: 0 });
+    this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
   }
 
   public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
