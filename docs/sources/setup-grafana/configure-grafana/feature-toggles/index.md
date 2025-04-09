@@ -116,6 +116,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                 |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                              |
 | `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                                                     |
+| `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                                           |
 
 ## Experimental feature toggles
 
