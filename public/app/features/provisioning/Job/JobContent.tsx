@@ -18,6 +18,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
   }
 
   const { state, message, progress, summary } = job.status;
+  const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
 
   const getStatusDisplay = () => {
     switch (state) {
@@ -66,7 +67,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           </Stack>
         )}
         {state === 'success' ? (
-          <RepositoryLink name={job.metadata?.labels?.repository} />
+          <RepositoryLink name={repoName} />
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>
