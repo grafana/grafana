@@ -1052,6 +1052,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3159,7 +3165,6 @@
         "tooltip": "Общий доступ к дашборду"
       },
       "share-button": "Общий доступ",
-      "switch-old-dashboard": "Переключиться на старую страницу дашборда",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
     },
@@ -5355,7 +5360,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Ошибка при отмене создания снимка",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Ошибка при создании снимка",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Ошибка отключения",
       "error-see-server-logs": "Для получения более подробной информации см. журналы сервера Grafana",
       "get-session-error-title": "Ошибка при загрузке конфигурации переноса",
@@ -5452,6 +5461,7 @@
       "errored-resource-count": "Ошибки",
       "page-loading": "Загрузка…",
       "rebuild-snapshot": "Повторно создать снимок",
+      "show-errors": "",
       "snapshot-date": "Метка времени снимка",
       "snapshot-not-created": "Еще не создан",
       "start-migration": "Создать снимок",
@@ -5461,7 +5471,7 @@
       "upload-migration": "Загрузить снимок"
     },
     "support-types-disclosure": {
-      "text": "В стек Grafana Cloud переносятся дашборды, папки и основные источники данных. <2>Подробнее о переносе других параметров.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Токен создан и активен",
@@ -5853,7 +5863,6 @@
       "remove-bookmark": "Удалить из закладок"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Чтобы выйти из режима киоска, нажмите ESC"
     },
     "megamenu": {
@@ -6251,6 +6260,7 @@
       "strong-password-validation-register": "Пароль не соответствует политике надежных паролей"
     },
     "change-theme": "Изменить тему",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6886,6 +6896,7 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
+      "replace-query-from-library": "",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
