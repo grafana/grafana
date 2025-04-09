@@ -116,6 +116,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
 	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
+		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -128,10 +129,12 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 			return deny, err
 		}
 		if allowed {
+			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 			return &authzv1.CheckResponse{Allowed: allowed}, nil
 		}
 	}
+	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
 
 	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
@@ -175,7 +178,11 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	)
 
 	permissions, err := s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
-	if err != nil {
+	if err == nil {
+		s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
+	} else {
+		s.metrics.permissionCacheUsage.WithLabelValues("false", listReq.Action).Inc()
+
 		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 		if err != nil {
 			ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
@@ -340,10 +347,8 @@ func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.Nam
 	case types.TypeAnonymous:
 		anonPermKey := anonymousPermCacheKey(ns.Value, action)
 		if cached, ok := s.permCache.Get(ctx, anonPermKey); ok {
-			s.metrics.permissionCacheUsage.WithLabelValues("true", action).Inc()
 			return cached, nil
 		}
-		s.metrics.permissionCacheUsage.WithLabelValues("false", action).Inc()
 		return nil, cache.ErrNotFound
 	case types.TypeRenderService:
 		return nil, cache.ErrNotFound
@@ -354,10 +359,8 @@ func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.Nam
 		}
 		userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
 		if cached, ok := s.permCache.Get(ctx, userPermKey); ok {
-			s.metrics.permissionCacheUsage.WithLabelValues("true", action).Inc()
 			return cached, nil
 		}
-		s.metrics.permissionCacheUsage.WithLabelValues("false", action).Inc()
 		return nil, cache.ErrNotFound
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
