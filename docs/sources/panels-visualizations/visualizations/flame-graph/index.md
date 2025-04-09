@@ -141,6 +141,13 @@ There are also action buttons on the left-most side of each row. The first butto
 
 ## Toolbar
 
+The following sections describe the features of the toolbar:
+
+- [Search](#search)
+- [Reset](#reset)
+- [Color schema picker](#color-schema-picker)
+- [Grouping](#grouping-1)
+
 ### Search
 
 You can use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out.
@@ -149,7 +156,11 @@ You can use the search field to find functions with a particular name. All the f
 
 ### Reset
 
-TBA
+The reset icon is displayed when the flame graph is displaying a focus block or it's in sandwich view:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-reset-v12.0.png" max-width="500px" alt="Different color scheme" >}}
+
+When you click the icon, the flame graph is reset back to its original state.
 
 ### Color schema picker
 
@@ -159,7 +170,7 @@ You can switch between coloring functions by their value or by their package nam
 
 ### Grouping
 
-TBA
+Expand or collapse all groups to show all the instances of a function or show the function grouped.
 
 ### Text align
 
