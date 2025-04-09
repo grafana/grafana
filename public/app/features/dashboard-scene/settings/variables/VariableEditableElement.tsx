@@ -4,7 +4,7 @@ import { VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Combobox, Input, TextArea, Stack, Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -136,8 +136,15 @@ function VariableTypeSelect({ variable }: VariableInputProps) {
   return (
     <Stack gap={2} direction={'column'}>
       <Combobox value={variable.state.type} options={options} disabled={true} onChange={() => {}} />
-      <Button tooltip={'For more variable options open variable editor'} onClick={onOpenVariableEdior} fullWidth>
-        Open variable editor
+      <Button
+        tooltip={t(
+          'dashboard-scene.variable-editor-form.open-editor-tooltip',
+          'For more variable options open variable editor'
+        )}
+        onClick={onOpenVariableEdior}
+        fullWidth
+      >
+        <Trans i18nKey="dashboard-scene.variable-editor-form.open-editor">Open variable editor</Trans>
       </Button>
     </Stack>
   );
