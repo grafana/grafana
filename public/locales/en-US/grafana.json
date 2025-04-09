@@ -1048,6 +1048,8 @@
       "alert-rules": "Alert rules",
       "confirm-modal": {
         "confirm": "Yes, import",
+        "loading": "Loading...",
+        "loading-body": "Preparing data to be imported.This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-title": "No rules to import",
         "plugin-rules-warning": {
@@ -2004,7 +2006,7 @@
     },
     "to-gma": {
       "confirm-modal": {
-        "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
+        "body": "The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
         "summary": "These are the list of rules that will be imported:",
         "title-warning": "Warning"
       }

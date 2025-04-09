@@ -12,6 +12,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
@@ -58,9 +59,37 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'ruleGroup',
     'targetDatasourceUID',
   ]);
-  const { rulerRules } = useGetRulerRules(selectedDatasourceName || undefined);
+  // we need to skip fetching if the modal is not open
+  const dataSourceToFetch = isOpen ? selectedDatasourceName : undefined;
+  const targetFolderToFetch = isOpen ? targetFolder : undefined;
+  const { rulerRules, isLoading: isloadingCloudRules } = useGetRulerRules(dataSourceToFetch || undefined);
+  const { currentData: rulerNamespace, isLoading: loadingTargetGroups } = useFetchGroupsForFolder(
+    targetFolderToFetch?.uid ?? ''
+  );
+
+  const targetFolderHasRules = Boolean(rulerNamespace && hasRules(rulerNamespace));
+
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
+
+  if (isloadingCloudRules || loadingTargetGroups) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        title={t('alerting.import-to-gma.confirm-modal.loading', 'Loading...')}
+        onDismiss={onDismiss}
+        onClickBackdrop={onDismiss}
+      >
+        <Text>
+          {t(
+            'alerting.import-to-gma.confirm-modal.loading-body',
+            'Preparing data to be imported.This can take a while...'
+          )}
+        </Text>
+      </Modal>
+    );
+  }
+
   const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = filterRulerRulesConfig(
     rulerRules,
     namespace,
@@ -132,14 +161,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>
-          <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
-            <Text variant="body">
-              <Trans i18nKey="alerting.to-gma.confirm-modal.body">
-                If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to
-                import these alert rules to Grafana-managed rules?
-              </Trans>
-            </Text>
-          </Alert>
+          {targetFolderHasRules && <TargetFolderNotEmptyWarning />}
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
@@ -227,3 +249,28 @@ const getStyles = () => ({
     width: '800px',
   }),
 });
+
+function hasRules(folderRules: RulerRulesConfigDTO) {
+  if (folderRules) {
+    const rules = Object.values(folderRules)
+      .at(0)
+      ?.flatMap((group) => group.rules);
+    if (rules) {
+      return rules.length > 0;
+    }
+  }
+  return false;
+}
+
+function TargetFolderNotEmptyWarning() {
+  return (
+    <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
+      <Text variant="body">
+        <Trans i18nKey="alerting.to-gma.confirm-modal.body">
+          The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import
+          these alert rules to Grafana-managed rules?
+        </Trans>
+      </Text>
+    </Alert>
+  );
+}
