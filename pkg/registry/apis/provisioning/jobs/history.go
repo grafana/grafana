@@ -46,10 +46,7 @@ func (h *recentHistory) WriteJob(ctx context.Context, job *provisioning.Job) err
 	key := fmt.Sprintf("%s/%s", job.Namespace, job.Spec.Repository)
 	v, ok := h.repoHistory[key]
 	if ok {
-		max := len(v.Items)
-		if max > 9 {
-			max = 9
-		}
+		max := min(len(v.Items), 9)
 		items = append(items, v.Items[0:max]...)
 	}
 	h.repoHistory[key] = provisioning.JobList{Items: items}
