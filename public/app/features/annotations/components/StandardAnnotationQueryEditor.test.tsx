@@ -230,7 +230,7 @@ describe('StandardAnnotationQueryEditor', () => {
       annotation: {
         name: 'v1WithQueryNoSpec',
         target: { refId: 'AnnoTarget' },
-        query: 'abcdefg' as any, // v1 dashboard might have a prop called query, but is not v2, it does not have spec
+        query: 'abcdefg', // v1 dashboard might have a prop called query, but is not v2, it does not have spec
         datasource: {
           type: 'prometheus',
           uid: 'abc123',
