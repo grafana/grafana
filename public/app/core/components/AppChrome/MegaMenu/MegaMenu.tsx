@@ -13,8 +13,6 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
-
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -140,8 +138,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       minHeight: 0,
+      flexGrow: 1,
       position: 'relative',
     }),
     mobileHeader: css({

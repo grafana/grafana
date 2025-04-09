@@ -1048,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3137,7 +3143,6 @@
         "tooltip": "Irányítópult megosztása"
       },
       "share-button": "Megosztás",
-      "switch-old-dashboard": "Váltás a régi irányítópult oldalára",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unmark-favorite": "Kedvencnek jelölés visszavonása"
     },
@@ -5331,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Hiba történt a pillanatfelvétel létrehozásának megszakításakor",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Hiba történt a pillanatfelvétel létrehozásakor",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Hiba történt a leválasztás során",
       "error-see-server-logs": "További részletekért tekintse meg a Grafana-kiszolgáló naplóit",
       "get-session-error-title": "Hiba történt az áttelepítési konfiguráció betöltésekor",
@@ -5428,6 +5437,7 @@
       "errored-resource-count": "Hibák",
       "page-loading": "Betöltés...",
       "rebuild-snapshot": "Pillanatkép újbóli létrehozása",
+      "show-errors": "",
       "snapshot-date": "Pillanatkép időbélyege",
       "snapshot-not-created": "Még nincs létrehozva",
       "start-migration": "Pillanatkép létrehozása",
@@ -5437,7 +5447,7 @@
       "upload-migration": "Pillanatkép feltöltése"
     },
     "support-types-disclosure": {
-      "text": "Az irányítópultok, mappák és beépített alapvető adatforrások áttelepülnek a Grafana Cloud stackbe. <2>További információ más beállítások áttelepítéséről.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token létrehozva és aktív",
@@ -5829,7 +5839,6 @@
       "remove-bookmark": "Eltávolítás a könyvjelzők közül"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Nyomja le az ESC gombot a kioszk módból való kilépéshez"
     },
     "megamenu": {
@@ -6227,6 +6236,7 @@
       "strong-password-validation-register": "A jelszó nem felel meg az erős jelszavakra vonatkozó irányelveknek"
     },
     "change-theme": "Téma módosítása",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6858,6 +6868,7 @@
       "expand-row": "Lekérdezési sor kibontása",
       "hide-response": "Válasz elrejtése",
       "remove-query": "Lekérdezés eltávolítása",
+      "replace-query-from-library": "",
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
