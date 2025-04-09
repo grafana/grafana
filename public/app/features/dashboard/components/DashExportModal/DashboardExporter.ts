@@ -4,7 +4,6 @@ import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from 
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
-  LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
   AnnotationQueryKind,
@@ -12,10 +11,8 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
 
-import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
@@ -204,23 +201,24 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
       }
     };
 
-    const processLibraryPanels = async (panel: PanelModel) => {
-      if (isPanelModelLibraryPanel(panel)) {
-        const { name, uid } = panel.libraryPanel;
-        let model = panel.libraryPanel.model;
-        if (!model) {
-          const libPanel = await getLibraryPanel(uid, true);
-          model = libPanel.model;
-        }
+    // TODO: Implement library panel processing
+    // const processLibraryPanels = async (panel: PanelModel) => {
+    //   if (isPanelModelLibraryPanel(panel)) {
+    //     const { name, uid } = panel.libraryPanel;
+    //     let model = panel.libraryPanel.model;
+    //     if (!model) {
+    //       const libPanel = await getLibraryPanel(uid, true);
+    //       model = libPanel.model;
+    //     }
 
-        await templateizeDatasourceUsage(model);
+    //     await templateizeDatasourceUsage(model);
 
-        const { gridPos, id, ...rest } = model as any;
-        if (!libraryPanels.has(uid)) {
-          libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
-        }
-      }
-    };
+    //     const { gridPos, id, ...rest } = model as any;
+    //     if (!libraryPanels.has(uid)) {
+    //       libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
+    //     }
+    //   }
+    // };
 
     try {
       // check up panel data sources
@@ -261,16 +259,17 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
         version: config.buildInfo.version,
       };
 
+      // TODO: Implement library panel processing
       // we need to process all panels again after all the promises are resolved
       // so all data sources, variables and targets have been templateized when we process library panels
-      for (const panel of saveModel.panels) {
-        await processLibraryPanels(panel);
-        if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
-          for (const rowPanel of panel.panels) {
-            await processLibraryPanels(rowPanel);
-          }
-        }
-      }
+      // for (const panel of saveModel.panels) {
+      //   await processLibraryPanels(panel);
+      //   if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+      //     for (const rowPanel of panel.panels) {
+      //       await processLibraryPanels(rowPanel);
+      //     }
+      //   }
+      // }
 
       each(datasources, (value: any) => {
         inputs.push(value);
@@ -346,10 +345,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       variableLookup[variable.spec.name] = variable.spec;
     }
 
-    const templateizeLibraryPanelDatasourceUsage = (obj: any) => {
-      obj.datasource = undefined;
-    };
-
     const removeDataSourceRefs = (
       obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
     ) => {
@@ -364,14 +359,15 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       }
     };
 
-    const processLibraryPanels = async (panel: LibraryPanelKind) => {
-      const { uid } = panel.spec.libraryPanel;
+    // TODO: Implement library panel processing
+    // const processLibraryPanels = async (panel: LibraryPanelKind) => {
+    //   const { uid } = panel.spec.libraryPanel;
 
-      const libPanel = await getLibraryPanel(uid, true);
-      panel.spec.libraryPanel.model = libPanel.model;
+    //   const libPanel = await getLibraryPanel(uid, true);
+    //   panel.spec.libraryPanel.model = libPanel.model;
 
-      templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
-    };
+    //   templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
+    // };
 
     try {
       const elements = dashboard.elements;
@@ -380,9 +376,11 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       for (const element of Object.values(elements)) {
         if (element.kind === 'Panel') {
           processPanel(element);
-        } else if (element.kind === 'LibraryPanel') {
-          await processLibraryPanels(element);
         }
+        // TODO: Implement library panel processing
+        // } else if (element.kind === 'LibraryPanel') {
+        //   await processLibraryPanels(element);
+        // }
       }
 
       // process template variables
