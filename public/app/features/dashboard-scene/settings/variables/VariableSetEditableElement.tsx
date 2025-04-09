@@ -22,9 +22,9 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.variable', 'Variables'),
+      typeName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
       icon: 'x',
-      instanceName: t('dashboard.edit-pane.elements.variable', 'Variables'),
+      instanceName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
       isContainer: true,
     };
   }

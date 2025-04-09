@@ -2782,7 +2782,8 @@
         "rows": "Rows",
         "tab": "Tab",
         "tabs": "Tabs",
-        "variable": "Variable"
+        "variable": "Variable",
+        "variable-set": "Variables"
       },
       "open": "Open options pane",
       "row": {
