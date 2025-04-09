@@ -72,15 +72,20 @@ These instructions apply only to Grafana OSS and Grafana Enterprise. To configur
 
 ## Configure an integration in Grafana IRM
 
-First, enable an integration in IRM to accept alerts from Grafana Alerting. You can either create a new integration or use an existing **Grafana Alerting** or **Webhook** integration in IRM.
+First, enable an integration in IRM to accept alerts from Grafana Alerting. You can either create a new integration or use an existing **Alertmanager** or **Webhook** integration in IRM.
 
 To create the integration, follow the same steps as described in [Configure an OnCall integration in IRM](ref:irm-configure-integrations):
 
 1. Navigate to **Alerts & IRM** -> **IRM** -> **Integrations**.
 1. Click **+ New integration**.
-1. Select either **Grafana Alerting** or **Webhook** integration from the list.
-   - **Grafana Alerting** integration – Includes preconfigured IRM templates for processing Grafana alerts.
+1. Select either **Alertmanager** or **Webhook** integration from the list.
+
+   - **Alertmanager** integration – Includes preconfigured IRM templates for processing Grafana and Prometheus alerts.
+
+     > The **Grafana Alerting** integration works similarly but may display a warning in the UI.
+
    - **Webhook** integration – Uses default IRM templates for general alert processing.
+
 1. Provide a title, description, and assign it to a team, then click **Create Integration**.
 1. On the integration details page, copy the **HTTP Endpoint** URL to use in the next section.
 

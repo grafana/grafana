@@ -10,10 +10,12 @@ import {
 } from '@grafana/scenes';
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
+import { appEvents } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
@@ -107,8 +109,36 @@ export class TabItem
   }
 
   public onDelete() {
-    const layout = sceneGraph.getAncestor(this, TabsLayoutManager);
+    const layout = this.getParentLayout();
     layout.removeTab(this);
+  }
+
+  public onConfirmDelete() {
+    const layout = this.getParentLayout();
+
+    if (layout.shouldUngroup()) {
+      layout.removeTab(this);
+      return;
+    }
+
+    if (this.getLayout().getVizPanels().length === 0) {
+      this.onDelete();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.tabs-layout.delete-tab-title', 'Delete tab?'),
+        text: t(
+          'dashboard.tabs-layout.delete-tab-text',
+          'Deleting this tab will also remove all panels. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.tabs-layout.delete-tab-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
   }
 
   public serialize(): TabsLayoutTabKind {

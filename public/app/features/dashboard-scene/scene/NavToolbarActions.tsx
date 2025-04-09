@@ -11,7 +11,6 @@ import {
   Dropdown,
   Icon,
   Menu,
-  Stack,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -38,7 +37,8 @@ import { isLibraryPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
-import { ToolbarActionsNew } from './new-toolbar/ToolbarActionsNew';
+import { LeftActions } from './new-toolbar/LeftActions';
+import { RightActions } from './new-toolbar/RightActions';
 
 interface Props {
   dashboard: DashboardScene;
@@ -47,12 +47,14 @@ interface Props {
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
 
-  const actions = hasNewToolbar ? (
-    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
+  return hasNewToolbar ? (
+    <AppChromeUpdate
+      breadcrumbActions={<LeftActions dashboard={dashboard} />}
+      actions={<RightActions dashboard={dashboard} />}
+    />
   ) : (
-    <ToolbarActions dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions`} />
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
   );
-  return <AppChromeUpdate actions={actions} />;
 });
 
 NavToolbarActions.displayName = 'NavToolbarActions';
@@ -68,7 +70,6 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
-  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
@@ -593,16 +594,7 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
-
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
-      <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

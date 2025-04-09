@@ -76,7 +76,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, statusCode)
 
 			// Viewer can see file listing
-			rsp = helper.ViewerREST.Get().
+			rsp = helper.AdminREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).
@@ -173,14 +173,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Update(ctx,
+	_, err := helper.Repositories.Resource.Create(ctx,
 		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repo,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 			"Path":        "grafana/",
 		}),
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 
@@ -197,6 +197,55 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
 	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete values")
+
+	t.Run("github url cleanup", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			input  string
+			output string
+		}{
+			{
+				name:   "simple-url",
+				input:  "https://github.com/dprokop/grafana-git-sync-test",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-dot-git",
+				input:  "https://github.com/dprokop/grafana-git-sync-test.git",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-slash",
+				input:  "https://github.com/dprokop/grafana-git-sync-test/",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name": test.name,
+					"URL":  test.input,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				require.NoError(t, err, "failed to create resource")
+
+				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+				require.NoError(t, err, "failed to read back resource")
+
+				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
+				require.NoError(t, err, "failed to read URL")
+				require.Equal(t, test.output, url)
+
+				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
+				require.NoError(t, err, "failed to delete")
+			})
+		}
+	})
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
@@ -251,10 +300,48 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Equal(t, repo, val, "should have repo annotations")
 
 		// Read the file we wrote
-		obj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
 		require.NoError(t, err, "read value")
-		name, _, _ = unstructured.NestedString(obj.Object, "resource", "file", "metadata", "name")
-		require.Equal(t, allPanels, name, "read the name out of the saved file")
+
+		wrap := &unstructured.Unstructured{}
+		wrap.Object, _, err = unstructured.NestedMap(wrapObj.Object, "resource", "dryRun")
+		require.NoError(t, err)
+		meta, err := utils.MetaAccessor(wrap)
+		require.NoError(t, err)
+		require.Equal(t, allPanels, meta.GetName(), "read the name out of the saved file")
+
+		// Check that an admin can update
+		meta.SetAnnotation("test", "from-provisioning")
+		body, err := json.Marshal(wrap.Object)
+		require.NoError(t, err)
+		result = helper.AdminREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, 200, code)
+		require.NoError(t, result.Error(), "update as admin value")
+		raw, err = result.Raw()
+		require.NoError(t, err)
+		err = json.Unmarshal(raw, wrapper)
+		require.NoError(t, err)
+		anno, _, _ := unstructured.NestedString(wrapper.Resource.File.Object, "metadata", "annotations", "test")
+		require.Equal(t, "from-provisioning", anno, "should set the annotation")
+
+		// But a viewer can not
+		result = helper.ViewerREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, 403, code)
+		require.True(t, apierrors.IsForbidden(result.Error()), code)
 	})
 
 	t.Run("fail using invalid paths", func(t *testing.T) {
