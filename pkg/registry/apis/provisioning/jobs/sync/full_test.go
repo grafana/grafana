@@ -512,6 +512,130 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				}).Return()
 			},
 		},
+		{
+			name:        "successful apply with folder deletion",
+			description: "Should successfully apply changes when deleting an existing folder",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "to-be-deleted/",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-folder",
+						Resource: "Folder",
+						Group:    "folders",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    "FolderList",
+				}
+
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    resources.FolderResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.FolderResource: listGVK.Kind,
+				})
+
+				fakeDynamicClient.PrependReactor("delete", "folders", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, nil
+				})
+
+				clients.On("ForResource", schema.GroupVersionResource{
+					Group:    "folders",
+					Resource: "Folder",
+				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{
+					Kind:    "Folder",
+					Group:   "folders",
+					Version: "v1",
+				}, nil)
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "to-be-deleted/",
+					Name:     "test-folder",
+					Resource: "Folder",
+					Group:    "folders",
+					Error:    nil,
+				}).Return()
+			},
+		},
+		{
+			name:        "failed to apply with folder deletion",
+			description: "Should record an error when deleting a folder",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "to-be-deleted/",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-folder",
+						Resource: "Folder",
+						Group:    "folders",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    "FolderList",
+				}
+
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    resources.FolderResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.FolderResource: listGVK.Kind,
+				})
+
+				fakeDynamicClient.PrependReactor("delete", "folders", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("delete failed")
+				})
+
+				clients.On("ForResource", schema.GroupVersionResource{
+					Group:    "folders",
+					Resource: "Folder",
+				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{
+					Kind:    "Folder",
+					Group:   "folders",
+					Version: "v1",
+				}, nil)
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "to-be-deleted/",
+					Name:     "test-folder",
+					Resource: "Folder",
+					Group:    "folders",
+					Error:    fmt.Errorf("delete failed"),
+				}).Return()
+			},
+		},
 	}
 
 	for _, tt := range tests {
