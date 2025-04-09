@@ -86,6 +86,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
+| `unifiedNavbars`                       | Enables unified navbars                                                                                                             |                    |
 
 ## Public preview feature toggles
 

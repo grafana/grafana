@@ -20,8 +20,7 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
-import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
+import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
 export interface Props extends PropsWithChildren<{}> {}
 
@@ -35,7 +34,9 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
-  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
+
+  const headerLevels = useChromeHeaderLevels();
+  const styles = useStyles2(getStyles, headerLevels * getChromeHeaderLevelHeight());
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
@@ -92,8 +93,11 @@ export function AppChrome({ children }: Props) {
               pageNav={state.pageNav}
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
+              actions={state.actions}
+              breadcrumbActions={state.breadcrumbActions}
+              scopes={scopes}
+              showToolbarLevel={headerLevels === 2}
             />
-            {(state.actions || scopes?.state.enabled) && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
           </header>
         </>
       )}
@@ -158,12 +162,13 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
+const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
   return {
     content: css({
+      label: 'page-content',
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
+      paddingTop: headerHeight,
       flexGrow: 1,
       height: 'auto',
     }),
@@ -185,12 +190,13 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       zIndex: 2,
 
       [theme.breakpoints.up('xl')]: {
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
       },
     }),
     scopesDashboardsContainer: css({
       position: 'fixed',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
+      height: `calc(100% - ${headerHeight}px)`,
       zIndex: 1,
     }),
     scopesDashboardsContainerDocked: css({
@@ -249,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     sidebarContainer: css({
       position: 'fixed',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
+      height: `calc(100% - ${headerHeight}px)`,
       zIndex: 2,
       right: 0,
     }),

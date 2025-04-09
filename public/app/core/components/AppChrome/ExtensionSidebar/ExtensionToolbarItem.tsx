@@ -2,6 +2,8 @@ import { useState } from 'react';
 
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
 import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
@@ -24,19 +26,22 @@ export function ExtensionToolbarItem() {
 
   if (components.length === 1) {
     return (
-      <ToolbarButton
-        icon="web-section"
-        data-testid="extension-toolbar-button"
-        variant={isOpen ? 'active' : 'default'}
-        tooltip={components[0].description}
-        onClick={() => {
-          if (isOpen) {
-            setDockedComponentId(undefined);
-          } else {
-            setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
-          }
-        }}
-      />
+      <>
+        <ToolbarButton
+          icon="web-section"
+          data-testid="extension-toolbar-button"
+          variant={isOpen ? 'active' : 'default'}
+          tooltip={components[0].description}
+          onClick={() => {
+            if (isOpen) {
+              setDockedComponentId(undefined);
+            } else {
+              setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
+            }
+          }}
+        />
+        <NavToolbarSeparator />
+      </>
     );
   }
 
@@ -62,13 +67,16 @@ export function ExtensionToolbarItem() {
     </Menu>
   );
   return (
-    <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
-      <ToolbarButton
-        data-testid="extension-toolbar-button"
-        icon="web-section"
-        isOpen={isMenuOpen}
-        variant={isOpen ? 'active' : 'default'}
-      />
-    </Dropdown>
+    <>
+      <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
+        <ToolbarButton
+          data-testid="extension-toolbar-button"
+          icon="web-section"
+          isOpen={isMenuOpen}
+          variant={isOpen ? 'active' : 'default'}
+        />
+      </Dropdown>
+      <NavToolbarSeparator />
+    </>
   );
 }
