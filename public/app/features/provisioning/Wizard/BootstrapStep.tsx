@@ -106,7 +106,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
               <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.repository">Repository</Trans>
+                <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
               </Text>
               <Text variant="h4">
                 {state.fileCount > 0
