@@ -36,16 +36,7 @@ func FullSync(
 		}
 	}
 
-	target, err := repositoryResources.List(ctx)
-	if err != nil {
-		return fmt.Errorf("error listing current: %w", err)
-	}
-
-	source, err := repo.ReadTree(ctx, currentRef)
-	if err != nil {
-		return fmt.Errorf("error reading tree: %w", err)
-	}
-	changes, err := compare(source, target)
+	changes, err := compare(ctx, repo, repositoryResources, currentRef)
 	if err != nil {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
@@ -54,10 +45,6 @@ func FullSync(
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
-
-	// FIXME: this is a way to load in different ways the resources
-	// maybe we can structure the code in better way to avoid this
-	repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 
 	return applyChanges(ctx, changes, clients, repositoryResources, progress)
 }

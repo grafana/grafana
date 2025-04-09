@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -18,6 +19,31 @@ type ResourceFileChange struct {
 
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
+}
+
+func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error) {
+	target, err := repositoryResources.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error listing current: %w", err)
+	}
+
+	source, err := repo.ReadTree(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("error reading tree: %w", err)
+	}
+
+	changes, err := Changes(source, target)
+	if err != nil {
+		return nil, fmt.Errorf("error calculating changes: %w", err)
+	}
+
+	if len(changes) > 0 {
+		// FIXME: this is a way to load in different ways the resources
+		// maybe we can structure the code in better way to avoid this
+		repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
+	}
+
+	return changes, nil
 }
 
 func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
