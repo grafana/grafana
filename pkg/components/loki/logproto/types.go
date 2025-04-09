@@ -54,6 +54,7 @@ func (m *Stream) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 					return 0, err
 				}
 				i -= size
+				//nolint:gosec // G115: the bits are what's important here, not the actual value.
 				i = encodeVarintLogproto(dAtA, i, uint64(size))
 			}
 			i--
@@ -102,6 +103,7 @@ func (m *Entry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		return 0, err7
 	}
 	i -= n7
+	//nolint:gosec // G115: the bits are what's important here, not the actual value.
 	i = encodeVarintLogproto(dAtA, i, uint64(n7))
 	i--
 	dAtA[i] = 0xa
@@ -129,7 +131,9 @@ func (m *Stream) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
+		//nolint:gosec // G115: we can reasonably trust Loki instances to not send us bad data.
 		fieldNum := int32(wire >> 3)
+		//nolint:gosec // G115: we can reasonably trust Loki instances to not send us bad data.
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
 			return fmt.Errorf("proto: StreamAdapter: wiretype end group for non-group")
@@ -157,6 +161,7 @@ func (m *Stream) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+			//nolint:gosec // G115: we can reasonably trust Loki instances to not send us bad data.
 			intStringLen := int(stringLen)
 			if intStringLen < 0 {
 				return ErrInvalidLengthLogproto
@@ -269,7 +274,9 @@ func (m *Entry) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
+		//nolint:gosec // G115: we can reasonably trust Loki instances to not send us bad data.
 		fieldNum := int32(wire >> 3)
+		//nolint:gosec // G115: we can reasonably trust Loki instances to not send us bad data.
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
 			return fmt.Errorf("proto: EntryAdapter: wiretype end group for non-group")
@@ -330,6 +337,7 @@ func (m *Entry) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+			//nolint:gosec // G115
 			intStringLen := int(stringLen)
 			if intStringLen < 0 {
 				return ErrInvalidLengthLogproto
@@ -381,6 +389,7 @@ func (m *Stream) Size() (n int) {
 	if len(m.Entries) > 0 {
 		for _, e := range m.Entries {
 			l = e.Size()
+			//nolint:gosec // G115: the Size cannot be negative
 			n += 1 + l + sovLogproto(uint64(l))
 		}
 	}
@@ -397,6 +406,7 @@ func (m *Entry) Size() (n int) {
 	var l int
 	_ = l
 	l = SizeOfStdTime(m.Timestamp)
+	//nolint:gosec // G115: the size can't be negative
 	n += 1 + l + sovLogproto(uint64(l))
 	l = len(m.Line)
 	if l > 0 {

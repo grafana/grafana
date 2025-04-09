@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"reflect"
 	"strconv"
 )
@@ -36,8 +37,10 @@ func (j *Json) Float64() (float64, error) {
 	case float32, float64:
 		return reflect.ValueOf(j.data).Float(), nil
 	case int, int8, int16, int32, int64:
+		// We don't need to verify the size: all 64-bit standard numbers fit into float64.
 		return float64(reflect.ValueOf(j.data).Int()), nil
 	case uint, uint8, uint16, uint32, uint64:
+		// We don't need to verify the size: all 64-bit standard numbers fit into float64.
 		return float64(reflect.ValueOf(j.data).Uint()), nil
 	}
 	return 0, errors.New("invalid value type")
@@ -55,9 +58,19 @@ func (j *Json) Int() (int, error) {
 	case float32, float64:
 		return int(reflect.ValueOf(j.data).Float()), nil
 	case int, int8, int16, int32, int64:
-		return int(reflect.ValueOf(j.data).Int()), nil
+		i := reflect.ValueOf(j.data).Int()
+		if i < int64(math.MinInt) || i > int64(math.MaxInt) {
+			// gosec G115
+			return 0, errors.New("value out of range for int")
+		}
+		return int(i), nil
 	case uint, uint8, uint16, uint32, uint64:
-		return int(reflect.ValueOf(j.data).Uint()), nil
+		i := reflect.ValueOf(j.data).Uint()
+		if i > uint64(math.MaxInt) {
+			// gosec G115
+			return 0, errors.New("value out of range for int")
+		}
+		return int(i), nil
 	}
 	return 0, errors.New("invalid value type")
 }
@@ -72,7 +85,12 @@ func (j *Json) Int64() (int64, error) {
 	case int, int8, int16, int32, int64:
 		return reflect.ValueOf(j.data).Int(), nil
 	case uint, uint8, uint16, uint32, uint64:
-		return int64(reflect.ValueOf(j.data).Uint()), nil
+		i := reflect.ValueOf(j.data).Uint()
+		if i > uint64(math.MaxInt64) {
+			// gosec G115
+			return 0, errors.New("value out of range for int64")
+		}
+		return int64(i), nil
 	}
 	return 0, errors.New("invalid value type")
 }
@@ -85,7 +103,12 @@ func (j *Json) Uint64() (uint64, error) {
 	case float32, float64:
 		return uint64(reflect.ValueOf(j.data).Float()), nil
 	case int, int8, int16, int32, int64:
-		return uint64(reflect.ValueOf(j.data).Int()), nil
+		i := reflect.ValueOf(j.data).Int()
+		if i < 0 {
+			// gosec G115
+			return 0, errors.New("value out of range for uint64")
+		}
+		return uint64(i), nil
 	case uint, uint8, uint16, uint32, uint64:
 		return reflect.ValueOf(j.data).Uint(), nil
 	}

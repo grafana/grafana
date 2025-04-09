@@ -107,8 +107,11 @@ func TestSQLEngine(t *testing.T) {
 	})
 
 	t.Run("Given row values with uint64 as time columns", func(t *testing.T) {
+		//nolint:gosec // G115: this is a test
 		tSeconds := uint64(dt.Unix())
+		//nolint:gosec // G115: this is a test
 		tMilliseconds := uint64(dt.UnixNano() / 1e6)
+		//nolint:gosec // G115: this is a test
 		tNanoSeconds := uint64(dt.UnixNano())
 		var nilPointer *uint64
 
@@ -151,6 +154,7 @@ func TestSQLEngine(t *testing.T) {
 	})
 
 	t.Run("Given row values with int32 as time columns", func(t *testing.T) {
+		//nolint:gosec // G115: this is a test
 		tSeconds := int32(dt.Unix())
 		var nilInt *int32
 
@@ -176,6 +180,7 @@ func TestSQLEngine(t *testing.T) {
 	})
 
 	t.Run("Given row values with uint32 as time columns", func(t *testing.T) {
+		//nolint:gosec // G115: this is a test
 		tSeconds := uint32(dt.Unix())
 		var nilInt *uint32
 

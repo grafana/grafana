@@ -10,7 +10,6 @@ func TransformException(ctx context.Context, ex *Exception, store *SourceMapStor
 	frames := []Frame{}
 
 	for _, frame := range ex.Stacktrace.Frames {
-		frame := frame
 		mappedFrame, err := store.resolveSourceLocation(ctx, frame)
 		if err != nil {
 			frames = append(frames, frame)

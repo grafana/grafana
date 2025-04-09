@@ -269,6 +269,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	// this temp slice is used to convert ints to bytes.
 	tmp := make([]byte, 8)
 	writeInt := func(u int64) {
+		//nolint:gosec // G115
 		binary.LittleEndian.PutUint64(tmp, uint64(u))
 		writeBytes(tmp)
 	}

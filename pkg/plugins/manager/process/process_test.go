@@ -57,7 +57,6 @@ func TestProcessManager_Start(t *testing.T) {
 		for _, tc := range tcs {
 			// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 			// otherwise it would be like a moving pointer while tests run in parallel
-			tc := tc
 
 			t.Run(tc.name, func(t *testing.T) {
 				t.Parallel()

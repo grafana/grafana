@@ -394,7 +394,6 @@ func TestSave(t *testing.T) {
 func insertPrefs(t testing.TB, store store, preferences ...pref.Preference) {
 	t.Helper()
 	for _, p := range preferences {
-		p := p
 		_, err := store.Insert(context.Background(), &p)
 		require.NoError(t, err)
 	}

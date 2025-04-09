@@ -199,7 +199,11 @@ func (s *service) start(ctx context.Context) error {
 
 		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
+			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{
+				Group: 15000,
+				//nolint:gosec // G115: we're our own source of this version
+				Version: int32(i + 1),
+			}
 		}
 
 		auth := b.GetAuthorizer()

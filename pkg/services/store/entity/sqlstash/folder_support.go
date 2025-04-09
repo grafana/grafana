@@ -116,6 +116,7 @@ func buildFolderTree(all []*folderInfo) (*folderInfo, []*folderInfo, error) {
 // https://imrannazar.com/Modified-Preorder-Tree-Traversal
 func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, error) {
 	var err error
+	//nolint:gosec // G115
 	folder.depth = int32(len(stack))
 	folder.left = idx
 	folder.stack = stack

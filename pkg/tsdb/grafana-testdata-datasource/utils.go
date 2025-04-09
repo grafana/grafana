@@ -20,6 +20,7 @@ func newRandomStringProvider(data []string) *randomStringProvider {
 }
 
 func (p *randomStringProvider) Next() string {
+	//nolint:gosec // G115: this is test code
 	return p.data[p.r.Int31n(int32(len(p.data)))]
 }
 

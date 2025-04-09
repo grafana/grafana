@@ -430,8 +430,6 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 
 	// Process metrics
 	for _, m := range q.Metrics {
-		m := m
-
 		if m.Type == countType {
 			continue
 		}

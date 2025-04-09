@@ -462,6 +462,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Format = format
 			fileHandler.Rotate = sec.Key("log_rotate").MustBool(true)
 			fileHandler.Maxlines = sec.Key("max_lines").MustInt(1000000)
+			//nolint:gosec // G115: this is a config key where there is little to no security risk
 			fileHandler.Maxsize = 1 << uint(sec.Key("max_size_shift").MustInt(28))
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)

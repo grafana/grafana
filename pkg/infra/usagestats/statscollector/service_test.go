@@ -66,8 +66,6 @@ func TestTotalStatsUpdate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
-
 		t.Run(fmt.Sprintf(
 			"metricsEnabled(%v) * totalStatsDisabled(%v) = %v",
 			tc.MetricsEndpointEnabled,

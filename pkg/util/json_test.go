@@ -68,7 +68,6 @@ func TestSearchJSONForGroups(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
 			actualResult, err := util.SearchJSONForStringSliceAttr(
@@ -140,7 +139,6 @@ func TestSearchJSONForEmail(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
 			actualResult, err := util.SearchJSONForStringAttr(test.EmailAttributePath, test.UserInfoJSONResponse)

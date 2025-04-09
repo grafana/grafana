@@ -673,6 +673,7 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 	}
 
 	bitmask := &usr.HelpFlags1
+	//nolint:gosec // G115
 	bitmask.AddFlag(user.HelpFlags1(flag))
 
 	cmd := user.SetUserHelpFlagCommand{

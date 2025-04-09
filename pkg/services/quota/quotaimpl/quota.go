@@ -335,7 +335,6 @@ func (s *service) getUsage(ctx context.Context, scopeParams *quota.ScopeParamete
 	g, ctx := errgroup.WithContext(ctx)
 
 	for r := range s.getReporters() {
-		r := r
 		g.Go(func() error {
 			u, err := r.reporterFunc(ctx, scopeParams)
 			if err != nil {

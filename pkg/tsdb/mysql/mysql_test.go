@@ -467,9 +467,12 @@ func TestIntegrationMySQL(t *testing.T) {
 				tInitial = t
 			}
 			tSeconds := t.Unix()
+			//nolint:gosec // G115: this is test code
 			tSecondsInt32 := int32(tSeconds)
+			//nolint:gosec // G115: this is test code
 			tSecondsFloat32 := float32(tSeconds)
 			tMilliseconds := tSeconds * 1e3
+			//nolint:gosec // G115: this is test code
 			tMillisecondsFloat := float64(tMilliseconds)
 			t2 := t
 			first := metric_values{

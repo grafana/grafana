@@ -52,7 +52,6 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	flavors := sync.Map{}
 
 	for _, ds := range dataSources {
-		ds := ds
 		g.Go(func() error {
 			variant, err := s.detectPrometheusVariant(ctx, ds)
 			if err != nil {

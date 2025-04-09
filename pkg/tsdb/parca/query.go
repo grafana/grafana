@@ -108,6 +108,7 @@ func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[
 			End: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.To.Unix(),
 			},
+			//nolint:gosec // G115
 			Limit: uint32(query.MaxDataPoints),
 		},
 	}

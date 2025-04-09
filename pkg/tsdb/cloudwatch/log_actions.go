@@ -53,7 +53,6 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			return nil, err
 		}
 
-		query := query
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {

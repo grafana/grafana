@@ -71,9 +71,11 @@ func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
 	var fl codejen.Files
 	major := -1
 	for sch := kind.Lineage().First(); sch != nil; sch = sch.Successor() {
+		//nolint:gosec // G115: this is codegen.
 		if int(sch.Version()[0]) == major {
 			continue
 		}
+		//nolint:gosec // G115: this is codegen.
 		major = int(sch.Version()[0])
 
 		sfg.Schema = sch.LatestInMajor()

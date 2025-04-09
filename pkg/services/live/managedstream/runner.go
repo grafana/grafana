@@ -210,9 +210,11 @@ func (s *NamespaceStream) incRate(path string, nowUnix int64) {
 	}
 	now := time.Unix(nowUnix, 0)
 	slot := now.Second() % 60
+	//nolint:gosec // G115
 	if pathRate[slot].time != uint32(nowUnix) {
 		pathRate[slot].count = 0
 	}
+	//nolint:gosec // G115
 	pathRate[slot].time = uint32(nowUnix)
 	pathRate[slot].count += 1
 	s.rates[path] = pathRate
@@ -228,6 +230,7 @@ func (s *NamespaceStream) minuteRate(path string) int64 {
 		return 0
 	}
 	for _, val := range pathRate {
+		//nolint:gosec // G115
 		if val.time > uint32(time.Now().Unix()-60) {
 			total += int64(val.count)
 		}

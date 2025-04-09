@@ -445,6 +445,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		//nolint:gosec // G115
 		return batch(len(q.UIDs), int(q.BatchSize), func(start, end int) error {
 			partialFolders := make([]*folder.Folder, 0, q.BatchSize)
 			partialUIDs := q.UIDs[start:min(end, len(q.UIDs))]
@@ -483,6 +484,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			// filter out folders if they are not in the subtree of the given ancestor folders
+			//nolint:gosec // G115
 			if err := batch(len(q.ancestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
 				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.ancestorUIDs, start2, end2, s.String(), args)
 				err := sess.SQL(s2, args2...).Find(&partialFolders)
