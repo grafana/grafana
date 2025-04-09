@@ -54,6 +54,11 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         );
     }
   };
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideQueryEditor = searchParams.has('hideQueryBuilder');
+  if (hideQueryEditor) {
+    return null;
+  }
 
   return (
     <>
