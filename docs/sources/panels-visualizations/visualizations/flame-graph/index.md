@@ -118,7 +118,12 @@ The sandwich view allows you to show the context of the clicked function. It sho
 
 ##### Grouping
 
-TBA
+Under the **Grouping** section of the menu, the following options let you expand and collapse groups of functions:
+
+- **Expand group** - Expands a grouped function. Displayed if you click a function that's been automatically grouped in the flame graph.
+- **Expand all groups** - Expands all grouped functions in the flame graph. Always displayed when you click the graph.
+- **Collapse group** - Collapses an expanded function. Displayed if you click a function in the flame graph that's been manually expanded.
+- **Collapse all groups** - Collapses all expanded functions in the flame graph. Displayed if there are any expanded functions when you click the graph.
 
 #### Status bar
 
