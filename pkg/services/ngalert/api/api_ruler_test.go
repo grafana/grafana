@@ -80,6 +80,24 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 	}
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
+		t.Run("allow deleting without access to datasource", func(t *testing.T){
+			ruleStore := initFakeRuleStore(t)
+			provisioningStore := fakes.NewFakeProvisioningStore()
+
+			folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
+
+			authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
+
+			ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+
+			permissions := createPermissionsForRulesWithoutDS(append(authorizedRulesInFolder), orgID)
+			requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+			response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
+
+			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+			assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
+		})
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
@@ -1010,6 +1028,20 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 		}
 		for _, query := range rule.Data {
 			permissions[datasources.ActionQuery] = append(permissions[datasources.ActionQuery], datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+		}
+	}
+	return map[int64]map[string][]string{orgID: permissions}
+}
+
+func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) map[int64]map[string][]string {
+	ns := map[string]any{}
+	permissions := map[string][]string{}
+	for _, rule := range rules {
+		if _, ok := ns[rule.NamespaceUID]; !ok {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
+			ns[rule.NamespaceUID] = struct{}{}
 		}
 	}
 	return map[int64]map[string][]string{orgID: permissions}

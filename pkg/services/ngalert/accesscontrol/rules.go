@@ -212,7 +212,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 	for _, rule := range change.Update {
 		if rule.AffectsQuery() {
 			if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rule.New), func() string {
-				return fmt.Sprintf("update alert rule '%s' (UID: %s)", rule.Existing.Title, rule.Existing.UID)
+				return fmt.Sprintf("update alert rule query '%s' (UID: %s)", rule.Existing.Title, rule.Existing.UID)
 			}); err != nil {
 				return err
 			}
