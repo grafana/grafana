@@ -2035,6 +2035,22 @@
     },
     {
       "metadata": {
+        "name": "metricsFromProfiles",
+        "resourceVersion": "1743767250962",
+        "creationTimestamp": "2025-04-04T11:45:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-04 11:47:30.962546 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables creating metrics from profiles and storing them as recording rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "mlExpressions",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-07-13T17:37:50Z"
