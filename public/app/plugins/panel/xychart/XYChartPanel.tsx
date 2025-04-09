@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { FALLBACK_COLOR, PanelProps } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
@@ -14,8 +13,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
-import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
+import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 
@@ -73,7 +71,7 @@ export const XYChartPanel2 = (props: Props2) => {
         items.push({
           yAxis: 1, // TODO: pull from y field
           label: s.name.value,
-          color: alpha(s.color.fixed ?? FALLBACK_COLOR, 1),
+          color: colorManipulator.alpha(s.color.fixed ?? FALLBACK_COLOR, 1),
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,

@@ -24,6 +24,7 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { appEvents } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
@@ -305,7 +306,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
-              label="Table view"
+              label={t('dashboard.panel-editor-unconnected.table-view-label-table-view', 'Table view')}
               showLabel={true}
               id="table-view"
               value={tableViewEnabled}
@@ -326,13 +327,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     let editorActions = [
       <Button
         onClick={this.onDiscard}
-        title="Undo all changes"
+        title={t('dashboard.panel-editor-unconnected.editor-actions.title-undo-all-changes', 'Undo all changes')}
         key="discard"
         size={size}
         variant="destructive"
         fill="outline"
       >
-        Discard
+        <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.discard">Discard</Trans>
       </Button>,
       this.props.dashboard.meta.canSave &&
         (this.props.panel.libraryPanel ? (
@@ -340,31 +341,42 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             onClick={this.onSaveLibraryPanel}
             variant="primary"
             size={size}
-            title="Apply changes and save library panel"
+            title={t(
+              'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-and-save-library-panel',
+              'Apply changes and save library panel'
+            )}
             key="save-panel"
           >
-            Save library panel
+            <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.save-library-panel">
+              Save library panel
+            </Trans>
           </Button>
         ) : (
           <Button
             onClick={this.onSaveDashboard}
-            title="Apply changes and save dashboard"
+            title={t(
+              'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-and-save-dashboard',
+              'Apply changes and save dashboard'
+            )}
             key="save"
             size={size}
             variant="secondary"
           >
-            Save
+            <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.save">Save</Trans>
           </Button>
         )),
       <Button
         onClick={this.onBack}
         variant="primary"
-        title="Apply changes and go back to dashboard"
+        title={t(
+          'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-dashboard',
+          'Apply changes and go back to dashboard'
+        )}
         data-testid={selectors.components.PanelEditor.applyButton}
         key="apply"
         size={size}
       >
-        Apply
+        <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.apply">Apply</Trans>
       </Button>,
     ];
 
@@ -389,7 +401,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 title="Disconnects this panel from the library panel so that you can edit it regularly."
                 key="unlink"
               >
-                Unlink
+                <Trans i18nKey="dashboard.panel-editor-unconnected.unlink">Unlink</Trans>
               </ToolbarButton>
             );
           }}

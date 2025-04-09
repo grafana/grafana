@@ -13,10 +13,13 @@ import {
   PanelData,
   RelativeTimeRange,
   ThresholdsConfig,
+  getDefaultRelativeTimeRange,
+  rangeUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -187,12 +190,12 @@ export const QueryWrapper = ({
   // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
   // TypeScript isn't complaining here because the interfaces just happen to be compatible
   const editorQueries = cloneDeep(queries.map((query) => query.model));
+  const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
 
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
-          alerting
           hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
@@ -209,6 +212,7 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
+          range={range}
           renderHeaderExtras={() => (
             <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
           )}
@@ -251,7 +255,7 @@ export function MaxDataPointsOption({
   return (
     <InlineField
       labelWidth={24}
-      label="Max data points"
+      label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
       tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
     >
       <Input
@@ -287,7 +291,7 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Interval"
+      label={t('alerting.min-interval-option.label-interval', 'Interval')}
       labelWidth={24}
       tooltip={
         <>

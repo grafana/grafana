@@ -79,25 +79,6 @@ module.exports = {
         },
       },
       {
-        test: /\.html$/,
-        exclude: /(index|error)\-template\.html/,
-        use: [
-          {
-            loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',
-          },
-          {
-            loader: 'html-loader',
-            options: {
-              sources: false,
-              minimize: {
-                removeComments: false,
-                collapseWhitespace: false,
-              },
-            },
-          },
-        ],
-      },
-      {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         type: 'asset/resource',
         generator: { filename: 'static/img/[name].[hash:8][ext]' },

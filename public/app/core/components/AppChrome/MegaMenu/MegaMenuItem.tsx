@@ -8,6 +8,7 @@ import { FeatureState, GrafanaTheme2, NavModelItem, toIconName } from '@grafana/
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { t } from '../../../internationalization';
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';
@@ -35,7 +36,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${link.text}]`,
-    Boolean(hasActiveChild || link.isNew)
+    Boolean(hasActiveChild)
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
@@ -114,7 +115,15 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
         <div className={styles.collapseButtonWrapper}>
           {showExpandButton && (
             <IconButton
-              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+              aria-label={
+                sectionExpanded
+                  ? t('navigation.megamenu-item.collapse-aria-label', 'Collapse section: {{sectionName}}', {
+                      sectionName: link.text,
+                    })
+                  : t('navigation.megamenu-item.expand-aria-label', 'Expand section: {{sectionName}}', {
+                      sectionName: link.text,
+                    })
+              }
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}

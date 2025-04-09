@@ -3,11 +3,10 @@ package client
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
-
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,7 +78,7 @@ func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.L
 func newItemChecker(res *authzv1.ListResponse) authlib.ItemChecker {
 	// if we can see all resource of this type we can just return a function that always return true
 	if res.GetAll() {
-		return func(_, _, _ string) bool { return true }
+		return func(_, _ string) bool { return true }
 	}
 
 	folders := make(map[string]struct{}, len(res.Folders))
@@ -92,7 +91,7 @@ func newItemChecker(res *authzv1.ListResponse) authlib.ItemChecker {
 		items[i] = struct{}{}
 	}
 
-	return func(_, name, folder string) bool {
+	return func(name, folder string) bool {
 		if _, ok := items[name]; ok {
 			return true
 		}

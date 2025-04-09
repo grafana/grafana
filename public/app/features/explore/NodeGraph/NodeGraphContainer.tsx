@@ -6,8 +6,10 @@ import { useToggle, useWindowSize } from 'react-use';
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
+import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
+import { LayoutAlgorithm } from '../../../plugins/panel/nodeGraph/panelcfg.gen';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
 import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
@@ -57,6 +59,10 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const { nodes } = useCategorizeFrames(frames);
   const [collapsed, toggleCollapsed] = useToggle(true);
 
+  // Determine default layout algorithm based on node count
+  const nodeCount = nodes[0]?.length || 0;
+  const layoutAlgorithm = nodeCount > layeredLayoutThreshold ? LayoutAlgorithm.Force : LayoutAlgorithm.Layered;
+
   const toggled = () => {
     toggleCollapsed();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
@@ -103,7 +109,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
               }
         }
       >
-        <NodeGraph dataFrames={frames} getLinks={getLinks} />
+        <NodeGraph dataFrames={frames} getLinks={getLinks} layoutAlgorithm={layoutAlgorithm} />
       </div>
     </PanelChrome>
   );

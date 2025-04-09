@@ -812,6 +812,13 @@ describe('ElasticDatasource', () => {
           const query = ds.addAdHocFilters('', filters);
           expect(query).toBe('field\\:name:/field value\\//');
         });
+
+        it('should replace level with the log level field', () => {
+          const ds = createElasticDatasource({ jsonData: { logLevelField: 'level_field' } });
+          const filters = [{ key: 'level', operator: '=', value: 'foo', condition: '' }];
+          const query = ds.addAdHocFilters('', filters);
+          expect(query).toBe('level_field:"foo"');
+        });
       });
     });
 

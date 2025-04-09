@@ -2,6 +2,13 @@ package prom
 
 import (
 	prommodel "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
+
+var (
+	ErrPrometheusRuleValidationFailed      = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
+	ErrPrometheusRuleGroupValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid")
 )
 
 type PrometheusRulesFile struct {
@@ -9,9 +16,24 @@ type PrometheusRulesFile struct {
 }
 
 type PrometheusRuleGroup struct {
-	Name     string             `yaml:"name"`
-	Interval prommodel.Duration `yaml:"interval"`
-	Rules    []PrometheusRule   `yaml:"rules"`
+	Name        string              `yaml:"name"`
+	Interval    prommodel.Duration  `yaml:"interval"`
+	QueryOffset *prommodel.Duration `yaml:"query_offset,omitempty"`
+	Limit       int                 `yaml:"limit,omitempty"`
+	Rules       []PrometheusRule    `yaml:"rules"`
+	Labels      map[string]string   `yaml:"labels,omitempty"`
+}
+
+func (g *PrometheusRuleGroup) Validate() error {
+	if g.Limit != 0 {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+	}
+
+	if g.QueryOffset != nil && *g.QueryOffset < prommodel.Duration(0) {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
+	}
+
+	return nil
 }
 
 type PrometheusRule struct {

@@ -386,8 +386,7 @@ const (
 	ActionSettingsWrite = "settings:write"
 
 	// Datasources actions
-	ActionDatasourcesExplore   = "datasources:explore"
-	ActionDatasourcesDrilldown = "datasources:drilldown"
+	ActionDatasourcesExplore = "datasources:explore"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"

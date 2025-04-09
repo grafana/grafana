@@ -14,6 +14,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -29,6 +30,8 @@ type Runner struct {
 	client             resource.Client
 	evaluationInterval time.Duration
 	maxHistory         int
+	namespace          string
+	log                log.Logger
 }
 
 // NewRunner creates a new Runner.
@@ -47,6 +50,10 @@ func New(cfg app.Config) (app.Runnable, error) {
 	if err != nil {
 		return nil, err
 	}
+	namespace, err := checks.GetNamespace(specificConfig.StackID)
+	if err != nil {
+		return nil, err
+	}
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -60,22 +67,26 @@ func New(cfg app.Config) (app.Runnable, error) {
 		client:             client,
 		evaluationInterval: evalInterval,
 		maxHistory:         maxHistory,
+		namespace:          namespace,
+		log:                log.New("advisor.checkscheduler"),
 	}, nil
 }
 
 func (r *Runner) Run(ctx context.Context) error {
 	lastCreated, err := r.checkLastCreated(ctx)
 	if err != nil {
-		return err
-	}
-
-	// do an initial creation if necessary
-	if lastCreated.IsZero() {
-		err = r.createChecks(ctx)
-		if err != nil {
-			klog.Error("Error creating new check reports", "error", err)
-		} else {
-			lastCreated = time.Now()
+		r.log.Error("Error getting last check creation time", "error", err)
+		// Wait for interval to create the next scheduled check
+		lastCreated = time.Now()
+	} else {
+		// do an initial creation if necessary
+		if lastCreated.IsZero() {
+			err = r.createChecks(ctx)
+			if err != nil {
+				klog.Error("Error creating new check reports", "error", err)
+			} else {
+				lastCreated = time.Now()
+			}
 		}
 	}
 
@@ -105,6 +116,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
+			r.markUnprocessedChecksAsErrored(ctx)
 			return ctx.Err()
 		}
 	}
@@ -114,7 +126,7 @@ func (r *Runner) Run(ctx context.Context) error {
 // regardless of its ID. This assumes that the checks are created in batches
 // so a batch will have a similar creation time.
 func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
-	list, err := r.client.List(ctx, metav1.NamespaceDefault, resource.ListOptions{})
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -134,7 +146,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "check-",
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    r.namespace,
 				Labels: map[string]string{
 					checks.TypeLabel: check.ID(),
 				},
@@ -152,7 +164,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
 func (r *Runner) cleanupChecks(ctx context.Context) error {
-	list, err := r.client.List(ctx, metav1.NamespaceDefault, resource.ListOptions{Limit: -1})
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{Limit: -1})
 	if err != nil {
 		return err
 	}
@@ -216,4 +228,22 @@ func getMaxHistory(pluginConfig map[string]string) (int, error) {
 		}
 	}
 	return maxHistory, nil
+}
+
+func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context) {
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	if err != nil {
+		r.log.Error("Error getting checks", "error", err)
+		return
+	}
+
+	for _, check := range list.GetItems() {
+		if checks.GetStatusAnnotation(check) == "" {
+			r.log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
+			err := checks.SetStatusAnnotation(ctx, r.client, check, checks.StatusAnnotationError)
+			if err != nil {
+				r.log.Error("Error setting check status to error", "error", err)
+			}
+		}
+	}
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
-import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
+import { LoadingIndicator } from '@grafana/ui/internal';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
 import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';

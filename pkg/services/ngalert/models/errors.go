@@ -28,11 +28,13 @@ func ErrAlertRuleConflictVerbose(existingPartialRule, rule AlertRule, underlying
 			"RuleUID":      rule.UID,
 			"Title":        rule.Title,
 			"NamespaceUID": rule.NamespaceUID,
+			"RuleGroup":    rule.RuleGroup,
 		},
 		"Existing": map[string]any{
 			"RuleUID":      existingPartialRule.UID,
 			"Title":        existingPartialRule.Title,
 			"NamespaceUID": existingPartialRule.NamespaceUID,
+			"RuleGroup":    existingPartialRule.RuleGroup,
 		},
 		"Error": underlying.Error(),
 	}, Error: underlying})

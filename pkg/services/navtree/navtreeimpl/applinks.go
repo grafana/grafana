@@ -185,6 +185,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		if len(navConfig.Icon) > 0 {
 			appLink.Icon = navConfig.Icon
 		}
+		if len(navConfig.SubTitle) > 0 {
+			appLink.SubTitle = navConfig.SubTitle
+		}
+		if navConfig.IsNew {
+			appLink.IsNew = true
+		}
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -239,6 +245,9 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
 				treeRoot.RemoveSection(alertingNode)
 			}
+			if appLink.Id == "plugin-page-grafana-irm-app" {
+				appLink.IsNew = true
+			}
 			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Alerts & IRM",
@@ -268,13 +277,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
-		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
+		if include.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
 			return false
-		} else if !useRBAC && !c.HasUserRole(include.Role) {
+		} else if !include.RequiresRBACAction() && !c.HasUserRole(include.Role) {
 			return false
 		}
 		return true
@@ -314,7 +322,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
-		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg, Text: "Advisor"}
+		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
+			SectionID: navtree.NavIDCfg,
+			Text:      "Advisor",
+			SubTitle:  "Keep Grafana running smoothly and securely",
+			IsNew:     true,
+		}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

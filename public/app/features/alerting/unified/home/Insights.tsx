@@ -77,6 +77,7 @@ const SERIES_COLORS = {
   missed: 'red',
   failed: 'red',
   pending: 'yellow',
+  recovering: 'yellow',
   nodata: 'blue',
   'active evaluation': 'blue',
   normal: 'green',
@@ -176,24 +177,22 @@ export function getInsightsScenes() {
         component: SectionSubheader,
         props: {
           children: (
-            <>
-              <Text>
-                Monitor the status of your system{' '}
-                <Tooltip
-                  content={
-                    <div>
-                      Alerting insights provides pre-built dashboards to monitor your alerting data.
-                      <br />
-                      <br />
-                      You can identify patterns in why things go wrong and discover trends in alerting performance
-                      within your organization.
-                    </div>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Text>
-            </>
+            <Text>
+              Monitor the status of your system{' '}
+              <Tooltip
+                content={
+                  <div>
+                    Alerting insights provides pre-built dashboards to monitor your alerting data.
+                    <br />
+                    <br />
+                    You can identify patterns in why things go wrong and discover trends in alerting performance within
+                    your organization.
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Text>
           ),
         },
       }),
@@ -241,6 +240,12 @@ function getGrafanaManagedScenes() {
                           'Firing instances',
                           'The number of currently firing alert rule instances',
                           'alerting'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Recovering instances',
+                          'The number of currently recovering alert rule instances',
+                          'recovering'
                         ),
                         getInstanceStatByStatusScene(
                           cloudUsageDs,
