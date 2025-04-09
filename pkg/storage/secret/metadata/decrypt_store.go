@@ -20,6 +20,7 @@ func ProvideDecryptStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
 	keeperService secretkeeper.Service,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	allowList contracts.DecryptAllowList,
 ) (contracts.DecryptStorage, error) {
@@ -33,14 +34,14 @@ func ProvideDecryptStorage(
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &decryptStorage{db: db, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
+	return &decryptStorage{db: db, keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	// TODO: remove this and only use the storages (when making this a service), need to figure out the getKeeperConfig part.
-	db db.DB
-
+	db                         db.DB
+	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keepers                    map[contracts.KeeperType]contracts.Keeper
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	allowList                  contracts.DecryptAllowList
@@ -66,7 +67,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotAuthorized
 	}
 
-	keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, namespace.String(), sv.Spec.Keeper)
+	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Spec.Keeper)
 	if err != nil {
 		return "", contracts.ErrDecryptFailed
 	}
