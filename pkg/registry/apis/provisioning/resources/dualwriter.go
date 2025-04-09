@@ -32,54 +32,6 @@ func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *Fol
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
-func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     parsed.GVR.Group,
-		Resource:  parsed.GVR.Resource,
-		Namespace: parsed.Obj.GetNamespace(),
-		Name:      parsed.Obj.GetName(),
-		Folder:    parsed.Meta.GetFolder(),
-		Verb:      verb,
-	})
-	if err != nil {
-		return err
-	}
-	if !rsp.Allowed {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to see embedded file"))
-	}
-	return nil
-}
-
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     FolderResource.Group,
-		Resource:  FolderResource.Resource,
-		Namespace: r.repo.Config().GetNamespace(),
-		Verb:      utils.VerbCreate,
-
-		// TODO: Currently this checks if you can create a new folder in root
-		// Ideally we should check the path and use the explicit parent and new id
-		Name: "f" + uuid.NewString(),
-	})
-	if err != nil {
-		return err
-	}
-	if !rsp.Allowed {
-		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-			fmt.Errorf("no access to see embedded file"))
-	}
-	return nil
-}
-
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
 	// TODO: implement this
 	if safepath.IsDir(path) {
@@ -323,4 +275,52 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	}
 
 	return parsed, nil
+}
+
+func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     parsed.GVR.Group,
+		Resource:  parsed.GVR.Resource,
+		Namespace: parsed.Obj.GetNamespace(),
+		Name:      parsed.Obj.GetName(),
+		Folder:    parsed.Meta.GetFolder(),
+		Verb:      verb,
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to see embedded file"))
+	}
+	return nil
+}
+
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: r.repo.Config().GetNamespace(),
+		Verb:      utils.VerbCreate,
+
+		// TODO: Currently this checks if you can create a new folder in root
+		// Ideally we should check the path and use the explicit parent and new id
+		Name: "f" + uuid.NewString(),
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+			fmt.Errorf("unable to create folder resource"))
+	}
+	return nil
 }

@@ -217,7 +217,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		return fmt.Errorf("no client configured")
 	}
 
-	// The provisioning service will eventually write it...
+	// Use the same identity that would eventually write the resource (via Run)
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
 	if err != nil {
 		return err
