@@ -52,6 +52,11 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
 			}
+
+			if len(dependencies.Errors) > 0 {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("error while fetching dependencies, code: %v, message: %v", dependencies.Errors[0].Code, dependencies.Errors[0].Msg)))
+				continue
+			}
 			frames := transformDependenciesResponse(dependencies, q.RefID)
 			response.Responses[q.RefID] = backend.DataResponse{
 				Frames: frames,
@@ -239,12 +244,17 @@ func transformDependenciesResponse(dependencies DependenciesResponse, refID stri
 	}
 
 	// Create edges frame
+	mainStatField := data.NewField("mainstat", nil, []int64{})
+	mainStatField.Config = &data.FieldConfig{
+		DisplayName: "Call count",
+	}
 	edgesFrame := data.NewFrame(refID+"_edges",
 		data.NewField("id", nil, []string{}),
 		data.NewField("source", nil, []string{}),
 		data.NewField("target", nil, []string{}),
-		data.NewField("mainStat", nil, []float64{}),
+		mainStatField,
 	)
+
 	edgesFrame.Meta = &data.FrameMeta{
 		PreferredVisualization: "nodeGraph",
 	}
@@ -255,20 +265,20 @@ func transformDependenciesResponse(dependencies DependenciesResponse, refID stri
 	}
 
 	// Create a map to store unique service nodes
-	servicesByName := make(map[string]struct{})
+	servicesByName := make(map[string]bool)
 
 	// Process each dependency
 	for _, dependency := range dependencies.Data {
 		// Add services to the map to track unique services
-		servicesByName[dependency.Parent] = struct{}{}
-		servicesByName[dependency.Child] = struct{}{}
+		servicesByName[dependency.Parent] = true
+		servicesByName[dependency.Child] = true
 
 		// Add edge data
 		edgesFrame.AppendRow(
 			dependency.Parent+"--"+dependency.Child,
 			dependency.Parent,
 			dependency.Child,
-			float64(dependency.CallCount),
+			int64(dependency.CallCount),
 		)
 	}
 

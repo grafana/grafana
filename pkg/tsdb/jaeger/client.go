@@ -199,7 +199,6 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (Depe
 
 	parsedURL.RawQuery = query.Encode()
 	u = parsedURL.String()
-	fmt.Println("URL!!", u)
 
 	res, err := j.httpClient.Get(u)
 	if err != nil {

@@ -1,0 +1,85 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "nodeGraph"
+//  }
+//  Name: test_nodes
+//  Dimensions: 2 Fields by 8 Rows
+//  +-------------------+-------------------+
+//  | Name: id          | Name: title       |
+//  | Labels:           | Labels:           |
+//  | Type: []string    | Type: []string    |
+//  +-------------------+-------------------+
+//  | user-service      | user-service      |
+//  | order-service     | order-service     |
+//  | payment-service   | payment-service   |
+//  | database          | database          |
+//  | frontend          | frontend          |
+//  | auth-service      | auth-service      |
+//  | api-gateway       | api-gateway       |
+//  | inventory-service | inventory-service |
+//  +-------------------+-------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test_nodes",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "nodeGraph"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "user-service",
+            "order-service",
+            "payment-service",
+            "database",
+            "frontend",
+            "auth-service",
+            "api-gateway",
+            "inventory-service"
+          ],
+          [
+            "user-service",
+            "order-service",
+            "payment-service",
+            "database",
+            "frontend",
+            "auth-service",
+            "api-gateway",
+            "inventory-service"
+          ]
+        ]
+      }
+    }
+  ]
+}
