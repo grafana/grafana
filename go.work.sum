@@ -3,6 +3,7 @@ buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127060915-a1ecdc58eccd.1/go.mod h1:YDq2B5X5BChU0lxAG5MxHpDb8mx1fv9OGtF2mwOe7hY=
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/protocolbuffers/go v1.28.1-20221127060915-a1ecdc58eccd.4 h1:z3Xc9n8yZ5k/Xr4ZTuff76TAYP20dWy7ZBV4cGIpbkM=
 cel.dev/expr v0.15.0/go.mod h1:TRSuuV7DlVCE/uwv5QbAiW/v8l5O8C4eEPHeu7gf7Sg=
+cel.dev/expr v0.19.1 h1:NciYrtDRIR0lNCnH1LFJegdjspNx9fI59O7TWcua/W4=
 cel.dev/expr v0.19.1/go.mod h1:MrpN08Q+lEBs+bGYdLxxHkZoUSsCp0nSKTs0nTymJgw=
 cloud.google.com/go/accessapproval v1.7.4 h1:ZvLvJ952zK8pFHINjpMBY5k7LTAp/6pBf50RDMRgBUI=
 cloud.google.com/go/accessapproval v1.7.5/go.mod h1:g88i1ok5dvQ9XJsxpUInWWvUBrIZhyPDPbk4T01OoJ0=
@@ -457,6 +458,7 @@ cloud.google.com/go/spanner v1.55.0/go.mod h1:HXEznMUVhC+PC+HDyo9YFG2Ajj5BQDkcbq
 cloud.google.com/go/spanner v1.56.0/go.mod h1:DndqtUKQAt3VLuV2Le+9Y3WTnq5cNKrnLb/Piqcj+h0=
 cloud.google.com/go/spanner v1.57.0/go.mod h1:aXQ5QDdhPRIqVhYmnkAdwPYvj/DRN0FguclhEWw+jOo=
 cloud.google.com/go/spanner v1.64.0/go.mod h1:TOFx3pb2UwPsDGlE1gTehW+y6YlU4IFk+VdDHSGQS/M=
+cloud.google.com/go/spanner v1.65.0 h1:XK15cs9lFFQo5n4Wh9nfrcPXAxWln6NdodDiQKmoD08=
 cloud.google.com/go/spanner v1.65.0/go.mod h1:dQGB+w5a67gtyE3qSKPPxzniedrnAmV6tewQeBY7Hxs=
 cloud.google.com/go/speech v1.21.0 h1:qkxNao58oF8ghAHE1Eghen7XepawYEN5zuZXYWaUTA4=
 cloud.google.com/go/speech v1.21.1/go.mod h1:E5GHZXYQlkqWQwY5xRSLHw2ci5NMQNG52FfMU1aZrIA=
