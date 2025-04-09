@@ -937,8 +937,9 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 					},
 					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The specific commit hash that triggered this notice",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"url": {
