@@ -59,12 +59,19 @@ const LogsQueryEditor = ({
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
+  const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
       return false;
     }
+
+    if (isBasicLogsQuery && selectedRows.length === 1) {
+      // Basic logs queries can only have one resource selected
+      return true;
+    }
+
     const rowResourceNS = parseResourceDetails(row.uri, row.location).metricNamespace?.toLowerCase();
     const selectedRowSampleNs = parseResourceDetails(
       selectedRows[0].uri,
@@ -210,7 +217,12 @@ const LogsQueryEditor = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
-              selectionNotice={() => 'You may only choose items of the same resource type.'}
+              selectionNotice={(selected) => {
+                if (selected.length === 1 && isBasicLogsQuery) {
+                  return 'When using Basic Logs, you may only select one resource at a time.';
+                }
+                return 'You may only choose items of the same resource type.';
+              }}
             />
             {showBasicLogsToggle && (
               <LogsManagement

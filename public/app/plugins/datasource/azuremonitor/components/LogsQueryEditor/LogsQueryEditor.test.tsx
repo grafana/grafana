@@ -424,6 +424,46 @@ describe('LogsQueryEditor', () => {
 
       expect(await screen.queryByLabelText('Basic')).not.toBeInTheDocument();
     });
+
+    it('should disable other resources with a basic logs query when one resource is selected', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+        },
+      });
+      const basicLogsEnabled = true;
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={basicLogsEnabled}
+        />
+      );
+
+      expect(await screen.findByLabelText('Basic')).toBeInTheDocument();
+
+      const resourcePickerButton = await screen.findByRole('button', { name: 'la-workspace' });
+      await userEvent.click(resourcePickerButton);
+
+      const checkbox = await screen.findByLabelText('la-workspace');
+      expect(checkbox).toBeChecked();
+
+      expect(await screen.findByLabelText('la-workspace-1')).toBeDisabled();
+      expect(
+        await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('data ingestion warning', () => {
