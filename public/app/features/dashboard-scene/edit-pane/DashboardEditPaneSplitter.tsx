@@ -57,6 +57,17 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
 
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
+  useEffect(() => {
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.clearSelection();
+    }
+  }, [isEditing, editPane]);
+
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
 
