@@ -221,7 +221,7 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 	}
 	if !check.Allowed {
 		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
-			fmt.Errorf("requires list permissions on dashbaords"))
+			fmt.Errorf("requires list permissions on dashboards"))
 	}
 
 	// TODO: Implement folder navigation
