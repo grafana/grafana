@@ -9,6 +9,7 @@ import {
   ResourceForCreate,
   AnnoKeyMessage,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
@@ -64,6 +65,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       obj.metadata.name = dashboard.uid;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 

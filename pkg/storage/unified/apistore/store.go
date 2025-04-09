@@ -46,6 +46,8 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
+type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	// ????: should we constrain this to only dashboards for now?
@@ -57,6 +59,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Temporary fix to support adding default permissions AfterCreate
+	Permissions DefaultPermissionSetter
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -164,15 +169,23 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
+	var permissions string
 	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
+
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
+
+	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
+	if err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -201,6 +214,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 				panic(err)
 			}
 		})
+	}
+
+	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
+	if grantPermissions != nil {
+		return grantPermissions(ctx)
 	}
 
 	return nil

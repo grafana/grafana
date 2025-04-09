@@ -50,6 +50,7 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import {
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
+  AnnoKeyGrantPermissions,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -130,6 +131,10 @@ export class K8sDashboardV2API
       delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
