@@ -1803,6 +1803,16 @@
         },
         "description": "(empty)"
       },
+      "resourceDependenciesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResourceDependenciesResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "resourcePermissionsDescription": {
         "content": {
           "application/json": {
@@ -4417,6 +4427,30 @@
         },
         "type": "object"
       },
+      "CreateSnapshotRequestDTO": {
+        "properties": {
+          "resourceTypes": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "CreateSnapshotResponseDTO": {
         "properties": {
           "uid": {
@@ -5952,6 +5986,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -6313,6 +6353,9 @@
           "http_config": {
             "$ref": "#/components/schemas/HTTPClientConfig"
           },
+          "jira_api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
           "opsgenie_api_key": {
             "$ref": "#/components/schemas/Secret"
           },
@@ -6360,6 +6403,9 @@
           },
           "smtp_smarthost": {
             "$ref": "#/components/schemas/HostPort"
+          },
+          "smtp_tls_config": {
+            "$ref": "#/components/schemas/TLSConfig"
           },
           "telegram_api_url": {
             "$ref": "#/components/schemas/URL"
@@ -6816,6 +6862,57 @@
           },
           "Use": {
             "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JiraConfig": {
+        "properties": {
+          "api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "custom_fields": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "issue_type": {
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "reopen_duration": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "reopen_transition": {
+            "type": "string"
+          },
+          "resolve_transition": {
+            "type": "string"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "wont_fix_resolution": {
             "type": "string"
           }
         },
@@ -8308,6 +8405,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -9348,6 +9451,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -9759,6 +9868,57 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceDependenciesResponseDTO": {
+        "properties": {
+          "resourceDependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceDependencyDTO": {
+        "properties": {
+          "dependencies": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resourceType": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ],
             "type": "string"
           }
         },
@@ -12575,6 +12735,9 @@
           "send_resolved": {
             "type": "boolean"
           },
+          "timeout": {
+            "$ref": "#/components/schemas/Duration"
+          },
           "url": {
             "$ref": "#/components/schemas/SecretURL"
           },
@@ -12666,6 +12829,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12869,7 +13033,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -15978,6 +16141,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSnapshotRequestDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/createSnapshotResponse"
@@ -16247,6 +16421,20 @@
           }
         },
         "summary": "Get a list of snapshots for a session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/resources/dependencies": {
+      "get": {
+        "operationId": "getResourceDependencies",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resourceDependenciesResponse"
+          }
+        },
+        "summary": "Get the resource dependencies graph for the current set of migratable resources.",
         "tags": [
           "migrations"
         ]

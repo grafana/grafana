@@ -180,7 +180,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         preserveDashboardSceneStateInLocalStorage,
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
-          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
+          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
           version: 1,
         }),
