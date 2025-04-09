@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -24,6 +26,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
@@ -62,6 +67,9 @@ type bleveBackend struct {
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
+
+	// sharding things
+	Pool *ringclient.Pool
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -88,7 +96,66 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 	go bleveBackend.updateIndexSizeMetric(opts.Root)
 
+	// TODO wrap in feature flag
+	err = bleveBackend.enableSharding()
+	if err != nil {
+		return nil, fmt.Errorf("error sharding", err)
+	}
+
 	return bleveBackend, nil
+}
+
+func (b *bleveBackend) enableSharding() error {
+	ctx := context.Background()
+	pool := newClientPool(grpcclient.Config{} /*TODO*/, b.log, nil)
+
+	ringsvc, lfcsvc, err := InitRing(log.New("bleve-ring"), nil)
+
+	err = ringsvc.StartAsync(ctx)
+	if err != nil {
+		return err
+	}
+	err = lfcsvc.StartAsync(ctx)
+	if err != nil {
+		return err
+	}
+
+	b.log.Info("waiting until bleve is JOINING in the rinng")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	if err := ring.WaitInstanceState(ctx, ringsvc, lfcsvc.GetInstanceID(), ring.JOINING); err != nil {
+		return err
+	}
+	b.log.Info("bleve is JOINING in the rinng")
+
+	if err := lfcsvc.ChangeState(context.Background(), ring.ACTIVE); err != nil {
+		return fmt.Errorf("switch instance to %s in the ring: %w", ring.ACTIVE, err)
+	}
+
+	b.log.Info("waiting until bleve is ACTIVE in the rinng")
+	if err := ring.WaitInstanceState(context.Background(), ringsvc, lfcsvc.GetInstanceID(), ring.ACTIVE); err != nil {
+		return err
+	}
+	b.log.Info("bleve is ACTIVE in the rinng")
+
+	if err := pool.StartAsync(context.Background()); err != nil {
+		return fmt.Errorf("failed to create pool client: %w", err)
+	}
+
+	b.Pool = pool
+
+	// TODO remove this
+	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", "8100"))
+	if err != nil {
+		panic(err)
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/ring", lfcsvc)
+	http.Serve(listener, mux)
+	// mux.Handle("/kv", memberlistsvc)
+
+	return nil
+
 }
 
 // This will return nil if the key does not exist
