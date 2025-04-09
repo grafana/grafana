@@ -309,7 +309,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 disabled={isSubmitting}
               >
                 {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                Save rule
+                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save rule</Trans>
               </Button>
               <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
                 <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
@@ -317,7 +317,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
               {existing && isCortexLokiOrRecordingRule(watch) && (
                 <Button variant="secondary" type="button" onClick={() => setShowEditYaml(true)} disabled={isSubmitting}>
-                  Edit YAML
+                  <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
                 </Button>
               )}
             </Stack>

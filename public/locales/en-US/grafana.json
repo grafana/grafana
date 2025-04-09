@@ -372,6 +372,12 @@
         }
       }
     },
+    "alert-rule-form": {
+      "action-buttons": {
+        "edit-yaml": "Edit YAML",
+        "save": "Save rule"
+      }
+    },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
       "label-metric": "Metric",
