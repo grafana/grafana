@@ -233,3 +233,4 @@ xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 logsPanelControls,privatePreview,@grafana/observability-logs,false,false,true
+metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true

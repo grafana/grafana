@@ -1036,4 +1036,8 @@ export interface FeatureToggles {
   * @default false
   */
   logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
 }
