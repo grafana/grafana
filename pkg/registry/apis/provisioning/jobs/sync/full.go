@@ -98,20 +98,20 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		// If folder ensure it exists
 		if safepath.IsDir(change.Path) {
 			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: change.Action,
+				Path:     change.Path,
+				Action:   change.Action,
+				Resource: resources.FolderResource.Resource,
+				Group:    resources.FolderResource.Group,
 			}
 
 			folder, err := repositoryResources.EnsureFolderPathExist(ctx, change.Path)
 			if err != nil {
-				result.Error = fmt.Errorf("create folder: %w", err)
+				result.Error = err
 				progress.Record(ctx, result)
 				continue
 			}
 
 			result.Name = folder
-			result.Resource = resources.FolderResource.Resource
-			result.Group = resources.FolderResource.Group
 			progress.Record(ctx, result)
 
 			continue

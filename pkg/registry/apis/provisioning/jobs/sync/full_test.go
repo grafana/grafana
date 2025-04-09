@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -347,11 +348,43 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "one/two/three/",
-					Name:     "some-folder",
-					Resource: "Folder",
-					Group:    "folders",
+					Action: repository.FileActionCreated,
+					Path:   "one/two/three/",
+					Name:   "some-folder",
+					// FIXME: this is probably inconsistent accross the codebase
+					Resource: "folders",
+					Group:    "folder.grafana.app",
+				}).Return()
+			},
+		},
+		{
+			name:        "failed apply folder creation",
+			description: "Should record an error when creating a new folder",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "one/two/three/",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				repoResources.On(
+					"EnsureFolderPathExist",
+					mock.Anything,
+					"one/two/three/",
+				).Return("some-folder", errors.New("folder creation error"))
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action: repository.FileActionCreated,
+					Path:   "one/two/three/",
+					Name:   "",
+					// FIXME: this is probably inconsistent accross the codebase
+					Resource: "folders",
+					Group:    "folder.grafana.app",
+					Error:    errors.New("folder creation error"),
 				}).Return()
 			},
 		},
