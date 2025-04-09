@@ -45,7 +45,7 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
           <Menu>
             <Menu.Item
               icon="code-branch"
-              label={t('provisioning.connect-repository-button.configure-git-sync', 'Configure GitSync')}
+              label={t('provisioning.connect-repository-button.configure-git-sync', 'Configure Git Sync')}
               onClick={() => {
                 navigate(gitURL);
               }}
@@ -73,7 +73,7 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
   return (
     <Stack gap={3}>
       <LinkButton href={gitURL} variant="primary">
-        <Trans i18nKey="provisioning.connect-repository-button.configure-git-sync">Configure GitSync</Trans>
+        <Trans i18nKey="provisioning.connect-repository-button.configure-git-sync">Configure Git Sync</Trans>
       </LinkButton>
       <LinkButton href={localURL} variant="secondary">
         <Trans i18nKey="provisioning.connect-repository-button.configure-file">Configure file provisioning</Trans>

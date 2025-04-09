@@ -6411,7 +6411,7 @@
     "connect-repository-button": {
       "configure": "Configure",
       "configure-file": "Configure file provisioning",
-      "configure-git-sync": "Configure GitSync",
+      "configure-git-sync": "Configure Git Sync",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "connect-step": {
@@ -6688,6 +6688,7 @@
       "step-finish": "Choose additional settings",
       "step-synchronize": "Synchronize",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
+      "sync-option-history": "History",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
