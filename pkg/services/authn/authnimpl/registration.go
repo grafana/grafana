@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -112,7 +113,8 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg))
 	}
 
 	if cfg.ExtJWTAuth.Enabled {
@@ -124,12 +126,17 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
 	}
 
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
+	}
+
 	// FIXME (jguer): move to User package
-	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
+	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features, cfg)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
-	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)
+	authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
+	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 40)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
@@ -142,6 +149,7 @@ func ProvideRegistration(
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
+	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)

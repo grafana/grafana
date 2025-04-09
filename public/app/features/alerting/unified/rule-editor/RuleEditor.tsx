@@ -25,6 +25,7 @@ export const defaultPageNav: Partial<NavModelItem> = {
 const RuleEditor = () => {
   const { identifier } = useRuleEditorPathParams();
   const cloneIdentifier = useIdentifierFromCopy();
+  const isManualRestore = useManualRestore();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
@@ -37,11 +38,20 @@ const RuleEditor = () => {
   }
 
   if (identifier) {
-    return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} />;
+    return (
+      <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} isManualRestore={isManualRestore} />
+    );
   }
 
   if (cloneIdentifier) {
-    return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={cloneIdentifier} clone={true} />;
+    return (
+      <ExistingRuleEditor
+        key={JSON.stringify(identifier)}
+        identifier={cloneIdentifier}
+        clone={true}
+        isManualRestore={isManualRestore}
+      />
+    );
   }
 
   // for new alerting or recording rules
@@ -55,6 +65,7 @@ const RECORDING_TYPE = ['grafana-recording', 'recording'];
  */
 function NewRuleEditor() {
   const prefill = useDefaultsFromQuery();
+  const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
 
   const entityName = RECORDING_TYPE.includes(type) ? 'recording rule' : 'alert rule';
@@ -68,7 +79,7 @@ function NewRuleEditor() {
         text: t('alerting.navigation.editor-title', '{{actionName}} {{entityName}}', { actionName, entityName }),
       }}
     >
-      <AlertRuleForm prefill={prefill} />
+      <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />
     </AlertingPageWrapper>
   );
 }
@@ -104,4 +115,11 @@ function useDefaultsFromQuery() {
     : undefined;
 
   return queryDefaults;
+}
+
+function useManualRestore() {
+  const [searchParams] = useURLSearchParams();
+  const isManualRestore = searchParams.has('isManualRestore');
+
+  return isManualRestore;
 }

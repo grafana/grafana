@@ -35,13 +35,17 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
           continue;
         }
 
-        const isNumFrom = !isNaN(vm.options.from!);
-        if (isNumFrom && valueAsNumber < vm.options.from!) {
+        const from = vm.options.from ?? -Infinity;
+
+        const isNumFrom = !isNaN(from);
+        if (isNumFrom && valueAsNumber < from) {
           continue;
         }
 
-        const isNumTo = !isNaN(vm.options.to!);
-        if (isNumTo && valueAsNumber > vm.options.to!) {
+        const to = vm.options.to ?? Infinity;
+
+        const isNumTo = !isNaN(to);
+        if (isNumTo && valueAsNumber > to) {
           continue;
         }
 

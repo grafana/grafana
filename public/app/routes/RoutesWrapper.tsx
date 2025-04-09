@@ -4,7 +4,7 @@ import { ComponentType, ReactNode } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   locationService,
   LocationServiceProvider,
@@ -13,7 +13,6 @@ import {
 } from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
-import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
@@ -40,7 +39,6 @@ export function RouterWrapper(props: RouterWrapperProps) {
             <ExtraProviders providers={props.providers}>
               <ModalsContextProvider>
                 <AppChrome>
-                  <AngularRoot />
                   <AppNotificationList />
                   <Stack gap={0} grow={1} direction="column">
                     {props.pageBanners.map((Banner, index) => (

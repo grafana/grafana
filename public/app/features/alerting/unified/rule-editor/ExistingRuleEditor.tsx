@@ -3,66 +3,80 @@ import { isEmpty } from 'lodash';
 import { NavModelItem } from '@grafana/data';
 import { Alert, Stack, Text } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertLabels } from '../components/AlertLabels';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { stringifyPendingPeriod } from '../components/rule-editor/PendingPeriodQuickPick';
+import { stringifyPendingPeriod } from '../components/rule-editor/DurationQuickPick';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
 import { Title } from '../components/rule-viewer/RuleViewer';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
+import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { createViewLinkFromRuleWithLocation, stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import * as ruleId from '../utils/rule-id';
 import {
-  getAnnotations,
   getPendingPeriodFromRulerRule,
   getRuleName,
   getRulePluginOrigin,
   isFederatedRuleGroup,
-  isGrafanaRecordingRule,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
+  isPausedRule,
+  rulerRuleType,
 } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
 import { cloneRuleDefinition } from './clone-utils';
-
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
+  // Provide prefill if we are trying to restore an old version of an alert rule but we need the user to manually tweak the values
+  prefill?: Partial<RuleFormValues>;
+  // indicate if this is a manual restore
+  isManualRestore?: boolean;
+  // indicate if this is a cloning operation
   clone?: boolean;
 }
 
-export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEditorProps) {
+export function ExistingRuleEditor({
+  identifier,
+  prefill,
+  isManualRestore = false,
+  clone = false,
+}: ExistingRuleEditorProps) {
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
   const {
     loading: loadingAlertRule,
     result: ruleWithLocation,
-    error,
+    error: fetchRuleError,
   } = useRuleWithLocation({ ruleIdentifier: identifier });
+  const {
+    isEditable,
+    loading: loadingEditable,
+    error: errorEditable,
+  } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
 
-  const { isEditable, loading: loadingEditable } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
-
-  const loading = loadingAlertRule || loadingEditable;
-
-  if (error) {
+  if (fetchRuleError || errorEditable) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
-        <Alert severity="error" title="Failed to load rule">
-          {stringifyErrorLike(error)}
+        <Alert
+          severity="error"
+          title={t('alerting.existing-rule-editor.title-failed-to-load-rule', 'Failed to load rule')}
+        >
+          {stringifyErrorLike(errorEditable ?? fetchRuleError)}
         </Alert>
       </AlertingPageWrapper>
     );
   }
 
+  const loading = loadingAlertRule || loadingEditable;
   if (loading) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()} isLoading={true}>
-        <></>
+        {null}
       </AlertingPageWrapper>
     );
   }
@@ -70,7 +84,11 @@ export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEd
   if (!ruleWithLocation && !loading) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
-        <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>
+        <AlertWarning title={t('alerting.existing-rule-editor.title-rule-not-found', 'Rule not found')}>
+          <Trans i18nKey="alerting.existing-rule-editor.sorry-this-rule-does-not-exist">
+            Sorry! This rule does not exist.
+          </Trans>
+        </AlertWarning>
       </AlertingPageWrapper>
     );
   }
@@ -78,7 +96,11 @@ export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEd
   if (isEditable === false) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
-        <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>
+        <AlertWarning title={t('alerting.existing-rule-editor.title-cannot-edit-rule', 'Cannot edit rule')}>
+          <Trans i18nKey="alerting.existing-rule-editor.sorry-permission">
+            Sorry! You do not have permission to edit this rule.
+          </Trans>
+        </AlertWarning>
       </AlertingPageWrapper>
     );
   }
@@ -91,10 +113,10 @@ export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEd
   const returnTo = createViewLinkFromRuleWithLocation(ruleWithLocation);
 
   const rulerRule = ruleWithLocation.rule;
-  const summary = getAnnotations(rulerRule)?.[Annotation.summary];
+  const summary = rulerRuleType.any.alertingRule(rulerRule) ? rulerRule.annotations?.[Annotation.summary] : null;
 
   const isFederatedRule = isFederatedRuleGroup(ruleWithLocation.group);
-  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
+  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
   const ruleOrigin = getRulePluginOrigin(rulerRule);
 
   return (
@@ -116,7 +138,7 @@ export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEd
       {clone ? (
         <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
       ) : (
-        <AlertRuleForm existing={ruleWithLocation} />
+        <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />
       )}
     </AlertingPageWrapper>
   );
@@ -136,7 +158,7 @@ const createMetadata = (ruleWithLocation: RuleWithLocation): PageInfoItem[] => {
   const interval = group.interval;
   const pendingPeriod = getPendingPeriodFromRulerRule(rulerRule);
 
-  if (isGrafanaRecordingRule(rulerRule)) {
+  if (rulerRuleType.grafana.recordingRule(rulerRule)) {
     const metric = rulerRule.grafana_alert.record?.metric ?? '';
     metadata.push({
       label: 'Metric name',

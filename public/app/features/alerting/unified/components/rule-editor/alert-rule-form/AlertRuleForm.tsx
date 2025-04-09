@@ -1,25 +1,24 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
-  isCloudRulerRule,
   isGrafanaManagedRuleByType,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
+  isPausedRule,
   isRecordingRuleByType,
+  rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
@@ -28,6 +27,7 @@ import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-aler
 import {
   LogMessages,
   logInfo,
+  logWarning,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
@@ -35,7 +35,12 @@ import {
   trackNewGrafanaAlertRuleFormError,
   trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
-import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
+import {
+  GrafanaGroupUpdatedResponse,
+  RulerGroupUpdatedResponse,
+  isGrafanaGroupUpdatedResponse,
+} from '../../../api/alertRuleModel';
+import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
@@ -49,6 +54,7 @@ import {
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { rulesNav } from '../../../utils/navigation';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -72,13 +78,16 @@ import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndEx
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
+  isManualRestore?: boolean;
 };
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+const alertingListViewV2 = shouldUseAlertingListViewV2();
 
-export const AlertRuleForm = ({ existing, prefill }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
+  const { redirectToDetailsPage } = useRedirectToDetailsPage();
   const [showEditYaml, setShowEditYaml] = useState(false);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -91,6 +100,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const uidFromParams = routeParams.id || '';
 
   const defaultValues: RuleFormValues = useMemo(() => {
+    // If we have an existing AND a prefill, then we're coming from the restore dialog
+    // and we want to merge the two
+    if (existing && prefill) {
+      return { ...formValuesFromExistingRule(existing), ...formValuesFromPrefill(prefill) };
+    }
     if (existing) {
       return formValuesFromExistingRule(existing);
     }
@@ -114,8 +128,16 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     handleSubmit,
     watch,
     formState: { isSubmitting },
+    trigger,
   } = formAPI;
 
+  useEffect(() => {
+    // If the user is manually restoring an old version of a rule,
+    // we should trigger validation on the form so any problem areas are clearly highlighted for them to action
+    if (isManualRestore) {
+      trigger();
+    }
+  }, [isManualRestore, trigger]);
   const type = watch('type');
   const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
 
@@ -151,12 +173,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       : getRuleGroupLocationFromFormValues(values);
 
     const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
+
+    let saveResult: RulerGroupUpdatedResponse;
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
       // save the rule to the rule group
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+      saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
       // track the new Grafana-managed rule creation in the analytics
       if (grafanaTypeRule) {
         const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
@@ -170,7 +194,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     } else {
       // when updating an existing rule
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-      await updateRuleInRuleGroup.execute(
+      saveResult = await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,
         ruleIdentifier,
         ruleDefinition,
@@ -180,6 +204,15 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
 
     const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
+
+    // V2 list is based on eventually consistent Prometheus API.
+    // When a new rule group is created it takes a while for the new rule group to be reflected in the V2 list.
+    // To avoid user confusion we redirect to the details page which is driven by a strongly consistent Ruler API..
+    if (alertingListViewV2) {
+      redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+      return;
+    }
+
     if (exitOnSave) {
       const returnToUrl = returnTo || getReturnToUrl(targetRuleGroupIdentifier, ruleDefinition);
 
@@ -190,7 +223,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
       // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
       // After successful update we need to update the URL to avoid displaying 404 errors
-      if (isCloudRulerRule(ruleDefinition)) {
+      if (rulerRuleType.dataSource.rule(ruleDefinition)) {
         const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
         locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
       }
@@ -218,20 +251,33 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     locationService.getHistory().goBack();
   };
 
-  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   if (!type) {
     return null;
   }
+
+  const isPaused = existing && rulerRuleType.grafana.rule(existing.rule) ? isPausedRule(existing.rule) : false;
+
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isManualRestore && (
+            <Alert
+              severity="warning"
+              title={t('alerting.alertVersionHistory.warning-restore-manually-title', 'Restoring rule manually')}
+            >
+              <Trans i18nKey="alerting.alertVersionHistory.warning-restore-manually">
+                You are manually restoring an old version of this alert rule. Please review the changes carefully before
+                saving the rule definition.
+              </Trans>
+            </Alert>
+          )}
           {isPaused && <InfoPausedRule />}
           <Stack direction="column" gap={3}>
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
             {/* Step 2 */}
-            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} mode="edit" />
             {/* Step 3-4-5 */}
             {showDataSourceDependantStep && (
               <>
@@ -259,7 +305,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                 data-testid="save-rule"
                 variant="primary"
                 type="button"
-                size="sm"
                 onClick={handleSubmit((values) => submit(values, true), onInvalid)}
                 disabled={isSubmitting}
               >
@@ -291,10 +336,62 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   );
 };
 
+function useRedirectToDetailsPage() {
+  const notifyApp = useAppNotification();
+
+  const redirectGrafanaRule = useCallback(
+    (saveResult: GrafanaGroupUpdatedResponse) => {
+      const newOrUpdatedRuleUid = saveResult.created?.at(0) || saveResult.updated?.at(0);
+      if (newOrUpdatedRuleUid) {
+        locationService.replace(
+          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
+        );
+      } else {
+        notifyApp.error(
+          'Cannot navigate to the new rule details page.',
+          'The rule was created but the UID is missing.'
+        );
+        logWarning('Cannot navigate to the new rule details page. The rule was created but the UID is missing.');
+      }
+    },
+    [notifyApp]
+  );
+
+  const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
+    const { dataSourceName, namespaceName, groupName } = groupId;
+    const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
+    locationService.replace(rulesNav.detailsPageLink(updatedRuleIdentifier.ruleSourceName, updatedRuleIdentifier));
+  }, []);
+
+  const redirectToDetailsPage = useCallback(
+    (
+      rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO,
+      groupId: RuleGroupIdentifier,
+      saveResult: RulerGroupUpdatedResponse
+    ) => {
+      if (isGrafanaGroupUpdatedResponse(saveResult)) {
+        redirectGrafanaRule(saveResult);
+        return;
+      } else if (rulerRuleType.dataSource.rule(rule)) {
+        redirectCloudRulerRule(rule, groupId);
+        return;
+      }
+
+      logWarning(
+        'Cannot navigate to the new rule details page. The response is not a GrafanaGroupUpdatedResponse and ruleDefinition is not a Cloud Ruler rule.',
+        { ruleFormType: rulerRuleType.dataSource.rule(rule) ? 'datasource' : 'grafana' }
+      );
+    },
+    [redirectGrafanaRule, redirectCloudRulerRule]
+  );
+
+  return { redirectToDetailsPage };
+}
+
 function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO) {
   const { dataSourceName, namespaceName, groupName } = groupId;
 
-  if (prometheusRulesPrimary && isCloudRulerRule(rule)) {
+  if (prometheusRulesPrimary && rulerRuleType.dataSource.rule(rule)) {
     const ruleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
     return createViewLinkFromIdentifier(ruleIdentifier);
   }

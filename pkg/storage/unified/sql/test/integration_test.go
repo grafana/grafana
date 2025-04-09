@@ -31,45 +31,57 @@ func TestMain(m *testing.M) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := infraDB.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
+	if infraDB.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       true,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewDefaultTestContext(t))
-		require.NoError(t, err)
-		return backend
-	}, nil)
-	// Run single instance tests with in-process notifier.
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := infraDB.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
+	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			dbstore := infraDB.InitTestDB(t)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			require.NoError(t, err)
+			require.NotNil(t, eDB)
 
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       false,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewDefaultTestContext(t))
-		require.NoError(t, err)
-		return backend
-	}, nil)
+			backend, err := sql.NewBackend(sql.BackendOptions{
+				DBProvider: eDB,
+				IsHA:       true,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, backend)
+			err = backend.Init(testutil.NewDefaultTestContext(t))
+			require.NoError(t, err)
+			return backend
+		}, nil)
+	})
+
+	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			dbstore := infraDB.InitTestDB(t)
+			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+			require.NoError(t, err)
+			require.NotNil(t, eDB)
+
+			backend, err := sql.NewBackend(sql.BackendOptions{
+				DBProvider: eDB,
+				IsHA:       false,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, backend)
+			err = backend.Init(testutil.NewDefaultTestContext(t))
+			require.NoError(t, err)
+			return backend
+		}, nil)
+	})
 }
 
 func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
+	if infraDB.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := infraDB.InitTestDB(t)
 
@@ -79,7 +91,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 

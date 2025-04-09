@@ -6,7 +6,8 @@ import (
 	"github.com/grafana/authlib/authn"
 )
 
-func newGRPCTokenAuth(audience, namespace string, tc authn.TokenExchanger) *tokenAuth {
+// TODO: move this to authlib
+func NewGRPCTokenAuth(audience, namespace string, tc authn.TokenExchanger) *tokenAuth {
 	return &tokenAuth{audience, namespace, tc}
 }
 

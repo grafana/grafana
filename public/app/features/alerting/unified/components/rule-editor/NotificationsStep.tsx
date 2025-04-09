@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -91,7 +92,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              Add labels to help you better manage your recording rules.
+              <Trans i18nKey="alerting.notifications-step.labels-better-manage-recording-rules">
+                Add labels to help you better manage your recording rules.
+              </Trans>
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (
@@ -118,7 +121,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Recipient</Text>
+          <Text element="h5">
+            <Trans i18nKey="alerting.notifications-step.recipient">Recipient</Trans>
+          </Text>
         </div>
       )}
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
@@ -240,16 +245,12 @@ function NeedHelpInfoForNotificationPolicy() {
       contentText={
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
-            <>
-              Firing alert instances are routed to notification policies based on matching labels. The default
-              notification policy matches all alert instances.
-            </>
+            Firing alert instances are routed to notification policies based on matching labels. The default
+            notification policy matches all alert instances.
           </Stack>
           <Stack direction="column" gap={0}>
-            <>
-              Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
-              connect them to your notification policy by adding label matchers.
-            </>
+            Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
+            connect them to your notification policy by adding label matchers.
             <a
               href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
               target="_blank"
@@ -262,7 +263,7 @@ function NeedHelpInfoForNotificationPolicy() {
           </Stack>
         </Stack>
       }
-      title="Notification routing"
+      title={t('alerting.need-help-info-for-notification-policy.title-notification-routing', 'Notification routing')}
     />
   );
 }
@@ -274,22 +275,19 @@ function NeedHelpInfoForContactpoint() {
         <>
           Select a contact point to notify all recipients in it.
           <br />
+          Muting, grouping, and timings options allow you to customize how notifications are sent.
           <br />
-          Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The wait time before sending the first notification for a new group of alerts is 30 seconds.
-          <br />
-          The waiting time before sending a notification about changes in the alert group after the first notification
-          has been sent is 5 minutes.
-          <br />
-          The wait time before resending a notification that has already been sent successfully is 4 hours.
-          <br />
-          Grouping and wait time values are defined in your default notification policy.
+          Alternatively, toggle the <b>Advanced options</b> button to route notifications using notification policies
+          for greater flexibility.
         </>
       }
       externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
       linkText="Read more about notifications"
-      title="Notify contact points"
+      title={t(
+        'alerting.need-help-info-for-contactpoint.title-notify-by-selecting-a-contact-point',
+        'Notify by selecting a contact point'
+      )}
     />
   );
 }

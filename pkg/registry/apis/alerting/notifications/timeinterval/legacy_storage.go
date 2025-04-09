@@ -11,14 +11,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
-	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
-	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
+	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
 
 type TimeIntervalService interface {

@@ -221,15 +221,13 @@ func CalculateRuleUpdate(ctx context.Context, ruleReader RuleReader, rule *model
 	return calculateChanges(ctx, ruleReader, rule.GetGroupKey(), existingGroupRules, newGroup)
 }
 
-// CalculateRuleGroupDelete calculates GroupDelta that reflects an operation of removing entire group
-func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey) (*GroupDelta, error) {
-	// List all rules in the group.
-	q := models.ListAlertRulesQuery{
-		OrgID:         groupKey.OrgID,
-		NamespaceUIDs: []string{groupKey.NamespaceUID},
-		RuleGroups:    []string{groupKey.RuleGroup},
+// CalculateRuleGroupsDelete calculates []*GroupDelta that reflects an operation of removing multiple groups
+func CalculateRuleGroupsDelete(ctx context.Context, ruleReader RuleReader, orgID int64, query *models.ListAlertRulesQuery) ([]*GroupDelta, error) {
+	if query == nil {
+		query = &models.ListAlertRulesQuery{}
 	}
-	ruleList, err := ruleReader.ListAlertRules(ctx, &q)
+	query.OrgID = orgID
+	ruleList, err := ruleReader.ListAlertRules(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -237,14 +235,40 @@ func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupK
 		return nil, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
-	delta := &GroupDelta{
-		GroupKey: groupKey,
-		Delete:   ruleList,
-		AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-			groupKey: ruleList,
-		},
+	groups := models.GroupByAlertRuleGroupKey(ruleList)
+	deltas := make([]*GroupDelta, 0, len(groups))
+	for groupKey := range groups {
+		delta := &GroupDelta{
+			GroupKey: groupKey,
+			Delete:   groups[groupKey],
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				groupKey: groups[groupKey],
+			},
+		}
+		if err != nil {
+			return nil, err
+		}
+		deltas = append(deltas, delta)
 	}
-	return delta, nil
+
+	return deltas, nil
+}
+
+// CalculateRuleGroupDelete calculates GroupDelta that reflects an operation of removing entire group
+func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey) (*GroupDelta, error) {
+	q := &models.ListAlertRulesQuery{
+		NamespaceUIDs: []string{groupKey.NamespaceUID},
+		RuleGroups:    []string{groupKey.RuleGroup},
+	}
+	deltas, err := CalculateRuleGroupsDelete(ctx, ruleReader, groupKey.OrgID, q)
+	if err != nil {
+		return nil, err
+	}
+	if len(deltas) != 1 {
+		return nil, fmt.Errorf("expected to get a single group delta, got %d", len(deltas))
+	}
+
+	return deltas[0], nil
 }
 
 // CalculateRuleDelete calculates GroupDelta that reflects an operation of removing a rule from the group.

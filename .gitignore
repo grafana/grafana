@@ -68,6 +68,8 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+
 .eslintcache
 .stylelintcache
 
@@ -94,6 +96,9 @@ conf/custom.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
+
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
 
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
@@ -148,6 +153,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache

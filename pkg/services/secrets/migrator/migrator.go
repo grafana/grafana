@@ -51,6 +51,7 @@ func ProvideSecretsMigrator(
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "refresh_token"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "session_id"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "name_id"}, encoding: base64.StdEncoding},
+		provisioningSecrets{},
 	}
 
 	return &SecretsMigrator{

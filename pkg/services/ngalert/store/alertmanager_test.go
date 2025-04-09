@@ -17,7 +17,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	testsuite.RunButSkipOnSpanner(m)
 }
 
 func TestIntegrationAlertmanagerStore(t *testing.T) {
