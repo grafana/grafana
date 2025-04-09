@@ -13,6 +13,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+func TestIncrementalSync_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
+		{
+			Action: repository.FileActionCreated,
+			Path:   "dashboards/test.json",
+			Ref:    "new-ref",
+		},
+	}, nil)
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+
+	err := IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress)
+	require.EqualError(t, err, "context canceled")
+}
+
 func TestIncrementalSync(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -124,6 +144,31 @@ func TestIncrementalSync(t *testing.T) {
 			expectedCalls: 1,
 		},
 		{
+			name: "unsupported file path with invalid folder",
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   ".unsupported/path/file.txt",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action: repository.FileActionIgnored,
+					Path:   ".unsupported/path/file.txt",
+				}).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef:   "old-ref",
+			currentRef:    "new-ref",
+			expectedCalls: 1,
+		},
+		{
 			name: "file deletion",
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
@@ -143,9 +188,13 @@ func TestIncrementalSync(t *testing.T) {
 					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted && result.Path == "dashboards/old.json"
-				})).Return()
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/old.json",
+					Name:     "old-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -175,10 +224,37 @@ func TestIncrementalSync(t *testing.T) {
 					Return("renamed-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionRenamed && result.Path == "dashboards/new.json"
-				})).Return()
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionRenamed,
+					Path:     "dashboards/new.json",
+					Name:     "renamed-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+				}).Return()
 
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef:   "old-ref",
+			currentRef:    "new-ref",
+			expectedCalls: 1,
+		},
+		{
+			name: "file ignored",
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionIgnored,
+						Path:   "dashboards/ignored.json",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action: repository.FileActionIgnored,
+					Path:   "dashboards/ignored.json",
+				}).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef:   "old-ref",
@@ -226,15 +302,52 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource write error
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "new-ref").
-					Return("", schema.GroupVersionKind{}, fmt.Errorf("write failed"))
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write failed"))
 
 				// Mock progress recording with error
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/test.json" &&
-						result.Error != nil
-				})).Return()
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionCreated,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    fmt.Errorf("write failed"),
+				}).Return()
 
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef:   "old-ref",
+			currentRef:    "new-ref",
+			expectedCalls: 1,
+		},
+		{
+			name: "error deleting resource",
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "dashboards/old.json",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				// Mock resource deletion error
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
+					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
+
+				// Mock progress recording with error
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/old.json",
+					Name:     "old-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    fmt.Errorf("delete failed"),
+				}).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef:   "old-ref",
@@ -254,7 +367,6 @@ func TestIncrementalSync(t *testing.T) {
 				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-
 				// Mock too many errors
 				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors occurred"))
 			},

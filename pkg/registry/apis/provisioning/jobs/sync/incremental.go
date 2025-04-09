@@ -78,7 +78,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			name, gvk, err := repositoryResources.WriteResourceFromFile(ctx, change.Path, change.Ref)
 			if err != nil {
-				result.Error = fmt.Errorf("write resource: %w", err)
+				result.Error = err
 			}
 			result.Name = name
 			result.Resource = gvk.Kind
@@ -86,7 +86,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		case repository.FileActionDeleted:
 			name, gvk, err := repositoryResources.RemoveResourceFromFile(ctx, change.Path, change.PreviousRef)
 			if err != nil {
-				result.Error = fmt.Errorf("delete resource: %w", err)
+				result.Error = err
 			}
 			result.Name = name
 			result.Resource = gvk.Kind
@@ -94,7 +94,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		case repository.FileActionRenamed:
 			name, gvk, err := repositoryResources.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
-				result.Error = fmt.Errorf("rename resource: %w", err)
+				result.Error = err
 			}
 			result.Name = name
 			result.Resource = gvk.Kind
