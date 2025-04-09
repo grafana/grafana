@@ -50,7 +50,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	return response, nil
 }
 
-// transformResponse converts Jaeger trace data to a Data frame
+// transformTraceResponse converts Jaeger trace data to a Data frame
 func transformTraceResponse(trace TraceResponse, refID string) *data.Frame {
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
