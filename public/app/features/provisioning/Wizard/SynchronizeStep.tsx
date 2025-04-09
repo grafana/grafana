@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button, Text, Stack, Alert, TextLink } from '@grafana/ui';
@@ -21,12 +21,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
   const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
   const [job, setJob] = useState<Job>();
 
-  useEffect(() => {
-    onStepUpdate('running');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const startSynchronization = useCallback(async () => {
+  const startSynchronization = async () => {
     if (!repoName) {
       onStepUpdate('error', t('provisioning.job-step.error-no-repository-name', 'No repository name provided'));
       return;
@@ -51,18 +46,15 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
         jobSpec,
       }).unwrap();
 
-      // The API returns an id in the status object
-      if (response.status && 'id' in response.status) {
-        setJob(response);
-        return;
+      if (!response?.metadata?.name) {
+        return onStepUpdate('error', t('provisioning.job-step.error-no-job-id', 'Failed to start job'));
       }
-
-      onStepUpdate('error', t('provisioning.job-step.error-no-job-id', 'Failed to start job'));
+      setJob(response);
     } catch (error) {
       onStepUpdate('error', t('provisioning.job-step.error-starting-job', 'Error starting job'));
       console.error('Error starting job:', error);
     }
-  }, [createJob, history, requiresMigration, repoName, onStepUpdate]);
+  };
 
   if (job) {
     return (

@@ -168,6 +168,9 @@ export function WizardContent({
   }, [saveRequest, setValue, handleStatusChange]);
 
   const isNextButtonDisabled = () => {
+    if (activeStep === 'synchronize') {
+      return stepStatus !== 'success';
+    }
     return isSubmitting || isCancelling || stepStatus === 'running' || stepStatus === 'error';
   };
 
