@@ -113,6 +113,7 @@ export class PanelPlugin<
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
+  shouldMigrate?: (panel: ComponentType<PanelProps<TOptions>> | null) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
   dataSupport: PanelPluginDataSupport = {
@@ -203,8 +204,12 @@ export class PanelPlugin<
    *
    * This is a good place to support any changes to the options model
    */
-  setMigrationHandler(handler: PanelMigrationHandler<TOptions>) {
+  setMigrationHandler(
+    handler: PanelMigrationHandler<TOptions>,
+    shouldMigrate?: (panel: ComponentType<PanelProps<TOptions>> | null) => boolean
+  ) {
     this.onPanelMigration = handler;
+    this.shouldMigrate = shouldMigrate;
     return this;
   }
 
