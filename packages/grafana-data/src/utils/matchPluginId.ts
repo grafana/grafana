@@ -4,7 +4,7 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
   if (pluginMeta.id === idToMatch) {
     return true;
   }
-  
+
   if (isPromFlavor(idToMatch)) {
     return isPromFlavor(pluginMeta.id);
   }
