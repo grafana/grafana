@@ -22,7 +22,7 @@ func (db *Database) Transaction(ctx context.Context, f func(context.Context) err
 }
 
 func (db *Database) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	panic("TODO: Database.ExecCOntext")
+	return db.db.GetSqlxSession().Exec(ctx, query, args...)
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
