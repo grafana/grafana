@@ -210,6 +210,34 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 			},
 		},
 		{
+			name:        "failed apply with file creation",
+			description: "Should record an error when creating a new file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/test.json",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionCreated,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    fmt.Errorf("write error"),
+				}).Return()
+			},
+		},
+		{
 			name:        "successful apply with file update",
 			description: "Should successfully apply changes when updating an existing file",
 			changes: []ResourceFileChange{
@@ -233,6 +261,34 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Name:     "test-dashboard",
 					Resource: "Dashboard",
 					Group:    "dashboards",
+				}).Return()
+			},
+		},
+		{
+			name:        "failed apply with file update",
+			description: "Should record an error when updating a file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionUpdated,
+					Path:   "dashboards/test.json",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionUpdated,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    fmt.Errorf("write error"),
 				}).Return()
 			},
 		},
@@ -278,10 +334,11 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				fakeDynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
 					return true, nil, nil
 				})
+
 				clients.On("ForResource", schema.GroupVersionResource{
 					Group:    "dashboards",
 					Resource: "Dashboard",
-				}).Return(fakeDynamicClient, schema.GroupVersionKind{
+				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
 					Kind:    "Dashboard",
 					Group:   "dashboards",
 					Version: "v1",
@@ -294,6 +351,68 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Resource: "Dashboard",
 					Group:    "dashboards",
 					Error:    nil,
+				}).Return()
+			},
+		},
+		{
+			name:        "file delete error",
+			description: "Should return an error when deleting a file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-dashboard",
+						Resource: "Dashboard",
+						Group:    "dashboards",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    "DashboardList",
+				}
+
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    resources.DashboardResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.DashboardResource: listGVK.Kind,
+				})
+
+				fakeDynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("delete failed")
+				})
+
+				clients.On("ForResource", schema.GroupVersionResource{
+					Group:    "dashboards",
+					Resource: "Dashboard",
+				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
+					Kind:    "Dashboard",
+					Group:   "dashboards",
+					Version: "v1",
+				}, nil)
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    fmt.Errorf("delete failed"),
 				}).Return()
 			},
 		},
