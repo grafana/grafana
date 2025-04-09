@@ -85,38 +85,36 @@ export function FinishStep() {
                 <Trans i18nKey="provisioning.finish-step.text-setup-later">You can always set this up later</Trans>
               </Text>
             </Stack>
-            <>
-              <Field>
-                <Checkbox
-                  disabled={!hasImageRenderer || !isPublic}
-                  label={t(
-                    'provisioning.finish-step.label-enable-previews',
-                    'Enable dashboard previews in pull requests'
-                  )}
-                  description={
-                    <>
-                      <Trans i18nKey="provisioning.finish-step.description-enable-previews">
-                        Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
-                        will be shared in your Git repository and visible to anyone with repository access.
-                      </Trans>{' '}
-                      <Text italic>
-                        <Trans i18nKey="provisioning.finish-step.description-image-rendering">
-                          Requires image rendering.{' '}
-                          <TextLink
-                            variant="bodySmall"
-                            external
-                            href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-                          >
-                            Set up image rendering
-                          </TextLink>
-                        </Trans>
-                      </Text>
-                    </>
-                  }
-                  {...register('repository.generateDashboardPreviews')}
-                />
-              </Field>
-            </>
+            <Field>
+              <Checkbox
+                disabled={!hasImageRenderer || !isPublic}
+                label={t(
+                  'provisioning.finish-step.label-enable-previews',
+                  'Enable dashboard previews in pull requests'
+                )}
+                description={
+                  <>
+                    <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                      Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
+                      will be shared in your Git repository and visible to anyone with repository access.
+                    </Trans>{' '}
+                    <Text italic>
+                      <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                        Requires image rendering.{' '}
+                        <TextLink
+                          variant="bodySmall"
+                          external
+                          href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                        >
+                          Set up image rendering
+                        </TextLink>
+                      </Trans>
+                    </Text>
+                  </>
+                }
+                {...register('repository.generateDashboardPreviews')}
+              />
+            </Field>
           </Stack>
         </>
       )}

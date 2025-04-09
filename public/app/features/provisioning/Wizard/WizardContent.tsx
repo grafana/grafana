@@ -251,7 +251,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 1,
     alignSelf: 'stretch',
     backgroundColor: theme.colors.border.weak,
-    // align the with the button row
+    // align with the button row
     marginBottom: theme.spacing(13),
   }),
   content: css({

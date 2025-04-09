@@ -104,8 +104,7 @@ export function ConnectStep() {
             invalid={!!errors.repository?.path}
             description={t(
               'provisioning.connect-step.description-github-path',
-              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from' +
-                ''
+              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
             )}
           >
             <Input
