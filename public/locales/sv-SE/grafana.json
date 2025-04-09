@@ -2,7 +2,11 @@
   "_comment": "Koden är sanningskällan för engelska fraser. Uppdateringar bör göras direkt i komponenterna och ytterligare pluralformer anges i denna fil.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Roll",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Servicekonto",
       "team-label": "Team",
       "title": "Lägg till behörighet för",
@@ -15,7 +19,9 @@
       "permission": "Behörighet"
     },
     "permission-list-item": {
-      "inherited": "Ärvd från mapp"
+      "inherited": "Ärvd från mapp",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Lägg till en behörighet",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Aldrig",
       "no-licensed-roles": "Ej tilldelad"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Varningstillstånd",
       "annotations": "Kommentarer",
+      "description-missing-series-evaluations": "",
       "evaluation": "Bedömning",
       "evaluation-paused": "Utvärdering av varning för närvarande pausad",
       "evaluation-paused-description": "Aviseringar för den här regeln kommer inte att utlösas och inga varningsinstanser kommer att skapas innan regeln har återaktiverats.",
+      "keep-firing-for": "",
       "last-evaluated": "Utvärderades senast",
       "last-evaluation-duration": "Senaste utvärderingens varaktighet",
       "last-updated-at": "Uppdaterades senast",
       "last-updated-by": "Senast uppdaterad av",
+      "missing-series-resolve": "",
       "no-annotations": "Inga kommentarer",
       "pending-period": "Väntande period",
       "rule": "Regel",
@@ -536,7 +550,8 @@
           "error": "Fel",
           "no-data": "Inga data",
           "normal": "Normal ",
-          "pending": "Väntande"
+          "pending": "Väntande",
+          "recovering": ""
         },
         "state-transitions": "Tillståndsövergång",
         "unknown-event-state": "Okänt",
@@ -794,6 +809,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -882,9 +898,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -912,6 +925,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1034,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1154,7 +1174,8 @@
           "new-recording-rule": "Ny inspelningsregel",
           "title": "Grafana-hanterad"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1272,9 +1293,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1548,8 +1566,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1605,7 +1625,18 @@
           "text": "Definiera hur varningsregeln utvärderas."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Definiera varningsbeteendet när utvärderingen misslyckas eller frågan inte returnerar några data."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Väntande period"
       },
@@ -1724,6 +1755,17 @@
       "na": "",
       "paused": "Pausad",
       "recording-rule": "Inspelningsregel"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2256,6 +2298,9 @@
     "inline-toast": {
       "success": "Kopierad"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2800,8 +2845,10 @@
         "copy-or-duplicate": "Kopiera eller duplicera",
         "delete": "Ta bort",
         "duplicate": "Dubblett",
-        "grid": "Rutnät",
-        "layout": "Layout"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3096,7 +3143,6 @@
         "tooltip": "Dela instrumentpanel"
       },
       "share-button": "Dela",
-      "switch-old-dashboard": "Byt till gammal instrumentpanelsida",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unmark-favorite": "Avmarkera som favorit"
     },
@@ -4295,10 +4341,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Rensa mappar"
+    "clear-folder-button": "Rensa mappar",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Tryck på ENTER för att skapa den nya mappen.",
+    "input-placeholder": "",
     "loading": "Laddar mappar…"
   },
   "folder-repo": {
@@ -4307,18 +4356,25 @@
   "forgot-password": {
     "back-button": "Tillbaka till inloggningen",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Hoppa över",
       "submit-button": "Skicka in"
     },
     "contact-admin": "Har du glömt ditt användarnamn eller e-postadress? Kontakta din Grafana-administratör.",
     "email-sent": "Ett e-postmeddelande med en återställningslänk har skickats till e-postadressen. Du bör få den inom kort.",
     "reset-password-header": "Återställ lösenord",
-    "send-email-button": "Skicka återställningsmeddelande"
+    "send-email-button": "Skicka återställningsmeddelande",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Fortsätt redigera",
     "description": "Ändringar du gjort sparades kanske inte.",
-    "discard-button": "Ignorera osparade ändringar"
+    "discard-button": "Ignorera osparade ändringar",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4588,6 +4644,7 @@
       "cell-filter-on": "Filtrera för värde",
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
+      "cell-inspect-tooltip": "",
       "copy": "Kopiera till klippbordet",
       "count": "",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}  <5></5>",
@@ -4597,8 +4654,10 @@
       "filter-popup-cancel": "Avbryt",
       "filter-popup-clear": "Rensa filter",
       "filter-popup-heading": "Filtrera per värden:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "Matcha gemener/versaler",
       "inspect-drawer-title": "Inspektera värde",
+      "inspect-menu-label": "",
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader"
     },
@@ -4739,6 +4798,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4999,10 +5068,10 @@
       "email-placeholder": "e-post",
       "email-required": "E-post är obligatoriskt",
       "name-label": "Namn",
-      "name-placeholder": "namn",
       "password-label": "Lösenord",
       "password-placeholder": "lösenord",
       "password-required": "Lösenord är obligatoriskt",
+      "passwordless-username-label": "",
       "submit-label": "Logga in",
       "submit-loading-label": "Loggar in ...",
       "username-label": "E-post eller användarnamn",
@@ -5088,15 +5157,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5257,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Fel vid avbrytande av skapande av ögonblicksbild",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Fel vid skapande av ögonblicksbild",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Fel vid frånkoppling",
       "error-see-server-logs": "Se Grafanas serverloggar för mer information",
       "get-session-error-title": "Fel vid laddning av migreringskonfiguration",
@@ -5354,6 +5437,7 @@
       "errored-resource-count": "Fel",
       "page-loading": "Laddar …",
       "rebuild-snapshot": "Återskapa ögonblicksbild",
+      "show-errors": "",
       "snapshot-date": "Tidsstämpel för ögonblicksbild",
       "snapshot-not-created": "Ännu inte skapat",
       "start-migration": "Bygg ögonblicksbild",
@@ -5363,7 +5447,7 @@
       "upload-migration": "Ladda upp ögonblicksbild"
     },
     "support-types-disclosure": {
-      "text": "Instrumentpaneler, mappar och inbyggda centrala datakällor migreras till din Grafana Cloud-stack. <2>Läs mer om att migrera andra inställningar.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token skapad och aktiverad",
@@ -5740,6 +5824,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Bjud in",
       "invite-tooltip": "Bjud in ny medlem"
@@ -5758,12 +5848,26 @@
       "open": "Öppna meny",
       "undock": "Avdocka menyn"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Senaste från bloggen"
   },
   "news": {
     "drawer": {
-      "close": "Stäng låda"
+      "close": ""
     },
+    "link-title": "",
     "title": "Senaste från bloggen"
   },
   "notifications": {
@@ -5788,6 +5892,17 @@
       "error": "Inloggningsleverantör nekade inloggningsbegäran"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5807,6 +5922,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5856,7 +5979,10 @@
     "unsupported-layout": "Layout som inte stöds"
   },
   "panel-type-filter": {
-    "clear-button": "Rensa typer"
+    "clear-button": "Rensa typer",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6065,6 +6191,7 @@
     },
     "plugin-help": {
       "error": "Ett fel uppstod vid laddning av hjälp.",
+      "loading": "",
       "not-found": "Ingen frågehjälp kunde hittas."
     },
     "plugin-installed-badge": {
@@ -6109,6 +6236,7 @@
       "strong-password-validation-register": "Lösenordet överensstämmer inte med policyn för starkt lösenord"
     },
     "change-theme": "Ändra tema",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6740,6 +6868,7 @@
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
       "remove-query": "Ta bort fråga",
+      "replace-query-from-library": "",
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
@@ -6822,9 +6951,13 @@
       "clear-button": "Rensa alla",
       "tooltip": "Du kan nu välja alternativet ”Ingen grundläggande roll” och lägga till behörigheter för dina anpassade behov. Du hittar mer information i <1>vår dokumentation</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Rensa"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Tilldela roller till användare för att säkerställa detaljerad kontroll över åtkomst till Grafanas funktioner och resurser. Läs mer i vår <2>dokumentation</2>."
     }
@@ -6832,10 +6965,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Grundläggande roller"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana har sannolikt uppdaterats. Prova att ladda om sidan.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Ladda om",
     "title": "Det gick inte att hitta applikationsfilen"
   },
@@ -6951,6 +7087,10 @@
     "role": {
       "label": "Roll"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7220,10 +7360,19 @@
   },
   "sign-up": {
     "back-button": "Tillbaka till inloggningen",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Skicka in",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Tillbaka till inloggningen",
       "complete-button": "Slutför registreringen",
+      "email-description": "",
+      "email-label": "",
       "header": "Verifiera epostadressen",
       "info": "Ett e-postmeddelande med en verifieringslänk har skickats till e-postadressen. Du bör få den inom kort.",
       "send-button": "Skicka verifieringsmeddelande"
@@ -7281,6 +7430,9 @@
     "url-column-header": "Webbadress för ögonblicksbild",
     "view-button": "Visa"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7308,7 +7460,13 @@
     "clear-button": "Rensa taggar",
     "loading": "Laddar …",
     "no-tags": "Inga taggar hittades",
-    "placeholder": "Filtrera per tagg"
+    "placeholder": "Filtrera per tagg",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7762,6 +7920,10 @@
     "role-column": "Roll",
     "select-org-button": "Välj organisation",
     "title": "Organisationer"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

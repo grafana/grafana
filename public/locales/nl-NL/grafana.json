@@ -2,7 +2,11 @@
   "_comment": "De code is de bron van waarheid voor Engelse zinnen. Ze moeten rechtstreeks worden bijgewerkt in de componenten en extra meervoudsvormen die in dit bestand worden gespecificeerd.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Rol",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Serviceaccount",
       "team-label": "Team",
       "title": "Toestemming toevoegen voor",
@@ -15,7 +19,9 @@
       "permission": "Toestemming"
     },
     "permission-list-item": {
-      "inherited": "Overgenomen van map"
+      "inherited": "Overgenomen van map",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Een toestemming toevoegen",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Nooit",
       "no-licensed-roles": "Niet toegewezen"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Status van de waarschuwing",
       "annotations": "Annotaties",
+      "description-missing-series-evaluations": "",
       "evaluation": "Evaluatie",
       "evaluation-paused": "Waarschuwingsevaluatie is momenteel gepauzeerd",
       "evaluation-paused-description": "Meldingen voor deze regel worden niet geactiveerd en er worden geen waarschuwingsinstanties gemaakt totdat de regel wordt hervat.",
+      "keep-firing-for": "",
       "last-evaluated": "Laatst geëvalueerd",
       "last-evaluation-duration": "Duur laatste evaluatie",
       "last-updated-at": "Laatst bijgewerkt op",
       "last-updated-by": "Laatst bijgewerkt door",
+      "missing-series-resolve": "",
       "no-annotations": "Geen annotaties",
       "pending-period": "Wachttijd",
       "rule": "Regel",
@@ -536,7 +550,8 @@
           "error": "Fout",
           "no-data": "Geen gegevens",
           "normal": "Normaal",
-          "pending": "In afwachting"
+          "pending": "In afwachting",
+          "recovering": ""
         },
         "state-transitions": "Status transformatie",
         "unknown-event-state": "Onbekend",
@@ -794,6 +809,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -882,9 +898,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -912,6 +925,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1034,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1154,7 +1174,8 @@
           "new-recording-rule": "Nieuwe opnameregel",
           "title": "Beheerd door Grafana"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1272,9 +1293,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1548,8 +1566,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1605,7 +1625,18 @@
           "text": "Definieer hoe de waarschuwingsregel wordt geëvalueerd."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Definieer het waarschuwingsgedrag wanneer de evaluatie mislukt of de query geen gegevens retourneert."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Wachttijd"
       },
@@ -1724,6 +1755,17 @@
       "na": "",
       "paused": "Gepauzeerd",
       "recording-rule": "Opnameregel"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2256,6 +2298,9 @@
     "inline-toast": {
       "success": "Gekopieerd"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2800,8 +2845,10 @@
         "copy-or-duplicate": "Kopiëren of dupliceren",
         "delete": "Verwijderen",
         "duplicate": "Dupliceren",
-        "grid": "Raster",
-        "layout": "Indeling"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3096,7 +3143,6 @@
         "tooltip": "Dashboard delen"
       },
       "share-button": "Delen",
-      "switch-old-dashboard": "Overschakelen naar oude dashboardpagina",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unmark-favorite": "Markering als favoriet ongedaan maken"
     },
@@ -4295,10 +4341,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Mappen wissen"
+    "clear-folder-button": "Mappen wissen",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Druk op enter om de nieuwe map aan te maken.",
+    "input-placeholder": "",
     "loading": "Mappen laden ..."
   },
   "folder-repo": {
@@ -4307,18 +4356,25 @@
   "forgot-password": {
     "back-button": "Terug naar inloggen",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Overslaan",
       "submit-button": "Verzenden"
     },
     "contact-admin": "Ben je je gebruikersnaam of e-mailadres vergeten? Neem contact op met je Grafana-beheerder.",
     "email-sent": "Er is een e-mail met een resetlink verzonden naar het e-mailadres. Je ontvangt deze binnenkort.",
     "reset-password-header": "Wachtwoord opnieuw instellen",
-    "send-email-button": "Reset-e-mail verzenden"
+    "send-email-button": "Reset-e-mail verzenden",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Doorgaan met bewerken",
     "description": "Wijzigingen die je hebt aangebracht, worden mogelijk niet opgeslagen.",
-    "discard-button": "Niet-opgeslagen wijzigingen verwijderen"
+    "discard-button": "Niet-opgeslagen wijzigingen verwijderen",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4588,6 +4644,7 @@
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
+      "cell-inspect-tooltip": "",
       "copy": "Naar klembord kopiëren",
       "count": "",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}  <5></5>",
@@ -4597,8 +4654,10 @@
       "filter-popup-cancel": "Annuleren",
       "filter-popup-clear": "Filter wissen",
       "filter-popup-heading": "Filteren op waarden:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "Case matchen",
       "inspect-drawer-title": "Waarde inspecteren",
+      "inspect-menu-label": "",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen"
     },
@@ -4739,6 +4798,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4999,10 +5068,10 @@
       "email-placeholder": "emailadres",
       "email-required": "E-mailadres is vereist",
       "name-label": "Naam",
-      "name-placeholder": "naam",
       "password-label": "Wachtwoord",
       "password-placeholder": "wachtwoord",
       "password-required": "Wachtwoord is vereist",
+      "passwordless-username-label": "",
       "submit-label": "Inloggen",
       "submit-loading-label": "Aan het inloggen ...",
       "username-label": "E-mailadres of gebruikersnaam",
@@ -5088,15 +5157,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5257,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Fout bij annuleren van maken snapshot",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Fout bij maken snapshot",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Fout bij het loskoppelen",
       "error-see-server-logs": "Zie de Grafana-serverlogboeken voor meer informatie",
       "get-session-error-title": "Fout bij laden van migratieconfiguratie",
@@ -5354,6 +5437,7 @@
       "errored-resource-count": "Fouten",
       "page-loading": "Bezig met laden ...",
       "rebuild-snapshot": "Snapshot opnieuw maken",
+      "show-errors": "",
       "snapshot-date": "Snapshottijdstempel",
       "snapshot-not-created": "Nog niet gemaakt",
       "start-migration": "Snapshot maken",
@@ -5363,7 +5447,7 @@
       "upload-migration": "Snapshot uploaden"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, mappen en ingebouwde kerngegevensbronnen worden gemigreerd naar je Grafana Cloud-stack. Meer informatie over het migreren van andere instellingen."
+      "text": ""
     },
     "token-status": {
       "active": "Token aangemaakt en actief",
@@ -5740,6 +5824,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Uitnodigen",
       "invite-tooltip": "Nieuw lid uitnodigen"
@@ -5758,12 +5848,26 @@
       "open": "Menu openen",
       "undock": "Menu ontkoppelen"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Laatste blogberichten"
   },
   "news": {
     "drawer": {
-      "close": "Lade sluiten"
+      "close": ""
     },
+    "link-title": "",
     "title": "Laatste blogberichten"
   },
   "notifications": {
@@ -5788,6 +5892,17 @@
       "error": "Loginprovider heeft loginverzoek geweigerd"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5807,6 +5922,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5856,7 +5979,10 @@
     "unsupported-layout": "Niet-ondersteunde lay-out"
   },
   "panel-type-filter": {
-    "clear-button": "Types wissen"
+    "clear-button": "Types wissen",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6065,6 +6191,7 @@
     },
     "plugin-help": {
       "error": "Er is een fout opgetreden bij het laden van hulp.",
+      "loading": "",
       "not-found": "Er is geen queryhulp gevonden."
     },
     "plugin-installed-badge": {
@@ -6109,6 +6236,7 @@
       "strong-password-validation-register": "Wachtwoord voldoet niet aan het sterke wachtwoordbeleid"
     },
     "change-theme": "Thema wijzigen",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6740,6 +6868,7 @@
       "expand-row": "Queryrij uitvouwen",
       "hide-response": "Antwoord verbergen",
       "remove-query": "Query verwijderen",
+      "replace-query-from-library": "",
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
@@ -6822,9 +6951,13 @@
       "clear-button": "Alles wissen",
       "tooltip": "Je kunt nu de optie 'Geen basisrol' selecteren en toestemmingen toevoegen aan je aangepaste behoeften. Meer informatie vind je in <1>onze documentatie</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Wissen"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Wijs rollen toe aan gebruikers om gedetailleerde controle over de toegang tot Grafana's functies en bronnen te garanderen. Lees meer in onze <2>documentatie</2>."
     }
@@ -6832,10 +6965,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Basisrollen"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana is waarschijnlijk bijgewerkt. Probeer de pagina opnieuw te laden.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Herladen",
     "title": "Kan toepassingsbestand niet vinden"
   },
@@ -6951,6 +7087,10 @@
     "role": {
       "label": "Rol"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7220,10 +7360,19 @@
   },
   "sign-up": {
     "back-button": "Terug naar inloggen",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Verzenden",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Terug naar inloggen",
       "complete-button": "Registratie voltooien",
+      "email-description": "",
+      "email-label": "",
       "header": "E-mailadres verifiëren",
       "info": "Er is een e-mail met een verificatielink verzonden naar het e-mailadres. Je ontvangt deze binnenkort.",
       "send-button": "Verificatie-e-mail verzenden"
@@ -7281,6 +7430,9 @@
     "url-column-header": "Snapshot-URL",
     "view-button": "Weergave"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7308,7 +7460,13 @@
     "clear-button": "Tags wissen",
     "loading": "Bezig met laden ...",
     "no-tags": "Geen tags gevonden",
-    "placeholder": "Filteren op tag"
+    "placeholder": "Filteren op tag",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7762,6 +7920,10 @@
     "role-column": "Rol",
     "select-org-button": "Organisatie selecteren",
     "title": "Organisaties"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

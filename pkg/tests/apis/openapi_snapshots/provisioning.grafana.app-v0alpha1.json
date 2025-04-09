@@ -2989,6 +2989,7 @@
         "type": "object",
         "properties": {
           "hash": {
+            "description": "The specific commit hash that triggered this notice",
             "type": "string"
           },
           "pr": {
