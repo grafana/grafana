@@ -1,53 +1,64 @@
 package cloudwatch
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/oam"
-	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/oam"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-// NewCWClient is a CloudWatch metrics api factory.
+// NewMetricsAPI is a CloudWatch metrics api factory.
 //
 // Stubbable by tests.
-var NewCWClient = func(cfg aws.Config) models.CWClient {
-	return cloudwatch.NewFromConfig(cfg)
+var NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
+	return cloudwatch.New(sess)
 }
 
 // NewLogsAPI is a CloudWatch logs api factory.
 //
 // Stubbable by tests.
-var NewLogsAPI = func(cfg aws.Config) models.CloudWatchLogsAPIProvider {
-	return cloudwatchlogs.NewFromConfig(cfg)
+var NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+	return cloudwatchlogs.New(sess)
 }
 
-// NewOAMAPI is a CloudWatch OAM API factory
+// NewOAMAPI is a CloudWatch OAM api factory.
 //
 // Stubbable by tests.
-var NewOAMAPI = func(cfg aws.Config) models.OAMAPIProvider {
-	return oam.NewFromConfig(cfg)
+var NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider {
+	return oam.New(sess)
 }
 
-// NewEC2API is a CloudWatch EC2 API factory
+// NewCWClient is a CloudWatch client factory.
 //
-// Stubbable by tests
-var NewEC2API = func(cfg aws.Config) models.EC2APIProvider {
-	return ec2.NewFromConfig(cfg)
+// Stubbable by tests.
+var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+	return cloudwatch.New(sess)
 }
 
 // NewCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
-var NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
-	return cloudwatchlogs.NewFromConfig(cfg)
+var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	return cloudwatchlogs.New(sess)
 }
 
-// NewRGTAClient is a ResourceGroupsTaggingAPI Client factory.
+// NewEC2Client is a client factory.
 //
 // Stubbable by tests.
-var NewRGTAClient = func(cfg aws.Config) resourcegroupstaggingapi.GetResourcesAPIClient {
-	return resourcegroupstaggingapi.NewFromConfig(cfg)
+var NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
+	return ec2.New(provider)
+}
+
+// RGTA client factory.
+//
+// Stubbable by tests.
+var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	return resourcegroupstaggingapi.New(provider)
 }
