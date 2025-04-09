@@ -81,6 +81,96 @@ func TestFullSync_NoChanges(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Sync: provisioning.SyncOptions{
+				Target: provisioning.SyncTargetTypeFolder,
+			},
+		},
+	})
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil)
+	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
+	repoResources.On("EnsureFolderExists", mock.Anything, resources.Folder{
+		ID:    "test-repo",
+		Title: "Test Repo",
+		Path:  "",
+	}, "").Return(nil)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
+	require.NoError(t, err)
+}
+
+func TestFullSync_FolderCreationFailed(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Sync: provisioning.SyncOptions{
+				Target: provisioning.SyncTargetTypeFolder,
+			},
+		},
+	})
+
+	repoResources.On("EnsureFolderExists", mock.Anything, resources.Folder{
+		ID:    "test-repo",
+		Title: "Test Repo",
+		Path:  "",
+	}, "").Return(fmt.Errorf("folder creation failed"))
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "create root folder: folder creation failed")
+}
+
+func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Sync: provisioning.SyncOptions{
+				Target: provisioning.SyncTargetTypeInstance,
+			},
+		},
+	})
+
+	// No folder creation should be attempted with instance target
+	// But we should still test the error path for completeness
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("compare error"))
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "compare changes: compare error")
+}
+
 func TestFullSync_ApplyChanges(t *testing.T) {
 	tests := []struct {
 		name          string
