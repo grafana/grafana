@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/promlib
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
