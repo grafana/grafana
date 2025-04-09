@@ -104,5 +104,5 @@ func (s *fakeKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Na
 }
 
 func (s *fakeKeeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
-	panic("TODO: fakeKeeperMetadataStorage.GetKeeperConfig")
+	panic("unimplemented: fakeKeeperMetadataStorage.GetKeeperConfig")
 }

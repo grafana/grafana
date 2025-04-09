@@ -26,11 +26,6 @@ type fakeSecureValueMetadataStorage struct {
 	latency time.Duration
 }
 
-// SetExternalID implements contracts.SecureValueMetadataStorage.
-func (s *fakeSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
-	panic("TODO: fakeSecureValueMetadataStorage.SetExternalID")
-}
-
 func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	// TODO: Remove once the outbox is implemented
 	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
@@ -119,6 +114,10 @@ func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xku
 	}, nil
 }
 
-func (storage *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
-	panic("TODO: fakeSecureValueMetadataStorage.SetStatusSucceeded")
+func (s *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+	panic("unimplemented: fakeSecureValueMetadataStorage.SetStatusSucceeded")
+}
+
+func (s *fakeSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	panic("unimplemented: fakeSecureValueMetadataStorage.SetExternalID")
 }

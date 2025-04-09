@@ -22,7 +22,6 @@ type SecureValueMetadataStorage interface {
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
-
 	SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
 }
