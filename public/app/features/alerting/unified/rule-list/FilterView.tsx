@@ -1,8 +1,8 @@
 import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
-import { useCallback, useRef, useState, useTransition } from 'react';
+import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
-import { Button, Card, EmptyState, Stack, Text } from '@grafana/ui';
+import { EmptyState, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { withPerformanceLogging } from '../Analytics';
@@ -11,6 +11,7 @@ import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
+import { FilterProgressState, FilterStatus } from './FilterViewStatus';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -136,6 +137,16 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     );
   }
 
+  // track the state of the filter progress, which is either searching, done or aborted
+  const filterProgressState = useMemo<FilterProgressState>(() => {
+    if (loadingAborted) {
+      return 'aborted';
+    } else if (doneSearching) {
+      return 'done';
+    }
+    return 'searching';
+  }, [doneSearching, loadingAborted]);
+
   return (
     <Stack direction="column" gap={0}>
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
@@ -173,33 +184,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
         )}
       </ul>
       {!noRulesFound && (
-        <Card>
-          <Text color="secondary">
-            {/* done searching everything and found some results */}
-            {doneSearching && !loadingAborted && (
-              <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">
-                No more results – found {{ numberOfRules }} rules
-              </Trans>
-            )}
-            {/* user has cancelled the search */}
-            {loadingAborted && (
-              <Trans i18nKey="alerting.rule-list.filter-view.results-with-cancellation">
-                Search cancelled – found {{ numberOfRules }} rules
-              </Trans>
-            )}
-            {/* search is in progress */}
-            {!doneSearching && !loadingAborted && (
-              <Trans i18nKey="alerting.rule-list.filter-view.results-loading">
-                Searching – found {{ numberOfRules }} rules
-              </Trans>
-            )}
-          </Text>
-          {!doneSearching && !loadingAborted && (
-            <Button variant="secondary" size="sm" onClick={() => cancelSearch()}>
-              {t('alerting.rule-list.filter-view.cancel-search', 'Cancel search')}
-            </Button>
-          )}
-        </Card>
+        <FilterStatus state={filterProgressState} numberOfRules={numberOfRules} onCancel={cancelSearch} />
       )}
       {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
