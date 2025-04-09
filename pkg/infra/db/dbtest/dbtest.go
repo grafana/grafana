@@ -3,7 +3,7 @@ package dbtest
 import (
 	"context"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
