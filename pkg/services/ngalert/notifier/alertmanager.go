@@ -402,6 +402,9 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		func(n receivers.Metadata) (receivers.EmailSender, error) {
 			return s, nil
 		},
+		func(_ string, n alertingNotify.Notifier) alertingNotify.Notifier {
+			return n
+		},
 		am.orgID,
 		setting.BuildVersion,
 	)
