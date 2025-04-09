@@ -34,7 +34,7 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 
 	changes, err := Changes(source, target)
 	if err != nil {
-		return nil, fmt.Errorf("error calculating changes: %w", err)
+		return nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
 	if len(changes) > 0 {

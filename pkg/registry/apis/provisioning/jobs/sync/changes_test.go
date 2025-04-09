@@ -43,6 +43,29 @@ func TestChanges(t *testing.T) {
 			Path:   "muta.json",
 		}, changes[0])
 	})
+	t.Run("empty file path", func(t *testing.T) {
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "", Resource: "dashboard", Group: "dashboard.grafana.app"},
+			},
+		}
+		_, err := Changes(source, target)
+		require.EqualError(t, err, "empty path on a non folder")
+	})
+
+	t.Run("empty path with folder resource", func(t *testing.T) {
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group},
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes)
+	})
 
 	t.Run("create empty folder structure for folders with unsupported file types", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
@@ -448,6 +471,24 @@ func TestCompare(t *testing.T) {
 				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
 			},
 			expectedChanges: []ResourceFileChange{},
+		},
+		{
+			name:        "compare function error",
+			description: "Should return error when comparing fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				target := &provisioning.ResourceList{
+					Items: []provisioning.ResourceListItem{
+						// Empty path to trigger error
+						{Path: "", Hash: "xyz", Resource: "dashboard", Group: "dashboard.grafana.app"},
+					},
+				}
+				source := []repository.FileTreeEntry{
+					{Path: "dashboard.json", Hash: "xyz", Blob: true},
+				}
+				repoResources.On("List", mock.Anything).Return(target, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			},
+			expectedError: "calculate changes: empty path on a non folder",
 		},
 	}
 
