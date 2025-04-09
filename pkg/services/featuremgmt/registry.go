@@ -1783,6 +1783,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "metricsFromProfiles",
+			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
