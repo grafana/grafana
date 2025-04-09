@@ -1,12 +1,16 @@
 package sync
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestChanges(t *testing.T) {
@@ -287,4 +291,69 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name            string
+		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
+		expectedError   string
+		expectedChanges []ResourceFileChange
+		description     string
+	}{
+		{
+			name:        "error listing current resources",
+			description: "Should return error when listing current resources fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				repoResources.On("List", mock.Anything).Return(nil, fmt.Errorf("listing failed"))
+			},
+			expectedError: "error listing current: listing failed",
+		},
+		{
+			name:        "error reading tree",
+			description: "Should return error when reading tree fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(nil, fmt.Errorf("read tree failed"))
+			},
+			expectedError: "error reading tree: read tree failed",
+		},
+		{
+			name:        "no changes between source and target",
+			description: "Should return empty changes when source and target are identical",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				target := &provisioning.ResourceList{
+					Items: []provisioning.ResourceListItem{
+						{Path: "dashboard.json", Hash: "xyz"},
+					},
+				}
+				source := []repository.FileTreeEntry{
+					{Path: "dashboard.json", Hash: "xyz", Blob: true},
+				}
+
+				repoResources.On("List", mock.Anything).Return(target, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			},
+			expectedChanges: []ResourceFileChange{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+
+			tt.setupMocks(repo, repoResources)
+
+			changes, err := Compare(context.Background(), repo, repoResources, "current-ref")
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError, tt.description)
+				require.Nil(t, changes)
+			} else {
+				require.NoError(t, err, tt.description)
+				require.Equal(t, tt.expectedChanges, changes, tt.description)
+			}
+		})
+	}
 }
