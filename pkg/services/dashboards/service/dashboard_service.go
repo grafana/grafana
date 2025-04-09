@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -41,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
@@ -1186,6 +1188,60 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
+// (sometimes) called by the k8s storage engine after creating an object
+func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey, id claims.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	ctx, span := tracer.Start(ctx, "dashboards.service.SetDefaultPermissionsAfterCreate")
+	defer span.End()
+
+	logger := logging.FromContext(ctx)
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	uid, err := user.GetInternalID()
+	if err != nil {
+		return err
+	}
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
+		// legacy behavior
+		permissions = []accesscontrol.SetResourcePermissionCommand{}
+		if user.IsIdentityType(claims.TypeUser) {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+			})
+		}
+		isNested := obj.GetFolder() != ""
+		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+			}...)
+		}
+	} else {
+		if obj.GetFolder() != "" {
+			return nil
+		}
+		permissions = []accesscontrol.SetResourcePermissionCommand{
+			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}
+	}
+	svc := dr.getPermissionsService(key.Resource == "folders")
+	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
+		logger.Error("Could not set default permissions", "error", err)
+		return err
+	}
+
+	return nil
+}
+
 func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultPermissions")
 	defer span.End()
@@ -1227,6 +1283,10 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return
+	}
+
 	ctx, span := tracer.Start(ctx, "dashboards.service.setDefaultFolderPermissions")
 	defer span.End()
 
@@ -1792,7 +1852,6 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	if err != nil {
 		return nil, err
 	}
-
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.k8sclient.Update(ctx, obj, orgID)
