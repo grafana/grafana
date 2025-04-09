@@ -7,7 +7,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -16,7 +15,6 @@ import (
 
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
-	db db.DB,
 	features featuremgmt.FeatureToggles,
 	keeperService secretkeeper.Service,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
@@ -30,14 +28,11 @@ func ProvideDecryptStorage(
 
 	keepers := keeperService.GetKeepers()
 
-	return &decryptStorage{db: db, keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
+	return &decryptStorage{keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
-	// TODO: remove this and only use the storages (when making this a service), need to figure out the getKeeperConfig part.
-	db db.DB
-
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keepers                    map[contracts.KeeperType]contracts.Keeper
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
