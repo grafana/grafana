@@ -12,6 +12,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -67,6 +68,11 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, err
 	}
 
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
 	readWriter, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
@@ -109,9 +115,27 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(filePath)
 		if r.Method == http.MethodGet && isDir {
+			// Listing files requires permission to list dashboards
+			rsp, err := c.access.Check(ctx, auth, authlib.CheckRequest{
+				Group:     resources.DashboardResource.Group,
+				Resource:  resources.DashboardResource.Resource,
+				Namespace: repo.Config().Namespace,
+				Verb:      utils.VerbList,
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			if !rsp.Allowed {
+				responder.Error(apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
+					fmt.Errorf("requires list permissions on dashbaords")))
+				return
+			}
+
 			files, err := listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
+				return
 			}
 
 			responder.Object(http.StatusOK, files)

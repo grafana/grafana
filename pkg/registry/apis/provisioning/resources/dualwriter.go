@@ -7,6 +7,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/google/uuid"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -48,6 +50,31 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 	}
 	if !rsp.Allowed {
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to see embedded file"))
+	}
+	return nil
+}
+
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: r.repo.Config().GetNamespace(),
+		Verb:      utils.VerbCreate,
+
+		// TODO: Currently this checks if you can create a new folder in root
+		// Ideally we should check the path and use the explicit parent and new id
+		Name: "f" + uuid.NewString(),
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
 			fmt.Errorf("no access to see embedded file"))
 	}
 	return nil
@@ -145,6 +172,10 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 
 	if !safepath.IsDir(path) {
 		return nil, fmt.Errorf("not a folder path")
+	}
+
+	if err := r.authorizeCreateFolder(ctx, path); err != nil {
+		return nil, err
 	}
 
 	// Now actually create the folder

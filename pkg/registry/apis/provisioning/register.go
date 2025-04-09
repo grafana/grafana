@@ -243,19 +243,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 
 				case "files":
-					// Reading files is allowed for everyone, so as to allow code reviews and similar.
-					// Writing files is only allowed fo Editor and higher.
-					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
-					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
-					isReadOperation := a.GetVerb() == apiutils.VerbGet
-
-					if isEditor || (isViewer && isReadOperation) {
-						return authorizer.DecisionAllow, "", nil
-					} else if isReadOperation {
-						return authorizer.DecisionDeny, "viewer role is required for reads", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required for edits", nil
-					}
+					// Access to files is controlled by the AccessClient
+					return authorizer.DecisionAllow, "", nil
 
 				case "render":
 					// This is used to read a blob from unified storage, for GitHub PR comments.
