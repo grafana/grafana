@@ -9,6 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { VariableHideSelect } from '../../settings/variables/components/VariableHideSelect';
@@ -29,7 +30,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
 
     const options = useMemo(() => {
@@ -38,7 +39,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
           new OptionsPaneItemDescriptor({
             title: t('dashboard-scene.variable-editor-form.name', 'Name'),
             popularRank: 1,
-            render: () => <VariableNameInput variable={variable} />,
+            render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -70,7 +71,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
             render: () => <VariableTypeSelect variable={variable} />,
           })
         );
-    }, [variable]);
+    }, [variable, isNewElement]);
 
     return [options];
   }
@@ -88,9 +89,10 @@ interface VariableInputProps {
   variable: SceneVariable;
 }
 
-function VariableNameInput({ variable }: VariableInputProps) {
+function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
   const { name } = variable.useState();
-  return <Input value={name} onChange={(e) => variable.setState({ name: e.currentTarget.value })} />;
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  return <Input ref={ref} value={name} onChange={(e) => variable.setState({ name: e.currentTarget.value })} />;
 }
 
 function VariableLabelInput({ variable }: VariableInputProps) {

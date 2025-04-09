@@ -36,7 +36,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;
 
@@ -53,7 +53,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} />,
+            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -69,7 +69,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             render: () => <PanelBackgroundSwitch panel={panel} />,
           })
         );
-    }, [panel]);
+    }, [panel, isNewElement]);
 
     const layoutCategories = useMemo(
       () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),

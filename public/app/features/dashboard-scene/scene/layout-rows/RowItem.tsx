@@ -29,7 +29,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
-import { getEditOptions } from './RowItemEditor';
+import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
@@ -43,7 +43,6 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
-  isNew?: boolean;
 }
 
 export class RowItem
@@ -103,8 +102,8 @@ export class RowItem
     this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+    return useEditOptions(this, isNewElement);
   }
 
   public onDelete() {
@@ -160,7 +159,7 @@ export class RowItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title, isNew: false });
+    this.setState({ title });
   }
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {

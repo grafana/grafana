@@ -8,8 +8,11 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { getDashboardSceneFor } from '../../utils/utils';
+
+import { getVariableDefault } from './utils';
 
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -52,6 +55,13 @@ function VariableList({ set }: { set: SceneVariableSet }) {
     editPane.selectObject(variable, variable.state.key!);
   };
 
+  const onAddVariable = () => {
+    //add the new variable to the end of the array
+    const newVariable = getVariableDefault(variables);
+    set.setState({ variables: [...variables, newVariable] });
+    set.publishEvent(new NewObjectAddedToCanvasEvent(newVariable), true);
+  };
+
   return (
     <Stack direction="column" gap={0}>
       {variables.map((variable) => (
@@ -61,12 +71,11 @@ function VariableList({ set }: { set: SceneVariableSet }) {
             <Button variant="primary" size="sm" fill="outline">
               Select
             </Button>
-            <Button variant="destructive" size="sm" fill="outline" icon="trash-alt" />
           </Stack>
         </div>
       ))}
       <Box paddingBottom={1} display={'flex'}>
-        <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={() => {}}>
+        <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddVariable}>
           Add variable
         </Button>
       </Box>

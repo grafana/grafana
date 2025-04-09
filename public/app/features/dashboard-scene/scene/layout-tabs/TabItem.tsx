@@ -29,7 +29,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
-import { getEditOptions } from './TabItemEditor';
+import { useEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -37,10 +37,6 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
-  /**
-   * Used to auto focus the title input
-   */
-  isNew?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
 }
@@ -103,8 +99,8 @@ export class TabItem
     this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+    return useEditOptions(this, isNewElement);
   }
 
   public onDelete() {
@@ -143,7 +139,7 @@ export class TabItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title, isNew: false });
+    this.setState({ title });
   }
 
   public setIsDropTarget(isDropTarget: boolean) {
