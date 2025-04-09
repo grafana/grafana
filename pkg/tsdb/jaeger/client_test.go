@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,7 +59,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger())
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{})
 			assert.NoError(t, err)
 
 			services, err := client.Services()
@@ -147,7 +148,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger())
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{})
 			assert.NoError(t, err)
 
 			operations, err := client.Operations(tt.service)
