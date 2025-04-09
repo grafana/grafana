@@ -19,7 +19,6 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -263,8 +262,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
-		reqCtx := contexthandler.FromContext(req.Context())
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, reqCtx.UserToken); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)

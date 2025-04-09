@@ -68,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.primary,
+    flex: 1,
   }),
   tabs: css({
     paddingTop: theme.spacing(0.5),

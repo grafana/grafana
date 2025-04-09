@@ -225,8 +225,15 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 
 	result := apimodels.NamespaceConfigResponse{}
 
+	ruleList := make([]*ngmodels.AlertRule, 0)
+	for _, ruleGroup := range ruleGroups {
+		ruleList = append(ruleList, ruleGroup...)
+	}
+
+	userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), ruleList)
+
 	for groupKey, rules := range ruleGroups {
-		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, srv.resolveUserIdToNameFn(c.Req.Context())))
+		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, userUIDmapping))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -263,9 +270,10 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
+	userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 	result := apimodels.RuleGroupConfigResponse{
 		// nolint:staticcheck
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords, srv.resolveUserIdToNameFn(c.Req.Context())),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords, userUIDmapping),
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -285,9 +293,10 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			return ErrResp(http.StatusInternalServerError, err, "failed to get deleted rules")
 		}
 		result := apimodels.NamespaceConfigResponse{}
+		userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 		if len(rules) > 0 {
 			result[""] = []apimodels.GettableRuleGroupConfig{
-				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(c.Req.Context())),
+				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping),
 			}
 		}
 		return response.JSON(http.StatusOK, result)
@@ -332,6 +341,13 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
+	ruleList := make([]*ngmodels.AlertRule, 0)
+	for _, ruleGroup := range configs {
+		ruleList = append(ruleList, ruleGroup...)
+	}
+
+	userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), ruleList)
+
 	for groupKey, rules := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
@@ -340,7 +356,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, srv.resolveUserIdToNameFn(c.Req.Context())))
+		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, userUIDmapping))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -363,7 +379,8 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenance", err)
 	}
 
-	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance}, srv.resolveUserIdToNameFn(ctx))
+	userUIDmapping := srv.getUserUIDmapping(ctx, []*ngmodels.AlertRule{&rule})
+	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance}, userUIDmapping)
 
 	return response.JSON(http.StatusOK, result)
 }
@@ -385,9 +402,10 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 	}
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID > rules[j].ID })
 	result := make(apimodels.GettableRuleVersions, 0, len(rules))
+	userUIDmapping := srv.getUserUIDmapping(ctx, rules)
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
-		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(ctx)))
+		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, userUIDmapping))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -616,7 +634,7 @@ func changesToResponse(finalChanges *store.GroupDelta) response.Response {
 	return response.JSON(http.StatusAccepted, body)
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userIdToName userIDToUserInfoFn) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableRuleGroupConfig {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -624,7 +642,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 		interval = time.Duration(rules[0].IntervalSeconds) * time.Second
 	}
 	for _, r := range rules {
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords, userIdToName))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords, userUIDmapping))
 	}
 	return apimodels.GettableRuleGroupConfig{
 		Name:     groupName,
@@ -633,7 +651,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 	}
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, userIdToName userIDToUserInfoFn) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableExtendedRuleNode {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
@@ -645,7 +663,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			Condition:                   r.Condition,
 			Data:                        ApiAlertQueriesFromAlertQueries(r.Data),
 			Updated:                     r.Updated,
-			UpdatedBy:                   userIdToName(r.UpdatedBy),
+			UpdatedBy:                   getUserFromMapping(userUIDmapping, r.UpdatedBy),
 			IntervalSeconds:             r.IntervalSeconds,
 			Version:                     r.Version,
 			UID:                         r.UID,
@@ -811,11 +829,9 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-type userIDToUserInfoFn func(id *ngmodels.UserUID) *apimodels.UserInfo
-
-// getIdentityName returns name of either user or service account
-func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoFn {
-	cache := map[ngmodels.UserUID]*apimodels.UserInfo{
+// getUserUIDmaping returns a UserUID->UserInfo mapping from the UpdatedBy users in the RulesGroup
+func (srv RulerSrv) getUserUIDmapping(ctx context.Context, rules []*ngmodels.AlertRule) map[ngmodels.UserUID]*apimodels.UserInfo {
+	mapping := map[ngmodels.UserUID]*apimodels.UserInfo{
 		ngmodels.AlertingUserUID: {
 			UID: string(ngmodels.AlertingUserUID),
 		},
@@ -823,30 +839,56 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 			UID: string(ngmodels.FileProvisioningUserUID),
 		},
 	}
-	return func(id *ngmodels.UserUID) *apimodels.UserInfo {
-		if id == nil {
-			return nil
+	userUIDs := []string{}
+	for _, rule := range rules {
+		if rule == nil {
+			continue
 		}
-		if val, ok := cache[*id]; ok {
-			return val
+
+		if rule.UpdatedBy == nil {
+			continue
 		}
-		u, err := srv.userService.GetByUID(ctx, &user.GetUserByUIDQuery{
-			UID: string(*id),
-		})
-		var name string
-		if err != nil {
-			srv.log.FromContext(ctx).Warn("Failed to get user by uid. Defaulting to an empty name", "uid", id, "error", err)
+
+		if _, ok := mapping[*rule.UpdatedBy]; ok {
+			// one of the system identifiers
+			continue
 		}
-		if u != nil {
-			name = u.NameOrFallback()
-		}
-		result := &apimodels.UserInfo{
-			UID:  string(*id),
-			Name: name,
-		}
-		cache[*id] = result
-		return result
+
+		userUIDs = append(userUIDs, string(*rule.UpdatedBy))
 	}
+
+	if len(userUIDs) == 0 {
+		return mapping
+	}
+
+	users, err := srv.userService.ListByIdOrUID(ctx, userUIDs, []int64{})
+	if err != nil {
+		srv.log.FromContext(ctx).Warn("Failed to list users by uid. Defaulting to empty names", "uids", userUIDs, "error", err)
+		return mapping
+	}
+
+	for _, user := range users {
+		mapping[ngmodels.UserUID(user.UID)] = &apimodels.UserInfo{
+			UID:  user.UID,
+			Name: user.NameOrFallback(),
+		}
+	}
+
+	return mapping
+}
+
+func getUserFromMapping(mapping map[ngmodels.UserUID]*apimodels.UserInfo, userUID *ngmodels.UserUID) *apimodels.UserInfo {
+	if userUID == nil {
+		return nil
+	}
+
+	u, ok := mapping[*userUID]
+	if ok {
+		return u
+	}
+
+	// if user is not found or we get an error building the mapping, return empty name by default
+	return &apimodels.UserInfo{UID: string(*userUID)}
 }
 
 func getPanelIDFromQuery(v url.Values) (int64, error) {

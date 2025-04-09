@@ -55,6 +55,7 @@ type NavigationAppConfig struct {
 	Text       string
 	Icon       string
 	SubTitle   string
+	IsNew      bool
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
@@ -399,15 +400,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Id:   "dashboards/public",
 				Url:  s.cfg.AppSubURL + "/dashboard/public",
 				Icon: "library-panel",
-			})
-		}
-
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && (c.SignedInUser.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently deleted",
-				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-				Id:       "dashboards/recently-deleted",
-				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
 			})
 		}
 	}

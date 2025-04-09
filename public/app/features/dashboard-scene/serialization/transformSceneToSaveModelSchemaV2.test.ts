@@ -56,6 +56,7 @@ import {
   getElementDatasource,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
+  getDataQueryKind,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -113,7 +114,14 @@ jest.mock('@grafana/runtime', () => ({
           },
           loki: {
             name: 'Loki',
-            meta: { id: 'loki' },
+            meta: {
+              id: 'loki',
+              name: 'Loki',
+              type: 'datasource',
+              info: { version: '1.0.0' },
+              module: 'app/plugins/datasource/loki/module',
+              baseUrl: '/plugins/loki',
+            },
             type: 'datasource',
           },
         },
@@ -497,6 +505,119 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
       expect(resultC).toEqual({});
     });
+  });
+
+  describe('getDataQueryKind', () => {
+    it('should preserve original query datasource type when available', () => {
+      // 1. Test with a query that has its own datasource type
+      const queryWithDS: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Create a query runner with a different datasource type
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'default-ds', type: 'loki' },
+        queries: [],
+      });
+
+      // Should use the query's own datasource type (prometheus)
+      expect(getDataQueryKind(queryWithDS, queryRunner)).toBe('prometheus');
+    });
+
+    it('should use queryRunner datasource type as fallback when query has no datasource', () => {
+      // 2. Test with a query that has no datasource
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with a datasource
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'influxdb-1', type: 'influxdb' },
+        queries: [],
+      });
+
+      // Should fall back to queryRunner's datasource type
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('influxdb');
+    });
+
+    it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
+      // 3. Test with neither query nor queryRunner having a datasource type
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with no datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+      });
+
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+
+      // Also verify the function's behavior by checking the args
+      expect(queryWithoutDS.datasource?.type).toBeUndefined(); // No query datasource
+      expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
+    });
+  });
+
+  it('should test annotation with options field', () => {
+    // Create a scene with an annotation layer that has options
+    const annotationWithOptions = new DashboardAnnotationsDataLayer({
+      key: 'layerWithOptions',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abc123',
+        },
+        name: 'annotation-with-options',
+        enable: true,
+        iconColor: 'red',
+        options: {
+          expr: 'rate(http_requests_total[5m])',
+          queryType: 'range',
+          legendFormat: '{{method}} {{endpoint}}',
+          useValueAsTime: true,
+        },
+        // Some other properties that aren't in the annotation spec
+        // and should be moved to options
+        customProp1: 'value1',
+        customProp2: 'value2',
+      },
+      name: 'layerWithOptions',
+      isEnabled: true,
+      isHidden: false,
+    });
+
+    const scene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [annotationWithOptions],
+      }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [] }),
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+
+    // Verify the annotation options are properly serialized
+    expect(result.annotations.length).toBe(1);
+    expect(result.annotations[0].spec.options).toBeDefined();
+    expect(result.annotations[0].spec.options).toEqual({
+      expr: 'rate(http_requests_total[5m])',
+      queryType: 'range',
+      legendFormat: '{{method}} {{endpoint}}',
+      useValueAsTime: true,
+      customProp1: 'value1',
+      customProp2: 'value2',
+    });
+
+    // Ensure these properties are not at the root level
+    expect(result).not.toHaveProperty('annotations[0].spec.expr');
+    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
+    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
+    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
 });
 

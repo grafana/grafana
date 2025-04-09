@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -62,34 +54,6 @@ export interface FeatureToggles {
   * @default true
   */
   correlations?: boolean;
-  /**
-  * Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-  */
-  autoMigrateOldPanels?: boolean;
-  /**
-  * Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateGraphPanel?: boolean;
-  /**
-  * Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateTablePanel?: boolean;
-  /**
-  * Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigratePiechartPanel?: boolean;
-  /**
-  * Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateWorldmapPanel?: boolean;
-  /**
-  * Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateStatPanel?: boolean;
-  /**
-  * Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-  */
-  disableAngular?: boolean;
   /**
   * Allow elements nesting
   */
@@ -186,18 +150,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-  */
-  alertStateHistoryLokiSecondary?: boolean;
-  /**
-  * Enable a remote Loki instance as the primary source for state history reads.
-  */
-  alertStateHistoryLokiPrimary?: boolean;
-  /**
-  * Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-  */
-  alertStateHistoryLokiOnly?: boolean;
-  /**
   * Writes error logs to the request logger
   * @default true
   */
@@ -266,11 +218,6 @@ export interface FeatureToggles {
   * Enable support for Machine Learning in server-side expressions
   */
   mlExpressions?: boolean;
-  /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
   /**
   * Expose some datasources as apiservers.
   */
@@ -550,7 +497,7 @@ export interface FeatureToggles {
   */
   newFolderPicker?: boolean;
   /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
@@ -590,10 +537,6 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
-  /**
-  * Changed the layout algorithm for the node graph
-  */
-  nodeGraphDotLayout?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -668,11 +611,6 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
-  /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -977,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
@@ -988,10 +927,6 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enable the alerting conversion API
-  */
-  alertingConversionAPI?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -1000,7 +935,7 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Load plugins from CDN synchronously
+  * Loads plugins from CDN synchronously
   */
   pluginsCDNSyncLoader?: boolean;
   /**
@@ -1046,10 +981,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Disables backdrop blur
-  */
-  noBackdropBlur?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
   */
   alertingMigrationUI?: boolean;
@@ -1063,13 +994,22 @@ export interface FeatureToggles {
   */
   azureMonitorLogsBuilderEditor?: boolean;
   /**
-  * Specify the locale so we can show the correct format for numbers and dates
+  * Specifies the locale so the correct format for numbers and dates can be shown
   */
   localeFormatPreference?: boolean;
   /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the extension sidebar
+  */
+  extensionSidebar?: boolean;
+  /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
   /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
@@ -1080,7 +1020,25 @@ export interface FeatureToggles {
   */
   xrayApplicationSignals?: boolean;
   /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
+  /**
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables unified navbars
+  * @default false
+  */
+  unifiedNavbars?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default true
+  */
+  logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
 }

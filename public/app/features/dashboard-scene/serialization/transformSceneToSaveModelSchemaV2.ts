@@ -254,7 +254,7 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
     vizPanelQueries.forEach((query) => {
       const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
+        kind: getDataQueryKind(query, queryRunner),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
@@ -272,12 +272,26 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery | string): string {
+export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: SceneQueryRunner): string {
+  // Query is a string - get default data source type
   if (typeof query === 'string') {
-    return getDefaultDataSourceRef()?.type ?? '';
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
   }
 
-  return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
+  // Query has explicit datasource with type
+  if (query.datasource?.type) {
+    return query.datasource.type;
+  }
+
+  // Get type from query runner's datasource
+  if (queryRunner?.state.datasource?.type) {
+    return queryRunner.state.datasource.type;
+  }
+
+  // Fall back to default datasource
+  const defaultDS = getDefaultDataSourceRef();
+  return defaultDS?.type || '';
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
@@ -400,13 +414,56 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // Check if DataQueryKind exists
-    const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query?.kind === queryKind) {
+    // Transform v1 dashboard (using target) to v2 structure
+    if (layer.state.query.target) {
+      // Handle built-in annotations
+      if (layer.state.query.builtIn) {
+        result.spec.query = {
+          kind: 'grafana', // built-in annotations are always of type grafana
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      } else {
+        result.spec.query = {
+          kind: getAnnotationQueryKind(layer.state.query),
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      }
+    }
+    // For annotations without query.query defined (e.g., grafana annotations without tags)
+    else if (layer.state.query.query?.kind) {
       result.spec.query = {
-        kind: queryKind,
-        spec: layer.state.query.query.spec,
+        kind: layer.state.query.query.kind,
+        spec: {
+          ...layer.state.query.query.spec,
+        },
       };
+    }
+    // Collect datasource-specific properties not in standard annotation spec
+    let otherProps = omit(
+      layer.state.query,
+      'type',
+      'target',
+      'builtIn',
+      'name',
+      'datasource',
+      'iconColor',
+      'enable',
+      'hide',
+      'filter',
+      'query'
+    );
+
+    // Store extra properties in the options field instead of directly in the spec
+    if (Object.keys(otherProps).length > 0) {
+      // Extract options property and get the rest of the properties
+      const { options, ...restProps } = otherProps;
+
+      // Merge options with the rest of the properties
+      result.spec.options = { ...options, ...restProps };
     }
 
     // If filter is an empty array, don't save it

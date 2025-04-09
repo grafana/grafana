@@ -16,9 +16,10 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 
 export interface Props {
   profileNode: NavModelItem;
+  onToggleKioskMode: () => void;
 }
 
-export function ProfileButton({ profileNode }: Props) {
+export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
@@ -34,6 +35,11 @@ export function ProfileButton({ profileNode }: Props) {
         {config.featureToggles.grafanaconThemes && (
           <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
         )}
+        <Menu.Item
+          icon="monitor"
+          onClick={onToggleKioskMode}
+          label={t('profile.enable-kiosk-mode', 'Enable kiosk mode')}
+        />
         {config.newsFeedEnabled && (
           <MenuItem
             icon="rss"
@@ -61,7 +67,7 @@ export function ProfileButton({ profileNode }: Props) {
           className={styles.profileButton}
           imgSrc={contextSrv.user.gravatarUrl}
           imgAlt="User avatar"
-          aria-label="Profile"
+          aria-label={t('navigation.profile.aria-label', 'Profile')}
         />
       </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
