@@ -11,8 +11,10 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
 
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
@@ -201,24 +203,23 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
       }
     };
 
-    // TODO: Implement library panel processing
-    // const processLibraryPanels = async (panel: PanelModel) => {
-    //   if (isPanelModelLibraryPanel(panel)) {
-    //     const { name, uid } = panel.libraryPanel;
-    //     let model = panel.libraryPanel.model;
-    //     if (!model) {
-    //       const libPanel = await getLibraryPanel(uid, true);
-    //       model = libPanel.model;
-    //     }
+    const processLibraryPanels = async (panel: PanelModel) => {
+      if (isPanelModelLibraryPanel(panel)) {
+        const { name, uid } = panel.libraryPanel;
+        let model = panel.libraryPanel.model;
+        if (!model) {
+          const libPanel = await getLibraryPanel(uid, true);
+          model = libPanel.model;
+        }
 
-    //     await templateizeDatasourceUsage(model);
+        await templateizeDatasourceUsage(model);
 
-    //     const { gridPos, id, ...rest } = model as any;
-    //     if (!libraryPanels.has(uid)) {
-    //       libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
-    //     }
-    //   }
-    // };
+        const { gridPos, id, ...rest } = model as any;
+        if (!libraryPanels.has(uid)) {
+          libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
+        }
+      }
+    };
 
     try {
       // check up panel data sources
@@ -259,17 +260,16 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
         version: config.buildInfo.version,
       };
 
-      // TODO: Implement library panel processing
       // we need to process all panels again after all the promises are resolved
       // so all data sources, variables and targets have been templateized when we process library panels
-      // for (const panel of saveModel.panels) {
-      //   await processLibraryPanels(panel);
-      //   if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
-      //     for (const rowPanel of panel.panels) {
-      //       await processLibraryPanels(rowPanel);
-      //     }
-      //   }
-      // }
+      for (const panel of saveModel.panels) {
+        await processLibraryPanels(panel);
+        if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+          for (const rowPanel of panel.panels) {
+            await processLibraryPanels(rowPanel);
+          }
+        }
+      }
 
       each(datasources, (value: any) => {
         inputs.push(value);

@@ -1741,8 +1741,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
     "public/app/features/dashboard/components/DashExportModal/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./DashboardExporter\`)", "0"],
