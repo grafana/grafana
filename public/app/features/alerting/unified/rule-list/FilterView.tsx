@@ -126,6 +126,16 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     cancelSearch();
   });
 
+  // track the state of the filter progress, which is either searching, done or aborted
+  const filterProgressState = useMemo<FilterProgressState>(() => {
+    if (loadingAborted) {
+      return 'aborted';
+    } else if (doneSearching) {
+      return 'done';
+    }
+    return 'searching';
+  }, [doneSearching, loadingAborted]);
+
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
     return (
@@ -136,16 +146,6 @@ function FilterViewResults({ filterState }: FilterViewProps) {
       </EmptyState>
     );
   }
-
-  // track the state of the filter progress, which is either searching, done or aborted
-  const filterProgressState = useMemo<FilterProgressState>(() => {
-    if (loadingAborted) {
-      return 'aborted';
-    } else if (doneSearching) {
-      return 'done';
-    }
-    return 'searching';
-  }, [doneSearching, loadingAborted]);
 
   return (
     <Stack direction="column" gap={0}>
