@@ -6555,12 +6555,6 @@
       },
       "summary": "Summary"
     },
-    "job-step": {
-      "error-job-failed": "Job failed",
-      "error-no-job-id": "Failed to start job",
-      "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job"
-    },
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -6667,6 +6661,14 @@
       "success-pull-started": "Pull started",
       "title-pull-not-enabled": "Pull is not enabled",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
+    },
+    "synchronize-step": {
+      "error-job-failed": "Job failed",
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job",
+      "synchronization-description": "Include commits for each historical value",
+      "synchronization-options": "Synchronization options"
     },
     "token-permissions-info": {
       "content-permission": "Content: <1>Read and write</1>",

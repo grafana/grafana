@@ -23,7 +23,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
 
   const startSynchronization = async () => {
     if (!repoName) {
-      onStepUpdate('error', t('provisioning.job-step.error-no-repository-name', 'No repository name provided'));
+      onStepUpdate('error', t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'));
       return;
     }
 
@@ -47,12 +47,11 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
       }).unwrap();
 
       if (!response?.metadata?.name) {
-        return onStepUpdate('error', t('provisioning.job-step.error-no-job-id', 'Failed to start job'));
+        return onStepUpdate('error', t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'));
       }
       setJob(response);
     } catch (error) {
-      onStepUpdate('error', t('provisioning.job-step.error-starting-job', 'Error starting job'));
-      console.error('Error starting job:', error);
+      onStepUpdate('error', t('provisioning.synchronize-step.error-starting-job', 'Error starting job'));
     }
   };
 
@@ -64,7 +63,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
           if (success) {
             onStepUpdate('success');
           } else {
-            onStepUpdate('error', t('provisioning.job-step.error-job-failed', 'Job failed'));
+            onStepUpdate('error', t('provisioning.synchronize-step.error-job-failed', 'Job failed'));
           }
         }}
         onRunningChange={(isRunning) => {
@@ -126,19 +125,25 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
       </Alert>
       {requiresMigration && (
         <>
-          <Text element="h3">Synchronization options</Text>
+          <Text element="h3">
+            <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>
+          </Text>
           <Field>
             <Checkbox
               {...register('migrate.history')}
               label={t('provisioning.wizard.sync-option-history', 'History')}
-              description={'Include commits for each historical value'}
+              description={
+                <Trans i18nKey="provisioning.synchronize-step.synchronization-description">
+                  Include commits for each historical value
+                </Trans>
+              }
             />
           </Field>
         </>
       )}
 
       <Button variant="primary" onClick={startSynchronization}>
-        {t('provisioning.wizard.button-start', 'Begin synchronization')}
+        <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
       </Button>
     </Stack>
   );
