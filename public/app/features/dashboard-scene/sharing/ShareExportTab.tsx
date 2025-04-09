@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getDashboardExporter, DashboardExporterLike } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -139,7 +139,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
+  const { isSharingExternally, isViewingJSON, modalRef, isSharingV2Resource, hasLibraryPanels } = model.useState();
   const dashboardJson = useAsync(async () => {
     if (isViewingJSON) {
       const json = await model.getExportableDashboardJson();
@@ -150,6 +150,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
   }, [isViewingJSON]);
 
   const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
+  const switchResourceLabel = t('export.json.export-resource-label', 'Export the dashboard as a resource');
 
   return (
     <>
@@ -166,6 +167,34 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 onChange={model.onShareExternallyChange}
               />
             </Field>
+            {config.featureToggles.dashboardNewLayouts && (
+              <>
+                <Field label={switchResourceLabel}>
+                  <Switch
+                    id="export-resource-toggle"
+                    value={isSharingV2Resource}
+                    onChange={model.onShareV2ResourceChange}
+                  />
+                </Field>
+                {isSharingExternally && hasLibraryPanels && (
+                  <Alert
+                    title={t(
+                      'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
+                      'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
+                    )}
+                    severity="warning"
+                  >
+                    <p>
+                      <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+                        Because you're using new dashboards features only supported on new Grafana dashboard schema
+                        format, exporting the dashboard to use in another instance will not include library panels. We
+                        are planning to support this in the future.
+                      </Trans>
+                    </p>
+                  </Alert>
+                )}
+              </>
+            )}
           </Stack>
 
           <Modal.ButtonRow>
