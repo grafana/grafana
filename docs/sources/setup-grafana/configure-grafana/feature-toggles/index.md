@@ -39,7 +39,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                           | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                | Yes                |
-| `traceQLStreaming`                     | Enables response streaming of TraceQL queries of the Tempo data source                                                              |                    |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
@@ -86,6 +85,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
+| `unifiedNavbars`                       | Enables unified navbars                                                                                                             |                    |
 
 ## Public preview feature toggles
 
@@ -214,6 +214,7 @@ Experimental features might be changed or removed without prior notice.
 | `localeFormatPreference`                    | Specifies the locale so the correct format for numbers and dates can be shown                                                                                                                                                                                                     |
 | `extensionSidebar`                          | Enables the extension sidebar                                                                                                                                                                                                                                                     |
 | `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
+| `metricsFromProfiles`                       | Enables creating metrics from profiles and storing them as recording rules                                                                                                                                                                                                        |
 
 ## Development feature toggles
 

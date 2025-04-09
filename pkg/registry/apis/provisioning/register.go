@@ -140,6 +140,7 @@ func NewAPIBuilder(
 		storageStatus:       storageStatus,
 		unified:             unified,
 		secrets:             secrets,
+		jobHistory:          jobs.NewJobHistoryCache(),
 	}
 }
 
@@ -287,8 +288,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
-			case provisioning.JobResourceInfo.GetName(),
-				provisioning.HistoricJobResourceInfo.GetName():
+			case provisioning.JobResourceInfo.GetName():
 				// Jobs are shown on the configuration page.
 				if id.GetOrgRole().Includes(identity.RoleAdmin) {
 					return authorizer.DecisionAllow, "", nil
@@ -341,16 +341,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
-	}
-
-	historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job storage: %w", err)
-	}
-
-	b.jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job wrapper: %w", err)
 	}
 
 	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
@@ -425,7 +415,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
 
@@ -556,7 +547,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
+				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,

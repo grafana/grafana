@@ -43,19 +43,27 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.8,
+      initialSize: 330,
       handleSize: 'sm',
+      usePixels: true,
+      collapseBelowPixels: 250,
       collapsed: isCollapsed,
-
-      paneOptions: {
-        collapseBelowPixels: 150,
-        snapOpenToPixels: 400,
-      },
     });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
+
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
+  useEffect(() => {
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.clearSelection();
+    }
+  }, [isEditing, editPane]);
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
@@ -105,7 +113,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
-                isCollapsed={splitterState.collapsed}
+                isCollapsed={isCollapsed}
                 onToggleCollapse={onToggleCollapse}
                 openOverlay={selectionContext.selected.length > 0}
               />
