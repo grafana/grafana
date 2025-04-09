@@ -274,11 +274,10 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       },
     }),
     sidebarContainer: css({
-      position: 'fixed',
-      height: `calc(100% - ${headerHeight}px)`,
+      // the `Resizeable` component overrides the needed `position` and `height`
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      // position: 'fixed !important' as 'fixed',
-      // height: `calc(100% - ${headerHeight}px) !important`,
+      position: 'fixed !important' as 'fixed',
+      height: `calc(100% - ${headerHeight}px) !important`,
       zIndex: 2,
       right: 0,
     }),
