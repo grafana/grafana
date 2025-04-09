@@ -12,7 +12,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+	k8testing "k8s.io/client-go/testing"
 )
 
 func TestFullSync_ContextCancelled(t *testing.T) {
@@ -253,20 +256,36 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
-				// scheme := runtime.NewScheme()
-				// scheme.AddKnownTypes(schema.GroupVersion{Group: "dashboards", Version: "v1"}, &provisioning.Dashboard{})
-				// fakeDynamicClient := fake.NewSimpleDynamicClient(scheme)
-				// 	Resource: "Dashboard",
-				// })
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    "DashboardList",
+				}
 
-				// clients.On("ForResource", schema.GroupVersionResource{
-				// 	Group:    "dashboards",
-				// 	Resource: "Dashboard",
-				// }).Return(dashboardsClient, schema.GroupVersionKind{
-				// 	Kind:    "Dashboard",
-				// 	Group:   "dashboards",
-				// 	Version: "v1",
-				// }, nil)
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    resources.DashboardResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.DashboardResource: listGVK.Kind,
+				})
+
+				fakeDynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, nil
+				})
+				clients.On("ForResource", schema.GroupVersionResource{
+					Group:    "dashboards",
+					Resource: "Dashboard",
+				}).Return(fakeDynamicClient, schema.GroupVersionKind{
+					Kind:    "Dashboard",
+					Group:   "dashboards",
+					Version: "v1",
+				}, nil)
 
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
 					Action:   repository.FileActionDeleted,
