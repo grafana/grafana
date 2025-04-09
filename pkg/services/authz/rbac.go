@@ -98,7 +98,11 @@ func ProvideAuthZClient(
 			return ctx, nil
 		}))
 		authzv1.RegisterAuthzServiceServer(channel, server)
-		rbacClient := newRBACClient(channel, tracer)
+		rbacClient := authzlib.NewClient(
+			channel,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		)
 
 		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
@@ -153,11 +157,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	return newRBACClient(conn, tracer), nil
-}
-
-func newRBACClient(conn grpc.ClientConnInterface, tracer trace.Tracer) authlib.AccessClient {
-	return authzlib.NewClient(
+	client := authzlib.NewClient(
 		conn,
 		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
 			Expiry:          30 * time.Second,
@@ -165,6 +165,8 @@ func newRBACClient(conn grpc.ClientConnInterface, tracer trace.Tracer) authlib.A
 		})),
 		authzlib.WithTracerClientOption(tracer),
 	)
+
+	return client, nil
 }
 
 func RegisterRBACAuthZService(
@@ -232,4 +234,18 @@ func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, er
 
 	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
 	return t.rt.RoundTrip(r)
+}
+
+type NoopCache struct{}
+
+func (lc *NoopCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return nil, cache.ErrNotFound
+}
+
+func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.Duration) error {
+	return nil
+}
+
+func (lc *NoopCache) Delete(ctx context.Context, key string) error {
+	return nil
 }

@@ -27,6 +27,10 @@ func userPermCacheKey(namespace, userUID, action string) string {
 	return namespace + ".perm_" + userUID + "_" + action
 }
 
+func userPermDenialCacheKey(namespace, userUID, action, name, parent string) string {
+	return namespace + ".perm_" + userUID + "_" + action + "_" + name + "_" + parent
+}
+
 func userBasicRoleCacheKey(namespace, userUID string) string {
 	return namespace + ".basic_role_" + userUID
 }
