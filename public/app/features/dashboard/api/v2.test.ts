@@ -219,7 +219,8 @@ describe('v2 dashboard API', () => {
             ...defaultSaveCommand.dashboard,
             title: 'chaing-title-dashboard',
           },
-        }
+        },
+        { params: undefined }
       );
     });
   });

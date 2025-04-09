@@ -232,14 +232,19 @@ export interface ResourceEvent<T = object, S = object, K = string> {
   object: Resource<T, S, K>;
 }
 
+export type ResourceClientWriteParams = {
+  dryRun?: 'All';
+  fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
+};
+
 export interface ResourceClient<T = object, S = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
   get(name: string): Promise<Resource<T, S, K>>;
-  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
-  subresource<S>(name: string, path: string): Promise<S>;
-  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
-  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
+  create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
+  update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
+  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
+  subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;
+  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
 }
 
 export interface K8sAPIGroup {
