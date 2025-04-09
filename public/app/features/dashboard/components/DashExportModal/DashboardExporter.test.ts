@@ -533,23 +533,6 @@ describe('DashboardExporter', () => {
     beforeAll(() => {
       config.featureToggles.dashboardNewLayouts = true;
       config.buildInfo.version = '11.6.0';
-      config.panels['timeseries'] = {
-        id: 'timeseries',
-        name: 'Time series',
-        info: { version: '1.1.0' },
-      } as PanelPluginMeta;
-
-      config.panels['table'] = {
-        id: 'table',
-        name: 'Table',
-        info: { version: '1.1.1' },
-      } as PanelPluginMeta;
-
-      config.panels['heatmap'] = {
-        id: 'heatmap',
-        name: 'Heatmap',
-        info: { version: '1.1.2' },
-      } as PanelPluginMeta;
     });
 
     afterAll(() => {
@@ -558,9 +541,10 @@ describe('DashboardExporter', () => {
 
     const setup = async () => {
       const exporter = getDashboardExporter();
-      const dashboard = (await exporter.makeExportable(handyTestingSchema)) as DashboardV2Spec;
-
-      return { dashboard };
+      // Making a deep copy here because original JSON is mutated by the exporter
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+      const dashboard = (await exporter.makeExportable(schemaCopy)) as DashboardV2Spec;
+      return { dashboard, originalSchema: handyTestingSchema };
     };
 
     it('should replace datasource in a query variable', async () => {
@@ -581,6 +565,15 @@ describe('DashboardExporter', () => {
       const annotationQuery = dashboard.annotations[0];
 
       expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
+    });
+
+    it('should remove library panels from layout', async () => {
+      const { dashboard, originalSchema } = await setup();
+      const elementRef = 'panel-2';
+      const libraryPanel = dashboard.elements[elementRef];
+      const origLibraryPanel = originalSchema.elements[elementRef];
+      expect(origLibraryPanel.kind).toBe('LibraryPanel');
+      expect(libraryPanel).toBeUndefined();
     });
   });
 });

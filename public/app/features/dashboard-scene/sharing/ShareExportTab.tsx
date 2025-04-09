@@ -24,6 +24,7 @@ export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isSharingV2Resource?: boolean;
   isViewingJSON?: boolean;
+  hasLibraryPanels?: boolean;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
@@ -77,6 +78,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     if (config.featureToggles.dashboardNewLayouts) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
+
+      this.setState({
+        hasLibraryPanels: Object.values(saveModelV2.elements).some((element) => element.kind === 'LibraryPanel'),
+      });
 
       if (isSharingV2Resource) {
         const dashboard = {

@@ -21,6 +21,8 @@ import { isConstant } from '../../../variables/guard';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
+import { removePanelRefFromLayout } from './utils';
+
 export interface InputUsage {
   libraryPanels?: LibraryPanel[];
 }
@@ -360,27 +362,30 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     };
 
     // TODO: Implement library panel processing
-    // const processLibraryPanels = async (panel: LibraryPanelKind) => {
-    //   const { uid } = panel.spec.libraryPanel;
+    // Currently we just remove all library panels
+    // const processLibraryPanel = async (panel: LibraryPanelKind) => {
+    //   panel = undefined;
 
-    //   const libPanel = await getLibraryPanel(uid, true);
-    //   panel.spec.libraryPanel.model = libPanel.model;
+    // const libPanel = await getLibraryPanel(uid, true);
+    // panel.spec.libraryPanel.model = libPanel.model;
 
-    //   templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
+    // templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
     // };
 
     try {
       const elements = dashboard.elements;
+      const layout = dashboard.layout;
 
       // process elements
-      for (const element of Object.values(elements)) {
+      for (const [key, element] of Object.entries(elements)) {
         if (element.kind === 'Panel') {
           processPanel(element);
+        } else if (element.kind === 'LibraryPanel') {
+          // just remove the library panel
+          delete elements[key];
+          // remove reference from layout
+          removePanelRefFromLayout(layout, key);
         }
-        // TODO: Implement library panel processing
-        // } else if (element.kind === 'LibraryPanel') {
-        //   await processLibraryPanels(element);
-        // }
       }
 
       // process template variables
