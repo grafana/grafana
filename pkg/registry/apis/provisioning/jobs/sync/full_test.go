@@ -183,6 +183,44 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 		description   string
 	}{
 		{
+			name:        "too many errors",
+			description: "Should return an error when too many errors occur",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/one.json",
+				},
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/two.json",
+				},
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/three.json",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 3).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+
+				// First call returns nil, second call returns error
+				progress.On("TooManyErrors").Return(nil).Once()
+				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors")).Once()
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/one.json", "").
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionCreated,
+					Path:     "dashboards/one.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+				}).Return()
+			},
+			expectedError: "too many errors",
+		},
+		{
 			name:        "successful apply with file creation",
 			description: "Should successfully apply changes when creating a new file",
 			changes: []ResourceFileChange{
@@ -289,6 +327,31 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Resource: "Dashboard",
 					Group:    "dashboards",
 					Error:    fmt.Errorf("write error"),
+				}).Return()
+			},
+		},
+		{
+			name:        "successful apply with folder creation",
+			description: "Should successfully apply changes when creating a new folder",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "one/two/three/",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionCreated,
+					Path:     "one/two/three/",
+					Name:     "some-folder",
+					Resource: "Folder",
+					Group:    "folders",
 				}).Return()
 			},
 		},
