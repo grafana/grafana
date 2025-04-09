@@ -980,6 +980,9 @@ func (s *server) ListManagedObjects(ctx context.Context, req *ListManagedObjects
 }
 
 func (s *server) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
 	return s.search.CountManagedObjects(ctx, req)
 }
 
