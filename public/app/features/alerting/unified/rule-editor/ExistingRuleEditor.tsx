@@ -169,7 +169,13 @@ const createMetadata = (ruleWithLocation: RuleWithLocation): PageInfoItem[] => {
   if (interval) {
     metadata.push({
       label: 'Evaluation interval',
-      value: <Text color="primary">Every {interval}</Text>,
+      value: (
+        <Text color="primary">
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ interval }}>
+            Every {{ interval }}
+          </Trans>
+        </Text>
+      ),
     });
   }
 
