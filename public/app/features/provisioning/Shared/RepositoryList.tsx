@@ -26,7 +26,7 @@ export function RepositoryList({ items }: Props) {
             value={query}
             onChange={setQuery}
           />
-          <ConnectRepositoryButton items={items} />
+          <ConnectRepositoryButton items={items} showDropdown />
         </Stack>
       )}
       <Stack direction={'column'}>

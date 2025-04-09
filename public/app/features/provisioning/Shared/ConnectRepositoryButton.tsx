@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Alert, Button, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Alert, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -60,8 +60,11 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
           </Menu>
         }
       >
-        <Button icon="plus" variant="primary" size="sm" fill="outline">
-          <Trans i18nKey="provisioning.connect-repository-button.configure">Configure</Trans>
+        <Button variant="primary">
+          <Stack alignItems="center">
+            <Trans i18nKey="provisioning.connect-repository-button.configure">Configure</Trans>
+            <Icon name={'angle-down'} />
+          </Stack>
         </Button>
       </Dropdown>
     );
