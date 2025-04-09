@@ -64,11 +64,8 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 		if change.Action == repository.FileActionDeleted {
 			result := jobs.JobResourceResult{
-				Name:     change.Existing.Name,
-				Resource: change.Existing.Resource,
-				Group:    change.Existing.Group,
-				Path:     change.Path,
-				Action:   change.Action,
+				Path:   change.Path,
+				Action: change.Action,
 			}
 
 			if change.Existing == nil || change.Existing.Name == "" {
@@ -76,6 +73,10 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 				progress.Record(ctx, result)
 				continue
 			}
+
+			result.Name = change.Existing.Name
+			result.Resource = change.Existing.Resource
+			result.Group = change.Existing.Group
 
 			versionlessGVR := schema.GroupVersionResource{
 				Group:    change.Existing.Group,
@@ -85,7 +86,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			// TODO: should we use the clients or the resource manager instead?
 			client, _, err := clients.ForResource(versionlessGVR)
 			if err != nil {
-				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
+				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(ctx, result)
 				continue
 			}

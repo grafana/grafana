@@ -513,6 +513,85 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 			},
 		},
 		{
+			name:        "without existing for delete",
+			description: "Should record an error when deleting a file",
+			changes: []ResourceFileChange{
+				{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/test.json",
+					Existing: nil,
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Error:  fmt.Errorf("missing existing reference"),
+				}).Return()
+			},
+		},
+		{
+			name:        "without existing name for delete",
+			description: "Should record an error when deleting a file",
+			changes: []ResourceFileChange{
+				{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/test.json",
+					Existing: &provisioning.ResourceListItem{},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Error:  fmt.Errorf("missing existing reference"),
+				}).Return()
+			},
+		},
+		{
+			name:        "error finding client for delete",
+			description: "Should record an error when deleting a file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-dashboard",
+						Group:    "dashboards",
+						Resource: "Dashboard",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				clients.On("ForResource", schema.GroupVersionResource{
+					Group:    "dashboards",
+					Resource: "Dashboard",
+				}).Return(nil, schema.GroupVersionKind{}, errors.New("didn't work"))
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Name:     "test-dashboard",
+					Group:    "dashboards",
+					Resource: "Dashboard",
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/test.json",
+					Error:    fmt.Errorf("get client for deleted object: %w", errors.New("didn't work")),
+				}).Return()
+			},
+		},
+		{
 			name:        "successful apply with folder deletion",
 			description: "Should successfully apply changes when deleting an existing folder",
 			changes: []ResourceFileChange{
