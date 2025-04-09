@@ -21,6 +21,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
+var _ builder.APIGroupRouteProvider = (*FeatureFlagAPIBuilder)(nil)
 
 var gv = v0alpha1.SchemeGroupVersion
 
@@ -100,7 +101,7 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Register additional routes with the server
-func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *FeatureFlagAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	stateSchema := defs["github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1.ResolvedToggleState"].Schema
 
@@ -126,70 +127,6 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 															Schema: &stateSchema,
 														},
 													},
-												},
-												Description: "OK",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					Patch: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        tags,
-							Summary:     "Update individual toggles",
-							Description: "Patch some of the toggles (keyed by the toggle name)",
-							RequestBody: &spec3.RequestBody{
-								RequestBodyProps: spec3.RequestBodyProps{
-									Required:    true,
-									Description: "flags to change",
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: &stateSchema,
-												Example: &v0alpha1.ResolvedToggleState{
-													Enabled: map[string]bool{
-														featuremgmt.FlagAutoMigrateOldPanels: true,
-														featuremgmt.FlagAngularDeprecationUI: false,
-													},
-												},
-												Examples: map[string]*spec3.Example{
-													"enable-auto-migrate": {
-														ExampleProps: spec3.ExampleProps{
-															Summary:     "enable auto-migrate panels",
-															Description: "enable description",
-															Value: &v0alpha1.ResolvedToggleState{
-																Enabled: map[string]bool{
-																	featuremgmt.FlagAutoMigrateOldPanels: true,
-																},
-															},
-														},
-													},
-													"disable-auto-migrate": {
-														ExampleProps: spec3.ExampleProps{
-															Summary:     "disable auto-migrate panels",
-															Description: "disable description",
-															Value: &v0alpha1.ResolvedToggleState{
-																Enabled: map[string]bool{
-																	featuremgmt.FlagAutoMigrateOldPanels: false,
-																},
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {},
 												},
 												Description: "OK",
 											},

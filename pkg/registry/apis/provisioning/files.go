@@ -24,7 +24,12 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
-	parsers *resources.ParserFactory
+	parsers resources.ParserFactory
+	clients resources.ClientFactory
+}
+
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -54,7 +59,7 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := s.getter.GetRepository(ctx, name)
+	repo, err := s.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
@@ -70,7 +75,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
-	folderClient, err := parser.Clients().Folder()
+	clients, err := s.clients.Clients(ctx, repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+
+	folderClient, err := clients.Folder()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
@@ -100,6 +110,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			files, err := s.listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
+				return
 			}
 
 			responder.Object(http.StatusOK, files)
@@ -126,12 +137,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
-			code = http.StatusOK
-			if len(resource.Errors) > 0 {
-				code = http.StatusNotAcceptable
-			}
 		case http.MethodPost:
 			if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
@@ -173,7 +179,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				responder.Error(err)
 				return
 			}
-
 			obj = resource.AsResourceWrapper()
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
@@ -185,9 +190,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// something failed
 		if len(obj.Errors) > 0 {
-			code = http.StatusInternalServerError
+			code = http.StatusPartialContent
 		}
 
 		logger.Debug("request resulted in valid object", "object", obj)

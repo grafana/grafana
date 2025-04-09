@@ -1,6 +1,6 @@
-import { LinkButton } from '@grafana/ui';
+import { Alert, LinkButton, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans } from 'app/core/internationalization';
 
 import { CONNECT_URL } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
@@ -18,29 +18,24 @@ export function ConnectRepositoryButton({ items }: Props) {
 
   if (state.maxReposReached) {
     return (
-      <LinkButton
-        href={CONNECT_URL}
-        variant="primary"
-        icon="plus"
-        disabled={true}
-        tooltip={t(
-          'provisioning.connect-repository-button.tooltip-max-repos',
-          'Max repositories already created ({{count}})',
-          { count: state.repoCount }
-        )}
-      >
+      <Alert title="" severity="info">
         <Trans
-          i18nKey="provisioning.connect-repository-button.max-repositories-exist"
+          i18nKey="provisioning.connect-repository-button.repository-limit-info-alert"
           values={{ count: state.repoCount }}
-          defaults={'Maximum repositories exist ({{count}})'}
+          defaults={'Repository limit reached ({{count}})'}
         />
-      </LinkButton>
+      </Alert>
     );
   }
 
   return (
-    <LinkButton href={CONNECT_URL} variant="primary" icon="plus">
-      <Trans i18nKey="provisioning.connect-repository-button.connect-to-repository">Connect to repository</Trans>
-    </LinkButton>
+    <Stack gap={3}>
+      <LinkButton href={CONNECT_URL} variant="primary">
+        <Trans i18nKey="provisioning.connect-repository-button.configure-git-sync">Configure GitSync</Trans>
+      </LinkButton>
+      <LinkButton href={CONNECT_URL} variant="secondary">
+        <Trans i18nKey="provisioning.connect-repository-button.configure-file">Configure file provisioning</Trans>
+      </LinkButton>
+    </Stack>
   );
 }
