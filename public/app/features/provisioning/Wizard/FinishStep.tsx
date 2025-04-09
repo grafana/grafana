@@ -9,23 +9,12 @@ import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/feature
 import { WizardFormData } from './types';
 
 export function FinishStep() {
-  const { register, watch, formState, setValue } = useFormContext<WizardFormData>();
+  const { register, watch, setValue } = useFormContext<WizardFormData>();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
-
-  if (!isPublic || !hasImageRenderer) {
-    if (formState.defaultValues?.repository) {
-      formState.defaultValues.repository.generateDashboardPreviews = false;
-    }
-  }
-  if (!isPublic) {
-    if (formState.defaultValues?.repository) {
-      // TODO: Disable webhooks by default
-    }
-  }
 
   // Set sync enabled by default
   useEffect(() => {
