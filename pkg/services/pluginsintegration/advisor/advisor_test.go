@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestService_ReportSummary(t *testing.T) {
@@ -161,16 +160,4 @@ type mockListObject struct {
 
 func (m *mockListObject) GetItems() []resource.Object {
 	return m.items
-}
-
-func (m *mockListObject) Copy() resource.ListObject {
-	return &mockListObject{items: m.items}
-}
-
-func (m *mockListObject) DeepCopyObject() runtime.Object {
-	return m.Copy()
-}
-
-func (m *mockListObject) GetContinue() string {
-	return ""
 }

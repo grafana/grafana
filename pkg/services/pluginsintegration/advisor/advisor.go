@@ -47,6 +47,25 @@ type ReportInfo struct {
 	DatasourcesUnhealthy int
 }
 
+func isMoreRecent(check1 resource.Object, check2 resource.Object) bool {
+	return check1.GetCommonMetadata().CreationTimestamp.After(check2.GetCommonMetadata().CreationTimestamp)
+}
+
+// findLatestCheck returns the most recent check of the specified type from the list
+func findLatestCheck(checkList []resource.Object, checkType string) *advisorv0alpha1.Check {
+	var latestCheck *advisorv0alpha1.Check
+	for _, check := range checkList {
+		currentCheckType := check.GetLabels()[checks.TypeLabel]
+		if currentCheckType != checkType {
+			continue
+		}
+		if latestCheck == nil || isMoreRecent(check, latestCheck) {
+			latestCheck = check.(*advisorv0alpha1.Check)
+		}
+	}
+	return latestCheck
+}
+
 func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 	if s.client == nil {
 		kubeConfig, err := s.restConfigProvider.GetRestConfig(ctx)
@@ -66,24 +85,11 @@ func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 		return nil, err
 	}
 
-	var lastPluginCheck *advisorv0alpha1.Check
-	var lastDatasourceCheck *advisorv0alpha1.Check
-	for _, check := range checkList.GetItems() {
-		if check.GetLabels()[checks.TypeLabel] == plugincheck.CheckID {
-			if lastPluginCheck == nil || lastPluginCheck.GetCommonMetadata().CreationTimestamp.Before(check.GetCommonMetadata().CreationTimestamp) {
-				lastPluginCheck = check.(*advisorv0alpha1.Check)
-			}
-		}
-		if check.GetLabels()[checks.TypeLabel] == datasourcecheck.CheckID {
-			if lastDatasourceCheck == nil || lastDatasourceCheck.GetCommonMetadata().CreationTimestamp.Before(check.GetCommonMetadata().CreationTimestamp) {
-				lastDatasourceCheck = check.(*advisorv0alpha1.Check)
-			}
-		}
-	}
-
+	latestPluginCheck := findLatestCheck(checkList.GetItems(), plugincheck.CheckID)
+	latestDatasourceCheck := findLatestCheck(checkList.GetItems(), datasourcecheck.CheckID)
 	reportInfo := &ReportInfo{}
-	if lastPluginCheck != nil {
-		for _, failure := range lastPluginCheck.CheckStatus.Report.Failures {
+	if latestPluginCheck != nil {
+		for _, failure := range latestPluginCheck.CheckStatus.Report.Failures {
 			if failure.StepID == plugincheck.UpdateStepID {
 				reportInfo.PluginsOutdated++
 			} else if failure.StepID == plugincheck.DeprecationStepID {
@@ -91,8 +97,8 @@ func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 			}
 		}
 	}
-	if lastDatasourceCheck != nil {
-		for _, failure := range lastDatasourceCheck.CheckStatus.Report.Failures {
+	if latestDatasourceCheck != nil {
+		for _, failure := range latestDatasourceCheck.CheckStatus.Report.Failures {
 			if failure.StepID == datasourcecheck.HealthCheckStepID {
 				reportInfo.DatasourcesUnhealthy++
 			}
