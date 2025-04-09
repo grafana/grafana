@@ -76,7 +76,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, statusCode)
 
 			// Viewer can see file listing
-			rsp = helper.ViewerREST.Get().
+			rsp = helper.AdminREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).

@@ -12,7 +12,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -204,24 +204,15 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // listFolderFiles returns a list of files in a folder
 func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// Listing files requires permission to list dashboards
-	check, err := c.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     resources.DashboardResource.Group,
-		Resource:  resources.DashboardResource.Resource,
-		Namespace: readWriter.Config().Namespace,
-		Verb:      utils.VerbList,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !check.Allowed {
+	// TODO: replace with access check on the repo itself
+	if !id.GetOrgRole().Includes(identity.RoleAdmin) {
 		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
-			fmt.Errorf("requires list permissions on dashboards"))
+			fmt.Errorf("requires admin role"))
 	}
 
 	// TODO: Implement folder navigation
