@@ -67,6 +67,21 @@ export const useMetricsLabelsValues = (
     return selector === EMPTY_SELECTOR ? undefined : selector;
   }, []);
 
+  // Helper function to load and filter label keys from localStorage
+  const loadSelectedLabelsFromStorage = useCallback(
+    (availableLabelKeys: string[]) => {
+      try {
+        const labelKeysInLocalStorageAsString = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
+        const labelKeysInLocalStorage = JSON.parse(labelKeysInLocalStorageAsString);
+        return labelKeysInLocalStorage.filter((slk: string) => availableLabelKeys.includes(slk));
+      } catch (e) {
+        handleError(e, 'Failed to load saved label keys');
+        return [];
+      }
+    },
+    [handleError]
+  );
+
   // Initial set up of the Metrics Browser
   useEffect(() => {
     async function initialize() {
@@ -107,14 +122,7 @@ export const useMetricsLabelsValues = (
       }
 
       // Selected Labels
-      let labelKeysInLocalStorage: string[] = [];
-      try {
-        const labelKeysInLocalStorageAsString = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
-        labelKeysInLocalStorage = JSON.parse(labelKeysInLocalStorageAsString);
-        labelKeysInLocalStorage = labelKeysInLocalStorage.filter((slk) => transformedLabelKeys.includes(slk));
-      } catch (e) {
-        handleError(e, 'Failed to load saved label keys');
-      }
+      const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
 
       // Selected Labels' Values
       const transformedLabelValues: Record<string, string[]> = {};
@@ -266,14 +274,6 @@ export const useMetricsLabelsValues = (
     // Fetch label keys
     setStatus('Fetching labels...');
     let newLabelKeys: string[] = [];
-    let newSelectedLabelKeys: string[] = [];
-    try {
-      const labelKeysInLocalStorageAsString = localStorage.getItem(LAST_USED_LABELS_KEY) || '[]';
-      newSelectedLabelKeys = JSON.parse(labelKeysInLocalStorageAsString);
-    } catch (e) {
-      handleError(e, 'Failed to load saved label keys');
-    }
-
     const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
     try {
       const fetchedLabelKeysRecord = await languageProvider.fetchSeriesLabelsMatch(
@@ -282,10 +282,11 @@ export const useMetricsLabelsValues = (
         seriesLimit
       );
       newLabelKeys = Object.keys(fetchedLabelKeysRecord);
-      newSelectedLabelKeys = newSelectedLabelKeys.filter((slk) => newLabelKeys.includes(slk));
     } catch (e: unknown) {
       handleError(e, 'Error fetching labels');
     }
+
+    const newSelectedLabelKeys: string[] = loadSelectedLabelsFromStorage(newLabelKeys);
 
     // adjust the label values
     let newLabelValues: Record<string, string[]> = {};
