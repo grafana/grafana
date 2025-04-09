@@ -38,7 +38,7 @@ func FullSync(
 
 	changes, err := compare(ctx, repo, repositoryResources, currentRef)
 	if err != nil {
-		return fmt.Errorf("error calculating changes: %w", err)
+		return fmt.Errorf("compare changes: %w", err)
 	}
 
 	if len(changes) == 0 {
