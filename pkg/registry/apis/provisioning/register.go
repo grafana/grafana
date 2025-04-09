@@ -547,7 +547,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
+				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,
