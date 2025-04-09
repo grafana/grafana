@@ -2601,51 +2601,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoricJob": {
-        "description": "HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.\n\nThe repository name and type are stored as labels.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "default": {}
-          },
-          "status": {
-            "default": {}
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoricJobList": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoryItem": {
         "type": "object",
         "required": [
@@ -2989,6 +2944,7 @@
         "type": "object",
         "properties": {
           "hash": {
+            "description": "The specific commit hash that triggered this notice",
             "type": "string"
           },
           "pr": {

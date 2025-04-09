@@ -269,9 +269,6 @@ func (s *AlertmanagerScenario) NewGrafanaService(name string, peers []string, pe
 	flags := map[string]string{}
 
 	ft := []string{
-		"alertStateHistoryLokiSecondary",
-		"alertStateHistoryLokiPrimary",
-		"alertStateHistoryLokiOnly",
 		"alertingAlertmanagerExtraDedupStage",
 	}
 	if stopOnExtraDedup {

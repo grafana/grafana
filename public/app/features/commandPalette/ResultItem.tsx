@@ -54,6 +54,7 @@ export const ResultItem = React.forwardRef(
                 {!hasCommandOrLink(ancestor) && (
                   <>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
+                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
                   </>
                 )}

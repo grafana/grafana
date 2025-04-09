@@ -74,6 +74,7 @@ type DashboardsAPIBuilder struct {
 	legacy                       *DashboardStorage
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	dashboardPermissions         dashboards.PermissionsRegistrationService
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 	dashStore                    dashboards.Store
@@ -94,6 +95,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
+	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -116,6 +118,7 @@ func RegisterAPIService(
 		log: log.New("grafana-apiserver.dashboards"),
 
 		dashboardService:             dashboardService,
+		dashboardPermissions:         dashboardPermissions,
 		features:                     features,
 		accessControl:                accessControl,
 		unified:                      unified,
@@ -269,6 +272,13 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting internal ID: %w", err)
 	}
 
+	// Validate folder existence if specified
+	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+			return err
+		}
+	}
+
 	// Validate quota
 	if !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
@@ -350,10 +360,7 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	_, err := b.folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 
 	if err != nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) {
-			return err
-		}
-		return fmt.Errorf("error checking folder existence: %w", err)
+		return err
 	}
 
 	return nil
@@ -385,15 +392,18 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storageOpts := apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
+
+		// Sets default root permissions
+		Permissions: b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
 	}
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
 	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme)
+		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
-	opts.StorageOptions(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
+	opts.StorageOptsRegister(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
@@ -464,7 +474,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg)
+	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg, b.dashboardPermissions)
 	if err != nil {
 		return err
 	}
