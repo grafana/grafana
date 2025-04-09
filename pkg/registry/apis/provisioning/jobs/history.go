@@ -42,7 +42,10 @@ func (h *recentHistory) WriteJob(ctx context.Context, job *provisioning.Job) err
 	h.repoMu.Lock()
 	defer h.repoMu.Unlock()
 
-	items := []provisioning.Job{*job}
+	copy := job.DeepCopy()
+	delete(copy.Labels, LabelJobClaim)
+
+	items := []provisioning.Job{*copy}
 	key := fmt.Sprintf("%s/%s", job.Namespace, job.Spec.Repository)
 	v, ok := h.repoHistory[key]
 	if ok {
