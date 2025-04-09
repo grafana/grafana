@@ -1033,7 +1033,7 @@ export interface FeatureToggles {
   localizationForPlugins?: boolean;
   /**
   * Enables unified navbars
-  * @default true
+  * @default false
   */
   unifiedNavbars?: boolean;
   /**

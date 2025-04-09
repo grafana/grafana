@@ -1781,7 +1781,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
-			Expression:   "true", // enabled by default
+			Expression:   "false", // enabled by default
 		},
 		{
 			Name:         "logsPanelControls",
