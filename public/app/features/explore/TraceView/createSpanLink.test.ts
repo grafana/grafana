@@ -200,7 +200,7 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" OR span_id="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" or trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" or span_id="6605c7b08e715d6c"',
                 refId: '',
               },
             ],
