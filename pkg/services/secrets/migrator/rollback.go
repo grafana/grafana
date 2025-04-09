@@ -233,8 +233,6 @@ func (s alertingSecret) Rollback(
 	}
 
 	for _, result := range results {
-		result := result
-
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {

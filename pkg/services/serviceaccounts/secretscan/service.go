@@ -115,7 +115,6 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 	// Revoke leaked tokens.
 	// Could be done in bulk but we don't expect more than 1 or 2 tokens to be leaked per check.
 	for _, secretscanToken := range secretscanTokens {
-		secretscanToken := secretscanToken
 		leakedToken := hashMap[secretscanToken.Hash]
 
 		if s.revoke {

@@ -225,8 +225,6 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 	var anyFailure bool
 
 	for _, result := range results {
-		result := result
-
 		err := sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {

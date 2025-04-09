@@ -191,7 +191,6 @@ func (mg *Migrator) run() (err error) {
 	migrationsSkipped := 0
 	start := time.Now()
 	for _, m := range mg.migrations {
-		m := m
 		_, exists := mg.logMap[m.Id()]
 		if exists {
 			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
