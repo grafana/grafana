@@ -1032,6 +1032,11 @@ export interface FeatureToggles {
   */
   localizationForPlugins?: boolean;
   /**
+  * Enables unified navbars
+  * @default false
+  */
+  unifiedNavbars?: boolean;
+  /**
   * Enables a control component for the logs panel in Explore
   * @default false
   */

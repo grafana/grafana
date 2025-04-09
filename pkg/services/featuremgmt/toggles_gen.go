@@ -939,6 +939,10 @@ const (
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
 
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
+
 	// FlagLogsPanelControls
 	// Enables a control component for the logs panel in Explore
 	FlagLogsPanelControls = "logsPanelControls"
