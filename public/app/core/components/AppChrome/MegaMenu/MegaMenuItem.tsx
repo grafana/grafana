@@ -88,7 +88,11 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
-        <div className={styles.collapsibleSectionWrapper}>
+        <div
+          // @PERCONA
+          aria-label={link.text}
+          className={styles.collapsibleSectionWrapper}
+        >
           <MegaMenuItemText
             isActive={isActive}
             onClick={() => {
