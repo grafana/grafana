@@ -82,14 +82,10 @@ export const useMetricsLabelsValues = (
     [handleError]
   );
 
-  // Initial set up of the Metrics Browser
-  useEffect(() => {
-    async function initialize() {
-      const selector = buildSelector(selectedMetric, selectedLabelValues);
-      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-
-      // Metrics
-      let transformedMetrics: Metric[] = [];
+  // Helper function to fetch metrics
+  const fetchMetrics = useCallback(
+    async (safeSelector?: string) => {
+      setStatus('Fetching metrics...');
       try {
         const fetchedMetrics = await languageProvider.fetchSeriesValuesWithMatch(
           timeRangeRef.current,
@@ -98,13 +94,26 @@ export const useMetricsLabelsValues = (
           'MetricsBrowser_M',
           seriesLimit
         );
-        transformedMetrics = fetchedMetrics.map((m) => ({
+        return fetchedMetrics.map((m) => ({
           name: m,
           details: getMetricDetails(m),
         }));
       } catch (e) {
         handleError(e, 'Error fetching metrics');
+        return [];
       }
+    },
+    [getMetricDetails, handleError, languageProvider, seriesLimit]
+  );
+
+  // Initial set up of the Metrics Browser
+  useEffect(() => {
+    async function initialize() {
+      const selector = buildSelector(selectedMetric, selectedLabelValues);
+      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+
+      // Metrics
+      const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
 
       // Labels
       let transformedLabelKeys: string[] = [];
@@ -256,20 +265,7 @@ export const useMetricsLabelsValues = (
     const safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
 
     // Fetch metrics
-    setStatus('Fetching metrics...');
-    let newMetrics: Metric[] = [];
-    try {
-      const fetchedMetrics = await languageProvider.fetchSeriesValuesWithMatch(
-        timeRangeRef.current,
-        METRIC_LABEL,
-        safeSelector,
-        'MetricsBrowser_M',
-        seriesLimit
-      );
-      newMetrics = fetchedMetrics.map((m) => ({ name: m, details: getMetricDetails(m) }));
-    } catch (e: unknown) {
-      handleError(e, 'Error fetching label values');
-    }
+    const newMetrics: Metric[] = await fetchMetrics(safeSelector);
 
     // Fetch label keys
     setStatus('Fetching labels...');
