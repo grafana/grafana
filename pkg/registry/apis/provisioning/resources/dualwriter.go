@@ -231,7 +231,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 				return parsed, fmt.Errorf("unable to update resource in grafana: %w", err)
 			}
 		case provisioning.ResourceActionDelete:
-			return parsed, fmt.Errorf("delete unspoorted via create/update command")
+			return parsed, fmt.Errorf("unexpected delete action on create or update")
 		}
 	}
 
