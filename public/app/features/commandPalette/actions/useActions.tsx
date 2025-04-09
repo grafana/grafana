@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
+import { Icon } from '@grafana/ui';
+
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, Node } from '../../scopes/selector/types';
+import { NodesMap, Node, TreeScope } from '../../scopes/selector/types';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
@@ -46,15 +48,15 @@ export function useRegisterScopesActions(searchQuery: string, parentId?: string 
 
   // Conditional hooks, but this should only change if feature toggles changes.
   if (!services) {
-    return;
+    return { applyChanges: undefined };
   }
 
-  const { open, updateNode, toggleNodeSelect } = services.scopesSelectorService;
+  const { updateNode, toggleNodeSelect, apply } = services.scopesSelectorService;
 
   // Initialize the scopes first time this runs.
   useEffect(() => {
-    open();
-  }, [open]);
+    updateNode([''], true, '');
+  }, [updateNode]);
 
   useEffect(() => {
     updateNode(getScopePathFromActionId(parentId), true, searchQuery);
@@ -65,16 +67,35 @@ export function useRegisterScopesActions(searchQuery: string, parentId?: string 
     services.scopesSelectorService.state
   );
 
-  const { nodes, loading, loadingNodeName } = selectorServiceState;
-  const nodesActions = mapScopeNodesToActions(nodes, toggleNodeSelect);
+  const { nodes, loading, loadingNodeName, treeScopes, selectedScopes } = selectorServiceState;
+  const nodesActions = mapScopeNodesToActions(nodes, treeScopes, toggleNodeSelect);
 
   // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
   // scopes tree though is loaded on demand, and it would be a deep check to see if something changes so the current
   // parentId and searchQuery are good proxy to when the nodes and thus action would change.
-  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName]);
+  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes]);
+
+  // TODO would probably make sense to have this on the selectorService itself
+  const isDirty =
+    treeScopes
+      .map((t) => t.scopeName)
+      .sort()
+      .join('') !==
+    selectedScopes
+      .map((s) => s.scope.metadata.name)
+      .sort()
+      .join('');
+
+  return {
+    applyChanges: isDirty
+      ? () => {
+          apply();
+        }
+      : undefined,
+  };
 }
 
-function mapScopeNodesToActions(nodes: NodesMap, selectNode: (path: string[]) => void) {
+function mapScopeNodesToActions(nodes: NodesMap, treeScopes: TreeScope[], toggleNodeSelect: (path: string[]) => void) {
   const actions: CommandPaletteAction[] = [
     {
       id: 'scopes',
@@ -86,7 +107,8 @@ function mapScopeNodesToActions(nodes: NodesMap, selectNode: (path: string[]) =>
   ];
 
   const traverse = (node: Node, parentId: string) => {
-    if (Object.keys(node.nodes).length === 0) {
+    // TODO: not sure how and why a node.nodes can be undefined
+    if (!node.nodes || Object.keys(node.nodes).length === 0) {
       return;
     }
     for (const key of Object.keys(node.nodes)) {
@@ -94,16 +116,18 @@ function mapScopeNodesToActions(nodes: NodesMap, selectNode: (path: string[]) =>
       const action: CommandPaletteAction = {
         id: `${parentId}/${child.name}`,
         name: child.title,
-        section: t('command-palette.action.scopes', 'Scopes'),
         keywords: `${child.title} ${child.name}`,
         priority: SCOPES_PRIORITY,
         parent: parentId,
       };
 
       if (child.nodeType === 'leaf') {
+        if (treeScopes.map((s) => s.scopeName).includes(child.linkId!)) {
+          action.icon = <Icon name={'check-circle'} />;
+          action.priority = 100;
+        }
         action.perform = () => {
-          selectNode(getScopePathFromActionId(action.id));
-          return true;
+          toggleNodeSelect(getScopePathFromActionId(action.id));
         };
       }
 

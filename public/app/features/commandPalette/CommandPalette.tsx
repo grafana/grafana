@@ -8,8 +8,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, Icon, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+
+import { getModKey } from '../../core/utils/browser';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -36,7 +38,7 @@ export function CommandPalette() {
 
   useRegisterStaticActions();
   useRegisterRecentDashboardsActions(searchQuery);
-  useRegisterScopesActions(searchQuery, currentRootActionId);
+  const { applyChanges } = useRegisterScopesActions(searchQuery, currentRootActionId);
 
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
@@ -57,7 +59,19 @@ export function CommandPalette() {
     ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
     : [];
 
-  console.log('ancestorActions', ancestorActions);
+  useEffect(() => {
+    function handler(event: KeyboardEvent) {
+      if (applyChanges && event.key === 'Enter' && event.metaKey) {
+        event.preventDefault();
+        applyChanges();
+        query.toggle();
+      }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [applyChanges, query]);
+
+  // console.log('ancestorActions', ancestorActions);
   return (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
@@ -73,6 +87,17 @@ export function CommandPalette() {
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
+                {applyChanges && (
+                  <Button
+                    onClick={() => {
+                      applyChanges();
+                      query.toggle();
+                    }}
+                  >
+                    Apply&nbsp;
+                    <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
+                  </Button>
+                )}
                 <div className={styles.loadingBarContainer}>
                   {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
                 </div>

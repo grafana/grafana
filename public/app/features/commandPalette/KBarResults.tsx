@@ -71,7 +71,8 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
-      } else if (event.key === 'Enter') {
+      } else if (event.key === 'Enter' && !event.metaKey) {
+        console.log('event kbar ', event);
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
@@ -123,7 +124,7 @@ export const KBarResults = (props: KBarResultsProps) => {
       if (item.command) {
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
-        if (!item.id.startsWith('scopes/')) {
+        if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
           query.toggle();
         }
       } else if (url) {
