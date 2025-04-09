@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -30,11 +30,23 @@ const RuleEditor = () => {
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
   if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+    return (
+      <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
+        <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-create-rules">
+          Sorry! You are not allowed to create rules.
+        </Trans>
+      </AlertWarning>
+    );
   }
 
   if (identifier && !canEditRules(identifier.ruleSourceName)) {
-    return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
+    return (
+      <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-edit-rules', 'Cannot edit rules')}>
+        <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-rules">
+          Sorry! You are not allowed to edit rules.
+        </Trans>
+      </AlertWarning>
+    );
   }
 
   if (identifier) {
@@ -68,15 +80,20 @@ function NewRuleEditor() {
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
 
-  const entityName = RECORDING_TYPE.includes(type) ? 'recording rule' : 'alert rule';
-  const actionName = Boolean(identifier) ? 'Edit' : 'New';
+  const entityName = RECORDING_TYPE.includes(type)
+    ? t('alerting.editor.recording-rule-entity-name', 'recording rule')
+    : t('alerting.editor.alerting-rule-entity-name', 'alerting rule');
+
+  const actionName = Boolean(identifier)
+    ? t('alerting.editor.edit-action', 'Edit')
+    : t('alerting.editor.new-action', 'New');
 
   return (
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
         id: 'alert-rule-add',
-        text: t('alerting.navigation.editor-title', '{{actionName}} {{entityName}}', { actionName, entityName }),
+        text: `${actionName} ${entityName}`,
       }}
     >
       <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />

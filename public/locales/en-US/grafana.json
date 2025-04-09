@@ -795,6 +795,12 @@
       "text-loading-template": "Loading template...",
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
+    "editor": {
+      "alerting-rule-entity-name": "alerting rule",
+      "edit-action": "Edit",
+      "new-action": "New",
+      "recording-rule-entity-name": "recording rule"
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:"
     },
@@ -1283,9 +1289,6 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
-    "navigation": {
-      "editor-title": "{{actionName}} {{entityName}}"
-    },
     "need-help-info": {
       "need-help": "Need help?"
     },
@@ -1581,6 +1584,14 @@
     },
     "rule-details-federated-sources": {
       "label-tenant-sources": "Tenant sources"
+    },
+    "rule-editor": {
+      "get-content": {
+        "sorry-allowed-create-rules": "Sorry! You are not allowed to create rules.",
+        "sorry-allowed-rules": "Sorry! You are not allowed to edit rules.",
+        "title-cannot-create-rules": "Cannot create rules",
+        "title-cannot-edit-rules": "Cannot edit rules"
+      }
     },
     "rule-editor-section": {
       "label-advanced-options": "Advanced options"
