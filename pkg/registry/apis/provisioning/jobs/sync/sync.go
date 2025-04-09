@@ -31,6 +31,7 @@ func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync Increment
 
 func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) (string, error) {
 	cfg := repo.Config()
+	// TODO: move the root folder creation to the full sync
 	// Ensure the configured folder exists and is managed by the repository
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
