@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -118,7 +119,7 @@ func (p *previewer) Preview(
 		return resourcePreview{}, fmt.Errorf("error parsing base url: %w", err)
 	}
 
-	if f.GVK.Kind != "Dashboard" {
+	if f.GVK.Kind != dashboard.DashboardResourceInfo.GroupVersionKind().Kind {
 		return resourcePreview{}, fmt.Errorf("only dashboards are supported")
 	}
 
@@ -145,7 +146,7 @@ func (p *previewer) Preview(
 	}
 
 	// Render the *before* image
-	if preview.TargetURL != "" && f.Action == provisioning.ResourceActionUpdate {
+	if preview.TargetURL != "" && f.Existing != nil {
 		screenshotURL, err := p.renderer.RenderScreenshot(ctx, namespace, f.Repo.Name, preview.TargetURL)
 		if err != nil {
 			return resourcePreview{}, fmt.Errorf("render dashboard preview: %w", err)

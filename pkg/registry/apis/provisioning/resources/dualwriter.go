@@ -219,20 +219,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		switch parsed.Action {
-		case provisioning.ResourceActionCreate:
-			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				return parsed, fmt.Errorf("unable to create resource in grafana: %w", err)
-			}
-		case provisioning.ResourceActionUpdate:
-			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				return parsed, fmt.Errorf("unable to update resource in grafana: %w", err)
-			}
-		case provisioning.ResourceActionDelete:
-			return parsed, fmt.Errorf("unexpected delete action on create or update")
-		}
+		parsed.Run(ctx)
 	}
 
 	return parsed, nil
