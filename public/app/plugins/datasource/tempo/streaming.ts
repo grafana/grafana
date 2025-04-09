@@ -190,7 +190,6 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): Data
 
   result.data = result.data.map((frame: DataFrame) => {
     let newFrame = frame;
-
     const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
     if (timeFieldIndex >= 0) {
       removeDuplicateTimeFieldValues(frame, timeFieldIndex);
