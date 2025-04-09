@@ -33,16 +33,18 @@ type ResourceServer interface {
 }
 
 type ListIterator interface {
+	// Next advances iterator and returns true if there is next value is available from the iterator.
+	// Error() should be checked after every call of Next(), even when Next() returns true.
 	Next() bool // sql.Rows
 
 	// Error returns iterator error, if any. This should be checked after any Next() call.
 	// (Some iterator implementations return true from Next, but also set the error at the same time).
 	Error() error
 
-	// The token that can be used to start iterating *after* this item
+	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// The token that can be used to start iterating *before* this item
+	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
 	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
