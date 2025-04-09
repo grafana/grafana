@@ -9,8 +9,6 @@ import { AccessControlAction } from 'app/types';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 export function InviteUserButton() {
-  config.externalUserMngLinkUrl = '(true)';
-
   return config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
     <Box paddingLeft={1} gap={2} alignItems="center" display="flex">
       <Button
