@@ -95,14 +95,19 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     withPerformanceLogging(async () => {
       const rulesIterator = getRulesBatchIterator();
 
-      const nextRulesBatch = await rulesIterator.next();
-      if (nextRulesBatch.done) {
-        return;
-      }
-      if (nextRulesBatch.value) {
-        startTransition(() => {
-          setRules((rules) => rules.concat(nextRulesBatch.value.map((rule) => ({ key: getRuleKey(rule), ...rule }))));
-        });
+      let loadedRulesCount = 0;
+
+      while (loadedRulesCount < FRONTENT_PAGE_SIZE) {
+        const nextRulesBatch = await rulesIterator.next();
+        if (nextRulesBatch.done) {
+          return;
+        }
+        if (nextRulesBatch.value) {
+          startTransition(() => {
+            setRules((rules) => rules.concat(nextRulesBatch.value.map((rule) => ({ key: getRuleKey(rule), ...rule }))));
+          });
+        }
+        loadedRulesCount += nextRulesBatch.value.length;
       }
     }, 'alerting.rule-list.filter-view.load-result-page')
   );
@@ -191,7 +196,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           </Text>
           {!doneSearching && !loadingAborted && (
             <Button variant="secondary" size="sm" onClick={() => cancelSearch()}>
-              Cancel search
+              {t('alerting.rule-list.filter-view.cancel-search', 'Cancel search')}
             </Button>
           )}
         </Card>
