@@ -146,6 +146,24 @@ describe('datasource_srv', () => {
       name: 'TestData',
       meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
     },
+    Prometheus: {
+      type: 'prometheus',
+      name: 'Prometheus',
+      uid: 'uid-code-prometheus',
+      meta: { metrics: true, id: 'prometheus' },
+    },
+    AmazonPrometheus: {
+      type: 'grafana-amazonprometheus-datasource',
+      name: 'Amazon Prometheus',
+      uid: 'uid-code-amp',
+      meta: { metrics: true, id: 'grafana-amazonprometheus-datasource' },
+    },
+    AzurePrometheus: {
+      type: 'grafana-azureprometheus-datasource',
+      name: 'Azure Prometheus',
+      uid: 'uid-code-azp',
+      meta: { metrics: true, id: 'grafana-azureprometheus-datasource' },
+    },
   };
 
   describe('Given a list of data sources', () => {
@@ -308,7 +326,7 @@ describe('datasource_srv', () => {
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(8);
+        expect(externalSources.length).toBe(11);
       });
     });
 
@@ -348,6 +366,28 @@ describe('datasource_srv', () => {
         expect(list[0].name).toBe('Jaeger');
       });
 
+      it('should include Prometheus flavor data sources when pluginId is prometheus', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'prometheus' });
+        expect(list.length).toBe(3);
+        expect(list[0].name).toBe('Amazon Prometheus');
+        expect(list[0].type).toBe('grafana-amazonprometheus-datasource');
+        expect(list[1].name).toBe('Azure Prometheus');
+        expect(list[1].type).toBe('grafana-azureprometheus-datasource');
+        expect(list[2].name).toBe('Prometheus');
+        expect(list[2].type).toBe('prometheus');
+      });
+
+      it('should include compatible Prometheus data sources when pluginId is a flavor of prometheus', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'grafana-amazonprometheus-datasource' });
+        expect(list.length).toBe(3);
+        expect(list[0].name).toBe('Amazon Prometheus');
+        expect(list[0].type).toBe('grafana-amazonprometheus-datasource');
+        expect(list[1].name).toBe('Azure Prometheus');
+        expect(list[1].type).toBe('grafana-azureprometheus-datasource');
+        expect(list[2].name).toBe('Prometheus');
+        expect(list[2].type).toBe('prometheus');
+      });
+
       it('should not include runtime datasources in list', () => {
         const list = dataSourceSrv.getList({ pluginId: 'grafana-runtime-datasource' });
         expect(list.length).toBe(0);
@@ -370,6 +410,24 @@ describe('datasource_srv', () => {
             "name": "aaa",
             "type": "test-db",
             "uid": "uid-code-aaa",
+          },
+          {
+            "meta": {
+              "id": "grafana-amazonprometheus-datasource",
+              "metrics": true,
+            },
+            "name": "Amazon Prometheus",
+            "type": "grafana-amazonprometheus-datasource",
+            "uid": "uid-code-amp",
+          },
+          {
+            "meta": {
+              "id": "grafana-azureprometheus-datasource",
+              "metrics": true,
+            },
+            "name": "Azure Prometheus",
+            "type": "grafana-azureprometheus-datasource",
+            "uid": "uid-code-azp",
           },
           {
             "isDefault": true,
@@ -396,6 +454,15 @@ describe('datasource_srv', () => {
             "name": "mmm",
             "type": "test-db",
             "uid": "uid-code-mmm",
+          },
+          {
+            "meta": {
+              "id": "prometheus",
+              "metrics": true,
+            },
+            "name": "Prometheus",
+            "type": "prometheus",
+            "uid": "uid-code-prometheus",
           },
           {
             "meta": {
