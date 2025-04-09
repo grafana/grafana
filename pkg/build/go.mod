@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.23.7
+go 1.24.2
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -91,10 +91,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require (
-	dagger.io/dagger v0.11.8-rc.2
-	docker.io/go-docker v1.0.0
-)
+require dagger.io/dagger v0.11.8-rc.2
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
