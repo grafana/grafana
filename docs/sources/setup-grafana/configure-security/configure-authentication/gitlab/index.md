@@ -23,9 +23,9 @@ weight: 1000
 
 This topic describes how to configure GitLab OAuth authentication.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in GitLab that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -43,27 +43,23 @@ Ensure you know how to create a GitLab OAuth application. Consult GitLab's docum
 
 ## Configure GitLab authentication client using the Grafana UI
 
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{% /admonition %}}
-
 As a Grafana Admin, you can configure GitLab OAuth client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > GitLab** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitLab authentication client using the Terraform provider
 
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
+{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "gitlab_sso_settings" {
@@ -134,9 +130,9 @@ By default, GitLab provides a refresh token.
 
 Refresh token fetching and access token expiration check is enabled by default for the GitLab provider since Grafana v10.1.0. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
 
-{{% admonition type="note" %}}
-The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0. Use the `use_refresh_token` configuration value instead for configuring refresh token fetching and access token expiration check.
+{{< /admonition >}}
 
 ### Configure allowed groups
 
@@ -259,7 +255,7 @@ To learn more about Team Sync, refer to [Configure team sync](https://grafana.co
 
 ## Configuration options
 
-The table below describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The following table describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
 
 {{< admonition type="note" >}}
 If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
