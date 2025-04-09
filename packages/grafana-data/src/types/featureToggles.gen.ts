@@ -219,11 +219,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;

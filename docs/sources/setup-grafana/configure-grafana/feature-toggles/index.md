@@ -39,7 +39,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                           | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                | Yes                |
-| `traceQLStreaming`                     | Enables response streaming of TraceQL queries of the Tempo data source                                                              |                    |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
