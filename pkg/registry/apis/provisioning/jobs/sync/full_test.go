@@ -34,10 +34,15 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 		},
 	})
 
-	repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{}, ctx.Err())
+	repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+	repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{}, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil)
+	repoResources.On("SetTree", mock.Anything).Return()
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("SetMessage", mock.Anything, "replicating changes").Return()
 
 	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
-	require.EqualError(t, err, "error reading tree: context canceled")
+	require.EqualError(t, err, "context canceled")
 }
 
 func TestFullSync(t *testing.T) {
@@ -65,7 +70,7 @@ func TestFullSync(t *testing.T) {
 					Path:  "",
 				}, "").Return(nil)
 
-				repoResources.On("List", mock.Anything).Return(provisioning.ResourceList{}, nil)
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{}, nil)
 				compareFn.On("Execute", mock.MatchedBy(func(source []repository.FileTreeEntry) bool {
 					return len(source) == 0
@@ -136,7 +141,7 @@ func TestFullSync(t *testing.T) {
 					Path:  "",
 				}, "").Return(nil)
 
-				repoResources.On("List", mock.Anything).Return(provisioning.ResourceList{}, nil)
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return(nil, fmt.Errorf("read tree failed"))
 			},
 			expectedError: "error reading tree: read tree failed",
@@ -159,7 +164,7 @@ func TestFullSync(t *testing.T) {
 					Path:  "",
 				}, "").Return(nil)
 
-				repoResources.On("List", mock.Anything).Return(provisioning.ResourceList{}, nil)
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{}, nil)
 				compareFn.On("Execute", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("compare failed"))
 			},
@@ -183,7 +188,7 @@ func TestFullSync(t *testing.T) {
 					Path:  "",
 				}, "").Return(nil)
 
-				repoResources.On("List", mock.Anything).Return(provisioning.ResourceList{}, nil)
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
 					{
 						Path: "dashboards/test.json",
@@ -239,7 +244,7 @@ func TestFullSync(t *testing.T) {
 					Path:  "",
 				}, "").Return(nil)
 
-				repoResources.On("List", mock.Anything).Return(provisioning.ResourceList{}, nil)
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
 					{
 						Path: "dashboards/test.json",
