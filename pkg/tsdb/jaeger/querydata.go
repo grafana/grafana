@@ -45,6 +45,18 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 				Frames: []*data.Frame{frame},
 			}
 		}
+
+		if query.QueryType == "dependencyGraph" {
+			dependencies, err := dsInfo.JaegerClient.Dependencies(ctx, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli())
+			if err != nil {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+			frames := transformDependenciesResponse(dependencies, q.RefID)
+			response.Responses[q.RefID] = backend.DataResponse{
+				Frames: frames,
+			}
+		}
 	}
 
 	return response, nil
@@ -214,4 +226,59 @@ type TracesResponse struct {
 	Limit  int             `json:"limit"`
 	Offset int             `json:"offset"`
 	Total  int             `json:"total"`
+}
+
+func transformDependenciesResponse(dependencies DependenciesResponse, refID string) []*data.Frame {
+	// Create nodes frame
+	nodesFrame := data.NewFrame(refID+"_nodes",
+		data.NewField("id", nil, []string{}),
+		data.NewField("title", nil, []string{}),
+	)
+	nodesFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+
+	// Create edges frame
+	edgesFrame := data.NewFrame(refID+"_edges",
+		data.NewField("id", nil, []string{}),
+		data.NewField("source", nil, []string{}),
+		data.NewField("target", nil, []string{}),
+		data.NewField("mainStat", nil, []float64{}),
+	)
+	edgesFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+
+	// Return early if there are no dependencies
+	if len(dependencies.Data) == 0 {
+		return []*data.Frame{nodesFrame, edgesFrame}
+	}
+
+	// Create a map to store unique service nodes
+	servicesByName := make(map[string]struct{})
+
+	// Process each dependency
+	for _, dependency := range dependencies.Data {
+		// Add services to the map to track unique services
+		servicesByName[dependency.Parent] = struct{}{}
+		servicesByName[dependency.Child] = struct{}{}
+
+		// Add edge data
+		edgesFrame.AppendRow(
+			dependency.Parent+"--"+dependency.Child,
+			dependency.Parent,
+			dependency.Child,
+			float64(dependency.CallCount),
+		)
+	}
+
+	// Add node data
+	for service := range servicesByName {
+		nodesFrame.AppendRow(
+			service,
+			service,
+		)
+	}
+
+	return []*data.Frame{nodesFrame, edgesFrame}
 }
