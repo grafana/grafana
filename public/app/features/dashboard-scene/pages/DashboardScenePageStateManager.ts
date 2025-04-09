@@ -547,6 +547,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
+        case DashboardRoutes.Provisioning: {
+          return await this.dashboardLoader.loadDashboard('provisioning', slug, uid);
+        }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
@@ -652,7 +655,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (!rsp) {
       return null;
     }
-
     if (isDashboardV2Resource(rsp)) {
       this.activeManager = this.v2Manager;
       return this.v2Manager.transformResponseToScene(rsp, options);

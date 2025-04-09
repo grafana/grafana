@@ -5,15 +5,17 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
+import { AnnoKeyManagerKind, AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ProvisioningPreview } from 'app/features/provisioning/types';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
-import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
@@ -37,7 +39,16 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<T>;
+
   abstract loadSnapshot(slug: string): Promise<T>;
+
+  protected abstract isVersionSupported(version: string): boolean;
+  protected abstract processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: any,
+    provisioningPreview: ProvisioningPreview
+  ): T;
 
   protected loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
@@ -110,9 +121,44 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 
     return { data: scriptResult };
   }
+
+  protected loadDashboardFromProvisioning(repo: string, path: string) {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') ?? undefined; // commit hash or branch
+
+    const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
+    return getBackendSrv()
+      .get(url, ref ? { ref } : undefined)
+      .then((v) => {
+        // Load the results from dryRun
+        const dryRun = v.resource.dryRun;
+        if (!dryRun) {
+          return Promise.reject('failed to read provisioned dashboard');
+        }
+
+        if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+          return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+        }
+        if (!this.isVersionSupported(dryRun.apiVersion.split('/')[1])) {
+          throw new DashboardVersionError(dryRun.apiVersion.split('/')[1], 'Unsupported dashboard version');
+        }
+
+        return this.processDashboardFromProvisioning(repo, path, dryRun, {
+          file: url,
+          ref: ref,
+          repo: repo,
+        });
+      });
+  }
 }
 
 export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
+  private SUPPORTED_VERSIONS = ['v1alpha1', 'v0alpha1'];
+
+  protected isVersionSupported(version: string): boolean {
+    return this.SUPPORTED_VERSIONS.includes(version);
+  }
+
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
@@ -125,7 +171,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
     } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid);
+      promise = this.loadDashboardFromProvisioning(slug, uid);
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
@@ -182,9 +228,51 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     return promise;
   }
+
+  protected processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: any,
+    provisioningPreview: ProvisioningPreview
+  ): DashboardDTO {
+    // Make sure the annotation key exists
+    let anno = dryRun.metadata.annotations;
+    if (!anno) {
+      dryRun.metadata.annotations = {};
+    }
+    anno[AnnoKeyManagerKind] = 'repo';
+    anno[AnnoKeyManagerIdentity] = repo;
+    anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
+
+    return {
+      meta: {
+        canStar: false,
+        isSnapshot: false,
+        canShare: false,
+
+        // Should come from the repo settings
+        canDelete: true,
+        canSave: true,
+        canEdit: true,
+
+        // Includes additional k8s metadata
+        k8s: dryRun.metadata,
+
+        // lookup info
+        provisioning: provisioningPreview,
+      },
+      dashboard: dryRun.spec,
+    };
+  }
 }
 
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
+  private SUPPORTED_VERSIONS = ['v2alpha1'];
+
+  protected isVersionSupported(version: string): boolean {
+    return this.SUPPORTED_VERSIONS.includes(version);
+  }
+
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
@@ -201,7 +289,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
         return ResponseTransformers.ensureV2Response(result);
       });
     } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid).then((r) => ResponseTransformers.ensureV2Response(r));
+      promise = this.loadDashboardFromProvisioning(slug, uid);
     } else if (uid) {
       if (!params) {
         const cachedDashboard = stateManager.getDashboardFromCache(uid);
@@ -251,6 +339,28 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
     return promise;
   }
+
+  protected processDashboardFromProvisioning(
+    _repo: string,
+    _path: string,
+    dryRun: any,
+    _provisioningPreview: ProvisioningPreview
+  ): DashboardWithAccessInfo<DashboardV2Spec> {
+    return {
+      ...dryRun,
+      kind: 'DashboardWithAccessInfo',
+      access: {
+        canStar: false,
+        isSnapshot: false,
+        canShare: false,
+
+        // Should come from the repo settings
+        canDelete: true,
+        canSave: true,
+        canEdit: true,
+      },
+    };
+  }
 }
 
 let dashboardLoaderSrv = new DashboardLoaderSrv();
@@ -263,5 +373,6 @@ export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('dashboardLoaderSrv can be only overriden in test environment');
   }
+
   dashboardLoaderSrv = srv;
 };
