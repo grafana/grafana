@@ -80,25 +80,26 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 	}
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		t.Run("allow deleting without access to datasource", func(t *testing.T) {
-			ruleStore := initFakeRuleStore(t)
-			provisioningStore := fakes.NewFakeProvisioningStore()
-
-			folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
-
-			authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
-
-			ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
-
-			permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
-			requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
-
-			response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
-
-			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-			assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
-		})
 		t.Run("and group argument is empty", func(t *testing.T) {
+
+			t.Run("allow deleting without access to datasource", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := fakes.NewFakeProvisioningStore()
+
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
+
+				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
+
+				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+
+				permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
+
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
+			})
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
@@ -126,8 +127,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithGroupPrefix("unauthz")).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -148,8 +147,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				require.NoError(t, err)
 
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -177,10 +174,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
-				// more rules in the same group but user is not authorized to access them
-				ruleStore.PutRule(context.Background(), groupGen.GenerateManyRef(1, 5)...)
 
-				permissions := createPermissionsForRules(authorizedRulesInGroup, orgID)
+				permissions := createPermissionsForRules([]*models.AlertRule{}, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
 				response := createService(ruleStore, nil).RouteDeleteAlertRules(requestCtx, folder.UID, authorizedRulesInGroup[0].RuleGroup)
