@@ -3429,7 +3429,7 @@
     },
     "provisioned-resource-delete-modal": {
       "file-path": "File path:",
-      "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
+      "managed-by-version-control": "This resource is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
     },
