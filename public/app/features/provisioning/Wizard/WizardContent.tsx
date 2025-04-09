@@ -21,10 +21,9 @@ import { dataToSpec } from '../utils/data';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
-import { MigrateStep } from './MigrateStep';
-import { PullStep } from './PullStep';
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
+import { SynchronizeStep } from './SynchronizeStep';
 import { WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -203,8 +202,9 @@ export function WizardContent({
                 repoName={repoName ?? ''}
               />
             )}
-            {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
-            {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
+            {activeStep === 'synchronize' && (
+              <SynchronizeStep onStepUpdate={handleStepUpdate} requiresMigration={requiresMigration} />
+            )}
             {activeStep === 'finish' && <FinishStep />}
           </div>
 

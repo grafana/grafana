@@ -106,9 +106,11 @@ export function FinishStep() {
 
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={0}>
-          <Text element="h4">Enhance your GitHub experience</Text>
+          <Text element="h4">
+            <Trans i18nKey="provisioning.finish-step.title-enhance-github">Enhance your GitHub experience</Trans>
+          </Text>
           <Text color="secondary" variant="bodySmall">
-            You can always set this up later
+            <Trans i18nKey="provisioning.finish-step.text-setup-later">You can always set this up later</Trans>
           </Text>
         </Stack>
         {isGithub && (

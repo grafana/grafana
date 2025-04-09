@@ -36,17 +36,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         submitOnNext: true,
       },
       {
-        id: 'migrate',
+        id: 'synchronize',
         name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
         title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
         submitOnNext: false,
       },
-      // {
-      //   id: 'pull',
-      //   name: t('provisioning.wizard.step-resources', 'Resources'),
-      //   title: t('provisioning.wizard.title-pull', 'Pull resources'),
-      //   submitOnNext: false,
-      // },
       {
         id: 'finish',
         name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
@@ -77,33 +71,24 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     [activeStep]
   );
 
-  // Filter out migrate step if using legacy storage
-  const availableSteps = useMemo(() => {
-    const stepToRemove = requiresMigration ? 'pull' : 'migrate';
-    return steps.filter((step) => step.id !== stepToRemove);
-  }, [requiresMigration, steps]);
-
   // Calculate button text based on current step position
   const getNextButtonText = useCallback(
     (currentStep: WizardStep) => {
-      const stepIndex = availableSteps.findIndex((s) => s.id === currentStep);
-      if (currentStep === 'bootstrap') {
-        return t('provisioning.wizard.button-start', 'Begin synchronization');
-      }
+      const stepIndex = steps.findIndex((s) => s.id === currentStep);
 
       // Guard against index out of bounds
-      if (stepIndex === -1 || stepIndex >= availableSteps.length - 1) {
+      if (stepIndex === -1 || stepIndex >= steps.length - 1) {
         return t('provisioning.wizard.button-next', 'Finish');
       }
 
-      return availableSteps[stepIndex + 1].name;
+      return steps[stepIndex + 1].name;
     },
-    [availableSteps]
+    [steps]
   );
 
   const handleNext = async () => {
-    const currentStepIndex = availableSteps.findIndex((s) => s.id === activeStep);
-    const isLastStep = currentStepIndex === availableSteps.length - 1;
+    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+    const isLastStep = currentStepIndex === steps.length - 1;
 
     if (activeStep === 'connection') {
       // Validate repository form data before proceeding
@@ -125,13 +110,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       }
     }
 
-    // If we're on the bootstrap step, determine the next step based on the migration flag
-    if (activeStep === 'bootstrap') {
-      const nextStep = requiresMigration ? 'migrate' : 'pull';
-      setActiveStep(nextStep);
-      return;
-    }
-
     // Only navigate to provisioning URL if we're on the actual last step and it's completed
     if (isLastStep && stepSuccess) {
       settingsQuery.refetch();
@@ -140,8 +118,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     }
 
     // For all other cases, proceed to next step
-    if (currentStepIndex < availableSteps.length - 1) {
-      setActiveStep(availableSteps[currentStepIndex + 1].id);
+    if (currentStepIndex < steps.length - 1) {
+      setActiveStep(steps[currentStepIndex + 1].id);
       setStepSuccess(false);
       // Update completed steps only if the current step was successful
       if (stepSuccess) {
@@ -155,7 +133,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       <WizardContent
         activeStep={activeStep}
         completedSteps={completedSteps}
-        availableSteps={availableSteps}
+        availableSteps={steps}
         requiresMigration={requiresMigration}
         handleStatusChange={handleStatusChange}
         handleNext={handleNext}

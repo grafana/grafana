@@ -2,7 +2,7 @@ import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning';
 
 import { RepositoryFormData } from '../types';
 
-export type WizardStep = 'connection' | 'bootstrap' | 'migrate' | 'pull' | 'finish';
+export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
 export type RepoType = RepositorySpec['type'];
 

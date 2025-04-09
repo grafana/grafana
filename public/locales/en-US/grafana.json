@@ -6324,13 +6324,13 @@
       "title-webhook-will-be-created": "Webhook will be created"
     },
     "connect-repository-button": {
+      "configure": "Configure",
       "configure-file": "Configure file provisioning",
       "configure-git-sync": "Configure GitSync",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "connect-step": {
       "description-branch": "Branch to use for the GitHub repository",
-      "description-choose-storage-resources": "Choose the type of storage for your resources",
       "description-github-path": "This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from",
       "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
       "description-repository-url": "Paste the URL of your GitHub repository",
@@ -6341,14 +6341,11 @@
       "label-local-path": "Local path",
       "label-path": "Path to subdirectory in repository",
       "label-repository-url": "GitHub repository URL",
-      "label-storage-type": "Storage type",
       "placeholder-branch": "main",
       "placeholder-github-path": "grafana/",
       "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
       "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo",
-      "storage-type-github": "GitHub",
-      "storage-type-local": "Local"
+      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -6414,7 +6411,9 @@
       "label-update-instance-interval-seconds": "Update instance interval (seconds)",
       "label-workflows": "Workflows",
       "placeholder": "60",
-      "placeholder-readonly-repository": "Read-only repository"
+      "placeholder-readonly-repository": "Read-only repository",
+      "text-setup-later": "You can always set this up later",
+      "title-enhance-github": "Enhance your GitHub experience"
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No results matching your query",
@@ -6473,15 +6472,10 @@
       "summary": "Summary"
     },
     "job-step": {
-      "error-failed-to-start": "Failed to start operation",
-      "error-invalid-response": "Invalid response from operation",
-      "error-job-failed": "Job failed"
-    },
-    "migrate-step": {
-      "description-migrating-dashboards": "Migrating all dashboards from this instance to your repository, including their identifiers and complete history. After this one-time migration, all future updates will be automatically saved to the repository."
-    },
-    "pull-step": {
-      "description-pulling-content": "Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
+      "error-job-failed": "Job failed",
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job"
     },
     "recent-jobs": {
       "active-jobs": "active jobs",
@@ -6599,17 +6593,21 @@
       "webhooks-permission": "Webhooks: <1>Read and write</1>"
     },
     "wizard": {
+      "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
+      "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
+      "alert-point-3": "The duration of this process depends on the number of resources involved.",
+      "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2>this guide</2> for step-by-step instructions.",
+      "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
-      "step-resources": "Resources",
       "step-synchronize": "Synchronize",
+      "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
       "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
-      "title-pull": "Pull resources",
       "title-synchronize": "Synchronize with external storage"
     },
     "wizard-content": {
