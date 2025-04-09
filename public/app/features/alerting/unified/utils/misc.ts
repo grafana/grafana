@@ -7,27 +7,27 @@ import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
-    alertInstanceKey,
-    isCloudRuleIdentifier,
-    isGrafanaRuleIdentifier,
-    isPrometheusRuleIdentifier,
+  alertInstanceKey,
+  isCloudRuleIdentifier,
+  isGrafanaRuleIdentifier,
+  isPrometheusRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
-    Alert,
-    CombinedRule,
-    DataSourceRuleGroupIdentifier,
-    FilterState,
-    RuleIdentifier,
-    RuleWithLocation,
-    RulesSource,
-    SilenceFilterState,
+  Alert,
+  CombinedRule,
+  DataSourceRuleGroupIdentifier,
+  FilterState,
+  RuleIdentifier,
+  RuleWithLocation,
+  RulesSource,
+  SilenceFilterState,
 } from 'app/types/unified-alerting';
 import {
-    GrafanaAlertState,
-    PromAlertingRuleState,
-    PromRuleDTO,
-    mapStateWithReasonToBaseState,
+  GrafanaAlertState,
+  PromAlertingRuleState,
+  PromRuleDTO,
+  mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';

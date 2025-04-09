@@ -34,7 +34,7 @@ import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';
-import { cloneRuleDefinition } from './clone-utils';
+import { cloneRuleDefinition } from './clone.utils';
 import { getDefaultFormValues } from './formDefaults';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
@@ -86,13 +86,8 @@ describe('CloneRuleEditor', function () {
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
-      AccessControlAction.AlertingRuleUpdate,
-      AccessControlAction.AlertingRuleDelete,
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.DataSourcesRead,
-      AccessControlAction.DataSourcesWrite,
-      AccessControlAction.DataSourcesCreate,
-      AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,

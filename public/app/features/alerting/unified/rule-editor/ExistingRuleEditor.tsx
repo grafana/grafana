@@ -30,7 +30,7 @@ import {
 } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
-import { cloneRuleDefinition } from './clone-utils';
+import { cloneRuleDefinition } from './clone.utils';
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
   // Provide prefill if we are trying to restore an old version of an alert rule but we need the user to manually tweak the values

@@ -255,7 +255,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     return null;
   }
 
-  const isPaused = existing && rulerRuleType.grafana.rule(existing.rule) ? isPausedRule(existing.rule) : false;
+  const isPaused = rulerRuleType.grafana.rule(existing?.rule) && isPausedRule(existing?.rule);
 
   return (
     <FormProvider {...formAPI}>

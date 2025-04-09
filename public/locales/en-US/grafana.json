@@ -826,7 +826,11 @@
       "title-global-evaluation-interval-limit-exceeded": "Global evaluation interval limit exceeded"
     },
     "existing-rule-editor": {
-      "text-loading-rule": "Loading rule..."
+      "sorry-permission": "Sorry! You do not have permission to edit this rule.",
+      "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
+      "title-cannot-edit-rule": "Cannot edit rule",
+      "title-failed-to-load-rule": "Failed to load rule",
+      "title-rule-not-found": "Rule not found"
     },
     "existing-silence-editor": {
       "text-loading-existing-silence-information": "Loading existing silence information..."
