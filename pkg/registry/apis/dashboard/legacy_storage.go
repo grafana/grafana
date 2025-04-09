@@ -64,12 +64,7 @@ type storeWrapper struct {
 func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx = legacy.WithLegacyAccess(ctx)
 
-	_, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err = s.Store.Create(ctx, obj, createValidation, options)
+	obj, err := s.Store.Create(ctx, obj, createValidation, options)
 	access := legacy.GetLegacyAccess(ctx)
 	if access != nil && access.DashboardID > 0 {
 		meta, _ := utils.MetaAccessor(obj)
@@ -78,18 +73,17 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 			meta.SetDeprecatedInternalID(access.DashboardID) //nolint:staticcheck
 		}
 	}
-
-	if err != nil {
-		return obj, err
-	}
-
 	meta, metaErr := utils.MetaAccessor(obj)
 	if metaErr == nil {
-		// Reconstruc the same UID as done at the storage level
+		// Reconstruct the same UID as done at the storage level
 		// https://github.com/grafana/grafana/blob/a84e96fba29c3a1bb384fdbad1c9c658cc79ec8f/pkg/registry/apis/dashboard/legacy/sql_dashboards.go#L287
 		// This is necessary because the UID generated during the creation via legacy storage is actually never stored in the database
 		// and the one returned here is wrong.
 		meta.SetUID(gapiutil.CalculateClusterWideUID(obj))
+	}
+
+	if err != nil {
+		return obj, err
 	}
 
 	if metaErr != nil {
