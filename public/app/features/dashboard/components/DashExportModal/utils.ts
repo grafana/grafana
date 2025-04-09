@@ -52,7 +52,6 @@ export function removePanelRefFromLayout(layout: DashboardV2Spec['layout'], elem
   }
 }
 
-// A helper to determine whether a layout is empty
 function isLayoutEmpty(layout: DashboardV2Spec['layout']) {
   if (!layout || !layout.spec) {
     return true;
@@ -61,12 +60,11 @@ function isLayoutEmpty(layout: DashboardV2Spec['layout']) {
   switch (layout.kind) {
     case 'GridLayout': {
       const items = layout.spec.items || [];
-      // If every item is a row with zero elements, or if there are no items, it's empty
       return (
         items.length === 0 ||
         items.every((item) => {
           if (item.kind === 'GridLayoutItem') {
-            return false; // We have at least one item, not empty
+            return false;
           } else if (item.kind === 'GridLayoutRow') {
             return item.spec.elements.length === 0;
           }
