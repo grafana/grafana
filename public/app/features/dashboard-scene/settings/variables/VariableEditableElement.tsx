@@ -83,6 +83,11 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       set.setState({ variables: set.state.variables.filter((v) => v !== this.variable) });
     }
   }
+
+  public onChangeName(name: string) {
+    // TODO add validation
+    this.variable.setState({ name });
+  }
 }
 
 interface VariableInputProps {

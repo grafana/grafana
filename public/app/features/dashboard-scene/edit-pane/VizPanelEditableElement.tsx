@@ -112,6 +112,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     dashboard.copyPanel(this.panel);
   }
 
+  public onChangeName(name: string) {
+    this.panel.setState({ title: name });
+  }
+
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
     return new MultiSelectedVizPanelsEditableElement(items);
   }

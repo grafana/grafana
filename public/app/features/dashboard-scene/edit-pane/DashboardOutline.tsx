@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -50,21 +50,40 @@ function DashboardOutlineNode({
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const elementCollapsed = editableElement.getCollapsedState?.();
+  const [isRenaming, setIsRenaming] = useState(false);
 
-  const onPointerDown = (evt: React.PointerEvent) => {
+  const onNameClicked = (evt: React.PointerEvent) => {
     // Only select via clicking outline never deselect
     if (!isSelected) {
       onSelect?.(evt);
     }
 
-    setIsCollapsed(!isCollapsed);
     editableElement.scrollIntoView?.();
+  };
+
+  const onToggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
 
     // Sync expanded state with canvas element
     if (editableElement.getCollapsedState) {
       editableElement.setCollapsedState?.(!isCollapsed);
     }
   };
+
+  const onNameDoubleClicked = (evt: React.MouseEvent) => {
+    if (!editableElement.onChangeName) {
+      return;
+    }
+
+    setIsRenaming(true);
+  };
+
+  const selectTextOnMount = useMemo(() => {
+    return (ref: HTMLInputElement | null) => {
+      ref?.focus();
+      ref?.select();
+    };
+  }, []);
 
   // Sync canvas element expanded state with outline element
   useEffect(() => {
@@ -75,18 +94,42 @@ function DashboardOutlineNode({
 
   return (
     <>
-      <button
-        role="treeitem"
-        className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-        onPointerDown={onPointerDown}
-      >
-        {elementInfo.isContainer && <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />}
-        <Icon size="sm" name={elementInfo.icon} />
-        <span>{instanceName}</span>
-        {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
-      </button>
+      <Stack gap={0.5}>
+        {elementInfo.isContainer && (
+          <button role="treeitem" className={styles.angleButton} onClick={onToggleCollapse}>
+            <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
+          </button>
+        )}
+        <button
+          role="button"
+          className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
+          onPointerDown={onNameClicked}
+          onDoubleClick={onNameDoubleClicked}
+        >
+          <Icon size="sm" name={elementInfo.icon} />
+          {isRenaming ? (
+            <input
+              ref={selectTextOnMount}
+              type="text"
+              value={elementInfo.instanceName}
+              className={styles.outlineInput}
+              onChange={(evt) => editableElement.onChangeName!(evt.target.value)}
+              onBlur={() => setIsRenaming(false)}
+              onKeyDown={(evt) => {
+                if (evt.key === 'Enter') {
+                  setIsRenaming(false);
+                }
+              }}
+            />
+          ) : (
+            <>
+              <span>{instanceName}</span>
+              {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
+              {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
+            </>
+          )}
+        </button>
+      </Stack>
 
       {elementInfo.isContainer && !isCollapsed && (
         <div className={styles.container} role="group">
@@ -119,6 +162,15 @@ function getStyles(theme: GrafanaTheme2) {
       marginLeft: theme.spacing(1),
       paddingLeft: theme.spacing(1.5),
       borderLeft: `1px solid ${theme.colors.border.medium}`,
+    }),
+    angleButton: css({
+      boxShadow: 'none',
+      border: 'none',
+      background: 'transparent',
+      borderRadius: theme.shape.radius.default,
+      padding: 0,
+      color: theme.colors.text.secondary,
+      lineHeight: 0,
     }),
     nodeButton: css({
       boxShadow: 'none',
@@ -158,6 +210,15 @@ function getStyles(theme: GrafanaTheme2) {
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
       cursor: 'not-allowed',
+    }),
+    outlineInput: css({
+      border: `1px solid ${theme.colors.primary.border}`,
+      height: theme.spacing(3),
+
+      '&:focus': {
+        outline: 'none',
+        boxShadow: 'none',
+      },
     }),
   };
 }
