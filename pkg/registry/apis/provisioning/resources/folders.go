@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -103,6 +104,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
 	}
 
 	obj = &unstructured.Unstructured{
