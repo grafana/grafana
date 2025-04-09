@@ -95,9 +95,11 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
             Select which resources you want to include in the snapshot.
           </Trans>
           <br />
-          <Trans i18nKey="migrate-to-cloud.configure-snapshot.description-sub-line">
-            Some resources may depend on others and will be automatically selected or deselected.
-          </Trans>
+          <Text weight="bold">
+            <Trans i18nKey="migrate-to-cloud.configure-snapshot.description-sub-line">
+              Some resources may depend on others and will be automatically selected or deselected.
+            </Trans>
+          </Text>
         </Text>
       </Stack>
 
