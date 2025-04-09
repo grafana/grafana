@@ -4,6 +4,7 @@ import { getWrapper, render, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -18,12 +19,14 @@ import { setupMswServer } from '../mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from '../mocks';
 import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
+import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
 import { RuleFormValues } from '../types/rule-form';
@@ -68,12 +71,47 @@ function Wrapper({ children }: React.PropsWithChildren<{}>) {
 }
 
 describe('CloneRuleEditor', function () {
-  grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+  const folder = {
+    title: 'Folder A',
+    uid: grafanaRulerRule.grafana_alert.namespace_uid,
+    id: 1,
+    type: DashboardSearchItemType.DashDB,
+    accessControl: {
+      [AccessControlAction.AlertingRuleUpdate]: true,
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersWrite,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
+
+    const dataSources = {
+      default: mockDataSource({
+        uid: MIMIR_DATASOURCE_UID,
+        type: 'prometheus',
+        name: 'Mimir',
+        isDefault: true,
+      }),
+    };
+    setupDataSources(dataSources.default);
+    setFolderResponse(mockFolder(folder));
+  });
 
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
-      setupDataSources();
-
       render(
         <ExistingRuleEditor
           identifier={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }}
@@ -94,13 +132,13 @@ describe('CloneRuleEditor', function () {
       expect(
         byRole('listitem', {
           name: 'severity: critical',
-        }).get()
-      ).toBeInTheDocument();
+        }).getAll()
+      ).toHaveLength(2); // once in the form, once in the header
       expect(
         byRole('listitem', {
           name: 'region: nasa',
-        }).get()
-      ).toBeInTheDocument();
+        }).getAll()
+      ).toHaveLength(2); // once in the form, once in the header
       expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
     });
   });
@@ -154,13 +192,13 @@ describe('CloneRuleEditor', function () {
       expect(
         byRole('listitem', {
           name: 'severity: critical',
-        }).get()
-      ).toBeInTheDocument();
+        }).getAll()
+      ).toHaveLength(2); // once in the form, once in the header
       expect(
         byRole('listitem', {
           name: 'region: nasa',
-        }).get()
-      ).toBeInTheDocument();
+        }).getAll()
+      ).toHaveLength(2); // once in the form, once in the header
       expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
     });
   });

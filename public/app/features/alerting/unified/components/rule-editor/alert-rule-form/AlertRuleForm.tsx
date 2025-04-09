@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
@@ -36,7 +36,6 @@ import {
   trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
-import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
@@ -82,7 +81,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const notifyApp = useAppNotification();
   const [showEditYaml, setShowEditYaml] = useState(false);
 
-  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
@@ -91,8 +89,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
   const uidFromParams = routeParams.id || '';
-
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -201,16 +197,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
   };
 
-  const deleteRule = async () => {
-    if (existing) {
-      const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
-      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-
-      await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
-      locationService.replace(returnTo ?? '/alerting/list');
-    }
-  };
-
   const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
     trackAlertRuleFormError({
       grafana_version: config.buildInfo.version,
@@ -231,8 +217,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
     locationService.getHistory().goBack();
   };
-
-  const isSaveable = Boolean(existing || prefill);
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   if (!type) {
@@ -271,19 +255,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
             {/* actions */}
             <Stack direction="row" alignItems="center">
-              {isSaveable && (
-                <Button
-                  data-testid="save-rule"
-                  variant="primary"
-                  type="button"
-                  onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                  Save rule
-                </Button>
-              )}
-
+              <Button
+                data-testid="save-rule"
+                variant="primary"
+                type="button"
+                size="sm"
+                onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+                disabled={isSubmitting}
+              >
+                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                Save rule
+              </Button>
               <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
                 <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
@@ -298,17 +280,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </div>
       </form>
 
-      {showDeleteModal ? (
-        <ConfirmModal
-          isOpen={true}
-          title="Delete rule"
-          body="Deleting this rule will permanently remove it. Are you sure you want to delete this rule?"
-          confirmText="Yes, delete"
-          icon="exclamation-triangle"
-          onConfirm={deleteRule}
-          onDismiss={() => setShowDeleteModal(false)}
-        />
-      ) : null}
       {showEditYaml ? (
         isGrafanaManagedRuleByType(type) ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
