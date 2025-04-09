@@ -84,7 +84,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		allowNonProvisionedUsers:  scimSection.Key("allowed_non_provisioned_users").MustBool(false),
+		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
 		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
 		userService:               userService,
 		authInfoService:           authInfoService,
