@@ -20,8 +20,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
-    useIsConditionallyHidden(currentTab);
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
 
   return (
     <div className={styles.tabLayoutContainer}>
