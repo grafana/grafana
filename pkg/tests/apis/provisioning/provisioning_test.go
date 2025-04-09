@@ -330,7 +330,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Do(ctx).StatusCode(&code)
 		require.Equal(t, http.StatusConflict, code)
 		require.Error(t, result.Error(), "should have error")
-		require.Equal(t, result.Error().Error(), "should fail response (already exists)")
+		require.Equal(t, ` \"all-panels.json\" already exists`, result.Error().Error())
 	})
 
 	t.Run("fail using invalid paths", func(t *testing.T) {
