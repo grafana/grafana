@@ -19,6 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	folderUIDHeader           = "X-Grafana-Alerting-Folder-UID"
+	targetDatasourceUIDHeader = "X-Grafana-Alerting-Target-Datasource-UID"
+)
+
 var (
 	promGroup1 = apimodels.PrometheusRuleGroup{
 		Name:     "test-group-1",
@@ -99,6 +104,78 @@ var (
 	}
 )
 
+func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
+			EnableRecordingRules:  true,
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		sourceDS := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+		targetDS := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		recordingGroup := apimodels.PrometheusRuleGroup{
+			Name:     "test-recording-group",
+			Interval: prommodel.Duration(60 * time.Second),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Record: "test_recording_metric",
+					Expr:   "sum(up) by (job)",
+					Labels: map[string]string{
+						"env": "test",
+					},
+				},
+			},
+		}
+
+		namespace := "test-recording-namespace"
+		namespaceUID := util.GenerateShortUID()
+		apiClient.CreateFolder(t, namespaceUID, namespace)
+
+		t.Run("recording rules should use specified target datasource", func(t *testing.T) {
+			headers := map[string]string{
+				"Content-Type":            "application/json",
+				targetDatasourceUIDHeader: targetDS.Body.Datasource.UID,
+			}
+
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace, sourceDS.Body.Datasource.UID, recordingGroup, headers)
+
+			ruleGroup, _, _ := apiClient.GetRulesGroupWithStatus(t, namespaceUID, recordingGroup.Name)
+			require.Len(t, ruleGroup.Rules, 1)
+
+			rule := ruleGroup.Rules[0]
+			require.NotNil(t, rule.GrafanaManagedAlert.Record)
+			require.Equal(t, targetDS.Body.Datasource.UID, rule.GrafanaManagedAlert.Record.TargetDatasourceUID)
+			require.NotEmpty(t, rule.GrafanaManagedAlert.Data)
+			require.Equal(t, sourceDS.Body.Datasource.UID, rule.GrafanaManagedAlert.Data[0].DatasourceUID)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
 func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
@@ -133,12 +210,65 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 
 		namespace1 := "test-namespace-1"
 		namespace2 := "test-namespace-2"
+		namespace3 := "test-namespace-3"
+		namespace4 := "test-namespace-4"
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
 		postContentTypeHeader := map[string]string{
 			"Content-Type": postContentType,
 		}
+
+		t.Run("create multiple namespaces at once", func(t *testing.T) {
+			nsUID := util.GenerateShortUID()
+			nsTitle := "multiple-namespaces-folder"
+			apiClient.CreateFolder(t, nsUID, nsTitle)
+
+			ns := map[string][]apimodels.PrometheusRuleGroup{
+				namespace1: {promGroup1},
+				namespace2: {promGroup2},
+				namespace3: {promGroup3},
+				namespace4: {promGroup1, promGroup2, promGroup3},
+			}
+
+			// We will create the namespaces in a separate folder, so we need to
+			// pass the folder UID in the header.
+			headers := map[string]string{
+				"Content-Type":  postContentType,
+				folderUIDHeader: nsUID,
+			}
+
+			apiClient.ConvertPrometheusPostRuleGroups(t, ds.Body.Datasource.UID, ns, headers)
+
+			// Check namespaces
+			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1, headers)
+			expectedNs1 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace1: {promGroup1},
+			}
+			require.Equal(t, expectedNs1, ns1)
+
+			ns2 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace2, headers)
+			expectedNs2 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace2: {promGroup2},
+			}
+			require.Equal(t, expectedNs2, ns2)
+
+			ns3 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace3, headers)
+			expectedNs3 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace3: {promGroup3},
+			}
+			require.Equal(t, expectedNs3, ns3)
+
+			ns4 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace4, headers)
+			expectedNs4 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace4: {promGroup1, promGroup2, promGroup3},
+			}
+			require.Equal(t, expectedNs4, ns4)
+
+			// Check all namespaces at once
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, headers)
+			require.Equal(t, ns, namespaces)
+		})
 
 		t.Run("create rule groups and get them back", func(t *testing.T) {
 			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
@@ -550,8 +680,6 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
-
-		folderUIDHeader := "X-Grafana-Alerting-Folder-UID"
 
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

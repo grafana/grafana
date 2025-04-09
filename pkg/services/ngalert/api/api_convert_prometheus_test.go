@@ -1284,6 +1284,46 @@ func createRequestCtx() *contextmodel.ReqContext {
 	}
 }
 
+// Test parseBooleanHeader function which handles boolean header values
+func TestParseBooleanHeader(t *testing.T) {
+	headerName := "X-Test-Header"
+
+	t.Run("should return false when header is not present", func(t *testing.T) {
+		result, err := parseBooleanHeader("", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'true'", func(t *testing.T) {
+		result, err := parseBooleanHeader("true", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return false when header is 'false'", func(t *testing.T) {
+		result, err := parseBooleanHeader("false", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'TRUE' (case insensitive)", func(t *testing.T) {
+		result, err := parseBooleanHeader("TRUE", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return error when header has invalid value", func(t *testing.T) {
+		_, err := parseBooleanHeader("invalid", headerName)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "Invalid value for header")
+	})
+
+	t.Run("should return error when header is numeric but not 0/1", func(t *testing.T) {
+		_, err := parseBooleanHeader("2", headerName)
+		require.Error(t, err)
+	})
+}
+
 func TestGetWorkingFolderUID(t *testing.T) {
 	t.Run("should return root folder UID when header is not present", func(t *testing.T) {
 		rc := createRequestCtx()
