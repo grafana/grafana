@@ -1,11 +1,12 @@
 import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
-import { SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneGridRow, SceneObject, SceneVariable, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 
 import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -35,6 +36,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new DashboardEditableElement(sceneObj);
   }
 
+  if (isSceneVariable(sceneObj)) {
+    return new VariableEditableElement(sceneObj);
+  }
+
   return undefined;
 }
 
@@ -55,6 +60,10 @@ export function hasEditableElement(sceneObj: SceneObject | undefined): boolean {
   return false;
 }
 
+export function isSceneVariable(sceneObj: SceneObject): sceneObj is SceneVariable {
+  return 'getValue' in sceneObj;
+}
+
 export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
   static type = 'new-object-added-to-canvas';
 }
@@ -65,4 +74,8 @@ export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObjec
 
 export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
   static type = 'objects-reordered-on-canvas';
+}
+
+export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'conditional-rendering-changed';
 }

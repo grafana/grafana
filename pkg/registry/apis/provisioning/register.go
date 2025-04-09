@@ -24,6 +24,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -75,17 +77,20 @@ type APIBuilder struct {
 	webhookSecretKey string
 	isPublic         bool
 
-	features          featuremgmt.FeatureToggles
-	getter            rest.Getter
-	localFileResolver *repository.LocalFolderResolver
-	render            rendering.Service
-	parsers           *resources.ParserFactory
-	ghFactory         *github.Factory
-	clonedir          string // where repo clones are managed
-	jobs              interface {
+	features            featuremgmt.FeatureToggles
+	getter              rest.Getter
+	localFileResolver   *repository.LocalFolderResolver
+	render              rendering.Service
+	parsers             resources.ParserFactory
+	repositoryResources resources.RepositoryResourcesFactory
+	clients             resources.ClientFactory
+	ghFactory           *github.Factory
+	clonedir            string // where repo clones are managed
+	jobs                interface {
 		jobs.Queue
 		jobs.Store
 	}
+	jobHistory       jobs.History
 	tester           *RepositoryTester
 	resourceLister   resources.ResourceLister
 	repositoryLister listers.RepositoryLister
@@ -93,6 +98,8 @@ type APIBuilder struct {
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	secrets          secrets.Service
+	client           client.ProvisioningV0alpha1Interface
+	access           authlib.AccessChecker
 }
 
 // NewAPIBuilder creates an API builder.
@@ -111,27 +118,33 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
+	access authlib.AccessChecker,
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
 
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+
 	return &APIBuilder{
-		urlProvider:       urlProvider,
-		localFileResolver: local,
-		webhookSecretKey:  webhookSecretKey,
-		isPublic:          isPublic,
-		features:          features,
-		ghFactory:         ghFactory,
-		parsers: &resources.ParserFactory{
-			ClientFactory: resources.NewClientFactory(configProvider),
-		},
-		render:         render,
-		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
-		unified:        unified,
-		secrets:        secrets,
+		urlProvider:         urlProvider,
+		localFileResolver:   local,
+		webhookSecretKey:    webhookSecretKey,
+		isPublic:            isPublic,
+		features:            features,
+		ghFactory:           ghFactory,
+		clients:             clients,
+		parsers:             parsers,
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		render:              render,
+		clonedir:            clonedir,
+		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		legacyMigrator:      legacyMigrator,
+		storageStatus:       storageStatus,
+		unified:             unified,
+		secrets:             secrets,
+		access:              access,
+		jobHistory:          jobs.NewJobHistoryCache(),
 	}
 }
 
@@ -147,6 +160,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
+	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
@@ -171,7 +185,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc),
+		secrets.NewSingleTenant(secretsSvc), access,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -208,16 +222,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 				switch a.GetSubresource() {
-				case "":
+				case "", "test", "jobs":
 					// Doing something with the repository itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "test", "export", "migrate":
-					// Testing doesn't make sense for non-admins.
-					// Exporting and migrating are potentially dangerous.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
 					}
@@ -230,19 +236,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 
 				case "files":
-					// Reading files is allowed for everyone, so as to allow code reviews and similar.
-					// Writing files is only allowed fo Editor and higher.
-					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
-					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
-					isReadOperation := a.GetVerb() == apiutils.VerbGet
-
-					if isEditor || (isViewer && isReadOperation) {
-						return authorizer.DecisionAllow, "", nil
-					} else if isReadOperation {
-						return authorizer.DecisionDeny, "viewer role is required for reads", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required for edits", nil
-					}
+					// Access to files is controlled by the AccessClient
+					return authorizer.DecisionAllow, "", nil
 
 				case "render":
 					// This is used to read a blob from unified storage, for GitHub PR comments.
@@ -279,8 +274,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
-			case provisioning.JobResourceInfo.GetName(),
-				provisioning.HistoricJobResourceInfo.GetName():
+			case provisioning.JobResourceInfo.GetName():
 				// Jobs are shown on the configuration page.
 				if id.GetOrgRole().Includes(identity.RoleAdmin) {
 					return authorizer.DecisionAllow, "", nil
@@ -299,6 +293,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return provisioning.SchemeGroupVersion
+}
+
+func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
+	return b.client
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -331,17 +329,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job storage: %w", err)
-	}
-
-	jobHistory, err := jobs.NewStorageBackedHistory(historicJobStore)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job wrapper: %w", err)
-	}
-
-	b.jobs, err = jobs.NewStore(realJobStore, jobHistory, time.Second*30)
+	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -356,18 +344,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter:          b,
-		jobs:            b.jobs,
-		webhooksEnabled: b.isPublic,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = NewWebhookConnector(b, b, b.jobs, b.isPublic)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
-		getter:  b,
-		parsers: b.parsers,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -378,7 +359,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		historic:   jobHistory,
+		historic:   b.jobHistory,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
 		blob: b.unified,
@@ -420,7 +401,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
 
@@ -475,34 +457,24 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
+	// Early exit to avoid more expensive checks if we have already found errors
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	// Exit early if we have already found errors
 	targetError := b.verifyAgaintsExistingRepositories(cfg)
 	if targetError != nil {
-		list = append(list, targetError)
+		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
 
-	// For *create* we do a synchronous test... this can be expensive!
-	// it is the same as a full healthcheck, so should not be run on every update
-	if len(list) == 0 && a.GetOperation() == admission.Create {
-		testResults, err := repository.TestRepository(ctx, repo)
-		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec"),
-				"Repository test failed", "Unable to verify repository: "+err.Error()))
-		}
-
-		if !testResults.Success {
-			for _, err := range testResults.Errors {
-				list = append(list, field.Invalid(field.NewPath("spec"),
-					"Repository test failed", err))
-			}
-		}
-	}
-
-	if len(list) > 0 {
-		return apierrors.NewInvalid(
-			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
-			a.GetName(), list)
-	}
 	return nil
+}
+
+func invalidRepositoryError(name string, list field.ErrorList) error {
+	return apierrors.NewInvalid(
+		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+		name, list)
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go
@@ -549,26 +521,33 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
+			b.client = c.ProvisioningV0alpha1()
+
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
 			b.tester = &RepositoryTester{
-				client: c.ProvisioningV0alpha1(),
+				client: b.GetClient(),
 			}
+
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.parsers.ClientFactory,
-				b.storageStatus,
-				b.parsers,
+				b.clients,
+				b.repositoryResources,
+				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
 			syncWorker := sync.NewSyncWorker(
-				c.ProvisioningV0alpha1(),
+				b.GetClient(),
 				b.parsers,
+				b.clients,
 				b.resourceLister,
 				b.storageStatus,
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,
+				b.clients,
 				b.storageStatus,
 				b.unified,
 				exportWorker,
@@ -578,21 +557,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Pull request worker
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
 			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
-			if err != nil {
-				return fmt.Errorf("create pull request worker: %w", err)
-			}
+			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b,
+			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
-				c.ProvisioningV0alpha1(),
+				b.GetClient(),
 				repoInformer,
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
+				b.clients,
 				&repository.Tester{},
 				b.jobs,
 				b.secrets,

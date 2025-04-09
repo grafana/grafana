@@ -88,6 +88,46 @@ resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
     }
   }
   rule {
+    name      = "alert with uid"
+    condition = "B"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "000000004"
+      model          = "{\"alias\":\"just-testing\",\"intervalMs\":1000,\"maxDataPoints\":100,\"orgId\":0,\"refId\":\"A\",\"scenarioId\":\"csv_metric_values\",\"stringInput\":\"1,20,90,30,5,0\"}"
+    }
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "__expr__"
+      model          = "{\"expression\":\"$A\",\"intervalMs\":2000,\"maxDataPoints\":200,\"orgId\":0,\"reducer\":\"mean\",\"refId\":\"B\",\"type\":\"reduce\"}"
+    }
+
+    no_data_state  = "NoData"
+    exec_err_state = "Alerting"
+    is_paused      = false
+
+    notification_settings {
+      contact_point   = "Test-Receiver"
+      group_by        = ["alertname", "grafana_folder", "test"]
+      group_wait      = "1s"
+      group_interval  = "5s"
+      repeat_interval = "5m"
+      mute_timings    = ["test-mute"]
+    }
+  }
+  rule {
     name = "recording rule"
 
     data {

@@ -3,21 +3,23 @@ import { useMemo } from 'react';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
+import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
@@ -84,6 +86,22 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     layout.removePanel?.(this.panel);
   }
 
+  public onConfirmDelete() {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.viz-panel.delete-panel-title', 'Delete panel?'),
+        text: t(
+          'dashboard.viz-panel.delete-panel-text',
+          'Deleting this panel will also remove all queries. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.viz-panel.delete-panel-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
+
   public onDuplicate() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
@@ -102,6 +120,9 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     if (this.panel.parent instanceof AutoGridItem) {
       this.panel.parent.scrollIntoView();
     }
+    if (this.panel.parent instanceof DashboardGridItem) {
+      this.panel.parent.scrollIntoView();
+    }
   }
 }
 
@@ -114,14 +135,14 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.push(getEditPanelUrl(getPanelIdForVizPanel(panel)));
+          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
         }}
         icon="sliders-v-alt"
         fullWidth
         size="sm"
         tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
       >
-        <Trans i18nKey="dashboard.new-panel.configure-button">Configure panel</Trans>
+        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
       </Button>
     </Stack>
   );

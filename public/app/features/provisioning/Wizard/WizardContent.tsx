@@ -14,7 +14,7 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
-import { useCreateOrUpdateRepository } from '../hooks';
+import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 
@@ -94,19 +94,12 @@ export function WizardContent({
   const handleRepositoryDeletion = async (name: string) => {
     try {
       await deleteRepository({ name });
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('provisioning.wizard-content.success-repository-deleted', 'Repository deleted')],
-      });
-      // Wait before redirecting to ensure deletion is indexed
-      setTimeout(() => navigate(PROVISIONING_URL), 1500);
+      // Wait before redirecting to ensure deletion is processed
+      setTimeout(() => {
+        settingsQuery.refetch();
+        navigate(PROVISIONING_URL);
+      }, 1500);
     } catch (error) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('provisioning.wizard-content.error-failed-to-delete', 'Failed to delete repository. Please try again.'),
-        ],
-      });
       setIsCancelling(false);
     }
   };
@@ -168,10 +161,6 @@ export function WizardContent({
       const newName = saveRequest.data?.metadata?.name;
       if (newName) {
         setValue('repositoryName', newName);
-        appEvents.publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [t('provisioning.wizard-content.success-repository-saved', 'Repository saved')],
-        });
         handleStatusChange(true);
       }
     } else if (saveRequest.isError) {

@@ -8,14 +8,22 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import appEvents from 'app/core/app_events';
+import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { getDefaultVizPanel } from '../../utils/utils';
+import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
+import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
+import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
@@ -53,7 +61,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   private _layoutRestorer = new LayoutRestorer();
-  public containerRef = React.createRef<HTMLDivElement>();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -101,7 +109,33 @@ export class RowItem
   }
 
   public onDelete() {
-    this._getParentLayout().removeRow(this);
+    this.getParentLayout().removeRow(this);
+  }
+
+  public onConfirmDelete() {
+    if (this.getLayout().getVizPanels().length === 0) {
+      this.onDelete();
+      return;
+    }
+
+    if (this.getParentLayout().shouldUngroup()) {
+      this.onDelete();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.rows-layout.delete-row-title', 'Delete row?'),
+        text: t(
+          'dashboard.rows-layout.delete-row-text',
+          'Deleting this row will also remove all panels. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.rows-layout.delete-row-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
@@ -109,11 +143,22 @@ export class RowItem
   }
 
   public onDuplicate() {
-    this._getParentLayout().duplicateRow(this);
+    this.getParentLayout().duplicateRow(this);
   }
 
   public duplicate(): RowItem {
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  }
+
+  public serialize(): RowsLayoutRowKind {
+    return serializeRow(this);
+  }
+
+  public onCopy() {
+    const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
+
+    clearClipboard();
+    store.set(LS_ROW_COPY_KEY, JSON.stringify({ elements, row: this.serialize() }));
   }
 
   public onAddPanel(panel = getDefaultVizPanel()) {
@@ -174,7 +219,7 @@ export class RowItem
     this.setState({ collapse: !this.state.collapse });
   }
 
-  private _getParentLayout(): RowsLayoutManager {
+  public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
   }
 
@@ -184,5 +229,19 @@ export class RowItem
 
   public scrollIntoView() {
     scrollCanvasElementIntoView(this, this.containerRef);
+  }
+
+  public getCollapsedState(): boolean {
+    return this.state.collapse ?? false;
+  }
+
+  public setCollapsedState(collapse: boolean) {
+    this.setState({ collapse });
+  }
+
+  public hasUniqueTitle(): boolean {
+    const parentLayout = this.getParentLayout();
+    const duplicateTitles = parentLayout.duplicateTitles();
+    return !duplicateTitles.has(this.state.title);
   }
 }

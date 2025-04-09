@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
@@ -40,7 +41,9 @@ export function TemplateContentAndPreview({
   return (
     <div className={cx(className, styles.mainContainer)}>
       <div className={styles.container}>
-        <EditorColumnHeader label="Template content" />
+        <EditorColumnHeader
+          label={t('alerting.template-content-and-preview.label-template-content', 'Template content')}
+        />
         <Box flex={1}>
           <div className={styles.viewerContainer({ height: 400 })}>
             <AutoSizer>
@@ -60,7 +63,13 @@ export function TemplateContentAndPreview({
 
       {isGrafanaAlertManager && (
         <div className={styles.container}>
-          <EditorColumnHeader id={templatePreviewId} label="Preview with the default payload" />
+          <EditorColumnHeader
+            id={templatePreviewId}
+            label={t(
+              'alerting.template-content-and-preview.label-preview-with-the-default-payload',
+              'Preview with the default payload'
+            )}
+          />
           <Box flex={1}>
             <div
               role="presentation"

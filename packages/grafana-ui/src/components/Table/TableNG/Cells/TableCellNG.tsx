@@ -1,13 +1,20 @@
 import { css } from '@emotion/css';
-import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
+import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { CellColors, TableCellNGProps } from '../types';
+import {
+  CellColors,
+  CustomCellRendererProps,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableCellNGProps,
+} from '../types';
 import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
@@ -31,15 +38,19 @@ export function TableCellNG(props: TableCellNGProps) {
     shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
-    cellInspect,
     getActions,
     rowBg,
+    onCellFilterAdded,
   } = props;
+
+  const cellInspect = field.config?.custom?.inspect ?? false;
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
   const { type: cellType } = cellOptions;
+
+  const showFilters = field.config.filterable && onCellFilterAdded;
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
@@ -120,6 +131,10 @@ export function TableCellNG(props: TableCellNGProps) {
     case TableCellDisplayMode.Actions:
       cell = <ActionsCell actions={actions} />;
       break;
+    case TableCellDisplayMode.Custom:
+      const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+      cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
+      break;
     case TableCellDisplayMode.Auto:
     default:
       cell = (
@@ -139,11 +154,11 @@ export function TableCellNG(props: TableCellNGProps) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
       const div = divWidthRef.current;
       const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('position', 'absolute');
-      tableCellDiv?.style.setProperty('top', '0');
       tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
-      tableCellDiv?.style.setProperty('white-space', 'normal');
-      tableCellDiv?.style.setProperty('min-height', `${height}px`);
+      tableCellDiv?.style.setProperty('white-space', 'pre-line');
+      tableCellDiv?.style.setProperty('min-height', `100%`);
+      tableCellDiv?.style.setProperty('height', `fit-content`);
+      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
     }
   };
 
@@ -153,32 +168,61 @@ export function TableCellNG(props: TableCellNGProps) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
       const div = divWidthRef.current;
       const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('position', 'relative');
-      tableCellDiv?.style.removeProperty('top');
       tableCellDiv?.style.removeProperty('z-index');
-      tableCellDiv?.style.setProperty('white-space', 'nowrap');
+      tableCellDiv?.style.removeProperty('white-space');
+      tableCellDiv?.style.removeProperty('min-height');
+      tableCellDiv?.style.removeProperty('height');
+      tableCellDiv?.style.removeProperty('background');
     }
   };
+
+  const onFilterFor = useCallback(() => {
+    if (onCellFilterAdded) {
+      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
+    }
+  }, [field.name, onCellFilterAdded, value]);
+
+  const onFilterOut = useCallback(() => {
+    if (onCellFilterAdded) {
+      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: String(value ?? '') });
+    }
+  }, [field.name, onCellFilterAdded, value]);
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
-      {cellInspect && isHovered && (
+      {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
-          <IconButton
-            name="eye"
-            tooltip="Inspect value"
-            onClick={() => {
-              setContextMenuProps({
-                value: String(value ?? ''),
-                mode:
-                  cellType === TableCellDisplayMode.JSONView
-                    ? TableCellInspectorMode.code
-                    : TableCellInspectorMode.text,
-              });
-              setIsInspecting(true);
-            }}
-          />
+          {cellInspect && (
+            <IconButton
+              name="eye"
+              tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+              onClick={() => {
+                setContextMenuProps({
+                  value: String(value ?? ''),
+                  mode:
+                    cellType === TableCellDisplayMode.JSONView
+                      ? TableCellInspectorMode.code
+                      : TableCellInspectorMode.text,
+                });
+                setIsInspecting(true);
+              }}
+            />
+          )}
+          {showFilters && (
+            <>
+              <IconButton
+                name={'search-plus'}
+                onClick={onFilterFor}
+                tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
+              />
+              <IconButton
+                name={'search-minus'}
+                onClick={onFilterOut}
+                tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
