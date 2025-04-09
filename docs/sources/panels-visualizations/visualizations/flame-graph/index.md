@@ -97,9 +97,7 @@ You can click a function to show a drop-down menu with additional actions:
 - Copy function name
 - Sandwich view
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-menu-v2.png" max-width="700px" alt="A flame graph visualization with drop-down actions." >}}
-
-<!-- Determine if this option has changed before adding new screenshot -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-menu-v12.0.png" max-width="700px" alt="A flame graph visualization with drop-down actions." >}}
 
 ##### Focus block
 
