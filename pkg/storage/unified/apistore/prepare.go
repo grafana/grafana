@@ -61,6 +61,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
+	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+		return nil, err
+	}
 
 	if s.opts.RequireDeprecatedInternalID {
 		// nolint:staticcheck
@@ -160,6 +163,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetGeneration(previous.GetGeneration() + 1)
 		obj.SetUpdatedBy(info.GetUID())
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+
+		// Only validate when the generation has changed
+		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+			return nil, err
+		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
@@ -175,12 +183,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
 	support := s.opts.LargeObjectSupport
-	if support != nil {
-		size := buf.Len()
-		if size > support.Threshold() {
-			if support.MaxSize() > 0 && size > support.MaxSize() {
-				return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
-			}
+	size := buf.Len()
+	if support != nil && size > support.Threshold() {
+		if support.MaxSize() > 0 && size > support.MaxSize() {
+			return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
 		}
 
 		key := &resource.ResourceKey{
