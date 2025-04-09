@@ -38,6 +38,9 @@ export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
   ruleSourceType: 'grafana',
 };
 
+/**
+ * @deprecated use "SupportedRulesSourceType" and related types instead
+ */
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
   Loki = 'loki',
@@ -54,13 +57,6 @@ export interface AlertManagerDataSource {
   handleGrafanaManagedAlerts?: boolean;
 }
 
-export const RulesDataSourceTypes: string[] = [
-  DataSourceType.Loki,
-  DataSourceType.Prometheus,
-  DataSourceType.AmazonPrometheus,
-  DataSourceType.AzurePrometheus,
-];
-
 export function getRulesDataSources() {
   const hasReadPermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
   const hasWritePermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
@@ -69,7 +65,7 @@ export function getRulesDataSources() {
   }
 
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => isSupportedExternalRulesSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -208,17 +204,6 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   }
 
   return { availableInternalDataSources, availableExternalDataSources };
-}
-
-export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
-  const dataSource = getDataSourceByName(dataSourceName);
-  if (!dataSource) {
-    throw new Error(`Data source ${dataSourceName} not found`);
-  }
-  if (dataSource.type !== DataSourceType.Loki && dataSource.type !== DataSourceType.Prometheus) {
-    throw new Error(`Unexpected data source type ${dataSource.type}`);
-  }
-  return dataSource;
 }
 
 export function getAllRulesSourceNames(): string[] {
@@ -363,3 +348,56 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
     ruleSourceType: 'datasource',
   };
 }
+
+export type SupportedExternalPrometheusFlavoredRulesSourceType =
+  | 'prometheus'
+  | 'grafana-amazonprometheus-datasource'
+  | 'grafana-azureprometheus-datasource';
+
+/**
+ * Check if the given type is a supported external Prometheus flavored rules source type.
+ */
+export function isSupportedExternalPrometheusFlavoredRulesSourceType(
+  type: string
+): type is SupportedExternalPrometheusFlavoredRulesSourceType {
+  return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.includes(
+    type as SupportedExternalPrometheusFlavoredRulesSourceType
+  );
+}
+
+export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
+
+/**
+ * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
+ */
+export function isSupportedExternalRulesSourceType(type: string): type is SupportedExternalRulesSourceType {
+  return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.includes(type as SupportedExternalRulesSourceType);
+}
+
+/**
+ * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
+ */
+export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceType;
+
+/**
+ * Check if the given type is a supported rules source type. Includes "grafana" for Grafana Managed Rules.
+ */
+export function isSupportedRulesSourceType(type: string): type is SupportedRulesSourceType {
+  return type === GRAFANA_RULES_SOURCE_NAME || isSupportedExternalRulesSourceType(type);
+}
+
+export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
+  'prometheus',
+  'grafana-amazonprometheus-datasource',
+  'grafana-azureprometheus-datasource',
+] as const;
+
+export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
+  'loki',
+  ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+] as const;
+
+export const SUPPORTED_RULE_SOURCE_TYPES = [
+  GRAFANA_RULES_SOURCE_NAME,
+  ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
+] as const;
