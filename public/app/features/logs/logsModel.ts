@@ -259,6 +259,7 @@ export function dataFrameToLogsModel(
  * @param intervalMs Dynamic data interval based on available pixel width
  * @param absoluteRange Requested time range
  * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
+ * @param minimumBucketSize
  */
 export function getSeriesProperties(
   sortedRows: LogRowModel[],
@@ -274,18 +275,21 @@ export function getSeriesProperties(
   let requestedRangeMs;
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
-    const earliestTsLogs = sortedRows[0].timeEpochMs;
+    const firstTimeStamp = sortedRows[0].timeEpochMs;
+    const lastTimeStamp = sortedRows[sortedRows.length - 1].timeEpochMs;
+    const earliestTsLogs = firstTimeStamp < lastTimeStamp ? firstTimeStamp : lastTimeStamp;
+    const earliestLogToTimeRangeEnd = absoluteRange.to - earliestTsLogs;
 
     requestedRangeMs = absoluteRange.to - absoluteRange.from;
-    visibleRangeMs = absoluteRange.to - earliestTsLogs;
+    visibleRangeMs = Math.abs(firstTimeStamp - lastTimeStamp);
 
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
-      const clampingFactor = visibleRangeMs / requestedRangeMs;
+      const clampingFactor = earliestLogToTimeRangeEnd / requestedRangeMs;
       resolutionIntervalMs *= clampingFactor;
       // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
-      // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
+      // makeSeriesForLogs() aligns data points with time buckets, so we do the same here to not cut off data
       const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
       visibleRange = { from: adjustedEarliest, to: absoluteRange.to };
     } else {
@@ -564,17 +568,15 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 
       if (canShowCoverage) {
         const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
-        metaLimitValue += `, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
-          visibleRangeMs
-        )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+        metaLimitValue = `${limit} lines shown — ${coverage}% (${rangeUtil.msRangeToTimeString(visibleRangeMs)}) of ${rangeUtil.msRangeToTimeString(requestedRangeMs)}`;
       }
     } else {
       const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
-      metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
+      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} ${description}`;
     }
 
     logsModelMeta[limitIndex] = {
-      label: LIMIT_LABEL,
+      label: '',
       value: metaLimitValue,
       kind: LogsMetaKind.String,
     };
