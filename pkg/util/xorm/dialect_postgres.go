@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"xorm.io/core"
 )
 
 // from http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html
@@ -772,11 +770,11 @@ var (
 const postgresPublicSchema = "public"
 
 type postgres struct {
-	core.Base
+	coreBase
 }
 
-func (db *postgres) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
-	err := db.Base.Init(d, db, uri, drivername, dataSourceName)
+func (db *postgres) Init(d *coreDB, uri *coreUri, drivername, dataSourceName string) error {
+	err := db.coreBase.Init(d, db, uri, drivername, dataSourceName)
 	if err != nil {
 		return err
 	}
@@ -786,50 +784,50 @@ func (db *postgres) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName s
 	return nil
 }
 
-func (db *postgres) SqlType(c *core.Column) string {
+func (db *postgres) SqlType(c *coreColumn) string {
 	var res string
 	switch t := c.SQLType.Name; t {
-	case core.TinyInt:
-		res = core.SmallInt
+	case TinyInt:
+		res = SmallInt
 		return res
-	case core.Bit:
-		res = core.Boolean
+	case Bit:
+		res = Boolean
 		return res
-	case core.MediumInt, core.Int, core.Integer:
+	case MediumInt, Int, Integer:
 		if c.IsAutoIncrement {
-			return core.Serial
+			return Serial
 		}
-		return core.Integer
-	case core.BigInt:
+		return Integer
+	case BigInt:
 		if c.IsAutoIncrement {
-			return core.BigSerial
+			return BigSerial
 		}
-		return core.BigInt
-	case core.Serial, core.BigSerial:
+		return BigInt
+	case Serial, BigSerial:
 		c.IsAutoIncrement = true
 		c.Nullable = false
 		res = t
-	case core.Binary, core.VarBinary:
-		return core.Bytea
-	case core.DateTime:
-		res = core.TimeStamp
-	case core.TimeStampz:
+	case Binary, VarBinary:
+		return Bytea
+	case DateTime:
+		res = TimeStamp
+	case TimeStampz:
 		return "timestamp with time zone"
-	case core.Float:
-		res = core.Real
-	case core.TinyText, core.MediumText, core.LongText:
-		res = core.Text
-	case core.NVarchar:
-		res = core.Varchar
-	case core.Uuid:
-		return core.Uuid
-	case core.Blob, core.TinyBlob, core.MediumBlob, core.LongBlob:
-		return core.Bytea
-	case core.Double:
+	case Float:
+		res = Real
+	case TinyText, MediumText, LongText:
+		res = Text
+	case NVarchar:
+		res = Varchar
+	case Uuid:
+		return Uuid
+	case Blob, TinyBlob, MediumBlob, LongBlob:
+		return Bytea
+	case Double:
 		return "DOUBLE PRECISION"
 	default:
 		if c.IsAutoIncrement {
-			return core.Serial
+			return Serial
 		}
 		res = t
 	}
@@ -900,7 +898,7 @@ func (db *postgres) TableCheckSql(tableName string) (string, []any) {
 	return `SELECT tablename FROM pg_tables WHERE schemaname = ? AND tablename = ?`, args
 }
 
-func (db *postgres) ModifyColumnSql(tableName string, col *core.Column) string {
+func (db *postgres) ModifyColumnSql(tableName string, col *coreColumn) string {
 	if len(db.Schema) == 0 || strings.Contains(tableName, ".") {
 		return fmt.Sprintf("alter table %s ALTER COLUMN %s TYPE %s",
 			tableName, col.Name, db.SqlType(col))
@@ -909,7 +907,7 @@ func (db *postgres) ModifyColumnSql(tableName string, col *core.Column) string {
 		db.Schema, tableName, col.Name, db.SqlType(col))
 }
 
-func (db *postgres) DropIndexSql(tableName string, index *core.Index) string {
+func (db *postgres) DropIndexSql(tableName string, index *coreIndex) string {
 	quote := db.Quote
 	idxName := index.Name
 
@@ -918,14 +916,14 @@ func (db *postgres) DropIndexSql(tableName string, index *core.Index) string {
 
 	if !strings.HasPrefix(idxName, "UQE_") &&
 		!strings.HasPrefix(idxName, "IDX_") {
-		if index.Type == core.UniqueType {
+		if index.Type == UniqueType {
 			idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
 		} else {
 			idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 		}
 	}
-	if db.Uri.Schema != "" {
-		idxName = db.Uri.Schema + "." + idxName
+	if db.coreUri.Schema != "" {
+		idxName = db.coreUri.Schema + "." + idxName
 	}
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
@@ -950,7 +948,7 @@ func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
 	return rows.Next(), nil
 }
 
-func (db *postgres) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+func (db *postgres) GetColumns(tableName string) ([]string, map[string]*coreColumn, error) {
 	args := []any{tableName}
 	s := `SELECT column_name, column_default, is_nullable, data_type, character_maximum_length,
     CASE WHEN p.contype = 'p' THEN true ELSE false END AS primarykey,
@@ -979,11 +977,11 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 	}
 	defer rows.Close()
 
-	cols := make(map[string]*core.Column)
+	cols := make(map[string]*coreColumn)
 	colSeq := make([]string, 0)
 
 	for rows.Next() {
-		col := new(core.Column)
+		col := new(coreColumn)
 		col.Indexes = make(map[string]int)
 
 		var colName, isNullable, dataType string
@@ -1023,23 +1021,23 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 
 		switch dataType {
 		case "character varying", "character":
-			col.SQLType = core.SQLType{Name: core.Varchar, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: Varchar, DefaultLength: 0, DefaultLength2: 0}
 		case "timestamp without time zone":
-			col.SQLType = core.SQLType{Name: core.DateTime, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: DateTime, DefaultLength: 0, DefaultLength2: 0}
 		case "timestamp with time zone":
-			col.SQLType = core.SQLType{Name: core.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: TimeStampz, DefaultLength: 0, DefaultLength2: 0}
 		case "double precision":
-			col.SQLType = core.SQLType{Name: core.Double, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: Double, DefaultLength: 0, DefaultLength2: 0}
 		case "boolean":
-			col.SQLType = core.SQLType{Name: core.Bool, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: Bool, DefaultLength: 0, DefaultLength2: 0}
 		case "time without time zone":
-			col.SQLType = core.SQLType{Name: core.Time, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: Time, DefaultLength: 0, DefaultLength2: 0}
 		case "oid":
-			col.SQLType = core.SQLType{Name: core.BigInt, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: BigInt, DefaultLength: 0, DefaultLength2: 0}
 		default:
-			col.SQLType = core.SQLType{Name: strings.ToUpper(dataType), DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = coreSQLType{Name: strings.ToUpper(dataType), DefaultLength: 0, DefaultLength2: 0}
 		}
-		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
+		if _, ok := SqlTypes[col.SQLType.Name]; !ok {
 			return nil, nil, fmt.Errorf("unknown colType: %v", dataType)
 		}
 
@@ -1065,7 +1063,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 	return colSeq, cols, nil
 }
 
-func (db *postgres) GetTables() ([]*core.Table, error) {
+func (db *postgres) GetTables() ([]*coreTable, error) {
 	args := []any{}
 	s := "SELECT tablename FROM pg_tables"
 	if len(db.Schema) != 0 {
@@ -1081,9 +1079,9 @@ func (db *postgres) GetTables() ([]*core.Table, error) {
 	}
 	defer rows.Close()
 
-	tables := make([]*core.Table, 0)
+	tables := make([]*coreTable, 0)
 	for rows.Next() {
-		table := core.NewEmptyTable()
+		table := NewEmptyTable()
 		var name string
 		err = rows.Scan(&name)
 		if err != nil {
@@ -1106,7 +1104,7 @@ func getIndexColName(indexdef string) []string {
 	return colNames
 }
 
-func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error) {
+func (db *postgres) GetIndexes(tableName string) (map[string]*coreIndex, error) {
 	args := []any{tableName}
 	s := "SELECT indexname, indexdef FROM pg_indexes WHERE tablename=$1"
 	if len(db.Schema) != 0 {
@@ -1121,7 +1119,7 @@ func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error)
 	}
 	defer rows.Close()
 
-	indexes := make(map[string]*core.Index, 0)
+	indexes := make(map[string]*coreIndex, 0)
 	for rows.Next() {
 		var indexType int
 		var indexName, indexdef string
@@ -1135,9 +1133,9 @@ func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error)
 			continue
 		}
 		if strings.HasPrefix(indexdef, "CREATE UNIQUE INDEX") {
-			indexType = core.UniqueType
+			indexType = UniqueType
 		} else {
-			indexType = core.IndexType
+			indexType = IndexType
 		}
 		colNames = getIndexColName(indexdef)
 		var isRegular bool
@@ -1149,7 +1147,7 @@ func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error)
 			}
 		}
 
-		index := &core.Index{Name: indexName, Type: indexType, Cols: make([]string, 0)}
+		index := &coreIndex{Name: indexName, Type: indexType, Cols: make([]string, 0)}
 		for _, colName := range colNames {
 			index.Cols = append(index.Cols, strings.Trim(colName, `" `))
 		}
@@ -1159,8 +1157,8 @@ func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error)
 	return indexes, nil
 }
 
-func (db *postgres) Filters() []core.Filter {
-	return []core.Filter{&core.IdFilter{}, &core.QuoteFilter{}, &core.SeqFilter{Prefix: "$", Start: 1}}
+func (db *postgres) Filters() []coreFilter {
+	return []coreFilter{&coreIdFilter{}, &coreQuoteFilter{}, &coreSeqFilter{Prefix: "$", Start: 1}}
 }
 
 type pqDriver struct {
@@ -1214,8 +1212,8 @@ func parseOpts(name string, o values) error {
 	return nil
 }
 
-func (p *pqDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	db := &core.Uri{DbType: core.POSTGRES}
+func (p *pqDriver) Parse(driverName, dataSourceName string) (*coreUri, error) {
+	db := &coreUri{DbType: POSTGRES}
 	var err error
 
 	if strings.HasPrefix(dataSourceName, "postgresql://") || strings.HasPrefix(dataSourceName, "postgres://") {
@@ -1244,7 +1242,7 @@ type pqDriverPgx struct {
 	pqDriver
 }
 
-func (pgx *pqDriverPgx) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+func (pgx *pqDriverPgx) Parse(driverName, dataSourceName string) (*coreUri, error) {
 	// Remove the leading characters for driver to work
 	if len(dataSourceName) >= 9 && dataSourceName[0] == 0 {
 		dataSourceName = dataSourceName[9:]

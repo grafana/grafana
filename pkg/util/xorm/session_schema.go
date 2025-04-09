@@ -8,8 +8,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-
-	"xorm.io/core"
 )
 
 // Ping test if database is ok
@@ -190,9 +188,9 @@ func (session *Session) isIndexExist2(tableName string, cols []string, unique bo
 	for _, index := range indexes {
 		if sliceEq(index.Cols, cols) {
 			if unique {
-				return index.Type == core.UniqueType, nil
+				return index.Type == UniqueType, nil
 			}
-			return index.Type == core.IndexType, nil
+			return index.Type == IndexType, nil
 		}
 	}
 	return false, nil
@@ -253,7 +251,7 @@ func (session *Session) Sync2(beans ...any) error {
 		}
 		tbNameWithSchema := engine.tbNameWithSchema(tbName)
 
-		var oriTable *core.Table
+		var oriTable *coreTable
 		for _, tb := range tables {
 			if strings.EqualFold(engine.tbNameWithSchema(tb.Name), engine.tbNameWithSchema(tbName)) {
 				oriTable = tb
@@ -287,7 +285,7 @@ func (session *Session) Sync2(beans ...any) error {
 
 		// check columns
 		for _, col := range table.Columns() {
-			var oriCol *core.Column
+			var oriCol *coreColumn
 			for _, col2 := range oriTable.Columns() {
 				if strings.EqualFold(col.Name, col2.Name) {
 					oriCol = col2
@@ -309,11 +307,11 @@ func (session *Session) Sync2(beans ...any) error {
 			expectedType := engine.dialect.SqlType(col)
 			curType := engine.dialect.SqlType(oriCol)
 			if expectedType != curType {
-				if expectedType == core.Text &&
-					strings.HasPrefix(curType, core.Varchar) {
+				if expectedType == Text &&
+					strings.HasPrefix(curType, Varchar) {
 					// currently only support mysql & postgres
-					if engine.dialect.DBType() == core.MYSQL ||
-						engine.dialect.DBType() == core.POSTGRES {
+					if engine.dialect.DBType() == MYSQL ||
+						engine.dialect.DBType() == POSTGRES {
 						engine.logger.Infof("Table %s column %s change type from %s to %s\n",
 							tbNameWithSchema, col.Name, curType, expectedType)
 						_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
@@ -321,8 +319,8 @@ func (session *Session) Sync2(beans ...any) error {
 						engine.logger.Warnf("Table %s column %s db type is %s, struct type is %s\n",
 							tbNameWithSchema, col.Name, curType, expectedType)
 					}
-				} else if strings.HasPrefix(curType, core.Varchar) && strings.HasPrefix(expectedType, core.Varchar) {
-					if engine.dialect.DBType() == core.MYSQL {
+				} else if strings.HasPrefix(curType, Varchar) && strings.HasPrefix(expectedType, Varchar) {
+					if engine.dialect.DBType() == MYSQL {
 						if oriCol.Length < col.Length {
 							engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
 								tbNameWithSchema, col.Name, oriCol.Length, col.Length)
@@ -335,8 +333,8 @@ func (session *Session) Sync2(beans ...any) error {
 							tbNameWithSchema, col.Name, curType, expectedType)
 					}
 				}
-			} else if expectedType == core.Varchar {
-				if engine.dialect.DBType() == core.MYSQL {
+			} else if expectedType == Varchar {
+				if engine.dialect.DBType() == MYSQL {
 					if oriCol.Length < col.Length {
 						engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
 							tbNameWithSchema, col.Name, oriCol.Length, col.Length)
@@ -348,7 +346,7 @@ func (session *Session) Sync2(beans ...any) error {
 			if col.Default != oriCol.Default {
 				switch {
 				case col.IsAutoIncrement: // For autoincrement column, don't check default
-				case (col.SQLType.Name == core.Bool || col.SQLType.Name == core.Boolean) &&
+				case (col.SQLType.Name == Bool || col.SQLType.Name == Boolean) &&
 					((strings.EqualFold(col.Default, "true") && oriCol.Default == "1") ||
 						(strings.EqualFold(col.Default, "false") && oriCol.Default == "0")):
 				default:
@@ -367,10 +365,10 @@ func (session *Session) Sync2(beans ...any) error {
 		}
 
 		var foundIndexNames = make(map[string]bool)
-		var addedNames = make(map[string]*core.Index)
+		var addedNames = make(map[string]*coreIndex)
 
 		for name, index := range table.Indexes {
-			var oriIndex *core.Index
+			var oriIndex *coreIndex
 			for name2, index2 := range oriTable.Indexes {
 				if index.Equal(index2) {
 					oriIndex = index2
@@ -406,11 +404,11 @@ func (session *Session) Sync2(beans ...any) error {
 		}
 
 		for name, index := range addedNames {
-			if index.Type == core.UniqueType {
+			if index.Type == UniqueType {
 				session.statement.RefTable = table
 				session.statement.tableName = tbNameWithSchema
 				err = session.addUnique(tbNameWithSchema, name)
-			} else if index.Type == core.IndexType {
+			} else if index.Type == IndexType {
 				session.statement.RefTable = table
 				session.statement.tableName = tbNameWithSchema
 				err = session.addIndex(tbNameWithSchema, name)

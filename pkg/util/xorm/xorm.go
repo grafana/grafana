@@ -16,8 +16,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-
-	"xorm.io/core"
 )
 
 const (
@@ -29,21 +27,21 @@ const (
 
 func regDrvsNDialects() bool {
 	providedDrvsNDialects := map[string]struct {
-		dbType     core.DbType
-		getDriver  func() core.Driver
-		getDialect func() core.Dialect
+		dbType     coreDbType
+		getDriver  func() Driver
+		getDialect func() coreDialect
 	}{
-		"mysql":    {"mysql", func() core.Driver { return &mysqlDriver{} }, func() core.Dialect { return &mysql{} }},
-		"mymysql":  {"mysql", func() core.Driver { return &mymysqlDriver{} }, func() core.Dialect { return &mysql{} }},
-		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
-		"pgx":      {"postgres", func() core.Driver { return &pqDriverPgx{} }, func() core.Dialect { return &postgres{} }},
-		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
+		"mysql":    {"mysql", func() Driver { return &mysqlDriver{} }, func() coreDialect { return &mysql{} }},
+		"mymysql":  {"mysql", func() Driver { return &mymysqlDriver{} }, func() coreDialect { return &mysql{} }},
+		"postgres": {"postgres", func() Driver { return &pqDriver{} }, func() coreDialect { return &postgres{} }},
+		"pgx":      {"postgres", func() Driver { return &pqDriverPgx{} }, func() coreDialect { return &postgres{} }},
+		"sqlite3":  {"sqlite3", func() Driver { return &sqlite3Driver{} }, func() coreDialect { return &sqlite3{} }},
 	}
 
 	for driverName, v := range providedDrvsNDialects {
-		if driver := core.QueryDriver(driverName); driver == nil {
-			core.RegisterDriver(driverName, v.getDriver())
-			core.RegisterDialect(v.dbType, v.getDialect)
+		if driver := QueryDriver(driverName); driver == nil {
+			RegisterDriver(driverName, v.getDriver())
+			RegisterDialect(v.dbType, v.getDialect)
 		}
 	}
 	return true
@@ -60,7 +58,7 @@ func init() {
 // NewEngine new a db manager according to the parameter. Currently support four
 // drivers
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
-	driver := core.QueryDriver(driverName)
+	driver := QueryDriver(driverName)
 	if driver == nil {
 		return nil, fmt.Errorf("unsupported driver name: %v", driverName)
 	}
@@ -70,12 +68,12 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		return nil, err
 	}
 
-	dialect := core.QueryDialect(uri.DbType)
+	dialect := QueryDialect(uri.DbType)
 	if dialect == nil {
 		return nil, fmt.Errorf("unsupported dialect type: %v", uri.DbType)
 	}
 
-	db, err := core.Open(driverName, dataSourceName)
+	db, err := Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +86,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	engine := &Engine{
 		db:              db,
 		dialect:         dialect,
-		Tables:          make(map[reflect.Type]*core.Table),
+		Tables:          make(map[reflect.Type]*coreTable),
 		mutex:           &sync.RWMutex{},
 		TagIdentifier:   "xorm",
 		TZLocation:      time.Local,
@@ -98,7 +96,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	}
 
 	switch uri.DbType {
-	case core.SQLITE:
+	case SQLITE:
 		engine.DatabaseTZ = time.UTC
 	case Spanner:
 		engine.DatabaseTZ = time.UTC
@@ -111,9 +109,9 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	}
 
 	logger := NewSimpleLogger(os.Stdout)
-	logger.SetLevel(core.LOG_INFO)
+	logger.SetLevel(LOG_INFO)
 	engine.SetLogger(logger)
-	engine.SetMapper(core.NewCacheMapper(new(core.SnakeMapper)))
+	engine.SetMapper(NewCacheMapper(new(coreSnakeMapper)))
 
 	runtime.SetFinalizer(engine, close)
 
@@ -139,13 +137,13 @@ type SequenceGenerator interface {
 }
 
 type DialectWithSequenceGenerator interface {
-	core.Dialect
+	coreDialect
 
 	// CreateSequenceGenerator returns optional generator used to create AUTOINCREMENT ids for inserts.
 	CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
 }
 
 type DialectWithRetryableErrors interface {
-	core.Dialect
+	coreDialect
 	RetryOnError(err error) bool
 }

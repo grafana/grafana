@@ -16,8 +16,8 @@ import (
 )
 
 func init() {
-	core.RegisterDriver("spanner", &spannerDriver{})
-	core.RegisterDialect("spanner", func() core.Dialect { return &spanner{} })
+	coreRegisterDriver("spanner", &spannerDriver{})
+	coreRegisterDialect("spanner", func() coreDialect { return &spanner{} })
 }
 
 // https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#reserved_keywords
@@ -121,18 +121,18 @@ var spannerReservedKeywords = map[string]struct{}{
 
 type spannerDriver struct{}
 
-func (d *spannerDriver) Parse(_driverName, datasourceName string) (*core.Uri, error) {
-	return &core.Uri{DbType: "spanner", DbName: datasourceName}, nil
+func (d *spannerDriver) Parse(_driverName, datasourceName string) (*coreUri, error) {
+	return &coreUri{DbType: "spanner", DbName: datasourceName}, nil
 }
 
 type spanner struct {
-	core.Base
+	coreBase
 }
 
-func (s *spanner) Init(db *core.DB, uri *core.Uri, driverName string, datasourceName string) error {
+func (s *spanner) Init(db *coreDB, uri *coreUri, driverName string, datasourceName string) error {
 	return s.Base.Init(db, s, uri, driverName, datasourceName)
 }
-func (s *spanner) Filters() []core.Filter { return []core.Filter{&core.IdFilter{}} }
+func (s *spanner) Filters() []coreFilter { return []coreFilter{&coreIdFilter{}} }
 func (s *spanner) IsReserved(name string) bool {
 	_, exists := spannerReservedKeywords[name]
 	return exists
@@ -152,11 +152,11 @@ func (s *spanner) SupportDropIfExists() bool { return false } // Drop should be 
 func (s *spanner) IndexOnTable() bool        { return false }
 func (s *spanner) ShowCreateNull() bool      { return false }
 func (s *spanner) Quote(name string) string  { return "`" + name + "`" }
-func (s *spanner) SqlType(col *core.Column) string {
+func (s *spanner) SqlType(col *coreColumn) string {
 	switch col.SQLType.Name {
-	case core.Int, core.SmallInt, core.BigInt:
+	case coreInt, coreSmallInt, coreBigInt:
 		return "INT64"
-	case core.Varchar, core.Text, core.MediumText, core.LongText, core.Char, core.NVarchar, core.NChar, core.NText:
+	case coreVarchar, coreText, coreMediumText, coreLongText, coreChar, coreNVarchar, coreNChar, coreNText:
 		l := col.Length
 		if l == 0 {
 			l = col.SQLType.DefaultLength
@@ -165,13 +165,13 @@ func (s *spanner) SqlType(col *core.Column) string {
 			return fmt.Sprintf("STRING(%d)", l)
 		}
 		return "STRING(MAX)"
-	case core.Jsonb:
+	case coreJsonb:
 		return "STRING(MAX)"
-	case core.Bool, core.TinyInt:
+	case coreBool, coreTinyInt:
 		return "BOOL"
-	case core.Float, core.Double:
+	case coreFloat, coreDouble:
 		return "FLOAT64"
-	case core.Bytea, core.Blob, core.MediumBlob, core.LongBlob:
+	case coreBytea, coreBlob, coreMediumBlob, coreLongBlob:
 		l := col.Length
 		if l == 0 {
 			l = col.SQLType.DefaultLength
@@ -180,7 +180,7 @@ func (s *spanner) SqlType(col *core.Column) string {
 			return fmt.Sprintf("BYTES(%d)", l)
 		}
 		return "BYTES(MAX)"
-	case core.DateTime, core.TimeStamp:
+	case coreDateTime, coreTimeStamp:
 		return "TIMESTAMP"
 	default:
 		panic("unknown column type: " + col.SQLType.Name)
@@ -189,7 +189,7 @@ func (s *spanner) SqlType(col *core.Column) string {
 	}
 }
 
-func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+func (s *spanner) GetColumns(tableName string) ([]string, map[string]*coreColumn, error) {
 	query := `SELECT COLUMN_NAME, SPANNER_TYPE, IS_NULLABLE, IS_IDENTITY, IDENTITY_GENERATION, IDENTITY_KIND, COLUMN_DEFAULT
 				FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND TABLE_SCHEMA="" ORDER BY ORDINAL_POSITION`
 	rows, err := s.DB().Query(query, tableName)
@@ -198,7 +198,7 @@ func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	}
 	defer rows.Close()
 
-	columns := make(map[string]*core.Column)
+	columns := make(map[string]*coreColumn)
 	var colNames []string
 
 	var name, sqlType, isNullable string
@@ -211,29 +211,29 @@ func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Colum
 		var length int
 		switch {
 		case sqlType == "INT64":
-			sqlType = core.Int
+			sqlType = coreInt
 		case sqlType == "FLOAT32" || sqlType == "FLOAT64":
-			sqlType = core.Float
+			sqlType = coreFloat
 		case sqlType == "BOOL":
-			sqlType = core.Bool
+			sqlType = coreBool
 		case sqlType == "BYTES(MAX)":
-			sqlType = core.Blob
+			sqlType = coreBlob
 		case sqlType == "STRING(MAX)":
-			sqlType = core.NVarchar
+			sqlType = coreNVarchar
 		case sqlType == "TIMESTAMP":
-			sqlType = core.DateTime
+			sqlType = coreDateTime
 		case strings.HasPrefix(sqlType, "BYTES("):
 			// 6 == len(`BYTES(`), we also remove ")" from the end.
 			if l, err := strconv.Atoi(sqlType[6 : len(sqlType)-1]); err == nil {
 				length = l
 			}
-			sqlType = core.Blob
+			sqlType = coreBlob
 		case strings.HasPrefix(sqlType, "STRING("):
 			// 7 == len(`STRING(`), we also remove ")" from the end.
 			if l, err := strconv.Atoi(sqlType[7 : len(sqlType)-1]); err == nil {
 				length = l
 			}
-			sqlType = core.Varchar
+			sqlType = coreVarchar
 		default:
 			panic("unknown column type: " + sqlType)
 		}
@@ -249,9 +249,9 @@ func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Colum
 			defEmpty = false
 		}
 
-		col := &core.Column{
+		col := &coreColumn{
 			Name:            name,
-			SQLType:         core.SQLType{Name: sqlType},
+			SQLType:         coreSQLType{Name: sqlType},
 			Length:          length,
 			Nullable:        isNullable == "YES",
 			IsAutoIncrement: autoincrement,
@@ -266,7 +266,7 @@ func (s *spanner) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	return colNames, columns, rows.Err()
 }
 
-func (s *spanner) CreateTableSql(table *core.Table, tableName, _, charset string) string {
+func (s *spanner) CreateTableSql(table *coreTable, tableName, _, charset string) string {
 	sql := "CREATE TABLE " + s.Quote(tableName) + " ("
 
 	for i, col := range table.Columns() {
@@ -290,9 +290,9 @@ func (s *spanner) CreateTableSql(table *core.Table, tableName, _, charset string
 	return sql
 }
 
-func (s *spanner) CreateIndexSql(tableName string, index *core.Index) string {
+func (s *spanner) CreateIndexSql(tableName string, index *coreIndex) string {
 	sql := "CREATE "
-	if index.Type == core.UniqueType {
+	if index.Type == coreUniqueType {
 		sql += "UNIQUE NULL_FILTERED "
 	}
 	sql += "INDEX " + s.Quote(index.XName(tableName)) + " ON " + s.Quote(tableName) + " (" + strings.Join(index.Cols, ", ") + ")"
@@ -311,27 +311,27 @@ func (s *spanner) TableCheckSql(tableName string) (string, []any) {
 		[]any{tableName}
 }
 
-func (s *spanner) GetTables() ([]*core.Table, error) {
+func (s *spanner) GetTables() ([]*coreTable, error) {
 	res, err := s.DB().Query(`SELECT table_name FROM information_schema.tables WHERE table_schema = ""`)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Close()
 
-	tables := []*core.Table{}
+	tables := []*coreTable{}
 	for res.Next() {
 		var name string
 		if err := res.Scan(&name); err != nil {
 			return nil, err
 		}
-		t := core.NewEmptyTable()
+		t := coreNewEmptyTable()
 		t.Name = name
 		tables = append(tables, t)
 	}
 	return tables, res.Err()
 }
 
-func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
+func (s *spanner) GetIndexes(tableName string) (map[string]*coreIndex, error) {
 	res, err := s.DB().Query(`SELECT ix.INDEX_NAME, ix.INDEX_TYPE, ix.IS_UNIQUE, c.COLUMN_NAME
 		FROM INFORMATION_SCHEMA.INDEXES ix
 		JOIN INFORMATION_SCHEMA.INDEX_COLUMNS c ON (ix.TABLE_NAME=c.TABLE_NAME AND ix.INDEX_NAME=c.INDEX_NAME)
@@ -342,7 +342,7 @@ func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	}
 	defer res.Close()
 
-	indexes := map[string]*core.Index{}
+	indexes := map[string]*coreIndex{}
 	var ixName, ixType, colName string
 	var isUnique bool
 	for res.Next() {
@@ -357,15 +357,15 @@ func (s *spanner) GetIndexes(tableName string) (map[string]*core.Index, error) {
 			isRegular = true
 		}
 
-		var index *core.Index
+		var index *coreIndex
 		var ok bool
 		if index, ok = indexes[ixName]; !ok {
-			t := core.IndexType // ixType == "INDEX" && !isUnique
+			t := coreIndexType // ixType == "INDEX" && !isUnique
 			if ixType == "PRIMARY KEY" || isUnique {
-				t = core.UniqueType
+				t = coreUniqueType
 			}
 
-			index = &core.Index{}
+			index = &coreIndex{}
 			index.IsRegular = isRegular
 			index.Type = t
 			index.Name = ixName

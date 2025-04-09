@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
-func (engine *Engine) buildConds(table *core.Table, bean any,
+func (engine *Engine) buildConds(table *coreTable, bean any,
 	includeVersion bool, includeUpdated bool, includeNil bool,
 	includeAutoIncr bool, allUseBool bool, useAllCols bool, unscoped bool,
 	mustColumnMap map[string]bool, tableName, aliasName string, addedTableName bool) (builder.Cond, error) {
@@ -127,13 +126,13 @@ func (engine *Engine) buildConds(table *core.Table, bean any,
 			t := int64(fieldValue.Uint())
 			val = reflect.ValueOf(&t).Interface()
 		case reflect.Struct:
-			if fieldType.ConvertibleTo(core.TimeType) {
-				t := fieldValue.Convert(core.TimeType).Interface().(time.Time)
+			if fieldType.ConvertibleTo(TimeType) {
+				t := fieldValue.Convert(TimeType).Interface().(time.Time)
 				if !requiredField && (t.IsZero() || !fieldValue.IsValid()) {
 					continue
 				}
 				val = engine.formatColTime(col, t)
-			} else if _, ok := reflect.New(fieldType).Interface().(core.Conversion); ok {
+			} else if _, ok := reflect.New(fieldType).Interface().(coreConversion); ok {
 				continue
 			} else if valNul, ok := fieldValue.Interface().(driver.Valuer); ok {
 				val, _ = valNul.Value()

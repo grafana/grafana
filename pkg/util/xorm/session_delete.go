@@ -6,8 +6,6 @@ package xorm
 
 import (
 	"fmt"
-
-	"xorm.io/core"
 )
 
 // Delete records, bean's non-empty fields are conditions
@@ -64,14 +62,14 @@ func (session *Session) Delete(bean any) (int64, error) {
 
 	if len(orderSQL) > 0 {
 		switch session.engine.dialect.DBType() {
-		case core.POSTGRES:
+		case POSTGRES:
 			inSQL := fmt.Sprintf("ctid IN (SELECT ctid FROM %s%s)", tableName, orderSQL)
 			if len(condSQL) > 0 {
 				deleteSQL += " AND " + inSQL
 			} else {
 				deleteSQL += " WHERE " + inSQL
 			}
-		case core.SQLITE:
+		case SQLITE:
 			inSQL := fmt.Sprintf("rowid IN (SELECT rowid FROM %s%s)", tableName, orderSQL)
 			if len(condSQL) > 0 {
 				deleteSQL += " AND " + inSQL
@@ -96,14 +94,14 @@ func (session *Session) Delete(bean any) (int64, error) {
 
 		if len(orderSQL) > 0 {
 			switch session.engine.dialect.DBType() {
-			case core.POSTGRES:
+			case POSTGRES:
 				inSQL := fmt.Sprintf("ctid IN (SELECT ctid FROM %s%s)", tableName, orderSQL)
 				if len(condSQL) > 0 {
 					realSQL += " AND " + inSQL
 				} else {
 					realSQL += " WHERE " + inSQL
 				}
-			case core.SQLITE:
+			case SQLITE:
 				inSQL := fmt.Sprintf("rowid IN (SELECT rowid FROM %s%s)", tableName, orderSQL)
 				if len(condSQL) > 0 {
 					realSQL += " AND " + inSQL

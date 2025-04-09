@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 func (session *Session) queryPreprocess(sqlStr *string, paramStr ...any) {
@@ -22,7 +21,7 @@ func (session *Session) queryPreprocess(sqlStr *string, paramStr ...any) {
 	session.lastSQLArgs = paramStr
 }
 
-func (session *Session) queryRows(sqlStr string, args ...any) (*core.Rows, error) {
+func (session *Session) queryRows(sqlStr string, args ...any) (*coreRows, error) {
 	defer session.resetStatement()
 
 	session.queryPreprocess(&sqlStr, args...)
@@ -79,8 +78,8 @@ func (session *Session) queryRows(sqlStr string, args ...any) (*core.Rows, error
 	return rows, nil
 }
 
-func (session *Session) queryRow(sqlStr string, args ...any) *core.Row {
-	return core.NewRow(session.queryRows(sqlStr, args...))
+func (session *Session) queryRow(sqlStr string, args ...any) *coreRow {
+	return NewRow(session.queryRows(sqlStr, args...))
 }
 
 func value2Bytes(rawValue *reflect.Value) ([]byte, error) {
@@ -91,7 +90,7 @@ func value2Bytes(rawValue *reflect.Value) ([]byte, error) {
 	return []byte(str), nil
 }
 
-func row2map(rows *core.Rows, fields []string) (resultsMap map[string][]byte, err error) {
+func row2map(rows *coreRows, fields []string) (resultsMap map[string][]byte, err error) {
 	result := make(map[string][]byte)
 	scanResultContainers := make([]any, len(fields))
 	for i := 0; i < len(fields); i++ {
@@ -119,7 +118,7 @@ func row2map(rows *core.Rows, fields []string) (resultsMap map[string][]byte, er
 	return result, nil
 }
 
-func rows2maps(rows *core.Rows) (resultsSlice []map[string][]byte, err error) {
+func rows2maps(rows *coreRows) (resultsSlice []map[string][]byte, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
 		return nil, err

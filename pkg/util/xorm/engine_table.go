@@ -8,15 +8,13 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	"xorm.io/core"
 )
 
 // tbNameWithSchema will automatically add schema prefix on table name
 func (engine *Engine) tbNameWithSchema(v string) string {
 	// Add schema name as prefix of table name.
 	// Only for postgres database.
-	if engine.dialect.DBType() == core.POSTGRES &&
+	if engine.dialect.DBType() == POSTGRES &&
 		engine.dialect.URI().Schema != "" &&
 		engine.dialect.URI().Schema != postgresPublicSchema &&
 		!strings.Contains(v, ".") {

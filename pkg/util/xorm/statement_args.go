@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 func quoteNeeded(a any) bool {
@@ -107,7 +106,7 @@ func (statement *Statement) writeArg(w *builder.BytesWriter, arg any) error {
 			w.Append(arg)
 		} else {
 			var convertFunc = convertStringSingleQuote
-			if statement.Engine.dialect.DBType() == core.MYSQL {
+			if statement.Engine.dialect.DBType() == MYSQL {
 				convertFunc = convertString
 			}
 			if _, err := w.WriteString(convertArg(arg, convertFunc)); err != nil {

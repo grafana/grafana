@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // Update records, bean's non-empty fields are updated contents,
@@ -217,9 +216,9 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 	var top string
 	if st.LimitN != nil {
 		limitValue := *st.LimitN
-		if st.Engine.dialect.DBType() == core.MYSQL {
+		if st.Engine.dialect.DBType() == MYSQL {
 			condSQL = condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
-		} else if st.Engine.dialect.DBType() == core.SQLITE {
+		} else if st.Engine.dialect.DBType() == SQLITE {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("rowid IN (SELECT rowid FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -230,7 +229,7 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == core.POSTGRES {
+		} else if st.Engine.dialect.DBType() == POSTGRES {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("CTID IN (SELECT CTID FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -315,10 +314,6 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				continue
 			}
 		}
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		fieldValuePtr, err := col.ValueOf(bean)
 		if err != nil {
 			return nil, nil, err

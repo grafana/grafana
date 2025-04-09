@@ -12,16 +12,15 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // Statement save all the sql info for executing SQL
 type Statement struct {
-	RefTable        *core.Table
+	RefTable        *coreTable
 	Engine          *Engine
 	Start           int
 	LimitN          *int
-	idParam         *core.PK
+	idParam         *corePK
 	OrderStr        string
 	JoinStr         string
 	joinArgs        []any
@@ -100,8 +99,8 @@ func (statement *Statement) Init() {
 }
 
 var (
-	ptrPkType = reflect.TypeOf(&core.PK{})
-	pkType    = reflect.TypeOf(core.PK{})
+	ptrPkType = reflect.TypeOf(&corePK{})
+	pkType    = reflect.TypeOf(corePK{})
 )
 
 // NoAutoCondition if you do not want convert bean's field as query condition, then use this function
@@ -274,10 +273,6 @@ func (statement *Statement) buildUpdates(bean any,
 			continue
 		}
 
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if statement.incrColumns.isColExist(col.Name) {
 			continue
 		} else if statement.decrColumns.isColExist(col.Name) {
@@ -322,7 +317,7 @@ func (statement *Statement) buildUpdates(bean any,
 		var val any
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+			if structConvert, ok := fieldValue.Addr().Interface().(coreConversion); ok {
 				data, err := structConvert.ToDB()
 				if err != nil {
 					engine.logger.Error(err)
@@ -337,7 +332,7 @@ func (statement *Statement) buildUpdates(bean any,
 			}
 		}
 
-		if structConvert, ok := fieldValue.Interface().(core.Conversion); ok {
+		if structConvert, ok := fieldValue.Interface().(coreConversion); ok {
 			data, err := structConvert.ToDB()
 			if err != nil {
 				engine.logger.Error(err)
@@ -404,8 +399,8 @@ func (statement *Statement) buildUpdates(bean any,
 			t := int64(fieldValue.Uint())
 			val = reflect.ValueOf(&t).Interface()
 		case reflect.Struct:
-			if fieldType.ConvertibleTo(core.TimeType) {
-				t := fieldValue.Convert(core.TimeType).Interface().(time.Time)
+			if fieldType.ConvertibleTo(TimeType) {
+				t := fieldValue.Convert(TimeType).Interface().(time.Time)
 				if !requiredField && (t.IsZero() || !fieldValue.IsValid()) {
 					continue
 				}
@@ -512,7 +507,7 @@ func (statement *Statement) needTableName() bool {
 	return len(statement.JoinStr) > 0
 }
 
-func (statement *Statement) colName(col *core.Column, tableName string) string {
+func (statement *Statement) colName(col *coreColumn, tableName string) string {
 	if statement.needTableName() {
 		var nm = tableName
 		if len(statement.TableAlias) > 0 {
@@ -539,12 +534,12 @@ func (statement *Statement) ID(id any) *Statement {
 
 	switch idType {
 	case ptrPkType:
-		if pkPtr, ok := (id).(*core.PK); ok {
+		if pkPtr, ok := (id).(*corePK); ok {
 			statement.idParam = pkPtr
 			return statement
 		}
 	case pkType:
-		if pk, ok := (id).(core.PK); ok {
+		if pk, ok := (id).(corePK); ok {
 			statement.idParam = &pk
 			return statement
 		}
@@ -552,11 +547,11 @@ func (statement *Statement) ID(id any) *Statement {
 
 	switch idType.Kind() {
 	case reflect.String:
-		statement.idParam = &core.PK{idValue.Convert(reflect.TypeOf("")).Interface()}
+		statement.idParam = &corePK{idValue.Convert(reflect.TypeOf("")).Interface()}
 		return statement
 	}
 
-	statement.idParam = &core.PK{id}
+	statement.idParam = &corePK{id}
 	return statement
 }
 
@@ -823,10 +818,6 @@ func (statement *Statement) genColumnStr() string {
 			continue
 		}
 
-		if col.MapType == core.ONLYTODB {
-			continue
-		}
-
 		if buf.Len() != 0 {
 			buf.WriteString(", ")
 		}
@@ -856,7 +847,7 @@ func (statement *Statement) genIndexSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
 	for _, index := range statement.RefTable.Indexes {
-		if index.Type == core.IndexType {
+		if index.Type == IndexType {
 			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
 			sqls = append(sqls, sql)
 		}
@@ -872,7 +863,7 @@ func (statement *Statement) genUniqueSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
 	for _, index := range statement.RefTable.Indexes {
-		if index.Type == core.UniqueType {
+		if index.Type == UniqueType {
 			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
 			sqls = append(sqls, sql)
 		}
@@ -887,9 +878,9 @@ func (statement *Statement) genDelIndexSQL() []string {
 	idxPrefixName = strings.Replace(idxPrefixName, `.`, "_", -1)
 	for idxName, index := range statement.RefTable.Indexes {
 		var rIdxName string
-		if index.Type == core.UniqueType {
+		if index.Type == UniqueType {
 			rIdxName = uniqueName(idxPrefixName, idxName)
-		} else if index.Type == core.IndexType {
+		} else if index.Type == IndexType {
 			rIdxName = indexName(idxPrefixName, idxName)
 		}
 		sql := fmt.Sprintf("DROP INDEX %v", statement.Engine.Quote(statement.Engine.TableName(rIdxName, true)))
@@ -901,18 +892,18 @@ func (statement *Statement) genDelIndexSQL() []string {
 	return sqls
 }
 
-func (statement *Statement) genAddColumnStr(col *core.Column) (string, []any) {
+func (statement *Statement) genAddColumnStr(col *coreColumn) (string, []any) {
 	quote := statement.Engine.Quote
 	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quote(statement.TableName()),
 		col.String(statement.Engine.dialect))
-	if statement.Engine.dialect.DBType() == core.MYSQL && len(col.Comment) > 0 {
+	if statement.Engine.dialect.DBType() == MYSQL && len(col.Comment) > 0 {
 		sql += " COMMENT '" + col.Comment + "'"
 	}
 	sql += ";"
 	return sql, []any{}
 }
 
-func (statement *Statement) buildConds(table *core.Table, bean any, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
+func (statement *Statement) buildConds(table *coreTable, bean any, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
 	return statement.Engine.buildConds(table, bean, includeVersion, includeUpdated, includeNil, includeAutoIncr, statement.allUseBool, statement.useAllCols,
 		statement.unscoped, statement.mustColumnMap, statement.TableName(), statement.TableAlias, addedTableName)
 }
@@ -1069,7 +1060,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 	fromStr += quote(statement.TableName())
 
 	if statement.TableAlias != "" {
-		if dialect.DBType() == core.ORACLE {
+		if dialect.DBType() == ORACLE {
 			fromStr += " " + quote(statement.TableAlias)
 		} else {
 			fromStr += " AS " + quote(statement.TableAlias)
@@ -1101,7 +1092,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		fmt.Fprint(&buf, " ORDER BY ", statement.OrderStr)
 	}
 	if needLimit {
-		if dialect.DBType() != core.ORACLE {
+		if dialect.DBType() != ORACLE {
 			if statement.Start > 0 {
 				if pLimitN != nil {
 					fmt.Fprintf(&buf, " LIMIT %v OFFSET %v", *pLimitN, statement.Start)

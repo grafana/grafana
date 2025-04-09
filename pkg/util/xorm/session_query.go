@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
@@ -116,8 +115,8 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 		}
 	// time type
 	case reflect.Struct:
-		if aa.ConvertibleTo(core.TimeType) {
-			str = vv.Convert(core.TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
+		if aa.ConvertibleTo(TimeType) {
+			str = vv.Convert(TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
 		} else {
 			err = fmt.Errorf("Unsupported struct type %v", vv.Type().Name())
 		}
@@ -138,7 +137,7 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 	return
 }
 
-func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string, err error) {
+func row2mapStr(rows *coreRows, fields []string) (resultsMap map[string]string, err error) {
 	result := make(map[string]string)
 	scanResultContainers := make([]interface{}, len(fields))
 	for i := 0; i < len(fields); i++ {
@@ -166,7 +165,7 @@ func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string,
 	return result, nil
 }
 
-func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error) {
+func row2sliceStr(rows *coreRows, fields []string) (results []string, err error) {
 	result := make([]string, 0, len(fields))
 	scanResultContainers := make([]interface{}, len(fields))
 	for i := 0; i < len(fields); i++ {
@@ -194,7 +193,7 @@ func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error
 	return result, nil
 }
 
-func rows2Strings(rows *core.Rows) (resultsSlice []map[string]string, err error) {
+func rows2Strings(rows *coreRows) (resultsSlice []map[string]string, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -213,7 +212,7 @@ func rows2Strings(rows *core.Rows) (resultsSlice []map[string]string, err error)
 	return resultsSlice, nil
 }
 
-func rows2SliceString(rows *core.Rows) (resultsSlice [][]string, err error) {
+func rows2SliceString(rows *coreRows) (resultsSlice [][]string, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -272,7 +271,7 @@ func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, 
 	return rows2SliceString(rows)
 }
 
-func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]interface{}, err error) {
+func row2mapInterface(rows *coreRows, fields []string) (resultsMap map[string]interface{}, err error) {
 	resultsMap = make(map[string]interface{}, len(fields))
 	scanResultContainers := make([]interface{}, len(fields))
 	for i := 0; i < len(fields); i++ {
@@ -289,7 +288,7 @@ func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]i
 	return
 }
 
-func rows2Interfaces(rows *core.Rows) (resultsSlice []map[string]interface{}, err error) {
+func rows2Interfaces(rows *coreRows) (resultsSlice []map[string]interface{}, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
 		return nil, err
