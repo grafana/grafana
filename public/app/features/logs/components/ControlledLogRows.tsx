@@ -105,6 +105,7 @@ const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range,
 
   return (
     <div className={styles.logRowsContainer}>
+      <LogListControls eventBus={eventBus} />
       <div
         ref={scrollElementRef}
         className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
@@ -133,7 +134,6 @@ const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range,
           />
         </InfiniteScroll>
       </div>
-      <LogListControls eventBus={eventBus} />
     </div>
   );
 };
@@ -159,5 +159,6 @@ const styles = {
   }),
   logRowsContainer: css({
     display: 'flex',
+    flexDirection: 'row-reverse',
   }),
 };
