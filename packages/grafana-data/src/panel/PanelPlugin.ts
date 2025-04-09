@@ -202,7 +202,7 @@ export class PanelPlugin<
    * This function is called before the panel first loads if
    * the current version is different than the version that was saved.
    *
-   * If shouldMigrate is provided, it will be called regaedless of whether
+   * If shouldMigrate is provided, it will be called regardless of whether
    * the version has changed, and can explicitly opt into running the
    * migration handler
    *
