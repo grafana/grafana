@@ -170,7 +170,7 @@ describe('Migrate to Cloud (On-prem)', () => {
       let getSnapshotCalled = false;
       cy.intercept(
         'GET',
-        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50`,
+        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
         (req) => {
           if (!getSnapshotCalled) {
             getSnapshotCalled = true;
@@ -247,7 +247,7 @@ describe('Migrate to Cloud (On-prem)', () => {
       let getSnapshotUploadingCalls = 0;
       cy.intercept(
         'GET',
-        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50`,
+        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
         (req) => {
           req.reply((res) => {
             if (getSnapshotUploadingCalls <= 1) {
