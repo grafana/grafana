@@ -62,7 +62,7 @@ type Service struct {
 	folderCache     *cacheWrap[folderTree]
 }
 
-type RBACSettings struct {
+type Settings struct {
 	AnonOrgRole string
 }
 
@@ -75,7 +75,7 @@ func NewService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
-	settings RBACSettings,
+	settings Settings,
 ) *Service {
 	if settings.AnonOrgRole == "" {
 		settings.AnonOrgRole = "Viewer"
