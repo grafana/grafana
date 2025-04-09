@@ -13,7 +13,7 @@ interface Props {
 const HIDE_OPTIONS = [
   { label: 'Nothing', value: VariableHide.dontHide },
   { label: 'Variable', value: VariableHide.hideVariable },
-  { label: 'Label only', value: VariableHide.hideLabel },
+  { label: 'Label', value: VariableHide.hideLabel },
 ];
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {

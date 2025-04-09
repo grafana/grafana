@@ -39,6 +39,8 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
     }
   };
 
+  // className={cx(isSelectable && styles.labelSelectable)}
+
   return (
     <div
       className={cx(
@@ -49,9 +51,7 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
     >
-      <div className={cx(styles.labelWrapper, isSelectable && styles.labelSelectable)}>
-        <VariableLabel variable={variable} />
-      </div>
+      <VariableLabel variable={variable} />
       <variable.Component model={variable} />
     </div>
   );
@@ -94,8 +94,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   labelSelectable: css({
-    '> label': {
-      cursor: 'pointer',
-    },
+    cursor: 'pointer',
   }),
 });
