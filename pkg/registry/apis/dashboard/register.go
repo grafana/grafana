@@ -267,11 +267,6 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
-	internalId, err := id.GetInternalID()
-	if err != nil {
-		return fmt.Errorf("error getting internal ID: %w", err)
-	}
-
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
 		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
@@ -283,7 +278,10 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	if !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
-		params.UserID = internalId
+		internalId, err := id.GetInternalID()
+		if err == nil {
+			params.UserID = internalId
+		}
 
 		quotaReached, err := b.QuotaService.CheckQuotaReached(ctx, dashboards.QuotaTargetSrv, params)
 		if err != nil && !errors.Is(err, quota.ErrDisabled) {
