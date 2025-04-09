@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { useHasClonedParents } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 
@@ -12,6 +13,7 @@ import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
+  const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
@@ -20,6 +22,8 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
+
+  const showCanvasActions = !hasClonedParents && isEditing;
 
   return (
     <div
@@ -35,7 +39,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
           <item.Component key={item.state.key} model={item} />
         )
       )}
-      {isEditing && <CanvasGridAddActions layoutManager={layoutManager} />}
+      {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
     </div>
   );
 }

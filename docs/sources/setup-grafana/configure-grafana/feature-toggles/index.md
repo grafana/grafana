@@ -86,6 +86,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
+| `unifiedNavbars`                       | Enables unified navbars                                                                                                             |                    |
 
 ## Public preview feature toggles
 
@@ -214,6 +215,7 @@ Experimental features might be changed or removed without prior notice.
 | `localeFormatPreference`                    | Specifies the locale so the correct format for numbers and dates can be shown                                                                                                                                                                                                     |
 | `extensionSidebar`                          | Enables the extension sidebar                                                                                                                                                                                                                                                     |
 | `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
+| `metricsFromProfiles`                       | Enables creating metrics from profiles and storing them as recording rules                                                                                                                                                                                                        |
 
 ## Development feature toggles
 
