@@ -226,7 +226,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     let target = annotation.target;
 
     // For v2 dashboards, use query.spec
-    if (annotation.query) {
+    if (annotation.query && annotation.query.spec) {
       target = {
         ...annotation.query.spec,
       };
