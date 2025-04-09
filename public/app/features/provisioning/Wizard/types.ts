@@ -26,6 +26,7 @@ export interface ModeOption {
   label: string;
   description: string;
   disabledReason?: string;
+  subtitle: string;
 }
 
 export interface SystemState {

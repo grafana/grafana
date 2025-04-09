@@ -9,17 +9,20 @@ import { ModeOption, SystemState } from './types';
 const migrateInstance: ModeOption = {
   target: 'instance',
   operation: 'migrate',
-  label: 'Sync all dashboards and folders with GitHub',
+  label: 'Sync all resources with external storage',
   description:
-    'Migrate all dashboards and folders from this instance to external storage. After setup, all new dashboards and changes will be saved to external storage and provisioned back into the instance. Use this option if you want all your existing dashboards to be migrated and synced.',
+    'Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.',
+  subtitle: 'Use this option if you want to sync and manage your entire Grafana instance through external storage.',
 };
 
 const pullFolder: ModeOption = {
   target: 'folder',
   operation: 'pull',
-  label: 'Sync dashboards and folders to a new Grafana folder',
+  label: 'Sync external storage to a new Grafana folder',
   description:
-    'Dashboards  and folders in external storage will be provisioned into a new folder in Grafana. After setup, all new dashboards and folders changes in this folder will be saved to external storage and provisioned back into the instance. Use this option if you want to import the content of the GitHub repository in a folder.',
+    'After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.',
+  subtitle:
+    'Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders.',
 };
 
 function getDisabledReason(action: ModeOption, resourceCount: number, folderConnected?: boolean) {

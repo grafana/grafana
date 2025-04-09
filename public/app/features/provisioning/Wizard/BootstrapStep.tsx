@@ -132,7 +132,12 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                   autoFocus={index === 0}
                 >
                   <Card.Heading>{action.label}</Card.Heading>
-                  <Card.Description>{action.description}</Card.Description>
+                  <Card.Description>
+                    <Stack direction="column" gap={3}>
+                      {action.description}
+                      <Text color="primary">{action.subtitle}</Text>
+                    </Stack>
+                  </Card.Description>
                 </Card>
               ))}
             </>
