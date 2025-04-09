@@ -1046,6 +1046,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3126,7 +3132,6 @@
         "tooltip": "ダッシュボードを共有"
       },
       "share-button": "共有",
-      "switch-old-dashboard": "古いダッシュボードページに切り替える",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unmark-favorite": "お気に入りを解除"
     },
@@ -5319,7 +5324,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "スナップショットの作成のキャンセル中にエラーが発生しました",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "スナップショットの作成中にエラーが発生しました",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "接続解除中のエラー",
       "error-see-server-logs": "詳細については、Grafanaサーバーログを参照してください。",
       "get-session-error-title": "移行構成の読み込み中にエラーが発生しました",
@@ -5416,6 +5425,7 @@
       "errored-resource-count": "エラー",
       "page-loading": "読み込み中...",
       "rebuild-snapshot": "スナップショットを再構築",
+      "show-errors": "",
       "snapshot-date": "スナップショットのタイムスタンプ",
       "snapshot-not-created": "まだ作成されていません",
       "start-migration": "スナップショットを構築",
@@ -5425,7 +5435,7 @@
       "upload-migration": "スナップショットをアップロード"
     },
     "support-types-disclosure": {
-      "text": "ダッシュボード、フォルダ、および組み込みのコアデータソースがGrafana クラウドスタックに移行されます。<2>他の設定の移行について学びます</2>"
+      "text": ""
     },
     "token-status": {
       "active": "トークンが作成され、アクティブです",
@@ -5817,7 +5827,6 @@
       "remove-bookmark": "ブックマークから削除"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "ESCを押してキオスクモードを終了します"
     },
     "megamenu": {
@@ -6215,6 +6224,7 @@
       "strong-password-validation-register": "パスワードが強力なパスワードポリシーに準拠していません"
     },
     "change-theme": "テーマを変更",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6844,6 +6854,7 @@
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
       "remove-query": "クエリを削除",
+      "replace-query-from-library": "",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"

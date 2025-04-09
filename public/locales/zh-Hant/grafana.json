@@ -1046,6 +1046,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3126,7 +3132,6 @@
         "tooltip": "分享儀表板"
       },
       "share-button": "分享",
-      "switch-old-dashboard": "切換至舊的儀表板頁面",
       "unlink-library-panel": "取消連結資料庫面板",
       "unmark-favorite": "取消標記為「我的最愛」"
     },
@@ -5319,7 +5324,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "取消建立快照集時發生錯誤",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "建立快照集時發生錯誤",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "中斷連線時發生錯誤",
       "error-see-server-logs": "請參閱 Grafana 伺服器日誌，以了解更多詳細資訊",
       "get-session-error-title": "載入移轉設定時發生錯誤",
@@ -5416,6 +5425,7 @@
       "errored-resource-count": "錯誤",
       "page-loading": "正在載入…",
       "rebuild-snapshot": "重新建立快照集",
+      "show-errors": "",
       "snapshot-date": "快照時間戳記",
       "snapshot-not-created": "尚未建立",
       "start-migration": "建立快照集",
@@ -5425,7 +5435,7 @@
       "upload-migration": "上傳快照集"
     },
     "support-types-disclosure": {
-      "text": "儀表板、資料夾和內建核心資料來源已移轉至您的 Grafana Cloud 堆疊。了解移轉的其他設定</2>"
+      "text": ""
     },
     "token-status": {
       "active": "權杖已建立並啟用",
@@ -5817,7 +5827,6 @@
       "remove-bookmark": "從書籤中移除"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "按 ESC 結束資訊站模式"
     },
     "megamenu": {
@@ -6215,6 +6224,7 @@
       "strong-password-validation-register": "密碼不符合強密碼原則"
     },
     "change-theme": "變更主題",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6844,6 +6854,7 @@
       "expand-row": "展開查詢列",
       "hide-response": "隱藏回應",
       "remove-query": "移除查詢",
+      "replace-query-from-library": "",
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"

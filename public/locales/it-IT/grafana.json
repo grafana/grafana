@@ -1048,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3137,7 +3143,6 @@
         "tooltip": "Condividi dashboard"
       },
       "share-button": "Condividi",
-      "switch-old-dashboard": "Passa alla vecchia pagina del dashboard",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unmark-favorite": "Rimuovi dai preferiti"
     },
@@ -5331,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Errore durante l'annullamento della creazione dell'istantanea",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Errore durante la creazione dell'istantanea",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Errore durante la disconnessione",
       "error-see-server-logs": "Visualizza i registri del server di Grafana per maggiori dettagli",
       "get-session-error-title": "Errore durante il caricamento della configurazione della migrazione",
@@ -5428,6 +5437,7 @@
       "errored-resource-count": "Errori",
       "page-loading": "Caricamento in corso...",
       "rebuild-snapshot": "Ricostruisci istantanea",
+      "show-errors": "",
       "snapshot-date": "Timestamp istantanea",
       "snapshot-not-created": "Creazione non ancora effettuata",
       "start-migration": "Costruisci istantanea",
@@ -5437,7 +5447,7 @@
       "upload-migration": "Carica istantanea"
     },
     "support-types-disclosure": {
-      "text": "Dashboard, cartelle e origini dati di base integrate vengono migrate nel tuo stack Grafana Cloud. <2>Ulteriori informazioni sulla migrazione di altre impostazioni.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token creato e attivo",
@@ -5829,7 +5839,6 @@
       "remove-bookmark": "Rimuovi da Segnalibri"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Premi ESC per uscire dalla modalità kiosk"
     },
     "megamenu": {
@@ -6227,6 +6236,7 @@
       "strong-password-validation-register": "La password non è conforme alla politica sulle password complesse"
     },
     "change-theme": "Modifica tema ",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6858,6 +6868,7 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
+      "replace-query-from-library": "",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"

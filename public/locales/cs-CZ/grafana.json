@@ -1052,6 +1052,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3159,7 +3165,6 @@
         "tooltip": "Sdílet nástěnku"
       },
       "share-button": "Sdílet",
-      "switch-old-dashboard": "Přepnout na starou stránku nástěnky",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unmark-favorite": "Odznačit z oblíbených"
     },
@@ -5355,7 +5360,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Chyba při rušení vytváření snímku",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Chyba při vytváření snímku",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Chyba při odpojování",
       "error-see-server-logs": "Další podrobnosti najdete v serverových protokolech Grafany",
       "get-session-error-title": "Chyba při načítání konfigurace migrace",
@@ -5452,6 +5461,7 @@
       "errored-resource-count": "Chyby",
       "page-loading": "Načítání…",
       "rebuild-snapshot": "Znovu vytvořit snímek",
+      "show-errors": "",
       "snapshot-date": "Časové razítko snímku",
       "snapshot-not-created": "Dosud nevytvořeno",
       "start-migration": "Vytvořit snímek",
@@ -5461,7 +5471,7 @@
       "upload-migration": "Nahrát snímek"
     },
     "support-types-disclosure": {
-      "text": "Nástěnky, složky a vestavěné zdroje základních dat jsou migrovány do sady Grafana Cloud. <2>Zjistěte víc o migraci dalšího nastavení.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token byl vytvořen a je aktivní",
@@ -5853,7 +5863,6 @@
       "remove-bookmark": "Odebrat ze záložek"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Stisknutím klávesy ESC ukončíte režim kiosku"
     },
     "megamenu": {
@@ -6251,6 +6260,7 @@
       "strong-password-validation-register": "Heslo není v souladu se zásadami silného hesla"
     },
     "change-theme": "Změnit motiv",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6886,6 +6896,7 @@
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
       "remove-query": "Odebrat dotaz",
+      "replace-query-from-library": "",
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
