@@ -11,6 +11,7 @@ import {
   useDeleteRepositoryMutation,
   useGetFrontendSettingsQuery,
 } from 'app/api/clients/provisioning';
+import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
@@ -53,7 +54,13 @@ export function WizardContent({
   stepSuccess,
   settingsData,
 }: WizardContentProps) {
-  const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
+  const {
+    watch,
+    setValue,
+    getValues,
+    trigger,
+    formState: { isDirty },
+  } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
 
   const repoName = watch('repositoryName');
@@ -95,9 +102,8 @@ export function WizardContent({
       await deleteRepository({ name });
       // Wait before redirecting to ensure deletion is processed
       setTimeout(() => {
-        settingsQuery.refetch();
         navigate(PROVISIONING_URL);
-      }, 1500);
+      }, 1000);
     } catch (error) {
       setIsCancelling(false);
     }
@@ -179,6 +185,7 @@ export function WizardContent({
       <Stepper steps={availableSteps} activeStep={activeStep} visitedSteps={completedSteps} />
       <div className={styles.divider} />
       <form className={styles.form}>
+        <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish'} />
         <Stack direction="column">
           <Box marginBottom={2}>
             {/* eslint-disable-next-line @grafana/no-untranslated-strings */}

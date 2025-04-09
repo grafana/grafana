@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Button, Text, Stack, Alert, TextLink } from '@grafana/ui';
+import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
 import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -17,7 +17,7 @@ export interface SynchronizeStepProps {
 
 export function SynchronizeStep({ onStepUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
-  const { getValues } = useFormContext<WizardFormData>();
+  const { getValues, register } = useFormContext<WizardFormData>();
   const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
   const [job, setJob] = useState<Job>();
 
@@ -124,6 +124,19 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
           </li>
         </ul>
       </Alert>
+      {requiresMigration && (
+        <>
+          <Text element="h3">Synchronization options</Text>
+          <Field>
+            <Checkbox
+              {...register('migrate.history')}
+              label={t('provisioning.wizard.sync-option-history', 'History')}
+              description={'Include commits for each historical value'}
+            />
+          </Field>
+        </>
+      )}
+
       <Button variant="primary" onClick={startSynchronization}>
         {t('provisioning.wizard.button-start', 'Begin synchronization')}
       </Button>
