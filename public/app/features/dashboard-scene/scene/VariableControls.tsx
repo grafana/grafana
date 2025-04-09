@@ -21,7 +21,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
 interface VariableSelectProps {
   variable: SceneVariable;
-  className: string;
 }
 
 export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
@@ -56,7 +55,7 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   );
 }
 
-function VariableLabel({ variable, className }: VariableSelectProps) {
+function VariableLabel({ variable, className }: { variable: SceneVariable; className?: string }) {
   const { state } = variable;
 
   if (variable.state.hide === VariableHide.hideLabel) {
