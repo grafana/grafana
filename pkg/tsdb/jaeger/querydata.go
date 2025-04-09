@@ -40,7 +40,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
 			}
-			frame := transformResponse(traces, q.RefID)
+			frame := transformTraceResponse(traces, q.RefID)
 			response.Responses[q.RefID] = backend.DataResponse{
 				Frames: []*data.Frame{frame},
 			}
@@ -51,7 +51,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 }
 
 // transformResponse converts Jaeger trace data to a Data frame
-func transformResponse(trace TraceResponse, refID string) *data.Frame {
+func transformTraceResponse(trace TraceResponse, refID string) *data.Frame {
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
 		data.NewField("spanID", nil, []string{}),

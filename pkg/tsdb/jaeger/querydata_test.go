@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 )
 
-func TestTransformResponse(t *testing.T) {
+func TestTransformTraceResponse(t *testing.T) {
 	t.Run("simple_trace", func(t *testing.T) {
 		trace := TraceResponse{
 			TraceID: "3fa414edcef6ad90",
@@ -61,7 +61,7 @@ func TestTransformResponse(t *testing.T) {
 			Warnings: nil,
 		}
 
-		frame := transformResponse(trace, "test")
+		frame := transformTraceResponse(trace, "test")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frame, false)
 	})
 
@@ -180,7 +180,7 @@ func TestTransformResponse(t *testing.T) {
 			Warnings: []string{"Trace contains errors", "Multiple service failures"},
 		}
 
-		frame := transformResponse(trace, "test")
+		frame := transformTraceResponse(trace, "test")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "complex_trace.golden", frame, false)
 	})
 }
