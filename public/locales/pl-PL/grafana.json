@@ -1052,6 +1052,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3159,7 +3165,6 @@
         "tooltip": "Udostępnij pulpit"
       },
       "share-button": "Udostępnij",
-      "switch-old-dashboard": "Przełącz na starą stronę pulpitu",
       "unlink-library-panel": "Rozłącz panel biblioteki",
       "unmark-favorite": "Usuń oznaczenie jako ulubione"
     },
@@ -5355,7 +5360,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Błąd anulowania podczas tworzenia migawki",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Błąd podczas tworzenia migawki",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Błąd rozłączania",
       "error-see-server-logs": "Więcej informacji uzyskasz w logach serwera Grafana",
       "get-session-error-title": "Błąd podczas ładowania konfiguracji migracji",
@@ -5452,6 +5461,7 @@
       "errored-resource-count": "Błędy",
       "page-loading": "Ładowanie…",
       "rebuild-snapshot": "Utwórz ponownie migawkę",
+      "show-errors": "",
       "snapshot-date": "Sygnatura czasowa migawki",
       "snapshot-not-created": "Jeszcze nie utworzono",
       "start-migration": "Utwórz migawkę",
@@ -5461,7 +5471,7 @@
       "upload-migration": "Prześlij migawkę"
     },
     "support-types-disclosure": {
-      "text": "Pulpity, foldery i wbudowane podstawowe źródła danych są przenoszone do stosu Grafana Cloud. <2>Dowiedz się więcej o migracji innych ustawień.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Utworzono i aktywowano token",
@@ -5853,7 +5863,6 @@
       "remove-bookmark": "Usuń z zakładek"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Naciśnij ESC, aby wyjść z trybu kiosku"
     },
     "megamenu": {
@@ -6251,6 +6260,7 @@
       "strong-password-validation-register": "Hasło nie jest zgodne z zasadami dotyczącymi silnych haseł"
     },
     "change-theme": "Zmień motyw",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6886,6 +6896,7 @@
       "expand-row": "Rozwiń wiersz zapytania",
       "hide-response": "Ukryj odpowiedź",
       "remove-query": "Usuń zapytanie",
+      "replace-query-from-library": "",
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
