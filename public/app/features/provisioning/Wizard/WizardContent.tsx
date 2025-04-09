@@ -185,7 +185,7 @@ export function WizardContent({
       <Stepper steps={availableSteps} activeStep={activeStep} visitedSteps={completedSteps} />
       <div className={styles.divider} />
       <form className={styles.form}>
-        <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish'} />
+        <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
         <Stack direction="column">
           <Box marginBottom={2}>
             {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
