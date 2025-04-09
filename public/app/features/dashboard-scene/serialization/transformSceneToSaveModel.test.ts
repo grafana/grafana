@@ -14,7 +14,7 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -154,8 +154,6 @@ jest.mock('@grafana/data', () => ({
   setWeekStart: jest.fn(),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
-
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneUtils: {
@@ -165,11 +163,6 @@ jest.mock('@grafana/scenes', () => ({
 }));
 
 describe('transformSceneToSaveModel', () => {
-  beforeEach(() => {
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
-  });
-
   describe('Given a simple scene with custom settings', () => {
     it('Should transform back to persisted model', () => {
       const dashboardWithCustomSettings = {

@@ -42,6 +42,5 @@
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
-  },
-  "packageManager": "yarn@4.4.0"
+  }
 }

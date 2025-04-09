@@ -4,10 +4,7 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  type PluginExtensionLinkConfig,
-  type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
-  PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
   isDateTime,
   dateTime,
@@ -28,12 +25,6 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
-
-export function isPluginExtensionLinkConfig(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionLinkConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
