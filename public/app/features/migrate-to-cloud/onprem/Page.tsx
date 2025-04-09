@@ -17,6 +17,7 @@ import {
   useUploadSnapshotMutation,
   useGetLocalPluginListQuery,
 } from '../api';
+import { maybeAPIError } from '../api/errors';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { DisconnectModal } from './DisconnectModal';
@@ -65,10 +66,15 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
 const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
+const SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES: Array<SnapshotDto['status']> = [
+  'PROCESSING',
+  'PENDING_PROCESSING',
+  'FINISHED',
+];
 
 const PAGE_SIZE = 50;
 
-function useGetLatestSnapshot(sessionUid?: string, page = 1) {
+function useGetLatestSnapshot(sessionUid?: string, page = 1, sortParams?: SortParams, showErrors = false) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(
@@ -78,7 +84,15 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
   const getSnapshotQueryArgs =
     sessionUid && lastItem?.uid
-      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
+      ? {
+          uid: sessionUid,
+          snapshotUid: lastItem.uid,
+          resultLimit: PAGE_SIZE,
+          resultPage: page,
+          resultSortColumn: sortParams?.column ? sortParams.column : undefined,
+          resultSortOrder: sortParams?.order,
+          errorsOnly: showErrors,
+        }
       : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
@@ -113,11 +127,20 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   };
 }
 
+interface SortParams {
+  column: string;
+  order: string | undefined;
+}
+
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-  const session = useGetLatestSession();
   const [page, setPage] = useState(1);
-  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
+  const [sortParams, setSortParams] = useState<SortParams>({
+    column: '',
+    order: undefined,
+  });
+  const [highlightErrors, setHighlightErrors] = useState(false);
+
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -125,6 +148,16 @@ export const Page = () => {
 
   const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
+  const session = useGetLatestSession();
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page, sortParams, highlightErrors);
+  const numPages = Math.ceil(
+    (highlightErrors ? snapshot?.data?.stats?.statuses?.['ERROR'] || 0 : snapshot?.data?.stats?.total || 0) / PAGE_SIZE
+  );
+  useEffect(() => {
+    if (numPages > 0 && page > numPages) {
+      setPage(numPages);
+    }
+  }, [numPages, page]);
   useNotifySuccessful(snapshot.data);
 
   const sessionUid = session.data?.uid;
@@ -147,6 +180,7 @@ export const Page = () => {
   const showUploadSnapshot =
     !snapshot.isError && (status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status));
   const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
+  const showOnlyErrorsSwitch = SNAPSHOT_RESOURCES_HAVE_ERROR_STATUSES.includes(status);
 
   const error = getError({
     snapshot: snapshot.data,
@@ -166,7 +200,26 @@ export const Page = () => {
 
   const handleCreateSnapshot = useCallback(() => {
     if (sessionUid) {
-      performCreateSnapshot({ uid: sessionUid });
+      performCreateSnapshot({
+        uid: sessionUid,
+        createSnapshotRequestDto: {
+          // TODO: For the moment, pass all resource types. Once we have a frontend for selecting resource types,
+          // we should pass the selected resource types instead.
+          resourceTypes: [
+            'DASHBOARD',
+            'DATASOURCE',
+            'FOLDER',
+            'LIBRARY_ELEMENT',
+            'ALERT_RULE',
+            'ALERT_RULE_GROUP',
+            'CONTACT_POINT',
+            'NOTIFICATION_POLICY',
+            'NOTIFICATION_TEMPLATE',
+            'MUTE_TIMING',
+            'PLUGIN',
+          ],
+        },
+      });
     }
   }, [performCreateSnapshot, sessionUid]);
 
@@ -210,6 +263,9 @@ export const Page = () => {
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
+            onHighlightErrors={() => setHighlightErrors(!highlightErrors)}
+            isHighlightErrors={highlightErrors}
+            showOnlyErrorsSwitch={showOnlyErrorsSwitch}
           />
         )}
 
@@ -245,8 +301,17 @@ export const Page = () => {
               resources={snapshot.data.results}
               localPlugins={localPlugins}
               onChangePage={setPage}
-              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              numberOfPages={numPages}
               page={page}
+              onChangeSort={(a) => {
+                const order = a.sortBy[0]?.desc === undefined ? undefined : a.sortBy[0]?.desc ? 'desc' : 'asc';
+                if (sortParams.column !== a.sortBy[0]?.id || order !== sortParams.order) {
+                  setSortParams({
+                    column: a.sortBy[0]?.id,
+                    order: order,
+                  });
+                }
+              }}
             />
             <SupportedTypesDisclosure />
           </Stack>
@@ -322,12 +387,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   if (createSnapshotError) {
-    return {
-      severity: 'warning',
-      title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
-      body: seeLogs,
-      error: createSnapshotError,
-    };
+    return handleCreateSnapshotError(createSnapshotError, seeLogs);
   }
 
   if (uploadSnapshotError) {
@@ -385,4 +445,52 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   return undefined;
+}
+
+function handleCreateSnapshotError(createSnapshotError: unknown, seeLogs: string): ErrorDescription | undefined {
+  const apiError = maybeAPIError(createSnapshotError);
+
+  let severity: AlertVariant = 'warning';
+  let body = null;
+
+  switch (apiError?.messageId) {
+    case 'cloudmigrations.emptyResourceTypes':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-empty-resource-types',
+        'You need to provide at least one resource type for snapshot creation'
+      );
+      break;
+
+    case 'cloudmigrations.unknownResourceType':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-unknown-resource-type',
+        'Unknown resource type. See the Grafana server logs for more details'
+      );
+      break;
+
+    case 'cloudmigrations.duplicateResourceType':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-duplicate-resource-type',
+        'Duplicate resource type. See the Grafana server logs for more details'
+      );
+      break;
+
+    case 'cloudmigrations.missingDependency':
+      severity = 'error';
+      body = t(
+        'migrate-to-cloud.onprem.create-snapshot-error-missing-dependency',
+        'Missing dependency. See the Grafana server logs for more details'
+      );
+      break;
+  }
+
+  return {
+    severity,
+    title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
+    body: body || seeLogs,
+    error: createSnapshotError,
+  };
 }
