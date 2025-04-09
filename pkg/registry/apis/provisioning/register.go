@@ -140,6 +140,7 @@ func NewAPIBuilder(
 		storageStatus:       storageStatus,
 		unified:             unified,
 		secrets:             secrets,
+		jobHistory:          jobs.NewJobHistoryCache(),
 	}
 }
 
@@ -341,16 +342,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
-	}
-
-	historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job storage: %w", err)
-	}
-
-	b.jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job wrapper: %w", err)
 	}
 
 	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
