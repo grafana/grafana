@@ -94,10 +94,10 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 	return operations, err
 }
 
-func (j *JaegerClient) Search(query *jaegerQuery) (jaegerResponse, error) {
+func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
 	jaegerURL, err := url.Parse(j.url)
 	if err != nil {
-		return jaegerResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
+		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
 	}
 	jaegerURL.Path = "/api/traces"
 
@@ -124,9 +124,9 @@ func (j *JaegerClient) Search(query *jaegerQuery) (jaegerResponse, error) {
 	resp, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return jaegerResponse{}, backend.DownstreamError(err)
+			return []TraceResponse{}, backend.DownstreamError(err)
 		}
-		return jaegerResponse{}, err
+		return []TraceResponse{}, err
 	}
 
 	defer func() {
@@ -138,17 +138,17 @@ func (j *JaegerClient) Search(query *jaegerQuery) (jaegerResponse, error) {
 	if resp.StatusCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
-			return jaegerResponse{}, backend.DownstreamError(err)
+			return []TraceResponse{}, backend.DownstreamError(err)
 		}
-		return jaegerResponse{}, err
+		return []TraceResponse{}, err
 	}
 
-	var result jaegerResponse
+	var result TracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return jaegerResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
+		return []TraceResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
 
-	return result, nil
+	return result.Data, nil
 }
 
 func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {

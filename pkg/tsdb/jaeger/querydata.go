@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type jaegerQuery struct {
+type JaegerQuery struct {
 	QueryType   string `json:"queryType"`
 	Service     string `json:"service"`
 	Operation   string `json:"operation"`
@@ -21,43 +21,12 @@ type jaegerQuery struct {
 	Limit       int    `json:"limit"`
 }
 
-type jaegerSpan struct {
-	TraceID       string `json:"traceID"`
-	SpanID        string `json:"spanID"`
-	OperationName string `json:"operationName"`
-	StartTime     int64  `json:"startTime"`
-	Duration      int64  `json:"duration"`
-	ProcessID     string `json:"processID"`
-	Tags          []struct {
-		Key   string          `json:"key"`
-		Value json.RawMessage `json:"value"`
-	} `json:"tags"`
-}
-
-type jaegerProcess struct {
-	ServiceName string `json:"serviceName"`
-	Tags        []struct {
-		Key   string          `json:"key"`
-		Value json.RawMessage `json:"value"`
-	} `json:"tags"`
-}
-
-type jaegerTrace struct {
-	TraceID   string                   `json:"traceID"`
-	Spans     []jaegerSpan             `json:"spans"`
-	Processes map[string]jaegerProcess `json:"processes"`
-}
-
-type jaegerResponse struct {
-	Data []jaegerTrace `json:"data"`
-}
-
 func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 	logger := dsInfo.JaegerClient.logger.FromContext(ctx)
 
 	for _, q := range req.Queries {
-		var query jaegerQuery
+		var query JaegerQuery
 
 		err := json.Unmarshal(q.JSON, &query)
 		if err != nil {
@@ -106,7 +75,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	return response, nil
 }
 
-func transformSearchResponse(response jaegerResponse, dsInfo *datasourceInfo) *data.Frame {
+func transformSearchResponse(response []TraceResponse, dsInfo *datasourceInfo) *data.Frame {
 	frame := data.NewFrame("traces",
 		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
 			DisplayName: "Trace ID",
@@ -140,7 +109,7 @@ func transformSearchResponse(response jaegerResponse, dsInfo *datasourceInfo) *d
 		PreferredVisualization: "table",
 	}
 
-	for _, trace := range response.Data {
+	for _, trace := range response {
 		if len(trace.Spans) == 0 {
 			continue
 		}
