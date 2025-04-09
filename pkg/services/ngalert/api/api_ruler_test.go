@@ -80,7 +80,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 	}
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		t.Run("allow deleting without access to datasource", func(t *testing.T){
+		t.Run("allow deleting without access to datasource", func(t *testing.T) {
 			ruleStore := initFakeRuleStore(t)
 			provisioningStore := fakes.NewFakeProvisioningStore()
 
@@ -90,7 +90,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 			ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
 
-			permissions := createPermissionsForRulesWithoutDS(append(authorizedRulesInFolder), orgID)
+			permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
 			requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
 			response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
