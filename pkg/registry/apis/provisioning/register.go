@@ -221,16 +221,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 				switch a.GetSubresource() {
-				case "":
+				case "", "test", "jobs":
 					// Doing something with the repository itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "test", "export", "migrate":
-					// Testing doesn't make sense for non-admins.
-					// Exporting and migrating are potentially dangerous.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
 					}
@@ -419,7 +411,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
 

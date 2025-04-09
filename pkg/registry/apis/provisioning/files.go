@@ -62,15 +62,10 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetRepository(ctx, name)
+	repo, err := c.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
-	}
-
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
 	}
 
 	readWriter, ok := repo.(repository.ReaderWriter)
@@ -115,24 +110,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(filePath)
 		if r.Method == http.MethodGet && isDir {
-			// Listing files requires permission to list dashboards
-			rsp, err := c.access.Check(ctx, auth, authlib.CheckRequest{
-				Group:     resources.DashboardResource.Group,
-				Resource:  resources.DashboardResource.Resource,
-				Namespace: repo.Config().Namespace,
-				Verb:      utils.VerbList,
-			})
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			if !rsp.Allowed {
-				responder.Error(apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
-					fmt.Errorf("requires list permissions on dashbaords")))
-				return
-			}
-
-			files, err := listFolderFiles(ctx, filePath, ref, readWriter)
+			files, err := c.listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -225,7 +203,27 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // listFolderFiles returns a list of files in a folder
-func listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	// Listing files requires permission to list dashboards
+	check, err := c.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     resources.DashboardResource.Group,
+		Resource:  resources.DashboardResource.Resource,
+		Namespace: readWriter.Config().Namespace,
+		Verb:      utils.VerbList,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !check.Allowed {
+		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
+			fmt.Errorf("requires list permissions on dashbaords"))
+	}
+
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {
 		return nil, apierrors.NewBadRequest("folder navigation not yet supported")
