@@ -75,7 +75,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     if (config.featureToggles.jaegerBackendMigration) {
       return super.query(options);
     }
-    
+
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];

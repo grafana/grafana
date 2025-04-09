@@ -124,10 +124,12 @@ func (j *JaegerClient) Search(query *jaegerQuery) (*data.Frame, error) {
 		}
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	if resp != nil && resp.StatusCode/100 != 2 {
-	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
