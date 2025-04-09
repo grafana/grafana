@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,8 +16,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-
-	"go.opentelemetry.io/otel/codes"
 )
 
 type CloudMigrationAPI struct {
@@ -23,6 +23,7 @@ type CloudMigrationAPI struct {
 	routeRegister         routing.RouteRegister
 	log                   log.Logger
 	tracer                tracing.Tracer
+	resourceDependencyMap cloudmigration.DependencyMap
 }
 
 func RegisterApi(
@@ -30,12 +31,14 @@ func RegisterApi(
 	cms cloudmigration.Service,
 	tracer tracing.Tracer,
 	acHandler accesscontrol.AccessControl,
+	resourceDependencyMap cloudmigration.DependencyMap,
 ) *CloudMigrationAPI {
 	api := &CloudMigrationAPI{
 		log:                   log.New("cloudmigrations.api"),
 		routeRegister:         rr,
 		cloudMigrationService: cms,
 		tracer:                tracer,
+		resourceDependencyMap: resourceDependencyMap,
 	}
 	api.registerEndpoints(acHandler)
 	return api
@@ -63,6 +66,9 @@ func (cma *CloudMigrationAPI) registerEndpoints(acHandler accesscontrol.AccessCo
 		cloudMigrationRoute.Get("/migration/:uid/snapshots", routing.Wrap(cma.GetSnapshotList))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/upload", routing.Wrap(cma.UploadSnapshot))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/cancel", routing.Wrap(cma.CancelSnapshot))
+
+		// resource dependency list
+		cloudMigrationRoute.Get("/resources/dependencies", routing.Wrap(cma.GetResourceDependencies))
 	}, authorize(cloudmigration.MigrationAssistantAccess))
 }
 
@@ -316,7 +322,6 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
-
 	if err := util.ValidateUID(uid); err != nil {
 		span.SetStatus(codes.Error, "invalid session uid")
 		span.RecordError(err)
@@ -324,7 +329,35 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
-	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, uid)
+	var cmd CreateSnapshotRequestDTO
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		span.SetStatus(codes.Error, "invalid request body")
+		span.RecordError(err)
+
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid request body", err)
+	}
+
+	if len(cmd.ResourceTypes) == 0 {
+		return response.ErrOrFallback(http.StatusBadRequest, "at least one resource type is required", cloudmigration.ErrEmptyResourceTypes)
+	}
+
+	rawResourceTypes := make([]cloudmigration.MigrateDataType, 0, len(cmd.ResourceTypes))
+	for _, t := range cmd.ResourceTypes {
+		rawResourceTypes = append(rawResourceTypes, cloudmigration.MigrateDataType(t))
+	}
+
+	resourceTypes, err := cma.resourceDependencyMap.Parse(rawResourceTypes)
+	if err != nil {
+		span.SetStatus(codes.Error, "invalid resource types")
+		span.RecordError(err)
+
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid resource types", err)
+	}
+
+	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, cloudmigration.CreateSnapshotCommand{
+		SessionUID:    uid,
+		ResourceTypes: resourceTypes,
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, "error creating snapshot")
 		span.RecordError(err)
@@ -370,6 +403,10 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	col := getQueryCol(c.Query("resultSortColumn"), cloudmigration.SortColumnID)
 	order := getQueryOrder(c.Query("resultSortOrder"), cloudmigration.SortOrderAsc)
 	errorsOnly := c.QueryBool("errorsOnly")
+	// Don't allow the user to reverse-sort by ID
+	if col == cloudmigration.SortColumnID && order == cloudmigration.SortOrderDesc {
+		order = cloudmigration.SortOrderAsc
+	}
 
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
@@ -601,4 +638,32 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 	}
 
 	return response.JSON(http.StatusOK, nil)
+}
+
+// swagger:route GET /cloudmigration/resources/dependencies migrations getResourceDependencies
+//
+// Get the resource dependencies graph for the current set of migratable resources.
+//
+// Responses:
+// 200: resourceDependenciesResponse
+func (cma *CloudMigrationAPI) GetResourceDependencies(c *contextmodel.ReqContext) response.Response {
+	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetResourceDependencies")
+	defer span.End()
+
+	resourceDependencies := make([]ResourceDependencyDTO, 0, len(cma.resourceDependencyMap))
+	for resourceType, dependencies := range cma.resourceDependencyMap {
+		dependencyNames := make([]MigrateDataType, 0, len(dependencies))
+		for _, dependency := range dependencies {
+			dependencyNames = append(dependencyNames, MigrateDataType(dependency))
+		}
+
+		resourceDependencies = append(resourceDependencies, ResourceDependencyDTO{
+			ResourceType: MigrateDataType(resourceType),
+			Dependencies: dependencyNames,
+		})
+	}
+
+	return response.JSON(http.StatusOK, ResourceDependenciesResponseDTO{
+		ResourceDependencies: resourceDependencies,
+	})
 }

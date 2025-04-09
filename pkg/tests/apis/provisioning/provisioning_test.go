@@ -14,6 +14,7 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -172,14 +173,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Update(ctx,
+	_, err := helper.Repositories.Resource.Create(ctx,
 		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repo,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 			"Path":        "grafana/",
 		}),
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 
@@ -196,6 +197,55 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
 	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete values")
+
+	t.Run("github url cleanup", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			input  string
+			output string
+		}{
+			{
+				name:   "simple-url",
+				input:  "https://github.com/dprokop/grafana-git-sync-test",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-dot-git",
+				input:  "https://github.com/dprokop/grafana-git-sync-test.git",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-slash",
+				input:  "https://github.com/dprokop/grafana-git-sync-test/",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name": test.name,
+					"URL":  test.input,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				require.NoError(t, err, "failed to create resource")
+
+				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+				require.NoError(t, err, "failed to read back resource")
+
+				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
+				require.NoError(t, err, "failed to read URL")
+				require.Equal(t, test.output, url)
+
+				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
+				require.NoError(t, err, "failed to delete")
+			})
+		}
+	})
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
@@ -325,7 +375,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
 
-	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
@@ -349,18 +399,37 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	const allPanels = "n1jR8vnnz"
 	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
+	require.True(t, apierrors.IsNotFound(err))
 
 	// Now, we import it, such that it may exist
 	helper.SyncAndWait(t, repo, nil)
 
-	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+	_, err = helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	names := []string{}
-	for _, v := range found.Items {
-		names = append(names, v.GetName())
-	}
-	require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
+	obj, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.NoError(t, err, "all-panels dashboard should exist")
+	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	// Try writing the value directly
+	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
+	require.NoError(t, err, "set tags")
+	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	require.Error(t, err, "only the provisionding service should be able to update")
+	require.True(t, apierrors.IsForbidden(err))
+
+	// Should not be able to directly delete the managed resource
+	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
+	require.Error(t, err, "only the provisioning service should be able to delete")
+	require.True(t, apierrors.IsForbidden(err))
+
+	// But we can delete the repository file, and this should also remove the resource
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "all-panels.json")
+	require.NoError(t, err, "should delete the resource file")
+
+	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.Error(t, err, "should delete the internal resource")
+	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {

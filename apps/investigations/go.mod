@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/investigations
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.35.1
@@ -31,7 +31,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.35.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
