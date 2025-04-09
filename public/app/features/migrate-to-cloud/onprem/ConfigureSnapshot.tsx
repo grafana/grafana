@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, useEffect } from 'react';
 
-import { Button, Icon, Stack, Checkbox, Text, Box, IconName } from '@grafana/ui';
+import { Button, Icon, Stack, Checkbox, Text, Box, IconName, Space } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ResourceDependencyDto } from '../api';
@@ -16,6 +16,14 @@ interface ConfigureSnapshotProps {
 }
 
 // Manual order of resource types to display in the UI for better UX.
+const alertsSubResources = [
+  'ALERT_RULE',
+  'NOTIFICATION_POLICY',
+  'NOTIFICATION_TEMPLATE',
+  'CONTACT_POINT',
+  'MUTE_TIMING',
+] as const;
+
 const displayOrder = [
   'DASHBOARD',
   'LIBRARY_ELEMENT',
@@ -23,11 +31,7 @@ const displayOrder = [
   'PLUGIN',
   'FOLDER',
   'ALERT_RULE_GROUP',
-  'ALERT_RULE',
-  'NOTIFICATION_POLICY',
-  'NOTIFICATION_TEMPLATE',
-  'CONTACT_POINT',
-  'MUTE_TIMING',
+  ...alertsSubResources,
 ] as const;
 
 // This guarantees that displayOrder includes all ResourceTypeId values.
@@ -116,6 +120,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
 
           {resourceTypes.map((type) => (
             <Stack key={type} gap={1} alignItems="center">
+              <Space h={alertsSubResources.includes(type as (typeof alertsSubResources)[number]) ? 2 : 0.25} />
               <Checkbox
                 value={selectedTypes.has(type)}
                 onChange={handleTypeChange(type)}
