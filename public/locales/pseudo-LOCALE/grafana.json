@@ -399,6 +399,9 @@
       "save": "Ŝävę mūŧę ŧįmįŉģ",
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
     },
+    "navigation": {
+      "editor-title": "{{actionName}} {{entityName}}"
+    },
     "notification-preview": {
       "alertmanager": "Åľęřŧmäŉäģęř:",
       "error": "Cőūľđ ŉőŧ ľőäđ řőūŧįŉģ přęvįęŵ ƒőř {{alertmanager}}",

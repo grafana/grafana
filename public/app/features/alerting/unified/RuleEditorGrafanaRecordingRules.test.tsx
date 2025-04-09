@@ -78,7 +78,7 @@ describe('RuleEditor grafana recording rules', () => {
       await user.type(await ui.inputs.metric.find(), 'metricName');
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
 
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
@@ -96,7 +96,7 @@ describe('RuleEditor grafana recording rules', () => {
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       expect(requests).toHaveLength(0);
     });

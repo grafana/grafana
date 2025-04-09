@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { getWrapper, render, waitFor, within } from 'test/test-utils';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
@@ -30,7 +30,8 @@ import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 
-import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
+import { ExistingRuleEditor } from './ExistingRuleEditor';
+import { cloneRuleDefinition } from './clone-utils';
 import { getDefaultFormValues } from './formDefaults';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
@@ -54,7 +55,6 @@ const ui = {
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
-  loadingIndicator: byText('Loading the rule...'),
 };
 
 const Providers = getWrapper({ renderWithRouter: true });
@@ -75,11 +75,13 @@ describe('CloneRuleEditor', function () {
       setupDataSources();
 
       render(
-        <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
+        <ExistingRuleEditor
+          identifier={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }}
+          clone={true}
+        />,
         { wrapper: Wrapper }
       );
 
-      await waitForElementToBeRemoved(ui.loadingIndicator.query());
       await waitFor(() => {
         expect(within(ui.inputs.group.get()).queryByTestId('Spinner')).not.toBeInTheDocument();
       });
@@ -130,19 +132,18 @@ describe('CloneRuleEditor', function () {
       });
 
       render(
-        <CloneRuleEditor
-          sourceRuleId={{
+        <ExistingRuleEditor
+          identifier={{
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',
             ruleName: 'First Ruler Rule',
             rulerRuleHash: hashRulerRule(originRule),
           }}
+          clone={true}
         />,
         { wrapper: Wrapper }
       );
-
-      await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');

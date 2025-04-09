@@ -8,7 +8,6 @@ import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { AlertWarning } from '../AlertWarning';
 import { AlertLabels } from '../components/AlertLabels';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import InfoPausedRule from '../components/InfoPausedRule';
 import { stringifyPendingPeriod } from '../components/rule-editor/PendingPeriodQuickPick';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
@@ -17,6 +16,7 @@ import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
 import { Annotation } from '../utils/constants';
 import { createViewLinkFromRuleWithLocation, stringifyErrorLike } from '../utils/misc';
+import { rulerRuleToFormValues } from '../utils/rule-form';
 import * as ruleId from '../utils/rule-id';
 import {
   getAnnotations,
@@ -30,12 +30,14 @@ import {
 } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
+import { cloneRuleDefinition } from './clone-utils';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
+  clone?: boolean;
 }
 
-export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
+export function ExistingRuleEditor({ identifier, clone = false }: ExistingRuleEditorProps) {
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
   const {
     loading: loadingAlertRule,
@@ -47,7 +49,6 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
 
   const loading = loadingAlertRule || loadingEditable;
 
-  // @TODO test this
   if (error) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
@@ -104,7 +105,6 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
       }
       subTitle={
         <Stack direction="column">
-          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
@@ -113,7 +113,11 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
       pageNav={getPageNav({ text: ruleWithLocation.rule ? getRuleName(ruleWithLocation.rule) : '' })}
       info={createMetadata(ruleWithLocation)}
     >
-      <AlertRuleForm existing={ruleWithLocation} />
+      {clone ? (
+        <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
+      ) : (
+        <AlertRuleForm existing={ruleWithLocation} />
+      )}
     </AlertingPageWrapper>
   );
 }

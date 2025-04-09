@@ -232,6 +232,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     locationService.getHistory().goBack();
   };
 
+  const isSaveable = Boolean(existing || prefill);
+
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   if (!type) {
     return null;
@@ -269,7 +271,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
             {/* actions */}
             <Stack direction="row" alignItems="center">
-              {existing && (
+              {isSaveable && (
                 <Button
                   data-testid="save-rule"
                   variant="primary"

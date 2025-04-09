@@ -69,7 +69,7 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
     const requests = await capture;

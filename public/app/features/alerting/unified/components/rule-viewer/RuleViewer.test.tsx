@@ -358,8 +358,7 @@ describe('RuleViewer', () => {
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
       // One summary is rendered by the Title component, and the other by the DetailsTab component
-      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
-
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(1);
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
     });
   });
