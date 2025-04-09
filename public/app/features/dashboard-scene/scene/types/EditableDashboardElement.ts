@@ -31,6 +31,11 @@ export interface EditableDashboardElement {
   onDelete?(): void;
 
   /**
+   * Should confirm delete action
+   */
+  onConfirmDelete?(): void;
+
+  /**
    * Supports duplicate action
    */
   onDuplicate?(): void;
