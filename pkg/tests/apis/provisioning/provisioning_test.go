@@ -340,8 +340,8 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Body(body).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
-		require.True(t, apierrors.IsForbidden(result.Error()), code)
 		require.Equal(t, 403, code)
+		require.True(t, apierrors.IsForbidden(result.Error()), code)
 	})
 
 	t.Run("fail using invalid paths", func(t *testing.T) {
