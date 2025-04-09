@@ -2,7 +2,11 @@
   "_comment": "Код является источником истины для английских фраз. Их следует менять непосредственно в компонентах, а дополнительные формы множественного числа указывать в этом файле.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Роль",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Служебная учетная запись",
       "team-label": "Команда",
       "title": "Добавление разрешений",
@@ -15,7 +19,9 @@
       "permission": "Разрешение"
     },
     "permission-list-item": {
-      "inherited": "Унаследованные от папки"
+      "inherited": "Унаследованные от папки",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Добавить разрешение",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Никогда",
       "no-licensed-roles": "Не назначено"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Состояние оповещения",
       "annotations": "Аннотации",
+      "description-missing-series-evaluations": "",
       "evaluation": "Оценка",
       "evaluation-paused": "Оценка оповещения в настоящее время приостановлена",
       "evaluation-paused-description": "Уведомления для этого правила не будут отправляться. Экземпляры оповещений также не будут создаваться, пока правило не будет возобновлено.",
+      "keep-firing-for": "",
       "last-evaluated": "Время последней оценки",
       "last-evaluation-duration": "Продолжительность последней оценки",
       "last-updated-at": "Время последнего обновления",
       "last-updated-by": "Кем выполнено последнее обновление",
+      "missing-series-resolve": "",
       "no-annotations": "Нет аннотаций",
       "pending-period": "Период ожидания",
       "rule": "Правило",
@@ -536,7 +550,8 @@
           "error": "Ошибка",
           "no-data": "Нет данных",
           "normal": "Нормальное",
-          "pending": "Ожидание"
+          "pending": "Ожидание",
+          "recovering": ""
         },
         "state-transitions": "Переход состояний",
         "unknown-event-state": "Неизвестно",
@@ -798,6 +813,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -886,9 +902,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -916,6 +929,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1038,6 +1052,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1158,7 +1178,10 @@
           "new-recording-rule": "Новое правило записи",
           "title": "Управляемые Grafana"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_few": "",
+        "loading-rules_many": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1276,9 +1299,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1556,8 +1576,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1613,7 +1635,18 @@
           "text": "Задайте способ оценки правила оповещения."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Задайте поведение оповещения, если оценка не удалась или запрос не возвращает данных."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Период ожидания"
       },
@@ -1732,6 +1765,19 @@
       "na": "",
       "paused": "Приостановлено",
       "recording-rule": "Правило записи"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_few": "",
+      "error_many": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2274,6 +2320,9 @@
     "inline-toast": {
       "success": "Скопировано"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2818,8 +2867,10 @@
         "copy-or-duplicate": "Копировать или дублировать",
         "delete": "Удалить",
         "duplicate": "Дублировать",
-        "grid": "Сетка",
-        "layout": "Расположение"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3114,7 +3165,6 @@
         "tooltip": "Общий доступ к дашборду"
       },
       "share-button": "Общий доступ",
-      "switch-old-dashboard": "Переключиться на старую страницу дашборда",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
     },
@@ -4313,10 +4363,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Очистить папки"
+    "clear-folder-button": "Очистить папки",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Чтобы создать новую папку, нажмите Enter.",
+    "input-placeholder": "",
     "loading": "Загрузка папок..."
   },
   "folder-repo": {
@@ -4325,18 +4378,25 @@
   "forgot-password": {
     "back-button": "Назад на страницу входа",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Пропустить",
       "submit-button": "Отправить"
     },
     "contact-admin": "Забыли имя пользователя или адрес электронной почты? Обратитесь к администратору Grafana.",
     "email-sent": "На ваш адрес электронной почты отправлена ссылка для сброса пароля. Вы должны получить ее в ближайшее время.",
     "reset-password-header": "Сброс пароля",
-    "send-email-button": "Отправить письмо для сброса"
+    "send-email-button": "Отправить письмо для сброса",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Продолжить редактирование",
     "description": "Внесенные вами изменения не могут быть сохранены.",
-    "discard-button": "Отменить несохраненные изменения"
+    "discard-button": "Отменить несохраненные изменения",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4606,6 +4666,7 @@
       "cell-filter-on": "Фильтровать по значению",
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
+      "cell-inspect-tooltip": "",
       "copy": "Копировать в буфер обмена",
       "count": "",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}  <5></5>",
@@ -4615,8 +4676,10 @@
       "filter-popup-cancel": "Отмена",
       "filter-popup-clear": "Очистить фильтр",
       "filter-popup-heading": "Фильтр по значениям:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
+      "inspect-menu-label": "",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
     },
@@ -4757,6 +4820,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -5019,10 +5092,10 @@
       "email-placeholder": "адрес электронной почты",
       "email-required": "Введите адрес электронной почты",
       "name-label": "Имя",
-      "name-placeholder": "имя",
       "password-label": "Пароль",
       "password-placeholder": "пароль",
       "password-required": "Введите пароль",
+      "passwordless-username-label": "",
       "submit-label": "Войти",
       "submit-loading-label": "Вход...",
       "username-label": "Адрес электронной почты или имя пользователя",
@@ -5108,15 +5181,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5277,7 +5360,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Ошибка при отмене создания снимка",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Ошибка при создании снимка",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Ошибка отключения",
       "error-see-server-logs": "Для получения более подробной информации см. журналы сервера Grafana",
       "get-session-error-title": "Ошибка при загрузке конфигурации переноса",
@@ -5374,6 +5461,7 @@
       "errored-resource-count": "Ошибки",
       "page-loading": "Загрузка…",
       "rebuild-snapshot": "Повторно создать снимок",
+      "show-errors": "",
       "snapshot-date": "Метка времени снимка",
       "snapshot-not-created": "Еще не создан",
       "start-migration": "Создать снимок",
@@ -5383,7 +5471,7 @@
       "upload-migration": "Загрузить снимок"
     },
     "support-types-disclosure": {
-      "text": "В стек Grafana Cloud переносятся дашборды, папки и основные источники данных. <2>Подробнее о переносе других параметров.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Токен создан и активен",
@@ -5760,6 +5848,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Пригласить",
       "invite-tooltip": "Пригласить нового члена"
@@ -5778,12 +5872,26 @@
       "open": "Открыть меню",
       "undock": "Открепить меню"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Последние записи в блоге"
   },
   "news": {
     "drawer": {
-      "close": "Закрыть выдвижную панель"
+      "close": ""
     },
+    "link-title": "",
     "title": "Последние записи в блоге"
   },
   "notifications": {
@@ -5808,6 +5916,17 @@
       "error": "Поставщик услуг входа отклонил запрос на вход"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5827,6 +5946,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5876,7 +6003,10 @@
     "unsupported-layout": "Неподдерживаемый макет"
   },
   "panel-type-filter": {
-    "clear-button": "Очистить типы"
+    "clear-button": "Очистить типы",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6085,6 +6215,7 @@
     },
     "plugin-help": {
       "error": "Ошибка при загрузке справки.",
+      "loading": "",
       "not-found": "Справка по запросу не найдена."
     },
     "plugin-installed-badge": {
@@ -6129,6 +6260,7 @@
       "strong-password-validation-register": "Пароль не соответствует политике надежных паролей"
     },
     "change-theme": "Изменить тему",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6764,6 +6896,7 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
+      "replace-query-from-library": "",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -6852,9 +6985,13 @@
       "clear-button": "Очистить всё",
       "tooltip": "Теперь вы можете выбрать параметр «Нет основных ролей» и добавить разрешения в соответствии со своими потребностями. Дополнительную информацию можно найти в <1>нашей документации</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Очистить"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Назначайте роли пользователям, чтобы обеспечить детальное управление доступом к функциям и ресурсам Grafana. Подробнее в нашей <2>документации</2>."
     }
@@ -6862,10 +6999,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Основные роли"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Вероятно, Grafana была обновлена. Попробуйте перезагрузить страницу.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Перезагрузить",
     "title": "Не удалось найти файл приложения"
   },
@@ -6981,6 +7121,10 @@
     "role": {
       "label": "Роль"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7250,10 +7394,19 @@
   },
   "sign-up": {
     "back-button": "Назад на страницу входа",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Отправить",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Назад на страницу входа",
       "complete-button": "Завершить регистрацию",
+      "email-description": "",
+      "email-label": "",
       "header": "Подтверждение адреса электронной почты",
       "info": "На ваш адрес электронной почты отправлена ссылка для подтверждения. Вы должны получить ее в ближайшее время.",
       "send-button": "Отправить письмо для подтверждения"
@@ -7311,6 +7464,9 @@
     "url-column-header": "URL-адрес снимка",
     "view-button": "Просмотр"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7338,7 +7494,13 @@
     "clear-button": "Очистить теги",
     "loading": "Загрузка…",
     "no-tags": "Теги не найдены",
-    "placeholder": "Фильтровать по тегам"
+    "placeholder": "Фильтровать по тегам",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7792,6 +7954,10 @@
     "role-column": "Роль",
     "select-org-button": "Выбрать тип организации",
     "title": "Организации"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

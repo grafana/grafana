@@ -2,7 +2,11 @@
   "_comment": "代码是英语短语的真实来源。应直接在组件中对它们进行更新，并在此文件中指定其他复数形式。",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "角色",
+      "role-select-aria-label": "",
       "serviceaccount-label": "服务帐户",
       "team-label": "团队",
       "title": "添加权限：",
@@ -15,7 +19,9 @@
       "permission": "权限"
     },
     "permission-list-item": {
-      "inherited": "继承自文件夹"
+      "inherited": "继承自文件夹",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "添加权限",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "",
       "no-licensed-roles": "未分配"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "提醒状态",
       "annotations": "",
+      "description-missing-series-evaluations": "",
       "evaluation": "评估",
       "evaluation-paused": "提醒评估当前已暂停",
       "evaluation-paused-description": "在此规则取消暂停之前，不会触发此规则的通知，也不会创建提醒实例。",
+      "keep-firing-for": "",
       "last-evaluated": "上次评估",
       "last-evaluation-duration": "上次评估持续时间",
       "last-updated-at": "上次更新时间",
       "last-updated-by": "上次更新者",
+      "missing-series-resolve": "",
       "no-annotations": "无注释",
       "pending-period": "待处理时段",
       "rule": "规则",
@@ -536,7 +550,8 @@
           "error": "",
           "no-data": "没有数据",
           "normal": "",
-          "pending": "待处理"
+          "pending": "待处理",
+          "recovering": ""
         },
         "state-transitions": "状态转换",
         "unknown-event-state": "",
@@ -792,6 +807,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -880,9 +896,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -910,6 +923,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1032,6 +1046,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1152,7 +1172,7 @@
           "new-recording-rule": "新的录制规则",
           "title": "由 Grafana 管理"
         },
-        "loading-rules": ""
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1270,9 +1290,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1544,8 +1561,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1601,7 +1620,18 @@
           "text": "定义系统如何评估提醒规则。"
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "定义评估失败或查询未返回数据时的提醒行为。"
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "待处理时段"
       },
@@ -1720,6 +1750,16 @@
       "na": "",
       "paused": "已暂停",
       "recording-rule": "录制规则"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2247,6 +2287,9 @@
     "inline-toast": {
       "success": "已复制"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2791,8 +2834,10 @@
         "copy-or-duplicate": "复制或拷贝",
         "delete": "",
         "duplicate": "",
-        "grid": "网格",
-        "layout": "布局"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3087,7 +3132,6 @@
         "tooltip": ""
       },
       "share-button": "分享",
-      "switch-old-dashboard": "切换到旧的数据面板页面",
       "unlink-library-panel": "",
       "unmark-favorite": "取消标记为收藏"
     },
@@ -4286,10 +4330,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "清除文件夹"
+    "clear-folder-button": "清除文件夹",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "按 Enter 键以创建新文件夹。",
+    "input-placeholder": "",
     "loading": "正在加载文件夹..."
   },
   "folder-repo": {
@@ -4298,18 +4345,25 @@
   "forgot-password": {
     "back-button": "返回登录",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "跳过",
       "submit-button": "提交"
     },
     "contact-admin": "忘记了用户名或邮箱？请与您的 Grafana 管理员联系。",
     "email-sent": "一封包含重置链接的电子邮件已发送到您的电子邮箱。您很快就会收到它。",
     "reset-password-header": "重置密码",
-    "send-email-button": "发送重置电子邮件"
+    "send-email-button": "发送重置电子邮件",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "继续编辑",
     "description": "您所做的更改可能无法保存。",
-    "discard-button": "丢弃未保存的更改"
+    "discard-button": "丢弃未保存的更改",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4579,6 +4633,7 @@
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
       "cell-inspect": "检查值",
+      "cell-inspect-tooltip": "",
       "copy": "",
       "count": "",
       "csv-counts": "行：{{rows}}，列：{{columns}}  <5></5>",
@@ -4588,8 +4643,10 @@
       "filter-popup-cancel": "",
       "filter-popup-clear": "清除筛选器",
       "filter-popup-heading": "按值筛选：",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "区分大小写",
       "inspect-drawer-title": "检查值",
+      "inspect-menu-label": "",
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行"
     },
@@ -4730,6 +4787,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4989,10 +5056,10 @@
       "email-placeholder": "电子邮件",
       "email-required": "",
       "name-label": "",
-      "name-placeholder": "姓名",
       "password-label": "密码",
       "password-placeholder": "密码",
       "password-required": "必须输入密码",
+      "passwordless-username-label": "",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
@@ -5078,15 +5145,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5247,7 +5324,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "取消创建快照时出错",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "创建快照时出错",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "断开连接时出错",
       "error-see-server-logs": "有关更多详细信息，请参阅 Grafana 服务器日志",
       "get-session-error-title": "加载迁移配置时出错",
@@ -5344,6 +5425,7 @@
       "errored-resource-count": "错误",
       "page-loading": "",
       "rebuild-snapshot": "重建快照",
+      "show-errors": "",
       "snapshot-date": "快照时间戳",
       "snapshot-not-created": "尚未创建",
       "start-migration": "构建快照",
@@ -5353,7 +5435,7 @@
       "upload-migration": "上传快照"
     },
     "support-types-disclosure": {
-      "text": "数据面板、文件夹和内置核心数据源已迁移到您的 Grafana Cloud 堆栈。<2>了解如何迁移其他设置。</2>"
+      "text": ""
     },
     "token-status": {
       "active": "令牌已创建并激活",
@@ -5730,6 +5812,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "",
       "invite-tooltip": "邀请新成员"
@@ -5748,12 +5836,26 @@
       "open": "",
       "undock": "取消停靠菜单"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": ""
   },
   "news": {
     "drawer": {
-      "close": "关闭抽屉"
+      "close": ""
     },
+    "link-title": "",
     "title": "最新博客"
   },
   "notifications": {
@@ -5778,6 +5880,17 @@
       "error": "登录提供商拒绝了登录请求"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5797,6 +5910,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5846,7 +5967,10 @@
     "unsupported-layout": "不支持的布局"
   },
   "panel-type-filter": {
-    "clear-button": "清除类型"
+    "clear-button": "清除类型",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6055,6 +6179,7 @@
     },
     "plugin-help": {
       "error": "载入帮助时发生错误。",
+      "loading": "",
       "not-found": "找不到查询帮助。"
     },
     "plugin-installed-badge": {
@@ -6099,6 +6224,7 @@
       "strong-password-validation-register": "密码不符合强密码政策"
     },
     "change-theme": "",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6728,6 +6854,7 @@
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
       "remove-query": "删除查询",
+      "replace-query-from-library": "",
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -6807,9 +6934,13 @@
       "clear-button": "全部清除",
       "tooltip": "您现在可以选择“无基本角色”选项，并根据自定义需求添加权限。您可以在<1>我们的文档</1>中找到更多信息。"
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "清除"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "向用户分配角色，以确保对 Grafana 的功能和资源的访问进行细粒度控制。不妨在我们的<2>文档</2>中了解更多信息。"
     }
@@ -6817,10 +6948,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "基本角色"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana 可能已更新。请尝试重新加载页面。",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "重新加载",
     "title": "无法找到应用程序文件"
   },
@@ -6936,6 +7070,10 @@
     "role": {
       "label": ""
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7205,10 +7343,19 @@
   },
   "sign-up": {
     "back-button": "返回登录",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "提交",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "返回登录",
       "complete-button": "完成注册",
+      "email-description": "",
+      "email-label": "",
       "header": "验证电子邮件",
       "info": "一封包含验证链接的电子邮件已发送到您的电子邮箱。您很快就会收到它。",
       "send-button": "发送验证电子邮件"
@@ -7266,6 +7413,9 @@
     "url-column-header": "快照网址",
     "view-button": "查看"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7293,7 +7443,13 @@
     "clear-button": "清除标记",
     "loading": "加载中...",
     "no-tags": "未找到标签",
-    "placeholder": "按标签筛选"
+    "placeholder": "按标签筛选",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7747,6 +7903,10 @@
     "role-column": "角色",
     "select-org-button": "选择组织",
     "title": "组织"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

@@ -2,7 +2,11 @@
   "_comment": "올바른 영어 표현의 기준은 코드입니다. 이는 구성 요소에서 직접 업데이트되어야 하며, 이 파일에서 명시한 추가 복수형도 마찬가지입니다.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "역할",
+      "role-select-aria-label": "",
       "serviceaccount-label": "서비스 계정",
       "team-label": "팀",
       "title": "다음에 대한 권한 추가:",
@@ -15,7 +19,9 @@
       "permission": "권한"
     },
     "permission-list-item": {
-      "inherited": "폴더에서 상속됨"
+      "inherited": "폴더에서 상속됨",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "권한 추가",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "기록 없음",
       "no-licensed-roles": "할당되지 않음"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
+      "description-missing-series-evaluations": "",
       "evaluation": "평가",
       "evaluation-paused": "현재 경고 평가가 일시 중지됨",
       "evaluation-paused-description": "이 규칙에 대한 알림이 실행되지 않으며 규칙의 일시 중지 상태가 해제될 때까지 경고 인스턴스가 생성되지 않습니다.",
+      "keep-firing-for": "",
       "last-evaluated": "마지막 평가 시점",
       "last-evaluation-duration": "마지막 평가 기간",
       "last-updated-at": "마지막 업데이트 시점",
       "last-updated-by": "마지막에 업데이트한 사용자",
+      "missing-series-resolve": "",
       "no-annotations": "주석 없음",
       "pending-period": "보류 기간",
       "rule": "규칙",
@@ -536,7 +550,8 @@
           "error": "오류",
           "no-data": "데이터 없음",
           "normal": "정상",
-          "pending": "보류 중"
+          "pending": "보류 중",
+          "recovering": ""
         },
         "state-transitions": "상태 전환",
         "unknown-event-state": "알 수 없음",
@@ -792,6 +807,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -880,9 +896,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -910,6 +923,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1032,6 +1046,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1152,7 +1172,7 @@
           "new-recording-rule": "새 기록 규칙",
           "title": "Grafana 관리"
         },
-        "loading-rules": ""
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1270,9 +1290,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1544,8 +1561,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1601,7 +1620,18 @@
           "text": "경고 규칙의 평가 방법을 정의하세요."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "평가가 실패하거나 쿼리에서 데이터를 반환하지 않을 때 경고 작동 방식을 정의하세요."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "보류 기간"
       },
@@ -1720,6 +1750,16 @@
       "na": "",
       "paused": "일시 중지됨",
       "recording-rule": "기록 규칙"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2247,6 +2287,9 @@
     "inline-toast": {
       "success": "복사됨"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2791,8 +2834,10 @@
         "copy-or-duplicate": "복사 또는 복제",
         "delete": "삭제",
         "duplicate": "복제",
-        "grid": "그리드",
-        "layout": "레이아웃"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3087,7 +3132,6 @@
         "tooltip": "대시보드 공유"
       },
       "share-button": "공유",
-      "switch-old-dashboard": "이전 대시보드 페이지로 전환",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "unmark-favorite": "즐겨찾기 표시 취소"
     },
@@ -4286,10 +4330,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "폴더 비우기"
+    "clear-folder-button": "폴더 비우기",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "새 폴더를 만들려면 엔터 키를 누르세요.",
+    "input-placeholder": "",
     "loading": "폴더 로딩 중..."
   },
   "folder-repo": {
@@ -4298,18 +4345,25 @@
   "forgot-password": {
     "back-button": "로그인으로 돌아가기",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "건너뛰기",
       "submit-button": "제출"
     },
     "contact-admin": "사용자 이름이나 이메일을 잊으셨나요? Grafana 관리자에게 문의하세요.",
     "email-sent": "재설정 링크가 포함된 이메일이 이메일 주소로 전송되었습니다. 곧 받으실 수 있습니다.",
     "reset-password-header": "비밀번호 재설정",
-    "send-email-button": "재설정 이메일 전송"
+    "send-email-button": "재설정 이메일 전송",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "계속 편집하기",
     "description": "변경한 내용이 저장되지 않을 수 있습니다.",
-    "discard-button": "저장되지 않은 변경 사항 삭제"
+    "discard-button": "저장되지 않은 변경 사항 삭제",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4579,6 +4633,7 @@
       "cell-filter-on": "값 필터링하여 포함",
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
+      "cell-inspect-tooltip": "",
       "copy": "클립보드로 복사",
       "count": "",
       "csv-counts": "행:{{rows}}, 열:{{columns}}  <5></5>",
@@ -4588,8 +4643,10 @@
       "filter-popup-cancel": "취소",
       "filter-popup-clear": "필터 초기화",
       "filter-popup-heading": "값으로 필터링:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "대소문자 일치",
       "inspect-drawer-title": "값 검사",
+      "inspect-menu-label": "",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}"
     },
@@ -4730,6 +4787,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4989,10 +5056,10 @@
       "email-placeholder": "이메일",
       "email-required": "이메일은 필수 입력 사항입니다.",
       "name-label": "이름",
-      "name-placeholder": "이름",
       "password-label": "비밀번호",
       "password-placeholder": "비밀번호",
       "password-required": "비밀번호는 필수 입력 항목입니다.",
+      "passwordless-username-label": "",
       "submit-label": "로그인",
       "submit-loading-label": "로그인 중...",
       "username-label": "이메일 또는 사용자 이름",
@@ -5078,15 +5145,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5247,7 +5324,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "스냅샷 생성 취소 중 오류 발생",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "스냅샷 생성 중 오류 발생",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "연결 해제 중 오류 발생",
       "error-see-server-logs": "자세한 내용은 Grafana 서버 로그를 참고하세요.",
       "get-session-error-title": "마이그레이션 구성 로딩 중 오류 발생",
@@ -5344,6 +5425,7 @@
       "errored-resource-count": "오류",
       "page-loading": "로딩 중...",
       "rebuild-snapshot": "스냅샷 재구축",
+      "show-errors": "",
       "snapshot-date": "스냅샷 타임스탬프",
       "snapshot-not-created": "아직 생성되지 않음",
       "start-migration": "스냅샷 구축",
@@ -5353,7 +5435,7 @@
       "upload-migration": "스냅샷 업로드"
     },
     "support-types-disclosure": {
-      "text": "대시보드, 폴더 및 빌트인 핵심 데이터 소스가 Grafana Cloud 스택으로 마이그레이션됩니다. <2>다른 설정을 마이그레이션하는 방법에 대해 자세히 알아보세요.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "토큰 생성 및 활성화됨",
@@ -5730,6 +5812,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "초대",
       "invite-tooltip": "새 멤버 초대"
@@ -5748,12 +5836,26 @@
       "open": "메뉴 열기",
       "undock": "메뉴 고정 해제"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "블로그 최근 글"
   },
   "news": {
     "drawer": {
-      "close": "드로어 닫기"
+      "close": ""
     },
+    "link-title": "",
     "title": "블로그 최근 글"
   },
   "notifications": {
@@ -5778,6 +5880,17 @@
       "error": "로그인 제공자가 로그인 요청을 거부했습니다."
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5797,6 +5910,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5846,7 +5967,10 @@
     "unsupported-layout": "지원되지 않는 레이아웃"
   },
   "panel-type-filter": {
-    "clear-button": "유형 초기화"
+    "clear-button": "유형 초기화",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6055,6 +6179,7 @@
     },
     "plugin-help": {
       "error": "도움말을 로딩하는 동안 오류가 발생했습니다.",
+      "loading": "",
       "not-found": "쿼리 도움말을 찾지 못했습니다."
     },
     "plugin-installed-badge": {
@@ -6099,6 +6224,7 @@
       "strong-password-validation-register": "비밀번호가 강력한 비밀번호 정책을 준수하지 않습니다."
     },
     "change-theme": "테마 변경",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6728,6 +6854,7 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
+      "replace-query-from-library": "",
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
@@ -6807,9 +6934,13 @@
       "clear-button": "전체 초기화",
       "tooltip": "이제 '기본 역할 없음' 옵션을 선택하고 사용자의 필요에 맞게 권한을 추가할 수 있습니다. 자세한 내용은 <1>문서</1>를 참조하세요."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "초기화"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "사용자에게 역할을 할당하여 Grafana의 기능과 리소스에 대한 액세스 권한을 세분화하여 제어하세요. 자세한 내용은 Grafana의 <2>문서</2>를 참조하세요."
     }
@@ -6817,10 +6948,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "기본 역할"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana가 업데이트되었을 가능성이 높습니다. 페이지를 다시 로딩해 보세요.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "다시 로딩",
     "title": "애플리케이션 파일을 찾을 수 없음"
   },
@@ -6936,6 +7070,10 @@
     "role": {
       "label": "역할"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7205,10 +7343,19 @@
   },
   "sign-up": {
     "back-button": "로그인으로 돌아가기",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "제출",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "로그인으로 돌아가기",
       "complete-button": "가입 완료",
+      "email-description": "",
+      "email-label": "",
       "header": "이메일 인증",
       "info": "인증 링크가 포함된 이메일이 이메일 주소로 전송되었습니다. 곧 받으실 수 있습니다.",
       "send-button": "인증 이메일 전송"
@@ -7266,6 +7413,9 @@
     "url-column-header": "스냅샷 URL",
     "view-button": "보기"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7293,7 +7443,13 @@
     "clear-button": "태그 지우기",
     "loading": "로딩 중...",
     "no-tags": "찾은 태그 없음",
-    "placeholder": "태그로 필터링"
+    "placeholder": "태그로 필터링",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7747,6 +7903,10 @@
     "role-column": "역할",
     "select-org-button": "조직 선택",
     "title": "조직"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

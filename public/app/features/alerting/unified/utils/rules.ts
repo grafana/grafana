@@ -192,6 +192,18 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
+export function getKeepFiringfor(rule: CombinedRule): string | undefined {
+  if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
+    return undefined;
+  }
+
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
+    return rule.rulerRule.keep_firing_for;
+  }
+
+  return undefined;
+}
+
 export function getAnnotations(rule?: AlertingRule): Annotations {
   return rule?.annotations ?? {};
 }
@@ -288,17 +300,21 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
+  [PromAlertingRuleState.Recovering]: 'warning',
   [GrafanaAlertState.Alerting]: 'bad',
   [GrafanaAlertState.Error]: 'bad',
   [GrafanaAlertState.NoData]: 'info',
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
+  [GrafanaAlertState.Recovering]: 'warning',
   [AlertState.NoData]: 'info',
   [AlertState.Paused]: 'warning',
   [AlertState.Alerting]: 'bad',
   [AlertState.OK]: 'good',
   // AlertState.Pending is not included because the 'pending' value is already covered by `PromAlertingRuleState.Pending`
   // [AlertState.Pending]: 'warning',
+  // same for AlertState.Recovering
+  // [AlertState.Recovering]: 'warning',
   [AlertState.Unknown]: 'info',
 };
 

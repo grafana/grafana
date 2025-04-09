@@ -87,6 +87,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should keep manager info", func(t *testing.T) {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+		require.NoError(t, err)
+
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
@@ -296,4 +299,50 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	meta, err := utils.MetaAccessor(out)
 	require.NoError(t, err)
 	return meta
+}
+
+func TestPrepareLargeObjectForStorage(t *testing.T) {
+	_ = v1alpha1.AddToScheme(scheme)
+	node, err := snowflake.NewNode(rand.Int63n(1024))
+	require.NoError(t, err)
+
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+
+	dashboard := v1alpha1.Dashboard{}
+	dashboard.Name = "test-name"
+	t.Run("Should deconstruct object if size is over threshold", func(t *testing.T) {
+		los := LargeObjectSupportFake{
+			threshold: 0,
+		}
+
+		f := &Storage{
+			codec:     apitesting.TestCodec(codecs, v1alpha1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				LargeObjectSupport: &los,
+			},
+		}
+
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
+		require.True(t, los.deconstructed)
+	})
+
+	t.Run("Should not deconstruct object if size is under threshold", func(t *testing.T) {
+		los := LargeObjectSupportFake{
+			threshold: 1000,
+		}
+
+		f := &Storage{
+			codec:     apitesting.TestCodec(codecs, v1alpha1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				LargeObjectSupport: &los,
+			},
+		}
+
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
+		require.False(t, los.deconstructed)
+	})
 }
