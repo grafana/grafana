@@ -24,6 +24,7 @@ func ProvideSecureValueMetadataStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
 	accessClient claims.AccessClient,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -42,17 +43,19 @@ func ProvideSecureValueMetadataStorage(
 	}
 
 	return &secureValueMetadataStorage{
-		db:           db,
-		accessClient: accessClient,
-		keepers:      keepers,
+		db:                    db,
+		accessClient:          accessClient,
+		keeperMetadataStorage: keeperMetadataStorage,
+		keepers:               keepers,
 	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	db           db.DB
-	accessClient claims.AccessClient
-	keepers      map[contracts.KeeperType]contracts.Keeper
+	db                    db.DB
+	accessClient          claims.AccessClient
+	keeperMetadataStorage contracts.KeeperMetadataStorage
+	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
