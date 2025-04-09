@@ -612,18 +612,12 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     });
 
     // Ensure these properties are not at the root level
-    // @ts-expect-error this are the properties that should be moved to options
-    expect(result.annotations[0].spec.expr).toBeUndefined();
-    // @ts-expect-error
-    expect(result.annotations[0].spec.queryType).toBeUndefined();
-    // @ts-expect-error
-    expect(result.annotations[0].spec.legendFormat).toBeUndefined();
-    // @ts-expect-error
-    expect(result.annotations[0].spec.useValueAsTime).toBeUndefined();
-    // @ts-expect-error
-    expect(result.annotations[0].spec.customProp1).toBeUndefined();
-    // @ts-expect-error
-    expect(result.annotations[0].spec.customProp2).toBeUndefined();
+    expect(result).not.toHaveProperty('annotations[0].spec.expr');
+    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
+    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
+    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
 });
 
