@@ -45,7 +45,6 @@ logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
-traceQLStreaming,GA,@grafana/observability-traces-and-profiling,false,false,true
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
