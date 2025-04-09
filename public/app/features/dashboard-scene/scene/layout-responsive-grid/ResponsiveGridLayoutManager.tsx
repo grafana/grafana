@@ -121,11 +121,10 @@ export class AutoGridLayoutManager
       let panelId = dashboardSceneGraph.getNextPanelId(children[0].state.body);
 
       children.forEach((child) => {
-        const clonePanelId = panelId;
         const clone = child.clone({
           key: undefined,
           body: child.state.body.clone({
-            key: getVizPanelKeyForPanelId(clonePanelId),
+            key: getVizPanelKeyForPanelId(panelId),
           }),
         });
 

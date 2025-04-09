@@ -238,11 +238,10 @@ export class DefaultGridLayoutManager
 
       children.forEach((child) => {
         if (child instanceof DashboardGridItem) {
-          const clonePanelId = panelId;
           const clone = child.clone({
             key: undefined,
             body: child.state.body.clone({
-              key: getVizPanelKeyForPanelId(clonePanelId),
+              key: getVizPanelKeyForPanelId(panelId),
             }),
           });
 
