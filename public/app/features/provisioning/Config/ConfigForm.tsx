@@ -232,7 +232,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
             },
           })}
           label={t('provisioning.finish-step.label-read-only', 'Read only')}
-          description={"Resources can't be modified through Grafana."}
+          description={t(
+            'provisioning.config-form.description-read-only',
+            "Resources can't be modified through Grafana."
+          )}
         />
       </Field>
 
@@ -240,7 +243,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Checkbox
           disabled={readOnly}
           {...register('prWorkflow')}
-          label={'Enable pull request option when saving'}
+          label={t('provisioning.config-form.label-pr-workflow', 'Enable pull request option when saving')}
           description={
             <Trans i18nKey="provisioning.finish-step.description-webhooks-enable">
               Allows users to choose whether to open a pull request when saving changes. If the repository does not

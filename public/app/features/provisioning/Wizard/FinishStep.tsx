@@ -53,7 +53,10 @@ export function FinishStep() {
             },
           })}
           label={t('provisioning.finish-step.label-read-only', 'Read only')}
-          description={"Resources can't be modified through Grafana."}
+          description={t(
+            'provisioning.finish-step.description-read-only',
+            "Resources can't be modified through Grafana."
+          )}
         />
       </Field>
 
@@ -61,7 +64,7 @@ export function FinishStep() {
         <Checkbox
           {...register('repository.prWorkflow')}
           disabled={readOnly}
-          label={'Enable pull request option when saving'}
+          label={t('provisioning.finish-step.label-pr-workflow', 'Enable pull request option when saving')}
           description={
             <Trans i18nKey="provisioning.finish-step.description-pr-enable-description">
               Allows users to choose whether to open a pull request when saving changes. If the repository does not
