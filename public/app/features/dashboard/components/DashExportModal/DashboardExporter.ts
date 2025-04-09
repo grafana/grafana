@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, matchPluginId, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -129,21 +129,13 @@ export class DashboardExporter {
           if (ds.meta?.builtIn) {
             return;
           }
-          let dataSourceId = ds.meta?.id;
-          let dataSourceName = ds.meta?.name;
-          let dataSourceVersion = ds.meta.info.version || '1.0.0';
-          // if this is a prom flavored data source (azure prom/ aws prom) it will be treated as a prom data source
-          if (matchPluginId('prometheus', ds.meta)) {
-            dataSourceId = 'prometheus';
-            dataSourceName = 'Prometheus';
-            dataSourceVersion = '1.0.0';
-          }
+
           // add data source type to require list
-          requires['datasource' + dataSourceId] = {
+          requires['datasource' + ds.meta?.id] = {
             type: 'datasource',
-            id: dataSourceId,
-            name: dataSourceName,
-            version: dataSourceVersion,
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
           };
 
           // if used via variable we can skip templatizing usage
@@ -160,8 +152,8 @@ export class DashboardExporter {
             label: ds.name,
             description: '',
             type: 'datasource',
-            pluginId: dataSourceId,
-            pluginName: dataSourceName,
+            pluginId: ds.meta?.id,
+            pluginName: ds.meta?.name,
             usage: datasources[refName]?.usage,
           };
 
@@ -174,7 +166,7 @@ export class DashboardExporter {
             };
           }
 
-          obj.datasource = { type: dataSourceId, uid: '${' + refName + '}' };
+          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
         });
     };
 

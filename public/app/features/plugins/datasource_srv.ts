@@ -294,7 +294,7 @@ export class DatasourceSrv implements DataSourceService {
       }
     }
 
-    let sorted = base.sort((a, b) => {
+    const sorted = base.sort((a, b) => {
       if (a.name.toLowerCase() > b.name.toLowerCase()) {
         return 1;
       }
@@ -325,12 +325,6 @@ export class DatasourceSrv implements DataSourceService {
           base.push(grafanaInstanceSettings);
         }
       }
-    }
-
-    if (!filters.pluginId) {
-      sorted = sorted.filter((x) => {
-        return matchPluginId('prometheus', x.meta);
-      });
     }
 
     return sorted;
