@@ -2781,7 +2781,8 @@
         "row": "Row",
         "rows": "Rows",
         "tab": "Tab",
-        "tabs": "Tabs"
+        "tabs": "Tabs",
+        "variable": "Variable"
       },
       "open": "Open options pane",
       "row": {
@@ -3622,13 +3623,19 @@
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
       "delete": "Delete",
+      "description": "Description",
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "label": "Label",
+      "name": "Name",
+      "open-editor": "Open variable editor",
+      "open-editor-tooltip": "For more variable options open variable editor",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
-      "text-running-query": "Running query..."
+      "text-running-query": "Running query...",
+      "type": "Type"
     },
     "variable-editor-list": {
       "definition": "Definition",
@@ -3641,7 +3648,7 @@
       "tooltip-remove-variable": "Remove variable"
     },
     "variable-hide-select": {
-      "label-show-on-dashboard": "Show on dashboard"
+      "label": "Hide"
     },
     "variable-usages-button": {
       "title-show-usages": "Showing usages for: {{variableId}}",
