@@ -1454,6 +1454,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -1815,6 +1821,9 @@
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
+    "jira_api_url": {
+     "$ref": "#/definitions/URL"
+    },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
     },
@@ -1862,6 +1871,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "smtp_tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "telegram_api_url": {
      "$ref": "#/definitions/URL"
@@ -2049,6 +2061,57 @@
       "$ref": "#/definitions/LinkTransformationConfig"
      },
      "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "JiraConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "description": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2656,6 +2719,12 @@
     "grafana_managed_receiver_configs": {
      "items": {
       "$ref": "#/definitions/PostableGrafanaReceiver"
+     },
+     "type": "array"
+    },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
      },
      "type": "array"
     },
@@ -3398,6 +3467,12 @@
     "email_configs": {
      "items": {
       "$ref": "#/definitions/EmailConfig"
+     },
+     "type": "array"
+    },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
      },
      "type": "array"
     },
@@ -4657,6 +4732,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "timeout": {
+     "$ref": "#/definitions/Duration"
+    },
     "url": {
      "$ref": "#/definitions/SecretURL"
     },
@@ -4909,6 +4987,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -6376,36 +6455,6 @@
     ]
    }
   },
-  "/convert/api/prom/config/v1/rules": {
-   "post": {
-    "consumes": [
-     "application/json",
-     "application/yaml"
-    ],
-    "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "202": {
-      "description": "ConvertPrometheusResponse",
-      "schema": {
-       "$ref": "#/definitions/ConvertPrometheusResponse"
-      }
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
-    "tags": [
-     "convert_prometheus"
-    ]
-   }
-  },
   "/convert/api/prom/rules": {
    "get": {
     "operationId": "RouteConvertPrometheusCortexGetRules",
@@ -6433,6 +6482,34 @@
      }
     },
     "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
     "tags": [
      "convert_prometheus"
     ]

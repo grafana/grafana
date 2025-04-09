@@ -1048,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -3137,7 +3143,6 @@
         "tooltip": ""
       },
       "share-button": "Compartir",
-      "switch-old-dashboard": "Cambiar a la página del panel de control antiguo",
       "unlink-library-panel": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
@@ -5331,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Error al cancelar la creación de la instantánea",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Error al crear la instantánea",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Error al desconectar",
       "error-see-server-logs": "Consulta los registros del servidor de Grafana para obtener más información",
       "get-session-error-title": "Error al cargar la configuración de migración",
@@ -5428,6 +5437,7 @@
       "errored-resource-count": "Errores",
       "page-loading": "",
       "rebuild-snapshot": "Volver a crear instantánea",
+      "show-errors": "",
       "snapshot-date": "Marca de tiempo de la instantánea",
       "snapshot-not-created": "Aún no se ha creado",
       "start-migration": "Crear instantánea",
@@ -5437,7 +5447,7 @@
       "upload-migration": "Subir instantánea"
     },
     "support-types-disclosure": {
-      "text": "Los paneles de control, las carpetas y las fuentes de datos básicas integradas se han migrado a tu pila de Grafana Cloud. <2>Más información sobre cómo migrar otros ajustes.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token creado y activo",
@@ -5829,7 +5839,6 @@
       "remove-bookmark": "Eliminar de marcadores"
     },
     "kiosk": {
-      "tooltip": "",
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "megamenu": {
@@ -6227,6 +6236,7 @@
       "strong-password-validation-register": "La contraseña no cumple con la política de contraseñas seguras"
     },
     "change-theme": "",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6858,6 +6868,7 @@
       "expand-row": "Expandir la fila de la consulta",
       "hide-response": "Ocultar respuesta",
       "remove-query": "Eliminar consulta",
+      "replace-query-from-library": "",
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
