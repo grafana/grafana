@@ -93,9 +93,10 @@ You can hover over a specific function to view a tooltip that shows you addition
 
 You can click a function to show a drop-down menu with additional actions:
 
-- Focus block
-- Copy function name
-- Sandwich view
+- [Focus block](#focus-block)
+- [Copy function name](#copy-function-name)
+- [Sandwich view](#sandwich-view)
+- [Grouping](#grouping)
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-menu-v12.0.png" max-width="700px" alt="A flame graph visualization with drop-down actions." >}}
 
@@ -114,6 +115,10 @@ When you click **Copy function name**, the full name of the function that the bl
 The sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees at the bottom. This shows the aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-sandwich-v11.6.png" max-width="700px" alt="A flame graph visualization with sandwich view selected.">}}
+
+##### Grouping
+
+TBA
 
 #### Status bar
 
@@ -135,13 +140,21 @@ There are also action buttons on the left-most side of each row. The first butto
 
 You can use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out.
 
-{{< figure src="/static/img/docs/flame-graph-panel/flame-graph-search-dark.png" max-width="700px" alt="Searching for a function name in a flame graph visualization.">}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-search-v12.0.png" max-width="700px" alt="Searching for a function name in a flame graph visualization.">}}
+
+### Reset
+
+TBA
 
 ### Color schema picker
 
 You can switch between coloring functions by their value or by their package name to visually tie functions from the same package together.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-color-v11.6.png" max-width="700px" alt="Different color scheme" >}}
+
+### Grouping
+
+TBA
 
 ### Text align
 
