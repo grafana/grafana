@@ -1099,7 +1099,7 @@
     },
     "irm-integration": {
       "connection-method": "How to connect to IRM",
-      "disabled-description": "Enable Grafana IRM to use this integration",
+      "disabled-description": "Enable IRM through a Webhook integration",
       "enabled-description": "Seamless way to handle alerts and manage incidents",
       "existing-integration": "Existing IRM integration",
       "existing-integration-description": "Use an existing IRM integration",
