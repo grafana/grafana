@@ -90,7 +90,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			}
 
 			response.Responses[q.RefID] = backend.DataResponse{
-				Frames: data.Frames{res},
+				Frames: data.Frames{transformSearchResponse(res, dsInfo)},
 			}
 		}
 	}
@@ -98,10 +98,23 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	return response, nil
 }
 
-func transformSearchResponse(response jaegerResponse) *data.Frame {
+func transformSearchResponse(response jaegerResponse, dsInfo *datasourceInfo) *data.Frame {
 	frame := data.NewFrame("traces",
 		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
 			DisplayName: "Trace ID",
+			Links: []data.DataLink{
+				{
+					Title: "Trace: ${__value.raw}",
+					URL:   "",
+					Internal: &data.InternalDataLink{
+						DatasourceUID:  dsInfo.JaegerClient.settings.UID,
+						DatasourceName: dsInfo.JaegerClient.settings.Name,
+						Query: map[string]interface{}{
+							"query": "${__value.raw}",
+						},
+					},
+				},
+			},
 		}),
 		data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
 			DisplayName: "Trace name",
