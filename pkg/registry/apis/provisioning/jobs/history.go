@@ -27,12 +27,14 @@ type History interface {
 // NewJobHistoryCache creates a History client
 func NewJobHistoryCache() History {
 	history := &recentHistory{
+		maxJobs:     9, // 10-1
 		repoHistory: make(map[string]provisioning.JobList),
 	}
 	return history
 }
 
 type recentHistory struct {
+	maxJobs     int
 	repoMu      sync.Mutex
 	repoHistory map[string]provisioning.JobList
 }
@@ -49,7 +51,7 @@ func (h *recentHistory) WriteJob(ctx context.Context, job *provisioning.Job) err
 	key := fmt.Sprintf("%s/%s", job.Namespace, job.Spec.Repository)
 	v, ok := h.repoHistory[key]
 	if ok {
-		max := min(len(v.Items), 9)
+		max := min(len(v.Items), h.maxJobs)
 		items = append(items, v.Items[0:max]...)
 	}
 	h.repoHistory[key] = provisioning.JobList{Items: items}
