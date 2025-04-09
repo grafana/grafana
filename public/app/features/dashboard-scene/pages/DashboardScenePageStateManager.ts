@@ -425,10 +425,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       params,
     };
 
-    // We shouldn't check all params since:
-    // - version doesn't impact the new dashboard, and it's there for increased compatibility
-    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
-    // - other params don't affect the dashboard content
     if (
       isEqual(options.params?.variables, stateOptions.params?.variables) &&
       isEqual(options.params?.scopes, stateOptions.params?.scopes)
@@ -473,8 +469,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
-      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
-      // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
         throw err;
       }
@@ -520,10 +514,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
-  }
-
-  reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
-    throw new Error('Method not implemented.');
   }
 
   public async fetchDashboard({
@@ -592,6 +582,68 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       throw e;
     }
     return rsp;
+  }
+
+  public async reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
+    const stateOptions = this.state.options;
+
+    if (!stateOptions) {
+      return;
+    }
+
+    const options = {
+      ...stateOptions,
+      params,
+    };
+
+    if (
+      isEqual(options.params?.variables, stateOptions.params?.variables) &&
+      isEqual(options.params?.scopes, stateOptions.params?.scopes)
+    ) {
+      return;
+    }
+
+    try {
+      this.setState({ isLoading: true });
+
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        this.setState({ isLoading: false });
+        return;
+      }
+
+      if (!rsp?.spec) {
+        this.setState({
+          isLoading: false,
+          loadError: {
+            status: 404,
+            message: 'Dashboard not found',
+          },
+        });
+        return;
+      }
+
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+
+      this.setSceneCache(options.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false, options });
+    } catch (err) {
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      this.setState({
+        isLoading: false,
+        loadError: {
+          message,
+          status,
+        },
+      });
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
+    }
   }
 }
 

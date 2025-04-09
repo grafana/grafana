@@ -2775,6 +2775,10 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "multiple-elements": "Multiple elements",
+        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
+        "multiple-panels": "Multiple panels",
+        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
         "objects": "Objects",
         "panel": "Panel",
         "panels": "Panels",
@@ -2973,6 +2977,9 @@
       "title-row-options": "Row options"
     },
     "rows-layout": {
+      "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
+      "delete-row-title": "Delete row?",
+      "delete-row-yes": "Delete",
       "description": "Collapsable panel groups with headings",
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
@@ -3047,6 +3054,9 @@
       "aria-label-template-variables": "Template variables"
     },
     "tabs-layout": {
+      "delete-tab-text": "Deleting this tab will also remove all panels. Are you sure you want to continue?",
+      "delete-tab-title": "Delete tab?",
+      "delete-tab-yes": "Delete",
       "description": "Organize panels into horizontal tabs",
       "name": "Tabs",
       "tab": {
@@ -3257,6 +3267,9 @@
       "title-close": "Close"
     },
     "viz-panel": {
+      "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
+      "delete-panel-title": "Delete panel?",
+      "delete-panel-yes": "Delete",
       "options": {
         "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",
@@ -7427,8 +7440,11 @@
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
-      "locale-label": "Language",
-      "locale-placeholder": "Choose language",
+      "language-preference-label": "Language",
+      "language-preference-placeholder": "Choose language",
+      "locale-preference-description": "Choose your region to see the corresponding date, time, and number format",
+      "locale-preference-label": "Region format",
+      "locale-preference-placeholder": "Choose region",
       "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
