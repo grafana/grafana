@@ -69,6 +69,16 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
+    // No query type means that the query is a trace ID query
+    // If all targets are trace ID queries, we can use the backend querying
+    const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
+    // We have not migrated the node graph to the backend
+    // If the node graph is disabled, we can use the backend migration
+    const nodeGraphDisabled = !this.nodeGraph?.enabled;
+    if (config.featureToggles.jaegerBackendMigration && allTargetsTraceIdQuery && nodeGraphDisabled) {
+      return super.query(options);
+    }
+
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
@@ -131,7 +141,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       }
     }
 
-    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+    let jaegerInterpolated = pick(this.applyTemplateVariables(target, options.scopedVars), [
       'service',
       'operation',
       'tags',
@@ -176,12 +186,12 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: JaegerQuery, scopedVars: ScopedVars) {
     let expandedQuery = { ...query };
 
     if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
