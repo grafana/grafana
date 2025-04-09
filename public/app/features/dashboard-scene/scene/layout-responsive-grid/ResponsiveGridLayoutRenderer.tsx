@@ -1,24 +1,35 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useHasClonedParents } from '../../utils/clone';
+import { useDashboardState } from '../../utils/utils';
+import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 
 import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
+import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
+  const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator } = getDashboardSceneFor(model).state;
+  const { layoutOrchestrator, isEditing } = useDashboardState(model);
+  const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
+  const { fillScreen } = layoutManager.useState();
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
+  const showCanvasActions = !hasClonedParents && isEditing;
+
   return (
-    <div className={styles.container} ref={(ref) => model.setRef(ref)}>
+    <div
+      className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      ref={model.containerRef}
+    >
       {children.map((item) =>
         isLazy ? (
           <LazyLoader key={item.state.key!} className={styles.container}>
@@ -28,6 +39,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
           <item.Component key={item.state.key} model={item} />
         )
       )}
+      {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
     </div>
   );
 }
@@ -44,8 +56,6 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     justifyItems: state.justifyItems || 'unset',
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
-    flexGrow: 1,
-
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,
@@ -57,6 +67,20 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
           justifyContent: state.md.justifyContent,
         }
       : undefined,
+    // Show add action when hovering over the grid
+    '&:hover': {
+      '.dashboard-canvas-add-button': {
+        opacity: 1,
+        filter: 'unset',
+      },
+    },
+  }),
+  containerFillScreen: css({
+    flexGrow: 1,
+  }),
+  containerEditing: css({
+    paddingBottom: theme.spacing(5),
+    position: 'relative',
   }),
   wrapper: css({
     display: 'grid',

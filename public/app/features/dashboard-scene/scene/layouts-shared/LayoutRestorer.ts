@@ -28,6 +28,10 @@ export class LayoutRestorer {
  * Ideally we should check if persisted state is the same but not possible anymore with current serialization code that requires all panels be connected to a DashboardScene
  */
 function panelsAreUnchanged(a: VizPanel[], b: VizPanel[]) {
+  if (a.length < b.length) {
+    return false;
+  }
+
   for (let i = 0; i < a.length; i++) {
     const ap = a[i];
     const bp = b[i];
