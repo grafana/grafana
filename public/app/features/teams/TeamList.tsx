@@ -16,6 +16,7 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  Tag,
   TextLink,
   useStyles2,
 } from '@grafana/ui';
@@ -43,6 +44,7 @@ const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => 
   memberCount: 0,
   name: '',
   orgId: 0,
+  isProvisioned: false,
 }));
 
 export const TeamList = ({
@@ -167,6 +169,16 @@ export const TeamList = ({
           ]
         : []),
       {
+        id: 'isProvisioned',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => {
+          if (!hasFetched) {
+            return <Skeleton width={240} />;
+          }
+          return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
+        },
+      },
+      {
         id: 'actions',
         header: '',
         disableGrow: true,
@@ -181,7 +193,9 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+          const canDelete =
+            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
+            !original.isProvisioned;
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (

@@ -2,7 +2,11 @@
   "_comment": "コードが英語フレーズの信頼できる情報源です。コンポーネント内で直接更新され、このファイルで指定された複数形が追加されます。",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "役割",
+      "role-select-aria-label": "",
       "serviceaccount-label": "サービスアカウント",
       "team-label": "チーム",
       "title": "次のためのアクセス許可を追加します。",
@@ -15,7 +19,9 @@
       "permission": "権限"
     },
     "permission-list-item": {
-      "inherited": "フォルダから継承"
+      "inherited": "フォルダから継承",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "権限を追加する",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "絶対にしない",
       "no-licensed-roles": "割り当てなし"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "アラートステート",
       "annotations": "注釈",
+      "description-missing-series-evaluations": "",
       "evaluation": "評価",
       "evaluation-paused": "アラート評価は現在一時停止しています",
       "evaluation-paused-description": "このルールの通知は、ルールの一時停止が解除されるまで発生せず、アラートインスタンスも作成されません。",
+      "keep-firing-for": "",
       "last-evaluated": "最終評価",
       "last-evaluation-duration": "最終評価の期間",
       "last-updated-at": "最終更新日",
       "last-updated-by": "最終更新者",
+      "missing-series-resolve": "",
       "no-annotations": "注釈なし",
       "pending-period": "保留期間",
       "rule": "ルール",
@@ -536,7 +550,8 @@
           "error": "エラー",
           "no-data": "データなし",
           "normal": "通常",
-          "pending": "保留"
+          "pending": "保留",
+          "recovering": ""
         },
         "state-transitions": "ステート遷移",
         "unknown-event-state": "不明な",
@@ -792,6 +807,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -880,9 +896,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -910,6 +923,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1032,6 +1046,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1152,7 +1172,7 @@
           "new-recording-rule": "新しい記録ルール",
           "title": "Grafana管理"
         },
-        "loading-rules": ""
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1270,9 +1290,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1544,8 +1561,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1601,7 +1620,18 @@
           "text": "アラートルールの評価方法を定義します。"
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "評価が失敗した場合、またはクエリがデータを返さない場合のアラートの動作を定義します。"
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "保留期間"
       },
@@ -1720,6 +1750,16 @@
       "na": "",
       "paused": "中断しています",
       "recording-rule": "録画ルール"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2247,6 +2287,9 @@
     "inline-toast": {
       "success": "コピー済み"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2791,8 +2834,10 @@
         "copy-or-duplicate": "コピーまたは複製",
         "delete": "削除",
         "duplicate": "複製",
-        "grid": "グリッド",
-        "layout": "レイアウト"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3087,7 +3132,6 @@
         "tooltip": "ダッシュボードを共有"
       },
       "share-button": "共有",
-      "switch-old-dashboard": "古いダッシュボードページに切り替える",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unmark-favorite": "お気に入りを解除"
     },
@@ -4286,10 +4330,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "フォルダをクリア"
+    "clear-folder-button": "フォルダをクリア",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Enterキーを押して新しいフォルダを作成します。",
+    "input-placeholder": "",
     "loading": "フォルダを読み込んでいます..."
   },
   "folder-repo": {
@@ -4298,18 +4345,25 @@
   "forgot-password": {
     "back-button": "ログイン画面に戻る",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "スキップ",
       "submit-button": "送信"
     },
     "contact-admin": "ユーザー名またはメールアドレスをお忘れですか？Grafana管理者にお問い合わせください。",
     "email-sent": "リセットリンクが記載されたメールがメールアドレスに送信されました。まもなく受け取るはずです。",
     "reset-password-header": "パスワードをリセット",
-    "send-email-button": "リセットメールを送信 "
+    "send-email-button": "リセットメールを送信 ",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "編集を続ける",
     "description": "変更した内容が保存されない場合があります。",
-    "discard-button": "未保存の変更を破棄しますか？"
+    "discard-button": "未保存の変更を破棄しますか？",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4579,6 +4633,7 @@
       "cell-filter-on": "値でフィルタリング",
       "cell-filter-out": "値を除外してフィルタリング",
       "cell-inspect": "値を検査",
+      "cell-inspect-tooltip": "",
       "copy": "クリップボードにコピー",
       "count": "",
       "csv-counts": "行：{{rows}}、列：{{columns}}  <5></5>",
@@ -4588,8 +4643,10 @@
       "filter-popup-cancel": "キャンセル",
       "filter-popup-clear": "フィルタを解除",
       "filter-popup-heading": "値でフィルタ：",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "大文字/小文字を区別",
       "inspect-drawer-title": "値を検査",
+      "inspect-menu-label": "",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）"
     },
@@ -4730,6 +4787,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4989,10 +5056,10 @@
       "email-placeholder": "メールアドレス",
       "email-required": "メールアドレスを入力してください",
       "name-label": "名前",
-      "name-placeholder": "名前",
       "password-label": "パスワード",
       "password-placeholder": "パスワード",
       "password-required": "パスワードは必須です",
+      "passwordless-username-label": "",
       "submit-label": "ログイン",
       "submit-loading-label": "ログイン中…",
       "username-label": "メールアドレスまたはユーザー名",
@@ -5078,15 +5145,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5247,7 +5324,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "スナップショットの作成のキャンセル中にエラーが発生しました",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "スナップショットの作成中にエラーが発生しました",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "接続解除中のエラー",
       "error-see-server-logs": "詳細については、Grafanaサーバーログを参照してください。",
       "get-session-error-title": "移行構成の読み込み中にエラーが発生しました",
@@ -5344,6 +5425,7 @@
       "errored-resource-count": "エラー",
       "page-loading": "読み込み中...",
       "rebuild-snapshot": "スナップショットを再構築",
+      "show-errors": "",
       "snapshot-date": "スナップショットのタイムスタンプ",
       "snapshot-not-created": "まだ作成されていません",
       "start-migration": "スナップショットを構築",
@@ -5353,7 +5435,7 @@
       "upload-migration": "スナップショットをアップロード"
     },
     "support-types-disclosure": {
-      "text": "ダッシュボード、フォルダ、および組み込みのコアデータソースがGrafana クラウドスタックに移行されます。<2>他の設定の移行について学びます</2>"
+      "text": ""
     },
     "token-status": {
       "active": "トークンが作成され、アクティブです",
@@ -5730,6 +5812,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "招待",
       "invite-tooltip": "新しいメンバーの招待"
@@ -5748,12 +5836,26 @@
       "open": "メニューを開きます",
       "undock": "メニューの固定を解除"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "最新ブログから"
   },
   "news": {
     "drawer": {
-      "close": "ドロワーを閉じる"
+      "close": ""
     },
+    "link-title": "",
     "title": "最新ブログから"
   },
   "notifications": {
@@ -5778,6 +5880,17 @@
       "error": "ログインプロバイダーがログインリクエストを拒否しました"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5797,6 +5910,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5846,7 +5967,10 @@
     "unsupported-layout": "サポートされていないレイアウト"
   },
   "panel-type-filter": {
-    "clear-button": "タイプをクリア"
+    "clear-button": "タイプをクリア",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6055,6 +6179,7 @@
     },
     "plugin-help": {
       "error": "ヘルプの読み込み中にエラーが発生しました。",
+      "loading": "",
       "not-found": "クエリヘルプが見つかりませんでした。"
     },
     "plugin-installed-badge": {
@@ -6099,6 +6224,7 @@
       "strong-password-validation-register": "パスワードが強力なパスワードポリシーに準拠していません"
     },
     "change-theme": "テーマを変更",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6728,6 +6854,7 @@
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
       "remove-query": "クエリを削除",
+      "replace-query-from-library": "",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
@@ -6807,9 +6934,13 @@
       "clear-button": "すべてをクリア",
       "tooltip": "「基本的な役割なし」オプションを選択し、カスタムニーズに権限を追加できるようになりました。詳細については、<1>ドキュメント</1>をご覧ください。"
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "消去"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Grafanaの機能とリソースへのアクセスを細かく制御するために、ユーザーに役割を割り当てます。詳細については、<2>ドキュメント</2>をご覧ください。"
     }
@@ -6817,10 +6948,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "基本的な役割"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafanaが更新された可能性があります。ページを再読み込みしてみてください。",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "再読み込み",
     "title": "アプリケーションファイルが見つかりません"
   },
@@ -6936,6 +7070,10 @@
     "role": {
       "label": "役割"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7205,10 +7343,19 @@
   },
   "sign-up": {
     "back-button": "ログイン画面に戻る",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "送信",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "ログイン画面に戻る",
       "complete-button": "サインアップを完了する",
+      "email-description": "",
+      "email-label": "",
       "header": "メールを確認",
       "info": "確認リンクが記載されたメールがメールアドレスに送信されました。まもなく受け取るはずです。",
       "send-button": "確認メールを送信"
@@ -7266,6 +7413,9 @@
     "url-column-header": "スナップショットURL",
     "view-button": "表示"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7293,7 +7443,13 @@
     "clear-button": "タグをクリア",
     "loading": "読み込み中...",
     "no-tags": "タグが見つかりません",
-    "placeholder": "タグでフィルタ"
+    "placeholder": "タグでフィルタ",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7747,6 +7903,10 @@
     "role-column": "役割",
     "select-org-button": "組織を選択する",
     "title": "組織"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

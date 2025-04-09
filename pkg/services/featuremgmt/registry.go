@@ -28,20 +28,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:         "live-service-web-worker",
-			Description:  "This will use a webworker thread to processes events rather than the main thread",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:         "queryOverLive",
-			Description:  "Use Grafana Live WebSocket to execute backend queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:              "panelTitleSearch",
 			Description:       "Search for dashboards using panel title",
 			Stage:             FeatureStagePublicPreview,
@@ -248,24 +234,6 @@ var (
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiSecondary",
-			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiPrimary",
-			Description: "Enable a remote Loki instance as the primary source for state history reads.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiOnly",
-			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -950,13 +918,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-		},
-		{
-			Name:         "nodeGraphDotLayout",
-			Description:  "Changed the layout algorithm for the node graph",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "groupToNestedTableTransformation",
@@ -1727,15 +1688,6 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:              "noBackdropBlur",
-			Description:       "Disables backdrop blur",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaFrontendPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
 			Name:              "alertingMigrationUI",
 			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
 			FrontendOnly:      true,
@@ -1822,6 +1774,21 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:         "logsPanelControls",
+			Description:  "Enables a control component for the logs panel in Explore",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "metricsFromProfiles",
+			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )

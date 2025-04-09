@@ -2,7 +2,11 @@
   "_comment": "Kod, İngilizce ifadeler için ana referans kaynağıdır. Bileşenlerde doğrudan güncellenmeli ve ek çoğul formlar bu dosyada belirtilmelidir.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Rol",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Hizmet Hesabı",
       "team-label": "Ekip",
       "title": "Şunun için izin ekle:",
@@ -15,7 +19,9 @@
       "permission": "İzin"
     },
     "permission-list-item": {
-      "inherited": "Klasörden devralındı"
+      "inherited": "Klasörden devralındı",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "İzin ekle",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Hiçbir zaman",
       "no-licensed-roles": "Atanmadı"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Uyarı durumu",
       "annotations": "Ek açıklamalar",
+      "description-missing-series-evaluations": "",
       "evaluation": "Değerlendirme",
       "evaluation-paused": "Uyarı değerlendirmesi şu anda duraklatıldı",
       "evaluation-paused-description": "Bu kural için bildirimler tetiklenmeyecek ve kural tekrar etkinleştirilene kadar hiçbir uyarı örneği oluşturulmayacaktır.",
+      "keep-firing-for": "",
       "last-evaluated": "Son değerlendirme zamanı",
       "last-evaluation-duration": "Son değerlendirme süresi",
       "last-updated-at": "Son güncelleme zamanı",
       "last-updated-by": "Son güncelleyen",
+      "missing-series-resolve": "",
       "no-annotations": "Ek açıklama yok",
       "pending-period": "Bekleme süresi",
       "rule": "Kural",
@@ -536,7 +550,8 @@
           "error": "Hata",
           "no-data": "Veri yok",
           "normal": "Normal",
-          "pending": "Bekliyor"
+          "pending": "Bekliyor",
+          "recovering": ""
         },
         "state-transitions": "Durum geçişi",
         "unknown-event-state": "Bilinmeyen",
@@ -794,6 +809,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -882,9 +898,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -912,6 +925,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1034,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1154,7 +1174,8 @@
           "new-recording-rule": "Yeni kayıt kuralı",
           "title": "Grafana tarafından yönetilen"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1272,9 +1293,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1548,8 +1566,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1605,7 +1625,18 @@
           "text": "Uyarı kuralının nasıl değerlendirileceğini tanımlayın."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Değerlendirme başarısız olduğunda veya sorgu veri döndürmediğinde uyarı davranışını tanımlayın."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Bekleme süresi"
       },
@@ -1724,6 +1755,17 @@
       "na": "",
       "paused": "Duraklatıldı",
       "recording-rule": "Kayıt kuralı"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2256,6 +2298,9 @@
     "inline-toast": {
       "success": "Kopyalandı"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2800,8 +2845,10 @@
         "copy-or-duplicate": "Kopyala veya Çoğalt",
         "delete": "Sil",
         "duplicate": "Çoğalt",
-        "grid": "Izgara",
-        "layout": "Düzen"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3096,7 +3143,6 @@
         "tooltip": "Panoyu paylaşın"
       },
       "share-button": "Paylaş",
-      "switch-old-dashboard": "Eski pano sayfasına geç",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unmark-favorite": "Favorilerden kaldır"
     },
@@ -4295,10 +4341,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Klasörleri temizle"
+    "clear-folder-button": "Klasörleri temizle",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Yeni klasörü oluşturmak için enter tuşuna basın.",
+    "input-placeholder": "",
     "loading": "Klasörler yükleniyor..."
   },
   "folder-repo": {
@@ -4307,18 +4356,25 @@
   "forgot-password": {
     "back-button": "Giriş yapmaya geri dön",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Atla",
       "submit-button": "Gönder"
     },
     "contact-admin": "Kullanıcı adınızı veya e-posta adresinizi mi unuttunuz? Grafana yöneticinizle iletişime geçin.",
     "email-sent": "E-posta adresine, bir sıfırlama bağlantısı içeren bir e-posta gönderildi. Kısa süre içinde e-postayı almanız gerekir.",
     "reset-password-header": "Parolayı sıfırla",
-    "send-email-button": "Sıfırlama e-postası gönder"
+    "send-email-button": "Sıfırlama e-postası gönder",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Düzenlemeye devam et",
     "description": "Yaptığınız değişiklikler kaydedilmemiş olabilir.",
-    "discard-button": "Kaydedilmemiş değişiklikleri at"
+    "discard-button": "Kaydedilmemiş değişiklikleri at",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4588,6 +4644,7 @@
       "cell-filter-on": "Değere göre filtrele",
       "cell-filter-out": "Değeri filtre dışı bırak",
       "cell-inspect": "Değeri incele",
+      "cell-inspect-tooltip": "",
       "copy": "Panoya kopyala",
       "count": "",
       "csv-counts": "Satırlar:{{rows}}, Sütunlar:{{columns}}  <5></5>",
@@ -4597,8 +4654,10 @@
       "filter-popup-cancel": "İptal",
       "filter-popup-clear": "Filtreyi temizle",
       "filter-popup-heading": "Değerlere göre filtrele:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
       "inspect-drawer-title": "Değeri incele",
+      "inspect-menu-label": "",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır"
     },
@@ -4739,6 +4798,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4999,10 +5068,10 @@
       "email-placeholder": "e-posta",
       "email-required": "E-posta gereklidir",
       "name-label": "Ad",
-      "name-placeholder": "ad",
       "password-label": "Parola",
       "password-placeholder": "parola",
       "password-required": "Parola gereklidir",
+      "passwordless-username-label": "",
       "submit-label": "Giriş yap",
       "submit-loading-label": "Giriş yapılıyor...",
       "username-label": "E-posta veya kullanıcı adı",
@@ -5088,15 +5157,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5257,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Anlık görüntü oluşturma işlemi iptal edilirken hata oluştu",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Anlık görüntü oluşturulurken hata oluştu",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Bağlantı kesilirken hata oluştu",
       "error-see-server-logs": "Daha fazla ayrıntı için Grafana sunucu günlüklerine bakın",
       "get-session-error-title": "Taşıma yapılandırması yüklenirken hata oluştu",
@@ -5354,6 +5437,7 @@
       "errored-resource-count": "Hata",
       "page-loading": "Yükleniyor...",
       "rebuild-snapshot": "Anlık görüntüyü yeniden oluştur",
+      "show-errors": "",
       "snapshot-date": "Anlık görüntü zaman damgası",
       "snapshot-not-created": "Henüz oluşturulmadı",
       "start-migration": "Anlık görüntü oluştur",
@@ -5363,7 +5447,7 @@
       "upload-migration": "Anlık görüntü yükle"
     },
     "support-types-disclosure": {
-      "text": "Panolar, klasörler ve yerleşik çekirdek veri kaynakları Grafana Cloud altyapınıza taşındı. <2>Diğer ayarları taşıma hakkında bilgi edinin.</2> bize bildirin."
+      "text": ""
     },
     "token-status": {
       "active": "Belirteç oluşturuldu ve etkin",
@@ -5740,6 +5824,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Davet et",
       "invite-tooltip": "Yeni üye davet edin"
@@ -5758,12 +5848,26 @@
       "open": "Menüyü aç",
       "undock": "Menünün sabitlemesini kaldır"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Blog'tan son gönderiler"
   },
   "news": {
     "drawer": {
-      "close": "Başlatıcıyı kapat"
+      "close": ""
     },
+    "link-title": "",
     "title": "Blog'tan son gönderiler"
   },
   "notifications": {
@@ -5788,6 +5892,17 @@
       "error": "Giriş sağlayıcı giriş isteğini reddetti"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5807,6 +5922,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5856,7 +5979,10 @@
     "unsupported-layout": "Desteklenmeyen düzen"
   },
   "panel-type-filter": {
-    "clear-button": "Türleri temizle"
+    "clear-button": "Türleri temizle",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6065,6 +6191,7 @@
     },
     "plugin-help": {
       "error": "Yardım yüklenirken hata oluştu.",
+      "loading": "",
       "not-found": "Sorgu yardımı bulunamadı."
     },
     "plugin-installed-badge": {
@@ -6109,6 +6236,7 @@
       "strong-password-validation-register": "Parola güçlü parola politikasına uygun değil"
     },
     "change-theme": "Temayı değiştir",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6740,6 +6868,7 @@
       "expand-row": "Sorgu satırını genişlet",
       "hide-response": "Yanıtı gizle",
       "remove-query": "Sorguyu kaldır",
+      "replace-query-from-library": "",
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
@@ -6822,9 +6951,13 @@
       "clear-button": "Tümünü temizle",
       "tooltip": "Artık \"Temel rol yok\" seçeneğini seçebilir ve izinleri özel ihtiyaçlarınıza göre ekleyebilirsiniz. Daha fazla bilgi için <1>belgelerimize</1> göz atabilirsiniz."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Temizle"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Kullanıcılara roller atayarak Grafana'nın özellikleri ve kaynakları üzerinde ayrıntılı erişim kontrolü sağlayabilirsiniz. Daha fazla bilgi için <2>belgelerimize</2> bakın."
     }
@@ -6832,10 +6965,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Temel Roller"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana güncellenmiş olmalıdır. Lütfen sayfayı yeniden yüklemeyi deneyin.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Yeniden yükle",
     "title": "Uygulama dosyası bulunamıyor"
   },
@@ -6951,6 +7087,10 @@
     "role": {
       "label": "Rol"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7220,10 +7360,19 @@
   },
   "sign-up": {
     "back-button": "Giriş yapmaya geri dön",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Gönder",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Giriş yapmaya geri dön",
       "complete-button": "Kayıt işlemini tamamla",
+      "email-description": "",
+      "email-label": "",
       "header": "E-posta doğrulama",
       "info": "E-posta adresinize doğrulama bağlantısı içeren bir e-posta gönderildi. Kısa süre içinde e-postayı almanız gerekir.",
       "send-button": "Doğrulama e-postası gönder"
@@ -7281,6 +7430,9 @@
     "url-column-header": "Anlık görüntü URL'si",
     "view-button": "Görüntüle"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7308,7 +7460,13 @@
     "clear-button": "Etiketleri temizle",
     "loading": "Yükleniyor...",
     "no-tags": "Etiket bulunamadı",
-    "placeholder": "Etikete göre filtrele"
+    "placeholder": "Etikete göre filtrele",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7762,6 +7920,10 @@
     "role-column": "Rol",
     "select-org-button": "Kuruluş seçin",
     "title": "Kuruluşlar"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

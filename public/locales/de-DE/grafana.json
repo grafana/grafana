@@ -2,7 +2,11 @@
   "_comment": "Der Code ist die Source of Truth für englischsprachige Sätze. Sie sollten direkt in den Komponenten aktualisiert werden. Zusätzliche Sätze sollten in dieser Datei spezifiziert werden.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Rolle",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Service-Konto",
       "team-label": "Team",
       "title": "Berechtigung hinzufügen für",
@@ -15,7 +19,9 @@
       "permission": "Berechtigung"
     },
     "permission-list-item": {
-      "inherited": "Geerbt von Ordner"
+      "inherited": "Geerbt von Ordner",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Berechtigung hinzufügen",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "",
       "no-licensed-roles": "Nicht zugewiesen"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Warnstatus",
       "annotations": "",
+      "description-missing-series-evaluations": "",
       "evaluation": "Evaluierung",
       "evaluation-paused": "Alarm-Evaluierung derzeit angehalten",
       "evaluation-paused-description": "Benachrichtigungen für diese Regel werden nicht ausgelöst und es werden keine Warninstanzen erstellt, bis die Regel wieder aktiviert wird.",
+      "keep-firing-for": "",
       "last-evaluated": "Zuletzt evaluiert",
       "last-evaluation-duration": "Dauer der letzten Evaluierung",
       "last-updated-at": "Zuletzt aktualisiert am",
       "last-updated-by": "Zuletzt aktualisiert von",
+      "missing-series-resolve": "",
       "no-annotations": "Keine Anmerkungen",
       "pending-period": "Wartezeit",
       "rule": "Regel",
@@ -536,7 +550,8 @@
           "error": "",
           "no-data": "Keine Daten",
           "normal": "",
-          "pending": "Ausstehend"
+          "pending": "Ausstehend",
+          "recovering": ""
         },
         "state-transitions": "Statusübergang",
         "unknown-event-state": "",
@@ -794,6 +809,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -882,9 +898,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -912,6 +925,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1034,6 +1048,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1154,7 +1174,8 @@
           "new-recording-rule": "Neue Aufnahmeregel",
           "title": "Von Grafana verwaltet"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1272,9 +1293,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1548,8 +1566,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1605,7 +1625,18 @@
           "text": "Definieren Sie, wie die Warnregel evaluiert wird."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Definieren Sie das Warnverhalten, wenn die Evaluierung fehlschlägt oder bei der Abfrage keine Daten ausgegeben werden."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Wartezeit"
       },
@@ -1724,6 +1755,17 @@
       "na": "",
       "paused": "Pausiert",
       "recording-rule": "Aufnahmeregel"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2256,6 +2298,9 @@
     "inline-toast": {
       "success": "Kopiert"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2800,8 +2845,10 @@
         "copy-or-duplicate": "Kopieren oder duplizieren",
         "delete": "",
         "duplicate": "",
-        "grid": "Raster",
-        "layout": "Layout"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -3096,7 +3143,6 @@
         "tooltip": ""
       },
       "share-button": "Teilen",
-      "switch-old-dashboard": "Zur alten Dashboard-Seite wechseln",
       "unlink-library-panel": "",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
@@ -4295,10 +4341,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Ordner löschen"
+    "clear-folder-button": "Ordner löschen",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Drücken Sie die Eingabetaste, um den neuen Ordner zu erstellen.",
+    "input-placeholder": "",
     "loading": "Ordner werden geladen …"
   },
   "folder-repo": {
@@ -4307,18 +4356,25 @@
   "forgot-password": {
     "back-button": "Zurück zur Anmeldung",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Überspringen",
       "submit-button": "Absenden"
     },
     "contact-admin": "Haben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse vergessen? Wenden Sie sich an Ihren Grafana-Administrator.",
     "email-sent": "Eine E-Mail mit einem Link zum Zurücksetzen wurde an die E-Mail-Adresse gesendet. Sie sollten sie in Kürze erhalten.",
     "reset-password-header": "Passwort zurücksetzen",
-    "send-email-button": "E-Mail zum Zurücksetzen senden"
+    "send-email-button": "E-Mail zum Zurücksetzen senden",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Bearbeitung fortsetzen",
     "description": "Die von Ihnen vorgenommenen Änderungen werden möglicherweise nicht gespeichert.",
-    "discard-button": "Nicht gespeicherte Änderungen verwerfen"
+    "discard-button": "Nicht gespeicherte Änderungen verwerfen",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4588,6 +4644,7 @@
       "cell-filter-on": "Nach Wert filtern",
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
+      "cell-inspect-tooltip": "",
       "copy": "",
       "count": "",
       "csv-counts": "Zeilen: {{rows}}, Spalten: {{columns}} <5></5>",
@@ -4597,8 +4654,10 @@
       "filter-popup-cancel": "",
       "filter-popup-clear": "Filter löschen",
       "filter-popup-heading": "Nach Werten filtern:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
       "inspect-drawer-title": "Wert prüfen",
+      "inspect-menu-label": "",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen"
     },
@@ -4739,6 +4798,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -4999,10 +5068,10 @@
       "email-placeholder": "E-Mail-Adresse",
       "email-required": "",
       "name-label": "",
-      "name-placeholder": "Name",
       "password-label": "Passwort",
       "password-placeholder": "Passwort",
       "password-required": "Passwort ist erforderlich",
+      "passwordless-username-label": "",
       "submit-label": "Einloggen",
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
@@ -5088,15 +5157,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5257,7 +5336,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Fehler beim Abbrechen der Snapshot-Erstellung",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Fehler beim Erstellen des Snapshots",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Fehler beim Trennen der Verbindung",
       "error-see-server-logs": "Weitere Informationen finden Sie in den Grafana-Serverprotokollen",
       "get-session-error-title": "Fehler beim Laden der Migrationskonfiguration",
@@ -5354,6 +5437,7 @@
       "errored-resource-count": "Fehler",
       "page-loading": "",
       "rebuild-snapshot": "Snapshot erneut erstellen",
+      "show-errors": "",
       "snapshot-date": "Snapshot-Zeitstempel",
       "snapshot-not-created": "Noch nicht erstellt",
       "start-migration": "Snapshot erstellen",
@@ -5363,7 +5447,7 @@
       "upload-migration": "Snapshot hochladen"
     },
     "support-types-disclosure": {
-      "text": "Dashboards, Ordner und integrierte Kerndatenquellen werden in Ihren Grafana-Cloud-Stack migriert. <2>Erfahren Sie mehr über die Migration anderer Einstellungen.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Token erstellt und aktiv",
@@ -5740,6 +5824,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "",
       "invite-tooltip": "Neues Mitglied einladen"
@@ -5758,12 +5848,26 @@
       "open": "",
       "undock": "Menü abdocken"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": ""
   },
   "news": {
     "drawer": {
-      "close": "Drawer schließen"
+      "close": ""
     },
+    "link-title": "",
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
@@ -5788,6 +5892,17 @@
       "error": "Der Anmeldeanbieter hat die Anmeldeanfrage abgelehnt"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5807,6 +5922,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5856,7 +5979,10 @@
     "unsupported-layout": "Nicht unterstütztes Layout"
   },
   "panel-type-filter": {
-    "clear-button": "Typen zurücksetzen"
+    "clear-button": "Typen zurücksetzen",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6065,6 +6191,7 @@
     },
     "plugin-help": {
       "error": "Beim Laden der Hilfe ist ein Fehler aufgetreten.",
+      "loading": "",
       "not-found": "Es konnte keine Abfragehilfe gefunden werden."
     },
     "plugin-installed-badge": {
@@ -6109,6 +6236,7 @@
       "strong-password-validation-register": "Passwort entspricht nicht den strengen Kennwortrichtlinien"
     },
     "change-theme": "",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6740,6 +6868,7 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
       "remove-query": "Abfrage entfernen",
+      "replace-query-from-library": "",
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -6822,9 +6951,13 @@
       "clear-button": "Alles löschen",
       "tooltip": "Sie können jetzt die Option „Keine Basisrolle“ auswählen und Berechtigungen zu Ihren benutzerdefinierten Anforderungen hinzufügen. Weitere Informationen finden Sie in <1>unserer Dokumentation</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Löschen"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Weisen Sie den Benutzern Rollen zu, um eine granulare Kontrolle über den Zugriff auf die Funktionen und Ressourcen von Grafana zu gewährleisten. Weitere Informationen finden Sie in unserer <2>Dokumentation</2>."
     }
@@ -6832,10 +6965,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Basisrollen"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Grafana wurde wahrscheinlich aktualisiert. Bitte versuchen Sie, die Seite neu zu laden.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Neu laden",
     "title": "Die Anwendungsdatei konnte nicht gefunden werden"
   },
@@ -6951,6 +7087,10 @@
     "role": {
       "label": ""
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7220,10 +7360,19 @@
   },
   "sign-up": {
     "back-button": "Zurück zur Anmeldung",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Absenden",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Zurück zur Anmeldung",
       "complete-button": "Registrierung abschließen",
+      "email-description": "",
+      "email-label": "",
       "header": "E-Mail-Adresse verifizieren",
       "info": "Eine E-Mail mit einem Verifizierungslink wurde an die E-Mail-Adresse gesendet. Sie sollten sie in Kürze erhalten.",
       "send-button": "Verifizierungs-E-Mail senden"
@@ -7281,6 +7430,9 @@
     "url-column-header": "Snapshot url",
     "view-button": "Anzeigen"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7308,7 +7460,13 @@
     "clear-button": "Tags löschen",
     "loading": "Wird geladen ...",
     "no-tags": "Keine Tags gefunden",
-    "placeholder": "Nach Tag filtern"
+    "placeholder": "Nach Tag filtern",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7762,6 +7920,10 @@
     "role-column": "Rolle",
     "select-org-button": "Organisation auswählen",
     "title": "Organisationen"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

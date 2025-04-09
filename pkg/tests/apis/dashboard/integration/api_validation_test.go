@@ -3,21 +3,23 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
+	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,6 +34,7 @@ func TestMain(m *testing.M) {
 // TestContext holds common test resources
 type TestContext struct {
 	Helper                    *apis.K8sTestHelper
+	DualWriterMode            rest.DualWriterMode
 	AdminUser                 apis.User
 	EditorUser                apis.User
 	ViewerUser                apis.User
@@ -45,23 +48,38 @@ type TestContext struct {
 // TestIntegrationValidation tests the dashboard K8s API
 func TestIntegrationValidation(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test")
+		t.Skip("skipping integration test2")
 	}
 
-	// Create a K8sTestHelper which will set up a real API server
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
-		},
-	})
+	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode4, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
 
+			testIntegrationValidationForServer(t, helper, dualWriterMode)
+		})
+	}
+}
+
+func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) {
 	t.Cleanup(func() {
 		helper.Shutdown()
 	})
 
 	// Create test contexts organization
-	org1Ctx := createTestContext(t, helper, helper.Org1)
+	org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
 	t.Run("Organization 1 tests", func(t *testing.T) {
 		t.Run("Dashboard validation tests", func(t *testing.T) {
@@ -194,7 +212,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
 			nonExistentFolderUID := "non-existent-folder-uid"
 			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
-			require.Error(t, err)
+			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folder not found")
 		})
 	})
 
@@ -263,10 +281,17 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
-			// Try to update with the second copy (should fail with version conflict)
-			_, err = updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
-			require.Error(t, err)
-			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
+			// Try to update with the second copy (should fail with version conflict for mode 0, 4 and 5, but not for mode 1, 2 and 3)
+			updatedDash2, err := updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
+			if ctx.DualWriterMode == rest.Mode1 || ctx.DualWriterMode == rest.Mode2 || ctx.DualWriterMode == rest.Mode3 {
+				require.NoError(t, err)
+				require.NotNil(t, updatedDash2)
+				meta, _ := utils.MetaAccessor(updatedDash2)
+				require.Equal(t, "Updated by second user", meta.FindTitle(""), "Dashboard title should be updated")
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
+			}
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
@@ -508,6 +533,33 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 }
 
+// skipIfMode skips the current test if running in any of the specified modes
+// Usage: skipIfMode(t, rest.Mode1, rest.Mode4)
+// or with a message: skipIfMode(t, "Known issue with conflict detection", rest.Mode1, rest.Mode4)
+// nolint:unused
+func (c *TestContext) skipIfMode(t *testing.T, args ...interface{}) {
+	t.Helper()
+
+	message := "Test not supported in this dual writer mode"
+	modes := []rest.DualWriterMode{}
+
+	// Parse args - first string is considered a message, all rest.DualWriterMode values are modes to skip
+	for _, arg := range args {
+		if msg, ok := arg.(string); ok {
+			message = msg
+		} else if mode, ok := arg.(rest.DualWriterMode); ok {
+			modes = append(modes, mode)
+		}
+	}
+
+	// Check if current mode is in the list of modes to skip
+	for _, mode := range modes {
+		if c.DualWriterMode == mode {
+			t.Skipf("%s (mode %d)", message, c.DualWriterMode)
+		}
+	}
+}
+
 // Run tests for quota validation
 func runQuotaTests(t *testing.T, ctx TestContext) {
 	t.Helper()
@@ -608,7 +660,7 @@ func runQuotaTests(t *testing.T, ctx TestContext) {
 }
 
 // Helper function to create test context for an organization
-func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.OrgUsers) TestContext {
+func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.OrgUsers, dualWriterMode rest.DualWriterMode) TestContext {
 	// Create test folder
 	folderTitle := "Test Folder " + orgUsers.Admin.Identity.GetLogin()
 	testFolder, err := createFolder(t, helper, orgUsers.Admin, folderTitle)
@@ -617,6 +669,7 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 	// Create test context
 	return TestContext{
 		Helper:                    helper,
+		DualWriterMode:            dualWriterMode,
 		AdminUser:                 orgUsers.Admin,
 		EditorUser:                orgUsers.Editor,
 		ViewerUser:                orgUsers.Viewer,
@@ -735,6 +788,9 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-",
+				"annotations": map[string]interface{}{
+					"grafana.app/grant-permissions": "default",
+				},
 			},
 			"spec": map[string]interface{}{
 				"title": title,
@@ -810,16 +866,21 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 		return nil, err
 	}
 
-	// TODO: Remove once the underlying issue is fixed:
-	// https://raintank-corp.slack.com/archives/C05FYAPEPKP/p1743111830777889
-	// This only happens in mode 0.
+	// Fetch the generated object to ensure we're not running into any caching or UID mismatch issues
 	databaseDash, err := client.Resource.Get(context.Background(), createdDash.GetName(), v1.GetOptions{})
 	if err != nil {
-		return nil, err
+		t.Errorf("Potential caching issue: Unable to retrieve newly created dashboard: %v", err)
 	}
-	require.NotEqual(t, createdDash.GetUID(), databaseDash.GetUID(), "The underlying UID mismatch bug has been fixed, please remove the redundant read!")
 
-	return databaseDash, nil
+	createdMeta, _ := utils.MetaAccessor(createdDash)
+	databaseMeta, _ := utils.MetaAccessor(databaseDash)
+
+	require.Equal(t, createdDash.GetUID(), databaseDash.GetUID(), "Created and retrieved UID mismatch")
+	require.Equal(t, createdDash.GetName(), databaseDash.GetName(), "Created and retrieved name mismatch")
+	require.Equal(t, createdDash.GetResourceVersion(), databaseDash.GetResourceVersion(), "Created and retrieved resource version mismatch")
+	require.Equal(t, createdMeta.FindTitle("A"), databaseMeta.FindTitle("B"), "Created and retrieved title mismatch")
+
+	return createdDash, nil
 }
 
 // Update a dashboard
