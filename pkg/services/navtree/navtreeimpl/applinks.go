@@ -188,6 +188,9 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		if len(navConfig.SubTitle) > 0 {
 			appLink.SubTitle = navConfig.SubTitle
 		}
+		if navConfig.IsNew {
+			appLink.IsNew = true
+		}
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -323,6 +326,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
 			SubTitle:  "Keep Grafana running smoothly and securely",
+			IsNew:     true,
 		}
 	}
 

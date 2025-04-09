@@ -1,4 +1,4 @@
-import { Box, Button, Space, Stack, Text } from '@grafana/ui';
+import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -23,6 +23,10 @@ interface MigrationSummaryProps {
   onUploadSnapshot: () => void;
 
   showRebuildSnapshot: boolean;
+
+  onHighlightErrors: () => void;
+  isHighlightErrors: boolean;
+  showOnlyErrorsSwitch: boolean;
 }
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -47,12 +51,18 @@ export function MigrationSummary(props: MigrationSummaryProps) {
     onUploadSnapshot,
 
     showRebuildSnapshot,
+
+    isHighlightErrors,
+    onHighlightErrors,
+    showOnlyErrorsSwitch,
   } = props;
 
   const totalCount = snapshot?.stats?.total ?? 0;
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
   const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
   const warningCount = snapshot?.stats?.statuses?.['WARNING'] ?? 0;
+
+  const switchLabel = t('migrate-to-cloud.summary.show-errors', 'Only view errors');
 
   return (
     <Box
@@ -79,12 +89,23 @@ export function MigrationSummary(props: MigrationSummaryProps) {
           {totalCount}
         </MigrationInfo>
 
-        <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
-          {errorCount}
-        </MigrationInfo>
-
         <MigrationInfo title={t('migrate-to-cloud.summary.successful-resource-count', 'Successfully migrated')}>
           {successCount + warningCount}
+        </MigrationInfo>
+
+        <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
+          <Stack direction="row" alignItems="center">
+            {errorCount}
+            <Space h={1} layout="inline" />
+            {showOnlyErrorsSwitch && (
+              <Stack>
+                <Switch label={switchLabel} value={isHighlightErrors} onChange={onHighlightErrors} />
+                <Text variant="bodySmall" color="secondary">
+                  {switchLabel}
+                </Text>
+              </Stack>
+            )}
+          </Stack>
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}>
