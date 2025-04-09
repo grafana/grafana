@@ -502,7 +502,6 @@ describe('dataFrameToLogsModel', () => {
     const timeRange = {
       from: 1556270899999,
       to: 1556357299999,
-      //86400000
     };
     const queries = [
       {
