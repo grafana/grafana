@@ -81,7 +81,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
-
 			t.Run("allow deleting without access to datasource", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
