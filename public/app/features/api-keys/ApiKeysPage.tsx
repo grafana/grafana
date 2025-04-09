@@ -190,15 +190,15 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
             <Trans i18nKey="api-keys.migration-summary.migration-successful">Migration Successful!</Trans>
           </p>
           <p>
-            <Trans i18nKey="api-keys.migration-summary.total" values={{ count: data.total }}>
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
               <strong>Total: </strong>
-              {'{{count}}'}
+              {'{{total}}'}
             </Trans>
           </p>
           <p>
-            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ count: data.migrated }}>
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
               <strong>Migrated: </strong>
-              {'{{count}}'}
+              {'{{migrated}}'}
             </Trans>
           </p>
         </div>
@@ -213,21 +213,21 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
           </p>
           <hr />
           <p>
-            <Trans i18nKey="api-keys.migration-summary.total" values={{ count: data.total }}>
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
               <strong>Total: </strong>
-              {'{{count}}'}
+              {'{{total}}'}
             </Trans>
           </p>
           <p>
-            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ count: data.migrated }}>
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
               <strong>Migrated: </strong>
-              {'{{count}}'}
+              {'{{migrated}}'}
             </Trans>
           </p>
           <p>
-            <Trans i18nKey="api-keys.migration-summary.failed" values={{ count: data.failed }}>
+            <Trans i18nKey="api-keys.migration-summary.failed" values={{ failed: data.failed }}>
               <strong>Failed: </strong>
-              {'{{count}}'}
+              {'{{failed}}'}
             </Trans>
           </p>
           <p>

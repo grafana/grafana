@@ -2121,14 +2121,14 @@
     },
     "migration-summary": {
       "close": "Close",
-      "failed": "<0>Failed: </0>{{count}}",
+      "failed": "<0>Failed: </0>{{failed}}",
       "failed-details": "<0>Failed details: </0>{{details}}",
       "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
-      "migrated": "<0>Migrated: </0>{{count}}",
+      "migrated": "<0>Migrated: </0>{{migrated}}",
       "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
       "migration-successful": "Migration Successful!",
       "title-migration-summary": "Migration summary",
-      "total": "<0>Total: </0>{{count}}"
+      "total": "<0>Total: </0>{{total}}"
     }
   },
   "app-chrome": {
