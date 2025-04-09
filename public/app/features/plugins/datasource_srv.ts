@@ -313,7 +313,7 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       if (filters.dashboard) {
-      const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+        const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
         if (dashboardInstanceSettings) {
           base.push(dashboardInstanceSettings);
         }
