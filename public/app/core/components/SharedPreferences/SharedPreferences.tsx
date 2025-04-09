@@ -24,6 +24,7 @@ import {
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
+import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -39,7 +40,6 @@ export interface Props {
 export type State = UserPreferencesDTO & {
   isLoading: boolean;
 };
-
 function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
@@ -67,9 +67,29 @@ function getLanguageOptions(): ComboboxOption[] {
   return options;
 }
 
+function getLocaleOptions(): ComboboxOption[] {
+  const localeOptions = LOCALES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  })).sort((a, b) => {
+    return a.label.localeCompare(b.label);
+  });
+
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    ...localeOptions,
+  ];
+  return options;
+}
+
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
+  languageOptions: ComboboxOption[];
+  localeOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -81,17 +101,22 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       language: '',
+      locale: '',
       queryHistory: { homeTab: '' },
       navbar: { bookmarkUrls: [] },
     };
 
     const themes = getSelectableThemes();
 
+    // Options are translated, so must be called after init but call them
+    // in constructor to avoid memo-break of array changing every render
     this.themeOptions = themes.map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
       group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
     }));
+    this.languageOptions = getLanguageOptions();
+    this.localeOptions = getLocaleOptions();
 
     // Add default option
     this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -110,6 +135,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       language: prefs.language,
+      locale: prefs.locale,
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -120,13 +146,22 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      const { homeDashboardUID, theme, timezone, weekStart, language, locale, queryHistory, navbar } = this.state;
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: this.props.preferenceType,
         theme,
         language,
       });
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
+      await this.service.update({
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        locale,
+        queryHistory,
+        navbar,
+      });
       window.location.reload();
     }
   };
@@ -167,11 +202,19 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   };
 
+  onLocaleChanged = (locale: string) => {
+    this.setState({ locale });
+
+    reportInteraction('grafana_preferences_locale_changed', {
+      toLocale: locale,
+      preferenceType: this.props.preferenceType,
+    });
+  };
+
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
-    const languages = getLanguageOptions();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
@@ -257,23 +300,50 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={
-              <Label htmlFor="locale-select">
+              <Label htmlFor="language-preference-select">
                 <span className={styles.labelText}>
-                  <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
+                  <Trans i18nKey="shared-preferences.fields.language-preference-label">Language</Trans>
                 </span>
-                <FeatureBadge featureState={FeatureState.beta} />
+                <FeatureBadge featureState={FeatureState.preview} />
               </Label>
             }
             data-testid="User preferences language drop down"
           >
             <Combobox
-              value={languages.find((lang) => lang.value === language)?.value || ''}
+              value={this.languageOptions.find((lang) => lang.value === language)?.value || ''}
               onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
-              options={languages}
-              placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-              id="locale-select"
+              options={this.languageOptions}
+              placeholder={t('shared-preferences.fields.language-preference-placeholder', 'Choose language')}
+              id="language-preference-select"
             />
           </Field>
+          {config.featureToggles.localeFormatPreference && (
+            <Field
+              loading={isLoading}
+              disabled={isLoading}
+              label={
+                <Label htmlFor="locale-preference">
+                  <span className={styles.labelText}>
+                    <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
+                  </span>
+                  <FeatureBadge featureState={FeatureState.experimental} />
+                </Label>
+              }
+              description={t(
+                'shared-preferences.fields.locale-preference-description',
+                'Choose your region to see the corresponding date, time, and number format'
+              )}
+              data-testid="User preferences locale drop down"
+            >
+              <Combobox
+                value={this.localeOptions.find((loc) => loc.value === locale)?.value || ''}
+                onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
+                options={this.localeOptions}
+                placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
+                id="locale-preference-select"
+              />
+            </Field>
+          )}
         </FieldSet>
         <Button type="submit" variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
           <Trans i18nKey="common.save">Save</Trans>
