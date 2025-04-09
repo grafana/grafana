@@ -17,6 +17,6 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
 }
 
 function isPromFlavor(pluginId: string): boolean {
-  const regex = new RegExp('^grafana-.*prometheus-datasource$');
+  const regex = new RegExp('^grafana-[0-9a-z]+prometheus-datasource$');
   return regex.test(pluginId);
 }
