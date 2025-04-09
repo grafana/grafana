@@ -217,6 +217,24 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
 	})
 
+	t.Run("Should remove grant permissions annotation", func(t *testing.T) {
+		dashboard := v1alpha1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
+
+		encodedData, p, err := s.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		require.NoError(t, err)
+		meta, err = utils.MetaAccessor(newObject)
+		require.NoError(t, err)
+		require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions))
+		require.Equal(t, p, "default")
+	})
+
 	t.Run("calculate generation", func(t *testing.T) {
 		dash := &v1alpha1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
