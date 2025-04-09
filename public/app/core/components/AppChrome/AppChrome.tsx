@@ -287,7 +287,7 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
 const getContentSizeStyles = (_: GrafanaTheme2, extensionSidebarWidth = 0) => {
   return {
     contentWidth: css({
-      maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
+      maxWidth: `calc(100% - ${extensionSidebarWidth}px)`,
     }),
   };
 };
