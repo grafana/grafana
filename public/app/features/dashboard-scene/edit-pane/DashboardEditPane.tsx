@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useEffect } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -191,21 +190,6 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
-  // Activate the edit pane
-  useEffect(() => {
-    editPane.enableSelection();
-
-    return () => {
-      editPane.disableSelection();
-    };
-  }, [editPane]);
-
-  useEffect(() => {
-    if (isCollapsed) {
-      editPane.clearSelection();
-    }
-  }, [editPane, isCollapsed]);
-
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const editableElement = useEditableElement(selection, editPane);
@@ -311,6 +295,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     overlayWrapper: css({
       right: 0,

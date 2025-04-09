@@ -130,7 +130,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}",
 		http.MethodPost + "/api/convert/api/prom/rules/{NamespaceTitle}",
 		http.MethodPost + "/api/convert/prometheus/config/v1/rules",
-		http.MethodPost + "/api/convert/api/prom/config/v1/rules":
+		http.MethodPost + "/api/convert/api/prom/rules":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleCreate),
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),

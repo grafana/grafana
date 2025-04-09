@@ -109,7 +109,7 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		state := mustNestedString(result.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state,
 			"historic job '%s' was not successful", job.GetName())
-	}, time.Second*5, time.Millisecond*20) {
+	}, time.Second*10, time.Millisecond*25) {
 		// We also want to add the job details to the error when it fails.
 		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
 		if err != nil {
@@ -129,14 +129,15 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
 		if assert.NoError(collect, err, "failed to list active jobs") {
 			for _, elem := range list.Items {
-				// TODO: Use the spec field of the job.
-				if elem.GetLabels()["repository"] == repoName {
+				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
+				require.NoError(t, err)
+				if repo == repoName {
 					collect.Errorf("there are still remaining jobs for %s: %+v", repoName, elem)
 					return
 				}
 			}
 		}
-	}, time.Second*5, time.Millisecond*20)
+	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
 
 	// Then, as all jobs are now historic jobs, we make sure they are successful.
 	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")

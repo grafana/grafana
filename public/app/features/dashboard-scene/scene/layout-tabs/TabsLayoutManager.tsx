@@ -18,6 +18,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -44,6 +45,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     id: 'TabsLayout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     isGridLayout: false,
+    icon: 'window',
   };
 
   public serialize(): DashboardV2Spec['layout'] {
@@ -69,7 +71,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
-    this.setState({ tabs: [...this.state.tabs, newTab] });
+    this.addNewTab(newTab);
   }
 
   public getUrlState() {
@@ -125,6 +127,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public addNewTab(tab?: TabItem) {
     const newTab = tab ?? new TabItem({ isNew: true });
+    const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
+    const newTitle = generateUniqueTitle(newTab.state.title, existingNames);
+    if (newTitle !== newTab.state.title) {
+      newTab.setState({ title: newTitle });
+    }
+
     this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
     this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
     return newTab;
@@ -144,9 +152,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.tabs.length === 1;
+  }
+
   public removeTab(tabToRemove: TabItem) {
-    // Do not allow removing last tab (for now)
-    if (this.state.tabs.length === 1) {
+    // When removing last tab replace ourselves with the inner tab layout
+    if (this.shouldUngroup()) {
+      ungroupLayout(this, tabToRemove.state.layout);
       return;
     }
 
@@ -225,5 +238,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return key;
+  }
+
+  public duplicateTitles() {
+    const titleCounts = new Map<string | undefined, number>();
+    const duplicateTitles = new Set<string | undefined>();
+
+    this.state.tabs.forEach((tab) => {
+      const title = tab.state.title;
+      const count = (titleCounts.get(title) ?? 0) + 1;
+      titleCounts.set(title, count);
+      if (count > 1) {
+        duplicateTitles.add(title);
+      }
+    });
+
+    return duplicateTitles;
   }
 }

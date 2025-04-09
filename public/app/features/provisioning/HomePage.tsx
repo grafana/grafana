@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -10,9 +8,7 @@ import { t, Trans } from 'app/core/internationalization';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { FolderRepositoryList } from './Shared/FolderRepositoryList';
-import { useRepositoryList } from './hooks';
-
-const appEvents = getAppEvents();
+import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
   Repositories = 'repositories',
@@ -22,7 +18,7 @@ enum TabSelection {
 export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
-  const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
+  const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
 
@@ -41,15 +37,6 @@ export default function HomePage() {
     ],
     []
   );
-
-  useEffect(() => {
-    if (deleteAllResult.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('provisioning.home-page.success-all-repositories-deleted', 'All configured repositories deleted')],
-      });
-    }
-  }, [deleteAllResult.isSuccess]);
 
   // Early return for onboarding
   if (!items?.length && !isLoading) {

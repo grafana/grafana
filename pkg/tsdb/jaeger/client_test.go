@@ -1,12 +1,14 @@
 package jaeger
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,7 +60,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger())
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), false)
 			assert.NoError(t, err)
 
 			services, err := client.Services()
@@ -147,7 +149,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger())
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), false)
 			assert.NoError(t, err)
 
 			operations, err := client.Operations(tt.service)
@@ -161,6 +163,116 @@ func TestJaegerClient_Operations(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedResult, operations)
 			}
+		})
+	}
+}
+
+func TestJaegerClient_Trace(t *testing.T) {
+	tests := []struct {
+		name               string
+		traceId            string
+		traceIdTimeEnabled bool
+		start              int64
+		end                int64
+		mockResponse       string
+		mockStatusCode     int
+		mockStatus         string
+		expectedURL        string
+		expectError        bool
+		expectedError      error
+	}{
+		{
+			name:               "Successful response with time params enabled",
+			traceId:            "abc123",
+			traceIdTimeEnabled: true,
+			start:              1000,
+			end:                2000,
+			mockResponse:       `{"data":[{"traceID":"abc123"}]}`,
+			mockStatusCode:     http.StatusOK,
+			mockStatus:         "OK",
+			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
+			expectError:        false,
+			expectedError:      nil,
+		},
+		{
+			name:               "Successful response with time params disabled",
+			traceId:            "abc123",
+			traceIdTimeEnabled: false,
+			start:              1000,
+			end:                2000,
+			mockResponse:       `{"data":[{"traceID":"abc123"}]}`,
+			mockStatusCode:     http.StatusOK,
+			mockStatus:         "OK",
+			expectedURL:        "/api/traces/abc123",
+			expectError:        false,
+			expectedError:      nil,
+		},
+		{
+			name:               "Non-200 response",
+			traceId:            "abc123",
+			traceIdTimeEnabled: true,
+			start:              1000,
+			end:                2000,
+			mockResponse:       "",
+			mockStatusCode:     http.StatusInternalServerError,
+			mockStatus:         "Internal Server Error",
+			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
+			expectError:        true,
+			expectedError:      backend.PluginError(errors.New("Internal Server Error")),
+		},
+		{
+			name:               "Invalid JSON response",
+			traceId:            "abc123",
+			traceIdTimeEnabled: true,
+			start:              1000,
+			end:                2000,
+			mockResponse:       `{invalid json`,
+			mockStatusCode:     http.StatusOK,
+			mockStatus:         "OK",
+			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
+			expectError:        true,
+			expectedError:      &json.SyntaxError{},
+		},
+		{
+			name:               "Empty trace ID",
+			traceId:            "",
+			traceIdTimeEnabled: true,
+			start:              1000,
+			end:                2000,
+			mockResponse:       `{"data":[]}`,
+			mockStatusCode:     http.StatusOK,
+			mockStatus:         "OK",
+			expectedURL:        "",
+			expectError:        true,
+			expectedError:      backend.DownstreamError(errors.New("traceID is empty")),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualURL string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				actualURL = r.URL.String()
+				w.WriteHeader(tt.mockStatusCode)
+				_, _ = w.Write([]byte(tt.mockResponse))
+			}))
+			defer server.Close()
+
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), tt.traceIdTimeEnabled)
+			assert.NoError(t, err)
+
+			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.expectedError != nil {
+					assert.IsType(t, tt.expectedError, err)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, trace)
+			}
+			assert.Equal(t, tt.expectedURL, actualURL)
 		})
 	}
 }

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
@@ -41,7 +41,7 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
+  const isRestoreDashboardsEnabled = false;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
@@ -61,7 +61,9 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
       severity="error"
     >
       <p>
-        A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        <Trans i18nKey="dashboard-scene.name-already-exists-error.body-name-already-exists">
+          A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        </Trans>
       </p>
       <Box paddingTop={2}>
         <Stack alignItems="center">

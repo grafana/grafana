@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,9 +14,11 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -73,7 +76,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, statusCode)
 
 			// Viewer can see file listing
-			rsp = helper.ViewerREST.Get().
+			rsp = helper.AdminREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).
@@ -170,14 +173,14 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	)
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Update(ctx,
+	_, err := helper.Repositories.Resource.Create(ctx,
 		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repo,
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
 			"Path":        "grafana/",
 		}),
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 	require.NoError(t, err)
 
@@ -194,9 +197,58 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	}
 	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
 	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+	require.NoError(t, err, "should delete values")
+
+	t.Run("github url cleanup", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			input  string
+			output string
+		}{
+			{
+				name:   "simple-url",
+				input:  "https://github.com/dprokop/grafana-git-sync-test",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-dot-git",
+				input:  "https://github.com/dprokop/grafana-git-sync-test.git",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+			{
+				name:   "trim-slash",
+				input:  "https://github.com/dprokop/grafana-git-sync-test/",
+				output: "https://github.com/dprokop/grafana-git-sync-test",
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name": test.name,
+					"URL":  test.input,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				require.NoError(t, err, "failed to create resource")
+
+				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+				require.NoError(t, err, "failed to read back resource")
+
+				url, _, err := unstructured.NestedString(obj.Object, "spec", "github", "url")
+				require.NoError(t, err, "failed to read URL")
+				require.Equal(t, test.output, url)
+
+				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
+				require.NoError(t, err, "failed to delete")
+			})
+		}
+	})
 }
 
-func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
+func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -204,41 +256,149 @@ func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	const repo = "local-safe-path-usages"
+	const allPanels = "n1jR8vnnz"
+	const repo = "local-local-examples"
+	const targetPath = "all-panels.json"
+
 	// Set up the repository.
 	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{"Name": repo})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	obj, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+	name, _, _ := unstructured.NestedString(obj.Object, "metadata", "name")
+	require.Equal(t, repo, name, "wrote the expected name")
 
-	// Write a file
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "all-panels.json").
-		Body(helper.LoadFile("testdata/all-panels.json")).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "expecting to be able to create file")
+	// Write a file -- this will create it *both* in the local file system, and in grafana
+	t.Run("write all panels", func(t *testing.T) {
+		code := 0
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.NoError(t, result.Error(), "expecting to be able to create file")
+		wrapper := &provisioning.ResourceWrapper{}
+		raw, err := result.Raw()
+		require.NoError(t, err)
+		err = json.Unmarshal(raw, wrapper)
+		require.NoError(t, err)
+		require.Equal(t, 200, code, "expected 200 response")
+		require.Equal(t, provisioning.ClassicDashboard, wrapper.Resource.Type.Classic)
+		name, _, _ := unstructured.NestedString(wrapper.Resource.File.Object, "metadata", "name")
+		require.Equal(t, allPanels, name, "name from classic UID")
+		name, _, _ = unstructured.NestedString(wrapper.Resource.Upsert.Object, "metadata", "name")
+		require.Equal(t, allPanels, name, "save the name from the request")
 
-	// Write a file with a bad path
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "test", "..", "..", "all-panels.json").
-		Body(helper.LoadFile("testdata/all-panels.json")).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.Error(t, result.Error(), "invalid path should return error")
+		// Get the file from the grafana database
+		obj, err := helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+		require.NoError(t, err, "the value should be saved in grafana")
+		val, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyManagerKind)
+		require.Equal(t, string(utils.ManagerKindRepo), val, "should have repo annotations")
+		val, _, _ = unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyManagerIdentity)
+		require.Equal(t, repo, val, "should have repo annotations")
 
-	// Read a file
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
-	require.NoError(t, err, "valid path should be fine")
+		// Read the file we wrote
+		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		require.NoError(t, err, "read value")
 
-	// Read a file with a bad path
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
-	require.Error(t, err, "invalid path should not be fine")
+		wrap := &unstructured.Unstructured{}
+		wrap.Object, _, err = unstructured.NestedMap(wrapObj.Object, "resource", "dryRun")
+		require.NoError(t, err)
+		meta, err := utils.MetaAccessor(wrap)
+		require.NoError(t, err)
+		require.Equal(t, allPanels, meta.GetName(), "read the name out of the saved file")
+
+		// Check that an admin can update
+		meta.SetAnnotation("test", "from-provisioning")
+		body, err := json.Marshal(wrap.Object)
+		require.NoError(t, err)
+		result = helper.AdminREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, 200, code)
+		require.NoError(t, result.Error(), "update as admin value")
+		raw, err = result.Raw()
+		require.NoError(t, err)
+		err = json.Unmarshal(raw, wrapper)
+		require.NoError(t, err)
+		anno, _, _ := unstructured.NestedString(wrapper.Resource.File.Object, "metadata", "annotations", "test")
+		require.Equal(t, "from-provisioning", anno, "should set the annotation")
+
+		// But a viewer can not
+		result = helper.ViewerREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, 403, code)
+		require.True(t, apierrors.IsForbidden(result.Error()), code)
+	})
+
+	t.Run("fail using invalid paths", func(t *testing.T) {
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "test", "..", "..", "all-panels.json"). // UNSAFE PATH
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.Error(t, result.Error(), "invalid path should return error")
+
+		// Read a file with a bad path
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
+		require.Error(t, err, "invalid path should error")
+	})
+
+	t.Run("require name or generateName", func(t *testing.T) {
+		code := 0
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "example.json").
+			Body([]byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+spec:
+  title: Test dashboard
+`)).Do(ctx).StatusCode(&code)
+		require.Error(t, result.Error(), "missing name")
+
+		result = helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "example.json").
+			Body([]byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  generateName: prefix-
+spec:
+  title: Test dashboard
+`)).Do(ctx).StatusCode(&code)
+		require.NoError(t, result.Error(), "should create name")
+		require.Equal(t, 200, code, "expect OK result")
+
+		raw, err := result.Raw()
+		require.NoError(t, err)
+
+		obj := &unstructured.Unstructured{}
+		err = json.Unmarshal(raw, obj)
+		require.NoError(t, err)
+
+		name, _, _ = unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
+		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
+	})
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
@@ -253,7 +413,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
 
-	localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
@@ -277,18 +437,37 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	const allPanels = "n1jR8vnnz"
 	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
+	require.True(t, apierrors.IsNotFound(err))
 
 	// Now, we import it, such that it may exist
 	helper.SyncAndWait(t, repo, nil)
 
-	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+	_, err = helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	names := []string{}
-	for _, v := range found.Items {
-		names = append(names, v.GetName())
-	}
-	require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
+	obj, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.NoError(t, err, "all-panels dashboard should exist")
+	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	// Try writing the value directly
+	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
+	require.NoError(t, err, "set tags")
+	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	require.Error(t, err, "only the provisionding service should be able to update")
+	require.True(t, apierrors.IsForbidden(err))
+
+	// Should not be able to directly delete the managed resource
+	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
+	require.Error(t, err, "only the provisioning service should be able to delete")
+	require.True(t, apierrors.IsForbidden(err))
+
+	// But we can delete the repository file, and this should also remove the resource
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "all-panels.json")
+	require.NoError(t, err, "should delete the resource file")
+
+	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.Error(t, err, "should delete the internal resource")
+	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
@@ -319,9 +498,8 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		Body(asJSON(&provisioning.JobSpec{
 			Push: &provisioning.ExportJobOptions{
-				Folder:     "",   // export entire instance
-				Path:       "",   // no prefix necessary for testing
-				Identifier: true, // doesn't _really_ matter, but handy for debugging.
+				Folder: "", // export entire instance
+				Path:   "", // no prefix necessary for testing
 			},
 		})).
 		Do(ctx)
