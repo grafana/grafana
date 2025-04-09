@@ -145,7 +145,7 @@ The following table lists the features of the toolbar:
 
 | Option | Description |
 | ------ | ----------- |
-| [Search](#search) | Use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out. |
+| [Search](#search) | Use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions appear in gray. |
 | Reset | Reset the flame graph back to its original state from a focus block or sandwich view. The reset icon is only displayed when the flame graph is in one of those two states. |
 | [Color schema picker](#color-schema-picker) | Switch between coloring functions by their value or by their package name to visually tie functions from the same package together. |
 | Grouping | Expand or collapse all groups to show all instances of a function or show the function grouped. |
