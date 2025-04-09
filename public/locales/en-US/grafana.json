@@ -2080,7 +2080,9 @@
       "title": "There are no custom annotation queries added yet"
     },
     "standard-annotation-query-editor": {
+      "events-found": "{{numEvents}} events (from {{numFields}} fields)",
       "no-events-found": "No events found",
+      "no-query-editor": "Annotations are not supported. This datasource needs to export a QueryEditor",
       "test-annotation-query": "Test annotation query",
       "title-query-result": "Query result"
     }
@@ -2104,6 +2106,8 @@
       "message": "No API keys found"
     },
     "migrate-to-service-accounts-card": {
+      "body-no-api-keys-found": "No API keys were found. If you reload the browser, this page will not be available anymore.",
+      "body-switch-service-accounts": "API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will continue to work as they were. We encourage you to migrate your API keys to service accounts now. <docsLink />",
       "docs-link": {
         "about-migration": "Find out more about the migration here."
       },
@@ -2111,13 +2115,20 @@
       "migration-box-desc": {
         "migrating": "Migrating all API keys will hide the API keys tab."
       },
+      "modal-title": "Migrate API keys to service accounts",
       "title-no-api-keys-found": "No API keys found",
       "title-switch-service-accounts": "Switch from API keys to service accounts"
     },
     "migration-summary": {
       "close": "Close",
+      "failed": "<0>Failed: </0>{{failed}}",
+      "failed-details": "<0>Failed details: </0>{{details}}",
+      "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
+      "migrated": "<0>Migrated: </0>{{migrated}}",
+      "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
       "migration-successful": "Migration Successful!",
-      "title-migration-summary": "Migration summary"
+      "title-migration-summary": "Migration summary",
+      "total": "<0>Total: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -2135,10 +2146,15 @@
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
     },
+    "auth-drawer-unconneced": {
+      "subtitle": "Configure auth settings. Find out more in our <2>documentation</2>."
+    },
     "auth-drawer-unconnected": {
       "advanced-auth": "Advanced Auth",
       "enable-insecure-email-lookup": "Enable insecure email lookup",
+      "enable-insecure-email-lookup-description": "Allow users to use the same email address to log into Grafana with different identity providers.",
       "reset": "Reset",
+      "reset-tooltip": "This action will disregard any saved changes and load the configuration from the configuration file.",
       "title-auth-settings": "Auth settings"
     },
     "configure-auth-cta": {
@@ -2151,8 +2167,10 @@
         "label-reset-to-default-values": "Reset to default values"
       },
       "discard": "Discard",
+      "enabled-label-enabled": "Enabled",
       "label-enabled": "Enabled",
       "reset-configuration": "Are you sure you want to reset this configuration?",
+      "reset-configuration-description": "After resetting these settings Grafana will use the provider configuration from the system (config file/environment variables) if any.",
       "title-more-actions": "More actions",
       "title-reset": "Reset",
       "tooltip-more-actions": "More actions"
@@ -2161,6 +2179,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "bookmarks-page": {
     "empty": {
@@ -2288,6 +2309,11 @@
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
+  "canvas": {
+    "not-found-display": {
+      "not-found": "<0>Not found: </0><config />"
+    }
+  },
   "carousel": {
     "close": "Close",
     "error": "Something went wrong loading images",
@@ -2367,11 +2393,16 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
+      "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the Connections page, accessible from the main menu.",
       "go-to-connections": "Go to connections"
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
+      "editor-warning": "Editors cannot add new connections. You may check to see if it is already configured in <2>Data sources</2>.",
       "okay": "Okay"
+    },
+    "not-found-datasource": {
+      "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable.<3></3>To see a list of available datasources please <5>click here</5>."
     },
     "search": {
       "aria-label-search-all": "Search all",
@@ -2506,6 +2537,11 @@
       "transform-required": "Please select a transformation type",
       "type-label": "Type",
       "type-tooltip": "The type of transformation that will be applied to the source data."
+    }
+  },
+  "dashbaord-scene": {
+    "interval-variable-form": {
+      "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified"
     }
   },
   "dashboard": {
@@ -3278,6 +3314,7 @@
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
@@ -3290,6 +3327,7 @@
     },
     "annotation-settings-list": {
       "data-source": "Data source",
+      "delete-aria-label": "Delete query with title \"{{title}}\"",
       "new-query": "New query",
       "query-name": "Query name",
       "tooltip-move-down": "Move down",
@@ -3329,6 +3367,7 @@
       "placeholder-open-dashboard": "Open dashboard"
     },
     "dashboard-link-list": {
+      "delete-aria-label": "Delete link with title \"{{title}}\"",
       "info": "Info",
       "new-link": "New link",
       "tooltip-copy-link": "Copy link",
@@ -3369,6 +3408,10 @@
     },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
+      "description-randomize-data": "Modify the original data to hide sensitive information. Note the lengths will stay the same, and duplicate values will be equal.",
+      "description-support-snapshot": "Panel: {{panelTitle}}",
+      "download-dashboard": "Dashboard ({{snapshotSize}})",
+      "download-snapshot": "Download ({{snapshotSize}})",
       "label-randomize-data": "Randomize data",
       "label-support-snapshot": "Support snapshot",
       "label-template": "Template",
@@ -3376,7 +3419,9 @@
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
       "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard",
-      "title-get-help-with-this-panel": "Get help with this panel"
+      "title-get-help-with-this-panel": "Get help with this panel",
+      "troubleshooting-docs": "Troubleshooting docs",
+      "troubleshooting-request-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
     },
     "inspect-data-tab": {
       "no-data-found": "No data found"
@@ -3386,6 +3431,7 @@
     },
     "interval-variable-form": {
       "description-calculated-value-below-threshold": "The calculated value will not go below this threshold",
+      "description-step-count": "How many times the current time range should be divided to calculate the value",
       "interval-options": "Interval options"
     },
     "json-model-edit-view": {
@@ -3393,6 +3439,7 @@
         "cancel": "Cancel"
       },
       "render-save-button-and-error": {
+        "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <1>Save as</1> to create custom version.",
         "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
@@ -3400,6 +3447,7 @@
       }
     },
     "name-already-exists-error": {
+      "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
     },
     "panel-data-alerting-tab-rendered": {
@@ -3410,7 +3458,8 @@
       "title-dashboard-not-saved": "Dashboard not saved"
     },
     "panel-data-queries-tab-rendered": {
-      "add-query": "Add query"
+      "add-query": "Add query",
+      "expression": "Expression "
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Add another transformation",
@@ -3421,7 +3470,12 @@
       "table-view-aria-label-toggletableview": "Toggle table view",
       "table-view-label-table-view": "Table view"
     },
+    "panel-editor-renderer": {
+      "aria-label-open-options-pane": "Open options pane",
+      "tooltip-open-options-pane": "Open options pane"
+    },
     "panel-inspect-renderer": {
+      "body-panel-plugin-not-loaded": "Make sure the panel you want to inspect is visible and has been displayed before opening inspect.",
       "title-panel-plugin-not-loaded": "Panel plugin not loaded"
     },
     "panel-viz-type-picker": {
@@ -3461,14 +3515,22 @@
         "title-failed-to-save-dashboard": "Failed to save dashboard"
       }
     },
+    "save-dashboard-drawer": {
+      "tabs": {
+        "label-changes": "Changes",
+        "label-details": "Details"
+      }
+    },
     "save-dashboard-form": {
       "aria-label-message": "message",
+      "body-dashboard-drastically-changed": "Because you're using new dashboards features only supported on new Grafana dashboard schema format, the dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to save the dashboard as a new copy.",
       "cancel-button": {
         "cancel": "Cancel"
       },
       "label-message": "Message",
       "placeholder-describe-changes-optional": "Add a note to describe your changes (optional).",
       "render-footer": {
+        "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <1>Save as</1> to create custom version.",
         "no-changes-to-save": "No changes to save",
         "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
@@ -3480,6 +3542,7 @@
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
       "save-refresh-label-update-default-refresh-value": "Update default refresh value",
+      "save-timerange-description-current-range-default": "Will make current time range the new default",
       "save-timerange-label-update-default-time-range": "Update default time range",
       "save-variables-description-current-values-default": "Will make the current values the new default",
       "save-variables-label-update-default-variable-values": "Update default variable values"
@@ -3517,6 +3580,7 @@
       "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
@@ -3580,6 +3644,7 @@
       "label-show-on-dashboard": "Show on dashboard"
     },
     "variable-usages-button": {
+      "title-show-usages": "Showing usages for: {{variableId}}",
       "tooltip-show-usages": "Show usages"
     },
     "variable-values-preview": {
@@ -3594,6 +3659,7 @@
       "tooltip-reset-version": "Reset version"
     },
     "version-history-table": {
+      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
       "date": "Date",
       "notes": "Notes",
       "restore": "Restore",
@@ -3608,9 +3674,16 @@
       "aria-label-change-visualization": "Change visualization",
       "tooltip-click-to-change-visualization": "Click to change visualization"
     },
+    "viz-and-data-pane": {
+      "aria-label-open-query-pane": "Open query pane",
+      "tooltip-open-query-pane": "Open query pane"
+    },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": "Panel links"
     }
+  },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-settings": {
     "annotations": {
@@ -6652,6 +6725,7 @@
       "email-share-type-option-label": "Only specified people",
       "pause-sharing-dashboard-label": "Pause sharing dashboard",
       "public-share-type-option-label": "Anyone with a link",
+      "revoke-body": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
       "revoke-public-URL-button": "Revoke public URL",
       "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"

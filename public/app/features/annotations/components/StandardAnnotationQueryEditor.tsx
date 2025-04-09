@@ -156,9 +156,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
 
     const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
+    const numEvents = events.length;
+    const numFields = frame?.fields.length;
     return (
       <p>
-        {events.length} events (from {frame?.fields.length} fields)
+        <Trans i18nKey="annotations.standard-annotation-query-editor.events-found">
+          {{ numEvents }} events (from {{ numFields }} fields)
+        </Trans>
       </p>
     );
   }
@@ -212,7 +216,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     // Find the annotation runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
-      return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
+      return (
+        <div>
+          <Trans i18nKey="annotations.standard-annotation-query-editor.no-query-editor">
+            Annotations are not supported. This datasource needs to export a QueryEditor
+          </Trans>
+        </div>
+      );
     }
 
     const query = {

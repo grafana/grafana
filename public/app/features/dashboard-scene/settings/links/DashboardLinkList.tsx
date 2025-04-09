@@ -106,7 +106,11 @@ export function DashboardLinkList({
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton
-                  aria-label={`Delete link with title "${link.title}"`}
+                  aria-label={t(
+                    'dashboard-scene.dashboard-link-list.delete-aria-label',
+                    'Delete link with title "{{title}}"',
+                    { title: link.title }
+                  )}
                   size="sm"
                   onConfirm={() => onDelete(idx)}
                 />

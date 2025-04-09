@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -53,12 +54,15 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
-                tooltip={'Open options pane'}
+                tooltip={t('dashboard-scene.panel-editor-renderer.tooltip-open-options-pane', 'Open options pane')}
                 icon={'arrow-to-right'}
                 onClick={onToggleCollapse}
                 variant="canvas"
                 className={styles.rotate180}
-                aria-label={'Open options pane'}
+                aria-label={t(
+                  'dashboard-scene.panel-editor-renderer.aria-label-open-options-pane',
+                  'Open options pane'
+                )}
               />
             </div>
           )}
@@ -127,13 +131,13 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button
-                    tooltip={'Open query pane'}
+                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
                     icon={'arrow-to-right'}
                     onClick={onToggleCollapse}
                     variant="secondary"
                     size="sm"
                     className={styles.openDataPaneButton}
-                    aria-label={'Open query pane'}
+                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
                   />
                 </div>
               )}

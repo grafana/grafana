@@ -90,8 +90,10 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
           </div>
           <div>
             <p>
-              Editors cannot add new connections. You may check to see if it is already configured in{' '}
-              <a href="/connections/datasources">Data sources</a>.
+              <Trans i18nKey="connections.no-access-modal.editor-warning">
+                Editors cannot add new connections. You may check to see if it is already configured in{' '}
+                <a href="/connections/datasources">Data sources</a>.
+              </Trans>
             </p>
             <p>
               <Trans i18nKey="connections.no-access-modal.connection-contact-grafana-admin">

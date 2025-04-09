@@ -110,7 +110,10 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           severity="error"
         >
           <p>
-            Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom version.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.body-plugin-dashboard">
+              Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+              version.
+            </Trans>
           </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
@@ -162,9 +165,11 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           severity="warning"
         >
           <p>
-            Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
-            dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to
-            save the dashboard as a new copy.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
+              Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
+              dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer
+              to save the dashboard as a new copy.
+            </Trans>
           </p>
         </Alert>
       )}
@@ -211,7 +216,10 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
             'dashboard-scene.save-dashboard-form-common-options.save-timerange-label-update-default-time-range',
             'Update default time range'
           )}
-          description={'Will make current time range the new default'}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-description-current-range-default',
+            'Will make current time range the new default'
+          )}
           data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
         />
       )}
