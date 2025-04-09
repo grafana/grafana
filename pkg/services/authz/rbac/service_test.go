@@ -1452,7 +1452,7 @@ func setupService() *Service {
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
-		settings:        RBACSettings{AnonOrgRole: "Viewer"},
+		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
 		folderStore:     fStore,

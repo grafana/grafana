@@ -42,7 +42,7 @@ type Service struct {
 	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
-	settings        RBACSettings
+	settings        Settings
 
 	mapper mapper
 
