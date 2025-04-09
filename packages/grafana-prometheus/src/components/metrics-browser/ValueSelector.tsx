@@ -55,13 +55,14 @@ export function ValueSelector() {
               >
                 {({ index, style }) => {
                   const value = lv[index];
+                    const isSelected = selectedLabelValues[lk]?.includes(value);
                   return (
                     <div style={style}>
                       <PromLabel
                         name={value}
                         value={value}
-                        active={selectedLabelValues[lk]?.includes(value)}
-                        onClick={(name) => onLabelValueClick(lk, name)}
+                        active={isSelected}
+                        onClick={(name) => onLabelValueClick(lk, name, !isSelected)}
                         searchTerm={valueSearchTerm}
                       />
                     </div>

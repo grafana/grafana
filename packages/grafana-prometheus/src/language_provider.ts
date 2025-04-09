@@ -199,8 +199,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
-  fetchLabelValues = async (range: TimeRange, key: string): Promise<string[]> => {
-    const params = this.datasource.getAdjustedInterval(range);
+  fetchLabelValues = async (range: TimeRange, key: string, limit?: string): Promise<string[]> => {
+    const params = { ...this.datasource.getAdjustedInterval(range), ...(limit ? { limit } : {}) };
     const interpolatedName = this.datasource.interpolateString(key);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
@@ -215,12 +215,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[]): Promise<string[]> => {
+  fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[], limit?: string): Promise<string[]> => {
     let url = '/api/v1/labels';
     const timeParams = this.datasource.getAdjustedInterval(timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
-    const searchParams = new URLSearchParams({ ...timeParams });
+    const searchParams = new URLSearchParams({ ...timeParams, ...(limit ? { limit } : {}) });
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
@@ -268,7 +268,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     name: string,
     match?: string,
     requestId?: string,
-    withLimit?: number
+    withLimit?: string
   ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
@@ -329,7 +329,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     timeRange: TimeRange,
     name: string,
     withName?: boolean,
-    withLimit?: number
+    withLimit?: string
   ): Promise<Record<string, string[]>> => {
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(timeRange, name, withLimit);
@@ -373,7 +373,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeriesLabelsMatch = async (
     timeRange: TimeRange,
     name: string,
-    withLimit?: number
+    withLimit?: string
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(timeRange);
