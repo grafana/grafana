@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
-import { Field, RadioButtonGroup, Switch, Label, Badge } from '@grafana/ui';
+import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -8,7 +8,6 @@ const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
-
 export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
@@ -18,7 +17,6 @@ export const ColorBackgroundCellOptionsEditor = ({
     cellOptions.mode = v;
     onChange(cellOptions);
   };
-
   // Handle row coloring changes
   const onColorRowChange = () => {
     cellOptions.applyToRow = !cellOptions.applyToRow;
@@ -30,13 +28,6 @@ export const ColorBackgroundCellOptionsEditor = ({
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
   };
-
-  const label = (
-    <Label description="If selected text will be wrapped to the width of text in the configured column">
-      {'Wrap text '}
-      <Badge text="Alpha" color="blue" style={{ fontSize: '11px', marginLeft: '5px', lineHeight: '1.2' }} />
-    </Label>
-  );
 
   return (
     <>
@@ -53,7 +44,7 @@ export const ColorBackgroundCellOptionsEditor = ({
       >
         <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
-      <Field label={label}>
+      <Field label="Wrap text">
         <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
       </Field>
     </>
