@@ -273,18 +273,18 @@ type AlertRuleExport struct {
 	NoDataState   *NoDataState         `json:"noDataState,omitempty" yaml:"noDataState,omitempty" hcl:"no_data_state"`
 	ExecErrState  *ExecutionErrorState `json:"execErrState,omitempty" yaml:"execErrState,omitempty" hcl:"exec_err_state"`
 	For           model.Duration       `json:"for,omitempty" yaml:"for,omitempty"`
-	KeepFiringFor model.Duration       `json:"keepFiringFor,omitempty" yaml:"keepFiringFor,omitempty" hcl:"keep_firing_for"`
+	KeepFiringFor model.Duration       `json:"keepFiringFor,omitempty" yaml:"keepFiringFor,omitempty"`
 	// ForString and KeepFiringForString are used to:
 	// - Only export the for field for HCL if it is non-zero.
 	// - Format the Prometheus model.Duration type properly for HCL.
 	ForString                   *string                              `json:"-" yaml:"-" hcl:"for"`
-	KeepFiringForString         *string                              `json:"-" yaml:"-" hcl:"keep_firing_for"`
+	KeepFiringForString         *string                              `json:"-" yaml:"-" hcl:"keep_firing_for,optional"`
 	Annotations                 *map[string]string                   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
 	Labels                      *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
 	IsPaused                    bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 	NotificationSettings        *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
 	Record                      *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
-	MissingSeriesEvalsToResolve *int                                 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve"`
+	MissingSeriesEvalsToResolve *int                                 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve,optional"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
