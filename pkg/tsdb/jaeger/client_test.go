@@ -258,7 +258,7 @@ func TestJaegerClient_Trace(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger(), tt.traceIdTimeEnabled)
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, tt.traceIdTimeEnabled)
 			assert.NoError(t, err)
 
 			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end)
