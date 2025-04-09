@@ -55,6 +55,7 @@ type NavigationAppConfig struct {
 	Text       string
 	Icon       string
 	SubTitle   string
+	IsNew      bool
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
