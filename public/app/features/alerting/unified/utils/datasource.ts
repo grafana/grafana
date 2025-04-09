@@ -349,11 +349,6 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
   };
 }
 
-export type SupportedExternalPrometheusFlavoredRulesSourceType =
-  | 'prometheus'
-  | 'grafana-amazonprometheus-datasource'
-  | 'grafana-azureprometheus-datasource';
-
 /**
  * Check if the given type is a supported external Prometheus flavored rules source type.
  */
@@ -364,8 +359,13 @@ export function isSupportedExternalPrometheusFlavoredRulesSourceType(
     type as SupportedExternalPrometheusFlavoredRulesSourceType
   );
 }
-
-export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
+export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
+  'prometheus',
+  'grafana-amazonprometheus-datasource',
+  'grafana-azureprometheus-datasource',
+] as const;
+export type SupportedExternalPrometheusFlavoredRulesSourceType =
+  (typeof SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES)[number]; // infer the type from the tuple above so we can maintain a single source of truth
 
 /**
  * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
@@ -373,11 +373,11 @@ export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometh
 export function isSupportedExternalRulesSourceType(type: string): type is SupportedExternalRulesSourceType {
   return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.includes(type as SupportedExternalRulesSourceType);
 }
-
-/**
- * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
- */
-export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceType;
+export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
+export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
+  'loki',
+  ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+] as const;
 
 /**
  * Check if the given type is a supported rules source type. Includes "grafana" for Grafana Managed Rules.
@@ -385,18 +385,7 @@ export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceT
 export function isSupportedRulesSourceType(type: string): type is SupportedRulesSourceType {
   return type === GRAFANA_RULES_SOURCE_NAME || isSupportedExternalRulesSourceType(type);
 }
-
-export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
-  'prometheus',
-  'grafana-amazonprometheus-datasource',
-  'grafana-azureprometheus-datasource',
-] as const;
-
-export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
-  'loki',
-  ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
-] as const;
-
+export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceType;
 export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
