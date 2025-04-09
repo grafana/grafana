@@ -3,7 +3,7 @@ import type { IDisposable, IRange, Position, editor, languages } from 'monaco-ed
 
 import type { Monaco } from '@grafana/ui';
 
-import { getAlertManagerSuggestions } from './alertManagerSuggestions';
+import { getAlertManagerSuggestions, getGomplateSuggestions } from './alertManagerSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
 import {
   getAlertSuggestions,
@@ -72,7 +72,10 @@ export class CompletionProvider {
   };
 
   getFunctionsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(getAlertManagerSuggestions(this.monaco));
+    return this.getCompletionsFromDefinitions(
+      getAlertManagerSuggestions(this.monaco),
+      getGomplateSuggestions(this.monaco)
+    );
   };
 
   getTemplateDataSuggestions = (wordContext: string): languages.ProviderResult<languages.CompletionList> => {
