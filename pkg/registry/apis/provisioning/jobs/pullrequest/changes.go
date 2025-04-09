@@ -25,7 +25,7 @@ type changeInfo struct {
 	// Files we tried to read
 	Changes []fileChangeInfo
 
-	// Requested image render, but it is not avaliable
+	// Requested image render, but it is not available
 	MissingImageRenderer bool
 	HasScreenshot        bool
 }
@@ -177,10 +177,7 @@ func (g *generator) renderScreenshot(ctx context.Context,
 		logger.Warn("invalid", "url", request, "err", err)
 		return "", err
 	}
-	query := parsed.Query()
-	query["kiosk"] = []string{}
-
-	snap, err := g.renderer.RenderScreenshot(ctx, repo, parsed.Path, query)
+	snap, err := g.renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
 	if err != nil {
 		logger.Warn("render failed", "url", request, "err", err)
 		return "", fmt.Errorf("error rendering screenshot %w", err)
@@ -189,6 +186,10 @@ func (g *generator) renderScreenshot(ctx context.Context,
 		return snap, nil // it is a full URL already (can happen when the blob storage returns CDN urls)
 	}
 	base, err := url.Parse(baseURL)
+	if err != nil {
+		logger.Warn("invalid base", "url", baseURL, "err", err)
+		return "", err
+	}
 	return base.JoinPath(snap).String(), nil
 }
 

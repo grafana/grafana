@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -45,8 +46,16 @@ func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
 }
 
 func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisioning.ResourceRepositoryInfo, path string, values url.Values) (string, error) {
+	if strings.Contains(path, "://") {
+		return "", fmt.Errorf("path should be relative to the system root url")
+	}
+	if strings.HasPrefix(path, "/") {
+		return "", fmt.Errorf("path should not start with slash")
+	}
 	if len(values) > 0 {
-		path = path + "?" + values.Encode()
+		path = path + "?" + values.Encode() + "&kiosk"
+	} else {
+		path = path + "?kiosk"
 	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
