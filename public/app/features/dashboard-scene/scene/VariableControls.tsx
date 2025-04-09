@@ -21,6 +21,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
 interface VariableSelectProps {
   variable: SceneVariable;
+  className: string;
 }
 
 export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
@@ -39,8 +40,6 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
     }
   };
 
-  // className={cx(isSelectable && styles.labelSelectable)}
-
   return (
     <div
       className={cx(
@@ -51,13 +50,13 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
     >
-      <VariableLabel variable={variable} />
+      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable)} />
       <variable.Component model={variable} />
     </div>
   );
 }
 
-function VariableLabel({ variable }: VariableSelectProps) {
+function VariableLabel({ variable, className }: VariableSelectProps) {
   const { state } = variable;
 
   if (variable.state.hide === VariableHide.hideLabel) {
@@ -76,6 +75,7 @@ function VariableLabel({ variable }: VariableSelectProps) {
       error={state.error}
       layout={'horizontal'}
       description={state.description ?? undefined}
+      className={className}
     />
   );
 }
