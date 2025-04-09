@@ -59,7 +59,7 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := s.getter.GetRepository(ctx, name)
+	repo, err := s.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
@@ -110,6 +110,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			files, err := s.listFolderFiles(ctx, filePath, ref, readWriter)
 			if err != nil {
 				responder.Error(err)
+				return
 			}
 
 			responder.Object(http.StatusOK, files)
