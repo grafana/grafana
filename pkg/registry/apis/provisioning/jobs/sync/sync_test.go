@@ -44,7 +44,7 @@ func TestSyncer_Sync(t *testing.T) {
 		expectedFinalMsg string
 	}{
 		{
-			name: "successful full sync with root folder",
+			name: "successful full sync",
 			options: provisioning.SyncJobOptions{
 				Incremental: false,
 			},
@@ -63,6 +63,54 @@ func TestSyncer_Sync(t *testing.T) {
 				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
+		},
+		{
+			name: "successful full sync with root folder",
+			options: provisioning.SyncJobOptions{
+				Incremental: false,
+			},
+			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+				repo.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolder,
+						},
+					},
+				})
+				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
+				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").Return(nil)
+
+				progress.On("SetMessage", mock.Anything, "full sync").Return()
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything).Return(nil)
+			},
+			expectedMessages: []string{"full sync"},
+		},
+		{
+			name: "root folder creation error",
+			options: provisioning.SyncJobOptions{
+				Incremental: false,
+			},
+			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+				repo.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+						Sync: provisioning.SyncOptions{
+							Target: provisioning.SyncTargetTypeFolder,
+						},
+					},
+				})
+
+				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").
+					Return(fmt.Errorf("folder creation failed"))
+			},
+			expectedError: "create root folder: folder creation failed",
 		},
 		{
 			name: "successful incremental sync",
@@ -110,29 +158,6 @@ func TestSyncer_Sync(t *testing.T) {
 			expectedFinalMsg: "same commit as last sync",
 		},
 		{
-			name: "root folder creation error",
-			options: provisioning.SyncJobOptions{
-				Incremental: false,
-			},
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").
-					Return(fmt.Errorf("folder creation failed"))
-			},
-			expectedError: "create root folder: folder creation failed",
-		},
-		{
 			name: "latest ref error",
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
@@ -151,6 +176,30 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("", fmt.Errorf("failed to get latest ref"))
 			},
 			expectedError: "get latest ref: failed to get latest ref",
+		},
+		{
+			name: "incremental sync error",
+			options: provisioning.SyncJobOptions{
+				Incremental: true,
+			},
+			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+				repo.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "old-ref",
+						},
+					},
+				})
+				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
+				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
+				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
+			},
+			expectedRef:      "new-ref",
+			expectedMessages: []string{"incremental sync"},
+			expectedError:    "incremental sync failed",
 		},
 	}
 

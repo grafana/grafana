@@ -41,7 +41,7 @@ func FullSync(
 	if err != nil {
 		return fmt.Errorf("error reading tree: %w", err)
 	}
-	changes, err := Changes(source, target)
+	changes, err := compare(source, target)
 	if err != nil {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
@@ -55,10 +55,10 @@ func FullSync(
 	// maybe we can structure the code in better way to avoid this
 	repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 
-	return ApplyChanges(ctx, changes, clients, repositoryResources, progress)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress)
 }
 
-func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetTotal(ctx, len(changes))
 	progress.SetMessage(ctx, "replicating changes")
 
@@ -66,6 +66,7 @@ func ApplyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
