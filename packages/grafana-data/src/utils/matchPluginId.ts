@@ -4,8 +4,8 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
   if (pluginMeta.id === idToMatch) {
     return true;
   }
-
-  if (idToMatch === 'prometheus') {
+  
+  if (isPromFlavor(idToMatch)) {
     return isPromFlavor(pluginMeta.id);
   }
 
@@ -17,6 +17,9 @@ export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
 }
 
 function isPromFlavor(pluginId: string): boolean {
+  if (pluginId === 'prometheus'){
+    return true;
+  }
   const regex = new RegExp('^grafana-[0-9a-z]+prometheus-datasource$');
   return regex.test(pluginId);
 }
