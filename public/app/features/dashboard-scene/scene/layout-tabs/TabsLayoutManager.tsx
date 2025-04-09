@@ -154,50 +154,30 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.tabs.length === 1;
+  }
+
   public removeTab(tabToRemove: TabItem) {
     // When removing last tab replace ourselves with the inner tab layout
-    if (this.state.tabs.length === 1) {
+    if (this.shouldUngroup()) {
       ungroupLayout(this, tabToRemove.state.layout);
       return;
     }
 
     const currentTab = this.getCurrentTab();
 
-    const remove = () => {
-      if (currentTab === tabToRemove) {
-        const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
-        this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
-        this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
-        return;
-      }
-
-      const filteredTab = this.state.tabs.filter((tab) => tab !== tabToRemove);
-      const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
-
-      this.setState({ tabs, currentTabIndex: 0 });
-    };
-
-    // If the tab has no panels, remove it immediately
-    if (tabToRemove.getLayout().getVizPanels().length === 0) {
-      remove();
+    if (currentTab === tabToRemove) {
+      const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
+      this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
+      this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
       return;
     }
 
-    // If it has panels, confirm the user wants to delete the tab
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: t('dashboard.tabs-layout.delete-tab-title', 'Delete tab?'),
-        text: t(
-          'dashboard.tabs-layout.delete-tab-text',
-          'Deleting this tab will also remove all panels. Are you sure you want to continue?'
-        ),
-        icon: 'trash-alt',
-        yesText: t('dashboard.tabs-layout.delete-tab-yes', 'Delete'),
-        onConfirm: () => {
-          remove();
-        },
-      })
-    );
+    const filteredTab = this.state.tabs.filter((tab) => tab !== tabToRemove);
+    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+
+    this.setState({ tabs, currentTabIndex: 0 });
   }
 
   public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
