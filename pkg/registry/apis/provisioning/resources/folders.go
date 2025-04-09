@@ -109,7 +109,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	// Always use the provisioning identity when writing
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to use provisioning identity %w", err)
 	}
 
 	obj = &unstructured.Unstructured{
