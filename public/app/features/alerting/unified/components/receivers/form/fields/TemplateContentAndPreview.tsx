@@ -11,6 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';
 import { TemplatePreview } from '../../TemplatePreview';
+import { getUseTemplateText } from './utils';
 
 export function TemplateContentAndPreview({
   payload,
@@ -58,8 +59,9 @@ export function TemplateContentAndPreview({
       {isGrafanaAlertManager && (
         <TemplatePreview
           payload={payload}
-          templateName={templateName}
-          templateContent={templateContent}
+          // This should be an empty template name so that the test API treats it as a new unnamed template.
+          templateName={''}
+          templateContent={getUseTemplateText(templateName)}
           setPayloadFormatError={setPayloadFormatError}
           payloadFormatError={payloadFormatError}
           className={cx(styles.templatePreview, styles.minEditorSize)}
