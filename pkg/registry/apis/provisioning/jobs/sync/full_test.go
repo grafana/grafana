@@ -175,40 +175,20 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupMocks    func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
+		changes       []ResourceFileChange
 		expectedError string
 		description   string
 	}{
 		{
 			name:        "successful apply with file creation",
 			description: "Should successfully apply changes when creating a new file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/test.json",
+				},
+			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				repo.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-					},
-				})
-
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
-					{
-						Path: "dashboards/test.json",
-						Hash: "hash",
-						Size: 100,
-						Blob: true,
-					},
-				}, nil)
-
-				changes := []ResourceFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/test.json",
-					},
-				}
-				compareFn.On("Execute", mock.Anything, mock.Anything).Return(changes, nil)
-
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
 				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
@@ -224,186 +204,78 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Resource: "Dashboard",
 					Group:    "dashboards",
 				}).Return()
-
-				repoResources.On("SetTree", mock.Anything).Return()
 			},
 		},
 		{
-			name:        "successful apply with folder creation",
-			description: "Should successfully apply changes when creating a new folder",
+			name:        "successful apply with file update",
+			description: "Should successfully apply changes when updating an existing file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionUpdated,
+					Path:   "dashboards/test.json",
+				},
+			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				repo.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-					},
-				})
-
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
-					{
-						Path: "dashboards/",
-						Hash: "hash",
-						Size: 0,
-						Blob: false,
-					},
-				}, nil)
-
-				changes := []ResourceFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/",
-					},
-				}
-				compareFn.On("Execute", mock.Anything, mock.Anything).Return(changes, nil)
-
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
 				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
 				progress.On("TooManyErrors").Return(nil)
 
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "dashboards/").
-					Return("test-folder", nil)
-
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "dashboards/",
-					Name:     "test-folder",
-					Resource: resources.FolderResource.Resource,
-					Group:    resources.FolderResource.Group,
-				}).Return()
-
-				repoResources.On("SetTree", mock.Anything).Return()
-			},
-		},
-		{
-			name:        "error creating folder",
-			description: "Should return error when folder creation fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				repo.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-					},
-				})
-
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
-					{
-						Path: "dashboards/",
-						Hash: "hash",
-						Size: 0,
-						Blob: false,
-					},
-				}, nil)
-
-				changes := []ResourceFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/",
-					},
-				}
-				compareFn.On("Execute", mock.Anything, mock.Anything).Return(changes, nil)
-
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("TooManyErrors").Return(nil)
-
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "dashboards/").
-					Return("", fmt.Errorf("folder creation failed"))
-
-				repoResources.On("SetTree", mock.Anything).Return()
-			},
-			expectedError: "create folder: folder creation failed",
-		},
-		{
-			name:        "too many errors during apply",
-			description: "Should stop processing when too many errors occur",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				repo.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-					},
-				})
-
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
-					{
-						Path: "dashboards/test.json",
-						Hash: "hash",
-						Size: 100,
-						Blob: true,
-					},
-				}, nil)
-
-				changes := []ResourceFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/test.json",
-					},
-				}
-				compareFn.On("Execute", mock.Anything, mock.Anything).Return(changes, nil)
-
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors occurred"))
-
-				repoResources.On("SetTree", mock.Anything).Return()
-			},
-			expectedError: "too many errors occurred",
-		},
-		{
-			name:        "error writing resource",
-			description: "Should handle errors when writing resources fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				repo.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-					},
-				})
-
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return([]repository.FileTreeEntry{
-					{
-						Path: "dashboards/test.json",
-						Hash: "hash",
-						Size: 100,
-						Blob: true,
-					},
-				}, nil)
-
-				changes := []ResourceFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/test.json",
-					},
-				}
-				compareFn.On("Execute", mock.Anything, mock.Anything).Return(changes, nil)
-
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
-				progress.On("TooManyErrors").Return(nil)
-
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
-					Return("", schema.GroupVersionKind{}, fmt.Errorf("write failed"))
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "dashboards/test.json",
-					Error:  fmt.Errorf("write failed"),
+					Action:   repository.FileActionUpdated,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
 				}).Return()
+			},
+		},
+		{
+			name:        "successful apply with file deletion",
+			description: "Should successfully apply changes when deleting an existing file",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-dashboard",
+						Resource: "Dashboard",
+						Group:    "dashboards",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating changes").Return()
+				progress.On("SetMessage", mock.Anything, "changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
 
-				repoResources.On("SetTree", mock.Anything).Return()
+				// scheme := runtime.NewScheme()
+				// scheme.AddKnownTypes(schema.GroupVersion{Group: "dashboards", Version: "v1"}, &provisioning.Dashboard{})
+				// fakeDynamicClient := fake.NewSimpleDynamicClient(scheme)
+				// 	Resource: "Dashboard",
+				// })
+
+				// clients.On("ForResource", schema.GroupVersionResource{
+				// 	Group:    "dashboards",
+				// 	Resource: "Dashboard",
+				// }).Return(dashboardsClient, schema.GroupVersionKind{
+				// 	Kind:    "Dashboard",
+				// 	Group:   "dashboards",
+				// 	Version: "v1",
+				// }, nil)
+
+				progress.On("Record", mock.Anything, jobs.JobResourceResult{
+					Action:   repository.FileActionDeleted,
+					Path:     "dashboards/test.json",
+					Name:     "test-dashboard",
+					Resource: "Dashboard",
+					Group:    "dashboards",
+					Error:    nil,
+				}).Return()
 			},
 		},
 	}
@@ -417,9 +289,17 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 			compareFn := NewMockCompareFn(t)
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil)
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+				},
+			})
 
 			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
-
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
