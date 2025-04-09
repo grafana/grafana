@@ -32,6 +32,20 @@ func FullSync(
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 ) error {
+	cfg := repo.Config()
+
+	// Ensure the configured folder exists and is managed by the repository
+	rootFolder := resources.RootFolder(cfg)
+	if rootFolder != "" {
+		if err := repositoryResources.EnsureFolderExists(ctx, resources.Folder{
+			ID:    rootFolder, // will not change if exists
+			Title: cfg.Spec.Title,
+			Path:  "", // at the root of the repository
+		}, ""); err != nil {
+			return fmt.Errorf("create root folder: %w", err)
+		}
+	}
+
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return fmt.Errorf("error listing current: %w", err)

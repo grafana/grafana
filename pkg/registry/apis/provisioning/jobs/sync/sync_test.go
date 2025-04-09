@@ -65,54 +65,6 @@ func TestSyncer_Sync(t *testing.T) {
 			expectedMessages: []string{"full sync"},
 		},
 		{
-			name: "successful full sync with root folder",
-			options: provisioning.SyncJobOptions{
-				Incremental: false,
-			},
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
-				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").Return(nil)
-
-				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything).Return(nil)
-			},
-			expectedMessages: []string{"full sync"},
-		},
-		{
-			name: "root folder creation error",
-			options: provisioning.SyncJobOptions{
-				Incremental: false,
-			},
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
-						},
-					},
-				})
-
-				repoResources.On("EnsureFolderExists", mock.Anything, mock.AnythingOfType("resources.Folder"), "").
-					Return(fmt.Errorf("folder creation failed"))
-			},
-			expectedError: "create root folder: folder creation failed",
-		},
-		{
 			name: "successful incremental sync",
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
