@@ -13,6 +13,9 @@ module.exports = defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,
 
+  env: {
+    LOG_SELECTORS_INFO: false,
+  },
   e2e: {
     supportFile: './e2e/cypress/support/e2e.js',
     setupNodeEvents(on, config) {
