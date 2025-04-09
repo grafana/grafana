@@ -214,12 +214,14 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 	if err := parsed.DryRun(ctx); err != nil {
 		logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
 		logger.Warn("failed to dry run resource on create", "error", err)
-		// Do not fail here as it's purely informational
-		parsed.Errors = append(parsed.Errors, err.Error())
+
+		// TODO: return this as a 400 rather than 500
+		return nil, fmt.Errorf("error running dryRun %w", err)
 	}
 
 	if len(parsed.Errors) > 0 {
-		return parsed, nil
+		// TODO: return this as a 400 rather than 500
+		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
 	data, err = parsed.ToSaveBytes()
