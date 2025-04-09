@@ -219,8 +219,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		parsed.Run(ctx)
+		err = parsed.Run(ctx)
 	}
 
-	return parsed, nil
+	return parsed, err
 }

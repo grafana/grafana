@@ -329,7 +329,8 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
 		require.Equal(t, http.StatusConflict, code)
-		require.Error(t, result.Error(), "should fail response (already exists)")
+		require.Error(t, result.Error(), "should have error")
+		require.Equal(t, result.Error().Error(), "should fail response (already exists)")
 	})
 
 	t.Run("fail using invalid paths", func(t *testing.T) {
