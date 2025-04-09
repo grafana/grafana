@@ -915,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
