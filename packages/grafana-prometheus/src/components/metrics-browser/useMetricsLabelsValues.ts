@@ -43,6 +43,15 @@ export const useMetricsLabelsValues = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
+  const handleError = useCallback((e: unknown, msg: string) => {
+    if (e instanceof Error) {
+      setErr(`${msg}: ${e.message}`);
+    } else {
+      setErr(`${msg}: Unknown error`);
+    }
+    setStatus('');
+  }, []);
+
   // Get metadata details for a metric if available
   const getMetricDetails = useCallback(
     (metricName: string) => {
@@ -52,13 +61,10 @@ export const useMetricsLabelsValues = (
     [languageProvider.metricsMetadata]
   );
 
-  const handleError = useCallback((e: unknown, msg: string) => {
-    if (e instanceof Error) {
-      setErr(`${msg}: ${e.message}`);
-    } else {
-      setErr(`${msg}: Unknown error`);
-    }
-    setStatus('');
+  // Helper function to build a selector and convert empty selectors to undefined
+  const buildSafeSelector = useCallback((metric: string, labelValues: Record<string, string[]>) => {
+    const selector = buildSelector(metric, labelValues);
+    return selector === EMPTY_SELECTOR ? undefined : selector;
   }, []);
 
   // Initial set up of the Metrics Browser
@@ -189,8 +195,7 @@ export const useMetricsLabelsValues = (
 
     if (lkIdx === -1) {
       newSelectedLabelKeys.push(labelKey);
-      const selector = buildSelector(selectedMetric, selectedLabelValues);
-      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+      const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
       try {
         const values = await languageProvider.fetchSeriesValuesWithMatch(
           timeRangeRef.current,
@@ -240,8 +245,7 @@ export const useMetricsLabelsValues = (
       }
     }
 
-    const selector = buildSelector(selectedMetric, newSelectedLabelValues);
-    const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+    const safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
 
     // Fetch metrics
     setStatus('Fetching metrics...');
@@ -286,8 +290,7 @@ export const useMetricsLabelsValues = (
     // adjust the label values
     let newLabelValues: Record<string, string[]> = {};
     if (newSelectedLabelKeys.length !== 0) {
-      const selector = buildSelector(selectedMetric, newSelectedLabelValues);
-      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+      const safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
       for (const lk of newSelectedLabelKeys) {
         try {
           const fetchedLabelValues = await languageProvider.fetchSeriesValuesWithMatch(
