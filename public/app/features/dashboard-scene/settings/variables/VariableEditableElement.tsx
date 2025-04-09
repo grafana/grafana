@@ -23,8 +23,9 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.edit-pane.elements.variable', 'Variable'),
-      icon: 'chart-line',
+      icon: 'dollar-alt',
       instanceName: this.variable.state.name,
+      isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }
 

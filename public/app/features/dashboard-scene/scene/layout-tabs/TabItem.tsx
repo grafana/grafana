@@ -87,6 +87,7 @@ export class TabItem
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'layers',
+      isContainer: true,
     };
   }
 

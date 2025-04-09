@@ -19,6 +19,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
       instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
+      isContainer: true,
     };
   }
 

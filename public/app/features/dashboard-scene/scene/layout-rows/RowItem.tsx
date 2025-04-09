@@ -87,6 +87,7 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
+      isContainer: true,
     };
   }
 

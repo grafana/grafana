@@ -65,6 +65,11 @@ export interface EditableDashboardElementInfo {
   instanceName: string;
   typeName: string;
   icon: IconName;
+  /**
+   * Mark it as a container of other editable elements
+   */
+  isContainer?: boolean;
+  isHidden?: boolean;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
