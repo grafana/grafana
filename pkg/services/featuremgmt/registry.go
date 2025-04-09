@@ -353,14 +353,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "traceQLStreaming",
-			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Expression:   "false",
-		},
-		{
 			Name:            "datasourceAPIServers",
 			Description:     "Expose some datasources as apiservers.",
 			Stage:           FeatureStageExperimental,
@@ -1776,12 +1768,27 @@ var (
 			FrontendOnly: false,
 		},
 		{
+			Name:         "unifiedNavbars",
+			Description:  "Enables unified navbars",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false", // enabled by default
+		},
+		{
 			Name:         "logsPanelControls",
 			Description:  "Enables a control component for the logs panel in Explore",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "metricsFromProfiles",
+			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )

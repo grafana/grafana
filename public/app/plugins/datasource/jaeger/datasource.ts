@@ -72,7 +72,19 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
    * Migrated to backend with feature toggle `jaegerBackendMigration`
    */
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
-    if (config.featureToggles.jaegerBackendMigration) {
+    // No query type means that the query is a trace ID query
+    // If all targets are trace ID queries, we can use the backend querying
+    const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
+    const allTargetsSearchQuery = options.targets.every((target) => target.queryType === 'search');
+    // We have not migrated the node graph to the backend
+    // If the node graph is disabled, we can use the backend migration
+    const nodeGraphDisabled = !this.nodeGraph?.enabled;
+
+    if (config.featureToggles.jaegerBackendMigration && allTargetsSearchQuery && nodeGraphDisabled) {
+      return super.query(options);
+    }
+
+    if (config.featureToggles.jaegerBackendMigration && allTargetsTraceIdQuery && nodeGraphDisabled) {
       return super.query(options);
     }
 
@@ -138,7 +150,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       }
     }
 
-    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+    let jaegerInterpolated = pick(this.applyTemplateVariables(target, options.scopedVars), [
       'service',
       'operation',
       'tags',
@@ -183,12 +195,12 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: JaegerQuery, scopedVars: ScopedVars) {
     let expandedQuery = { ...query };
 
     if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
