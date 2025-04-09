@@ -43,6 +43,7 @@ export const LOCALES: Locale[] = [
   { name: 'English (India)', code: 'en-in' },
   { name: 'English (New Zealand)', code: 'en-nz' },
   { name: 'English (Singapore)', code: 'en-sg' },
+  { name: 'English (United States)', code: 'en' },
   { name: 'Esperanto', code: 'eo' },
   { name: 'Español', code: 'es' },
   { name: 'Español (República Dominicana)', code: 'es-do' },
