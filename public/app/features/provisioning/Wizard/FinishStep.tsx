@@ -1,24 +1,20 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
-import { Checkbox, Field, Input, MultiCombobox, Stack, Switch, Text, TextLink } from '@grafana/ui';
+import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 
 import { WizardFormData } from './types';
 
 export function FinishStep() {
-  const { register, watch, control, formState } = useFormContext<WizardFormData>();
-  const { errors } = formState;
+  const { register, watch, formState, setValue } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
+  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
-  // Enable sync by default
-  const { setValue } = useFormContext<WizardFormData>();
 
   if (!isPublic || !hasImageRenderer) {
     if (formState.defaultValues?.repository) {
@@ -58,51 +54,33 @@ export function FinishStep() {
         </Field>
       )}
 
-      <Field
-        label={t('provisioning.finish-step.label-workflows', 'Workflows')}
-        description={t(
-          'provisioning.finish-step.description-select-workflows-allowed-within-repository',
-          'Select the workflows that are allowed within this repository'
-        )}
-        required
-        error={errors.repository?.workflows?.message}
-        invalid={!!errors.repository?.workflows}
-      >
-        <Controller
-          name="repository.workflows"
-          control={control}
-          rules={{ required: t('provisioning.finish-step.error-field-required', 'This field is required.') }}
-          render={({ field: { ref, onChange, ...field } }) => (
-            <MultiCombobox
-              options={getWorkflowOptions(type)}
-              placeholder={t('provisioning.finish-step.placeholder-readonly-repository', 'Read-only repository')}
-              onChange={(val) => {
-                onChange(val.map((v) => v.value));
-              }}
-              {...field}
-            />
-          )}
+      <Field>
+        <Checkbox
+          {...register('repository.readOnly', {
+            onChange: (e) => {
+              if (e.target.checked) {
+                setValue('repository.prWorkflow', false);
+              }
+            },
+          })}
+          label={t('provisioning.finish-step.label-read-only', 'Read only')}
+          description={"Resources can't be modified through Grafana."}
         />
       </Field>
 
-      {isGithub && false /* TODO */ && (
-        <Field
-          label={
-            t(
-              'provisioning.finish-step.label-enable-webhooks',
-              'Enable webhooks on changes'
-            ) /* TODO: Link to docs when !isPublic */
+      <Field>
+        <Checkbox
+          {...register('repository.prWorkflow')}
+          disabled={readOnly}
+          label={'Enable pull request option when saving'}
+          description={
+            <Trans i18nKey="provisioning.finish-step.description-pr-enable-description">
+              Allows users to choose whether to open a pull request when saving changes. If the repository does not
+              allow direct changes to the main branch, a pull request may still be required.
+            </Trans>
           }
-          description={t(
-            'provisioning.finish-step.description-enable-webhooks',
-            'Enable webhooks to automatically notify Grafana when a change occurs in the repository. This will allow Grafana to pull changes as soon as they are made.'
-          )}
-          disabled={!isPublic}
-        >
-          {/* TODO: Make an option for the switch to control */}
-          <Switch id="repository.webhook.enable" />
-        </Field>
-      )}
+        />
+      </Field>
 
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={0}>
@@ -114,33 +92,38 @@ export function FinishStep() {
           </Text>
         </Stack>
         {isGithub && (
-          <Field>
-            <Checkbox
-              disabled={!hasImageRenderer || !isPublic}
-              label={t('provisioning.finish-step.label-enable-previews', 'Enable dashboard previews in pull requests')}
-              description={
-                <>
-                  <Trans i18nKey="provisioning.finish-step.description-enable-previews">
-                    Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will
-                    be shared in your Git repository and visible to anyone with repository access.
-                  </Trans>{' '}
-                  <Text italic>
-                    <Trans i18nKey="provisioning.finish-step.description-image-rendering">
-                      Requires image rendering.{' '}
-                      <TextLink
-                        variant="bodySmall"
-                        external
-                        href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-                      >
-                        Set up image rendering
-                      </TextLink>
-                    </Trans>
-                  </Text>
-                </>
-              }
-              {...register('repository.generateDashboardPreviews')}
-            />
-          </Field>
+          <>
+            <Field>
+              <Checkbox
+                disabled={!hasImageRenderer || !isPublic}
+                label={t(
+                  'provisioning.finish-step.label-enable-previews',
+                  'Enable dashboard previews in pull requests'
+                )}
+                description={
+                  <>
+                    <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                      Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
+                      will be shared in your Git repository and visible to anyone with repository access.
+                    </Trans>{' '}
+                    <Text italic>
+                      <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                        Requires image rendering.{' '}
+                        <TextLink
+                          variant="bodySmall"
+                          external
+                          href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+                        >
+                          Set up image rendering
+                        </TextLink>
+                      </Trans>
+                    </Text>
+                  </>
+                }
+                {...register('repository.generateDashboardPreviews')}
+              />
+            </Field>
+          </>
         )}
       </Stack>
     </Stack>
