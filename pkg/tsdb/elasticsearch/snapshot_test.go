@@ -170,10 +170,7 @@ func TestResponseSnapshots(t *testing.T) {
 
 			for refId, dataRes := range result.response.Responses {
 				goldenFileName := fmt.Sprintf("%v.%v.golden", test.path, strings.ToLower(refId))
-				// we make a copy of the variable to avoid this linter-warning:
-				// "G601: Implicit memory aliasing in for loop."
-				dataResCopy := dataRes
-				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, false)
+				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataRes, false)
 			}
 		})
 	}

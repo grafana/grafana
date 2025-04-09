@@ -50,7 +50,6 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				tc := tc
 				_, err := svc.CreateServiceAccount(context.Background(), testOrgId, &tc.form)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
@@ -221,7 +220,6 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), testOrgId, testServiceAccountId, &tc.form)
 				assert.Equal(t, tc.expectedError, err, tc.description)
@@ -260,7 +258,6 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
 				assert.Equal(t, tc.expectedError, err, tc.description)
