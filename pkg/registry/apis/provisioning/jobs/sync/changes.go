@@ -67,6 +67,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
+		// TODO: why do we have to do this here?
+		if !file.Blob && !strings.HasSuffix(file.Path, "/") {
+			file.Path = file.Path + "/"
+		}
+
 		check, ok := lookup[file.Path]
 		if ok {
 			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {

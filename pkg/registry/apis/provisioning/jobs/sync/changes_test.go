@@ -135,7 +135,7 @@ func TestChanges(t *testing.T) {
 
 	t.Run("folder deletion order", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
-			{Path: "x/y/z/ignored.md"}, // ignored
+			{Path: "x/y/z/ignored.md", Blob: true}, // ignored
 			{Path: "aaa/bbb.yaml", Hash: "xyz", Blob: true},
 		}
 		target := &provisioning.ResourceList{
@@ -290,6 +290,119 @@ func TestChanges(t *testing.T) {
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
+	})
+
+	t.Run("error on empty path for non-folder resource", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "", Resource: "dashboard", Group: "dashboard.grafana.app"},
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "empty path on a non folder")
+		require.Nil(t, changes)
+	})
+
+	t.Run("complex nested folder hierarchy with mixed file types", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "root/folder1/dashboard.json", Hash: "abc", Blob: true},
+			{Path: "root/folder1/subfolder/.gitkeep", Hash: "def", Blob: true},
+			{Path: "root/folder2/alert.json", Hash: "ghi", Blob: true},
+			{Path: "root/folder2/README.md", Hash: "jkl", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "root/", Resource: "folders"},
+				{Path: "root/folder1/", Resource: "folders"},
+				{Path: "root/folder2/", Resource: "folders"},
+				{Path: "root/folder1/dashboard.json", Hash: "abc", Resource: "dashboard"},
+				{Path: "root/folder2/alert.json", Hash: "old", Resource: "alert"},
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 2)
+		require.Equal(t, "root/folder1/subfolder/", changes[0].Path)
+		require.Equal(t, "root/folder2/alert.json", changes[1].Path)
+	})
+
+	t.Run("folder path suffix handling", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder1/", Hash: "abc", Blob: false},
+			{Path: "folder2/", Hash: "def", Blob: false},
+			{Path: "folder3", Hash: "ghi", Blob: false},
+			{Path: "folder4/", Hash: "jkl", Blob: false},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder1", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group},
+				{Path: "folder2/", Resource: "folders", Group: resources.FolderResource.Group},
+				{Path: "folder3", Resource: "folders", Group: resources.FolderResource.Group},
+				{Path: "folder4/", Resource: "folders", Group: resources.FolderResource.Group},
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes, "Should handle folder paths with and without trailing slash")
+	})
+
+	t.Run("empty source with populated target", func(t *testing.T) {
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder1/", Resource: "folders"},
+				{Path: "folder1/dashboard.json", Resource: "dashboard"},
+				{Path: "folder2/", Resource: "folders"},
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 3)
+
+		// Verify deletion order (deepest first)
+		require.Equal(t, "folder1/dashboard.json", changes[0].Path)
+		require.Equal(t, "folder1/", changes[1].Path)
+		require.Equal(t, "folder2/", changes[2].Path)
+
+		for _, change := range changes {
+			require.Equal(t, repository.FileActionDeleted, change.Action)
+		}
+	})
+
+	t.Run("empty target with populated source", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder1/", Hash: "abc", Blob: false},
+			{Path: "folder1/dashboard.json", Hash: "def", Blob: true},
+			{Path: "folder2/", Hash: "ghi", Blob: false},
+		}
+		target := &provisioning.ResourceList{}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 3) // Only non-blob entries should create changes
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder1/dashboard.json",
+		}, changes[0])
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder1/",
+		}, changes[1])
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder2/",
+		}, changes[2])
 	})
 }
 
