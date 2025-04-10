@@ -4,6 +4,7 @@ import {
   LinkModel,
   PanelMenuItem,
   PanelPlugin,
+  PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
   PluginExtensionTypes,
@@ -27,7 +28,6 @@ import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/ge
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -54,6 +54,9 @@ function setupGetPluginExtensions() {
 
   return getPluginExtensions;
 }
+
+// Define the category for metrics drilldown links
+const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -292,10 +295,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (config.featureToggles.exploreMetrics) {
-      await addDataTrailPanelAction(dashboard, panel, items);
-    }
-
     if (exploreMenuItem) {
       items.push(exploreMenuItem);
     }
@@ -310,15 +309,41 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       limitPerPlugin: 3,
     });
 
-    const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
-
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      items.push({
-        text: 'Extensions',
-        iconClassName: 'plug',
-        type: 'submenu',
-        subMenu: createExtensionSubMenu(linkExtensions),
-      });
+      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+
+      // Separate metrics drilldown links from other links
+      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+        ([metricsDrilldownLinks, otherLinks], link) => {
+          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
+            metricsDrilldownLinks.push(link);
+          } else {
+            otherLinks.push(link);
+          }
+          return [metricsDrilldownLinks, otherLinks];
+        },
+        [[], []]
+      );
+
+      // Add specific "Metrics drilldown" menu
+      if (metricsDrilldownLinks.length > 0) {
+        items.push({
+          text: 'Metrics drilldown',
+          iconClassName: 'code-branch',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
+        });
+      }
+
+      // Add generic "Extensions" menu for other links
+      if (otherLinks.length > 0) {
+        items.push({
+          text: 'Extensions',
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(otherLinks),
+        });
+      }
     }
 
     if (moreSubMenu.length) {
