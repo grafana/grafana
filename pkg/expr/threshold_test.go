@@ -639,7 +639,7 @@ func TestThresholdExecute(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 						"A": newResults(input[name]),
-					}, tracing.InitializeTracerForTest())
+					}, tracing.InitializeTracerForTest(), nil)
 					require.NoError(t, err)
 					require.Equal(t, newResults(tc.expected[name]), result)
 				})
