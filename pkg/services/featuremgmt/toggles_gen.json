@@ -2250,8 +2250,8 @@
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-        "stage": "preview",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
       }
@@ -2866,13 +2866,16 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "resourceVersion": "1744189713698",
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-09 09:08:33.698779 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true,
         "hideFromAdminPage": true
       }
