@@ -24,9 +24,8 @@ import {
 import { Trans, t } from 'app/core/internationalization';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
+import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
@@ -47,21 +46,6 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
-
-const useFetchGroupsForFolder = (folderUid: string) => {
-  // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
-  // for our folders
-  return alertRuleApi.endpoints.rulerNamespace.useQuery(
-    {
-      namespace: folderUid,
-      rulerConfig: GRAFANA_RULER_CONFIG,
-    },
-    {
-      refetchOnMountOrArgChange: true,
-      skip: !folderUid,
-    }
-  );
-};
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
@@ -243,7 +227,10 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       </div>
                     )}
-                    placeholder={'Select an evaluation group...'}
+                    placeholder={t(
+                      'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
+                      'Select an evaluation group...'
+                    )}
                   />
                 )}
                 name="group"
@@ -460,7 +447,7 @@ function EvaluationGroupCreationModal({
     <Modal
       className={styles.modal}
       isOpen={true}
-      title={'New evaluation group'}
+      title={t('alerting.evaluation-group-creation-modal.title-new-evaluation-group', 'New evaluation group')}
       onDismiss={onCancel}
       onClickBackdrop={onCancel}
     >

@@ -228,7 +228,7 @@ export const DashNav = memo<Props>((props) => {
       buttons.push(
         <DashNavButton
           key="button-scenes"
-          tooltip={'View as Scene'}
+          tooltip={t('dashboard.dash-nav.render-left-actions.tooltip-view-as-scene', 'View as Scene')}
           icon="apps"
           onClick={() => {
             locationService.partial({ scenes: true });

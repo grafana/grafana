@@ -103,7 +103,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
 			Method: http.MethodGet,
 			Path:   "/api/admin/usage-report-preview",
-			User:   helper.K8sTestHelper.Org1.Admin,
+			User:   helper.Org1.Admin,
 		}, &usagestats.Report{})
 
 		stats := map[string]any{}
