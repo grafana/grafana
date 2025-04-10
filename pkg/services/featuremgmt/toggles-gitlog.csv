@@ -355,7 +355,6 @@ exploreLogsLimitedTimeRange,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa976
 exploreLogsShardSplitting,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 newFiltersUI,2024-08-30T12:48:13Z,,00ae49a61adff11e5fbac3341941b35185d9e8d9,Sergej-Vlasov
 appPlatformAccessTokens,2024-09-05T16:18:44Z,2024-10-14T10:47:18Z,d5ebaa0ef92edecfb9511dc7c8080be25f8cc7e7,Claudiu Dragalina-Paraipan
-appSidecar,2024-09-09T12:45:05Z,,5e2ac24890906e5070323d87730dd78a4f885963,Andrej Ocenas
 vizActions,2024-09-09T14:11:55Z,,af48d3db1eb2d8681843f5997e50fea5e5ea3096,Adela Almasan
 groupAttributeSync,2024-09-09T15:29:43Z,,6ded6a8872204a818b3795dc733cc5fe5db066a0,Aaron Godin
 alertingFilterV2,2024-09-11T11:29:26Z,,90ee52e8d9c14237f8a57b622c0def7512e657cd,Gilles De Mey
