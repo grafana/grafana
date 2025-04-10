@@ -1,6 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -985,6 +985,70 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(loader.state.dashboard).toBeDefined();
       expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
+    });
+  });
+
+  describe('New dashboards', () => {
+    it('should use v1 manager for new dashboards when dashboardNewLayouts feature toggle is disabled', async () => {
+      const prevFeatureToggleValue = !!config.featureToggles.dashboardNewLayouts;
+      config.featureToggles.dashboardNewLayouts = false;
+
+      try {
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        manager.setActiveManager('v2');
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+        await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+        expect(manager.state.dashboard).toBeDefined();
+        expect(manager.state.dashboard?.state.title).toBe('New dashboard');
+      } finally {
+        config.featureToggles.dashboardNewLayouts = prevFeatureToggleValue;
+      }
+    });
+
+    it('should use v2 manager for new dashboards when dashboardNewLayouts feature toggle is enabled', async () => {
+      const prevFeatureToggleValue = !!config.featureToggles.dashboardNewLayouts;
+      config.featureToggles.dashboardNewLayouts = true;
+
+      try {
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        manager.setActiveManager('v1');
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+        await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+        expect(manager.state.dashboard).toBeDefined();
+        expect(manager.state.dashboard?.state.title).toBe('New dashboard');
+      } finally {
+        config.featureToggles.dashboardNewLayouts = prevFeatureToggleValue;
+      }
+    });
+
+    it('should maintain manager version for subsequent loads based on feature toggle', async () => {
+      // Test with feature toggle disabled
+      config.featureToggles.dashboardNewLayouts = false;
+      const manager1 = new UnifiedDashboardScenePageStateManager({});
+      manager1.setActiveManager('v2');
+      await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      manager1.setActiveManager('v2');
+      await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      // Test with feature toggle enabled
+      config.featureToggles.dashboardNewLayouts = true;
+      const manager2 = new UnifiedDashboardScenePageStateManager({});
+      manager2.setActiveManager('v1');
+      await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager2['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      manager2.setActiveManager('v1');
+      await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager2['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
   });
 });
