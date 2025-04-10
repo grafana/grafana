@@ -1,19 +1,23 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { ComponentProps } from 'react';
+import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { FolderDTO } from 'app/types';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
+import { alertRuleApi } from '../../api/alertRuleApi';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { Folder } from '../../types/rule-form';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
@@ -60,20 +64,19 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'ruleGroup',
     'targetDatasourceUID',
   ]);
-  // we need to skip fetching if the modal is not open
-  const dataSourceToFetch = isOpen ? selectedDatasourceName : undefined;
-  const targetFolderToFetch = isOpen ? targetFolder : undefined;
-  const { rulerRules, isLoading: isloadingCloudRules } = useGetRulerRules(dataSourceToFetch || undefined);
-  const { currentData: rulerNamespace, isLoading: loadingTargetGroups } = useFetchGroupsForFolder(
-    targetFolderToFetch?.uid ?? ''
-  );
 
-  const targetFolderHasRules = Boolean(rulerNamespace && hasRules(rulerNamespace));
+  const dataSourceToFetch = isOpen ? (selectedDatasourceName ?? '') : undefined;
+  const { rulesToBeImported, isloadingCloudRules } = useGetRulesToBeImported(!isOpen, dataSourceToFetch);
+  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
+    () => filterRulerRulesConfig(rulesToBeImported, namespace, ruleGroup),
+    [rulesToBeImported, namespace, ruleGroup]
+  );
+  const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
 
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
 
-  if (isloadingCloudRules || loadingTargetGroups) {
+  if (isloadingCloudRules) {
     return (
       <Modal
         isOpen={isOpen}
@@ -90,12 +93,6 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       </Modal>
     );
   }
-
-  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = filterRulerRulesConfig(
-    rulerRules,
-    namespace,
-    ruleGroup
-  );
 
   async function onConvertConfirm() {
     try {
@@ -152,7 +149,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   // translations for texts in the modal
   const title = t('alerting.import-to-gma.confirm-modal.title', 'Confirm import');
-  const confirmText = t('alerting.import-to-gma.confirm-modal.confirm', 'Yes, import');
+  const confirmText = t('alerting.import-to-gma.confirm-modal.confirm', 'Import');
   return (
     <ConfirmModal
       isOpen={isOpen}
@@ -162,12 +159,12 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>
-          {targetFolderHasRules && rulerNamespace && <TargetFolderNotEmptyWarning targetFolderRules={rulerNamespace} />}
+          {!isEmpty(rulesThatMightBeOverwritten) && (
+            <TargetFolderNotEmptyWarning targetFolderRules={rulesThatMightBeOverwritten} />
+          )}
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
-            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
-              These are the list of rules that will be imported:
-            </Trans>
+            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">The following alert rules will be imported::</Trans>
           </Text>
           {rulerRulesToPayload && <RulesPreview rules={rulerRulesToPayload} />}
         </Stack>
@@ -251,16 +248,47 @@ const getStyles = () => ({
   }),
 });
 
-function hasRules(folderRules: RulerRulesConfigDTO) {
-  if (folderRules) {
-    const rules = Object.values(folderRules)
-      .at(0)
-      ?.flatMap((group) => group.rules);
-    if (rules) {
-      return rules.length > 0;
+function useFilterRulesThatMightBeOverwritten(
+  targetNestedFolders: FolderDTO[],
+  rulesToBeImported: RulerRulesConfigDTO,
+  skip = true
+): RulerRulesConfigDTO {
+  const [fetchRulesByFolderUID] = alertRuleApi.endpoints.rulerNamespace.useLazyQuery();
+  const [rulesThatMightBeOverwritten, setRulesThatMightBeOverwritten] = useState<RulerRulesConfigDTO>({});
+
+  useEffect(() => {
+    if (skip || isEmpty(targetNestedFolders) || isEmpty(rulesToBeImported)) {
+      setRulesThatMightBeOverwritten({});
+      return;
     }
-  }
-  return false;
+    // filter targetNestedFolders to only include folders that are in the rulesToBeImported
+    const targetNestedFoldersFiltered = targetNestedFolders.filter((folder) => {
+      return Object.keys(rulesToBeImported).includes(folder.title);
+    });
+    const fetchRules = async () => {
+      const results: RulerRulesConfigDTO = {};
+
+      await Promise.all(
+        targetNestedFoldersFiltered.map(async (folder) => {
+          const { data: rules } = await fetchRulesByFolderUID({
+            namespace: folder.uid,
+            rulerConfig: GRAFANA_RULER_CONFIG,
+          });
+
+          if (rules) {
+            const folderWithParentTitle = Object.keys(rules)[0];
+            results[folderWithParentTitle] = rules[folderWithParentTitle] || [];
+          }
+        })
+      );
+
+      setRulesThatMightBeOverwritten(results);
+    };
+
+    fetchRules();
+  }, [targetNestedFolders, rulesToBeImported, skip, fetchRulesByFolderUID]);
+
+  return rulesThatMightBeOverwritten;
 }
 
 function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
@@ -277,7 +305,10 @@ function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules:
       </Alert>
       {targetFolderRules && (
         <Collapse
-          label={t('alerting.import-to-gma.confirm-modal.target-folder-rules', 'Target folder rules')}
+          label={t(
+            'alerting.import-to-gma.confirm-modal.target-folder-rules',
+            'Target folder rules that might be overwritten'
+          )}
           isOpen={showTargetRules}
           onToggle={toggleShowTargetRules}
           collapsible={true}
@@ -287,4 +318,56 @@ function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules:
       )}
     </Stack>
   );
+}
+
+async function getNestedFoldersIn(uid: string) {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<FolderDTO[]>({
+      url: `/api/folders`,
+      params: { parentUid: uid },
+      method: 'GET',
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+
+  return response?.data;
+}
+
+export function useGetNestedFolders(folderUID: string, skip = false) {
+  const [nestedFolders, setNestedFolders] = useState<FolderDTO[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const nestedFoldersIn = skip ? [] : await getNestedFoldersIn(folderUID);
+      setNestedFolders(nestedFoldersIn);
+    })();
+  }, [folderUID, skip]);
+
+  return nestedFolders;
+}
+
+function useGetRulesThatMightBeOverwritten(
+  skip: boolean,
+  targetFolder: Folder | undefined,
+  rulesToBeImported: RulerRulesConfigDTO
+) {
+  // get nested folders in the target folder
+  const nestedFoldersInTargetFolder = useGetNestedFolders(targetFolder?.uid || '', skip);
+  const skipFiltering = skip || nestedFoldersInTargetFolder.length === 0;
+  const rulesThatMightBeOverwritten = useFilterRulesThatMightBeOverwritten(
+    nestedFoldersInTargetFolder,
+    rulesToBeImported,
+    skipFiltering
+  );
+
+  return { rulesThatMightBeOverwritten };
+}
+
+function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: string | undefined) {
+  // we need to skip fetching and filtering if the modal is not open
+  const dataSourceToFetch = !skip ? selectedDatasourceName : undefined;
+  const { rulerRules: rulesToBeImported, isLoading: isloadingCloudRules } = useGetRulerRules(dataSourceToFetch);
+
+  return { rulesToBeImported, isloadingCloudRules };
 }
