@@ -741,7 +741,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.False(t, delta.AffectsQuery())
 	})
-
 	t.Run("returns true when diff contains a field that affects query", func(t *testing.T) {
 		delta := RuleDelta{
 			Diff: cmputil.DiffReport{
@@ -754,7 +753,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.True(t, delta.AffectsQuery())
 	})
-
 	t.Run("returns false when diff contains only fields that do not affect query", func(t *testing.T) {
 		delta := RuleDelta{
 			Diff: cmputil.DiffReport{
@@ -767,7 +765,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.False(t, delta.AffectsQuery())
 	})
-
 	t.Run("returns true when diff contains multiple fields, including one that affects query", func(t *testing.T) {
 		delta := RuleDelta{
 			Diff: cmputil.DiffReport{
@@ -785,7 +782,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.True(t, delta.AffectsQuery())
 	})
-
 	t.Run("handles nested paths in diff", func(t *testing.T) {
 		delta := RuleDelta{
 			Diff: cmputil.DiffReport{
@@ -798,7 +794,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.True(t, delta.AffectsQuery())
 	})
-
 	t.Run("returns false for empty diff paths", func(t *testing.T) {
 		delta := RuleDelta{
 			Diff: cmputil.DiffReport{
@@ -811,7 +806,6 @@ func TestDeltaAffectsQuery(t *testing.T) {
 		}
 		assert.False(t, delta.AffectsQuery())
 	})
-
 }
 
 // simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
