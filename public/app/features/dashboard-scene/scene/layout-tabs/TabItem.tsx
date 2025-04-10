@@ -21,7 +21,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
