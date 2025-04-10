@@ -329,6 +329,7 @@ const (
 	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions
+
 	ActionAPIKeyRead   = "apikeys:read"
 	ActionAPIKeyCreate = "apikeys:create"
 	ActionAPIKeyDelete = "apikeys:delete"
