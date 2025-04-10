@@ -13,26 +13,28 @@ refs:
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Prometheus and Loki alert rules into Grafana-managed alert rules. 
+Grafana provides an internal tool in Alerting which allows you to import Prometheus and Loki alert rules into Grafana-managed alert rules.
 
 ## Before you begin
 
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
+
 - Alerting: Rules Writer
 - Alerting: Set provisioning status
 - Datasources: Reader
-- Folders: Creator 
+- Folders: Creator
 
-   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one. It is a best practice to prepare an import plan before you convert all your alert rules.
+  The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one. It is a best practice to prepare an import plan before you convert all your alert rules.
 
 ## How it works
 
-When you use the import tool, a folder of data source-managed rules is copied to another folder as Grafana-managed alert rules, preserving the behavior of the rules,  and the original alert rules are kept in their original location.
+When you use the import tool, a folder of data source-managed rules is copied to another folder as Grafana-managed alert rules, preserving the behavior of the rules, and the original alert rules are kept in their original location.
 
 When data source-managed alert rules are converted to Grafana-managed alert rules, the following are applied to the Grafana-managed alert rules:
+
 - All rules are given `rule_query_offset` offset value of 1m.
 - The `missing_series_evals_to_resolve` is set to 1 for the new rules.
--  The newly created rules are given unique UIDs.
+- The newly created rules are given unique UIDs.
 
 ## Import alert rules
 
@@ -50,7 +52,7 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    If you import the rules into an existing folder, don't chose a folder with existing alert rules, as they could get overwritten.
 
-1. Select a target Namespace and Group. 
+1. Select a target Namespace and Group.
 
 1. (Optional) Turn on Pause imported alerting rules.
 
