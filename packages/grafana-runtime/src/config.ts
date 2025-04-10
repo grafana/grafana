@@ -209,7 +209,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   language: string | undefined;
 
   /**
-   * Locale used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences. 
+   * Locale used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
    * This is the locale that is used for date formatting and other locale-specific features.
    */
   locale: string;
