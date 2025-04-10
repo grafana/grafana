@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsyncFn, useInterval } from 'react-use';
+import { useAsyncFn, useInterval, useLocalStorage } from 'react-use';
 
-import { urlUtil } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config, locationService, logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans, t } from 'app/core/internationalization';
@@ -19,7 +19,7 @@ import { RuleListErrors } from '../components/rules/RuleListErrors';
 import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
-import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
@@ -28,6 +28,8 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
+import { css } from '@emotion/css';
+import { RuleListPageTitle } from './RuleListPageTitle';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -123,6 +125,7 @@ const RuleListV1 = () => {
     <AlertingPageWrapper
       navId="alert-list"
       isLoading={false}
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
       actions={
         hasAlertRulesCreated && (
           <Stack gap={1}>
