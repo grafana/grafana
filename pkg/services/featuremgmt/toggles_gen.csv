@@ -234,5 +234,4 @@ localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,fals
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
-logsPanelControls,privatePreview,@grafana/observability-logs,false,false,true
 expressPluginInstall,experimental,@grafana/plugins-platform-backend,false,false,false
