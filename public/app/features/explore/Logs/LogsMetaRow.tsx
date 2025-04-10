@@ -17,7 +17,8 @@ const getStyles = () => ({
     flexWrap: 'wrap',
     '& span': {
       fontWeight: 'normal',
-    }
+      lineHeight: '1.25em',
+    },
   }),
 });
 
