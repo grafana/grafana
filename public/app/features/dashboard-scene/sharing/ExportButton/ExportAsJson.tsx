@@ -85,7 +85,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
               <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
                 The dynamic dashboard functionality is experimental, and has not full feature parity with current
                 dashboards behaviour. It is based on a new schema format, that does not support library panels. This
-                means that when exporting the dashboard to use it in another instance, we will nit include library
+                means that when exporting the dashboard to use it in another instance, we will not include library
                 panels. We intend to support them as we progress in the feature{' '}
                 <TextLink external href="https://grafana.com/docs/release-life-cycle/">
                   life cycle
