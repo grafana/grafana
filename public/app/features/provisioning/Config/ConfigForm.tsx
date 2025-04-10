@@ -204,7 +204,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             label={t('provisioning.config-form.label-path', 'Path')}
             description={t('provisioning.config-form.description-path', 'Path to a subdirectory in the Git repository')}
           >
-            <Input {...register('path')} placeholder={t('provisioning.config-form.placeholder-path', 'grafana/')} />
+            <Input {...register('path')} />
           </Field>
         </>
       )}
