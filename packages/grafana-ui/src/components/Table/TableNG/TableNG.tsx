@@ -109,9 +109,9 @@ export function TableNG(props: TableNGProps) {
       key: field.name,
       name: field.name,
       width: widths[i],
-      cellClass: field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : undefined,
+      cellClass: field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cell,
     }));
-  }, [width, scrollbarWidth, data, styles.cellWrapped]);
+  }, [width, scrollbarWidth, data, styles]);
 
   const hasSubTable = false;
 
@@ -460,6 +460,10 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 }
 
 const getStyles2 = (theme: GrafanaTheme2) => ({
+  cell: css({
+    paddingInline: 6,
+    paddingBlock: 6,
+  }),
   cellWrapped: css({
     // '--rdg-border-color': theme.colors.border.medium,
     // borderLeft: 'none',
@@ -693,7 +697,7 @@ const useRowHeight = (columns: TableColumn[], data: DataFrame, hasSubTable: bool
       const HPADDING = 8;
       const BORDER_RIGHT = 0.666667;
       const lineHeight = 22;
-      const VPADDING = 0;
+      const VPADDING = 6;
 
       const wrapWidths = columns.map((c) => Number(c.width) - 2 * HPADDING - BORDER_RIGHT);
 
