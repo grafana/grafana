@@ -6671,11 +6671,9 @@
       "synchronization-options": "Synchronization options"
     },
     "token-permissions-info": {
-      "content-permission": "Content: <1>Read and write</1>",
-      "github-instructions": "Go to <2>GitHub Personal Access Tokens</2> and click <5>\"Fine-grained token\"</5>. Make sure to include these permissions:",
-      "metadata-permission": "Metadata: <1>Read only</1>",
-      "pull-requests-permission": "Pull requests: <1>Read and write</1>",
-      "webhooks-permission": "Webhooks: <1>Read and write</1>"
+      "and-click": "and click",
+      "go-to": "Go to",
+      "make-sure": "Make sure to include these permissions"
     },
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
