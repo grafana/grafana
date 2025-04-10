@@ -414,13 +414,56 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // Check if DataQueryKind exists
-    const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query?.kind === queryKind) {
+    // Transform v1 dashboard (using target) to v2 structure
+    if (layer.state.query.target) {
+      // Handle built-in annotations
+      if (layer.state.query.builtIn) {
+        result.spec.query = {
+          kind: 'grafana', // built-in annotations are always of type grafana
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      } else {
+        result.spec.query = {
+          kind: getAnnotationQueryKind(layer.state.query),
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      }
+    }
+    // For annotations without query.query defined (e.g., grafana annotations without tags)
+    else if (layer.state.query.query?.kind) {
       result.spec.query = {
-        kind: queryKind,
-        spec: layer.state.query.query.spec,
+        kind: layer.state.query.query.kind,
+        spec: {
+          ...layer.state.query.query.spec,
+        },
       };
+    }
+    // Collect datasource-specific properties not in standard annotation spec
+    let otherProps = omit(
+      layer.state.query,
+      'type',
+      'target',
+      'builtIn',
+      'name',
+      'datasource',
+      'iconColor',
+      'enable',
+      'hide',
+      'filter',
+      'query'
+    );
+
+    // Store extra properties in the options field instead of directly in the spec
+    if (Object.keys(otherProps).length > 0) {
+      // Extract options property and get the rest of the properties
+      const { options, ...restProps } = otherProps;
+
+      // Merge options with the rest of the properties
+      result.spec.options = { ...options, ...restProps };
     }
 
     // If filter is an empty array, don't save it
