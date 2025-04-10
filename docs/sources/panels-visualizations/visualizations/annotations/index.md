@@ -22,7 +22,7 @@ weight: 100
 
 The annotations list shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
 
-
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-annotations-list-viz-v12.0.png" max-width="750px" alt="The annotations list visualization" >}}
 
 ## Configuration options
 
