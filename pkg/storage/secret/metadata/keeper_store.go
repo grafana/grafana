@@ -123,7 +123,6 @@ func read(ctx context.Context, namespace string, name string, s *keeperMetadataS
 	var k *keeperDB
 
 	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		// TODO LND Check QueryRowContext instead of Query
 		res, err := sess.Query(ctx, q, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
