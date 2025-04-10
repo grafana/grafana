@@ -76,6 +76,34 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
+		{"multiple files", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			SkippedFiles:   5,
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "aaa.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+					},
+					Title:      "AAA",
+					GrafanaURL: "http://grafana/d/aaa",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "bbb.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+					},
+					Title:      "BBB",
+					GrafanaURL: "http://grafana/d/bbb",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+			},
+		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			comment, err := builder.generateComment(context.Background(), tc.Input)

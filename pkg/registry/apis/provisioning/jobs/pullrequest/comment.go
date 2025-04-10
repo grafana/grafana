@@ -35,6 +35,10 @@ See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
 
 {{end}}
 
+{{ if .SkippedFiles }}
+and {{ .SkippedFiles }} more files
+{{end}}
+
 {{ if .MissingImageRenderer }}
 NOTE: The image renderer is not configured
 {{end}}

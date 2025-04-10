@@ -2,7 +2,7 @@ package pullrequest
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"testing"
@@ -92,9 +92,9 @@ func TestCalculateChanges(t *testing.T) {
 		require.False(t, info.MissingImageRenderer)
 		require.Equal(t, map[string]string{
 			"Grafana":         "http://host/d/id/hello",
-			"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+			"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
 			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-			"PreviewSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+			"PreviewSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
 		}, map[string]string{
 			"Grafana":         info.Changes[0].GrafanaURL,
 			"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
@@ -193,7 +193,7 @@ func getDummyRenderedURL(url string) string {
 	}
 
 	idx := 0
-	hash := sha1.New()
+	hash := sha256.New()
 	bytes := hash.Sum([]byte(url))
 	if len(bytes) > 8 {
 		v := binary.BigEndian.Uint64(bytes[0:8])
