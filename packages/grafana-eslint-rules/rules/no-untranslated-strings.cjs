@@ -11,6 +11,7 @@ const {
   canBeFixed,
   elementIsTrans,
   shouldBeFixed,
+  isStringLiteral,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -34,7 +35,7 @@ const noUntranslatedStrings = createRule({
         const isUntranslatedProp =
           (node.value.type === 'Literal' && node.value.value !== '') ||
           (node.value.type === AST_NODE_TYPES.JSXExpressionContainer &&
-            (node.value.expression.type === 'Literal' || node.value.expression.type === 'TemplateLiteral'));
+            ((isStringLiteral(node.value.expression) && node.value.expression.value !== '') || node.value.expression.type === 'TemplateLiteral'));
 
         if (isUntranslatedProp) {
           const errorShouldBeFixed = shouldBeFixed(context);

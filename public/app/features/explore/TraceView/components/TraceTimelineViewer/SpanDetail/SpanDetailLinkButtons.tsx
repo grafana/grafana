@@ -6,6 +6,7 @@ import { config, locationService, reportInteraction, usePluginLinks } from '@gra
 import { DataSourceRef } from '@grafana/schema';
 import { DataLinkButton, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+import { t, Trans } from 'app/core/internationalization';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { SpanLinkFunc } from '../../types';
@@ -141,8 +142,13 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
 
   return (
     <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={setIsOpen}>
-      <ToolbarButton variant="primary" icon="link" isOpen={isOpen} aria-label="Links">
-        Links
+      <ToolbarButton
+        variant="primary"
+        icon="link"
+        isOpen={isOpen}
+        aria-label={t('explore.drop-down-menu.aria-label-links', 'Links')}
+      >
+        <Trans i18nKey="explore.drop-down-menu.links">Links</Trans>
       </ToolbarButton>
     </Dropdown>
   );

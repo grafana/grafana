@@ -48,13 +48,13 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
             <Tab
               active={activeTab === 'custom'}
               icon="filter"
-              label={'Custom filter'}
+              label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
               onChangeTab={() => setActiveTab('custom')}
             />
             <Tab
               active={activeTab === 'saved'}
               icon="bookmark"
-              label={'Saved searches'}
+              label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
               onChangeTab={() => setActiveTab('saved')}
             />
           </TabsBar>

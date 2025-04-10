@@ -91,7 +91,12 @@ export default function TracePageActions(props: TracePageActionsProps) {
         label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
         icon={'copy'}
       />
-      <ActionButton onClick={exportTrace} ariaLabel={'Export Trace'} label={'Export'} icon={'save'} />
+      <ActionButton
+        onClick={exportTrace}
+        ariaLabel={'Export Trace'}
+        label={t('explore.trace-page-actions.label-export', 'Export')}
+        icon={'save'}
+      />
     </div>
   );
 }

@@ -97,7 +97,11 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
       )}
       {mode === TextDimensionMode.Fixed && (
         <InlineFieldRow key={value?.fixed}>
-          <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.text-dimension-editor.label-value', 'Value')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <StringValueEditor
               context={context}
               value={value?.fixed}

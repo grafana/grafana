@@ -115,7 +115,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       autoFocus
                     />
                   </Field>
-                  <Field label={'Operator'}>
+                  <Field label={t('alerting.am-routes-expanded-form.label-operator', 'Operator')}>
                     <Controller
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select

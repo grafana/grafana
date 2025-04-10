@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -325,7 +325,10 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
   }, [ruleName, groupIdentifier]);
 
   return (
-    <Alert title={'Unknown rule type'} className={styles.resetMargin}>
+    <Alert
+      title={t('alerting.unknown-rule-list-item.title-unknown-rule-type', 'Unknown rule type')}
+      className={styles.resetMargin}
+    >
       <details>
         <summary>
           <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>

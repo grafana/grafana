@@ -45,6 +45,26 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `<div aria-label={t('aria.label', 'Accessible label')} />`,
     },
     {
+      name: 'Empty string prop',
+      code: `<div title="" />`,
+    },
+    {
+      name: 'Prop using boolean',
+      code: `<div title={false} />`,
+    },
+    {
+      name: 'Prop using number',
+      code: `<div title={0} />`,
+    },
+    {
+      name: 'Prop using null',
+      code: `<div title={null} />`,
+    },
+    {
+      name: 'Prop using undefined',
+      code: `<div title={undefined} />`,
+    },
+    {
       name: 'Variable interpolation',
       code: `<div>{variable}</div>`,
     },
@@ -307,6 +327,26 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
     },
 
     {
+      name: 'Fixes prop case with string literal inside expression container',
+      code: `
+const Foo = () => <div title={"foo"} />`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+import { t } from 'app/core/internationalization';
+const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
       name: 'Fixes prop case with double quotes in value',
       code: `
 const Foo = () => <div title='"foo"' />`,
@@ -437,8 +477,8 @@ const Foo = () => {
     },
 
     {
-      name: 'Cannot fix JSXExpression in attribute',
-      code: `const Foo = () => <div title={"foo"} />`,
+      name: 'Cannot fix JSXExpression in attribute if it is template literal',
+      code: `const Foo = () => <div title={\`foo\`} />`,
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },

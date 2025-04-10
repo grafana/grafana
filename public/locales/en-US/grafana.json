@@ -329,6 +329,7 @@
     "alert-groups": {
       "no-results": "No results.",
       "text-loading-notifications": "Loading notifications",
+      "title-error-loading-notifications": "Error loading notifications",
       "title-grafana-alerts-delivered-alertmanager": "Grafana alerts are not delivered to Grafana Alertmanager"
     },
     "alert-instance-details": {
@@ -436,6 +437,7 @@
       },
       "this-might-take-a-while": "This might take a while...",
       "title-failed-to-load-configuration-history": "Failed to load configuration history",
+      "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
     "alerts-folder-view": {
@@ -510,6 +512,7 @@
       "label-continue-matching-subsequent-sibling-nodes": "Continue matching subsequent sibling nodes",
       "label-group-by": "Group by",
       "label-label": "Label",
+      "label-operator": "Operator",
       "label-override-general-timings": "Override general timings",
       "label-override-grouping": "Override grouping",
       "label-value": "Value",
@@ -803,7 +806,8 @@
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
     "error-modal": {
-      "failed-to-update-your-configuration": "Failed to update your configuration:"
+      "failed-to-update-your-configuration": "Failed to update your configuration:",
+      "title-something-went-wrong": "Something went wrong"
     },
     "error-summary-button": {
       "error": "1 error"
@@ -824,7 +828,8 @@
     },
     "evaluation-group-creation-modal": {
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
-      "placeholder-enter-a-name": "Enter a name"
+      "placeholder-enter-a-name": "Enter a name",
+      "title-new-evaluation-group": "New evaluation group"
     },
     "evaluation-group-loader": {
       "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
@@ -896,7 +901,8 @@
     "generate-alert-data-modal": {
       "add-alert-data": "Add alert data",
       "add-alert-data-to-payload": "Add alert data to payload",
-      "review-alert-payload": " Review alert data to add to the payload:"
+      "review-alert-payload": " Review alert data to add to the payload:",
+      "title-add-custom-alerts": "Add custom alerts"
     },
     "get-preview-results": {
       "title-error": "Error"
@@ -927,6 +933,7 @@
     "grafana-evaluation-behavior-step": {
       "missing-series-resolve-placeholder": "Default: 2",
       "or": "or",
+      "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
     },
@@ -957,6 +964,9 @@
     },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
+    },
+    "grafana-rule-design-exporter": {
+      "title-export-group": "Export Group"
     },
     "grafana-rule-export-preview": {
       "text-loading": "Loading...."
@@ -990,6 +1000,7 @@
       "namespace-picker-label-namespace": "Namespace"
     },
     "group-by": {
+      "aria-label-group-by-label-keys": "Group by label keys",
       "placeholder-group-by": "Group by"
     },
     "group-details": {
@@ -1318,6 +1329,10 @@
       "title-error-loading-alertmanager-config": "Error loading Alertmanager config",
       "title-notification-policies-have-changed": "Notification policies have changed"
     },
+    "notification-policies-tabs": {
+      "label-mute-timings": "Mute Timings",
+      "label-notification-policies": "Notification Policies"
+    },
     "notification-policy-matchers": {
       "default-policy": "Default policy",
       "no-matchers": "No matchers"
@@ -1532,7 +1547,8 @@
       "label-target-data-source": "Target data source"
     },
     "recording-rules-name-space-and-group-step": {
-      "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule."
+      "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
+      "title-add-namespace-and-group": "Add namespace and group"
     },
     "redirect-to-clone-rule": {
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
@@ -1808,7 +1824,9 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters"
+        "aria-label-show-filters": "Show filters",
+        "label-custom-filter": "Custom filter",
+        "label-saved-searches": "Saved searches"
       },
       "health": "Health",
       "placeholder-all-data-sources": "All data sources",
@@ -1877,7 +1895,8 @@
       "title-silence-alert-rule": "Silence alert rule"
     },
     "silence-period": {
-      "label-silence-start-and-end": "Silence start and end"
+      "label-silence-start-and-end": "Silence start and end",
+      "placeholder-select-time-range": "Select time range"
     },
     "silenced-instances-preview": {
       "no-firing-alert-instances-found": "No firing alert instances found",
@@ -1922,7 +1941,9 @@
     },
     "state-history": {
       "filter-group": "Filter group",
-      "placeholder-search": "Search"
+      "placeholder-search": "Search",
+      "text-loading-history": "Loading history...",
+      "title-failed-to-fetch-alert-state-history": "Failed to fetch alert state history"
     },
     "string-array-input": {
       "add": "Add",
@@ -1947,6 +1968,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Template form",
+      "label-examples-documentation": "Examples documentation",
       "label-template-group": "Template group",
       "label-template-group-name": "Template group name",
       "new-template-name-placeholder-give-your-template-group-a-name": "Give your template group a name",
@@ -1991,7 +2013,8 @@
     },
     "test-contact-point-modal": {
       "notification-message": "Notification message",
-      "send-test-notification": "Send test notification"
+      "send-test-notification": "Send test notification",
+      "title-test-contact-point": "Test contact point"
     },
     "threshold": {
       "to": "TO"
@@ -2011,6 +2034,9 @@
         "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
+    },
+    "unknown-rule-list-item": {
+      "title-unknown-rule-type": "Unknown rule type"
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "unused",
@@ -2701,7 +2727,8 @@
     },
     "dash-nav": {
       "render-left-actions": {
-        "text-public": "Public"
+        "text-public": "Public",
+        "tooltip-view-as-scene": "View as Scene"
       }
     },
     "dashboard-loading": {
@@ -2921,6 +2948,7 @@
       "title-option": "Title"
     },
     "options-pane-options": {
+      "placeholder-search-options": "Search options",
       "Recent options-title-recent-options": "Recent options"
     },
     "outline": {
@@ -3038,7 +3066,13 @@
     },
     "save-dashboard-diff": {
       "full-json-diff": "Full JSON diff",
-      "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON"
+      "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
+      "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
+      "title-folder": "folder"
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "Changes",
+      "label-details": "Details"
     },
     "save-dashboard-error-proxy": {
       "title-conflict": "Conflict"
@@ -3906,6 +3940,7 @@
     },
     "resource-dimension-editor": {
       "label-field": "Field",
+      "label-mappings": "Mappings",
       "label-source": "Source"
     },
     "resource-picker": {
@@ -3931,7 +3966,8 @@
     "text-dimension-editor": {
       "label-field": "Field",
       "label-source": "Source",
-      "label-template": "Template"
+      "label-template": "Template",
+      "label-value": "Value"
     },
     "thresholds-editor": {
       "add-threshold": "Add threshold",
@@ -4045,6 +4081,10 @@
       "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
       "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
     },
+    "drop-down-menu": {
+      "aria-label-links": "Links",
+      "links": "Links"
+    },
     "explore": {
       "title-flame-graph": "Flame graph",
       "title-graph": "Graph",
@@ -4093,6 +4133,9 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
+    "logs-column-search": {
+      "placeholder-search-fields-by-name": "Search fields by name"
+    },
     "logs-container": {
       "label-logs": "Logs"
     },
@@ -4119,6 +4162,7 @@
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
     "logs-table-wrap": {
+      "aria-label-select-query-by-name": "Select query by name",
       "label-select-query": "Select query",
       "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
     },
@@ -4149,6 +4193,9 @@
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": "Copy to clipboard"
+    },
+    "references": {
+      "label-attributes": "attributes"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -4277,6 +4324,7 @@
       "title-span-bar": "Span bar"
     },
     "span-bar-settings": {
+      "aria-label-selectlabelname": "Select label name",
       "label-label": "Label",
       "label-tag-key": "Tag key",
       "placeholder-duration": "Duration",
@@ -4356,7 +4404,11 @@
     },
     "trace-page-actions": {
       "give-feedback": "Give feedback",
+      "label-export": "Export",
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
+    },
+    "trace-page-header": {
+      "text-partial-trace": "Partial trace"
     },
     "trace-view": {
       "no-data": "No data"
@@ -4372,6 +4424,7 @@
       "label-unique-labels": "Unique labels",
       "label-wrap-lines": "Wrap lines",
       "title-feedback": "Feedback",
+      "title-logs": "Logs",
       "title-logs-volume": "Logs volume"
     },
     "unthemed-viewing-layer": {

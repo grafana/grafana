@@ -122,7 +122,11 @@ export const ResourceDimensionEditor = (
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>
-          <InlineField label="Mappings" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-mappings', 'Mappings')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <div>TODO mappings editor!</div>
           </InlineField>
         </InlineFieldRow>
