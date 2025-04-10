@@ -88,11 +88,11 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.GetRedirectURL(c))
 	}
 
-	redirectTo := c.Query("redirectTo")
+	redirectTo := hs.Cfg.AppSubURL + c.Query("redirectTo")
 	if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 		return response.Redirect(hs.Cfg.AppSubURL + "/")
 	}
-	return response.Redirect(hs.Cfg.AppSubURL + redirectTo)
+	return response.Redirect(redirectTo)
 }
 
 // swagger:route POST /user/auth-tokens/rotate
