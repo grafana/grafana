@@ -153,6 +153,9 @@ func read(ctx context.Context, namespace string, name string, s *keeperMetadataS
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
+	if k == nil {
+		return nil, contracts.ErrKeeperNotFound
+	}
 	return k, nil
 }
 
