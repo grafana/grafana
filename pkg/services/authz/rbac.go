@@ -163,14 +163,15 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	client := authzlib.NewClient(
-		conn,
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+	var authzCache cache.Cache = &NoopCache{}
+	if clientCfg.cacheTTL != 0 {
+		authzCache = cache.NewLocalCache(cache.Config{
 			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
-		})),
-		authzlib.WithTracerClientOption(tracer),
-	)
+		})
+	}
+
+	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
 
 	return client, nil
 }
