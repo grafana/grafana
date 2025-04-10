@@ -14,7 +14,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func convertToK8sResources(
+func ConvertToK8sResources(
 	orgID int64,
 	receivers []*ngmodels.Receiver,
 	accesses map[string]ngmodels.ReceiverPermissionSet,
