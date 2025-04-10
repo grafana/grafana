@@ -500,7 +500,7 @@ describe('useMetricsLabelsValues', () => {
       expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
         expect.anything(),
         METRIC_LABEL,
-        undefined,
+        `metric1{instance="host1"}`,
         'MetricsBrowser_M',
         DEFAULT_SERIES_LIMIT
       );
