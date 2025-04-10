@@ -79,17 +79,14 @@ Use this option to show or hide the tags associated with an annotation. _NB_: Yo
 
 ### Link behavior
 
-#### Link target
+Use the following options to control the behavior of links in the list:
 
-Use this option to chose how to view the annotated data. It has the following options.
+<!-- prettier-ignore-start -->
 
-- Panel - This option will take you directly to a full-screen view of the panel with the corresponding annotation
-- Dashboard - This option will focus the annotation in the context of a complete dashboard
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Link target  | Set how to view the annotated data. Choose from:<ul><li>**Panel** - The link takes you directly to a full-screen view of the panel with the corresponding annotation.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul>  |
+| Time before | Set the time range before the annotation. Use duration string values like `1h` for one hour and `10m` for 10 minutes. |
+| Time after | Set the time range after the annotation. |
 
-#### Time before
-
-Use this option to set the time range before the annotation. Use duration string values like "1h" = 1 hour, "10m" = 10 minutes, etc.
-
-#### Time after
-
-Use this option to set the time range after the annotation.
+<!-- prettier-ignore-end -->
