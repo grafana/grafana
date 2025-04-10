@@ -144,6 +144,7 @@ type Commit struct {
 	CreatedAt time.Time
 }
 
+//go:generate mockery --name CommitFile --structname MockCommitFile --inpackage --filename mock_commit_file.go --with-expecter
 type CommitFile interface {
 	GetSHA() string
 	GetFilename() string
