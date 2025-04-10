@@ -262,9 +262,21 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
-		relativePath := strings.TrimPrefix(entry.GetPath(), r.config.Spec.GitHub.Path)
+		filePath := entry.GetPath()
+		if r.config.Spec.GitHub.Path != "" {
+			filePath, err = safepath.RelativeTo(filePath, r.config.Spec.GitHub.Path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		isBlob := !entry.IsDirectory()
+		// FIXME: this we could potentially do somewhere else on in a different way
+		if !isBlob && !safepath.IsDir(filePath) {
+			filePath = filePath + "/"
+		}
+
 		converted := FileTreeEntry{
-			Path: relativePath,
+			Path: filePath,
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
