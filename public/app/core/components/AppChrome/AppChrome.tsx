@@ -278,7 +278,8 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       // the `Resizeable` component overrides the needed `position` and `height`
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
-      height: `calc(100% - ${headerHeight}px) !important`,
+      top: headerHeight,
+      bottom: 0,
       zIndex: 2,
       right: 0,
     }),

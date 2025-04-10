@@ -56,11 +56,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       width: '100%',
       height: '100%',
+      overflow: 'auto',
     }),
     content: css({
       flex: 1,
       minHeight: 0,
-      overflow: 'auto',
     }),
   };
 };
