@@ -104,19 +104,30 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const { name } = variable.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const [nameError, setNameError] = useState<string>();
+  const [validName, setValidName] = useState<string>(variable.state.name);
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
     const result = validateVariableName(variable, e.currentTarget.value);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
+    } else {
+      setValidName(variable.state.name);
     }
 
     variable.setState({ name: e.currentTarget.value });
   };
 
+  // Restore valid name if bluring while invalid
+  const onBlur = () => {
+    if (nameError) {
+      variable.setState({ name: validName });
+      setNameError(undefined);
+    }
+  };
+
   return (
     <Field label={t('dashboard-scene.variable-editor-form.name', 'Name')} invalid={!!nameError} error={nameError}>
-      <Input ref={ref} value={name} onChange={onChange} required />
+      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
     </Field>
   );
 }
