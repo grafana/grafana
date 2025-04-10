@@ -71,13 +71,16 @@ export function TableNG(props: TableNGProps) {
   const onColumnResize = useColumnResizeDone(onColumnResizeDone);
 
   const columns = useMemo<TableColumn[]>(
-    () =>
-      props.data.fields.map((field) => ({
-        key: field.name,
-        name: field.name,
-        field,
-        width: 100,
-      })),
+    () => {
+      const { fields } = props.data;
+
+      return computeColWidths(fields, props.width).map((width, i) => ({
+        key: fields[i].name,
+        name: fields[i].name,
+        field: fields[i],
+        width,
+      }));
+    },
     // todo: invalidate on structureRev?, deep-diff
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -551,3 +554,30 @@ const useColumnResizeDone = (done: OnColResizeDone) => {
 
   return onColumnResize;
 };
+
+// 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
+// 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+function computeColWidths(fields: Field[], availWidth: number) {
+  // TODO: skip hidden
+
+  let autoCount = 0;
+  let definedWidth = 0;
+
+  return fields
+    .map((field, i) => {
+      const width: number = field.config.custom?.width ?? 0;
+
+      if (width === 0) {
+        autoCount++;
+      } else {
+        definedWidth += width;
+      }
+
+      return width;
+    })
+    .map(
+      (width, i) =>
+        width ||
+        Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
+    );
+}
