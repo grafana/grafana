@@ -735,7 +735,7 @@ func TestRuleRoutine(t *testing.T) {
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
-			sender.AlertsSenderMock.AssertNotCalled(t, "Send")
+			sender.AssertNotCalled(t, "Send")
 		})
 
 		t.Run("and clean up the state but not send anything if the reason is not rule deleted", func(t *testing.T) {
@@ -758,7 +758,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
-			sender.AlertsSenderMock.AssertNotCalled(t, "Send")
+			sender.AssertNotCalled(t, "Send")
 		})
 
 		t.Run("and send resolved notifications if errRuleDeleted is the reason for stopping", func(t *testing.T) {
@@ -782,7 +782,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
-			sender.AlertsSenderMock.AssertExpectations(t)
+			sender.AssertExpectations(t)
 		})
 	})
 

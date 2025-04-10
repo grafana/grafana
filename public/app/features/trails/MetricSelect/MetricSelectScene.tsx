@@ -551,7 +551,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     return (
       <div className={styles.container}>
         <div className={styles.header}>
-          <Field label={'Search metrics'} className={styles.searchField}>
+          <Field
+            label={t('trails.metric-select-scene.label-search-metrics', 'Search metrics')}
+            className={styles.searchField}
+          >
             <Input
               placeholder={t('trails.metric-select-scene.placeholder-search-metrics', 'Search metrics')}
               prefix={<Icon name={'search'} />}

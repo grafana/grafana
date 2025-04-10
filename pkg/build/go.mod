@@ -9,7 +9,7 @@ replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
 
 require (
 	cloud.google.com/go/storage v1.50.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
+	github.com/Masterminds/semver/v3 v3.3.1 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.6 // @grafana/aws-datasources
 	github.com/docker/docker v27.5.1+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
@@ -31,8 +31,8 @@ require (
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.12.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.23.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/api v0.220.0 // @grafana/grafana-backend-group
+	golang.org/x/time v0.10.0 // indirect; @grafana/grafana-backend-group
+	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.71.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
@@ -40,7 +40,7 @@ require (
 
 require (
 	cloud.google.com/go v0.118.2 // indirect
-	cloud.google.com/go/auth v0.14.1 // indirect
+	cloud.google.com/go/auth v0.15.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.3.1 // indirect
