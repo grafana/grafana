@@ -1,28 +1,23 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { ComponentProps, useEffect, useMemo, useState } from 'react';
+import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
-import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { FolderDTO } from 'app/types';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
-import { alertRuleApi } from '../../api/alertRuleApi';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { Folder } from '../../types/rule-form';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
-import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ImportFormValues } from './ImportFromDSRules';
+import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
@@ -248,49 +243,6 @@ const getStyles = () => ({
   }),
 });
 
-function useFilterRulesThatMightBeOverwritten(
-  targetNestedFolders: FolderDTO[],
-  rulesToBeImported: RulerRulesConfigDTO,
-  skip = true
-): RulerRulesConfigDTO {
-  const [fetchRulesByFolderUID] = alertRuleApi.endpoints.rulerNamespace.useLazyQuery();
-  const [rulesThatMightBeOverwritten, setRulesThatMightBeOverwritten] = useState<RulerRulesConfigDTO>({});
-
-  useEffect(() => {
-    if (skip || isEmpty(targetNestedFolders) || isEmpty(rulesToBeImported)) {
-      setRulesThatMightBeOverwritten({});
-      return;
-    }
-    // filter targetNestedFolders to only include folders that are in the rulesToBeImported
-    const targetNestedFoldersFiltered = targetNestedFolders.filter((folder) => {
-      return Object.keys(rulesToBeImported).includes(folder.title);
-    });
-    const fetchRules = async () => {
-      const results: RulerRulesConfigDTO = {};
-
-      await Promise.all(
-        targetNestedFoldersFiltered.map(async (folder) => {
-          const { data: rules } = await fetchRulesByFolderUID({
-            namespace: folder.uid,
-            rulerConfig: GRAFANA_RULER_CONFIG,
-          });
-
-          if (rules) {
-            const folderWithParentTitle = Object.keys(rules)[0];
-            results[folderWithParentTitle] = rules[folderWithParentTitle] || [];
-          }
-        })
-      );
-
-      setRulesThatMightBeOverwritten(results);
-    };
-
-    fetchRules();
-  }, [targetNestedFolders, rulesToBeImported, skip, fetchRulesByFolderUID]);
-
-  return rulesThatMightBeOverwritten;
-}
-
 function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
   const [showTargetRules, toggleShowTargetRules] = useToggle(false);
   return (
@@ -318,56 +270,4 @@ function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules:
       )}
     </Stack>
   );
-}
-
-async function getNestedFoldersIn(uid: string) {
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<FolderDTO[]>({
-      url: `/api/folders`,
-      params: { parentUid: uid },
-      method: 'GET',
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-
-  return response?.data;
-}
-
-export function useGetNestedFolders(folderUID: string, skip = false) {
-  const [nestedFolders, setNestedFolders] = useState<FolderDTO[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      const nestedFoldersIn = skip ? [] : await getNestedFoldersIn(folderUID);
-      setNestedFolders(nestedFoldersIn);
-    })();
-  }, [folderUID, skip]);
-
-  return nestedFolders;
-}
-
-function useGetRulesThatMightBeOverwritten(
-  skip: boolean,
-  targetFolder: Folder | undefined,
-  rulesToBeImported: RulerRulesConfigDTO
-) {
-  // get nested folders in the target folder
-  const nestedFoldersInTargetFolder = useGetNestedFolders(targetFolder?.uid || '', skip);
-  const skipFiltering = skip || nestedFoldersInTargetFolder.length === 0;
-  const rulesThatMightBeOverwritten = useFilterRulesThatMightBeOverwritten(
-    nestedFoldersInTargetFolder,
-    rulesToBeImported,
-    skipFiltering
-  );
-
-  return { rulesThatMightBeOverwritten };
-}
-
-function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: string | undefined) {
-  // we need to skip fetching and filtering if the modal is not open
-  const dataSourceToFetch = !skip ? selectedDatasourceName : undefined;
-  const { rulerRules: rulesToBeImported, isLoading: isloadingCloudRules } = useGetRulerRules(dataSourceToFetch);
-
-  return { rulesToBeImported, isloadingCloudRules };
 }
