@@ -159,7 +159,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
           )}
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
-            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">The following alert rules will be imported::</Trans>
+            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">The following alert rules will be imported:</Trans>
           </Text>
           {rulerRulesToPayload && <RulesPreview rules={rulerRulesToPayload} />}
         </Stack>

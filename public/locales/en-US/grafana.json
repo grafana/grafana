@@ -2008,7 +2008,7 @@
     "to-gma": {
       "confirm-modal": {
         "body": "The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
-        "summary": "The following alert rules will be imported::",
+        "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
     },
