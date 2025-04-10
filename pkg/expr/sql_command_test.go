@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -134,7 +136,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 				}
 			}
 
-			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
+			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -144,6 +146,26 @@ func TestSQLCommandCellLimits(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSQLCommandMetrics(t *testing.T) {
+	// Create test metrics
+	m := metrics.NewTestMetrics()
+
+	// Create a command
+	cmd, err := NewSQLCommand("A", "someformat", "select * from foo", 0)
+	require.NoError(t, err)
+
+	// Execute successful command
+	_, err = cmd.Execute(context.Background(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+	require.NoError(t, err)
+
+	// Verify error count was not incremented
+	errorCount := testutil.ToFloat64(m.SqlCommandErrorCount.WithLabelValues("A"))
+	require.Equal(t, 0.0, errorCount, "Expected error count to be 0")
+
+	// Verify duration was recorded
+	require.Greater(t, testutil.CollectAndCount(m.SqlCommandDuration), 0, "Expected duration metric to be recorded")
 }
 
 type testTracer struct {

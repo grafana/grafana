@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -99,9 +100,18 @@ func (gr *SQLCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathExprResult mathexp.Results, resultError error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
-	defer span.End()
+	start := time.Now()
+
+	defer func() {
+		span.End()
+		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		metrics.SqlCommandDuration.WithLabelValues(gr.refID).Observe(duration)
+		if resultError != nil {
+			metrics.SqlCommandErrorCount.WithLabelValues(gr.refID).Inc()
+		}
+	}()
 
 	allFrames := []*data.Frame{}
 	for _, ref := range gr.varsToQuery {
