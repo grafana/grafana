@@ -825,6 +825,18 @@ describe('getElementDatasource', () => {
     // Variable set with query
     expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
   });
+
+  it('should throw error when invalid type is passed to getAutoAssignedDSRef', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    expect(() => {
+      // @ts-expect-error - intentionally passing invalid type to test error handling
+      getAutoAssignedDSRef(vizPanel, 'invalid-type');
+    }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
+  });
 });
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
