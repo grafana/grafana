@@ -11,7 +11,7 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
-export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
 
   const tabCategory = useMemo(
@@ -19,10 +19,10 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
       new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          render: () => <TabTitleInput tab={model} />,
+          render: () => <TabTitleInput tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model]
+    [model, isNewElement]
   );
 
   const layoutCategory = useLayoutCategory(layout);
@@ -41,9 +41,9 @@ export function getEditOptions(model: TabItem): OptionsPaneCategoryDescriptor[] 
   return editOptions;
 }
 
-function TabTitleInput({ tab }: { tab: TabItem }) {
-  const { title, isNew } = tab.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
+function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: boolean }) {
+  const { title } = tab.useState();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = tab.hasUniqueTitle();
 
   return (

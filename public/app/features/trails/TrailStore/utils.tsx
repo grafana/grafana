@@ -10,7 +10,9 @@ export function createBookmarkSavedNotification() {
   notification.component = (
     <Stack gap={2} direction={'row'}>
       <div>
-        You can view bookmarks under <i>Explore &gt; Metrics</i>
+        <Trans i18nKey="trails.create-bookmark-saved-notification.description">
+          You can view bookmarks under <i>Explore &gt; Metrics</i>
+        </Trans>
       </div>
       <LinkButton fill={'solid'} variant={'secondary'} href={HOME_ROUTE}>
         <Trans i18nKey="trails.create-bookmark-saved-notification.view-bookmarks">View bookmarks</Trans>
