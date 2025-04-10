@@ -7,6 +7,7 @@ menuTitle: SAML configuration options
 title: SAML configuration options
 weight: 520
 ---
+
 ### Example SAML configuration
 
 ```ini

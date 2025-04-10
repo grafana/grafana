@@ -8,6 +8,7 @@ menuTitle: Configure Organisation mapping for SAML
 title: Configure Organisation mapping for SAML
 weight: 550
 ---
+
 ### Configure organization mapping
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.

@@ -8,6 +8,7 @@ menuTitle: Troubleshooting
 title: Troubleshoot SAML configuration
 weight: 590
 ---
+
 ## Troubleshooting
 
 Following are common issues found in configuring SAML authentication in Grafana and how to resolve them.

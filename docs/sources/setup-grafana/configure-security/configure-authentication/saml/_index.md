@@ -117,6 +117,7 @@ assertion_attribute_login = Login
 assertion_attribute_email = Email
 assertion_attribute_groups = Group
 ```
+
 ## Assertion mapping
 
 During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
@@ -140,6 +141,7 @@ assertion_attribute_name = displayName
 #template mapping
 assertion_attribute_name = $__saml{firstName} $__saml{lastName}
 ```
+
 ## SAML Name ID
 
 The `name_id_format` configuration field specifies the format of the NameID element in the SAML assertion.

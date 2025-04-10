@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ./saml/#set-up-saml-with-azure-ad 
+  - ./saml/#set-up-saml-with-azure-ad
   - ../saml/#set-up-saml-with-azure-ad
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:

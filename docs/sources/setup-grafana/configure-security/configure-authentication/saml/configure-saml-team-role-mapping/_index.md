@@ -8,6 +8,7 @@ menuTitle: Configure Role and Team sync for SAML
 title: Configure Role and Team sync for SAML
 weight: 540
 ---
+
 ### Configure team sync
 
 To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
