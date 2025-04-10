@@ -62,6 +62,10 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
 
+	if cfg.GitHub == nil {
+		return apierrors.NewBadRequest("expecting github configuration")
+	}
+
 	prRepo, ok := repo.(PullRequestRepo)
 	if !ok {
 		return fmt.Errorf("repository is not a github repository")
@@ -96,7 +100,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	var render ScreenshotRenderer
-	if repo.Config().Spec.GitHub.GenerateDashboardPreviews {
+	if cfg.GitHub.GenerateDashboardPreviews {
 		render = c.renderer
 	}
 
@@ -123,4 +127,25 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 	logger.Info("preview comment added")
 	return nil
+}
+
+// Remove files we should not try to process
+func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
+	for _, file := range files {
+		if file.Action == repository.FileActionIgnored {
+			continue
+		}
+
+		if err := resources.IsPathSupported(file.Path); err == nil {
+			ret = append(ret, file)
+			continue
+		}
+		if file.PreviousPath != "" {
+			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
+				ret = append(ret, file)
+				continue
+			}
+		}
+	}
+	return
 }

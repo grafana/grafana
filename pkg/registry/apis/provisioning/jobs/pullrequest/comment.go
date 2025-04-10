@@ -7,10 +7,48 @@ import (
 	"html/template"
 )
 
-const previewsCommentTemplate = `Hey there! 🎉
-Grafana spotted some changes in your dashboard.
+type commentBuilder struct {
+	templateDashboard  *template.Template
+	templateTable      *template.Template
+	templateRenderInfo *template.Template
+}
 
-{{range .Changes}}
+func newCommentBuilder() *commentBuilder {
+	return &commentBuilder{
+		templateDashboard:  template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
+		templateTable:      template.Must(template.New("table").Parse(commentTemplateTable)),
+		templateRenderInfo: template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+	}
+}
+
+func (g *commentBuilder) generateComment(_ context.Context, info changeInfo) (string, error) {
+	if len(info.Changes) == 0 {
+		return "no changes found", nil
+	}
+
+	var buf bytes.Buffer
+
+	if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
+		if err := g.templateDashboard.Execute(&buf, info.Changes[0]); err != nil {
+			return "", fmt.Errorf("unable to execute template: %w", err)
+		}
+	} else {
+		if err := g.templateTable.Execute(&buf, info); err != nil {
+			return "", fmt.Errorf("unable to execute template: %w", err)
+		}
+	}
+
+	if info.MissingImageRenderer {
+		if err := g.templateRenderInfo.Execute(&buf, info); err != nil {
+			return "", fmt.Errorf("unable to execute template: %w", err)
+		}
+	}
+
+	return buf.String(), nil
+}
+
+const commentTemplateSingleDashboard = `Hey there! 🎉
+Grafana spotted some changes to your dashboard.
  
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
 ### Side by Side Comparison of {{.Parsed.Info.Path}}
@@ -32,35 +70,23 @@ See the [original]({{.GrafanaURL}}) of {{.Title}}.
 {{- else if .PreviewURL}}
 See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
 {{- end}}
-
-{{end}}
-
-{{ if .SkippedFiles }}
-and {{ .SkippedFiles }} more files
-{{end}}
-
-{{ if .MissingImageRenderer }}
-NOTE: The image renderer is not configured
-{{end}}
 `
 
-type commentBuilder struct {
-	template *template.Template
-}
+const commentTemplateTable = `Hey there! 🎉
+Grafana spotted some changes.
 
-func newCommentBuilder() *commentBuilder {
-	return &commentBuilder{
-		template: template.Must(template.New("comment").Parse(previewsCommentTemplate)),
-	}
-}
+| Action | Resource | Preview |
+|----------|---------|-------|
+{{- range .Changes}}
+| {{.Parsed.Action}} | {{.Title}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} |
+{{- end}}
 
-func (g *commentBuilder) generateComment(ctx context.Context, info changeInfo) (string, error) {
-	// NOTE: this is a simple function now, but we will likely pick differnet templates
-	// based on the values in changeInfo
+{{ if .SkippedFiles }}
+and {{ .SkippedFiles }} more files.
+{{ end}}
+`
 
-	var buf bytes.Buffer
-	if err := g.template.Execute(&buf, info); err != nil {
-		return "", fmt.Errorf("unable to execute template: %w", err)
-	}
-	return buf.String(), nil
-}
+// TODO: this should expand and show links to setup docs
+const commentTemplateMissingImageRenderer = `
+NOTE: The image renderer is not configured
+`

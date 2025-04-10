@@ -1,15 +1,11 @@
 Hey there! 🎉
-Grafana spotted some changes in your dashboard.
+Grafana spotted some changes.
 
-
-
-
-See the [original](http://grafana/d/uid) and [preview](http://grafana/admin/preview) of file.json.
-
-
+| Action | Resource | Preview |
+|----------|---------|-------|
+| create | Title | [preview](http://grafana/admin/preview) |
 
 
 
 
 NOTE: The image renderer is not configured
-

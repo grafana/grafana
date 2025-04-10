@@ -212,24 +212,3 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	}
 	return base.JoinPath(snap).String(), nil
 }
-
-// Remove files we should not try to process
-func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
-	for _, file := range files {
-		if file.Action == repository.FileActionIgnored {
-			continue
-		}
-
-		if err := resources.IsPathSupported(file.Path); err == nil {
-			ret = append(ret, file)
-			continue
-		}
-		if file.PreviousPath != "" {
-			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
-				ret = append(ret, file)
-				continue
-			}
-		}
-	}
-	return
-}
