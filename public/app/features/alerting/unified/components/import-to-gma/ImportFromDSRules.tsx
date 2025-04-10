@@ -143,7 +143,6 @@ const ImportFromDSRules = () => {
                       'alerting.import-from-dsrules.description-folder-import-rules',
                       'The folder to import the rules to'
                     )}
-                    invalid={!!errors.selectedDatasourceName}
                     error={errors.selectedDatasourceName?.message}
                     htmlFor="folder-picker"
                   >

@@ -1047,13 +1047,16 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "confirm-modal": {
-        "confirm": "Yes, import",
+        "confirm": "Import",
+        "loading": "Loading...",
+        "loading-body": "Preparing data to be imported.This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-title": "No rules to import",
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
         },
+        "target-folder-rules": "Target folder rules that might be overwritten",
         "title": "Confirm import"
       },
       "datasource": {
@@ -2004,8 +2007,8 @@
     },
     "to-gma": {
       "confirm-modal": {
-        "body": "If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
-        "summary": "These are the list of rules that will be imported:",
+        "body": "The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
+        "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
     },
