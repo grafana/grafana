@@ -5331,8 +5331,7 @@
       "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
     },
     "building-snapshot": {
-      "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
-      "description-eta": "Creating a snapshot typically takes less than two minutes.",
+      "description": "Please hold on - this won't take long!",
       "title": "Building installation snapshot"
     },
     "can-i-move": {

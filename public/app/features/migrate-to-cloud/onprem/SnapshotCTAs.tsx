@@ -53,14 +53,7 @@ export function CreatingSnapshotCTA(props: SnapshotCTAProps) {
     >
       <Text element="p" variant="body" color="secondary">
         <Trans i18nKey="migrate-to-cloud.building-snapshot.description">
-          We&apos;re creating a point-in-time snapshot of the current state of this installation. Once the snapshot is
-          complete. you&apos;ll be able to upload it to Grafana Cloud.
-        </Trans>
-      </Text>
-
-      <Text element="p" variant="body" color="secondary">
-        <Trans i18nKey="migrate-to-cloud.building-snapshot.description-eta">
-          Creating a snapshot typically takes less than two minutes.
+          Please hold on - this won&apos;t take long!
         </Trans>
       </Text>
 
