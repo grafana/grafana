@@ -165,8 +165,8 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
 							Plugins: []plugins.Dependency{
-								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+								{Type: "datasource", ID: "graphite", Name: "Graphite"},
+								{Type: "panel", ID: "graph", Name: "Graph"},
 							},
 							Extensions: plugins.ExtensionsDependencies{
 								ExposedComponents: []string{},
@@ -979,8 +979,8 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
@@ -1071,8 +1071,8 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
