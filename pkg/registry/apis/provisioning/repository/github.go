@@ -743,7 +743,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			}
 
 			changes = append(changes, VersionedFileChange{
-				// FIXME: we are passing the wrong ref for incremental sync
 				Ref:          ref,
 				PreviousRef:  base,
 				Path:         currentPath,
