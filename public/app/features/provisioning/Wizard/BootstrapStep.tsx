@@ -32,18 +32,19 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepUp
     () => getResourceStats(filesQuery.data, resourceStats.data),
     [filesQuery.data, resourceStats.data]
   );
-  console.log('sel', selectedTarget);
+
   useEffect(() => {
     const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-
     onStepUpdate({ status: isLoading ? 'running' : 'idle' });
   }, [filesQuery.isLoading, onStepUpdate, resourceStats.isLoading]);
 
   // Auto select the first option on mount
   useEffect(() => {
-    setValue('repository.sync.target', options[0].target);
-    onOptionSelect(resourceCount === 0);
-  }, [onOptionSelect, options, resourceCount, setValue]);
+    const { target } = options[0];
+    setValue('repository.sync.target', target);
+    onOptionSelect(target !== 'folder' || resourceCount > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOptionSelect = (option: ModeOption) => {
     setValue('repository.sync.target', option.target);
