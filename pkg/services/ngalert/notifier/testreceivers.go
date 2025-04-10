@@ -34,7 +34,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	a := &alertingNotify.PostableAlert{}
 	if c.Alert != nil {
 		a.Annotations = v2.ModelLabelSetToAPILabelSet(c.Alert.Annotations)
-		a.Alert.Labels = v2.ModelLabelSetToAPILabelSet(c.Alert.Labels)
+		a.Labels = v2.ModelLabelSetToAPILabelSet(c.Alert.Labels)
 	}
 	AddDefaultLabelsAndAnnotations(a)
 	return am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{

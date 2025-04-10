@@ -11,6 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';
 import { TemplatePreview } from '../../TemplatePreview';
+
 import { getUseTemplateText } from './utils';
 
 export function TemplateContentAndPreview({
