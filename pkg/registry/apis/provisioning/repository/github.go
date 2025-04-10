@@ -706,10 +706,15 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			previousPath, previousErr := safepath.RelativeTo(f.GetPreviousFilename(), r.config.Spec.GitHub.Path)
 			currentPath, currentErr := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
 
+			// Handle all possible combinations of path validation results:
+			// 1. Both paths outside configured path, do nothing
+			// 2. Both paths inside configured path, rename
+			// 3. Moving out of configured path, delete previous file
+			// 4. Moving into configured path, create new file
 			switch {
-			case previousErr != nil && currentErr != nil: // outside of configured path
+			case previousErr != nil && currentErr != nil:
 				// do nothing as it's outside of configured path
-			case previousErr == nil && currentErr == nil: // both are inside of configured path
+			case previousErr == nil && currentErr == nil:
 				changes = append(changes, VersionedFileChange{
 					Path:         currentPath,
 					PreviousPath: previousPath,
@@ -717,20 +722,18 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 					PreviousRef:  base,
 					Action:       FileActionRenamed,
 				})
-			case previousErr == nil && currentErr != nil: // moving out of the configured path
+			case previousErr == nil && currentErr != nil:
 				changes = append(changes, VersionedFileChange{
 					Path:   currentPath,
 					Ref:    ref,
 					Action: FileActionDeleted,
 				})
-			case previousErr != nil && currentErr == nil: // moving into the configured path
+			case previousErr != nil && currentErr == nil:
 				changes = append(changes, VersionedFileChange{
 					Path:   currentPath,
 					Ref:    ref,
 					Action: FileActionCreated,
 				})
-			default:
-				logger.Error("ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 			}
 		case "removed":
 			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
