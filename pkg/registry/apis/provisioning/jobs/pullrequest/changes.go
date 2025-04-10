@@ -79,7 +79,8 @@ func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, e
 
 	logger := logging.FromContext(ctx)
 	for i, change := range opts.changes {
-		if i > 10 {
+		// process maximum 10 files
+		if i >= 10 {
 			info.SkippedFiles = len(opts.changes) - i
 			break
 		}

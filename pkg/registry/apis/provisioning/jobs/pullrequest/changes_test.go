@@ -23,7 +23,6 @@ func TestCalculateChanges(t *testing.T) {
 	parser := resources.NewMockParser(t)
 	reader := repository.NewMockReader(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
-	renderer := NewMockScreenshotRenderer(t)
 
 	finfo := &repository.FileInfo{
 		Path: "path/to/file.json",
@@ -59,42 +58,109 @@ func TestCalculateChanges(t *testing.T) {
 		Meta:           meta,
 		DryRunResponse: obj, // avoid hitting the client
 	}, nil)
-	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
-	renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(getDummyRenderedURL("x"), nil)
 
-	info, err := processChangedFiles(context.Background(), changeOptions{
-		grafanaBaseURL: "http://host/",
-		pullRequest: v0alpha1.PullRequestJobOptions{
-			Ref: "ref",
-			PR:  123,
-			URL: "http://github.com/pr/",
-		},
-		changes: []repository.VersionedFileChange{{
-			Action: repository.FileActionCreated,
-			Path:   "path/to/file.json",
-			Ref:    "ref",
-		}},
-		parser:   parser,
-		reader:   reader,
-		progress: progress,
-		render:   renderer,
+	pullRequest := v0alpha1.PullRequestJobOptions{
+		Ref: "ref",
+		PR:  123,
+		URL: "http://github.com/pr/",
+	}
+	createdFileChange := repository.VersionedFileChange{
+		Action: repository.FileActionCreated,
+		Path:   "path/to/file.json",
+		Ref:    "ref",
+	}
+
+	t.Run("with-screenshot", func(t *testing.T) {
+		renderer := NewMockScreenshotRenderer(t)
+		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+		renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(getDummyRenderedURL("x"), nil)
+
+		options := changeOptions{
+			grafanaBaseURL: "http://host/",
+			pullRequest:    pullRequest,
+			changes:        []repository.VersionedFileChange{createdFileChange},
+			parser:         parser,
+			reader:         reader,
+			progress:       progress,
+			render:         renderer,
+		}
+
+		info, err := processChangedFiles(context.Background(), options)
+		require.NoError(t, err)
+
+		require.False(t, info.MissingImageRenderer)
+		require.Equal(t, map[string]string{
+			"Grafana":         "http://host/d/id/hello",
+			"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+			"PreviewSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+		}, map[string]string{
+			"Grafana":         info.Changes[0].GrafanaURL,
+			"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
+			"Preview":         info.Changes[0].PreviewURL,
+			"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
+		})
 	})
-	require.NoError(t, err)
 
-	// jj, err := json.MarshalIndent(info, "", "  ")
-	// require.NoError(t, err)
-	// fmt.Printf("%s", string(jj))
+	t.Run("without-screenshot", func(t *testing.T) {
+		renderer := NewMockScreenshotRenderer(t)
+		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+		options := changeOptions{
+			grafanaBaseURL: "http://host/",
+			pullRequest:    pullRequest,
+			changes:        []repository.VersionedFileChange{createdFileChange},
+			parser:         parser,
+			reader:         reader,
+			progress:       progress,
+			render:         renderer,
+		}
 
-	require.Equal(t, map[string]string{
-		"Grafana":         "http://host/d/id/hello",
-		"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
-		"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-		"PreviewSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
-	}, map[string]string{
-		"Grafana":         info.Changes[0].GrafanaURL,
-		"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
-		"Preview":         info.Changes[0].PreviewURL,
-		"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
+		info, err := processChangedFiles(context.Background(), options)
+		require.NoError(t, err)
+
+		require.True(t, info.MissingImageRenderer)
+		require.Equal(t, map[string]string{
+			"Grafana":         "http://host/d/id/hello",
+			"GrafanaSnapshot": "",
+			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+			"PreviewSnapshot": "",
+		}, map[string]string{
+			"Grafana":         info.Changes[0].GrafanaURL,
+			"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
+			"Preview":         info.Changes[0].PreviewURL,
+			"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
+		})
+	})
+
+	t.Run("process first 10 files", func(t *testing.T) {
+		renderer := NewMockScreenshotRenderer(t)
+		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+
+		options := changeOptions{
+			grafanaBaseURL: "http://host/",
+			pullRequest:    pullRequest,
+			parser:         parser,
+			reader:         reader,
+			progress:       progress,
+			render:         renderer, // not used
+		}
+		for range 15 {
+			options.changes = append(options.changes, createdFileChange)
+		}
+
+		info, err := processChangedFiles(context.Background(), options)
+		require.NoError(t, err)
+
+		require.False(t, info.MissingImageRenderer)
+		require.Equal(t, 10, len(info.Changes))
+		require.Equal(t, 5, info.SkippedFiles)
+
+		// Make sure we linked a URL, but no screenshot for each item
+		for _, change := range info.Changes {
+			require.NotEmpty(t, change.GrafanaURL)
+			require.Empty(t, change.GrafanaScreenshotURL)
+		}
 	})
 }
 
