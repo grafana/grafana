@@ -18,6 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
+const (
+	CheckID           = "plugin"
+	DeprecationStepID = "deprecation"
+	UpdateStepID      = "update"
+)
+
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
@@ -43,7 +49,7 @@ type check struct {
 }
 
 func (c *check) ID() string {
-	return "plugin"
+	return CheckID
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -88,7 +94,7 @@ func (s *deprecationStep) Resolution() string {
 }
 
 func (s *deprecationStep) ID() string {
-	return "deprecation"
+	return DeprecationStepID
 }
 
 func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
@@ -146,7 +152,7 @@ func (s *updateStep) Resolution() string {
 }
 
 func (s *updateStep) ID() string {
-	return "update"
+	return UpdateStepID
 }
 
 func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
