@@ -332,7 +332,7 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Action: repository.FileActionCreated,
 					Path:   "one/two/three/",
 					Name:   "some-folder",
-					// FIXME: this is probably inconsistent accross the codebase
+					// FIXME: this is probably inconsistent across the codebase
 					Resource: "folders",
 					Group:    "folder.grafana.app",
 				}).Return()
@@ -359,7 +359,7 @@ func TestFullSync_ApplyChanges(t *testing.T) {
 					Action: repository.FileActionCreated,
 					Path:   "one/two/three/",
 					Name:   "",
-					// FIXME: this is probably inconsistent accross the codebase
+					// FIXME: this is probably inconsistent across the codebase
 					Resource: "folders",
 					Group:    "folder.grafana.app",
 					Error:    errors.New("folder creation error"),
