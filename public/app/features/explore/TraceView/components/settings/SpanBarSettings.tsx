@@ -51,7 +51,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             }}
             placeholder={t('explore.span-bar-settings.placeholder-duration', 'Duration')}
             isClearable
-            aria-label={'select-label-name'}
+            aria-label={t('explore.span-bar-settings.aria-label-selectlabelname', 'Select label name')}
             width={40}
           />
         </InlineField>

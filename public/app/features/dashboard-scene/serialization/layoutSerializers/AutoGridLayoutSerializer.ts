@@ -4,8 +4,8 @@ import {
   AutoGridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
-import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
-import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
@@ -14,7 +14,7 @@ import {
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
   AutoGridLayoutManager,
-} from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+} from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 

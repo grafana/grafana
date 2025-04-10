@@ -255,7 +255,7 @@
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.27.6",
+    "@floating-ui/react": "0.27.7",
     "@formatjs/intl-durationformat": "^0.7.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/aws-sdk": "0.6.0",
@@ -299,7 +299,7 @@
     "@react-aria/focus": "3.20.1",
     "@react-aria/overlays": "3.26.1",
     "@react-aria/utils": "3.28.1",
-    "@react-awesome-query-builder/ui": "6.6.13",
+    "@react-awesome-query-builder/ui": "6.6.14",
     "@reduxjs/toolkit": "2.5.1",
     "@visx/event": "3.12.0",
     "@visx/gradient": "3.12.0",
@@ -429,7 +429,7 @@
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.2.4",
+    "swagger-ui-react/dompurify": "3.2.5",
     "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
