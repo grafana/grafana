@@ -50,10 +50,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.clearState();
     };
 
-    // removing slug from dependencies to prevent unmount when data links reference
+    // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference
     //  the same dashboard with no slug in url
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type, path]);
+  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
 
   useEffect(() => {
     // This use effect corrects URL without refresh when navigating to the same dashboard
