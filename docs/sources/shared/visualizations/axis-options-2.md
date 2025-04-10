@@ -3,7 +3,7 @@ title: Axis options
 comments: |
   There are three axis options shared files, axis-options-1.md, axis-options-2.md, and axis-options-3.md to cover the most common combinations of options. 
   Using shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content.
-  This file is used in the following visualizations: candlestick, xy chart
+  This file is used in the following visualizations: candlestick, trend, xy chart
 ---
 
 Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
