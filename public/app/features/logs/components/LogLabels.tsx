@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, forwardRef, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
@@ -72,7 +72,7 @@ export const LogLabels = memo(
               onDisplayMaxToggle?.(true);
             }}
           >
-            +{allLabels.length - displayLabels.length}
+            <Icon name="plus" size="xs" />{allLabels.length - displayLabels.length}
           </Button>
         )}
         {displayAll === true && (
@@ -85,7 +85,7 @@ export const LogLabels = memo(
               onDisplayMaxToggle?.(false);
             }}
           >
-            -
+            <Icon name="minus" size="xs" />
           </Button>
         )}
       </span>
