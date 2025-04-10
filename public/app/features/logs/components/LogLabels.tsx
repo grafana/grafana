@@ -3,6 +3,7 @@ import { memo, forwardRef, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
@@ -67,6 +68,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            aria-label={t('logs.log-labels.expand', 'Expand labels')}
             onClick={() => {
               setDisplayAll(true);
               onDisplayMaxToggle?.(true);
@@ -81,6 +83,7 @@ export const LogLabels = memo(
             size="sm"
             fill="outline"
             variant="secondary"
+            aria-label={t('logs.log-labels.collapse', 'Collapse labels')}
             onClick={() => {
               setDisplayAll(false);
               onDisplayMaxToggle?.(false);
