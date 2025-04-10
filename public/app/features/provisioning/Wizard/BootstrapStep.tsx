@@ -5,8 +5,8 @@ import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafa
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
-import { getResourceStats, isMigrateOperation, useModeOptions } from './actions';
-import { ModeOption, StepStatusInfo, WizardFormData } from './types';
+import { getResourceStats, useModeOptions } from './actions';
+import { StepStatusInfo, WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
@@ -62,15 +62,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleOptionSelect = (option: ModeOption) => {
-    setValue('repository.sync.target', option.target);
-
-    if (isMigrateOperation(option.target)) {
-      setValue('migrate.history', true);
-      setValue('migrate.identifier', true);
-    }
-  };
-
   if (resourceStats.isLoading || filesQuery.isLoading) {
     return (
       <Box padding={4}>
@@ -112,16 +103,16 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
         <Controller
           name="repository.sync.target"
           control={control}
-          render={() => (
+          render={({ field: { ref, onChange, ...field } }) => (
             <>
               {options.map((action, index) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
-                    handleOptionSelect(action);
+                    onChange(action.target);
                   }}
-                  autoFocus={index === 0}
+                  {...field}
                 >
                   <Card.Heading>{action.label}</Card.Heading>
                   <Card.Description>

@@ -74,7 +74,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       repository: { ...values, type },
       migrate: {
         history: true,
-        identifier: true, // Keep the same URLs
       },
     },
   });

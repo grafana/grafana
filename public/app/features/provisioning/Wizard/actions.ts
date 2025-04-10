@@ -9,10 +9,6 @@ import { t } from 'app/core/internationalization';
 
 import { ModeOption } from './types';
 
-export function isMigrateOperation(target: string) {
-  return target === 'instance';
-}
-
 /**
  * Filters available mode options based on system state
  */
