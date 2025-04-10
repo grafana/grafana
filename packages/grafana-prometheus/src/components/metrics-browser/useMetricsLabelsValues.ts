@@ -307,8 +307,14 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     const newMetrics: Metric[] = await fetchMetrics(safeSelector);
 
     // Fetch label keys
-    const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
-    const newLabelKeys: string[] = await fetchLabelKeys(labelKeysSelector);
+    // If there is no metric or label value selected fetch all the keys instead of creating a selector
+    let newLabelKeys: string[] = [];
+    if (!safeSelector) {
+      newLabelKeys = await fetchLabelKeys(undefined);
+    } else {
+      const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
+      newLabelKeys = await fetchLabelKeys(labelKeysSelector);
+    }
     const newSelectedLabelKeys: string[] = loadSelectedLabelsFromStorage(newLabelKeys);
 
     setMetrics(newMetrics);
