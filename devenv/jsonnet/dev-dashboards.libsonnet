@@ -73,7 +73,6 @@
     "mssql_unittest": (import '../dev-dashboards/datasource-mssql/mssql_unittest.json'),
     "mysql_fakedata": (import '../dev-dashboards/datasource-mysql/mysql_fakedata.json'),
     "mysql_unittest": (import '../dev-dashboards/datasource-mysql/mysql_unittest.json'),
-    "new_features_in_v62": (import '../dev-dashboards/datasource-testdata/new_features_in_v62.json'),
     "new_features_in_v74": (import '../dev-dashboards/datasource-testdata/new_features_in_v74.json'),
     "new_features_in_v8": (import '../dev-dashboards/datasource-testdata/new_features_in_v8.json'),
     "opentsdb": (import '../dev-dashboards/datasource-opentsdb/opentsdb.json'),
