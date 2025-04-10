@@ -7,7 +7,7 @@ export const InfoPaneRight = () => {
   return (
     <Stack gap={4} direction="column">
       <InfoItem
-        title={t('migrate-to-cloud.pdc.title', 'Not all my data sources are on the public internet')}
+        title={t('migrate-to-cloud.pdc.title', 'What if not all my data sources are on the public internet?')}
         linkTitle={t('migrate-to-cloud.pdc.link-title', 'Learn about PDC')}
         linkHref="https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect"
       >
@@ -27,13 +27,12 @@ export const InfoPaneRight = () => {
         </Trans>
       </InfoItem>
       <InfoItem
-        title={t('migrate-to-cloud.can-i-move.title', 'Can I move this installation to Grafana Cloud?')}
-        linkTitle={t('migrate-to-cloud.can-i-move.link-title', 'Learn about migrating other settings')}
+        title={t('migrate-to-cloud.can-i-move.title', 'Where can I learn more about migrating to Grafana Cloud?')}
+        linkTitle={t('migrate-to-cloud.can-i-move.link-title', 'Learn about migrating to Grafana Cloud')}
         linkHref="https://grafana.com/docs/grafana-cloud/account-management/migration-guide"
       >
         <Trans i18nKey="migrate-to-cloud.can-i-move.body">
-          Once you connect this installation to a cloud stack, you&apos;ll be able to upload data sources and
-          dashboards.
+          You can use the migration assistant to migrate a large proportion of your Grafana resources.
         </Trans>
       </InfoItem>
     </Stack>
