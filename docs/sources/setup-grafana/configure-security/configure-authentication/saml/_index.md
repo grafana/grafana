@@ -86,7 +86,7 @@ The integration provides two key endpoints as part of Grafana:
 - The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or you make the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 - The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
-## Configure SAML using the Grafana config file
+## Configure SAML using the Grafana configuration file
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
 1. Optionally, configure the [certificate and private key](#certificate-and-private-key").
@@ -166,7 +166,7 @@ You also need to define the public part of the IdP for message verification. The
 Grafana supports three ways of specifying the IdP metadata.
 
 - Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
-- With the `_path` suffix, Grafana assumes a file path and attempts to read the file from the file system.
+- With the `_path` suffix, Grafana assumes a path and attempts to read the file from the file system.
 - With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
 
 ## Maximum issue delay
@@ -181,7 +181,7 @@ SP metadata is likely to expire at some point, perhaps due to a certificate rota
 
 The configuration option is specified as a duration, such as `metadata_valid_duration = 48h`.
 
-## Allow new user signups
+## Allow new user signup
 
 By default, new Grafana users using SAML authentication will have an account created for them automatically. To decouple authentication and account creation and ensure only users with existing accounts can log in with SAML, set the `allow_sign_up` option to false.
 
@@ -208,7 +208,7 @@ allowed_organizations = ["org 1", "second org"]
 
 If multiple bindings are supported for SAML Single Sign-On (SSO) by the Identity Provider (IdP), Grafana will use the `HTTP-Redirect` binding by default. If the IdP only supports the `HTTP-Post binding` then updating the `content_security_policy_template` (in case `content_security_policy = true`) and `content_security_policy_report_only_template` (in case `content_security_policy_report_only = true`) might be required to allow Grafana to initiate a POST request to the IdP. These settings are used to define the [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) headers that are sent by Grafana.
 
-To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the IdP's domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
+To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the identity provider domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
 
 {{< admonition type="note" >}}
 For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
@@ -216,13 +216,13 @@ For Grafana Cloud instances, please contact Grafana Support to update the `conte
 
 ## IdP-initiated Single Sign-On (SSO)
 
-By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana's login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
+By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via the login page in Grafana). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
 
 ## Advanced configuration
 
-For advanced configuration and troublshooting, please refer to the one of the following pages:
+For advanced configuration and troubleshooting, please refer to the one of the following pages:
 
 - [Configure SAML request signing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-request-signing/)
 - [Configure SAML single logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/)

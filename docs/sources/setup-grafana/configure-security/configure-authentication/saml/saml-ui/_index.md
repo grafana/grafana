@@ -34,7 +34,7 @@ Any configuration changes made through the Grafana user interface (UI) will take
 
 To follow this guide, you need:
 
-- Knowledge of SAML authentication. Refer to [SAML authentication in Grafana](../) for an overview of Grafana's SAML integration.
+- Knowledge of SAML authentication. Refer to [SAML authentication in Grafana](../) for an overview of the SAML integration in Grafana.
 - Permissions `settings:read` and `settings:write` with scope `settings:auth.saml:*` that allow you to read and update SAML authentication settings.
 
   These permissions are granted by `fixed:authentication.config:writer` role.
