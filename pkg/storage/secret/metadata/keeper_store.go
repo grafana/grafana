@@ -35,7 +35,6 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 	}
 
 	return &keeperMetadataStorage{
-		// TODO LND is this ok or should we get a session for each operation?
 		db:           db,
 		dialect:      sqltemplate.DialectForDriver(string(db.GetDBType())),
 		accessClient: accessClient,
