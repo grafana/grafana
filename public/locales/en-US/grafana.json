@@ -5786,7 +5786,7 @@
       "subtitle": "Manage folder dashboards and permissions"
     },
     "migrate-to-cloud": {
-      "subtitle": "Copy configuration from your self-managed installation to a cloud stack",
+      "subtitle": "Copy resources from your self-managed installation to a cloud stack",
       "title": "Migrate to Grafana Cloud"
     },
     "monitoring": {
