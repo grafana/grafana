@@ -59,7 +59,6 @@ export const MigrationStepsPane = () => {
           </ol>
         </Stack>
       </InfoItem>
-
       <TextLink href="/connections/private-data-source-connections" external>
         {t('migrate-to-cloud.get-started.configure-pdc-link', 'Configure PDC for this stack')}
       </TextLink>
