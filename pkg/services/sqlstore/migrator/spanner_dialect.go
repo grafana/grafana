@@ -172,11 +172,11 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	}
 
 	// Collect all DROP statements.
-	var statements []string
 	changeStreams, err := s.findChangeStreams(engine)
 	if err != nil {
 		return err
 	}
+	statements := make([]string, 0, len(tables)+len(changeStreams))
 	for _, cs := range changeStreams {
 		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
 	}
