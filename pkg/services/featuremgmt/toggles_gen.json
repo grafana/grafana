@@ -483,7 +483,8 @@
       "metadata": {
         "name": "appSidecar",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
+        "creationTimestamp": "2024-09-09T12:45:05Z",
+        "deletionTimestamp": "2025-04-10T10:43:10Z"
       },
       "spec": {
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
