@@ -7,7 +7,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { StepStatus } from '../hooks/useStepStatus';
 
-import { getState } from './actions';
+import { getResourceStats, isMigrateOperation, useModeOptions } from './actions';
 import { ModeOption, WizardFormData } from './types';
 
 interface Props {
@@ -26,32 +26,29 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const selectedTarget = watch('repository.sync.target');
-
   const resourceStats = useGetResourceStatsQuery();
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
+  const selectedTarget = watch('repository.sync.target');
+  const options = useModeOptions(repoName, settingsData);
+  const { resourceCount, resourceCountString, fileCount } = useMemo(
+    () => getResourceStats(filesQuery.data, resourceStats.data),
+    [filesQuery.data, resourceStats.data]
+  );
 
-  const state = useMemo(() => {
-    return getState(repoName, settingsData, filesQuery.data, resourceStats.data);
-  }, [repoName, settingsData, resourceStats.data, filesQuery.data]);
-
+  // Auto select the first option on mount
   useEffect(() => {
-    if (state.actions.length && !selectedTarget) {
-      const first = state.actions[0];
-      setValue('repository.sync.target', first.target);
-      onOptionSelect(first.operation === 'migrate');
-    }
-  }, [state, selectedTarget, setValue, onOptionSelect]);
+    setValue('repository.sync.target', options[0].target);
+    onOptionSelect(resourceCount === 0);
+  }, [onOptionSelect, options, resourceCount, setValue]);
 
   const handleOptionSelect = useCallback(
     (option: ModeOption) => {
       setValue('repository.sync.target', option.target);
 
-      if (option.operation === 'migrate') {
+      if (isMigrateOperation(option.target)) {
         setValue('migrate.history', true);
         setValue('migrate.identifier', true);
       }
-      onOptionSelect(option.operation === 'migrate');
     },
     [setValue, onOptionSelect]
   );
@@ -77,9 +74,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
               </Text>
               <Stack direction="row" gap={2}>
                 <Text variant="h4">
-                  {state.resourceCount > 0
-                    ? state.resourceCountString
-                    : t('provisioning.bootstrap-step.empty', 'Empty')}
+                  {resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty')}
                 </Text>
               </Stack>
             </Stack>
@@ -88,8 +83,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
               </Text>
               <Text variant="h4">
-                {state.fileCount > 0
-                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: state.fileCount })
+                {fileCount > 0
+                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
                   : t('provisioning.bootstrap-step.empty', 'Empty')}
               </Text>
             </Stack>
@@ -101,9 +96,9 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
           control={control}
           render={() => (
             <>
-              {state.actions.map((action, index) => (
+              {options.map((action, index) => (
                 <Card
-                  key={`${action.target}-${action.operation}`}
+                  key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
                     handleOptionSelect(action);
@@ -144,7 +139,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 'My repository connection'
               )}
               // Autofocus the title field if it's the only available option
-              autoFocus={state.actions.length === 1 && state.actions[0].target === 'folder'}
+              autoFocus={options.length === 1 && options[0].target === 'folder'}
             />
           </Field>
         )}
