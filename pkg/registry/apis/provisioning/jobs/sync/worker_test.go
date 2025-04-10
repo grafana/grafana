@@ -130,6 +130,37 @@ func TestSyncWorker_Process(t *testing.T) {
 			},
 			expectedError: "update repo with job status at start: failed to patch status",
 		},
+		{
+			name: "failed getting repository resources",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				// Setup repository config
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "test-repo",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+
+				// Storage is migrated
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Initial status update succeeds
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+
+				// Repository resources creation fails
+				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
+			},
+			expectedError: "create repository resources client: failed to create repository resources client",
+		},
 	}
 
 	for _, tt := range tests {
