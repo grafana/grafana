@@ -121,7 +121,9 @@ export function getDatasourceForNewTrail(): string | undefined {
       return prevDataSource;
     }
   }
-  const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
+  const promDatasources = getDatasourceSrv().getList({
+    type: ['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'],
+  });
   if (promDatasources.length > 0) {
     const defaultDatasource = promDatasources.find((mds) => mds.isDefault);
 

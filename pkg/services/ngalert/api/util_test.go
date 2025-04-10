@@ -13,6 +13,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -176,3 +177,85 @@ func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, conditi
 }
 
 var _ ConditionValidator = &recordingConditionValidator{}
+
+func TestIsPrometheusCompatible(t *testing.T) {
+	testCases := []struct {
+		name     string
+		dsType   string
+		expected bool
+	}{
+		{
+			name:     "prometheus datasource should be compatible",
+			dsType:   datasources.DS_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "amazon prometheus datasource should be compatible",
+			dsType:   datasources.DS_AMAZON_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "azure prometheus datasource should be compatible",
+			dsType:   datasources.DS_AZURE_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "loki datasource should not be prometheus compatible",
+			dsType:   datasources.DS_LOKI,
+			expected: false,
+		},
+		{
+			name:     "other datasource types should not be compatible",
+			dsType:   "some-other-datasource",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := isPrometheusCompatible(tc.dsType)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestIsLotexRulerCompatible(t *testing.T) {
+	testCases := []struct {
+		name     string
+		dsType   string
+		expected bool
+	}{
+		{
+			name:     "prometheus datasource should be compatible",
+			dsType:   datasources.DS_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "amazon prometheus datasource should be compatible",
+			dsType:   datasources.DS_AMAZON_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "azure prometheus datasource should be compatible",
+			dsType:   datasources.DS_AZURE_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "loki datasource should be compatible",
+			dsType:   datasources.DS_LOKI,
+			expected: true,
+		},
+		{
+			name:     "other datasource types should not be compatible",
+			dsType:   "some-other-datasource",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := isLotexRulerCompatible(tc.dsType)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
