@@ -83,12 +83,13 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					return nil, predicate, apierrors.NewBadRequest("expecting single value for: " + v)
 				}
 
-				if v == utils.LabelKeyGetTrash {
+				switch v {
+				case utils.LabelKeyGetTrash:
 					req.Source = resource.ListRequest_TRASH
 					if vals[0] != "true" {
 						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
 					}
-				} else if v == utils.LabelKeyGetHistory {
+				case utils.LabelKeyGetHistory:
 					req.Source = resource.ListRequest_HISTORY
 					req.Options.Key.Name = vals[0]
 				}

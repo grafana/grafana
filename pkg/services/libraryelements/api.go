@@ -69,7 +69,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			generalFolderUID := ac.GeneralFolderUID
 			cmd.FolderUID = &generalFolderUID
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
@@ -229,7 +229,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 			// nolint:staticcheck
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}

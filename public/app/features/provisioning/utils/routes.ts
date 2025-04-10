@@ -37,7 +37,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: CONNECT_URL,
+      path: `${CONNECT_URL}/:type`,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ProvisioningWizardPage"*/ 'app/features/provisioning/Wizard/ConnectPage')
       ),

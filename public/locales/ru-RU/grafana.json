@@ -2,7 +2,11 @@
   "_comment": "Код является источником истины для английских фраз. Их следует менять непосредственно в компонентах, а дополнительные формы множественного числа указывать в этом файле.",
   "access-control": {
     "add-permission": {
+      "built-in-aria-label": "",
+      "level-aria-label": "",
+      "permissions-aria-label": "",
       "role-label": "Роль",
+      "role-select-aria-label": "",
       "serviceaccount-label": "Служебная учетная запись",
       "team-label": "Команда",
       "title": "Добавление разрешений",
@@ -15,7 +19,9 @@
       "permission": "Разрешение"
     },
     "permission-list-item": {
-      "inherited": "Унаследованные от папки"
+      "inherited": "Унаследованные от папки",
+      "locked-aria-label": "",
+      "remove-aria-label": ""
     },
     "permissions": {
       "add-label": "Добавить разрешение",
@@ -60,6 +66,8 @@
       }
     },
     "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "",
+      "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
         "deprecated": "",
@@ -167,6 +175,7 @@
       "columns": {
         "aria-label-role": ""
       },
+      "delete-aria-label": "",
       "title-delete": ""
     },
     "orgs": {
@@ -267,6 +276,8 @@
       "columns": {
         "title-edit-user": ""
       },
+      "edit-aria-label": "",
+      "edit-tooltip": "",
       "last-seen-never": "Никогда",
       "no-licensed-roles": "Не назначено"
     }
@@ -286,13 +297,16 @@
     "alert": {
       "alert-state": "Состояние оповещения",
       "annotations": "Аннотации",
+      "description-missing-series-evaluations": "",
       "evaluation": "Оценка",
       "evaluation-paused": "Оценка оповещения в настоящее время приостановлена",
       "evaluation-paused-description": "Уведомления для этого правила не будут отправляться. Экземпляры оповещений также не будут создаваться, пока правило не будет возобновлено.",
+      "keep-firing-for": "",
       "last-evaluated": "Время последней оценки",
       "last-evaluation-duration": "Продолжительность последней оценки",
       "last-updated-at": "Время последнего обновления",
       "last-updated-by": "Кем выполнено последнее обновление",
+      "missing-series-resolve": "",
       "no-annotations": "Нет аннотаций",
       "pending-period": "Период ожидания",
       "rule": "Правило",
@@ -536,7 +550,8 @@
           "error": "Ошибка",
           "no-data": "Нет данных",
           "normal": "Нормальное",
-          "pending": "Ожидание"
+          "pending": "Ожидание",
+          "recovering": ""
         },
         "state-transitions": "Переход состояний",
         "unknown-event-state": "Неизвестно",
@@ -798,6 +813,7 @@
       "error": ""
     },
     "evaluation-behavior-summary": {
+      "evaluate": "",
       "label-evaluate": "",
       "label-evaluation-time": "",
       "label-last-evaluation": "",
@@ -886,9 +902,6 @@
       "add-alert-data-to-payload": "",
       "review-alert-payload": ""
     },
-    "get-description": {
-      "title-alert-rule-evaluation": ""
-    },
     "get-preview-results": {
       "title-error": ""
     },
@@ -916,6 +929,7 @@
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
+      "missing-series-resolve-placeholder": "",
       "or": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
@@ -1038,6 +1052,12 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "no-rules-body": "",
+        "no-rules-title": "",
+        "plugin-rules-warning": {
+          "text": "",
+          "title": ""
+        },
         "title": ""
       },
       "datasource": {
@@ -1083,7 +1103,7 @@
     },
     "irm-integration": {
       "connection-method": "Как подключиться к IRM",
-      "disabled-description": "Чтобы использовать эту интеграцию, включите Grafana IRM",
+      "disabled-description": "",
       "enabled-description": "Удобный способ обработки оповещений и управления инцидентами",
       "existing-integration": "Существующая интеграция IRM",
       "existing-integration-description": "Использовать существующую интеграцию IRM",
@@ -1158,7 +1178,10 @@
           "new-recording-rule": "Новое правило записи",
           "title": "Управляемые Grafana"
         },
-        "loading-rules": ""
+        "loading-rules_one": "",
+        "loading-rules_few": "",
+        "loading-rules_many": "",
+        "loading-rules_other": ""
       }
     },
     "log-record-viewer-by-timestamp": {
@@ -1276,9 +1299,6 @@
     },
     "need-help-info": {
       "need-help": ""
-    },
-    "need-help-info-for-configure-no-data-error": {
-      "title-configure-no-data-and-error-handling": ""
     },
     "need-help-info-for-contactpoint": {
       "title-notify-by-selecting-a-contact-point": ""
@@ -1556,8 +1576,10 @@
       "title-view": ""
     },
     "rule-details": {
+      "keep-firing-for": "",
       "label-instances": "",
-      "label-labels": ""
+      "label-labels": "",
+      "last-evaluation-ago": ""
     },
     "rule-details-buttons": {
       "go-to-dashboard": "",
@@ -1613,7 +1635,18 @@
           "text": "Задайте способ оценки правила оповещения."
         },
         "info-help": {
+          "content": "",
+          "link-text": "",
+          "link-title": "",
           "text": "Задайте поведение оповещения, если оценка не удалась или запрос не возвращает данных."
+        },
+        "info-help2": {
+          "link-text": "",
+          "link-title": ""
+        },
+        "keep-firing-for": {
+          "label-description": "",
+          "label-text": ""
         },
         "pending-period": "Период ожидания"
       },
@@ -1732,6 +1765,19 @@
       "na": "",
       "paused": "Приостановлено",
       "recording-rule": "Правило записи"
+    },
+    "rule-stats": {
+      "firing": "",
+      "inactive": "",
+      "nodata": "",
+      "paused": "",
+      "pending": "",
+      "recording": "",
+      "recovering": "",
+      "error_one": "",
+      "error_few": "",
+      "error_many": "",
+      "error_other": ""
     },
     "rule-view": {
       "query": {
@@ -2046,7 +2092,9 @@
       "title": "Пользовательские запросы аннотаций еще не добавлены"
     },
     "standard-annotation-query-editor": {
+      "events-found": "",
       "no-events-found": "",
+      "no-query-editor": "",
       "test-annotation-query": "",
       "title-query-result": ""
     }
@@ -2070,6 +2118,8 @@
       "message": "Ключи API не найдены"
     },
     "migrate-to-service-accounts-card": {
+      "body-no-api-keys-found": "",
+      "body-switch-service-accounts": "",
       "docs-link": {
         "about-migration": ""
       },
@@ -2077,13 +2127,20 @@
       "migration-box-desc": {
         "migrating": ""
       },
+      "modal-title": "",
       "title-no-api-keys-found": "",
       "title-switch-service-accounts": ""
     },
     "migration-summary": {
       "close": "",
+      "failed": "",
+      "failed-details": "",
+      "failed-ids": "",
+      "migrated": "",
+      "migration-complete": "",
       "migration-successful": "",
-      "title-migration-summary": ""
+      "title-migration-summary": "",
+      "total": ""
     }
   },
   "app-chrome": {
@@ -2101,10 +2158,15 @@
     "auth-config-page-unconnected": {
       "auth-settings": ""
     },
+    "auth-drawer-unconneced": {
+      "subtitle": ""
+    },
     "auth-drawer-unconnected": {
       "advanced-auth": "",
       "enable-insecure-email-lookup": "",
+      "enable-insecure-email-lookup-description": "",
       "reset": "",
+      "reset-tooltip": "",
       "title-auth-settings": ""
     },
     "configure-auth-cta": {
@@ -2117,8 +2179,10 @@
         "label-reset-to-default-values": ""
       },
       "discard": "",
+      "enabled-label-enabled": "",
       "label-enabled": "",
       "reset-configuration": "",
+      "reset-configuration-description": "",
       "title-more-actions": "",
       "title-reset": "",
       "tooltip-more-actions": ""
@@ -2127,6 +2191,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "",
       "title-open-id-connect-discovery-url": ""
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": ""
   },
   "bookmarks-page": {
     "empty": {
@@ -2264,6 +2331,11 @@
     },
     "text-this-repository-is-read-only": ""
   },
+  "canvas": {
+    "not-found-display": {
+      "not-found": ""
+    }
+  },
   "carousel": {
     "close": "",
     "error": "",
@@ -2274,6 +2346,9 @@
     "inline-toast": {
       "success": "Скопировано"
     }
+  },
+  "close-button": {
+    "tooltip": ""
   },
   "combobox": {
     "async": {
@@ -2340,11 +2415,16 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "",
+      "body": "",
       "go-to-connections": ""
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "",
+      "editor-warning": "",
       "okay": ""
+    },
+    "not-found-datasource": {
+      "body": ""
     },
     "search": {
       "aria-label-search-all": "",
@@ -2479,6 +2559,11 @@
       "transform-required": "Выберите тип преобразования",
       "type-label": "Тип",
       "type-tooltip": "Тип преобразования, которое будет применено к исходным данным."
+    }
+  },
+  "dashbaord-scene": {
+    "interval-variable-form": {
+      "description-auto-option": ""
     }
   },
   "dashboard": {
@@ -2712,13 +2797,18 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
+        "multiple-elements": "",
+        "multiple-elements-delete-text": "",
+        "multiple-panels": "",
+        "multiple-panels-delete-text": "",
         "objects": "Объекты",
         "panel": "Панель",
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
         "tab": "Вкладка",
-        "tabs": "Вкладки"
+        "tabs": "Вкладки",
+        "variable": ""
       },
       "open": "Открыть область параметров",
       "row": {
@@ -2818,8 +2908,10 @@
         "copy-or-duplicate": "Копировать или дублировать",
         "delete": "Удалить",
         "duplicate": "Дублировать",
-        "grid": "Сетка",
-        "layout": "Расположение"
+        "group-layout": "",
+        "group-layout-disabled": "",
+        "panel-layout": "",
+        "panel-layout-disabled": ""
       }
     },
     "make-editable": {
@@ -2907,6 +2999,9 @@
       "title-row-options": ""
     },
     "rows-layout": {
+      "delete-row-text": "",
+      "delete-row-title": "",
+      "delete-row-yes": "",
       "description": "Сворачиваемые группы панелей с заголовками",
       "header-hidden-tooltip": "",
       "name": "Строки",
@@ -2981,6 +3076,9 @@
       "aria-label-template-variables": ""
     },
     "tabs-layout": {
+      "delete-tab-text": "",
+      "delete-tab-title": "",
+      "delete-tab-yes": "",
       "description": "Организуйте панели в горизонтальные вкладки",
       "name": "Вкладки",
       "tab": {
@@ -3114,7 +3212,6 @@
         "tooltip": "Общий доступ к дашборду"
       },
       "share-button": "Общий доступ",
-      "switch-old-dashboard": "Переключиться на старую страницу дашборда",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unmark-favorite": "Убрать из избранного"
     },
@@ -3192,6 +3289,9 @@
       "title-close": ""
     },
     "viz-panel": {
+      "delete-panel-text": "",
+      "delete-panel-title": "",
+      "delete-panel-yes": "",
       "options": {
         "configure-button-tooltip": "",
         "description": "Описание",
@@ -3250,6 +3350,7 @@
       "delete": "",
       "description-color-annotation-event-markers": "",
       "description-enabled-annotation-query-issued-every-dashboard": "",
+      "description-hidden": "",
       "label-color": "",
       "label-data-source": "",
       "label-enabled": "",
@@ -3262,6 +3363,7 @@
     },
     "annotation-settings-list": {
       "data-source": "",
+      "delete-aria-label": "",
       "new-query": "",
       "query-name": "",
       "tooltip-move-down": "",
@@ -3301,6 +3403,7 @@
       "placeholder-open-dashboard": ""
     },
     "dashboard-link-list": {
+      "delete-aria-label": "",
       "info": "",
       "new-link": "",
       "tooltip-copy-link": "",
@@ -3341,6 +3444,10 @@
     },
     "help-wizard": {
       "copy-to-clipboard": "",
+      "description-randomize-data": "",
+      "description-support-snapshot": "",
+      "download-dashboard": "",
+      "download-snapshot": "",
       "label-randomize-data": "",
       "label-support-snapshot": "",
       "label-template": "",
@@ -3348,7 +3455,9 @@
       "randomize-labels-label-labels": "",
       "randomize-string-values-label-string-values": "",
       "title-complete-git-hub-comment-clipboard": "",
-      "title-get-help-with-this-panel": ""
+      "title-get-help-with-this-panel": "",
+      "troubleshooting-docs": "",
+      "troubleshooting-request-help": ""
     },
     "inspect-data-tab": {
       "no-data-found": ""
@@ -3358,6 +3467,7 @@
     },
     "interval-variable-form": {
       "description-calculated-value-below-threshold": "",
+      "description-step-count": "",
       "interval-options": ""
     },
     "json-model-edit-view": {
@@ -3365,6 +3475,7 @@
         "cancel": ""
       },
       "render-save-button-and-error": {
+        "body-plugin-dashboard": "",
         "title-failed-to-save-dashboard": "",
         "title-plugin-dashboard": "",
         "title-someone-else-has-updated-this-dashboard": "",
@@ -3372,6 +3483,7 @@
       }
     },
     "name-already-exists-error": {
+      "body-name-already-exists": "",
       "title-name-already-exists": ""
     },
     "panel-data-alerting-tab-rendered": {
@@ -3382,7 +3494,8 @@
       "title-dashboard-not-saved": ""
     },
     "panel-data-queries-tab-rendered": {
-      "add-query": ""
+      "add-query": "",
+      "expression": ""
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "",
@@ -3393,7 +3506,12 @@
       "table-view-aria-label-toggletableview": "",
       "table-view-label-table-view": ""
     },
+    "panel-editor-renderer": {
+      "aria-label-open-options-pane": "",
+      "tooltip-open-options-pane": ""
+    },
     "panel-inspect-renderer": {
+      "body-panel-plugin-not-loaded": "",
       "title-panel-plugin-not-loaded": ""
     },
     "panel-viz-type-picker": {
@@ -3433,14 +3551,22 @@
         "title-failed-to-save-dashboard": ""
       }
     },
+    "save-dashboard-drawer": {
+      "tabs": {
+        "label-changes": "",
+        "label-details": ""
+      }
+    },
     "save-dashboard-form": {
       "aria-label-message": "",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": ""
       },
       "label-message": "",
       "placeholder-describe-changes-optional": "",
       "render-footer": {
+        "body-plugin-dashboard": "",
         "no-changes-to-save": "",
         "title-failed-to-save-dashboard": "",
         "title-plugin-dashboard": "",
@@ -3452,6 +3578,7 @@
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "",
       "save-refresh-label-update-default-refresh-value": "",
+      "save-timerange-description-current-range-default": "",
       "save-timerange-label-update-default-time-range": "",
       "save-variables-description-current-values-default": "",
       "save-variables-label-update-default-variable-values": ""
@@ -3489,6 +3616,7 @@
       "title-validation-failed": "Не удалось проверить название дашборда."
     },
     "scenes-new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "",
       "new-alert-rule": "",
       "title-no-alerting-capable-query-found": ""
     },
@@ -3530,13 +3658,19 @@
       "aria-label-variable-editor-form": "",
       "back-to-list": "",
       "delete": "",
+      "description": "",
       "description-optional-display-name": "",
       "description-template-variable-characters": "",
       "general": "",
+      "label": "",
+      "name": "",
+      "open-editor": "",
+      "open-editor-tooltip": "",
       "placeholder-descriptive-text": "",
       "placeholder-label-name": "",
       "placeholder-variable-name": "",
-      "text-running-query": ""
+      "text-running-query": "",
+      "type": ""
     },
     "variable-editor-list": {
       "definition": "",
@@ -3549,9 +3683,10 @@
       "tooltip-remove-variable": ""
     },
     "variable-hide-select": {
-      "label-show-on-dashboard": ""
+      "label": ""
     },
     "variable-usages-button": {
+      "title-show-usages": "",
       "tooltip-show-usages": ""
     },
     "variable-values-preview": {
@@ -3566,6 +3701,7 @@
       "tooltip-reset-version": ""
     },
     "version-history-table": {
+      "aria-label-toggle-selection": "",
       "date": "",
       "notes": "",
       "restore": "",
@@ -3580,9 +3716,16 @@
       "aria-label-change-visualization": "",
       "tooltip-click-to-change-visualization": ""
     },
+    "viz-and-data-pane": {
+      "aria-label-open-query-pane": "",
+      "tooltip-open-query-pane": ""
+    },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": ""
     }
+  },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": ""
   },
   "dashboard-settings": {
     "annotations": {
@@ -4313,10 +4456,13 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Очистить папки"
+    "clear-folder-button": "Очистить папки",
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "folder-picker": {
     "create-instructions": "Чтобы создать новую папку, нажмите Enter.",
+    "input-placeholder": "",
     "loading": "Загрузка папок..."
   },
   "folder-repo": {
@@ -4325,18 +4471,25 @@
   "forgot-password": {
     "back-button": "Назад на страницу входа",
     "change-password": {
+      "confirm-label": "",
+      "default-password-alert": "",
+      "new-password-label": "",
       "skip-button": "Пропустить",
       "submit-button": "Отправить"
     },
     "contact-admin": "Забыли имя пользователя или адрес электронной почты? Обратитесь к администратору Grafana.",
     "email-sent": "На ваш адрес электронной почты отправлена ссылка для сброса пароля. Вы должны получить ее в ближайшее время.",
     "reset-password-header": "Сброс пароля",
-    "send-email-button": "Отправить письмо для сброса"
+    "send-email-button": "Отправить письмо для сброса",
+    "user-field-description": "",
+    "user-field-label": "",
+    "user-field-placeholder": ""
   },
   "form-prompt": {
     "continue-button": "Продолжить редактирование",
     "description": "Внесенные вами изменения не могут быть сохранены.",
-    "discard-button": "Отменить несохраненные изменения"
+    "discard-button": "Отменить несохраненные изменения",
+    "title": ""
   },
   "frontendtests": {
     "test-key": ""
@@ -4606,6 +4759,7 @@
       "cell-filter-on": "Фильтровать по значению",
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
+      "cell-inspect-tooltip": "",
       "copy": "Копировать в буфер обмена",
       "count": "",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}  <5></5>",
@@ -4615,8 +4769,10 @@
       "filter-popup-cancel": "Отмена",
       "filter-popup-clear": "Очистить фильтр",
       "filter-popup-heading": "Фильтр по значениям:",
+      "filter-popup-input-placeholder": "",
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
+      "inspect-menu-label": "",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
     },
@@ -4757,6 +4913,16 @@
       "placeholder-password": "",
       "placeholder-username": "",
       "sign-up": ""
+    }
+  },
+  "layers": {
+    "layer-drag-drop-list": {
+      "draggable-aria-label": "",
+      "duplicate-tooltip": "",
+      "remove-tooltip": ""
+    },
+    "layer-name": {
+      "edit-layer-title": ""
     }
   },
   "ldap-drawer": {
@@ -5019,10 +5185,10 @@
       "email-placeholder": "адрес электронной почты",
       "email-required": "Введите адрес электронной почты",
       "name-label": "Имя",
-      "name-placeholder": "имя",
       "password-label": "Пароль",
       "password-placeholder": "пароль",
       "password-required": "Введите пароль",
+      "passwordless-username-label": "",
       "submit-label": "Войти",
       "submit-loading-label": "Вход...",
       "username-label": "Адрес электронной почты или имя пользователя",
@@ -5108,15 +5274,25 @@
     "logs-controls": {
       "deduplication": "",
       "disable-highlighting": "",
+      "disable-prettify-json": "",
       "display-level": "",
       "display-level-all": "",
+      "download": "",
+      "download-logs": {
+        "csv": "",
+        "json": "",
+        "txt": ""
+      },
       "enable-highlighting": "",
       "hide-timestamps": "",
+      "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
+      "prettify-json": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
+      "show-unique-labels": "",
       "unwrap-lines": "",
       "wrap-lines": ""
     },
@@ -5277,7 +5453,11 @@
     },
     "onprem": {
       "cancel-snapshot-error-title": "Ошибка при отмене создания снимка",
+      "create-snapshot-error-duplicate-resource-type": "",
+      "create-snapshot-error-empty-resource-types": "",
+      "create-snapshot-error-missing-dependency": "",
       "create-snapshot-error-title": "Ошибка при создании снимка",
+      "create-snapshot-error-unknown-resource-type": "",
       "disconnect-error-title": "Ошибка отключения",
       "error-see-server-logs": "Для получения более подробной информации см. журналы сервера Grafana",
       "get-session-error-title": "Ошибка при загрузке конфигурации переноса",
@@ -5374,6 +5554,7 @@
       "errored-resource-count": "Ошибки",
       "page-loading": "Загрузка…",
       "rebuild-snapshot": "Повторно создать снимок",
+      "show-errors": "",
       "snapshot-date": "Метка времени снимка",
       "snapshot-not-created": "Еще не создан",
       "start-migration": "Создать снимок",
@@ -5383,7 +5564,7 @@
       "upload-migration": "Загрузить снимок"
     },
     "support-types-disclosure": {
-      "text": "В стек Grafana Cloud переносятся дашборды, папки и основные источники данных. <2>Подробнее о переносе других параметров.</2>"
+      "text": ""
     },
     "token-status": {
       "active": "Токен создан и активен",
@@ -5693,7 +5874,7 @@
       "title": "Сцены"
     },
     "search": {
-      "placeholderCommandPalette": "Поиск или переход к..."
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Поиск по дашбордам"
@@ -5760,6 +5941,12 @@
     }
   },
   "navigation": {
+    "breadcrumbs": {
+      "aria-label": ""
+    },
+    "help": {
+      "aria-label": ""
+    },
     "invite-user": {
       "invite-button": "Пригласить",
       "invite-tooltip": "Пригласить нового члена"
@@ -5778,12 +5965,26 @@
       "open": "Открыть меню",
       "undock": "Открепить меню"
     },
+    "megamenu-item": {
+      "collapse-aria-label": "",
+      "expand-aria-label": ""
+    },
+    "org-switcher": {
+      "aria-label": ""
+    },
+    "profile": {
+      "aria-label": ""
+    },
+    "quick-add": {
+      "aria-label": ""
+    },
     "rss-button": "Последние записи в блоге"
   },
   "news": {
     "drawer": {
-      "close": "Закрыть выдвижную панель"
+      "close": ""
     },
+    "link-title": "",
     "title": "Последние записи в блоге"
   },
   "notifications": {
@@ -5808,6 +6009,17 @@
       "error": "Поставщик услуг входа отклонил запрос на вход"
     }
   },
+  "options-ui": {
+    "color": {
+      "clear-tooltip": ""
+    },
+    "field-color": {
+      "color-by-label": ""
+    },
+    "units": {
+      "clear-tooltip": ""
+    }
+  },
   "org": {
     "new-org-page": {
       "create": "",
@@ -5827,6 +6039,14 @@
       "placeholder-optional": "",
       "role": "",
       "submit": ""
+    }
+  },
+  "org-picker": {
+    "select-placeholder": ""
+  },
+  "page": {
+    "editable-title": {
+      "edit-tooltip": ""
     }
   },
   "panel": {
@@ -5876,7 +6096,10 @@
     "unsupported-layout": "Неподдерживаемый макет"
   },
   "panel-type-filter": {
-    "clear-button": "Очистить типы"
+    "clear-button": "Очистить типы",
+    "select-aria-label": "",
+    "select-no-options": "",
+    "select-placeholder": ""
   },
   "playlist": {
     "start-modal": {
@@ -6085,6 +6308,7 @@
     },
     "plugin-help": {
       "error": "Ошибка при загрузке справки.",
+      "loading": "",
       "not-found": "Справка по запросу не найдена."
     },
     "plugin-installed-badge": {
@@ -6129,6 +6353,7 @@
       "strong-password-validation-register": "Пароль не соответствует политике надежных паролей"
     },
     "change-theme": "Изменить тему",
+    "enable-kiosk-mode": "",
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -6546,6 +6771,7 @@
       "email-share-type-option-label": "Только указанные пользователи",
       "pause-sharing-dashboard-label": "Приостановить общий доступ к дашборду",
       "public-share-type-option-label": "Любой, у кого есть ссылка",
+      "revoke-body": "",
       "revoke-public-URL-button": "Отозвать общедоступный URL-адрес",
       "revoke-public-URL-button-title": "Отозвать общедоступный URL-адрес",
       "settings-title": "Параметры"
@@ -6764,6 +6990,7 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
+      "replace-query-from-library": "",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -6852,9 +7079,13 @@
       "clear-button": "Очистить всё",
       "tooltip": "Теперь вы можете выбрать параметр «Нет основных ролей» и добавить разрешения в соответствии со своими потребностями. Дополнительную информацию можно найти в <1>нашей документации</1>."
     },
+    "menu-aria-label": "",
+    "menu-group-option-aria-label": "",
+    "menu-option-aria-label": "",
     "sub-menu": {
       "clear-button": "Очистить"
     },
+    "sub-menu-aria-label": "",
     "title": {
       "description": "Назначайте роли пользователям, чтобы обеспечить детальное управление доступом к функциям и ресурсам Grafana. Подробнее в нашей <2>документации</2>."
     }
@@ -6862,10 +7093,13 @@
   "role-picker-drawer": {
     "basic-roles": {
       "label": "Основные роли"
-    }
+    },
+    "user-count": ""
   },
   "route-error": {
     "description": "Вероятно, Grafana была обновлена. Попробуйте перезагрузить страницу.",
+    "error-title": "",
+    "error-unexpected-title": "",
     "reload-button": "Перезагрузить",
     "title": "Не удалось найти файл приложения"
   },
@@ -6981,6 +7215,10 @@
     "role": {
       "label": "Роль"
     }
+  },
+  "service-account-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "service-accounts": {
     "empty-state": {
@@ -7236,8 +7474,11 @@
     "fields": {
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",
-      "locale-label": "Язык",
-      "locale-placeholder": "Выбрать язык",
+      "language-preference-label": "",
+      "language-preference-placeholder": "",
+      "locale-preference-description": "",
+      "locale-preference-label": "",
+      "locale-preference-placeholder": "",
       "theme-description": "Нравятся экспериментальные темы? Поделитесь с нами, что вы хотели бы видеть, <2>здесь.</2>",
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
@@ -7250,10 +7491,19 @@
   },
   "sign-up": {
     "back-button": "Назад на страницу входа",
+    "confirm-password-label": "",
+    "email-label": "",
+    "org-name-label": "",
+    "password-label": "",
     "submit-button": "Отправить",
+    "user-name-label": "",
+    "user-name-placeholder": "",
+    "verification-code-label": "",
     "verify": {
       "back-button": "Назад на страницу входа",
       "complete-button": "Завершить регистрацию",
+      "email-description": "",
+      "email-label": "",
       "header": "Подтверждение адреса электронной почты",
       "info": "На ваш адрес электронной почты отправлена ссылка для подтверждения. Вы должны получить ее в ближайшее время.",
       "send-button": "Отправить письмо для подтверждения"
@@ -7311,6 +7561,9 @@
     "url-column-header": "URL-адрес снимка",
     "view-button": "Просмотр"
   },
+  "sort-picker": {
+    "select-aria-label": ""
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": ""
@@ -7338,7 +7591,13 @@
     "clear-button": "Очистить теги",
     "loading": "Загрузка…",
     "no-tags": "Теги не найдены",
-    "placeholder": "Фильтровать по тегам"
+    "placeholder": "Фильтровать по тегам",
+    "select-aria-label": "",
+    "tag-option-label": ""
+  },
+  "team-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "teams": {
     "create-team": {
@@ -7792,6 +8051,10 @@
     "role-column": "Роль",
     "select-org-button": "Выбрать тип организации",
     "title": "Организации"
+  },
+  "user-picker": {
+    "select-aria-label": "",
+    "select-placeholder": ""
   },
   "user-profile": {
     "fields": {

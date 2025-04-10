@@ -24,9 +24,9 @@ Keycloak OAuth2 authentication allows users to log in to Grafana using their Key
 
 Refer to [Generic OAuth authentication](../generic-oauth/) for extra configuration options available for this provider.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
@@ -59,10 +59,10 @@ To configure the `kc_idp_hint` parameter for Keycloak, you need to change the `a
 auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth?kc_idp_hint=google
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
 It is useful as a fallback or if the user has more than 150 group memberships.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Keycloak configuration
 
@@ -108,9 +108,9 @@ viewer
 
 ## Teamsync
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 [Teamsync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 

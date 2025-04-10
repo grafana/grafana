@@ -126,7 +126,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({ isNew: true });
+    const newTab = tab ?? new TabItem({});
     const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
     const newTitle = generateUniqueTitle(newTab.state.title, existingNames);
     if (newTitle !== newTab.state.title) {
@@ -152,10 +152,15 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.tabs.length === 1;
+  }
+
   public removeTab(tabToRemove: TabItem) {
     // When removing last tab replace ourselves with the inner tab layout
-    if (this.state.tabs.length === 1) {
+    if (this.shouldUngroup()) {
       ungroupLayout(this, tabToRemove.state.layout);
+      return;
     }
 
     const currentTab = this.getCurrentTab();
