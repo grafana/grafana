@@ -4,9 +4,9 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
-import { Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
+import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
@@ -76,11 +76,10 @@ export default function Browse() {
 
   const subTitle = (
     <div>
-      Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
-      <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
-        Connections
-      </a>
-      .
+      <Trans i18nKey="plugins.browse.subtitle">
+        Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
+        <TextLink href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>Connections</TextLink>.
+      </Trans>
     </div>
   );
 

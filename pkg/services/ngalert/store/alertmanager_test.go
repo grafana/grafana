@@ -403,7 +403,7 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 		var lastID int64
 		for _, config := range configs {
 			// Check that the returned configurations are the ones that we're expecting.
-			require.NotEqual(tt, config.AlertConfiguration.AlertmanagerConfiguration, unmarkedConfig)
+			require.NotEqual(tt, config.AlertmanagerConfiguration, unmarkedConfig)
 
 			// Configs should only belong to the queried org.
 			require.Equal(tt, org, config.OrgID)
