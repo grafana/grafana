@@ -33,33 +33,34 @@ The annotations list shows a list of available annotations you can use to view a
 
 ### Annotation query
 
-The following options control the source query for the list of annotations.
+The following options control the source query for the list of annotations:
+
+<!-- prettier-ignore-start -->
+
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| [Query Filter](#query-filter) | Show or hide which user created the annotation.  |
+| [Time Range](#time-range) | Show or hide the time the annotation creation time. |
+| Tags | Filter the annotations by tags. You can add multiple tags in order to refine the list. Optionally, leave the tag list empty and filter in view mode by selecting tags that are listed as part of the results on the panel itself. |
+| Limit | Limit the number of results returned. |
+
+<!-- prettier-ignore-end -->
 
 #### Query Filter
 
-Use the query filter to create a list of annotations from all dashboards in your organization or the current dashboard in which this panel is located. It has the following options:
+Use the **Query filter** option to create a list of annotations from all dashboards in your organization or the current dashboard in which this panel is located.
+Choose from:
 
-- All dashboards - List annotations from all dashboards in the current organization.
-- This dashboard - Limit the list to the annotations on the current dashboard.
+- **All dashboards** - List annotations from all dashboards in the current organization.
+- **This dashboard** - Limit the list to the annotations on the current dashboard.
 
 #### Time Range
 
-Use the time range option to specify whether the list should be limited to the current time range. It has the following options:
+Use the time range option to specify whether the list should be limited to the current time range.
+Choose from:
 
-- None - no time range limit for the annotations query.
-- This dashboard - Limit the list to the time range of the dashboard where the annotations list is available.
-
-#### Tags
-
-Use the tags option to filter the annotations by tags. You can add multiple tags in order to refine the list.
-
-{{% admonition type="note" %}}
-Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
-{{% /admonition %}}
-
-#### Limit
-
-Use the limit option to limit the number of results returned.
+- **None** - No time range limit for the annotations query.
+- **This dashboard** - Limit the list to the time range of the dashboard where the annotations list is available.
 
 ### Display
 
