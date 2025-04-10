@@ -93,7 +93,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
-  console.log('currentStepConfig', completedSteps);
   const isStepSuccess = stepStatusInfo.status === 'success';
 
   // A different repository is marked with instance target -- nothing will succeed

@@ -17,10 +17,10 @@ export interface SynchronizeStepProps {
 export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register } = useFormContext<WizardFormData>();
-  const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
   const [job, setJob] = useState<Job>();
 
   const startSynchronization = async () => {
+    const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
     if (!repoName) {
       onStepStatusUpdate({
         status: 'error',
