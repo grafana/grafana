@@ -167,9 +167,8 @@ func RegisterAPIService(
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		return nil, nil
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
