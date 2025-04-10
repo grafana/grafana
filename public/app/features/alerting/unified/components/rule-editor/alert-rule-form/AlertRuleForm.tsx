@@ -5,8 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -42,7 +41,6 @@ import {
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
-import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
@@ -92,7 +90,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   const { redirectToDetailsPage } = useRedirectToDetailsPage();
   const [showEditYaml, setShowEditYaml] = useState(false);
 
-  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
@@ -101,8 +98,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
   const uidFromParams = routeParams.id || '';
-
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     // If we have an existing AND a prefill, then we're coming from the restore dialog
@@ -235,16 +230,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     }
   };
 
-  const deleteRule = async () => {
-    if (existing) {
-      const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
-      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-
-      await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
-      locationService.replace(returnTo ?? '/alerting/list');
-    }
-  };
-
   const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
     trackAlertRuleFormError({
       grafana_version: config.buildInfo.version,
@@ -266,62 +251,14 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     locationService.getHistory().goBack();
   };
 
-  const actionButtons = (
-    <Stack justifyContent="flex-end" alignItems="center">
-      {existing && (
-        <Button
-          data-testid="save-rule"
-          variant="primary"
-          type="button"
-          size="sm"
-          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-          Save rule
-        </Button>
-      )}
-      <Button
-        data-testid="save-rule-and-exit"
-        variant="primary"
-        type="button"
-        size="sm"
-        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-        disabled={isSubmitting}
-      >
-        {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-        Save rule and exit
-      </Button>
-      <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-      </Button>
-      {existing ? (
-        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
-          <Trans i18nKey="alerting.alert-rule-form.action-buttons.delete">Delete</Trans>
-        </Button>
-      ) : null}
-      {existing && isCortexLokiOrRecordingRule(watch) && (
-        <Button
-          variant="secondary"
-          type="button"
-          onClick={() => setShowEditYaml(true)}
-          disabled={isSubmitting}
-          size="sm"
-        >
-          <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
-        </Button>
-      )}
-    </Stack>
-  );
-
-  const isPaused = rulerRuleType.grafana.alertingRule(existing?.rule) && isPausedRule(existing?.rule);
-
   if (!type) {
     return null;
   }
+
+  const isPaused = rulerRuleType.grafana.rule(existing?.rule) && isPausedRule(existing?.rule);
+
   return (
     <FormProvider {...formAPI}>
-      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isManualRestore && (
@@ -361,20 +298,34 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 {!isRecordingRuleByType(type) && <AnnotationsStep />}
               </>
             )}
+
+            {/* actions */}
+            <Stack direction="row" alignItems="center">
+              <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+              </Button>
+
+              {existing && isCortexLokiOrRecordingRule(watch) && (
+                <Button variant="secondary" type="button" onClick={() => setShowEditYaml(true)} disabled={isSubmitting}>
+                  <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
+                </Button>
+              )}
+
+              <Button
+                data-testid="save-rule"
+                variant="primary"
+                type="button"
+                onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+                disabled={isSubmitting}
+              >
+                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save rule</Trans>
+              </Button>
+            </Stack>
           </Stack>
         </div>
       </form>
-      {showDeleteModal ? (
-        <ConfirmModal
-          isOpen={true}
-          title={t('alerting.alert-rule-form.title-delete-rule', 'Delete rule')}
-          body="Deleting this rule will permanently remove it. Are you sure you want to delete this rule?"
-          confirmText="Yes, delete"
-          icon="exclamation-triangle"
-          onConfirm={deleteRule}
-          onDismiss={() => setShowDeleteModal(false)}
-        />
-      ) : null}
+
       {showEditYaml ? (
         isGrafanaManagedRuleByType(type) ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />

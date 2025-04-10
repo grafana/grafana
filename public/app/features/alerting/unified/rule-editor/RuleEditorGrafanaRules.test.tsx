@@ -73,7 +73,7 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
     const requests = await capture;
@@ -133,7 +133,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     expect(ui.manualRestoreBanner.get()).toBeInTheDocument(); // check that manual restore banner is shown
 
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
     const requests = await capture;
