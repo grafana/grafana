@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -41,6 +42,7 @@ type Service struct {
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 	sandbox            sandbox.Sandbox
+	advisor            advisor.AdvisorStats
 
 	log log.Logger
 
@@ -61,6 +63,7 @@ func ProvideService(
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 	sandbox sandbox.Sandbox,
+	advisor advisor.AdvisorStats,
 ) *Service {
 	s := &Service{
 		cfg:                cfg,
@@ -73,9 +76,9 @@ func ProvideService(
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
 		sandbox:            sandbox,
-
-		startTime: time.Now(),
-		log:       log.New("infra.usagestats.collector"),
+		advisor:            advisor,
+		startTime:          time.Now(),
+		log:                log.New("infra.usagestats.collector"),
 	}
 
 	collectors := []usagestats.MetricsFunc{
@@ -214,6 +217,15 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
+
+	report, err := s.advisor.ReportSummary(ctx)
+	if err != nil {
+		s.log.Error("Failed to get advisor usage stats", "error", err)
+	} else {
+		m["stats.plugins.advisor.outdated_plugins"] = report.PluginsOutdated
+		m["stats.plugins.advisor.deprecated_plugins"] = report.PluginsDeprecated
+		m["stats.plugins.advisor.unhealthy_datasources"] = report.DatasourcesUnhealthy
+	}
 
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {

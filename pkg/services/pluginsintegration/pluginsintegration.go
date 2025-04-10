@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
@@ -129,6 +130,8 @@ var WireSet = wire.NewSet(
 	pluginassets.ProvideService,
 	plugininstaller.ProvidePreinstall,
 	wire.Bind(new(plugininstaller.Preinstall), new(*plugininstaller.PreinstallImpl)),
+	advisor.ProvideService,
+	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
