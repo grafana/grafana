@@ -8,8 +8,8 @@ import { config } from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { FolderInfo, PermissionLevelString } from 'app/types';
 import { DashboardSearchItemType } from 'app/features/search/types';
+import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
