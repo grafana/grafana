@@ -1,4 +1,4 @@
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -7,6 +7,7 @@ import { StoreState } from 'app/types';
 
 import Contact from './Contact';
 import { ContactService } from './Contact.service';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
   return (
@@ -44,17 +45,18 @@ describe('Contact widget', () => {
   });
 
   it('not render contact when data fetch failed', async () => {
-    jest.spyOn(ContactService, 'getContact').mockImplementationOnce(() => {
-      throw Error('test');
-    });
+    // We expected an error to be logged if the api call fails
+    jest.spyOn(logger, 'error').mockImplementation();
 
-    try {
+    jest.spyOn(ContactService, 'getContact').mockReturnValueOnce(Promise.reject());
+
+    render(
       <MockWrapper>
         <Contact />
-      </MockWrapper>;
-    } catch (e) {}
+      </MockWrapper>
+    );
 
-    expect(screen.queryByTestId('contact-name')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contact-email-icon')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('contact-name')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId('contact-email-icon')).not.toBeInTheDocument());
   });
 });
