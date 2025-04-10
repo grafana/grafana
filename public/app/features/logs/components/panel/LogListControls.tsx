@@ -42,9 +42,12 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     dedupStrategy,
     downloadLogs,
     filterLevels,
+    forceEscape,
+    hasUnescapedContent,
     prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setForceEscape,
     setPrettifyJSON,
     setShowTime,
     setShowUniqueLabels,
@@ -75,6 +78,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
       })
     );
   }, [eventBus]);
+
+  const onForceEscapeClick = useCallback(() => {
+    reportInteraction('logs_log_list_controls_force_escape_clicked');
+    setForceEscape(!forceEscape);
+  }, [forceEscape, setForceEscape]);
 
   const onFilterLevelClick = useCallback(
     (level?: LogLevel) => {
@@ -306,6 +314,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                     syntaxHighlighting
                       ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
                       : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+                  }
+                  size="lg"
+                />
+              )}
+              {hasUnescapedContent && (
+                <IconButton
+                  name="enter"
+                  aria-pressed={forceEscape}
+                  className={forceEscape ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onForceEscapeClick}
+                  tooltip={
+                    forceEscape
+                      ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                      : t(
+                          'logs.logs-controls.escape-newlines',
+                          'Fix incorrectly escaped newline and tab sequences in log lines'
+                        )
                   }
                   size="lg"
                 />
