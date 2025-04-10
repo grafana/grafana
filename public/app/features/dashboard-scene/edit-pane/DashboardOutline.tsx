@@ -14,6 +14,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
+import { useOutlineRename } from './useOutlineRename';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -50,7 +51,7 @@ function DashboardOutlineNode({
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const elementCollapsed = editableElement.getCollapsedState?.();
-  const [isRenaming, setIsRenaming] = useState(false);
+  const outlineRename = useOutlineRename(editableElement);
 
   const onNameClicked = (evt: React.PointerEvent) => {
     // Only select via clicking outline never deselect
@@ -69,21 +70,6 @@ function DashboardOutlineNode({
       editableElement.setCollapsedState?.(!isCollapsed);
     }
   };
-
-  const onNameDoubleClicked = (evt: React.MouseEvent) => {
-    if (!editableElement.onChangeName) {
-      return;
-    }
-
-    setIsRenaming(true);
-  };
-
-  const selectTextOnMount = useMemo(() => {
-    return (ref: HTMLInputElement | null) => {
-      ref?.focus();
-      ref?.select();
-    };
-  }, []);
 
   // Sync canvas element expanded state with outline element
   useEffect(() => {
@@ -104,22 +90,18 @@ function DashboardOutlineNode({
           role="button"
           className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
           onPointerDown={onNameClicked}
-          onDoubleClick={onNameDoubleClicked}
+          onDoubleClick={outlineRename.onNameDoubleClicked}
         >
           <Icon size="sm" name={elementInfo.icon} />
-          {isRenaming ? (
+          {outlineRename.isRenaming ? (
             <input
-              ref={selectTextOnMount}
+              ref={outlineRename.renameInputRef}
               type="text"
               value={elementInfo.instanceName}
               className={styles.outlineInput}
-              onChange={(evt) => editableElement.onChangeName!(evt.target.value)}
-              onBlur={() => setIsRenaming(false)}
-              onKeyDown={(evt) => {
-                if (evt.key === 'Enter') {
-                  setIsRenaming(false);
-                }
-              }}
+              onChange={outlineRename.onChangeName}
+              onBlur={outlineRename.onInputBlur}
+              onKeyDown={outlineRename.onInputKeyDown}
             />
           ) : (
             <>

@@ -68,7 +68,7 @@ export interface EditableDashboardElement {
   /**
    * Used to change name from outline
    */
-  onChangeName?(name: string): void;
+  onChangeName?(name: string): { errorMessage?: string } | void;
 }
 
 export interface EditableDashboardElementInfo {
