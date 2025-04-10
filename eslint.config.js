@@ -335,6 +335,7 @@ module.exports = [
     },
   },
   // @PERCONA
+  // don't prefer emotion object syntax within percona code to prevent significat refactoring effort
   {
     name: 'percona/pmm',
     files: ['public/app/percona/**/*.{ts,tsx}', 'public/app/plugins/panel/pmm-*/**/*.{ts,tsx}'],
