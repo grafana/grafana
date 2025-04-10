@@ -91,7 +91,9 @@ function useFilterRulesThatMightBeOverwritten(
 
           if (rules) {
             const folderWithParentTitle = Object.keys(rules)[0];
-            results[folderWithParentTitle] = rules[folderWithParentTitle] || [];
+            if (folderWithParentTitle) {
+              results[folderWithParentTitle] = rules[folderWithParentTitle] || [];
+            }
           }
         })
       );
