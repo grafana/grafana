@@ -347,6 +347,8 @@ export const LogListContextProvider = ({
         displayedFields: logListState.displayedFields,
         downloadLogs,
         filterLevels: logListState.filterLevels,
+        forceEscape: logListState.forceEscape,
+        hasUnescapedContent: logListState.hasUnescapedContent,
         getRowContextQuery,
         logSupportsContext,
         onLogLineHover,

@@ -86,8 +86,17 @@ export const ControlledLogRows = ({
 };
 
 const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
-  const { app, dedupStrategy, filterLevels, prettifyJSON, sortOrder, showTime, showUniqueLabels, wrapLogMessage } =
-    useLogListContext();
+  const {
+    app,
+    dedupStrategy,
+    filterLevels,
+    forceEscape,
+    prettifyJSON,
+    sortOrder,
+    showTime,
+    showUniqueLabels,
+    wrapLogMessage,
+  } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -127,6 +136,7 @@ const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range,
             app={app}
             dedupStrategy={dedupStrategy}
             deduplicatedRows={filteredLogs}
+            forceEscape={forceEscape}
             logRows={filteredLogs}
             logsSortOrder={sortOrder}
             scrollElement={scrollElementRef.current}
