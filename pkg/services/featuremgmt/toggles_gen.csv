@@ -208,7 +208,7 @@ exploreMetricsUseExternalAppPlugin,GA,@grafana/observability-metrics,false,true,
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
-grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
+grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true

@@ -1586,11 +1586,12 @@ var (
 		{
 			Name:              "grafanaconThemes",
 			Description:       "Enables the temporary themes for GrafanaCon",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+			Expression:        "true",
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
