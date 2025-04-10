@@ -7,10 +7,7 @@ import PromQlLanguageProvider from '../../language_provider';
 import { buildSelector } from './selectorBuilder';
 import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
-export const useMetricsLabelsValues = (
-  timeRange: TimeRange,
-  languageProvider: PromQlLanguageProvider,
-) => {
+export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
   const [initTrigger, setInitTrigger] = useState(Date.now());
 
@@ -43,6 +40,7 @@ export const useMetricsLabelsValues = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
+  //Handler for error processing - logs the error and updates UI state
   const handleError = useCallback((e: unknown, msg: string) => {
     console.error(e);
     if (e instanceof Error) {
@@ -62,13 +60,15 @@ export const useMetricsLabelsValues = (
     [languageProvider.metricsMetadata]
   );
 
-  // Helper function to build a selector and convert empty selectors to undefined
+  // Builds a safe selector string from metric name and label values
+  // Converts EMPTY_SELECTOR to undefined as some API calls need that
   const buildSafeSelector = useCallback((metric: string, labelValues: Record<string, string[]>) => {
     const selector = buildSelector(metric, labelValues);
     return selector === EMPTY_SELECTOR ? undefined : selector;
   }, []);
 
-  // Helper function to load and filter label keys from localStorage
+  // Loads label keys from localStorage and filters them against available labels
+  // This ensures we only show label keys that are actually available in the current context
   const loadSelectedLabelsFromStorage = useCallback(
     (availableLabelKeys: string[]) => {
       try {
@@ -83,7 +83,8 @@ export const useMetricsLabelsValues = (
     [handleError]
   );
 
-  // Helper function to fetch metrics
+  // Fetches metrics that match the given selector
+  // Transforms raw metric strings into Metric objects with metadata
   const fetchMetrics = useCallback(
     async (safeSelector?: string) => {
       try {
@@ -106,13 +107,15 @@ export const useMetricsLabelsValues = (
     [getMetricDetails, handleError, languageProvider, seriesLimit]
   );
 
+  // Fetches label keys based on an optional selector
+  // Uses different APIs depending on whether a selector is provided
   const fetchLabelKeys = useCallback(
     async (safeSelector?: string) => {
       setStatus('Fetching labels...');
       try {
         if (safeSelector) {
           return Object.keys(
-            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, /*selector*/ safeSelector, seriesLimit)
+            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, seriesLimit)
           );
         } else {
           return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, seriesLimit)) || [];
@@ -125,6 +128,7 @@ export const useMetricsLabelsValues = (
     [handleError, languageProvider, seriesLimit]
   );
 
+  // Fetches values for multiple label keys and also prepares selected values
   const fetchLabelValues = useCallback(
     async (labelKeys: string[], safeSelector?: string) => {
       const transformedLabelValues: Record<string, string[]> = {};
@@ -344,5 +348,11 @@ export const useMetricsLabelsValues = (
     handleSelectedLabelValueChange,
     handleValidation,
     handleClear,
+    // Helper functions - not part of the public API
+    buildSafeSelector,
+    loadSelectedLabelsFromStorage,
+    fetchMetrics,
+    fetchLabelKeys,
+    fetchLabelValues,
   };
 };
