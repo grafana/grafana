@@ -72,7 +72,8 @@ export const LogLabels = memo(
               onDisplayMaxToggle?.(true);
             }}
           >
-            <Icon name="plus" size="xs" />{allLabels.length - displayLabels.length}
+            <Icon name="plus" size="xs" />
+            {allLabels.length - displayLabels.length}
           </Button>
         )}
         {displayAll === true && (
