@@ -103,6 +103,8 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
 
 		SqlCommandErrorCount: newExprMetrics(metricsSubSystem).SqlCommandErrorCount,
+
+		SqlCommandCellCountSummary: newExprMetrics(metricsSubSystem).SqlCommandCellCountSummary,
 	}
 
 	if reg != nil {
