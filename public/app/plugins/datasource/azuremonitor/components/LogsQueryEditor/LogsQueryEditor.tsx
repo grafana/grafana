@@ -90,20 +90,21 @@ const LogsQueryEditor = ({
   const [schema, setSchema] = useState<EngineSchema | undefined>();
 
   useEffect(() => {
-    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
+    const resources = query.azureLogAnalytics?.resources;
+    if (resources) {
       const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
         const promises = [];
         for (const table of tables) {
           promises.push({
             ...table,
-            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(query, table.name),
+            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
           });
         }
 
         const tablesWithPlan = await Promise.all(promises);
         return tablesWithPlan;
       };
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]).then((schema) => {
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
         if (schema?.database?.tables) {
           fetchAllPlans(schema?.database?.tables).then(async (t) => {
             if (schema.database?.tables) {
@@ -114,12 +115,7 @@ const LogsQueryEditor = ({
         }
       });
     }
-  }, [
-    query.azureLogAnalytics?.resources,
-    datasource.azureLogAnalyticsDatasource,
-    datasource.azureMonitorDatasource,
-    query,
-  ]);
+  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource, datasource.azureMonitorDatasource]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {

@@ -277,11 +277,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     return undefined;
   }
 
-  async getWorkspaceTablePlan(query: AzureMonitorQuery, tableName: string): Promise<TablePlan> {
+  async getWorkspaceTablePlan(resources: string[], tableName: string): Promise<TablePlan> {
     let workspaceUri = '';
 
-    if (query.azureLogAnalytics?.resources) {
-      workspaceUri = query.azureLogAnalytics?.resources[0];
+    if (resources) {
+      workspaceUri = resources[0];
     }
 
     if (!workspaceUri) {
