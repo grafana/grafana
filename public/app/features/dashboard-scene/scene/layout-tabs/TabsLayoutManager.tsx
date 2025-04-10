@@ -1,4 +1,5 @@
 import {
+  sceneGraph,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -14,7 +15,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import { isClonedKey } from '../../utils/clone';
+import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../layout-rows/RowItemRepeaterBehavior';
@@ -125,7 +126,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    throw new Error('Method not implemented.');
+    return this.clone({
+      tabs: this.state.tabs.map((tab) => {
+        const key = joinCloneKeys(ancestorKey, tab.state.key!);
+
+        return tab.clone({
+          key,
+          layout: tab.state.layout.cloneLayout(key, isSource),
+        });
+      }),
+    });
   }
 
   public addNewTab(tab?: TabItem) {
@@ -274,7 +284,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const duplicateTitles = new Set<string | undefined>();
 
     this.state.tabs.forEach((tab) => {
-      const title = tab.state.title;
+      const title = sceneGraph.interpolate(tab, tab.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);
       if (count > 1) {

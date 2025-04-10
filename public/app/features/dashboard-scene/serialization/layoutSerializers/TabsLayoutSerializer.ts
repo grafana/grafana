@@ -36,6 +36,17 @@ export function serializeTab(tab: TabItem): TabsLayoutTabKind {
     tabKind.spec.conditionalRendering = conditionalRenderingRootGroup;
   }
 
+  if (tab.state.$behaviors) {
+    for (const behavior of tab.state.$behaviors) {
+      if (behavior instanceof TabItemRepeaterBehavior) {
+        if (tabKind.spec.repeat) {
+          throw new Error('Multiple repeaters are not supported');
+        }
+        tabKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
+      }
+    }
+  }
+
   return tabKind;
 }
 

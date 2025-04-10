@@ -1,4 +1,11 @@
-import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneGridItemLike,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { t } from 'app/core/internationalization';
 
@@ -8,7 +15,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { isClonedKey } from '../../utils/clone';
+import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -82,7 +89,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    throw new Error('Method not implemented.');
+    return this.clone({
+      rows: this.state.rows.map((row) => {
+        const key = joinCloneKeys(ancestorKey, row.state.key!);
+
+        return row.clone({
+          key,
+          layout: row.state.layout.cloneLayout(key, isSource),
+        });
+      }),
+    });
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -268,7 +284,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const duplicateTitles = new Set<string | undefined>();
 
     this.state.rows.forEach((row) => {
-      const title = row.state.title;
+      const title = sceneGraph.interpolate(row, row.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);
       if (count > 1 && title) {
