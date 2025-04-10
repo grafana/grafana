@@ -91,9 +91,29 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
+	k, err := read(ctx, namespace.String(), name, s)
+	if err != nil {
+		return nil, err
+	}
+
+	var keeper *secretv0alpha1.Keeper
+
+	keeper, err = k.toKubernetes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
+	}
+
+	if keeper != nil {
+		return keeper, nil
+	}
+
+	return nil, contracts.ErrKeeperNotFound
+}
+
+func read(ctx context.Context, namespace string, name string, s *keeperMetadataStorage) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
+		Namespace:   namespace,
 		Name:        name,
 	}
 	q, err := sqltemplate.Execute(sqlKeeperRead, req)
@@ -101,8 +121,10 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("read template %q: %w", q, err)
 	}
 
-	var keeper *secretv0alpha1.Keeper
+	var k *keeperDB
+
 	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+		// TODO LND Check QueryRowContext instead of Query
 		res, err := sess.Query(ctx, q, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
@@ -122,24 +144,16 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 			if err != nil {
 				return fmt.Errorf("failed to scan keeper row: %w", err)
 			}
+			k = row
 
-			keeper, err = row.toKubernetes()
-			if err != nil {
-				return fmt.Errorf("failed to convert to kubernetes object: %w", err)
-			}
 			return nil
 		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
-	if keeper != nil {
-		return keeper, nil
-	}
-
-	return nil, contracts.ErrKeeperNotFound
+	return k, nil
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
@@ -440,25 +454,13 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp := &keeperDB{Namespace: namespace, Name: name}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(kp)
-		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
-		}
-		if !found {
-			return contracts.ErrKeeperNotFound
-		}
-
-		return nil
-	})
+	kp, err := read(ctx, namespace, name, s)
 	if err != nil {
-		return "", nil, fmt.Errorf("db failure: %w", err)
+		return "", nil, err
 	}
 
 	keeperConfig := toProvider(kp.Type, kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
-
 	return kp.Type, keeperConfig, nil
 }
