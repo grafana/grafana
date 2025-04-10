@@ -202,6 +202,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
             )}
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}
+            required
           >
             <Input
               {...register('repository.title', {
@@ -211,7 +212,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 'provisioning.bootstrap-step.placeholder-my-repository-connection',
                 'My repository connection'
               )}
-              // Auto-focus the title field if it's the only available option
+              // Autofocus the title field if it's the only available option
               autoFocus={state.actions.length === 1 && state.actions[0].target === 'folder'}
             />
           </Field>

@@ -102,7 +102,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       switch (current.repository.type) {
         case 'github':
           const name = current.repository.url ?? 'github';
-          methods.setValue('repository.title', name.replace('https://github/', ''));
+          methods.setValue('repository.title', name.replace('https://github.com/', ''));
           break;
         case 'local':
           methods.setValue('repository.title', current.repository.path ?? 'local');
