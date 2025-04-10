@@ -1117,14 +1117,18 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744146547481",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-08 21:09:07.481769 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
@@ -1863,18 +1867,18 @@
     {
       "metadata": {
         "name": "logsPanelControls",
-        "resourceVersion": "1743772342343",
+        "resourceVersion": "1744209818391",
         "creationTimestamp": "2025-04-04T13:11:29Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-04-04 13:12:22.343052 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-04-09 14:43:38.391331 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
