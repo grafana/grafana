@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -66,17 +66,18 @@ function VariableList({ set }: { set: SceneVariableSet }) {
     <Stack direction="column" gap={0}>
       {variables.map((variable) => (
         <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>
+          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           <Text>${variable.state.name}</Text>
           <Stack direction="row" gap={1} alignItems="center">
             <Button variant="primary" size="sm" fill="outline">
-              Select
+              <Trans i18nKey="dashboard.edit-pane.variables.select-variable">Select</Trans>
             </Button>
           </Stack>
         </div>
       ))}
       <Box paddingBottom={1} display={'flex'}>
         <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddVariable}>
-          Add variable
+          <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
         </Button>
       </Box>
     </Stack>

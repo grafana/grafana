@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -47,7 +47,8 @@ function DashboardOutlineNode({
 
   const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
   const elementInfo = editableElement.getEditableElementInfo();
-  const instanceName = elementInfo.instanceName === '' ? '<empty title>' : elementInfo.instanceName;
+  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
+  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const elementCollapsed = editableElement.getCollapsedState?.();
 
   const onPointerDown = (evt: React.PointerEvent) => {
@@ -83,6 +84,7 @@ function DashboardOutlineNode({
         <Icon size="sm" name={elementInfo.icon} />
         <span>{instanceName}</span>
         {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
       </button>
 
@@ -98,8 +100,8 @@ function DashboardOutlineNode({
               />
             ))
           ) : (
-            <Text element="p" color="secondary">
-              <Trans i18nKey="dashboard.outline.tree.item.empty">(empty)</Trans>
+            <Text color="secondary">
+              <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
             </Text>
           )}
         </div>
