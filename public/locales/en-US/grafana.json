@@ -6467,7 +6467,6 @@
       "placeholder-interval-seconds": "60",
       "placeholder-local-path": "/path/to/repo",
       "placeholder-my-config": "My config",
-      "placeholder-path": "grafana/",
       "placeholder-select-repository-type": "Select repository type"
     },
     "config-form-github-collapse": {
@@ -6503,7 +6502,6 @@
       "label-path": "Path to subdirectory in repository",
       "label-repository-url": "GitHub repository URL",
       "placeholder-branch": "main",
-      "placeholder-github-path": "grafana/",
       "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
       "placeholder-github-url": "https://github.com/username/repo",
       "placeholder-local-path": "/path/to/repo"
