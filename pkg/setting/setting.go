@@ -570,7 +570,7 @@ type InstallPlugin struct {
 // AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
-	return !(cfg.DisableLoginForm || cfg.DisableLogin)
+	return !cfg.DisableLoginForm && !cfg.DisableLogin
 }
 
 type CommandLineArgs struct {

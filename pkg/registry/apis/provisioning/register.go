@@ -125,6 +125,7 @@ func NewAPIBuilder(
 
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	return &APIBuilder{
 		urlProvider:         urlProvider,
@@ -135,10 +136,10 @@ func NewAPIBuilder(
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		render:              render,
 		clonedir:            clonedir,
-		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
@@ -518,7 +519,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -536,13 +537,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
+			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
-				b.GetClient(),
-				b.parsers,
 				b.clients,
-				b.resourceLister,
+				b.repositoryResources,
 				b.storageStatus,
+				statusPatcher.Patch,
+				syncer,
 			)
+
 			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,

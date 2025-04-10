@@ -542,7 +542,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
     if (errorCount > 0) {
       msgBody = t(
         'migrate-to-cloud.onprem.migration-finished-with-errors-body',
-        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
+        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details.'
       );
     } else if (warningCount > 0) {
       msgBody = t(
