@@ -61,6 +61,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                 | Yes                |
 | `lokiQueryHints`                       | Enables query hints for Loki                                                                                                        | Yes                |
 | `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
+| `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.       | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                    | Yes                |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                               | Yes                |
 | `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                         | Yes                |
@@ -92,31 +93,30 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 [Public preview](https://grafana.com/docs/release-life-cycle/#public-preview) features are supported by our Support teams, but might be limited to enablement, configuration, and some troubleshooting.
 
-| Feature toggle name                   | Description                                                                                                                                                                         |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `panelTitleSearch`                    | Search for dashboards using panel title                                                                                                                                             |
-| `grpcServer`                          | Run the GRPC server                                                                                                                                                                 |
-| `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                |
-| `refactorVariablesTimeRange`          | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                              |
-| `faroDatasourceSelector`              | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                      |
-| `enableDatagridEditing`               | Enables the edit functionality in the datagrid panel                                                                                                                                |
-| `sqlDatasourceDatabaseSelection`      | Enables previous SQL data source dataset dropdown behavior                                                                                                                          |
-| `reportingRetries`                    | Enables rendering retries for the reporting feature                                                                                                                                 |
-| `externalServiceAccounts`             | Automatic service account and token setup for plugins                                                                                                                               |
-| `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                                                 |
-| `pdfTables`                           | Enables generating table data as PDF in reporting                                                                                                                                   |
-| `canvasPanelPanZoom`                  | Allow pan and zoom in canvas panel                                                                                                                                                  |
-| `regressionTransformation`            | Enables regression analysis transformation                                                                                                                                          |
-| `onPremToCloudMigrations`             | Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack. |
-| `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                                           |
-| `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                                      |
-| `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                                                  |
-| `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                                        |
-| `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.                       |
-| `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                 |
-| `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                                              |
-| `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                                                     |
-| `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                                           |
+| Feature toggle name                   | Description                                                                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `panelTitleSearch`                    | Search for dashboards using panel title                                                                                                                       |
+| `grpcServer`                          | Run the GRPC server                                                                                                                                           |
+| `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          |
+| `refactorVariablesTimeRange`          | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                        |
+| `faroDatasourceSelector`              | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                |
+| `enableDatagridEditing`               | Enables the edit functionality in the datagrid panel                                                                                                          |
+| `sqlDatasourceDatabaseSelection`      | Enables previous SQL data source dataset dropdown behavior                                                                                                    |
+| `reportingRetries`                    | Enables rendering retries for the reporting feature                                                                                                           |
+| `externalServiceAccounts`             | Automatic service account and token setup for plugins                                                                                                         |
+| `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |
+| `pdfTables`                           | Enables generating table data as PDF in reporting                                                                                                             |
+| `canvasPanelPanZoom`                  | Allow pan and zoom in canvas panel                                                                                                                            |
+| `regressionTransformation`            | Enables regression analysis transformation                                                                                                                    |
+| `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
+| `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                |
+| `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
+| `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
+| `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
+| `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                           |
+| `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
+| `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                               |
+| `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                     |
 
 ## Experimental feature toggles
 
