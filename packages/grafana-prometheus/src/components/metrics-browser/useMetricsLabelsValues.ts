@@ -186,7 +186,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
   const handleSelectedMetricChange = async (metricName: string) => {
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
-    const selector = buildSelector(newSelectedMetric, selectedLabelValues);
+    const selector = buildSafeSelector(newSelectedMetric, selectedLabelValues);
     try {
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));

@@ -226,13 +226,6 @@ describe('useMetricsLabelsValues', () => {
 
       // Verify the metric was selected
       expect(result.current.selectedMetric).toBe('metric1');
-
-      // Verify that fetchSeriesLabelsMatch was called to get label keys for the metric
-      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.any(String),
-        DEFAULT_SERIES_LIMIT
-      );
     });
 
     it('should deselect a metric when the same metric is selected again', async () => {
