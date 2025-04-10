@@ -14,8 +14,8 @@ SELECT
 FROM
   `secret_keeper`
 WHERE 1 = 1 AND
-  `namespace` =  'ns'       AND
-  `name`      IN 'a', 'b' AND
+  `namespace` =  'ns'         AND
+  `name`      IN ('a', 'b') AND
   `type`      != 'sql'
 FOR UPDATE
 ;
