@@ -45,7 +45,7 @@ Plugin rules that have the label `__grafana_origin` are not included on alert ru
 
 ## Import alert rules with Mimirtool
 
-To convert your alert rules, use the following command prompt substituting the your URL and your service account token as indicated, followed by your intended mimirtool command. For further reference, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
+To convert your alert rules, use the following command prompt substituting the your URL and your service account token as indicated, followed by your intended Mimirtool command. For further reference, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
 
 ```bash
 MIMIR_ADDRESS=https://<Grafana URL>.grafana-dev.net/api/convert/ MIMIR_AUTH_TOKEN=<your token ID> MIMIR_TENANT_ID=1
