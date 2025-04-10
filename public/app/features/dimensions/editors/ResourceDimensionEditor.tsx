@@ -5,7 +5,7 @@ import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegi
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
 import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
