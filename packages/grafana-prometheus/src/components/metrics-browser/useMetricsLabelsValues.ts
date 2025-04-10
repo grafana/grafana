@@ -239,7 +239,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       newLastSelectedLabelKey = labelKey;
     }
 
-    // Label selected
+    // Label value selected
     if (isSelected) {
       if (!newSelectedLabelValues[labelKey]) {
         newSelectedLabelValues[labelKey] = [];
@@ -252,21 +252,12 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       }
     }
 
-    const safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
+    let safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
 
-    // Fetch metrics
-    const newMetrics: Metric[] = await fetchMetrics(safeSelector);
-
-    // Fetch label keys
-    const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
-    const newLabelKeys: string[] = await fetchLabelKeys(labelKeysSelector);
-    const newSelectedLabelKeys: string[] = loadSelectedLabelsFromStorage(newLabelKeys);
-
-    // adjust the label values
+    // Fetch new values
     let newLabelValues: Record<string, string[]> = {};
-    if (newSelectedLabelKeys.length !== 0) {
-      const safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
-      for (const lk of newSelectedLabelKeys) {
+    if (selectedLabelKeys.length !== 0) {
+      for (const lk of selectedLabelKeys) {
         try {
           const fetchedLabelValues = await languageProvider.fetchSeriesValuesWithMatch(
             timeRange,
@@ -282,13 +273,28 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
             newLabelValues[lk] = Array.from(new Set([...labelValues[lk], ...fetchedLabelValues]));
           } else {
             // If there are already selected values merge them with the fetched values.
-            newLabelValues[lk] = Array.from(new Set([...(selectedLabelValues[lk] ?? []), ...fetchedLabelValues]));
+            newLabelValues[lk] = fetchedLabelValues;
+            // Discard selected label values if they are not in response
+            newSelectedLabelValues[lk] = (newSelectedLabelValues[lk] ?? []).filter((item) =>
+              fetchedLabelValues.includes(item)
+            );
           }
         } catch (e: unknown) {
           handleError(e, 'Error fetching label values');
         }
       }
     }
+
+    // rebuild the selector based on the new selected label values
+    safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
+
+    // Fetch metrics
+    const newMetrics: Metric[] = await fetchMetrics(safeSelector);
+
+    // Fetch label keys
+    const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
+    const newLabelKeys: string[] = await fetchLabelKeys(labelKeysSelector);
+    const newSelectedLabelKeys: string[] = loadSelectedLabelsFromStorage(newLabelKeys);
 
     setMetrics(newMetrics);
     setLabelKeys(newLabelKeys);
