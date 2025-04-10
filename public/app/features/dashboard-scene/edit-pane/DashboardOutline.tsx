@@ -187,7 +187,7 @@ function collectEditableElementChildren(
       if (child.state.repeatedPanels?.length) {
         for (const repeatedPanel of child.state.repeatedPanels) {
           const editableElement = getEditableElementFor(repeatedPanel)!;
-          children.push({ sceneObject: child, editableElement, depth });
+          children.push({ sceneObject: repeatedPanel, editableElement, depth });
         }
 
         return;
