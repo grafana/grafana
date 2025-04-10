@@ -262,8 +262,9 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
+		relativePath := strings.TrimPrefix(entry.GetPath(), r.config.Spec.GitHub.Path)
 		converted := FileTreeEntry{
-			Path: entry.GetPath(),
+			Path: relativePath,
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
