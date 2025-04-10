@@ -6424,7 +6424,6 @@
   },
   "provisioning": {
     "bootstrap-step": {
-      "dashboards-unavailable-while-running-process": "Dashboards will be unavailable while running this process",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
@@ -6432,15 +6431,9 @@
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "grafana": "Grafana instance",
-      "include-history": "Include history",
       "label-display-name": "Display name",
-      "label-migrate-options": "Migrate options",
       "placeholder-my-repository-connection": "My repository connection",
-      "resources-will-be-added": "The {{count}} resources in grafana will be added to the repository. Grafana will then include both the current resources and anything from the repository when done.",
-      "text-loading-resource-information": "Loading resource information...",
-      "title-files-exist-in-the-target": "Files exist in the target",
-      "title-note": "Note",
-      "tooltip-include-history": "Include complete dashboard version history"
+      "text-loading-resource-information": "Loading resource information..."
     },
     "check-repository": {
       "check": "Check"
@@ -6480,7 +6473,6 @@
       "placeholder-interval-seconds": "60",
       "placeholder-local-path": "/path/to/repo",
       "placeholder-my-config": "My config",
-      "placeholder-path": "grafana/",
       "placeholder-select-repository-type": "Select repository type"
     },
     "config-form-github-collapse": {
@@ -6516,7 +6508,6 @@
       "label-path": "Path to subdirectory in repository",
       "label-repository-url": "GitHub repository URL",
       "placeholder-branch": "main",
-      "placeholder-github-path": "grafana/",
       "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
       "placeholder-github-url": "https://github.com/username/repo",
       "placeholder-local-path": "/path/to/repo"
@@ -6644,6 +6635,18 @@
       },
       "summary": "Summary"
     },
+    "mode-options": {
+      "folder": {
+        "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
+        "label": "Sync external storage to a new Grafana folder",
+        "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders."
+      },
+      "instance": {
+        "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
+        "label": "Sync all resources with external storage",
+        "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
+      }
+    },
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -6752,7 +6755,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-job-failed": "Job failed",
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
       "error-starting-job": "Error starting job",

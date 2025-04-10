@@ -4,24 +4,17 @@ import { Alert, Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
 import { Trans, t } from 'app/core/internationalization';
 
+import { StepStatusInfo } from '../Wizard/types';
+
 import { JobContent } from './JobContent';
-import { useJobStatusEffect } from './hooks';
 
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  onStatusChange?: (success: boolean) => void;
-  onRunningChange?: (isRunning: boolean) => void;
-  onErrorChange?: (error: string | null) => void;
+  onStatusChange: (status: StepStatusInfo, error?: string) => void;
 }
 
-export function FinishedJobStatus({
-  jobUid,
-  repositoryName,
-  onStatusChange,
-  onRunningChange,
-  onErrorChange,
-}: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -30,8 +23,6 @@ export function FinishedJobStatus({
   const retryFailed = hasRetried.current && finishedQuery.isError;
 
   const job = finishedQuery.data;
-
-  useJobStatusEffect(job, onStatusChange, onRunningChange, onErrorChange);
 
   useEffect(() => {
     const shouldRetry = !job && !hasRetried.current && !finishedQuery.isFetching;
@@ -44,14 +35,19 @@ export function FinishedJobStatus({
       }, 1000);
     }
 
+    if (finishedQuery.isSuccess) {
+      onStatusChange({ status: 'success' });
+    }
+
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job]);
+  }, [finishedQuery, job, onStatusChange]);
 
   if (retryFailed) {
+    onStatusChange({ status: 'error' });
     return (
       <Alert severity="error" title={t('provisioning.job-status.no-job-found', 'No job found')}>
         <Trans i18nKey="provisioning.job-status.no-job-found-message">

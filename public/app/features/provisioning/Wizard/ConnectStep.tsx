@@ -107,10 +107,7 @@ export function ConnectStep() {
               'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
             )}
           >
-            <Input
-              {...register('repository.path')}
-              placeholder={t('provisioning.connect-step.placeholder-github-path', 'grafana/')}
-            />
+            <Input {...register('repository.path')} />
           </Field>
         </>
       )}
