@@ -3,14 +3,14 @@ import { escapeRegExp } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 
 import {
-  BuilderQueryExpression,
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorWhereExpression,
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorPropertyExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorWhereExpression,
+  BuilderQueryExpression,
 } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
 
@@ -88,6 +88,7 @@ export interface BuildAndUpdateOptions {
   orderBy?: BuilderQueryEditorOrderByExpression[];
   columns?: string[];
   from?: BuilderQueryEditorPropertyExpression;
+  basicLogsQuery?: boolean;
 }
 
 export const aggregateOptions = [
