@@ -101,8 +101,8 @@ func TestIntegration_RetryingOnFailures(t *testing.T) {
 			callback := func(sess *DBSession) error {
 				i++
 				var err error
-				switch {
-				case store.dbCfg.QueryRetries == i:
+				switch store.dbCfg.QueryRetries {
+				case i:
 					err = nil
 				default:
 					err = retryErrors[0]

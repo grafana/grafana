@@ -285,7 +285,7 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		sess.Where("d.updated_at BETWEEN ? AND ?", query.From.UTC(), query.To.UTC())
 
 		if query.Query != "" {
-			queryWithWildcards := "%" + strings.Replace(query.Query, "\\", "", -1) + "%"
+			queryWithWildcards := "%" + strings.ReplaceAll(query.Query, "\\", "") + "%"
 			sess.Where("d.client_ip "+s.sqlStore.GetDialect().LikeStr()+" ?", queryWithWildcards)
 		}
 
