@@ -6681,7 +6681,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-job-failed": "Job failed",
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
       "error-starting-job": "Error starting job",

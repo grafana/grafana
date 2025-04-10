@@ -256,13 +256,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               {activeStep === 'bootstrap' && (
                 <BootstrapStep
                   onOptionSelect={setRequiresMigration}
-                  onStepUpdate={setStepStatusInfo}
+                  onStepStatusUpdate={setStepStatusInfo}
                   settingsData={settingsQuery.data}
                   repoName={repoName ?? ''}
                 />
               )}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
+                <SynchronizeStep onStepStatusUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>

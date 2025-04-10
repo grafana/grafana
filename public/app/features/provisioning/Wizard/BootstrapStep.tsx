@@ -10,12 +10,12 @@ import { ModeOption, StepStatusInfo, WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepUpdate: (info: StepStatusInfo) => void;
+  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepUpdate }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
   const {
     register,
     control,
@@ -35,14 +35,15 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepUp
 
   useEffect(() => {
     const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-    onStepUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [filesQuery.isLoading, onStepUpdate, resourceStats.isLoading]);
+    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
+  }, [filesQuery.isLoading, onStepStatusUpdate, resourceStats.isLoading]);
 
   // Auto select the first option on mount
   useEffect(() => {
     const { target } = options[0];
     setValue('repository.sync.target', target);
     onOptionSelect(target !== 'folder' || resourceCount > 0);
+    // Only run this effect on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

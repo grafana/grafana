@@ -10,11 +10,11 @@ import { JobStatus } from '../Job/JobStatus';
 import { StepStatusInfo, WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  onStepUpdate: (info: StepStatusInfo) => void;
+  onStepStatusUpdate: (info: StepStatusInfo) => void;
   requiresMigration: boolean;
 }
 
-export function SynchronizeStep({ onStepUpdate, requiresMigration }: SynchronizeStepProps) {
+export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register } = useFormContext<WizardFormData>();
   const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
@@ -22,7 +22,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
 
   const startSynchronization = async () => {
     if (!repoName) {
-      onStepUpdate({
+      onStepStatusUpdate({
         status: 'error',
         error: t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'),
       });
@@ -30,7 +30,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
     }
 
     try {
-      onStepUpdate({ status: 'running' });
+      onStepStatusUpdate({ status: 'running' });
       const jobSpec = requiresMigration
         ? {
             migrate: {
@@ -49,14 +49,14 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
       }).unwrap();
 
       if (!response?.metadata?.name) {
-        return onStepUpdate({
+        return onStepStatusUpdate({
           status: 'error',
           error: t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'),
         });
       }
       setJob(response);
     } catch (error) {
-      onStepUpdate({
+      onStepStatusUpdate({
         status: 'error',
         error: t('provisioning.synchronize-step.error-starting-job', 'Error starting job'),
       });
@@ -64,7 +64,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
   };
 
   if (job) {
-    return <JobStatus watch={job} onStatusChange={onStepUpdate} />;
+    return <JobStatus watch={job} onStatusChange={onStepStatusUpdate} />;
   }
 
   return (
