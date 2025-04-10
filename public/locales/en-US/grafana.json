@@ -5213,6 +5213,10 @@
         "tooltip-show-log-line": "Show log line"
       }
     },
+    "log-labels": {
+      "collapse": "Collapse labels",
+      "expand": "Expand labels"
+    },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",
