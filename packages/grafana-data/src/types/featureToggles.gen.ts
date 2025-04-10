@@ -219,11 +219,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;
@@ -920,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
@@ -1032,10 +1028,19 @@ export interface FeatureToggles {
   */
   localizationForPlugins?: boolean;
   /**
-  * Enables a control component for the logs panel in Explore
+  * Enables unified navbars
   * @default false
   */
+  unifiedNavbars?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default true
+  */
   logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
   /**
   * Enables express plugin installation
   */

@@ -16,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	CheckID             = "datasource"
+	HealthCheckStepID   = "health-check"
+	UIDValidationStepID = "uid-validation"
+)
+
 type check struct {
 	DatasourceSvc         datasources.DataSourceService
 	PluginStore           pluginstore.Store
@@ -52,7 +58,7 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 }
 
 func (c *check) ID() string {
-	return "datasource"
+	return CheckID
 }
 
 func (c *check) Steps() []checks.Step {
@@ -69,7 +75,7 @@ func (c *check) Steps() []checks.Step {
 type uidValidationStep struct{}
 
 func (s *uidValidationStep) ID() string {
-	return "uid-validation"
+	return UIDValidationStepID
 }
 
 func (s *uidValidationStep) Title() string {
@@ -122,7 +128,7 @@ func (s *healthCheckStep) Resolution() string {
 }
 
 func (s *healthCheckStep) ID() string {
-	return "health-check"
+	return HealthCheckStepID
 }
 
 func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {

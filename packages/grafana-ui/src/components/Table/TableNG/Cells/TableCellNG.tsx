@@ -237,6 +237,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
+    '&:hover': { background: color.bgHoverColor },
   }),
   cellActions: css({
     display: 'flex',
