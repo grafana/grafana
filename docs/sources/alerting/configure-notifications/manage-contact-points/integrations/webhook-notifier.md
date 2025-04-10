@@ -272,17 +272,6 @@ Example of a custom payload template that includes variables:
 }
 ```
 
-When using a `Custom Payload` some additional fields are available in the template context under `.Extra`. This mostly includes information that is available in the default payload, but not in the `ExtendedData` template context:
-
-| Field             | Type              | Description                                           |
-| ----------------- | ----------------- | ----------------------------------------------------- |
-| `GroupKey`        | string            | Key that is used for grouping.                        |
-| `TruncatedAlerts` | number            | Number of alerts that were truncated.                 |
-| `Version`         | string            | Version of the payload structure.                     |
-| `State`           | string            | State of the alert group (either `alerting` or `ok`). |
-| `OrgId`           | number            | ID of the organization related to the payload.        |
-| `Vars`            | map[string]string | Variables provided by the webhook notifier.           |
-
 {{< admonition type="note" >}}
 When using Custom Payload, the Title and Message fields are ignored as the entire payload structure is determined by your template.
 {{< /admonition >}}
