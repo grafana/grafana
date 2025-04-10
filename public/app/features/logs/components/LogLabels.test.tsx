@@ -39,7 +39,7 @@ describe('<LogLabels />', () => {
     it('renders up to displayMax labels', () => {
       render(<LogLabels labels={{ foo: 'bar', baz: '42' }} displayMax={1} />);
       expect(screen.getByText('foo=bar')).toBeInTheDocument();
-      expect(screen.getByText('+1')).toBeInTheDocument();
+      expect(screen.getByLabelText('Expand labels')).toBeInTheDocument();
       expect(screen.queryByText('baz=42')).not.toBeInTheDocument();
     });
 
@@ -49,7 +49,7 @@ describe('<LogLabels />', () => {
         <LogLabels labels={{ foo: 'bar', baz: '42' }} displayMax={1} onDisplayMaxToggle={onDisplayMaxToggle} />
       );
 
-      await userEvent.click(screen.getByText('+1'));
+      await userEvent.click(screen.getByLabelText('Expand labels'));
       expect(onDisplayMaxToggle).toHaveBeenCalledTimes(1);
       expect(onDisplayMaxToggle).toHaveBeenCalledWith(true);
 
@@ -57,7 +57,7 @@ describe('<LogLabels />', () => {
 
       expect(screen.getByText('foo=bar')).toBeInTheDocument();
       expect(screen.getByText('baz=42')).toBeInTheDocument();
-      expect(screen.getByText('-')).toBeInTheDocument();
+      expect(screen.getByLabelText('Collapse labels')).toBeInTheDocument();
     });
 
     it('allows to collapse labels', async () => {
@@ -71,7 +71,7 @@ describe('<LogLabels />', () => {
         />
       );
 
-      await userEvent.click(screen.getByText('-'));
+      await userEvent.click(screen.getByLabelText('Collapse labels'));
       expect(onDisplayMaxToggle).toHaveBeenCalledTimes(1);
       expect(onDisplayMaxToggle).toHaveBeenCalledWith(false);
 
@@ -85,7 +85,7 @@ describe('<LogLabels />', () => {
       );
 
       expect(screen.getByText('foo=bar')).toBeInTheDocument();
-      expect(screen.getByText('+1')).toBeInTheDocument();
+      expect(screen.getByLabelText('Expand labels')).toBeInTheDocument();
       expect(screen.queryByText('baz=42')).not.toBeInTheDocument();
     });
   });
