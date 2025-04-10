@@ -173,24 +173,3 @@ You can switch between coloring functions by their value or by their package nam
 ### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Standard options
-
-**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations.
-When you set a standard option, the change is applied to all fields or series.
-For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
-
-You can customize the following standard options:
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
-| Unit | This option lets you choose which unit a field should use. For more information on unit options as well as creating custom units, refer to the [unit configuration documentation](ref:units). |
-| Decimals | Specify the number of decimals Grafana includes in the rendered value. |
-
-<!-- prettier-ignore-end -->
-
-### Field overrides
-
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
