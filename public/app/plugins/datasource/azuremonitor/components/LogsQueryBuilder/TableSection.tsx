@@ -21,10 +21,11 @@ interface TableSectionProps {
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions?: SelectableValue<string>;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
+  isLoadingSchema: boolean;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions } = props;
+  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
@@ -146,6 +147,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             placeholder="Select a table"
             onChange={handleTableChange}
             width={inputFieldSize}
+            isLoading={isLoadingSchema}
           />
         </EditorField>
         <EditorField label="Columns">

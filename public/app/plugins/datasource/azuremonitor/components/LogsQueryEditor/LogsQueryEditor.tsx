@@ -67,6 +67,7 @@ const LogsQueryEditor = ({
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
   const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -92,6 +93,7 @@ const LogsQueryEditor = ({
   useEffect(() => {
     const resources = query.azureLogAnalytics?.resources;
     if (resources) {
+      setIsLoadingSchema(true);
       const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
         const promises = [];
         for (const table of tables) {
@@ -113,6 +115,7 @@ const LogsQueryEditor = ({
             setSchema(schema);
           });
         }
+        setIsLoadingSchema(false);
       });
     }
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource, datasource.azureMonitorDatasource]);
@@ -281,6 +284,7 @@ const LogsQueryEditor = ({
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
             timeRange={timeRange}
+            isLoadingSchema={isLoadingSchema}
           />
         ) : (
           <QueryField
