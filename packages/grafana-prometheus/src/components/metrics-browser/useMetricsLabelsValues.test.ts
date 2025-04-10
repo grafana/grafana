@@ -281,6 +281,10 @@ describe('useMetricsLabelsValues', () => {
         expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
       });
 
+      await waitFor(() => {
+        return result.current.selectedLabelKeys.length === 3;
+      });
+
       // Clear mock calls
       jest.clearAllMocks();
 
