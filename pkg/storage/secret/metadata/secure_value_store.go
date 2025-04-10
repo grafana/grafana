@@ -39,7 +39,7 @@ func ProvideSecureValueMetadataStorage(
 
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get keepers: %w", err)
+		return nil, fmt.Errorf("getting keepers from keeper service: %+w", err)
 	}
 
 	return &secureValueMetadataStorage{
@@ -64,43 +64,39 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// Store in keeper.
-	// TODO: here temporary, the moment of storing will change in the async flow.
-	externalID, err := s.storeInKeeper(ctx, sv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store in keeper: %w", err)
-	}
-
-	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-	// Temporarily mark succeeded here since the value is already stored in the keeper.
-	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
+	row, err := toCreateRow(sv, authInfo.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if row.Keeper != contracts.DefaultSQLKeeper {
-			// Validate before inserting that the chosen `keeper` exists.
-			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if row.Keeper != contracts.DefaultSQLKeeper {
+				// Validate before inserting that the chosen `keeper` exists.
+				keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
-			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-			if err != nil {
-				return fmt.Errorf("check keeper existence: %w", err)
+				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+				if err != nil {
+					return fmt.Errorf("check keeper existence: %w", err)
+				}
+
+				if !keeperExists {
+					return contracts.ErrKeeperNotFound
+				}
 			}
 
-			if !keeperExists {
-				return contracts.ErrKeeperNotFound
+			if _, err := sess.Insert(row); err != nil {
+				if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
+				}
+				return fmt.Errorf("insert row: %w", err)
 			}
-		}
 
-		if _, err := sess.Insert(row); err != nil {
-			return fmt.Errorf("insert row: %w", err)
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
