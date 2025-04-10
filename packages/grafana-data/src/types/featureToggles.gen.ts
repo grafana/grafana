@@ -501,7 +501,7 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
   * @default true
   */
   onPremToCloudMigrations?: boolean;
@@ -932,6 +932,7 @@ export interface FeatureToggles {
   newLogsPanel?: boolean;
   /**
   * Enables the temporary themes for GrafanaCon
+  * @default true
   */
   grafanaconThemes?: boolean;
   /**

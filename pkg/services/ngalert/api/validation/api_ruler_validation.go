@@ -87,12 +87,12 @@ func ValidateRuleNode(
 	}
 
 	if ruleNode.ApiRuleNode != nil {
-		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
+		newAlertRule.Annotations = ruleNode.Annotations
 		err = validateLabels(ruleNode.Labels)
 		if err != nil {
 			return nil, err
 		}
-		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
+		newAlertRule.Labels = ruleNode.Labels
 
 		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
 		if err != nil {
@@ -272,30 +272,30 @@ func ValidateInterval(interval, baseInterval time.Duration) (int64, error) {
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
 func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
-	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.For == nil {
+	if ruleNode.ApiRuleNode == nil || ruleNode.For == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
 			return -1, nil // will be patched later with the real value of the current version of the rule
 		}
 		return 0, nil // if it's a new rule, use the 0 as the default
 	}
-	duration := time.Duration(*ruleNode.ApiRuleNode.For)
+	duration := time.Duration(*ruleNode.For)
 	if duration < 0 {
-		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
+		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.For)
 	}
 	return duration, nil
 }
 
 // validateKeepFiringForInterval validates ApiRuleNode.KeepFiringFor and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
 func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
-	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.KeepFiringFor == nil {
+	if ruleNode.ApiRuleNode == nil || ruleNode.KeepFiringFor == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
 			return -1, nil // will be patched later with the real value of the current version of the rule
 		}
 		return 0, nil // if it's a new rule, use the 0 as the default
 	}
-	duration := time.Duration(*ruleNode.ApiRuleNode.KeepFiringFor)
+	duration := time.Duration(*ruleNode.KeepFiringFor)
 	if duration < 0 {
-		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.ApiRuleNode.KeepFiringFor)
+		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.KeepFiringFor)
 	}
 	return duration, nil
 }

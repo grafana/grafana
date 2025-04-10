@@ -356,8 +356,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
   });
@@ -437,8 +437,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
   });
@@ -474,8 +474,8 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.meta![0]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (1 displayed)`,
+      label: '',
+      value: `1 line displayed`,
       kind: LogsMetaKind.String,
     });
 
@@ -486,8 +486,8 @@ describe('dataFrameToLogsModel', () => {
     const series: DataFrame[] = getTestDataFrame();
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
   });
@@ -500,8 +500,8 @@ describe('dataFrameToLogsModel', () => {
       },
     };
     const timeRange = {
-      from: 1556270800000,
-      to: 1556270899999,
+      from: 1556270899999,
+      to: 1556357299999,
     };
     const queries = [
       {
@@ -522,8 +522,8 @@ describe('dataFrameToLogsModel', () => {
         kind: 2,
       },
       {
-        label: 'Line limit',
-        value: '2 reached, received logs cover 8.65% (9sec) of your selected time range (1min 40sec)',
+        label: '',
+        value: '2 lines shown — 21.85% (5h 14min 40sec) of 24h',
         kind: 1,
       },
     ]);
@@ -560,7 +560,7 @@ describe('dataFrameToLogsModel', () => {
         kind: 2,
       },
       {
-        label: 'Line limit',
+        label: '',
         value: '2 reached',
         kind: 1,
       },
@@ -654,8 +654,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
   });
@@ -773,8 +773,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![2]).toMatchObject({
@@ -1115,8 +1115,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
+      label: '',
+      value: `2 lines shown — 98.44% (5h 14min 40sec) of 5h 19min 40sec`,
       kind: LogsMetaKind.String,
     });
   });
