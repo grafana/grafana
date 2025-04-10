@@ -37,7 +37,7 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
 
 /**
  * A class for interacting with the backend user storage.
- * Unexported because it is currently only be used through the useUserStorage hook.
+ * Exposed internally only to avoid misuse (wrong service name)..
  */
 export class UserStorage {
   private service: string;
