@@ -23,7 +23,7 @@ func TestGenerateComment(t *testing.T) {
 		Name  string
 		Input changeInfo
 	}{
-		{"new dashbaord", changeInfo{
+		{"new dashboard", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
 				{
