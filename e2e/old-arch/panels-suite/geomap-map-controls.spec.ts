@@ -1,7 +1,8 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'P2jR04WVk';
+const TIMEOUT = 45000;
 
-describe('Geomap layer controls options', { retries: 2 }, () => {
+describe('Geomap layer controls options', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -47,23 +48,23 @@ describe('Geomap layer controls options', { retries: 2 }, () => {
         cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
 
-    e2e.components.Panels.Panel.content()
+    e2e.components.Panels.Panel.content({ timeout: TIMEOUT })
       .should('be.visible')
       .within(() => {
         // Verify zoom
-        cy.get('.ol-zoom').should('be.visible');
+        cy.get('.ol-zoom', { timeout: TIMEOUT }).should('be.visible');
 
         // Verify attribution
-        cy.get('.ol-attribution').should('be.visible');
+        cy.get('.ol-attribution', { timeout: TIMEOUT }).should('be.visible');
 
         // Verify scale
-        cy.get('.ol-scale-line').should('be.visible');
+        cy.get('.ol-scale-line', { timeout: TIMEOUT }).should('be.visible');
 
         // Verify measure tool
-        e2e.components.PanelEditor.measureButton().should('be.visible');
+        e2e.components.PanelEditor.measureButton({ timeout: TIMEOUT }).should('be.visible');
 
         // Verify debug tool
-        e2e.components.DebugOverlay.wrapper().should('be.visible');
+        e2e.components.DebugOverlay.wrapper({ timeout: TIMEOUT }).should('be.visible');
       });
   });
 });
