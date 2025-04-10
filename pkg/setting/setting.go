@@ -1800,18 +1800,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
 	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
 
-	if cfg.RendererCallbackUrl != "" {
-		if cfg.RendererCallbackUrl[len(cfg.RendererCallbackUrl)-1] != '/' {
-			cfg.RendererCallbackUrl += "/"
-		}
-		_, err := url.Parse(cfg.RendererCallbackUrl)
-		if err != nil {
-			// XXX: Should return an error?
-			cfg.Logger.Error("Invalid callback_url.", "url", cfg.RendererCallbackUrl, "error", err)
-			os.Exit(1)
-		}
-	}
-
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
