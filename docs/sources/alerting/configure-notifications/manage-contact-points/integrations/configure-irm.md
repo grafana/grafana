@@ -165,4 +165,4 @@ Create a [Grafana-managed alert rule](ref:configure-grafana-alerts) with the fol
   - **Group interval**: `1s`
   - **Repeat interval**: shorter than the **hearbeat interval**.
 
-Once created, the alert rule acts as a heartbeat, verifying that Grafana Alerting is running and sending alerts to Grafana IRM.
+After it's created, the alert rule acts as a heartbeat, verifying that Grafana Alerting is running and sending alerts to Grafana IRM.
