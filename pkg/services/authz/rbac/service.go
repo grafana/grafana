@@ -42,6 +42,7 @@ type Service struct {
 	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
+	settings        Settings
 
 	mapper mapper
 
@@ -61,6 +62,10 @@ type Service struct {
 	folderCache     *cacheWrap[folderTree]
 }
 
+type Settings struct {
+	AnonOrgRole string
+}
+
 func NewService(
 	sql legacysql.LegacyDatabaseProvider,
 	folderStore store.FolderStore,
@@ -70,12 +75,17 @@ func NewService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	settings Settings,
 ) *Service {
+	if settings.AnonOrgRole == "" {
+		settings.AnonOrgRole = "Viewer"
+	}
 	return &Service{
 		store:           store.NewStore(sql, tracer),
 		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
+		settings:        settings,
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
@@ -422,7 +432,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 
 	anonPermKey := anonymousPermCacheKey(ns.Value, action)
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: s.settings.AnonOrgRole})
 		if err != nil {
 			return nil, err
 		}

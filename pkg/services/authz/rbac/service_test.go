@@ -1288,6 +1288,89 @@ func TestService_List(t *testing.T) {
 	})
 }
 
+func TestService_getAnonymousPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		permissions   []accesscontrol.Permission
+		action        string
+		expectedPerms map[string]bool
+		expectedError bool
+		anonRole      string
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return permissions from store if not in cache",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name:          "should return error if store fails",
+			permissions:   nil,
+			action:        "dashboards:read",
+			expectedPerms: nil,
+			expectedError: true,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should handle wildcard permissions",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "*", Kind: "*"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"*": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should use custom anonymous role when specified",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Editor",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			s := setupService()
+			if tc.anonRole != "" {
+				s.settings.AnonOrgRole = tc.anonRole
+			}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			store := &fakeStore{
+				userPermissions: tc.permissions,
+				err:             tc.expectedError,
+				disableNsCheck:  true,
+			}
+			s.store = store
+			s.permissionStore = store
+
+			perms, err := s.getAnonymousPermissions(ctx, ns, tc.action, []string{})
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPerms, perms)
+
+			// cache should then be set
+			cached, ok := s.permCache.Get(ctx, anonymousPermCacheKey(ns.Value, tc.action))
+			require.True(t, ok)
+			require.Equal(t, tc.expectedPerms, cached)
+		})
+	}
+}
+
 func TestService_CacheList(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -1337,6 +1420,7 @@ func setupService() *Service {
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
 		folderStore:     fStore,
