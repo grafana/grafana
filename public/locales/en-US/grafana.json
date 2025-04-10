@@ -1178,7 +1178,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules_one": "Loading rules from {{count}} sources",
+        "loading-rules_one": "Loading rules from {{count}} source",
         "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
@@ -1761,7 +1761,7 @@
       "recording-rule": "Recording rule"
     },
     "rule-stats": {
-      "error_one": "{{count}} errors",
+      "error_one": "{{count}} error",
       "error_other": "{{count}} errors",
       "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
