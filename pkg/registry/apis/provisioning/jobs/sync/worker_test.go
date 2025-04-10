@@ -479,6 +479,39 @@ func TestSyncWorker_Process(t *testing.T) {
 			},
 			expectedError: "",
 		},
+		{
+			name: "failed final status patch",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Initial status patch succeeds
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+				// Setup resources and clients
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
+
+				// Sync succeeds
+				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+
+				// Final status patch fails
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to patch final status")).Once()
+			},
+			expectedError: "update repo with job final status: failed to patch final status",
+		},
 	}
 
 	for _, tt := range tests {
