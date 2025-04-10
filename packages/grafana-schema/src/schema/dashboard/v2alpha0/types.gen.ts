@@ -72,9 +72,6 @@ export interface LibraryPanelSpec {
 	id: number;
 	// Title for the library panel in the dashboard
 	title: string;
-	// Model is the old panel model
-	// This is used during dashboard import to create a new library panel if the panel does not exist
-	model?: any;
 	libraryPanel: LibraryPanelRef;
 }
 
