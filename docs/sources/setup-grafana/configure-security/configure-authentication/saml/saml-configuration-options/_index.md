@@ -8,67 +8,9 @@ title: SAML configuration options
 weight: 520
 ---
 
-### Example SAML configuration
+# SAML configuration options
 
-```ini
-[auth.saml]
-enabled = true
-auto_login = false
-certificate_path = "/path/to/certificate.cert"
-private_key_path = "/path/to/private_key.pem"
-idp_metadata_path = "/my/metadata.xml"
-max_issue_delay = 90s
-metadata_valid_duration = 48h
-assertion_attribute_name = displayName
-assertion_attribute_login = mail
-assertion_attribute_email = mail
-
-assertion_attribute_groups = Group
-assertion_attribute_role = Role
-assertion_attribute_org = Org
-role_values_viewer = external
-role_values_editor = editor, developer
-role_values_admin = admin, operator
-role_values_grafana_admin = superadmin
-org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
-allowed_organizations = Engineering, Sales
-```
-
-### Example SAML configuration in Terraform
-
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
-{{% /admonition %}}
-
-```terraform
-resource "grafana_sso_settings" "saml_sso_settings" {
-  provider_name = "saml"
-  saml_settings {
-    name                       = "SAML"
-    auto_login                 = false
-    certificate_path           = "/path/to/certificate.cert"
-    private_key_path           = "/path/to/private_key.pem"
-    idp_metadata_path          = "/my/metadata.xml"
-    max_issue_delay            = "90s"
-    metadata_valid_duration    = "48h"
-    assertion_attribute_name   = "displayName"
-    assertion_attribute_login  = "mail"
-    assertion_attribute_email  = "mail"
-    assertion_attribute_groups = "Group"
-    assertion_attribute_role   = "Role"
-    assertion_attribute_org    = "Org"
-    role_values_editor         = "editor, developer"
-    role_values_admin          = "admin, operator"
-    role_values_grafana_admin  = "superadmin"
-    org_mapping                = "Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor"
-    allowed_organizations      = "Engineering, Sales"
-  }
-}
-```
-
-Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
-
-## Configure SAML authentication in Grafana
+This page provides a comprehensive guide to configuring SAML authentication in Grafana. You'll find detailed configuration examples, available settings, and their descriptions to help you set up and customize SAML authentication for your Grafana instance.
 
 The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
@@ -107,3 +49,63 @@ The table below describes all SAML configuration options. Continue reading below
 | `client_secret`                                            | No       | Client secret of the IdP service application used to retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                        |                                                       |
 | `token_url`                                                | No       | URL to retrieve the access token from the IdP. (Microsoft Entra ID only)                                                                                                                                     |                                                       |
 | `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                                  | `false`                                               |
+
+## Example SAML configuration
+
+```ini
+[auth.saml]
+enabled = true
+auto_login = false
+certificate_path = "/path/to/certificate.cert"
+private_key_path = "/path/to/private_key.pem"
+idp_metadata_path = "/my/metadata.xml"
+max_issue_delay = 90s
+metadata_valid_duration = 48h
+assertion_attribute_name = displayName
+assertion_attribute_login = mail
+assertion_attribute_email = mail
+
+assertion_attribute_groups = Group
+assertion_attribute_role = Role
+assertion_attribute_org = Org
+role_values_viewer = external
+role_values_editor = editor, developer
+role_values_admin = admin, operator
+role_values_grafana_admin = superadmin
+org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
+allowed_organizations = Engineering, Sales
+```
+
+## Example SAML configuration in Terraform
+
+{{< admonition type="note" >}}
+Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
+{{< /admonition >}}
+
+```terraform
+resource "grafana_sso_settings" "saml_sso_settings" {
+  provider_name = "saml"
+  saml_settings {
+    name                       = "SAML"
+    auto_login                 = false
+    certificate_path           = "/path/to/certificate.cert"
+    private_key_path           = "/path/to/private_key.pem"
+    idp_metadata_path          = "/my/metadata.xml"
+    max_issue_delay            = "90s"
+    metadata_valid_duration    = "48h"
+    assertion_attribute_name   = "displayName"
+    assertion_attribute_login  = "mail"
+    assertion_attribute_email  = "mail"
+    assertion_attribute_groups = "Group"
+    assertion_attribute_role   = "Role"
+    assertion_attribute_org    = "Org"
+    role_values_editor         = "editor, developer"
+    role_values_admin          = "admin, operator"
+    role_values_grafana_admin  = "superadmin"
+    org_mapping                = "Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor"
+    allowed_organizations      = "Engineering, Sales"
+  }
+}
+```
+
+Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
