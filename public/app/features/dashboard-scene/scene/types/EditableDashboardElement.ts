@@ -18,7 +18,7 @@ export interface EditableDashboardElement {
   /**
    * Hook that returns edit pane options
    */
-  useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
+  useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
 
   /**
    * Panel Actions
@@ -29,6 +29,11 @@ export interface EditableDashboardElement {
    * Supports delete action
    */
   onDelete?(): void;
+
+  /**
+   * Should confirm delete action
+   */
+  onConfirmDelete?(): void;
 
   /**
    * Supports duplicate action
@@ -65,6 +70,11 @@ export interface EditableDashboardElementInfo {
   instanceName: string;
   typeName: string;
   icon: IconName;
+  /**
+   * Mark it as a container of other editable elements
+   */
+  isContainer?: boolean;
+  isHidden?: boolean;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {

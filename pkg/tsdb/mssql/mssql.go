@@ -292,7 +292,8 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
-	if encrypt == "true" {
+	switch encrypt {
+	case "true":
 		connStr += fmt.Sprintf("encrypt=%s;TrustServerCertificate=%t;", encrypt, tlsSkipVerify)
 		if hostNameInCertificate != "" {
 			connStr += fmt.Sprintf("hostNameInCertificate=%s;", hostNameInCertificate)
@@ -301,7 +302,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 		if certificate != "" {
 			connStr += fmt.Sprintf("certificate=%s;", certificate)
 		}
-	} else if encrypt == "disable" {
+	case "disable":
 		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
 

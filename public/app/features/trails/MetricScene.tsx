@@ -210,7 +210,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                   <Icon name={'star'} type={'default'} size={'lg'} />
                 )
               }
-              tooltip={'Bookmark'}
+              tooltip={t('trails.metric-action-bar.tooltip-bookmark', 'Bookmark')}
               onClick={toggleBookmark}
             />
             {trail.state.embedded && (

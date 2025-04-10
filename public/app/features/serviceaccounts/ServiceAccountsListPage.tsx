@@ -14,6 +14,7 @@ import {
   Box,
   Stack,
   useStyles2,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -172,20 +173,14 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
-  const docsLink = (
-    <a
-      className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      documentation.
-    </a>
-  );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
-      {docsLink}
+      <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
+        Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+        <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
+          documentation.
+        </TextLink>
+      </Trans>
     </span>
   );
 

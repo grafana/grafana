@@ -15,6 +15,7 @@ on:
       - '**/*.md'
       - '**/*.txt'
       - '**/*.yml'
+      - pkg/storage/unified/sql/db/dbimpl/db.go # Ignoring warnings on the whole file for now while inline comments is not supported in Go (https://github.com/github/codeql/issues/11427)
   schedule:
     - cron: '0 4 * * 6'
 
