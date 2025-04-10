@@ -45,6 +45,10 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `<div aria-label={t('aria.label', 'Accessible label')} />`,
     },
     {
+      name: 'Empty string prop',
+      code: `<div title="" />`,
+    },
+    {
       name: 'Prop using boolean',
       code: `<div title={false} />`,
     },

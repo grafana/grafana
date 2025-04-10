@@ -28,7 +28,8 @@ const elementIsTrans = (node) => {
 const isStringLiteral = (node) => {
   return (
     node.type === AST_NODE_TYPES.Literal &&
-    typeof node.value === 'string'
+    typeof node.value === 'string' &&
+    node.value !== ''
   );
 }
 
