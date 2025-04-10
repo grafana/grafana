@@ -5346,7 +5346,7 @@
       "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
       "body-token-field": "Migration token",
       "body-token-field-placeholder": "Paste token here",
-      "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
+      "body-token-instructions": "Log into your cloud stack and navigate to Administration > General > Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
       "body-view-stacks": "View my cloud stacks",
       "cancel": "Cancel",
       "connect": "Connect to this stack",
