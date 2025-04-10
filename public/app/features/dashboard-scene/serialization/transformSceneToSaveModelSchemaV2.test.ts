@@ -422,8 +422,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
-    // check annotation layer 3 with no datasource has undefined datasource defined, as this is relevant for the
-    // as-code dashboards
+    // Check annotation layer 3 without initial data source isn't updated with runtime default
     expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
   });
 
