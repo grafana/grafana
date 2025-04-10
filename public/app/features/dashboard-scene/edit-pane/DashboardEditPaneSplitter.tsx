@@ -61,7 +61,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     if (isEditing) {
       editPane.enableSelection();
     } else {
-      editPane.clearSelection();
+      editPane.disableSelection();
     }
   }, [isEditing, editPane]);
 
