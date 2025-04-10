@@ -69,7 +69,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref as we use replace operation
-	syncStatus.LastRef = repo.Config().Status.Sync.LastRef
+	lastRef := repo.Config().Status.Sync.LastRef
+	syncStatus.LastRef = lastRef
 
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
@@ -103,6 +104,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Create sync status and set hash if successful
 	if syncStatus.State == provisioning.JobStateSuccess {
 		syncStatus.LastRef = currentRef
+	} else {
+		syncStatus.LastRef = lastRef
 	}
 
 	// Update final status using JSON patch

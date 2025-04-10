@@ -196,6 +196,117 @@ func TestSyncWorker_Process(t *testing.T) {
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
+		{
+			name: "successful sync",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+
+				// Storage is migrated
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Initial status update
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+
+				// Setup resources and clients
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
+
+				// Sync execution succeeds
+				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+					return true // Add specific sync options validation if needed
+				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
+
+				// Final status updates
+				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
+
+				// Final patch should include new ref
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					if len(patch) != 1 {
+						return false
+					}
+					syncStatus := patch[0]["value"].(provisioning.SyncStatus)
+					return patch[0]["op"] == "replace" &&
+						patch[0]["path"] == "/status/sync" &&
+						syncStatus.LastRef == "new-ref" &&
+						syncStatus.State == provisioning.JobStateSuccess
+				})).Return(nil)
+			},
+			expectedError: "",
+		},
+		{
+			name: "failed sync",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+
+				// Storage is migrated
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Initial status update
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+
+				// Setup resources and clients
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
+
+				// Sync execution fails
+				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				syncError := errors.New("sync operation failed")
+				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+					return true // Add specific sync options validation if needed
+				}), mockRepoResources, mock.Anything, pr).Return("", syncError)
+
+				// Final status updates
+				pr.On("Complete", mock.Anything, syncError).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
+
+				// Final patch should preserve existing ref on failure
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					if len(patch) != 1 {
+						return false
+					}
+					syncStatus := patch[0]["value"].(provisioning.SyncStatus)
+					return patch[0]["op"] == "replace" &&
+						patch[0]["path"] == "/status/sync" &&
+						syncStatus.LastRef == "existing-ref" && // LastRef should not change on failure
+						syncStatus.State == provisioning.JobStateError
+				})).Return(nil)
+			},
+			expectedError: "sync operation failed",
+		},
 	}
 
 	for _, tt := range tests {
