@@ -48,7 +48,7 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.SignedInUser.GetOrgID()
+	cmd.OrgId = c.GetOrgID()
 
 	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
@@ -153,7 +153,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.SignedInUser.GetOrgID()
+	cmd.OrgId = c.GetOrgID()
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -206,7 +206,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) 
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	correlation, err := s.getCorrelation(c.Req.Context(), query)
@@ -252,7 +252,7 @@ type GetCorrelationResponse struct {
 func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
@@ -308,7 +308,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	sourceUIDs := c.QueryStrings("sourceUID")
 
 	query := GetCorrelationsQuery{
-		OrgId:      c.SignedInUser.GetOrgID(),
+		OrgId:      c.GetOrgID(),
 		Limit:      limit,
 		Page:       page,
 		SourceUIDs: sourceUIDs,

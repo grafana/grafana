@@ -18,7 +18,7 @@ var (
 	ErrMismatchedHash        = errors.New("the update cannot be applied because the expected and actual hashes are unequal")
 	ErrNoSecret              = errors.New("new webhooks must have a secret")
 	//lint:ignore ST1005 this is not punctuation
-	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:stylecheck
+	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:staticcheck
 	ErrServiceUnavailable      = apierrors.NewServiceUnavailable("github is unavailable")
 	ErrFileTooLarge            = errors.New("file exceeds maximum allowed size")
 	ErrTooManyItems            = errors.New("maximum number of items exceeded")
