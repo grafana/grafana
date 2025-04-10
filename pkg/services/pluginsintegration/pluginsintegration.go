@@ -70,8 +70,6 @@ var WireSet = wire.NewSet(
 	pluginconfig.NewRequestConfigProvider,
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
-	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
@@ -153,6 +151,9 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 	plugininstaller.ProvideNoopExpressService,
 	wire.Bind(new(plugininstaller.Express), new(*plugininstaller.NoopExpressService)),
+
+	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 )
 
 func ProvideClientWithMiddlewares(
