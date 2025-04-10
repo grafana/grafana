@@ -13,7 +13,7 @@ import (
 var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
 
 // AlertRuleFieldsWhichAffectQuery contains fields which affect the rule's query(s)
-var AlertRuleFieldsWhichAffectQuery = [...]string{"Data", "Condition"}
+var AlertRuleFieldsWhichAffectQuery = [...]string{"Data", "IntervalSeconds"}
 
 type RuleDelta struct {
 	Existing *models.AlertRule

@@ -145,7 +145,6 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		}
 		rulesToDelete := make([]string, 0)
 		provisioned := false
-		auth := true
 		for groupKey, rules := range deletionCandidates {
 			if containsProvisionedAlerts(provenances, rules) {
 				logger.Debug("Alert group cannot be deleted because it is provisioned", "group", groupKey.RuleGroup)
@@ -167,17 +166,10 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			return nil
 		}
 		// if none rules were deleted return an error.
-
 		// Check whether provisioned check failed first because if it is true, then all rules that the user can access (actually read via GET API) are provisioned.
 		if provisioned {
 			return errProvisionedResource
 		}
-
-		// If auth is false, then the user is not authorized to delete any of the rules.
-		if !auth {
-			return authz.NewAuthorizationErrorGeneric("delete any existing rules in the namespace")
-		}
-
 		logger.Info("No alert rules were deleted")
 		return nil
 	})
