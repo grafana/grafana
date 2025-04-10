@@ -33,7 +33,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBeha
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';

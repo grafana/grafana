@@ -4,7 +4,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
 import { deserializeDefaultGridLayout } from './DefaultGridLayoutSerializer';
-import { deserializeAutoGridLayout } from './ResponsiveGridLayoutSerializer';
+import { deserializeAutoGridLayout } from './AutoGridLayoutSerializer';
 import { deserializeRowsLayout } from './RowsLayoutSerializer';
 import { deserializeTabsLayout } from './TabsLayoutSerializer';
 

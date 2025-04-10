@@ -2,8 +2,8 @@ import { SceneGridLayout } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { AutoGridLayout } from '../../scene/layout-responsive-grid/ResponsiveGridLayout';
-import { AutoGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
