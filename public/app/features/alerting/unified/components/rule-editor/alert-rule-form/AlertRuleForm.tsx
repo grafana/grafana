@@ -301,6 +301,16 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
             {/* actions */}
             <Stack direction="row" alignItems="center">
+              <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+              </Button>
+
+              {existing && isCortexLokiOrRecordingRule(watch) && (
+                <Button variant="secondary" type="button" onClick={() => setShowEditYaml(true)} disabled={isSubmitting}>
+                  <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
+                </Button>
+              )}
+
               <Button
                 data-testid="save-rule"
                 variant="primary"
@@ -311,15 +321,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
                 <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save rule</Trans>
               </Button>
-              <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
-                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-              </Button>
-
-              {existing && isCortexLokiOrRecordingRule(watch) && (
-                <Button variant="secondary" type="button" onClick={() => setShowEditYaml(true)} disabled={isSubmitting}>
-                  <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
-                </Button>
-              )}
             </Stack>
           </Stack>
         </div>
