@@ -8,7 +8,12 @@ import { BarGauge } from '../../BarGauge/BarGauge';
 import { DataLinksContextMenuApi } from '../../DataLinks/DataLinksContextMenu';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellProps } from '../types';
-import { getAlignmentFactor, getCellOptions } from '../utils';
+import {
+  DataLinksActionsTooltipCoords,
+  getAlignmentFactor,
+  getCellOptions,
+  getDataLinksActionsTooltipUtils,
+} from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -56,8 +61,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
     return field.getLinks({ valueRowIndex: row.index });
   };
 
-  const hasLinks = Boolean(getLinks().length);
-  const hasActions = Boolean(actions?.length);
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
@@ -84,19 +87,28 @@ export const BarGaugeCell = (props: TableCellProps) => {
     );
   };
 
-  const [tooltipCoords, setTooltipCoords] = useState<{ clientX: number; clientY: number }>();
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(getLinks(), actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
+
+  const links = getLinks();
 
   return (
     <div
       {...cellProps}
       className={tableStyles.cellContainer}
+      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
       onClick={({ clientX, clientY }) => {
         setTooltipCoords({ clientX, clientY });
       }}
     >
-      {(hasLinks || hasActions) && tooltipCoords ? (
+      {shouldShowLink ? (
+        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
+          {renderComponent({})}
+        </a>
+      ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
-          links={getLinks()}
+          links={links}
           actions={actions}
           value={renderComponent({})}
           coords={tooltipCoords}
