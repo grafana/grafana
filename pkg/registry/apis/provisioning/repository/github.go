@@ -707,7 +707,9 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			currentPath, currentErr := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
 
 			switch {
-			case previousErr == nil && currentErr == nil:
+			case previousErr != nil && currentErr != nil: // outside of configured path
+				// do nothing as it's outside of configured path
+			case previousErr == nil && currentErr == nil: // both are inside of configured path
 				changes = append(changes, VersionedFileChange{
 					Path:         currentPath,
 					PreviousPath: previousPath,
@@ -715,20 +717,20 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 					PreviousRef:  base,
 					Action:       FileActionRenamed,
 				})
-			case previousErr == nil && currentErr != nil:
+			case previousErr == nil && currentErr != nil: // moving out of the configured path
 				changes = append(changes, VersionedFileChange{
 					Path:   currentPath,
 					Ref:    ref,
 					Action: FileActionDeleted,
 				})
-			case previousErr != nil && currentErr == nil:
+			case previousErr != nil && currentErr == nil: // moving into the configured path
 				changes = append(changes, VersionedFileChange{
 					Path:   currentPath,
 					Ref:    ref,
 					Action: FileActionCreated,
 				})
 			default:
-				// do nothing as it's outside of configured path
+				logger.Error("ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 			}
 		case "removed":
 			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
