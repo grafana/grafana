@@ -28,6 +28,7 @@ import { GetRowContextQueryFn } from './LogLineMenu';
 export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
+  hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
@@ -48,6 +49,7 @@ export const LogListContext = createContext<LogListContextData>({
   displayedFields: [],
   downloadLogs: () => {},
   filterLevels: [],
+  hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
   setFilterLevels: () => {},
@@ -86,6 +88,7 @@ export type LogListState = Pick<
   | 'displayedFields'
   | 'forceEscape'
   | 'filterLevels'
+  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -102,12 +105,12 @@ export interface Props {
   displayedFields: string[];
   filterLevels?: LogLevel[];
   forceEscape?: boolean;
+  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
-  onEscapeNewlines?: () => {};
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -130,14 +133,14 @@ export const LogListContextProvider = ({
   children,
   dedupStrategy,
   displayedFields,
-  forceEscape,
+  filterLevels,
+  forceEscape = false,
+  hasUnescapedContent,
   getRowContextQuery,
   logs,
   logsMeta,
   logOptionsStorageKey,
-  filterLevels,
   logSupportsContext,
-  onEscapeNewlines,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
@@ -160,6 +163,7 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     forceEscape,
+    hasUnescapedContent,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -213,6 +217,12 @@ export const LogListContextProvider = ({
     }
   }, [filterLevels, logListState]);
 
+  useEffect(() => {
+    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
+      setLogListState({ ...logListState, hasUnescapedContent });
+    }
+  }, [hasUnescapedContent, logListState]);
+
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
@@ -232,9 +242,8 @@ export const LogListContextProvider = ({
   const setForceEscape = useCallback(
     (forceEscape: boolean) => {
       setLogListState({ ...logListState, forceEscape });
-      onLogOptionsChange?.('forceEscape', forceEscape);
     },
-    [logListState, onLogOptionsChange]
+    [logListState]
   );
 
   const setFilterLevels = useCallback(

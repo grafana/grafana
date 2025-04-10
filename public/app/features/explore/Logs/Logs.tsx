@@ -209,7 +209,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>([]);
-  const [forceEscape, setForceEscape] = useState<boolean>(false);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -496,10 +495,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     },
     [sortOrderChanged]
   );
-
-  const onEscapeNewlines = useCallback(() => {
-    setForceEscape(!forceEscape);
-  }, [forceEscape]);
 
   const onChangeVisualisation = useCallback(
     (visualisation: LogsVisualisationType) => {
@@ -1048,7 +1043,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 showLabels={showLabels}
                 showTime={showTime}
                 enableLogDetails={true}
-                forceEscape={forceEscape}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
@@ -1108,7 +1102,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       showLabels={showLabels}
                       showTime={showTime}
                       enableLogDetails={true}
-                      forceEscape={forceEscape}
                       wrapLogMessage={wrapLogMessage}
                       prettifyLogMessage={prettifyLogMessage}
                       timeZone={timeZone}
@@ -1156,7 +1149,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
-                  forceEscape={forceEscape}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   loadMore={loadMoreLogs}

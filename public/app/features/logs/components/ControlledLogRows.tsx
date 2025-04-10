@@ -51,7 +51,7 @@ export type LogRowsComponentProps = Omit<
 export const ControlledLogRows = ({
   deduplicatedRows,
   dedupStrategy,
-  forceEscape,
+  hasUnescapedContent,
   showLabels,
   showTime,
   logsMeta,
@@ -67,7 +67,7 @@ export const ControlledLogRows = ({
       app={rest.app || CoreApp.Unknown}
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
-      forceEscape={forceEscape}
+      hasUnescapedContent={hasUnescapedContent}
       logOptionsStorageKey={logOptionsStorageKey}
       logs={deduplicatedRows ?? []}
       logsMeta={logsMeta}
