@@ -108,7 +108,6 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Uses different APIs depending on whether a selector is provided
   const fetchLabelKeys = useCallback(
     async (safeSelector?: string) => {
-      setStatus('Fetching labels...');
       try {
         if (safeSelector) {
           return Object.keys(
@@ -194,6 +193,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setSelectedMetric(newSelectedMetric);
 
     if (newSelectedMetric === '') {
+      initialize();
       return;
     }
 
