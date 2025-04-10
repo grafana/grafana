@@ -654,6 +654,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return &ReadResponse{Error: rsp.Error}, nil
+	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
