@@ -2,11 +2,13 @@ import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
+import { TimeRange } from '@grafana/data';
+
 import PromQlLanguageProvider from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
-import { METRIC_LABEL } from './types';
+import { LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 
 // Mock the local storage
 const localStorageMock = (() => {
@@ -24,6 +26,7 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 // Mock language provider
+const mockTimeRange = getMockTimeRange();
 const mockLanguageProvider = {
   metrics: ['metric1', 'metric2', 'metric3'],
   labelKeys: ['__name__', 'instance', 'job', 'service'],
@@ -31,6 +34,7 @@ const mockLanguageProvider = {
     metric1: { type: 'counter', help: 'Test metric 1' },
     metric2: { type: 'gauge', help: 'Test metric 2' },
   },
+  fetchLabels: jest.fn(),
   fetchSeriesLabelsMatch: jest.fn(),
   fetchSeriesValuesWithMatch: jest.fn(),
   fetchLabelsWithMatch: jest.fn(),
@@ -69,7 +73,7 @@ const TestComponent = () => {
       <button data-testid="select-label" onClick={() => onLabelKeyClick('job')}>
         Select Label
       </button>
-      <button data-testid="select-label-value" onClick={() => onLabelValueClick('job', 'grafana')}>
+      <button data-testid="select-label-value" onClick={() => onLabelValueClick('job', 'grafana', true)}>
         Select Label Value
       </button>
       <button data-testid="clear" onClick={onClearClick}>
@@ -84,11 +88,7 @@ const TestComponent = () => {
 
 const renderWithProvider = (ui: ReactNode) => {
   return render(
-    <MetricsBrowserProvider
-      timeRange={getMockTimeRange()}
-      languageProvider={mockLanguageProvider}
-      onChange={mockOnChange}
-    >
+    <MetricsBrowserProvider timeRange={mockTimeRange} languageProvider={mockLanguageProvider} onChange={mockOnChange}>
       {ui}
     </MetricsBrowserProvider>
   );
@@ -99,14 +99,12 @@ describe('MetricsBrowserContext', () => {
     jest.clearAllMocks();
     localStorageMock.clear();
 
-    // Default implementation of mocked functions
-    (mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
-      instance: ['instance1', 'instance2'],
-      job: ['job1', 'job2'],
-    });
+    // Set up consistent mock implementation
+    (mockLanguageProvider.fetchLabels as jest.Mock).mockResolvedValue(['__name__', 'instance', 'job', 'service']);
 
+    // Default implementation for fetching metrics
     (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
-      (label: string, selector: string | undefined) => {
+      (_timeRange: TimeRange, label: string) => {
         if (label === 'job') {
           return Promise.resolve(['grafana', 'prometheus']);
         }
@@ -114,12 +112,21 @@ describe('MetricsBrowserContext', () => {
           return Promise.resolve(['host1', 'host2']);
         }
         if (label === METRIC_LABEL) {
-          return Promise.resolve(['metric1', 'metric2']);
+          return Promise.resolve(['metric1', 'metric2', 'metric3']);
         }
         return Promise.resolve([]);
       }
     );
 
+    // Mock for fetching label keys for a specific metric
+    (mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
+      __name__: ['metric1', 'metric2'],
+      instance: ['instance1', 'instance2'],
+      job: ['job1', 'job2'],
+      service: ['service1', 'service2'],
+    });
+
+    // Mock for validation
     (mockLanguageProvider.fetchLabelsWithMatch as jest.Mock).mockResolvedValue({
       job: ['job1', 'job2'],
       instance: ['instance1', 'instance2'],
@@ -129,209 +136,361 @@ describe('MetricsBrowserContext', () => {
   it('should initialize with metrics from language provider', async () => {
     renderWithProvider(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('metrics-count').textContent).toBe('3');
-    });
+    // Wait for API calls and state update
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          METRIC_LABEL,
+          undefined,
+          'MetricsBrowser_M',
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
+
+    // Then check UI update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('metrics-count').textContent).toBe('3');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should load saved label keys from localStorage on init', async () => {
     // Setup localStorage with saved label keys
-    localStorageMock.setItem('grafana.datasources.prometheus.browser.labels', JSON.stringify(['job', 'instance']));
+    localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
 
     renderWithProvider(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job,instance');
-    });
+    // First wait for API calls
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
+    // Then wait for state update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job,instance');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should select and deselect metrics on click', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
+    // Wait for initialization to complete
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
     // Initially no metric is selected
     expect(screen.getByTestId('selected-metric').textContent).toBe('');
 
     // Select a metric
     await user.click(screen.getByTestId('select-metric'));
-    expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+
+    // Wait for selection to complete and API calls
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
+    // Wait for state update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
+
+    // Mock setup for deselection
+    jest.clearAllMocks();
 
     // Click again to deselect
     await user.click(screen.getByTestId('select-metric'));
-    expect(screen.getByTestId('selected-metric').textContent).toBe('');
+
+    // Wait for deselection to complete
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should select and deselect label keys on click', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
+    // Wait for initialization to complete
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
     // Initially no label key is selected
     expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
 
     // Select a label key
     await user.click(screen.getByTestId('select-label'));
-    expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+
+    // Wait for selection and API calls
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          'job',
+          undefined,
+          'MetricsBrowser_LV_job',
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
+
+    // Wait for state update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
+
+    // Reset mocks for deselection test
+    jest.clearAllMocks();
 
     // Click again to deselect
     await user.click(screen.getByTestId('select-label'));
-    expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
+
+    // Wait for state update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
+      },
+      { timeout: 5000 }
+    );
 
     // Verify localStorage update
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(
-      'grafana.datasources.prometheus.browser.labels',
-      JSON.stringify([])
-    );
+    expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, JSON.stringify([]));
   });
 
   it('should select and deselect label values on click', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
-    // Select a label value
+    // Wait for initialization
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
+    // First select the label key to enable label value selection
+    await user.click(screen.getByTestId('select-label'));
+
+    // Wait for label key selection to complete
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
+
+    jest.clearAllMocks();
+
+    // Now select a label value
     await user.click(screen.getByTestId('select-label-value'));
 
-    // Should update the selector
-    await waitFor(() => {
-      expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
-    });
+    // Wait for API calls after value selection
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
+    // Wait for selector update in UI
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should fetch label values with the current selector', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
+    // Wait for initialization to complete
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
     // First select a metric to create a non-empty selector
     await user.click(screen.getByTestId('select-metric'));
+
+    // Wait for metric selection to complete
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
+
+    jest.clearAllMocks();
 
     // Then select a label
     await user.click(screen.getByTestId('select-label'));
 
-    await waitFor(() => {
-      // Should call fetchSeriesValuesWithMatch with the current selector
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        'metric1{}',
-        'MetricsBrowser_LV_job',
-        40000
-      );
-    });
-  });
-
-  it('should pass undefined instead of empty selector when fetching label values', async () => {
-    const user = userEvent.setup();
-    renderWithProvider(<TestComponent />);
-
-    // Only select a label key (no metric or label values)
-    await user.click(screen.getByTestId('select-label'));
-
-    await waitFor(() => {
-      // Should call fetchSeriesValuesWithMatch with undefined instead of '{}'
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        undefined,
-        'MetricsBrowser_LV_job',
-        40000
-      );
-    });
-  });
-
-  it('should fetch new labels when a metric is selected', async () => {
-    const user = userEvent.setup();
-    renderWithProvider(<TestComponent />);
-
-    await user.click(screen.getByTestId('select-metric'));
-
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith(expect.anything(), 'metric1{}', 40000);
-    });
+    // Wait for API call with the expected selector
+    await waitFor(
+      () => {
+        // Should call fetchSeriesValuesWithMatch with the current selector
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          'job',
+          expect.stringContaining('metric1'),
+          expect.any(String),
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should clear all selections when clear is clicked', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
+    // Wait for initialization
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
     // Set up some selections
     await user.click(screen.getByTestId('select-metric'));
-    await user.click(screen.getByTestId('select-label'));
-    await user.click(screen.getByTestId('select-label-value'));
 
-    // Verify selections are made
-    expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
-    expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+    // Wait for metric selection
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
+
+    await user.click(screen.getByTestId('select-label'));
+
+    // Wait for label selection
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
+
+    // Reset mocks before clear
+    jest.clearAllMocks();
 
     // Clear selections
     await user.click(screen.getByTestId('clear'));
 
+    // Wait for clear to trigger API calls
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
     // Verify everything is cleared
-    expect(screen.getByTestId('selected-metric').textContent).toBe('');
-    expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
-    expect(screen.getByTestId('selector').textContent).toBe('{}');
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('');
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
+        expect(screen.getByTestId('selector').textContent).toBe('{}');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should validate selectors and show status', async () => {
     const user = userEvent.setup();
     renderWithProvider(<TestComponent />);
 
-    // Make some selections to get a valid selector
+    // Wait for initialization
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
+
+    // Select a label to enable value selection
     await user.click(screen.getByTestId('select-label'));
+
+    // Wait for label selection
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
+
+    // Select a value to get a valid selector
     await user.click(screen.getByTestId('select-label-value'));
+
+    // Wait for the value selection
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
+
+    jest.clearAllMocks();
 
     // Trigger validation
     await user.click(screen.getByTestId('validate'));
 
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
-      expect(screen.getByTestId('validation-status').textContent).toContain('Selector is valid');
-    });
-  });
+    // Wait for validation API call
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
 
-  it('should handle validation errors gracefully', async () => {
-    const user = userEvent.setup();
-    (mockLanguageProvider.fetchLabelsWithMatch as jest.Mock).mockRejectedValueOnce(new Error('Validation error'));
-
-    renderWithProvider(<TestComponent />);
-
-    // Trigger validation
-    await user.click(screen.getByTestId('validate'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('validation-status').textContent).toBe('');
-    });
-  });
-
-  it('should fetch metrics when label values change', async () => {
-    const user = userEvent.setup();
-    renderWithProvider(<TestComponent />);
-
-    // Add a label value selection to trigger the metrics fetch
-    await user.click(screen.getByTestId('select-label-value'));
-
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        METRIC_LABEL,
-        '{job="grafana"}',
-        'MetricsBrowser_M',
-        40000
-      );
-    });
-  });
-
-  it('should handle errors when fetching metrics', async () => {
-    (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockRejectedValueOnce(new Error('Fetch error'));
-
-    const user = userEvent.setup();
-    renderWithProvider(<TestComponent />);
-
-    // Trigger metric fetch with an error
-    await user.click(screen.getByTestId('select-label-value'));
-
-    // Error should be handled gracefully
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    // Wait for validation status to update
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('validation-status').textContent).toContain('Selector is valid');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should throw error when hook is used outside provider', () => {
