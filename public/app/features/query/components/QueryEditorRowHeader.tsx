@@ -138,6 +138,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
+    // eslint-disable-next-line @grafana/no-untranslated-strings
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 

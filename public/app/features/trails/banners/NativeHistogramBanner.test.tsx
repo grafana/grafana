@@ -18,7 +18,7 @@ const mockProps = {
 describe('NativeHistogramBanner', () => {
   test('renders correctly when histograms are loaded', () => {
     render(<NativeHistogramBanner {...mockProps} />);
-    expect(screen.getByText('Native Histogram Support')).toBeInTheDocument();
+    expect(screen.getByText('Native histogram support')).toBeInTheDocument();
     expect(
       screen.getByText(
         'Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana.'

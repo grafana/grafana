@@ -116,7 +116,10 @@ export const RegressionTransformerEditor = ({
       <InlineField
         labelWidth={LABEL_WIDTH}
         label={t('transformers.regression-transformer-editor.label-predicted-points', 'Predicted points')}
-        tooltip={'Number of X,Y points to predict'}
+        tooltip={t(
+          'transformers.regression-transformer-editor.tooltip-number-of-xy-points-to-predict',
+          'Number of X,Y points to predict'
+        )}
       >
         <NumberInput
           value={options.predictionCount ?? DEFAULTS.predictionCount}

@@ -82,7 +82,7 @@ function FormatStringTransfomerEditor({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'Field'} labelWidth={10}>
+        <InlineField label={t('transformers.format-string-transfomer-editor.label-field', 'Field')} labelWidth={10}>
           <FieldNamePicker
             context={{ data: input }}
             value={options.stringField ?? ''}

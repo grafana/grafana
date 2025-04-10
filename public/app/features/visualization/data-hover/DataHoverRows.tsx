@@ -87,6 +87,7 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
 
   if (first) {
     return (
+      // eslint-disable-next-line @grafana/no-untranslated-strings
       <span>
         {first}: {renderValue(props[first])}
       </span>
@@ -97,6 +98,7 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
     const v = props[k];
     if (isString(v)) {
       return (
+        // eslint-disable-next-line @grafana/no-untranslated-strings
         <span>
           {k}: {renderValue(v)}
         </span>

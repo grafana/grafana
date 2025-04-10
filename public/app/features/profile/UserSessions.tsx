@@ -66,7 +66,12 @@ class UserSessions extends PureComponent<Props> {
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>
-                        {session.browser} on {session.os} {session.osVersion}
+                        <Trans
+                          i18nKey="profile.user-sessions.browser-details"
+                          values={{ browser: session.browser, os: session.os, osVersion: session.osVersion }}
+                        >
+                          {'{{browser}}'} on {'{{os}}'} {'{{osVersion}}'}
+                        </Trans>
                       </td>
                       <td>
                         {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}

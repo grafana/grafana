@@ -191,6 +191,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         </InlineLabel>
         <Input
           type="number"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder={`${dataSource.cachingConfig.TTLMs}`}
           spellCheck={false}
           onBlur={onQueryCachingTTLBlur}
@@ -223,6 +224,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="max-data-points-input"
           type="number"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder={`${realMd}`}
           spellCheck={false}
           onBlur={onMaxDataPointsBlur}
@@ -263,6 +265,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="min-interval-input"
           type="text"
+          // eslint-disable-next-line @grafana/no-untranslated-strings
           placeholder={`${minIntervalOnDs}`}
           spellCheck={false}
           onBlur={onMinIntervalBlur}

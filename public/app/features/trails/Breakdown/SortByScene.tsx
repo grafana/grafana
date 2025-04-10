@@ -93,7 +93,7 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
           width={20}
           isSearchable={true}
           options={model.sortingOptions}
-          placeholder={'Choose criteria'}
+          placeholder={t('trails.sort-by-scene.placeholder-choose-criteria', 'Choose criteria')}
           onChange={model.onCriteriaChange}
           inputId="sort-by-criteria"
         />
