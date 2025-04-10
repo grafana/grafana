@@ -21,7 +21,7 @@ import (
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
 type keeperMetadataStorage struct {
-	db           *session.SessionDB
+	db           db.DB
 	dialect      sqltemplate.Dialect
 	accessClient claims.AccessClient
 }
@@ -36,7 +36,7 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 
 	return &keeperMetadataStorage{
 		// TODO LND is this ok or should we get a session for each operation?
-		db:           db.GetSqlxSession(),
+		db:           db,
 		dialect:      sqltemplate.DialectForDriver(string(db.GetDBType())),
 		accessClient: accessClient,
 	}, nil
@@ -62,7 +62,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		return nil, fmt.Errorf("read template %q: %w", q, err)
 	}
 
-	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
 		if err := s.validateSecureValueReferences(ctx, sess, keeper); err != nil {
 			return err
@@ -123,7 +123,7 @@ func read(ctx context.Context, namespace string, name string, s *keeperMetadataS
 
 	var k *keeperDB
 
-	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// TODO LND Check QueryRowContext instead of Query
 		res, err := sess.Query(ctx, q, req.GetArgs()...)
 		if err != nil {
@@ -166,7 +166,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	}
 
 	var oldKeeper *secretv0alpha1.Keeper
-	err := s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err := s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
 
 		if err := s.validateSecureValueReferences(ctx, sess, newKeeper); err != nil {
@@ -207,7 +207,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("update template %q: %w", q, err)
 	}
 
-	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to update row: %w", err)
 		}
@@ -242,7 +242,7 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		return fmt.Errorf("delete template %q: %w", q, err)
 	}
 
-	err = s.db.WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// should we check the result?
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to delete row: %w", err)
@@ -288,7 +288,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("list template %q: %w", q, err)
 	}
 
-	rows, err := s.db.Query(ctx, q, req.GetArgs()...)
+	rows, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("list template %q: %w", q, err)
 	}
@@ -349,7 +349,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
 
-	rows, err := s.db.Query(ctx, qSecValue, reqSecValue.GetArgs()...)
+	rows, err := s.db.GetSqlxSession().Query(ctx, qSecValue, reqSecValue.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
@@ -412,7 +412,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("list template %q: %w", qKeeper, err)
 	}
 
-	rows2, err := s.db.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
+	rows2, err := s.db.GetSqlxSession().Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("execute list template %q: %w", qKeeper, err)
 	}
