@@ -33,12 +33,6 @@ func (g *PrometheusRuleGroup) Validate() error {
 		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
 	}
 
-	for _, rule := range g.Rules {
-		if err := rule.Validate(); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -50,12 +44,4 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
-}
-
-func (r *PrometheusRule) Validate() error {
-	if r.KeepFiringFor != nil {
-		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
-	}
-
-	return nil
 }

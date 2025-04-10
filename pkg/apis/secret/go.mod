@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apis/secret
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
@@ -63,6 +63,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	go.etcd.io/bbolt v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.16 // indirect

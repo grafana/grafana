@@ -16,7 +16,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle } from '../layouts-shared/utils';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -43,6 +43,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     id: 'RowsLayout',
     createFromLayout: RowsLayoutManager.createFromLayout,
     isGridLayout: false,
+    icon: 'list-ul',
   };
 
   public serialize(): DashboardV2Spec['layout'] {
@@ -133,9 +134,19 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.rows.length === 1;
+  }
+
   public removeRow(row: RowItem) {
+    // When removing last row replace ourselves with the inner row layout
+    if (this.shouldUngroup()) {
+      ungroupLayout(this, row.state.layout);
+      return;
+    }
+
     const rows = this.state.rows.filter((r) => r !== row);
-    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
+    this.setState({ rows });
     this.publishEvent(new ObjectRemovedFromCanvasEvent(row), true);
   }
 

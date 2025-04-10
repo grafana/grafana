@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon, IconButton } from '@grafana/ui';
+import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -20,6 +20,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
+  const onConfirmDelete = element.onConfirmDelete?.bind(element);
   // temporary simple solution, should select parent element
   const onGoBack = () => editPane.clearSelection();
   const canGoBack = editPane.state.selection;
@@ -40,7 +41,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
       </Stack>
       <Stack direction="row" gap={1}>
         {element.renderActions && element.renderActions()}
-        {(onCopy || onDelete) && (
+        {(onCopy || onDuplicate) && (
           <Dropdown
             overlay={
               <Menu>
@@ -69,22 +70,15 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
           </Dropdown>
         )}
 
-        {onDelete && (
-          <ConfirmButton
-            onConfirm={onDelete}
-            confirmText="Confirm"
-            confirmVariant="destructive"
+        {(onDelete || onConfirmDelete) && (
+          <Button
+            onClick={onConfirmDelete || onDelete}
             size="sm"
-            closeOnConfirm={true}
-          >
-            <Button
-              size="sm"
-              variant="destructive"
-              fill="outline"
-              icon="trash-alt"
-              tooltip={t('dashboard.layout.common.delete', 'Delete')}
-            />
-          </ConfirmButton>
+            variant="destructive"
+            fill="outline"
+            icon="trash-alt"
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+          />
         )}
       </Stack>
     </div>

@@ -18,7 +18,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle } from '../layouts-shared/utils';
+import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -45,6 +45,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     id: 'TabsLayout',
     createFromLayout: TabsLayoutManager.createFromLayout,
     isGridLayout: false,
+    icon: 'window',
   };
 
   public serialize(): DashboardV2Spec['layout'] {
@@ -151,9 +152,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.tabs.length === 1;
+  }
+
   public removeTab(tabToRemove: TabItem) {
-    // Do not allow removing last tab (for now)
-    if (this.state.tabs.length === 1) {
+    // When removing last tab replace ourselves with the inner tab layout
+    if (this.shouldUngroup()) {
+      ungroupLayout(this, tabToRemove.state.layout);
       return;
     }
 

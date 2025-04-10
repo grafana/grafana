@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/dashboard
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.35.1
@@ -41,7 +41,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.35.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
