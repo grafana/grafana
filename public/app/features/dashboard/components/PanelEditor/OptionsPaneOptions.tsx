@@ -100,7 +100,12 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
+          <FilterInput
+            width={0}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('dashboard.options-pane-options.placeholder-search-options', 'Search options')}
+          />
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>
