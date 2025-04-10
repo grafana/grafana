@@ -207,13 +207,13 @@ func TestReadTree(t *testing.T) {
 		}},
 		{name: "with path prefix", path: "prefix", tree: func() []pgh.RepositoryContent {
 			file := pgh.NewMockRepositoryContent(t)
-			file.EXPECT().GetPath().Return("prefix/file.txt")
+			file.EXPECT().GetPath().Return("file.txt")
 			file.EXPECT().GetSize().Return(int64(100))
 			file.EXPECT().GetSHA().Return("abc123")
 			file.EXPECT().IsDirectory().Return(false)
 
 			dir := pgh.NewMockRepositoryContent(t)
-			dir.EXPECT().GetPath().Return("prefix/dir")
+			dir.EXPECT().GetPath().Return("dir")
 			dir.EXPECT().GetSize().Return(int64(0))
 			dir.EXPECT().GetSHA().Return("")
 			dir.EXPECT().IsDirectory().Return(true)
@@ -222,31 +222,6 @@ func TestReadTree(t *testing.T) {
 		}(), expected: []FileTreeEntry{
 			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
 			{Path: "dir/", Blob: false},
-		}},
-		{name: "with path prefix and unexpected slashes", path: "prefix", tree: func() []pgh.RepositoryContent {
-			file := pgh.NewMockRepositoryContent(t)
-			file.EXPECT().GetPath().Return("/prefix/file.txt")
-			file.EXPECT().GetSize().Return(int64(100))
-			file.EXPECT().GetSHA().Return("abc123")
-			file.EXPECT().IsDirectory().Return(false)
-
-			dir := pgh.NewMockRepositoryContent(t)
-			dir.EXPECT().GetPath().Return("/prefix/dir")
-			dir.EXPECT().GetSize().Return(int64(0))
-			dir.EXPECT().GetSHA().Return("")
-			dir.EXPECT().IsDirectory().Return(true)
-
-			dir2 := pgh.NewMockRepositoryContent(t)
-			dir2.EXPECT().GetPath().Return("/prefix/dir2/")
-			dir2.EXPECT().GetSize().Return(int64(0))
-			dir2.EXPECT().GetSHA().Return("")
-			dir2.EXPECT().IsDirectory().Return(true)
-
-			return []pgh.RepositoryContent{file, dir, dir2}
-		}(), expected: []FileTreeEntry{
-			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
-			{Path: "dir/", Blob: false},
-			{Path: "dir2/", Blob: false},
 		}},
 	}
 

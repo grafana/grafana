@@ -262,17 +262,9 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
-		filePath := entry.GetPath()
-		if r.config.Spec.GitHub.Path != "" && filePath != "" {
-			p, err := safepath.RelativeTo(filePath, r.config.Spec.GitHub.Path)
-			if err != nil {
-				return nil, fmt.Errorf("file %s is not a subdirectory of %s", filePath, r.config.Spec.GitHub.Path)
-			}
-			filePath = p
-		}
-
 		isBlob := !entry.IsDirectory()
 		// FIXME: this we could potentially do somewhere else on in a different way
+		filePath := entry.GetPath()
 		if !isBlob && !safepath.IsDir(filePath) {
 			filePath = filePath + "/"
 		}
