@@ -297,6 +297,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	if err != nil {
 		return fmt.Errorf("failed to create database admin client: %v", err)
 	}
+	//nolint:errcheck // If the databaseAdminClient.Close fails, we simply don't care.
 	defer databaseAdminClient.Close()
 
 	databaseName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, cfg.Database)
@@ -330,6 +331,7 @@ func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck // If the rows.Close fails, we simply don't care.
 	defer rows.Close()
 	for rows.Next() {
 		var name string
