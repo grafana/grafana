@@ -144,7 +144,15 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 
 	// Deepest first (stable sort order)
 	sort.Slice(changes, func(i, j int) bool {
-		return safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path)
+		if safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path) {
+			return true
+		}
+
+		if safepath.Depth(changes[i].Path) < safepath.Depth(changes[j].Path) {
+			return false
+		}
+
+		return changes[i].Path < changes[j].Path
 	})
 
 	return changes, nil
