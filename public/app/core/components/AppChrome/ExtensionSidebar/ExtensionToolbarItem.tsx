@@ -76,7 +76,7 @@ export function ExtensionToolbarItem() {
           icon="ai-sparkle"
           data-testid="extension-toolbar-button"
           variant="default"
-          tooltip={t('navigation.extension-sidebar.button-tooltip', 'Open AI assistents and sidebar apps')}
+          tooltip={t('navigation.extension-sidebar.button-tooltip', 'Open AI assistants and sidebar apps')}
         />
       </Dropdown>
       <NavToolbarSeparator />
