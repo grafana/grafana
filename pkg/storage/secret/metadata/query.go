@@ -21,7 +21,6 @@ var (
 	sqlKeeperList   = mustTemplate("keeper_list.sql")
 	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
 
-	// TODO LND review query_test.go for this, implement
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 )
