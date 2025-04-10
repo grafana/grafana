@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, useEffect } from 'react';
 
-import { Button, Icon, Stack, Checkbox, Text, Box, IconName, Space } from '@grafana/ui';
+import { Button, Icon, Stack, Checkbox, Text, Box, IconName, Space, Tooltip } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ResourceDependencyDto } from '../api';
@@ -139,7 +139,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
           ))}
         </Stack>
 
-        <Box display="flex" justifyContent="flex-start">
+        <Box display="flex" justifyContent="flex-start" alignItems="center" gap={1}>
           <Button
             disabled={disabled || selectedTypes.size === 0}
             onClick={handleBuildSnapshot}
@@ -148,6 +148,18 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
           >
             <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
           </Button>
+
+          <Tooltip
+            content={
+              <Trans i18nKey="migrate-to-cloud.building-snapshot.description-eta">
+                Creating a snapshot typically takes less than two minutes.
+              </Trans>
+            }
+            placement="right"
+            interactive={true}
+          >
+            <Icon name="info-circle" size="lg" />
+          </Tooltip>
         </Box>
       </Stack>
     </Stack>
