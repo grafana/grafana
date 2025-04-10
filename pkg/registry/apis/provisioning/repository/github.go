@@ -676,6 +676,11 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 
 	changes := make([]VersionedFileChange, 0)
 	for _, f := range files {
+		if _, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path); err != nil {
+			logger.Debug("ignore file", "file", f.GetFilename())
+			continue
+		}
+
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":

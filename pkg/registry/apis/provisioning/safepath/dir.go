@@ -41,7 +41,7 @@ func InDir(filePath, dir string) bool {
 // RelativeTo returns the relative path of the filePath to the given directory.
 // It handles cases where either filePath or dir have leading or trailing slashes.
 func RelativeTo(filePath, dir string) (string, error) {
-	if dir == "/" {
+	if dir == "/" || dir == "" {
 		return filePath, nil
 	}
 
