@@ -7135,9 +7135,6 @@
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
-  "routes-wrapper": {
-    "close-aria-label": "Close"
-  },
   "sandbox": {
     "test-stuff-page": {
       "application-notifications-toasts-testing": "Application notifications (toasts) testing",
