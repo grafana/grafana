@@ -861,7 +861,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             )
           ) : null,
         ]}
-        title={'Logs'}
+        title={t('explore.unthemed-logs.title-logs', 'Logs')}
         actions={
           <>
             {config.featureToggles.logsExploreTableVisualisation && (
@@ -1132,6 +1132,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       onUnpinLine={onPinToContentOutlineClick}
                       onPinLine={onPinToContentOutlineClick}
                       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                      renderPreview
                     />
                   </InfiniteScroll>
                 </div>

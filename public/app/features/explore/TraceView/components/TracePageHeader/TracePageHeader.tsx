@@ -20,6 +20,7 @@ import * as React from 'react';
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
@@ -133,7 +134,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           {data.meta?.custom?.partial && (
             <Tooltip content={data.meta?.custom?.message} interactive={true}>
               <span className={styles.tag}>
-                <Badge icon={'info-circle'} text={'Partial trace'} color={'orange'} />
+                <Badge
+                  icon={'info-circle'}
+                  text={t('explore.trace-page-header.text-partial-trace', 'Partial trace')}
+                  color={'orange'}
+                />
               </span>
             </Tooltip>
           )}
