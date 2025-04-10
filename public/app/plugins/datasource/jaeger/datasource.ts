@@ -76,7 +76,11 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     // We have not migrated the node graph to the backend
     // If the node graph is disabled, we can use the backend migration
     const nodeGraphDisabled = !this.nodeGraph?.enabled;
-    if (config.featureToggles.jaegerBackendMigration && (allTargetsTraceIdQuery || allTargetsDependencyGraph) && nodeGraphDisabled) {
+    if (
+      config.featureToggles.jaegerBackendMigration &&
+      (allTargetsTraceIdQuery || allTargetsDependencyGraph) &&
+      nodeGraphDisabled
+    ) {
       return super.query(options);
     }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -282,8 +283,15 @@ func transformDependenciesResponse(dependencies DependenciesResponse, refID stri
 		)
 	}
 
-	// Add node data
+	// Convert map keys to slice and sort them - this is to ensure the returned nodes are in a consistent order
+	services := make([]string, 0, len(servicesByName))
 	for service := range servicesByName {
+		services = append(services, service)
+	}
+	sort.Strings(services)
+
+	// Add node data in sorted order
+	for _, service := range services {
 		nodesFrame.AppendRow(
 			service,
 			service,

@@ -14,14 +14,14 @@
 //  | Labels:           | Labels:           |
 //  | Type: []string    | Type: []string    |
 //  +-------------------+-------------------+
-//  | user-service      | user-service      |
-//  | order-service     | order-service     |
-//  | payment-service   | payment-service   |
+//  | api-gateway       | api-gateway       |
+//  | auth-service      | auth-service      |
 //  | database          | database          |
 //  | frontend          | frontend          |
-//  | auth-service      | auth-service      |
-//  | api-gateway       | api-gateway       |
 //  | inventory-service | inventory-service |
+//  | order-service     | order-service     |
+//  | payment-service   | payment-service   |
+//  | user-service      | user-service      |
 //  +-------------------+-------------------+
 //  
 //  
@@ -59,24 +59,24 @@
       "data": {
         "values": [
           [
-            "user-service",
-            "order-service",
-            "payment-service",
+            "api-gateway",
+            "auth-service",
             "database",
             "frontend",
-            "auth-service",
-            "api-gateway",
-            "inventory-service"
+            "inventory-service",
+            "order-service",
+            "payment-service",
+            "user-service"
           ],
           [
-            "user-service",
-            "order-service",
-            "payment-service",
+            "api-gateway",
+            "auth-service",
             "database",
             "frontend",
-            "auth-service",
-            "api-gateway",
-            "inventory-service"
+            "inventory-service",
+            "order-service",
+            "payment-service",
+            "user-service"
           ]
         ]
       }

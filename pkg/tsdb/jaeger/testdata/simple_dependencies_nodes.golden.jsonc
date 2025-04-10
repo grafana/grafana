@@ -14,9 +14,9 @@
 //  | Labels:        | Labels:        |
 //  | Type: []string | Type: []string |
 //  +----------------+----------------+
+//  | serviceA       | serviceA       |
 //  | serviceB       | serviceB       |
 //  | serviceC       | serviceC       |
-//  | serviceA       | serviceA       |
 //  +----------------+----------------+
 //  
 //  
@@ -54,14 +54,14 @@
       "data": {
         "values": [
           [
+            "serviceA",
             "serviceB",
-            "serviceC",
-            "serviceA"
+            "serviceC"
           ],
           [
+            "serviceA",
             "serviceB",
-            "serviceC",
-            "serviceA"
+            "serviceC"
           ]
         ]
       }
