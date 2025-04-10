@@ -97,7 +97,7 @@ module.exports = [
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**', '**/mocks.{ts,tsx}'],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
     },

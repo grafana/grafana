@@ -10,7 +10,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
@@ -125,7 +125,7 @@ export const mockRulerGrafanaRule = (
           datasourceUid: '123',
           refId: 'A',
           queryType: 'huh',
-          model: {} as any,
+          model: {} as unknown as DataQuery,
         },
       ],
       ...partialDef,
