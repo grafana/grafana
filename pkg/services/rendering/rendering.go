@@ -80,6 +80,15 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	//  value used for domain attribute of renderKey cookie
 	var domain string
 
+	if cfg.RendererUrl != "" {
+		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
+
+		// Default value for callback URL using a remote renderer should be AppURL
+		if cfg.RendererCallbackUrl == "" {
+			cfg.RendererCallbackUrl = cfg.AppURL
+		}
+	}
+	
 	switch {
 	case cfg.RendererCallbackUrl != "":
 		u, err := url.Parse(cfg.RendererCallbackUrl)
@@ -96,9 +105,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain = "localhost"
 	}
 
-	if cfg.RendererUrl != "" {
-		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
-	}
+
 
 	var renderKeyProvider renderKeyProvider
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -247,5 +248,58 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		}()
 
 		require.Eventually(t, func() bool { return rs.Version() == "3.1.4159" }, time.Second, time.Millisecond)
+	})
+}
+
+func TestProvideService(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AppURL = "http://app-url"
+	cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+	cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+	cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+
+	t.Run("Default configuration values", func(t *testing.T) {
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		require.NoError(t, err)
+
+		require.Equal(t, "", rs.Cfg.RendererUrl)
+		require.Equal(t, "", rs.Cfg.RendererCallbackUrl)
+		require.Equal(t, "", rs.domain)
+	})
+
+	t.Run("RendererURL is set but not RendererCallbackUrl", func(t *testing.T) {
+		cfg.RendererUrl = "http://custom-renderer:8081"
+		cfg.RendererCallbackUrl = ""
+
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		require.NoError(t, err)
+		
+		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererUrl)
+		require.Equal(t, "http://app-url", rs.Cfg.RendererCallbackUrl)
+		require.Equal(t, "app-url", rs.domain)
+	})
+
+	t.Run("RendererURL and RendererCallbackUrl are set", func(t *testing.T) {
+		cfg.RendererUrl = "http://custom-renderer:8081"
+		cfg.RendererCallbackUrl = "http://public-grafana.com"
+		
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		require.NoError(t, err)
+		
+		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererUrl)
+		require.Equal(t, "http://public-grafana.com", rs.Cfg.RendererCallbackUrl)
+		require.Equal(t, "public-grafana.com", rs.domain)
+	})
+
+	t.Run("RendererURL is not set but RendererCallbackUrl is set", func(t *testing.T) {
+		cfg.RendererUrl = ""
+		cfg.RendererCallbackUrl = "https://public-grafana.com"
+		
+		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		require.NoError(t, err)
+		
+		require.Equal(t, "", rs.Cfg.RendererUrl)
+		require.Equal(t, "https://public-grafana.com", rs.Cfg.RendererCallbackUrl)
+		require.Equal(t, "public-grafana.com", rs.domain)
 	})
 }
