@@ -36,8 +36,8 @@ func init() {
 
 func NewSpannerDialect() Dialect {
 	d := SpannerDialect{d: core.QueryDialect(Spanner)}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Spanner
+	d.dialect = &d
+	d.driverName = Spanner
 	return &d
 }
 
@@ -172,11 +172,11 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	}
 
 	// Collect all DROP statements.
-	var statements []string
 	changeStreams, err := s.findChangeStreams(engine)
 	if err != nil {
 		return err
 	}
+	statements := make([]string, 0, len(tables)+len(changeStreams))
 	for _, cs := range changeStreams {
 		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
 	}
@@ -297,6 +297,7 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	if err != nil {
 		return fmt.Errorf("failed to create database admin client: %v", err)
 	}
+	//nolint:errcheck // If the databaseAdminClient.Close fails, we simply don't care.
 	defer databaseAdminClient.Close()
 
 	databaseName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, cfg.Database)
@@ -330,6 +331,7 @@ func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck // If the rows.Close fails, we simply don't care.
 	defer rows.Close()
 	for rows.Next() {
 		var name string

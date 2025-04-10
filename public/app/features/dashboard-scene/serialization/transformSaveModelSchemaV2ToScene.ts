@@ -88,10 +88,19 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const { spec: dashboard, metadata } = dto;
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
+    let annoQuerySpec = annotation.spec;
+    // some annotations will contain in the options properties that need to be
+    // added to the root level annotation spec
+    if (annoQuerySpec?.options) {
+      annoQuerySpec = {
+        ...annoQuerySpec,
+        ...annoQuerySpec.options,
+      };
+    }
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
       query: {
-        ...annotation.spec,
+        ...annoQuerySpec,
         builtIn: annotation.spec.builtIn ? 1 : 0,
       },
       name: annotation.spec.name,
