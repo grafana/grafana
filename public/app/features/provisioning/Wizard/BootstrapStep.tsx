@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
@@ -41,17 +41,14 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
     onOptionSelect(resourceCount === 0);
   }, [onOptionSelect, options, resourceCount, setValue]);
 
-  const handleOptionSelect = useCallback(
-    (option: ModeOption) => {
-      setValue('repository.sync.target', option.target);
+  const handleOptionSelect = (option: ModeOption) => {
+    setValue('repository.sync.target', option.target);
 
-      if (isMigrateOperation(option.target)) {
-        setValue('migrate.history', true);
-        setValue('migrate.identifier', true);
-      }
-    },
-    [setValue, onOptionSelect]
-  );
+    if (isMigrateOperation(option.target)) {
+      setValue('migrate.history', true);
+      setValue('migrate.identifier', true);
+    }
+  };
 
   if (resourceStats.isLoading || filesQuery.isLoading) {
     return (

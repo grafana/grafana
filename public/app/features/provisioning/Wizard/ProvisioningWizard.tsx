@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -12,6 +12,35 @@ import { Step } from './Stepper';
 import { WizardContent } from './WizardContent';
 import { RepoType, WizardFormData, WizardStep } from './types';
 
+const getSteps = (): Array<Step<WizardStep>> => {
+  return [
+    {
+      id: 'connection',
+      name: t('provisioning.wizard.step-connect', 'Connect'),
+      title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
+      submitOnNext: true,
+    },
+    {
+      id: 'bootstrap',
+      name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
+      title: t('provisioning.wizard.title-bootstrap', 'Choose what to synchronize'),
+      submitOnNext: true,
+    },
+    {
+      id: 'synchronize',
+      name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
+      title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
+      submitOnNext: false,
+    },
+    {
+      id: 'finish',
+      name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
+      title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
+      submitOnNext: true,
+    },
+  ];
+};
+
 export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
@@ -20,36 +49,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
   const values = getDefaultValues();
-
-  const steps = useMemo<Array<Step<WizardStep>>>(
-    () => [
-      {
-        id: 'connection',
-        name: t('provisioning.wizard.step-connect', 'Connect'),
-        title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
-        submitOnNext: true,
-      },
-      {
-        id: 'bootstrap',
-        name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
-        title: t('provisioning.wizard.title-bootstrap', 'Choose what to synchronize'),
-        submitOnNext: true,
-      },
-      {
-        id: 'synchronize',
-        name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
-        title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
-        submitOnNext: false,
-      },
-      {
-        id: 'finish',
-        name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
-        title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
-        submitOnNext: true,
-      },
-    ],
-    []
-  );
+  const steps = getSteps();
 
   const methods = useForm<WizardFormData>({
     defaultValues: {
