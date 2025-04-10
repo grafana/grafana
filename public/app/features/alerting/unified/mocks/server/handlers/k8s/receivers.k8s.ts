@@ -7,6 +7,11 @@ import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } f
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
+const usedByPolicies = ['grafana-default-email'];
+const usedByRules = ['grafana-default-email'];
+const cannotBeEdited = ['grafana-default-email'];
+const cannotBeDeleted = ['grafana-default-email'];
+
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
@@ -24,8 +29,10 @@ const getReceiversList = () => {
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
             [K8sAnnotations.AccessAdmin]: 'true',
-            [K8sAnnotations.AccessDelete]: 'true',
-            [K8sAnnotations.AccessWrite]: 'true',
+            [K8sAnnotations.AccessDelete]: cannotBeDeleted.includes(contactPoint.name) ? 'false' : 'true',
+            [K8sAnnotations.AccessWrite]: cannotBeEdited.includes(contactPoint.name) ? 'false' : 'true',
+            [K8sAnnotations.InUseRoutes]: usedByPolicies.includes(contactPoint.name) ? '1' : '0',
+            [K8sAnnotations.InUseRules]: usedByRules.includes(contactPoint.name) ? '1' : '0',
           },
         },
         spec: {
