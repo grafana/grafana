@@ -5,7 +5,7 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
-import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/ResponsiveGridLayoutSerializer';
+import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -19,9 +19,9 @@ import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { AutoGridItem } from './ResponsiveGridItem';
-import { AutoGridLayout } from './ResponsiveGridLayout';
-import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayout } from './AutoGridLayout';
+import { getEditOptions } from './AutoGridLayoutManagerEditor';
 
 interface AutoGridLayoutManagerState extends SceneObjectState {
   layout: AutoGridLayout;

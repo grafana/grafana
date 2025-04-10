@@ -23,9 +23,9 @@ import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasEleme
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
-import { getOptions } from './ResponsiveGridItemEditor';
-import { AutoGridItemRenderer } from './ResponsiveGridItemRenderer';
-import { AutoGridLayout } from './ResponsiveGridLayout';
+import { getOptions } from './AutoGridItemEditor';
+import { AutoGridItemRenderer } from './AutoGridItemRenderer';
+import { AutoGridLayout } from './AutoGridLayout';
 
 export interface AutoGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -151,7 +151,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
   public getParentGrid(): AutoGridLayout {
     if (!(this.parent instanceof AutoGridLayout)) {
-      throw new Error('Parent is not a ResponsiveGridLayout');
+      throw new Error('Parent is not a AutoGridLayout');
     }
 
     return this.parent;

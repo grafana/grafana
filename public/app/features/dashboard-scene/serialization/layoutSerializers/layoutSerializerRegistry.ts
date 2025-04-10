@@ -3,8 +3,8 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
+import { deserializeAutoGridLayout } from './AutoGridLayoutSerializer';
 import { deserializeDefaultGridLayout } from './DefaultGridLayoutSerializer';
-import { deserializeAutoGridLayout } from './ResponsiveGridLayoutSerializer';
 import { deserializeRowsLayout } from './RowsLayoutSerializer';
 import { deserializeTabsLayout } from './TabsLayoutSerializer';
 

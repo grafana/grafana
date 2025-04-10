@@ -4,8 +4,8 @@ import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafa
 
 import { getLayoutOrchestratorFor } from '../../utils/utils';
 
-import { AutoGridItem } from './ResponsiveGridItem';
-import { AutoGridLayoutRenderer } from './ResponsiveGridLayoutRenderer';
+import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
