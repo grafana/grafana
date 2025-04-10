@@ -28,8 +28,7 @@ const elementIsTrans = (node) => {
 const isStringLiteral = (node) => {
   return (
     node.type === AST_NODE_TYPES.Literal &&
-    typeof node.value === 'string' &&
-    node.value !== ''
+    typeof node.value === 'string'
   );
 }
 
@@ -307,11 +306,15 @@ function getNodeValue(node) {
     // Return the raw value if we can, so we can work out if there are any HTML entities
     return node.raw;
   }
-  if (node.type === AST_NODE_TYPES.JSXAttribute
-    && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer
-    && isStringLiteral(node.value.expression)
-  ) {
-    return node.value.expression.value;
+  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    // this condition is basically `isStringLiteral`, but we can't use the function
+    // else it doesn't narrow the type correctly :(
+    if (
+      node.value.expression.type === AST_NODE_TYPES.Literal &&
+      typeof node.value.expression.value === 'string'
+    ) {
+      return node.value.expression.value;
+    }
   }
   return '';
 }
