@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true, displayMax }: Props) => {
-  const [displayAll, setDisplayAll] = useState(displayMax ? false : true);
+  const [displayAll, setDisplayAll] = useState<boolean | undefined>(displayMax ? false : undefined);
   const styles = useStyles2(getStyles);
   const allLabels = useMemo(
     () =>
@@ -55,6 +55,11 @@ export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true, displa
       {displayLabels.length < allLabels.length && !displayAll && (
         <Button size="sm" fill="outline" variant="secondary" onClick={() => setDisplayAll(true)}>
           +{allLabels.length - displayLabels.length}
+        </Button>
+      )}
+      {displayAll === true && (
+        <Button size="sm" fill="outline" variant="secondary" onClick={() => setDisplayAll(false)}>
+          -
         </Button>
       )}
     </span>
