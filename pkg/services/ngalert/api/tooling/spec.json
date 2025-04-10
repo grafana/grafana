@@ -1070,36 +1070,6 @@
         }
       }
     },
-    "/convert/api/prom/config/v1/rules": {
-      "post": {
-        "consumes": [
-          "application/json",
-          "application/yaml"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "convert_prometheus"
-        ],
-        "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
-        "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
-        "responses": {
-          "202": {
-            "description": "ConvertPrometheusResponse",
-            "schema": {
-              "$ref": "#/definitions/ConvertPrometheusResponse"
-            }
-          },
-          "403": {
-            "description": "ForbiddenError",
-            "schema": {
-              "$ref": "#/definitions/ForbiddenError"
-            }
-          }
-        }
-      }
-    },
     "/convert/api/prom/rules": {
       "get": {
         "produces": [
@@ -1127,6 +1097,34 @@
             "description": "NotFound",
             "schema": {
               "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
+        "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }

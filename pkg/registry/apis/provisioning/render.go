@@ -117,7 +117,7 @@ func validBlobID(id string) bool {
 		az := c >= 'a' && c <= 'z'
 		AZ := c >= 'A' && c <= 'Z'
 		digit := c >= '0' && c <= '9'
-		if !(az || AZ || digit || c == '-') {
+		if !az && !AZ && !digit && c != '-' {
 			return false
 		}
 	}

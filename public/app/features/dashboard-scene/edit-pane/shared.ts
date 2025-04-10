@@ -1,11 +1,13 @@
 import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
-import { SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneGridRow, SceneObject, SceneVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
+import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 
 import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -35,24 +37,19 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new DashboardEditableElement(sceneObj);
   }
 
+  if (sceneObj instanceof SceneVariableSet) {
+    return new VariableSetEditableElement(sceneObj);
+  }
+
+  if (isSceneVariable(sceneObj)) {
+    return new VariableEditableElement(sceneObj);
+  }
+
   return undefined;
 }
 
-export function hasEditableElement(sceneObj: SceneObject | undefined): boolean {
-  if (!sceneObj) {
-    return false;
-  }
-
-  if (
-    isEditableDashboardElement(sceneObj) ||
-    sceneObj instanceof VizPanel ||
-    sceneObj instanceof SceneGridRow ||
-    sceneObj instanceof DashboardScene
-  ) {
-    return true;
-  }
-
-  return false;
+export function isSceneVariable(sceneObj: SceneObject): sceneObj is SceneVariable {
+  return 'getValue' in sceneObj;
 }
 
 export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {

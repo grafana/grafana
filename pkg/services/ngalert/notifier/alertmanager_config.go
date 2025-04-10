@@ -233,8 +233,8 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	for _, recv := range cfg.AlertmanagerConfig.Receivers {
-		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.GrafanaManagedReceivers))
+		for _, pr := range recv.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
 				decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)

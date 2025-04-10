@@ -6423,36 +6423,6 @@
     ]
    }
   },
-  "/convert/api/prom/config/v1/rules": {
-   "post": {
-    "consumes": [
-     "application/json",
-     "application/yaml"
-    ],
-    "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "202": {
-      "description": "ConvertPrometheusResponse",
-      "schema": {
-       "$ref": "#/definitions/ConvertPrometheusResponse"
-      }
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
-    "tags": [
-     "convert_prometheus"
-    ]
-   }
-  },
   "/convert/api/prom/rules": {
    "get": {
     "operationId": "RouteConvertPrometheusCortexGetRules",
@@ -6480,6 +6450,34 @@
      }
     },
     "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
     "tags": [
      "convert_prometheus"
     ]

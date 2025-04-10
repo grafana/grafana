@@ -53,7 +53,7 @@ func (e UnknownReceiverError) Error() string {
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -64,7 +64,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
 	}
 
-	if !c.SignedInUser.HasRole(org.RoleAdmin) {
+	if !c.HasRole(org.RoleAdmin) {
 		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
 	}
 
@@ -72,7 +72,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
@@ -82,8 +82,8 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	canSeeAutogen := c.SignedInUser.HasRole(org.RoleAdmin)
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), canSeeAutogen)
+	canSeeAutogen := c.HasRole(org.RoleAdmin)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -95,7 +95,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
 	limit := c.QueryInt("limit")
-	configs, err := srv.mam.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.SignedInUser.GetOrgID(), limit)
+	configs, err := srv.mam.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.GetOrgID(), limit)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
@@ -104,7 +104,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqCont
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -129,7 +129,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) res
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -162,7 +162,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 		return ErrResp(http.StatusBadRequest, err, "failed to parse config id")
 	}
 
-	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), confId)
+	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.GetOrgID(), confId)
 	if err != nil {
 		var unknownReceiverError notifier.UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
@@ -189,7 +189,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -210,7 +210,7 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.SignedInUser.GetOrgID(), body.Receivers); err != nil {
+	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -228,7 +228,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	}
 	defer cancelFunc()
 
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -245,7 +245,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}

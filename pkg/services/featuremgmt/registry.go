@@ -311,7 +311,7 @@ var (
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaDatavizSquad,
+			Owner:             grafanaOSSBigTent,
 			HideFromAdminPage: true,
 		},
 		{
@@ -351,14 +351,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-		},
-		{
-			Name:         "traceQLStreaming",
-			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Expression:   "false",
 		},
 		{
 			Name:            "datasourceAPIServers",
@@ -860,8 +852,8 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-			Stage:       FeatureStagePublicPreview,
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
 		},
@@ -915,16 +907,9 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-		},
-		{
-			Name:         "nodeGraphDotLayout",
-			Description:  "Changed the layout algorithm for the node graph",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "groupToNestedTableTransformation",
@@ -1569,8 +1554,9 @@ var (
 		{
 			Name:            "exploreMetricsUseExternalAppPlugin",
 			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaObservabilityMetricsSquad,
+			Expression:      "true",
 			FrontendOnly:    false,
 			RequiresRestart: true,
 		},
@@ -1600,11 +1586,12 @@ var (
 		{
 			Name:              "grafanaconThemes",
 			Description:       "Enables the temporary themes for GrafanaCon",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+			Expression:        "true",
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
@@ -1783,12 +1770,27 @@ var (
 			FrontendOnly: false,
 		},
 		{
+			Name:         "unifiedNavbars",
+			Description:  "Enables unified navbars",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false", // enabled by default
+		},
+		{
 			Name:         "logsPanelControls",
 			Description:  "Enables a control component for the logs panel in Explore",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "false",
+			Expression:   "true",
+		},
+		{
+			Name:         "metricsFromProfiles",
+			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )
