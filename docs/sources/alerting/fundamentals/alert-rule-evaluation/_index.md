@@ -57,7 +57,7 @@ You can also set the pending period to zero to skip it and have the alert fire i
 
 You can set a period to keep an alert firing after the threshold is no longer breached. This sets the alert to a Recovering state. In a Recovering state, the alert won't fire again if the threshold is breached and the threshold timer is reset.
 
-The Keep firing for period is useful for silincing unnecessary noise that is the result of flapping alerts.
+The Keep firing for period is useful to help silence unnecessary noise that is the result of flapping alerts.
 
 ## Evaluation example
 
