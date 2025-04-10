@@ -54,17 +54,19 @@ type Service struct {
 	sf *singleflight.Group
 
 	// Cache for user permissions, user team memberships and user basic roles
-	idCache         *cacheWrap[store.UserIdentifiers]
-	permCache       *cacheWrap[map[string]bool]
-	permDenialCache *cacheWrap[bool]
-	teamCache       *cacheWrap[[]int64]
-	basicRoleCache  *cacheWrap[store.BasicRole]
-	folderCache     *cacheWrap[folderTree]
+	idCache         cacheWrap[store.UserIdentifiers]
+	permCache       cacheWrap[map[string]bool]
+	permDenialCache cacheWrap[bool]
+	teamCache       cacheWrap[[]int64]
+	basicRoleCache  cacheWrap[store.BasicRole]
+	folderCache     cacheWrap[folderTree]
 }
 
 type Settings struct {
 	AnonOrgRole string
-	CacheTTL    time.Duration
+	// CacheTTL is the time to live for the permission cache entries.
+	// Set to 0 to disable caching.
+	CacheTTL time.Duration
 }
 
 func NewService(
@@ -80,9 +82,6 @@ func NewService(
 ) *Service {
 	if settings.AnonOrgRole == "" {
 		settings.AnonOrgRole = "Viewer"
-	}
-	if settings.CacheTTL == 0 {
-		settings.CacheTTL = shortCacheTTL
 	}
 	return &Service{
 		store:           store.NewStore(sql, tracer),
