@@ -153,38 +153,34 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
   // Initial set up of the Metrics Browser
   // This is called when when "Clear" button clicked.
-  const initialize = useCallback(async () => {
-    const selector = buildSelector(selectedMetric, selectedLabelValues);
-    const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+  const initialize = useCallback(
+    async (metric: string, labelValues: Record<string, string[]>) => {
+      const selector = buildSelector(metric, labelValues);
+      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
 
-    // Metrics
-    const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
+      // Metrics
+      const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
 
-    // Labels
-    const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
+      // Labels
+      const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
 
-    // Selected Labels
-    const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
+      // Selected Labels
+      const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
 
-    // Selected Labels' Values
-    const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
+      // Selected Labels' Values
+      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
 
-    setMetrics(transformedMetrics);
-    setLabelKeys(transformedLabelKeys);
-    setSelectedLabelKeys(labelKeysInLocalStorage);
-    setLabelValues(transformedLabelValues);
-  }, [
-    fetchLabelKeys,
-    fetchLabelValues,
-    fetchMetrics,
-    loadSelectedLabelsFromStorage,
-    selectedLabelValues,
-    selectedMetric,
-  ]);
+      setMetrics(transformedMetrics);
+      setLabelKeys(transformedLabelKeys);
+      setSelectedLabelKeys(labelKeysInLocalStorage);
+      setLabelValues(transformedLabelValues);
+    },
+    [fetchLabelKeys, fetchLabelValues, fetchMetrics, loadSelectedLabelsFromStorage]
+  );
 
   // Initialize the hook
   useEffect(() => {
-    initialize();
+    initialize(selectedMetric, selectedLabelValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -193,7 +189,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setSelectedMetric(newSelectedMetric);
 
     if (newSelectedMetric === '') {
-      initialize();
+      initialize(newSelectedMetric, selectedLabelValues);
       return;
     }
 
@@ -330,7 +326,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setStatus('Ready');
     setValidationStatus('');
 
-    initialize();
+    initialize('', {});
   };
 
   return {
