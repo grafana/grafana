@@ -5269,6 +5269,10 @@
         "tooltip-show-log-line": "Show log line"
       }
     },
+    "log-line": {
+      "show-less": "show less",
+      "show-more": "show more"
+    },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",

@@ -9,8 +9,10 @@ import { createLogLine } from '../__mocks__/logRow';
 import { getStyles, LogLine } from './LogLine';
 import { LogListContextProvider } from './LogListContext';
 import { LogListModel } from './processing';
+import { getTruncationLength } from './virtualization';
 
 jest.mock('./LogListContext');
+jest.mock('./virtualization');
 
 const theme = createTheme();
 const styles = getStyles(theme);
@@ -97,6 +99,25 @@ describe('LogLine', () => {
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
 
+  test('Reports mouse over events', async () => {
+    const onLogLineHover = jest.fn();
+    render(
+      <LogListContextProvider {...contextProps} onLogLineHover={onLogLineHover}>
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          wrapLogMessage={false}
+        />
+      </LogListContextProvider>
+    );
+    await userEvent.hover(screen.getByText('log message 1'));
+    expect(onLogLineHover).toHaveBeenCalledTimes(1);
+  });
+
   describe('Log line menu', () => {
     test('Renders a log line menu', async () => {
       render(
@@ -178,6 +199,87 @@ describe('LogLine', () => {
       );
       expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
       expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Collapsible log lines', () => {
+    beforeEach(() => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
+      jest.mocked(getTruncationLength).mockReturnValue(5);
+    });
+
+    test('Logs are not collapsed by default', () => {
+      render(
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          wrapLogMessage={true}
+        />
+      );
+      expect(screen.queryByText('show less')).not.toBeInTheDocument();
+      expect(screen.queryByText('show more')).not.toBeInTheDocument();
+    });
+
+    test('Logs are not collapsible when unwrapped', () => {
+      log.collapsed = true;
+      render(
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          // Unwrapped logs
+          wrapLogMessage={false}
+        />
+      );
+      expect(screen.queryByText('show less')).not.toBeInTheDocument();
+      expect(screen.queryByText('show more')).not.toBeInTheDocument();
+    });
+
+    test('Long logs can be collapsed and expanded', async () => {
+      log.collapsed = true;
+      render(
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          wrapLogMessage={true}
+        />
+      );
+      expect(screen.getByText('show more')).toBeVisible();
+      await userEvent.click(screen.getByText('show more'));
+      expect(await screen.findByText('show less')).toBeInTheDocument();
+      await userEvent.click(screen.getByText('show less'));
+      expect(await screen.findByText('show more')).toBeInTheDocument();
+    });
+
+    test('When the collapsed state changes invokes a callback to update virtualized sizes', async () => {
+      log.collapsed = true;
+      const onOverflow = jest.fn();
+      render(
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          onOverflow={onOverflow}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          wrapLogMessage={true}
+        />
+      );
+      await userEvent.click(await screen.findByText('show more'));
+      await userEvent.click(await screen.findByText('show less'));
+      expect(onOverflow).toHaveBeenCalledTimes(2);
     });
   });
 });
