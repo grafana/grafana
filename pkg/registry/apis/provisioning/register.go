@@ -24,6 +24,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -98,6 +99,7 @@ type APIBuilder struct {
 	unified          resource.ResourceClient
 	secrets          secrets.Service
 	client           client.ProvisioningV0alpha1Interface
+	access           authlib.AccessChecker
 }
 
 // NewAPIBuilder creates an API builder.
@@ -116,6 +118,7 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
+	access authlib.AccessChecker,
 ) *APIBuilder {
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
@@ -140,6 +143,7 @@ func NewAPIBuilder(
 		storageStatus:       storageStatus,
 		unified:             unified,
 		secrets:             secrets,
+		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 	}
 }
@@ -156,15 +160,15 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
+	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		return nil, nil
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
@@ -180,7 +184,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc),
+		secrets.NewSingleTenant(secretsSvc), access,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -217,16 +221,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 				switch a.GetSubresource() {
-				case "":
+				case "", "test", "jobs":
 					// Doing something with the repository itself.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "test", "export", "migrate":
-					// Testing doesn't make sense for non-admins.
-					// Exporting and migrating are potentially dangerous.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
 					}
@@ -239,19 +235,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 
 				case "files":
-					// Reading files is allowed for everyone, so as to allow code reviews and similar.
-					// Writing files is only allowed fo Editor and higher.
-					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
-					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
-					isReadOperation := a.GetVerb() == apiutils.VerbGet
-
-					if isEditor || (isViewer && isReadOperation) {
-						return authorizer.DecisionAllow, "", nil
-					} else if isReadOperation {
-						return authorizer.DecisionDeny, "viewer role is required for reads", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required for edits", nil
-					}
+					// Access to files is controlled by the AccessClient
+					return authorizer.DecisionAllow, "", nil
 
 				case "render":
 					// This is used to read a blob from unified storage, for GitHub PR comments.
@@ -362,7 +347,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -547,7 +532,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
+				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
 			syncWorker := sync.NewSyncWorker(
 				b.GetClient(),
 				b.parsers,
