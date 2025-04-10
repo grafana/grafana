@@ -2,6 +2,9 @@ package pullrequest
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/binary"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -84,4 +87,42 @@ func TestCalculateChanges(t *testing.T) {
 
 	require.Equal(t, `http://host/d/id/hello`, info.GrafanaURL)
 	require.Equal(t, `http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref`, info.PreviewURL)
+}
+
+func TestDummyImageURL(t *testing.T) {
+	urls := []string{}
+	for i := range 10 {
+		urls = append(urls, getDummyRenderedURL(fmt.Sprintf("http://%d", i)))
+	}
+	require.Equal(t, []string{
+		"https://cdn2.thecatapi.com/images/9e2.jpg",
+		"https://cdn2.thecatapi.com/images/bhs.jpg",
+		"https://cdn2.thecatapi.com/images/d54.jpg",
+		"https://cdn2.thecatapi.com/images/99c.jpg",
+		"https://cdn2.thecatapi.com/images/9e2.jpg",
+		"https://cdn2.thecatapi.com/images/bhs.jpg",
+		"https://cdn2.thecatapi.com/images/d54.jpg",
+		"https://cdn2.thecatapi.com/images/99c.jpg",
+		"https://cdn2.thecatapi.com/images/9e2.jpg",
+		"https://cdn2.thecatapi.com/images/bhs.jpg",
+	}, urls)
+}
+
+// Returns a random (but stable) image for a string
+func getDummyRenderedURL(url string) string {
+	dummy := []string{
+		"https://cdn2.thecatapi.com/images/9e2.jpg",
+		"https://cdn2.thecatapi.com/images/bhs.jpg",
+		"https://cdn2.thecatapi.com/images/d54.jpg",
+		"https://cdn2.thecatapi.com/images/99c.jpg",
+	}
+
+	idx := 0
+	hash := sha1.New()
+	bytes := hash.Sum([]byte(url))
+	if len(bytes) > 8 {
+		v := binary.BigEndian.Uint64(bytes[0:8])
+		idx = int(v) % len(dummy)
+	}
+	return dummy[idx]
 }

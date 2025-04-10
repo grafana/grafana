@@ -39,6 +39,43 @@ func TestGenerateComment(t *testing.T) {
 			},
 			MissingImageRenderer: true,
 		}},
+		{"single dashboard with snapshots", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "file.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+					},
+					Title:      "Title",
+					GrafanaURL: "http://grafana/d/uid",
+					PreviewURL: "http://grafana/admin/preview",
+
+					GrafanaScreenshotURL: getDummyRenderedURL("http://grafana/d/uid"),
+					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
+				},
+			},
+		}},
+		{"single dashboard only preview", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "file.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+					},
+					Title:      "Title",
+					GrafanaURL: "http://grafana/d/uid",
+					PreviewURL: "http://grafana/admin/preview",
+
+					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
+				},
+			},
+		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			comment, err := generator.GenerateComment(context.Background(), tc.Input)
