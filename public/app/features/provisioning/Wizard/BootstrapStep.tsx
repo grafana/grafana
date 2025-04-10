@@ -17,7 +17,7 @@ interface Props {
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepUpdate }: Props) {
   const {
     register,
     control,
@@ -34,6 +34,12 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
     () => getResourceStats(filesQuery.data, resourceStats.data),
     [filesQuery.data, resourceStats.data]
   );
+
+  useEffect(() => {
+    const isLoading = resourceStats.isLoading || filesQuery.isLoading;
+
+    onStepUpdate(isLoading ? 'running' : 'idle');
+  }, [filesQuery.isLoading, onStepUpdate, resourceStats.isLoading]);
 
   // Auto select the first option on mount
   useEffect(() => {

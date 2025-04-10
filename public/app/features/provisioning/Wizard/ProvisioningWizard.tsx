@@ -94,28 +94,30 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
 
-  const currentStep = steps.find((s) => s.id === activeStep);
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+  const currentStepConfig = steps[currentStepIndex];
 
   const isStepSuccess = stepStatusInfo.status === 'success';
 
   // A different repository is marked with instance target -- nothing will succeed
-  if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: [
-        t('provisioning.wizard-content.error-instance-repository-exists', 'Instance repository already exists'),
-      ],
-    });
-    if (repoName) {
-      console.warn('Should we delete the pending repo?', repoName);
+  useEffect(() => {
+    if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('provisioning.wizard-content.error-instance-repository-exists', 'Instance repository already exists'),
+        ],
+      });
+
+      navigate(PROVISIONING_URL);
     }
-    navigate(PROVISIONING_URL);
-    return null;
-  }
+  }, [navigate, repoName, settingsQuery.data?.items]);
 
   const updateStepStatus = useCallback(
     (status: StepStatus, errorMessage?: string) => {
+      if (activeStep === 'connection') {
+        return;
+      }
       if (status === 'error' && errorMessage) {
         setStepStatusInfo({ status: 'error', error: errorMessage });
       } else if (status === 'error') {
@@ -208,7 +210,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   };
 
   const handleNextWithSubmit = async () => {
-    if (currentStep?.submitOnNext) {
+    if (currentStepConfig?.submitOnNext) {
       // Validate form data before proceeding
       if (activeStep === 'connection' || activeStep === 'bootstrap') {
         const isValid = await trigger(['repository', 'repository.title']);
@@ -223,7 +225,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         const spec = dataToSpec(formData.repository);
         const rsp = await submitData(spec);
         if (rsp.error) {
-          // Error is displayed in <RequestErrorAlert/>
+          updateStepStatus('error', 'Repository request failed');
           return;
         }
 
@@ -236,7 +238,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           console.error('Saved repository without a name:', rsp);
         }
       } catch (error) {
-        console.error('Repository connection failed:', error);
         updateStepStatus('error', 'Repository connection failed');
       } finally {
         setIsSubmitting(false);
@@ -248,18 +249,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       }
     }
   };
-
-  useEffect(() => {
-    if (saveRequest.isSuccess) {
-      const newName = saveRequest.data?.metadata?.name;
-      if (newName) {
-        setValue('repositoryName', newName);
-        updateStepStatus('success');
-      }
-    } else if (saveRequest.isError) {
-      updateStepStatus('error', 'Repository request failed');
-    }
-  }, [saveRequest, setValue, updateStepStatus]);
 
   const isNextButtonDisabled = () => {
     if (activeStep === 'synchronize') {
@@ -279,7 +268,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             <Box marginBottom={2}>
               {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text element="h2">
-                {currentStepIndex + 1}. {currentStep?.title}
+                {currentStepIndex + 1}. {currentStepConfig?.title}
               </Text>
             </Box>
 
