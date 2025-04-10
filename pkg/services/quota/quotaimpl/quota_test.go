@@ -458,10 +458,10 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 	t.Helper()
 
 	var id int64 = 0
-	switch {
-	case scope == quota.OrgScope:
+	switch scope {
+	case quota.OrgScope:
 		id = scopeParams.OrgID
-	case scope == quota.UserScope:
+	case quota.UserScope:
 		id = scopeParams.UserID
 	}
 

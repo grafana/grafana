@@ -365,10 +365,8 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
-	for {
-		if resp.Flushed {
-			break
-		}
+	for !resp.Flushed {
+
 	}
 
 	res := resp.Result()
@@ -402,10 +400,8 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			err := hs.makePluginResourceRequest(resp, req, pCtx)
 			require.NoError(t, err)
 
-			for {
-				if resp.Flushed {
-					break
-				}
+			for !resp.Flushed {
+
 			}
 			require.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
 			require.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
@@ -428,10 +424,8 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
-	for {
-		if resp.Flushed {
-			break
-		}
+	for !resp.Flushed {
+
 	}
 
 	require.Zero(t, resp.Header().Get("Content-Type"))

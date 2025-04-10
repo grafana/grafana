@@ -271,10 +271,8 @@ func TestPluginProxy(t *testing.T) {
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
-		for {
-			if requestHandled {
-				break
-			}
+		for !requestHandled {
+
 		}
 
 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
@@ -427,10 +425,8 @@ func TestPluginProxyRoutes(t *testing.T) {
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -561,10 +557,8 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
