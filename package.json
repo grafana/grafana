@@ -429,7 +429,7 @@
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.2.4",
+    "swagger-ui-react/dompurify": "3.2.5",
     "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
