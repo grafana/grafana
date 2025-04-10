@@ -47,13 +47,10 @@ export function CreatingSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
   return (
-    <CTAInfo
-      title={t('migrate-to-cloud.building-snapshot.title', 'Building installation snapshot')}
-      accessory={<Spinner inline />}
-    >
+    <CTAInfo title={t('migrate-to-cloud.building-snapshot.title', 'Building snapshot')} accessory={<Spinner inline />}>
       <Text element="p" variant="body" color="secondary">
         <Trans i18nKey="migrate-to-cloud.building-snapshot.description">
-          Please hold on - this won&apos;t take long!
+          We&apos;re gathering your resources for migration to Grafana Cloud. This should only take a moment.
         </Trans>
       </Text>
 

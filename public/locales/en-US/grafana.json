@@ -5331,8 +5331,8 @@
       "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
     },
     "building-snapshot": {
-      "description": "Please hold on - this won't take long!",
-      "title": "Building installation snapshot"
+      "description": "We're gathering your resources for migration to Grafana Cloud. This should only take a moment.",
+      "title": "Building snapshot"
     },
     "can-i-move": {
       "body": "You can use the migration assistant to migrate a large proportion of your Grafana resources.",
