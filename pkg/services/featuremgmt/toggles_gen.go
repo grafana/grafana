@@ -11,14 +11,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagLiveServiceWebWorker
-	// This will use a webworker thread to processes events rather than the main thread
-	FlagLiveServiceWebWorker = "live-service-web-worker"
-
-	// FlagQueryOverLive
-	// Use Grafana Live WebSocket to execute backend queries
-	FlagQueryOverLive = "queryOverLive"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -46,34 +38,6 @@ const (
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagAutoMigrateOldPanels
-	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
-
-	// FlagAutoMigrateGraphPanel
-	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
-
-	// FlagAutoMigrateTablePanel
-	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"
-
-	// FlagAutoMigratePiechartPanel
-	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
-
-	// FlagAutoMigrateWorldmapPanel
-	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"
-
-	// FlagAutoMigrateStatPanel
-	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
-
-	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-	FlagDisableAngular = "disableAngular"
 
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
@@ -163,18 +127,6 @@ const (
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
 
-	// FlagAlertStateHistoryLokiSecondary
-	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
-
-	// FlagAlertStateHistoryLokiPrimary
-	// Enable a remote Loki instance as the primary source for state history reads.
-	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
-
-	// FlagAlertStateHistoryLokiOnly
-	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
-
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"
@@ -238,10 +190,6 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
-
-	// FlagTraceQLStreaming
-	// Enables response streaming of TraceQL queries of the Tempo data source
-	FlagTraceQLStreaming = "traceQLStreaming"
 
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
@@ -534,10 +482,6 @@ const (
 	// FlagSqlExpressions
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
-
-	// FlagNodeGraphDotLayout
-	// Changed the layout algorithm for the node graph
-	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
@@ -895,10 +839,6 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
-	// FlagAlertingConversionAPI
-	// Enable the alerting conversion API
-	FlagAlertingConversionAPI = "alertingConversionAPI"
-
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
@@ -951,10 +891,6 @@ const (
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
-	// FlagNoBackdropBlur
-	// Disables backdrop blur
-	FlagNoBackdropBlur = "noBackdropBlur"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -998,4 +934,16 @@ const (
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
+
+	// FlagLogsPanelControls
+	// Enables a control component for the logs panel in Explore
+	FlagLogsPanelControls = "logsPanelControls"
+
+	// FlagMetricsFromProfiles
+	// Enables creating metrics from profiles and storing them as recording rules
+	FlagMetricsFromProfiles = "metricsFromProfiles"
 )

@@ -14,7 +14,7 @@ import {
 import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
-import { useCreateOrUpdateRepository } from '../hooks';
+import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 
@@ -94,8 +94,11 @@ export function WizardContent({
   const handleRepositoryDeletion = async (name: string) => {
     try {
       await deleteRepository({ name });
-      // Wait before redirecting to ensure deletion is indexed
-      setTimeout(() => navigate(PROVISIONING_URL), 1500);
+      // Wait before redirecting to ensure deletion is processed
+      setTimeout(() => {
+        settingsQuery.refetch();
+        navigate(PROVISIONING_URL);
+      }, 1500);
     } catch (error) {
       setIsCancelling(false);
     }

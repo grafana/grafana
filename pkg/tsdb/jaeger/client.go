@@ -1,6 +1,7 @@
 package jaeger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,9 +12,10 @@ import (
 )
 
 type JaegerClient struct {
-	logger     log.Logger
-	url        string
-	httpClient *http.Client
+	logger             log.Logger
+	url                string
+	httpClient         *http.Client
+	traceIdTimeEnabled bool
 }
 
 type ServicesResponse struct {
@@ -24,11 +26,12 @@ type ServicesResponse struct {
 	Total  int         `json:"total"`
 }
 
-func New(url string, hc *http.Client, logger log.Logger) (JaegerClient, error) {
+func New(url string, hc *http.Client, logger log.Logger, traceIdTimeEnabled bool) (JaegerClient, error) {
 	client := JaegerClient{
-		logger:     logger,
-		url:        url,
-		httpClient: hc,
+		logger:             logger,
+		url:                url,
+		httpClient:         hc,
+		traceIdTimeEnabled: traceIdTimeEnabled,
 	}
 	return client, nil
 }
@@ -87,4 +90,71 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 
 	operations = response.Data
 	return operations, err
+}
+
+func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {
+	logger := j.logger.FromContext(ctx)
+	var response TracesResponse
+	trace := TraceResponse{}
+
+	if traceID == "" {
+		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+	}
+
+	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
+	if err != nil {
+		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+	}
+
+	// Add time parameters if provided and traceIdTimeEnabled is true
+	if j.traceIdTimeEnabled {
+		if start > 0 || end > 0 {
+			parsedURL, err := url.Parse(traceUrl)
+			if err != nil {
+				return trace, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+			}
+
+			query := parsedURL.Query()
+			if start > 0 {
+				query.Set("start", fmt.Sprintf("%d", start))
+			}
+			if end > 0 {
+				query.Set("end", fmt.Sprintf("%d", end))
+			}
+
+			parsedURL.RawQuery = query.Encode()
+			traceUrl = parsedURL.String()
+		}
+	}
+
+	res, err := j.httpClient.Get(traceUrl)
+	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return trace, backend.DownstreamError(err)
+		}
+		return trace, err
+	}
+
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res != nil && res.StatusCode/100 != 2 {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return trace, backend.DownstreamError(err)
+		}
+		return trace, err
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return trace, err
+	}
+
+	// We only support one trace at a time
+	// this is how it was implemented in the frontend before
+	trace = response.Data[0]
+	return trace, err
 }

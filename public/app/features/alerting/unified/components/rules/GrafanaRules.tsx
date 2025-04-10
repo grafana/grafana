@@ -77,10 +77,16 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {hasGrafanaAlerts && canExportRules && (
               <Button
-                aria-label="export all grafana rules"
+                aria-label={t(
+                  'alerting.grafana-rules.export-all-grafana-rules-aria-label-export-all-grafana-rules',
+                  'export all grafana rules'
+                )}
                 data-testid="export-all-grafana-rules"
                 icon="download-alt"
-                tooltip="Export all Grafana-managed rules"
+                tooltip={t(
+                  'alerting.grafana-rules.export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules',
+                  'Export all Grafana-managed rules'
+                )}
                 onClick={toggleShowExportDrawer}
                 variant="secondary"
               >
@@ -94,7 +100,10 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
                 })}
                 icon="plus"
                 variant="secondary"
-                tooltip="Create new Grafana-managed recording rule"
+                tooltip={t(
+                  'alerting.grafana-rules.tooltip-create-new-grafanamanaged-recording-rule',
+                  'Create new Grafana-managed recording rule'
+                )}
                 onClick={() => logInfo(LogMessages.grafanaRecording)}
               >
                 <Trans i18nKey="alerting.list-view.section.grafanaManaged.new-recording-rule">New recording rule</Trans>
@@ -113,7 +122,11 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
-      {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
+      {hasResult && namespacesFormat?.length === 0 && (
+        <p>
+          <Trans i18nKey="alerting.grafana-rules.no-rules-found">No rules found.</Trans>
+        </p>
+      )}
       {!hasResult && loading && <Spinner size="xl" className={styles.spinner} />}
       <Pagination
         className={styles.pagination}

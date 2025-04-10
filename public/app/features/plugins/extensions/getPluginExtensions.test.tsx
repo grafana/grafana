@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { first, take } from 'rxjs';
+import { first, firstValueFrom, take } from 'rxjs';
 
 import {
   type PluginExtensionAddedLinkConfig,
@@ -700,6 +700,50 @@ describe('getObservablePluginLinks()', () => {
       expect(links[0].type).toBe(PluginExtensionTypes.link);
     });
   });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(1);
+    expect(links[0].pluginId).toBe(pluginId);
+    expect(links[0].type).toBe(PluginExtensionTypes.link);
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new link
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(2);
+    expect(links[0].pluginId).toBe(pluginId);
+    expect(links[0].type).toBe(PluginExtensionTypes.link);
+    expect(links[1].pluginId).toBe(pluginId);
+    expect(links[1].type).toBe(PluginExtensionTypes.link);
+  });
+
+  it('should receive an empty array if there are no links', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(0);
+  });
 });
 
 describe('getObservablePluginComponents()', () => {
@@ -746,5 +790,50 @@ describe('getObservablePluginComponents()', () => {
       expect(components[0].pluginId).toBe(pluginId);
       expect(components[0].type).toBe(PluginExtensionTypes.component);
     });
+  });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginComponents({ extensionPointId });
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(1);
+    expect(components[0].pluginId).toBe(pluginId);
+    expect(components[0].type).toBe(PluginExtensionTypes.component);
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new component
+    pluginExtensionRegistries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 2',
+          description: 'Component 2 description',
+          targets: extensionPointId,
+          component: () => {
+            return <div>Hello world2!</div>;
+          },
+        },
+      ],
+    });
+
+    const observable = getObservablePluginComponents({ extensionPointId });
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(2);
+    expect(components[0].pluginId).toBe(pluginId);
+    expect(components[0].type).toBe(PluginExtensionTypes.component);
+    expect(components[1].pluginId).toBe(pluginId);
+    expect(components[1].type).toBe(PluginExtensionTypes.component);
+  });
+
+  it('should receive an empty array if there are no components', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(0);
   });
 });
