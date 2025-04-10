@@ -885,7 +885,10 @@ export function mapFrameToDataGrid({
     if (!column.width) {
       column.width = sharedWidth;
     }
-    column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
+    // Only set minWidth if it's not already set
+    if (!column.minWidth) {
+      column.minWidth = COLUMN.MIN_WIDTH;
+    }
   });
 
   return columns;
