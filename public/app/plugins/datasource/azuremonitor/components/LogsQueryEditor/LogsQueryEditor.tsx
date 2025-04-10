@@ -251,7 +251,7 @@ const LogsQueryEditor = ({
             schema={schema!}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onQueryChange}
-            templateVariableOptions={templateVariableOptions}
+            variableOptionGroup={variableOptionGroup}
             datasource={datasource}
             timeRange={timeRange}
           />

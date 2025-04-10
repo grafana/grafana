@@ -14,7 +14,8 @@ import {
   BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { addValueToOptions } from '../../utils/common';
 
 import { FilterItem } from './FilterItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -23,7 +24,7 @@ interface FilterSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   datasource: Datasource;
   timeRange?: TimeRange;
 }
@@ -38,7 +39,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   buildAndUpdateQuery,
   query,
   allColumns,
-  templateVariableOptions,
+  variableOptionGroup,
   datasource,
   timeRange,
 }) => {
@@ -54,13 +55,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   );
   const hasLoadedFilters = useRef(false);
 
-  const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
-
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
     ? filterDynamicColumns(builderQuery.columns.columns, allColumns).map((col) => ({ label: col, value: col }))
     : allColumns.filter((col) => col.type !== 'dynamic').map((col) => ({ label: col.name, value: col.name }));
 
-  const selectableOptions = [...availableColumns, ...variableOptions];
+  const selectableOptions = addValueToOptions(availableColumns, variableOptionGroup);
 
   const usedColumnsInOtherGroups = (currentGroupIndex: number): string[] => {
     return filters
