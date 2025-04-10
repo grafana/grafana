@@ -19,10 +19,9 @@ type AdvisorStats interface {
 }
 
 type Service struct {
-	cfg                *setting.Cfg
-	restConfigProvider apiserver.RestConfigProvider
-	namespace          string
-	client             resource.Client
+	cfg             *setting.Cfg
+	namespace       string
+	clientGenerator func(ctx context.Context) (resource.Client, error)
 }
 
 func ProvideService(
@@ -30,14 +29,21 @@ func ProvideService(
 	restConfigProvider apiserver.RestConfigProvider,
 ) (*Service, error) {
 	namespace := "default"
-	if cfg != nil && cfg.StackID != "" {
+	if cfg.StackID != "" {
 		namespace = apiserverrequest.GetNamespaceMapper(cfg)(1)
 	}
 
 	return &Service{
-		cfg:                cfg,
-		restConfigProvider: restConfigProvider,
-		namespace:          namespace,
+		cfg:       cfg,
+		namespace: namespace,
+		clientGenerator: func(ctx context.Context) (resource.Client, error) {
+			kubeConfig, err := restConfigProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, err
+			}
+			clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
+			return clientGenerator.ClientFor(advisorv0alpha1.CheckKind())
+		},
 	}, nil
 }
 
@@ -67,20 +73,11 @@ func findLatestCheck(checkList []resource.Object, checkType string) *advisorv0al
 }
 
 func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
-	if s.client == nil {
-		kubeConfig, err := s.restConfigProvider.GetRestConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
-		client, err := clientGenerator.ClientFor(advisorv0alpha1.CheckKind())
-		if err != nil {
-			return nil, err
-		}
-		s.client = client
+	client, err := s.clientGenerator(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	checkList, err := s.client.List(ctx, s.namespace, resource.ListOptions{})
+	checkList, err := client.List(ctx, s.namespace, resource.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

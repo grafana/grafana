@@ -119,9 +119,9 @@ func TestService_ReportSummary(t *testing.T) {
 			}
 
 			service := &Service{
-				cfg:       tt.config,
-				namespace: "stacks-0",
-				client:    client,
+				cfg:             tt.config,
+				namespace:       "stacks-0",
+				clientGenerator: func(ctx context.Context) (resource.Client, error) { return client, nil },
 			}
 
 			// Execute
