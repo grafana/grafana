@@ -25,6 +25,7 @@ import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
+  hasUnescapedContent?: boolean;
   loading: boolean;
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
@@ -50,6 +51,7 @@ export type LogRowsComponentProps = Omit<
 export const ControlledLogRows = ({
   deduplicatedRows,
   dedupStrategy,
+  forceEscape,
   showLabels,
   showTime,
   logsMeta,
@@ -65,6 +67,7 @@ export const ControlledLogRows = ({
       app={rest.app || CoreApp.Unknown}
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
+      forceEscape={forceEscape}
       logOptionsStorageKey={logOptionsStorageKey}
       logs={deduplicatedRows ?? []}
       logsMeta={logsMeta}

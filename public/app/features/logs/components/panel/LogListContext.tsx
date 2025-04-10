@@ -31,6 +31,7 @@ export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 's
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
@@ -50,6 +51,7 @@ export const LogListContext = createContext<LogListContextData>({
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
   setFilterLevels: () => {},
+  setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
@@ -82,6 +84,7 @@ export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
   | 'displayedFields'
+  | 'forceEscape'
   | 'filterLevels'
   | 'pinnedLogs'
   | 'prettifyJSON'
@@ -98,11 +101,13 @@ export interface Props {
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   filterLevels?: LogLevel[];
+  forceEscape?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onEscapeNewlines?: () => {};
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -125,12 +130,14 @@ export const LogListContextProvider = ({
   children,
   dedupStrategy,
   displayedFields,
+  forceEscape,
   getRowContextQuery,
   logs,
   logsMeta,
   logOptionsStorageKey,
   filterLevels,
   logSupportsContext,
+  onEscapeNewlines,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
@@ -152,6 +159,7 @@ export const LogListContextProvider = ({
     displayedFields,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
+    forceEscape,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -217,6 +225,14 @@ export const LogListContextProvider = ({
     (displayedFields: string[]) => {
       setLogListState({ ...logListState, displayedFields });
       onLogOptionsChange?.('displayedFields', displayedFields);
+    },
+    [logListState, onLogOptionsChange]
+  );
+
+  const setForceEscape = useCallback(
+    (forceEscape: boolean) => {
+      setLogListState({ ...logListState, forceEscape });
+      onLogOptionsChange?.('forceEscape', forceEscape);
     },
     [logListState, onLogOptionsChange]
   );
@@ -335,6 +351,7 @@ export const LogListContextProvider = ({
         setDedupStrategy,
         setDisplayedFields,
         setFilterLevels,
+        setForceEscape,
         setLogListState,
         setPinnedLogs,
         setPrettifyJSON,
