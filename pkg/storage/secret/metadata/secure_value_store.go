@@ -71,9 +71,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("failed to store in keeper: %w", err)
 	}
 
-	// From this point on, we should not have a need to read value.
-	sv.Spec.Value = ""
-
 	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
 	// Temporarily mark succeeded here since the value is already stored in the keeper.
 	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
