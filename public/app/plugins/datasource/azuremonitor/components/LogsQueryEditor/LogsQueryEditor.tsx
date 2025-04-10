@@ -114,6 +114,8 @@ const LogsQueryEditor = ({
             }
             setSchema(schema);
           });
+        } else {
+          setSchema(schema);
         }
         setIsLoadingSchema(false);
       });
