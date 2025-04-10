@@ -2866,13 +2866,16 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "resourceVersion": "1744189713698",
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-09 09:08:33.698779 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true,
         "hideFromAdminPage": true
       }
