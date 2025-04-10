@@ -5391,11 +5391,12 @@
       "body": "The migration process must be started from your self-managed Grafana instance.",
       "configure-pdc-link": "Configure PDC for this stack",
       "link-title": "Learn more about Private Data Source Connect",
-      "step-1": "Log in to your self-managed instance and navigate to Administration, General, Migrate to Grafana Cloud.",
+      "step-1": "Log in to your self-managed instance and navigate to Administration > General > Migrate to Grafana Cloud.",
       "step-2": "Select \"Migrate this instance to Cloud\".",
-      "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
-      "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
-      "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
+      "step-3": "You'll be prompted for a migration token. Generate one from this screen. Enter your token and click \"Connect to this stack\".",
+      "step-4": "After connecting to the cloud stack, click \"Build snapshot\" to create a snapshot of your self-managed instance.",
+      "step-5": "After a snapshot is created, click \"Upload snapshot\" to copy the resources to your cloud stack.",
+      "step-6": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
       "title": "Performing a migration"
     },
     "is-it-secure": {
