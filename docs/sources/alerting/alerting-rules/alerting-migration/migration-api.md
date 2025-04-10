@@ -64,7 +64,7 @@ CORTEX_ADDRESS=<grafana url>/api/convert/ CORTEX_AUTH_TOKEN=<your token> CORTEX_
 
 Headers can be passed to the `mimirtool` or `coretextool` via `--extra-headers`.
 
-For more information about the Rule API points and examples of Mimirtool commandst, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
+For more information about the Rule API points and examples of Mimirtool commands, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
 
 {{< admonition type="note" >}}
 To use the `mimirtool rules sync` command, you need to set the `--concurrency` parameter to `1` (`--concurrency=1). The parameter which defaults to 8,, which may cause the API to return errors.
