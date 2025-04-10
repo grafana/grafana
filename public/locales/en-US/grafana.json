@@ -5404,7 +5404,7 @@
       "title": "Is it secure?"
     },
     "migrate-to-this-stack": {
-      "body": "You can migrate some resources from your self-managed Grafana installation to this cloud stack. To do this securely, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
+      "body": "You can securely migrate some resources from your self-managed Grafana installation to this cloud stack. To get started, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
