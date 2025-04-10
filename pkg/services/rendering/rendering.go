@@ -105,8 +105,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain = "localhost"
 	}
 
-
-
 	var renderKeyProvider renderKeyProvider
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
