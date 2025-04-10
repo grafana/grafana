@@ -122,13 +122,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   };
 
   const handleCancel = async () => {
-    // For the first step, do not delete anything—just go back.
+    // For the first step, do not delete anything — just go back.
     if (activeStep === 'connection' || !repoName) {
       navigate(PROVISIONING_URL);
       return;
     }
     setIsCancelling(true);
-    void handleRepositoryDeletion(repoName);
+    handleRepositoryDeletion(repoName);
   };
 
   // Calculate button text based on current step position
@@ -162,7 +162,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       }
     }
 
-    // Only navigate to provisioning URL if we're on the actual last step and it's completed
+    // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
       navigate(PROVISIONING_URL);
     } else {
@@ -172,7 +172,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     }
   };
 
-  const handleNextWithSubmit = async () => {
+  const onSubmit = async () => {
     if (currentStepConfig?.submitOnNext) {
       // Validate form data before proceeding
       if (activeStep === 'connection' || activeStep === 'bootstrap') {
@@ -280,7 +280,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
                   ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
                   : t('provisioning.wizard-content.button-cancel', 'Cancel')}
               </Button>
-              <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
+              <Button onClick={onSubmit} disabled={isNextButtonDisabled()}>
                 {isSubmitting
                   ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
                   : getNextButtonText(activeStep)}
