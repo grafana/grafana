@@ -9,62 +9,89 @@ import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['detected_level', 'level', 'lvl', 'filename'];
 
-interface Props {
+export interface Props {
   labels: Labels;
   emptyMessage?: string;
   addTooltip?: boolean;
   displayMax?: number;
+  displayAll?: boolean;
+  onDisplayMaxToggle?(state: boolean): void;
 }
 
-export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true, displayMax }: Props) => {
-  const [displayAll, setDisplayAll] = useState<boolean | undefined>(displayMax ? false : undefined);
-  const styles = useStyles2(getStyles);
-  const allLabels = useMemo(
-    () =>
-      Object.keys(labels)
-        .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label) && labels[label])
-        .map((label) => `${label}=${labels[label]}`),
-    [labels]
-  );
-  const displayLabels = useMemo(
-    () => allLabels.slice(0, !displayAll && displayMax ? displayMax : Infinity),
-    [allLabels, displayAll, displayMax]
-  );
+export const LogLabels = memo(
+  ({
+    labels,
+    emptyMessage,
+    addTooltip = true,
+    displayMax,
+    onDisplayMaxToggle,
+    displayAll: initialDisplayAll = false,
+  }: Props) => {
+    const [displayAll, setDisplayAll] = useState<boolean | undefined>(displayMax ? initialDisplayAll : undefined);
+    const styles = useStyles2(getStyles);
+    const allLabels = useMemo(
+      () =>
+        Object.keys(labels)
+          .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label) && labels[label])
+          .map((label) => `${label}=${labels[label]}`),
+      [labels]
+    );
+    const displayLabels = useMemo(
+      () => allLabels.slice(0, !displayAll && displayMax ? displayMax : Infinity),
+      [allLabels, displayAll, displayMax]
+    );
 
-  if (displayLabels.length === 0 && emptyMessage) {
+    if (displayLabels.length === 0 && emptyMessage) {
+      return (
+        <span className={styles.logsLabels}>
+          <span className={styles.logsLabel}>{emptyMessage}</span>
+        </span>
+      );
+    }
+
     return (
       <span className={styles.logsLabels}>
-        <span className={styles.logsLabel}>{emptyMessage}</span>
+        {displayLabels.map((labelValue) => {
+          return addTooltip ? (
+            <Tooltip content={labelValue} key={labelValue} placement="top">
+              <LogLabel styles={styles}>{labelValue}</LogLabel>
+            </Tooltip>
+          ) : (
+            <LogLabel styles={styles} tooltip={labelValue} key={labelValue}>
+              {labelValue}
+            </LogLabel>
+          );
+        })}
+        {displayLabels.length < allLabels.length && !displayAll && (
+          <Button
+            size="sm"
+            fill="outline"
+            variant="secondary"
+            onClick={() => {
+              setDisplayAll(true);
+              onDisplayMaxToggle?.(true);
+            }}
+          >
+            +{allLabels.length - displayLabels.length}
+          </Button>
+        )}
+        {displayAll === true && (
+          <Button
+            size="sm"
+            fill="outline"
+            variant="secondary"
+            onClick={() => {
+              setDisplayAll(false);
+              onDisplayMaxToggle?.(false);
+            }}
+          >
+            -
+          </Button>
+        )}
       </span>
     );
   }
-
-  return (
-    <span className={styles.logsLabels}>
-      {displayLabels.map((labelValue) => {
-        return addTooltip ? (
-          <Tooltip content={labelValue} key={labelValue} placement="top">
-            <LogLabel styles={styles}>{labelValue}</LogLabel>
-          </Tooltip>
-        ) : (
-          <LogLabel styles={styles} tooltip={labelValue} key={labelValue}>
-            {labelValue}
-          </LogLabel>
-        );
-      })}
-      {displayLabels.length < allLabels.length && !displayAll && (
-        <Button size="sm" fill="outline" variant="secondary" onClick={() => setDisplayAll(true)}>
-          +{allLabels.length - displayLabels.length}
-        </Button>
-      )}
-      {displayAll === true && (
-        <Button size="sm" fill="outline" variant="secondary" onClick={() => setDisplayAll(false)}>
-          -
-        </Button>
-      )}
-    </span>
-  );
-});
+);
 LogLabels.displayName = 'LogLabels';
 
 interface LogLabelsArrayProps {
