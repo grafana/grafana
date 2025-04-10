@@ -20,7 +20,7 @@ export const formatDate = deepMemoize(
       return formatDate(new Date(value), format);
     }
 
-    const locale = config.bootData.user.locale;
+    const locale = config.locale;
     const dateFormatter = createDateTimeFormatter(locale, format);
     return dateFormatter.format(value);
   }
@@ -28,7 +28,7 @@ export const formatDate = deepMemoize(
 
 export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const locale = config.bootData.user.locale;
+    const locale = config.locale;
 
     const dateFormatter = createDurationFormatter(locale, options);
     return dateFormatter.format(duration);

@@ -246,6 +246,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
+  locale: string;
 }
 
 export interface SqlConnectionLimits {
