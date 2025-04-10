@@ -124,7 +124,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           ...query.azureLogAnalytics,
           builderQuery: updatedBuilderQuery,
           query: updatedQueryString,
-          basicLogsQuery,
+          basicLogsQuery: from ? basicLogsQuery : query.azureLogAnalytics?.basicLogsQuery,
         },
       });
     },
