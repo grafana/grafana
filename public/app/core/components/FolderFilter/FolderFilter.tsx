@@ -9,6 +9,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { FolderInfo, PermissionLevelString } from 'app/types';
+import { DashboardSearchItemType } from 'app/features/search/types';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -86,7 +87,7 @@ async function getFoldersAsOptions(
   // Use existing backend service search
   const params = {
     query: searchString,
-    type: 'folder',
+    type: DashboardSearchItemType.DashFolder,
     permission: PermissionLevelString.View,
   };
 
