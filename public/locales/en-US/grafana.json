@@ -2786,7 +2786,8 @@
         "rows": "Rows",
         "tab": "Tab",
         "tabs": "Tabs",
-        "variable": "Variable"
+        "variable": "Variable",
+        "variable-set": "Variables"
       },
       "open": "Open options pane",
       "row": {
@@ -2794,6 +2795,10 @@
           "hide": "Hide",
           "title": "Row header"
         }
+      },
+      "variables": {
+        "add-variable": "Add variable",
+        "select-variable": "Select"
       }
     },
     "empty": {
@@ -2915,10 +2920,9 @@
       "Recent options-title-recent-options": "Recent options"
     },
     "outline": {
-      "tree": {
-        "item": {
-          "empty": "(empty)"
-        }
+      "tree-item": {
+        "empty": "(empty)",
+        "no-title": "<no title>"
       }
     },
     "override-category-title": {

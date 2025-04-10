@@ -3,7 +3,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -109,13 +108,12 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
+export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel; isNewElement?: boolean }) {
   const { title } = panel.useState();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
   let ref = useEditPaneInputAutoFocus({
-    autoFocus: notInPanelEdit && title === newPanelTitle,
+    autoFocus: notInPanelEdit && isNewElement,
   });
 
   return (
