@@ -160,3 +160,101 @@ func TestInDir(t *testing.T) {
 		})
 	}
 }
+
+func TestRelativeTo(t *testing.T) {
+	tests := []struct {
+		name        string
+		filePath    string
+		dir         string
+		want        string
+		expectError bool
+	}{
+		{
+			name:     "simple relative path",
+			filePath: "folder/subfolder/file.txt",
+			dir:      "folder",
+			want:     "subfolder/file.txt",
+		},
+		{
+			name:     "relative path with leading slash",
+			filePath: "/prefix/folder/subfolder/file.txt",
+			dir:      "/prefix/folder",
+			want:     "subfolder/file.txt",
+		},
+		{
+			name:     "relative path with leading slash in dir but in filePath",
+			filePath: "prefix/folder/subfolder/file.txt",
+			dir:      "/prefix/folder",
+			want:     "subfolder/file.txt",
+		},
+		{
+			name:     "with trailing slash in dir",
+			filePath: "folder/subfolder/file.txt",
+			dir:      "folder/",
+			want:     "subfolder/file.txt",
+		},
+		{
+			name:     "with trailing slash in both",
+			filePath: "folder/subfolder/",
+			dir:      "folder/",
+			want:     "subfolder/",
+		},
+		{
+			name:     "empty directory",
+			filePath: "file.txt",
+			dir:      "",
+			want:     "file.txt",
+		},
+		{
+			name:     "directory is root",
+			filePath: "folder/file.txt",
+			dir:      "/",
+			want:     "folder/file.txt",
+		},
+		{
+			name:     "nested directories",
+			filePath: "a/b/c/d/file.txt",
+			dir:      "a/b",
+			want:     "c/d/file.txt",
+		},
+		{
+			name:        "file not in directory",
+			filePath:    "other/file.txt",
+			dir:         "folder",
+			want:        "",
+			expectError: true,
+		},
+		{
+			name:        "file path shorter than directory",
+			filePath:    "file.txt",
+			dir:         "folder/subfolder",
+			want:        "",
+			expectError: true,
+		},
+		{
+			name:     "same directory",
+			filePath: "folder/file.txt",
+			dir:      "folder",
+			want:     "file.txt",
+		},
+		{
+			name:        "directory with similar prefix",
+			filePath:    "folder2/file.txt",
+			dir:         "folder",
+			want:        "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := RelativeTo(tt.filePath, tt.dir)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

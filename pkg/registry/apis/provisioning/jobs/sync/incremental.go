@@ -92,7 +92,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			result.Resource = gvk.Kind
 			result.Group = gvk.Group
 		case repository.FileActionRenamed:
-			name, gvk, err := repositoryResources.RenameResourceFile(ctx, change.Path, change.PreviousRef, change.Path, change.Ref)
+			name, gvk, err := repositoryResources.RenameResourceFile(ctx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
 				result.Error = err
 			}
