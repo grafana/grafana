@@ -154,7 +154,7 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
   );
 }
 
-function setPanelTitle(panel: VizPanel, title: string) {
+export function setPanelTitle(panel: VizPanel, title: string) {
   panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
 }
 
