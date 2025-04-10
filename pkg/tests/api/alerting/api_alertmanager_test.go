@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,6 +59,34 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		expStatus int
 		expBody   string
 	}
+
+	// Create alertmanager config
+	cfg := apimodels.PostableUserConfig{}
+	amConfig := `
+		{
+			"alertmanager_config": {
+				"route": {
+					"receiver": "grafana-default-email"
+				},
+				"receivers": [{
+					"name": "grafana-default-email",
+					"grafana_managed_receiver_configs": [{
+						"uid": "",
+						"name": "email receiver",
+						"type": "email",
+						"isDefault": true,
+						"settings": {
+							"addresses": "<example@email.com>"
+						}
+					}]
+				}]
+			}
+		}
+		`
+	err := json.Unmarshal([]byte(amConfig), &cfg)
+	require.NoError(t, err)
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+	require.NoError(t, err)
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
 		cfgTemplate := `
@@ -257,7 +286,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 	})
 
 	var silences apimodels.GettableSilences
-	err := json.Unmarshal(blob, &silences)
+	err = json.Unmarshal(blob, &silences)
 	require.NoError(t, err)
 	assert.Len(t, silences, 2)
 	silenceIDs := make([]string, 0, len(silences))
