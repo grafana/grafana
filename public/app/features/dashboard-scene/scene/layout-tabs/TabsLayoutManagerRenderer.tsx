@@ -6,6 +6,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -19,6 +20,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -64,9 +66,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
           </div>
         </DragDropContext>
       </TabsBar>
-      <TabContent className={styles.tabContentContainer}>
-        {currentTab && <layout.Component model={layout} />}
-      </TabContent>
+
+      <div className={conditionalRenderingClass}>
+        <TabContent className={styles.tabContentContainer}>
+          {currentTab && <layout.Component model={layout} />}
+        </TabContent>
+        {isEditing && conditionalRenderingOverlay}
+      </div>
     </div>
   );
 }
