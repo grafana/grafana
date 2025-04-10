@@ -59,36 +59,36 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
-  const { data, onColumnResize } = props;
-
-  const availWidth = props.width;
-
-  // // vt scrollbar accounting
-  // const [availWidth, setAvailWidth] = useState(props.width);
-  // const dom = useRef<DataGridHandle>(null);
-  // useEffect(
-  //   () => {
-  //     setAvailWidth(dom.current!.element!.clientWidth);
-  //   },
-  //   // todo: account for pagination, subtable expansion, default row height changes
-  //   [data, props.height]
-  // );
+  const { data, onColumnResize, width, height } = props;
 
   const rows = useMemo(() => frameToRecords(props.data), [props.data]);
 
-  const onColumnResizeDone = useCallback<OnColResizeDone>(
-    (idx, width) => {
-      onColumnResize?.(data.fields[idx].name, width);
+  // vt scrollbar accounting
+  // TODO: use ResizeObserver to detect appearance/disappearance of scrollbar
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+  const dom = useRef<DataGridHandle>(null);
+  useEffect(
+    () => {
+      let el = dom.current!.element!;
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
     },
-    [onColumnResize, data]
+    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
+    [height, rows.length]
   );
 
-  const _onColumnResize = useColumnResizeDone(onColumnResizeDone);
+  const _onColumnResize = useColumnResizeDone(
+    useCallback<OnColResizeDone>(
+      (idx, width) => {
+        onColumnResize?.(data.fields[idx].name, width);
+      },
+      [onColumnResize, data]
+    )
+  );
 
   const columns = useMemo<TableColumn[]>(() => {
-    const { fields } = props.data;
+    const { fields } = data;
 
-    const widths = computeColWidths(fields, availWidth);
+    const widths = computeColWidths(fields, width - scrollbarWidth);
 
     return fields.map((field, i) => ({
       field,
@@ -96,11 +96,11 @@ export function TableNG(props: TableNGProps) {
       name: field.name,
       width: widths[i],
     }));
-  }, [availWidth, props.data]);
+  }, [width, scrollbarWidth, data]);
 
   return (
     <DataGrid
-      // ref={dom}
+      ref={dom}
       columns={columns}
       rows={rows}
       defaultColumnOptions={{
