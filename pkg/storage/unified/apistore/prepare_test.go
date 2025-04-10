@@ -42,14 +42,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
-		_, err := s.prepareObjectForStorage(context.Background(), nil)
+		_, _, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing name")
 	})
@@ -58,7 +58,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 		dashboard.ResourceVersion = "123"
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
 	})
@@ -67,7 +67,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -106,7 +106,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			TimestampMillis: now.UnixMilli(),
 		})
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -133,7 +133,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetFolder("aaa")
 		require.NoError(t, err)
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
 		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
@@ -189,7 +189,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := v1alpha1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
@@ -208,13 +208,31 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta.SetDeprecatedInternalID(1) // nolint:staticcheck
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
+	})
+
+	t.Run("Should remove grant permissions annotation", func(t *testing.T) {
+		dashboard := v1alpha1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
+
+		encodedData, p, err := s.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		require.NoError(t, err)
+		meta, err = utils.MetaAccessor(newObject)
+		require.NoError(t, err)
+		require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions))
+		require.Equal(t, p, "default")
 	})
 
 	t.Run("calculate generation", func(t *testing.T) {
@@ -286,7 +304,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	var err error
 
 	if old == nil {
-		raw, err = s.prepareObjectForStorage(ctx, obj)
+		raw, _, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
 		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}
@@ -323,7 +341,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Nil(t, err)
 		require.True(t, los.deconstructed)
 	})
@@ -341,7 +359,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Nil(t, err)
 		require.False(t, los.deconstructed)
 	})
