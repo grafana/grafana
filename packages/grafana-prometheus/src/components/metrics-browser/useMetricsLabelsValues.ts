@@ -186,19 +186,16 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
   const handleSelectedMetricChange = async (metricName: string) => {
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
-    setSelectedMetric(newSelectedMetric);
-
-    if (newSelectedMetric === '') {
-      initialize(newSelectedMetric, selectedLabelValues);
-      return;
-    }
-
     const selector = buildSelector(newSelectedMetric, selectedLabelValues);
     try {
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
-      const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(newSelectedLabelKeys);
+      const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
+        newSelectedLabelKeys,
+        newSelectedMetric === '' ? undefined : selector
+      );
 
+      setSelectedMetric(newSelectedMetric);
       setLabelKeys(fetchedLabelKeys);
       setSelectedLabelKeys(newSelectedLabelKeys);
       setLabelValues(transformedLabelValues);
