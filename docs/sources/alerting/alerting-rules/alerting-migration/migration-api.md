@@ -73,7 +73,7 @@ POST /convert/prometheus/config/v1/rules/<NamespaceTitle> - Create/update a sing
 
 Post rules also require the following header:
 When posting rules:
-`X-Grafana-Alerting-Datasource-<UID>` - Supply the UID of the datasource to use for queries.
+`X-Grafana-Alerting-Datasource-<UID>` - Supply the UID of the data source to use for queries.
 
 **Delete**
 
