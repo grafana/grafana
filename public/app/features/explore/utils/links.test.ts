@@ -59,6 +59,32 @@ describe('explore links utils', () => {
       expect(links[0].onClick).not.toBeDefined();
     });
 
+    it('returns link model with resource attributes', () => {
+      const { field, range } = setup({
+        title: '',
+        url: 'http://example.com/service/service/${__span.tags["service.namespace"]}---${__span.tags["service.name"]}?some={test}',
+        origin: DataLinkConfigOrigin.Correlations,
+      });
+      const links = getFieldLinksForExplore({
+        field,
+        rowIndex: ROW_WITH_TEXT_VALUE.index,
+        splitOpenFn: jest.fn(),
+        range,
+        vars: {
+          __span: {
+            value: {
+              tags: {
+                'service.namespace': 'foo-space',
+                'service.name': 'bar-name',
+              },
+            },
+          },
+        },
+      });
+
+      expect(links[0].resourceAttributes).toEqual(['service.namespace', 'service.name']);
+    });
+
     it('returns generates title for external link', () => {
       const { field, range } = setup({
         title: '',
@@ -701,13 +727,14 @@ describe('explore links utils', () => {
       expect(allVariablesDefinedInQuery('test')).toBe(true);
     });
 
-    it('returns deduplicated list of variables', () => {
+    it('returns list of variables', () => {
       const dataLink = makeDataLinkWithQuery('test ${test} ${foo} ${test:raw} $test');
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
-      expect(variables).toHaveLength(2);
+      const usageInfo = getVariableUsageInfo(dataLink, scopedVars);
+      expect(usageInfo.uniqVariables).toHaveLength(2);
+      expect(usageInfo.variables).toHaveLength(4);
     });
   });
 });
