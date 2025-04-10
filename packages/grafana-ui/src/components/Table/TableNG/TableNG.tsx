@@ -1,6 +1,16 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
+import {
+  useMemo,
+  useState,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  RefObject,
+} from 'react';
 import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle, Column } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
@@ -59,22 +69,21 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
-  const { data, onColumnResize, width, height } = props;
+  const { data, onColumnResize, width } = props;
+  const gridHandle = useRef<DataGridHandle>(null);
 
   const rows = useMemo(() => frameToRecords(props.data), [props.data]);
 
-  // vt scrollbar accounting
-  // TODO: use ResizeObserver to detect appearance/disappearance of scrollbar
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-  const dom = useRef<DataGridHandle>(null);
-  useEffect(
-    () => {
-      let el = dom.current!.element!;
-      setScrollbarWidth(el.offsetWidth - el.clientWidth);
-    },
-    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
-    [height, rows.length]
-  );
+  const [filts, setFilts] = useState([]);
+  const [sorts, setSorts] = useState([]);
+
+  const renderedRows = useMemo(() => filterAndSort(rows, filts, sorts), [rows, filts, sorts]);
+
+  // const [page, setPage] = useState(0);
+  // const [scrollPos, setScrollPos] = useState(0);
+
+  // vt scrollbar accounting for column auto-sizing
+  const scrollbarWidth = useScrollbarWidth(gridHandle, props, renderedRows);
 
   const _onColumnResize = useColumnResizeDone(
     useCallback<OnColResizeDone>(
@@ -85,6 +94,7 @@ export function TableNG(props: TableNGProps) {
     )
   );
 
+  // TODO: skip hidden
   const columns = useMemo<TableColumn[]>(() => {
     const { fields } = data;
 
@@ -100,9 +110,9 @@ export function TableNG(props: TableNGProps) {
 
   return (
     <DataGrid
-      ref={dom}
+      ref={gridHandle}
       columns={columns}
-      rows={rows}
+      rows={renderedRows}
       defaultColumnOptions={{
         minWidth: 50,
         resizable: true,
@@ -593,4 +603,24 @@ function computeColWidths(fields: Field[], availWidth: number) {
         width ||
         Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
     );
+}
+
+function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, renderedRows: TableRow[]) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(
+    () => {
+      let el = ref.current!.element!;
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    },
+    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [height, renderedRows]
+  );
+
+  return scrollbarWidth;
+}
+
+function filterAndSort(rows: TableRow[], filts = [], sorts = []) {
+  return rows;
 }
