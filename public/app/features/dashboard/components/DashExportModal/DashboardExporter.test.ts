@@ -100,7 +100,7 @@ describe('DashboardExporter', () => {
       const dashboardModel = new DashboardModel(dashboard, undefined, {
         getVariablesFromState: () => dashboard.templating.list,
       });
-      const exporter = new DashboardExporterV1();
+      const exporter = getDashboardExporter('v1');
       const exported: any = await exporter.makeExportable(dashboardModel);
       expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
     });
@@ -530,17 +530,8 @@ describe('DashboardExporter', () => {
   });
 
   describe('DashboardExporter V2', () => {
-    beforeAll(() => {
-      config.featureToggles.dashboardNewLayouts = true;
-      config.buildInfo.version = '11.6.0';
-    });
-
-    afterAll(() => {
-      config.featureToggles.dashboardNewLayouts = false;
-    });
-
     const setup = async () => {
-      const exporter = getDashboardExporter();
+      const exporter = getDashboardExporter('v2');
       // Making a deep copy here because original JSON is mutated by the exporter
       const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
       const dashboard = (await exporter.makeExportable(schemaCopy)) as DashboardV2Spec;

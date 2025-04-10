@@ -5,9 +5,20 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ClipboardButton,
+  CodeEditor,
+  Label,
+  Link,
+  Spinner,
+  Stack,
+  Switch,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { config } from 'app/core/config';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
@@ -27,13 +38,14 @@ export class ExportAsJson extends ShareExportTab {
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const styles = useStyles2(getStyles);
-
-  const { isSharingExternally, isSharingV2Resource, hasLibraryPanels } = model.useState();
+  const { isSharingExternally, hasLibraryPanels } = model.useState();
+  const isV2Dashboard = model.getExportVersion() === 'v2';
+  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
     return JSON.stringify(json, null, 2);
-  }, [isSharingExternally, isSharingV2Resource]);
+  }, [isSharingExternally]);
 
   const onClickDownload = async () => {
     await model.onSaveAsFile();
@@ -42,7 +54,6 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   };
 
   const switchExportLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
-  const switchResourceLabel = t('export.json.export-resource-label', 'Export the dashboard as a resource');
 
   return (
     <div data-testid={selector.container} className={styles.container}>
@@ -51,47 +62,41 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           Copy or download a JSON file containing the JSON of your dashboard
         </Trans>
       </p>
-      <Stack gap={1} alignItems="center">
-        <Switch
-          label={switchExportLabel}
-          data-testid={selector.exportExternallyToggle}
-          id="export-externally-toggle"
-          value={isSharingExternally}
-          onChange={model.onShareExternallyChange}
-        />
-        <Label>{switchExportLabel}</Label>
+      <Stack gap={2} direction="column">
+        <Stack gap={1}>
+          <Switch
+            label={switchExportLabel}
+            data-testid={selector.exportExternallyToggle}
+            id="export-externally-toggle"
+            value={isSharingExternally}
+            onChange={model.onShareExternallyChange}
+          />
+          <Label>{switchExportLabel}</Label>
+        </Stack>
+
+        {showV2LibPanelAlert && (
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
+              'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
+            )}
+            severity="warning"
+          >
+            <p>
+              <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+                The dynamic dashboard functionality is experimental, and has not full feature parity with current
+                dashboards behaviour. It is based on a new schema format, that does not support library panels. This
+                means that when exporting the dashboard to use it in another instance, we will nit include library
+                panels. We intend to support them as we progress in the feature{' '}
+                <TextLink external href="https://grafana.com/docs/release-life-cycle/">
+                  life cycle
+                </TextLink>
+                .
+              </Trans>
+            </p>
+          </Alert>
+        )}
       </Stack>
-      {config.featureToggles.dashboardNewLayouts && (
-        <>
-          <Stack gap={1} alignItems="center">
-            <Switch
-              label={switchResourceLabel}
-              data-testid={selector.exportResourceToggle}
-              id="export-resource-toggle"
-              value={isSharingV2Resource}
-              onChange={model.onShareV2ResourceChange}
-            />
-            <Label>{switchResourceLabel}</Label>
-          </Stack>
-          {isSharingExternally && hasLibraryPanels && (
-            <Alert
-              title={t(
-                'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-                'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
-              )}
-              severity="warning"
-            >
-              <p>
-                <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-                  Because you're using new dashboards features only supported on new Grafana dashboard schema format,
-                  exporting the dashboard to use in another instance will not include library panels. We are planning to
-                  support this in the future.
-                </Trans>
-              </p>
-            </Alert>
-          )}
-        </>
-      )}
       <div className={styles.codeEditorBox}>
         <AutoSizer data-testid={selector.codeEditor}>
           {({ width, height }) => {

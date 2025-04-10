@@ -2,10 +2,9 @@ import saveAs from 'file-saver';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Alert, Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, CodeEditor, Field, Link, Modal, Stack, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getDashboardExporter, DashboardExporterLike } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -22,7 +21,6 @@ import { SceneShareTabState, ShareView } from './types';
 
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
-  isSharingV2Resource?: boolean;
   isViewingJSON?: boolean;
   hasLibraryPanels?: boolean;
 }
@@ -31,17 +29,30 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
 
-  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> =
-    getDashboardExporter();
+  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> | null =
+    null;
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
       isSharingExternally: false,
       isViewingJSON: false,
-      isSharingV2Resource: false,
       ...state,
     });
   }
+
+  private getExporter() {
+    if (!this._exporter) {
+      this._exporter = getDashboardExporter(this.getExportVersion());
+    }
+    return this._exporter;
+  }
+
+  public getExportVersion = () => {
+    const dashboardScene = getDashboardSceneFor(this);
+    const initialSaveModel = dashboardScene.getInitialSaveModel();
+    const isV2Dashboard = initialSaveModel && 'elements' in initialSaveModel;
+    return isV2Dashboard ? 'v2' : 'v1';
+  };
 
   public getTabLabel() {
     return t('share-modal.tab-title.export', 'Export');
@@ -50,12 +61,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public onShareExternallyChange = () => {
     this.setState({
       isSharingExternally: !this.state.isSharingExternally,
-    });
-  };
-
-  public onShareV2ResourceChange = () => {
-    this.setState({
-      isSharingV2Resource: !this.state.isSharingV2Resource,
     });
   };
 
@@ -70,42 +75,31 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   }
 
   public getExportableDashboardJson = async () => {
-    const { isSharingExternally, isSharingV2Resource } = this.state;
+    const { isSharingExternally } = this.state;
+    const isV2Dashboard = this.getExportVersion() === 'v2';
+    const exporter = this.getExporter();
 
-    // TODO: once we deprecate the old arch, DashboardExporter.makeExportable
-    // can just take dashboardScene as a prop and handle all this logic
-    // then we would just call here this._exporter.makeExportable(getDashboardSceneFor(this))
-
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isV2Dashboard) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
 
       this.setState({
         hasLibraryPanels: Object.values(saveModelV2.elements).some((element) => element.kind === 'LibraryPanel'),
       });
 
-      if (isSharingV2Resource) {
-        const dashboard = {
-          kind: 'Dashboard',
-          spec: saveModelV2,
-        };
-        if (isSharingExternally) {
-          const dash = await this._exporter.makeExportable(saveModelV2);
-          if ('error' in dash) {
-            return { error: dash.error };
-          }
-          if ('elements' in dash) {
-            dashboard.spec = dash;
-          }
+      if (isSharingExternally) {
+        const dashboard = await exporter.makeExportable(saveModelV2);
+        if ('error' in dashboard) {
+          return { error: dashboard.error };
         }
         return dashboard;
       }
 
-      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : saveModelV2;
+      return saveModelV2;
     }
 
     const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));
     const exportable = isSharingExternally
-      ? await this._exporter.makeExportable(
+      ? await exporter.makeExportable(
           new DashboardModel(saveModelV1, undefined, {
             getVariablesFromState: () => {
               return getVariablesCompatibility(window.__grafanaSceneContext);
@@ -139,18 +133,16 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef, isSharingV2Resource, hasLibraryPanels } = model.useState();
-  const dashboardJson = useAsync(async () => {
-    if (isViewingJSON) {
-      const json = await model.getExportableDashboardJson();
-      return JSON.stringify(json, null, 2);
-    }
+  const { isSharingExternally, isViewingJSON, modalRef, hasLibraryPanels } = model.useState();
+  const isV2Dashboard = model.getExportVersion() === 'v2';
+  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
-    return '';
-  }, [isViewingJSON]);
+  const dashboardJson = useAsync(async () => {
+    const json = await model.getExportableDashboardJson();
+    return JSON.stringify(json, null, 2);
+  }, [isViewingJSON, isSharingExternally]);
 
   const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
-  const switchResourceLabel = t('export.json.export-resource-label', 'Export the dashboard as a resource');
 
   return (
     <>
@@ -167,33 +159,27 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 onChange={model.onShareExternallyChange}
               />
             </Field>
-            {config.featureToggles.dashboardNewLayouts && (
-              <>
-                <Field label={switchResourceLabel}>
-                  <Switch
-                    id="export-resource-toggle"
-                    value={isSharingV2Resource}
-                    onChange={model.onShareV2ResourceChange}
-                  />
-                </Field>
-                {isSharingExternally && hasLibraryPanels && (
-                  <Alert
-                    title={t(
-                      'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-                      'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
-                    )}
-                    severity="warning"
-                  >
-                    <p>
-                      <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-                        Because you're using new dashboards features only supported on new Grafana dashboard schema
-                        format, exporting the dashboard to use in another instance will not include library panels. We
-                        are planning to support this in the future.
-                      </Trans>
-                    </p>
-                  </Alert>
+            {showV2LibPanelAlert && (
+              <Alert
+                title={t(
+                  'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
+                  'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
                 )}
-              </>
+                severity="warning"
+              >
+                <p>
+                  <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+                    The dynamic dashboard functionality is experimental, and has not full feature parity with current
+                    dashboards behaviour. It is based on a new schema format, that does not support library panels. This
+                    means that when exporting the dashboard to use it in another instance, we will nit include library
+                    panels. We intend to support them as we progress in the feature{' '}
+                    <TextLink external href="https://grafana.com/docs/release-life-cycle/">
+                      life cycle
+                    </TextLink>
+                    .
+                  </Trans>
+                </p>
+              </Alert>
             )}
           </Stack>
 

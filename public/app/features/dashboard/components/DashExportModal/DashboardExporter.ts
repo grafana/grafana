@@ -420,9 +420,12 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
   }
 }
 
-export function getDashboardExporter(): DashboardExporterLike<
-  DashboardModel | DashboardV2Spec,
-  DashboardJson | DashboardV2Spec
-> {
-  return config.featureToggles.dashboardNewLayouts ? new DashboardExporterV2() : new DashboardExporterV1();
+export function getDashboardExporter(
+  version: 'v1' | 'v2'
+): DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> {
+  if (version === 'v2') {
+    return new DashboardExporterV2();
+  } else {
+    return new DashboardExporterV1();
+  }
 }
