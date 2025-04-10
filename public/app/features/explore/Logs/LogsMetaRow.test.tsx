@@ -317,7 +317,7 @@ describe('LogsMetaRow', () => {
     expect(await screen.findByText(/Common labels/)).toBeInTheDocument();
     expect(await screen.findByText('exporter=OTLP')).toBeInTheDocument();
     expect(await screen.findByText('job=cicd-o11y/grafana-deployment-tools')).toBeInTheDocument();
-    expect(await screen.findByText('+1')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Expand labels')).toBeInTheDocument();
   });
 
   it('renders expanded common labels', async () => {
@@ -338,6 +338,6 @@ describe('LogsMetaRow', () => {
     expect(await screen.findByText(/Common labels/)).toBeInTheDocument();
     expect(await screen.findByText('exporter=OTLP')).toBeInTheDocument();
     expect(await screen.findByText('job=cicd-o11y/grafana-deployment-tools')).toBeInTheDocument();
-    expect(await screen.findByText('-')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Collapse labels')).toBeInTheDocument();
   });
 });
