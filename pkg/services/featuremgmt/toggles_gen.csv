@@ -117,7 +117,7 @@ alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
-sqlExpressions,experimental,@grafana/grafana-datasources-core-services,false,false,false
+sqlExpressions,privatePreview,@grafana/grafana-datasources-core-services,false,false,false
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
 newPDFRendering,GA,@grafana/sharing-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
@@ -208,7 +208,7 @@ exploreMetricsUseExternalAppPlugin,GA,@grafana/observability-metrics,false,true,
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
-grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
+grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
