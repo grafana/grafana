@@ -1,4 +1,5 @@
-UPDATE `secret_keeper` (
+UPDATE `secret_keeper`
+SET
   `guid` = 'abc',
   `name` = 'name',
   `namespace` = 'ns',
@@ -11,8 +12,7 @@ UPDATE `secret_keeper` (
   `title` = 'title',
   `type` = 'sql',
   `payload` = ''
-)
-WHERE
+WHERE 1 = 1 AND
   `name` = 'name' AND
   `namespace`= 'ns'
 ;
