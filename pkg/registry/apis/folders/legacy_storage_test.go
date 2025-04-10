@@ -59,7 +59,7 @@ func TestLegacyStorageList(t *testing.T) {
 	for _, obj := range list {
 		f, ok := obj.(*v0alpha1.Folder)
 		require.Equal(t, true, ok)
-		uidsReturnedByList = append(uidsReturnedByList, f.ObjectMeta.Name)
+		uidsReturnedByList = append(uidsReturnedByList, f.Name)
 	}
 	require.ElementsMatch(t, uidsFromServiceFolder, uidsReturnedByList)
 }
@@ -158,7 +158,7 @@ func TestLegacyStorage_List_LabelSelector(t *testing.T) {
 	})
 
 	t.Run("should set fullpath query parameters when label selector matches", func(t *testing.T) {
-		selector, err := labels.Parse(utils.AnnoKeyFullpath + "=true")
+		selector, err := labels.Parse(utils.LabelGetFullpath + "=true")
 		require.NoError(t, err)
 		options := &metainternalversion.ListOptions{
 			LabelSelector: selector,

@@ -353,8 +353,8 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
@@ -381,11 +381,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
+					_, isSqlInput := req.SqlInputs[refId]
+
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
 					}
+
 					vars[refId] = res
 				} else {
 					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
@@ -427,7 +430,7 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
 	if err != nil {
 		results.Error = err
 	}

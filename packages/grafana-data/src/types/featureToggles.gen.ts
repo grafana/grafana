@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -62,34 +54,6 @@ export interface FeatureToggles {
   * @default true
   */
   correlations?: boolean;
-  /**
-  * Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-  */
-  autoMigrateOldPanels?: boolean;
-  /**
-  * Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateGraphPanel?: boolean;
-  /**
-  * Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateTablePanel?: boolean;
-  /**
-  * Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigratePiechartPanel?: boolean;
-  /**
-  * Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateWorldmapPanel?: boolean;
-  /**
-  * Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateStatPanel?: boolean;
-  /**
-  * Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-  */
-  disableAngular?: boolean;
   /**
   * Allow elements nesting
   */
@@ -186,18 +150,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-  */
-  alertStateHistoryLokiSecondary?: boolean;
-  /**
-  * Enable a remote Loki instance as the primary source for state history reads.
-  */
-  alertStateHistoryLokiPrimary?: boolean;
-  /**
-  * Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-  */
-  alertStateHistoryLokiOnly?: boolean;
-  /**
   * Writes error logs to the request logger
   * @default true
   */
@@ -236,6 +188,7 @@ export interface FeatureToggles {
   frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
+  * @default true
   */
   pluginsDetailsRightPanel?: boolean;
   /**
@@ -265,11 +218,6 @@ export interface FeatureToggles {
   * Enable support for Machine Learning in server-side expressions
   */
   mlExpressions?: boolean;
-  /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
   /**
   * Expose some datasources as apiservers.
   */
@@ -344,6 +292,7 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   /**
   * Allow core plugins to be loaded as external
+  * @default true
   */
   externalCorePlugins?: boolean;
   /**
@@ -405,6 +354,10 @@ export interface FeatureToggles {
   * Routes requests to the new query service
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Routes explore requests to the new query service
+  */
+  queryServiceFromExplore?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   */
@@ -544,11 +497,11 @@ export interface FeatureToggles {
   */
   newFolderPicker?: boolean;
   /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
   * @default true
   */
   onPremToCloudMigrations?: boolean;
@@ -584,10 +537,6 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
-  /**
-  * Changed the layout algorithm for the node graph
-  */
-  nodeGraphDotLayout?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -663,11 +612,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
-  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;
@@ -686,6 +630,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
@@ -702,7 +647,8 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a datasource has an invalid UIDs
+  * Throws an error if a data source has an invalid UIDs
+  * @default true
   */
   failWrongDSUID?: boolean;
   /**
@@ -835,14 +781,10 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new combobox component for Prometheus query editor
-  */
-  prometheusUsesCombobox?: boolean;
-  /**
-  * Enables the user storage API
+  * Use new **Combobox** component for Prometheus query editor
   * @default true
   */
-  userStorageAPI?: boolean;
+  prometheusUsesCombobox?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -955,7 +897,7 @@ export interface FeatureToggles {
   */
   ABTestFeatureToggleA?: boolean;
   /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
   /**
@@ -973,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
@@ -984,18 +927,6 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enable the alerting conversion API
-  */
-  alertingConversionAPI?: boolean;
-  /**
-  * enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-  */
-  alertingAlertmanagerExtraDedupStage?: boolean;
-  /**
-  * works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-  */
-  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
@@ -1004,13 +935,17 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Load plugins from CDN synchronously
+  * Loads plugins from CDN synchronously
   */
   pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
   /**
   * Enables the alert rule version history restore feature
   * @default true
@@ -1046,14 +981,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
-  /**
-  * Disables backdrop blur
-  */
-  noBackdropBlur?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
   */
   alertingMigrationUI?: boolean;
@@ -1062,7 +989,56 @@ export interface FeatureToggles {
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default false
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Specifies the locale so the correct format for numbers and dates can be shown
+  */
+  localeFormatPreference?: boolean;
+  /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the extension sidebar
+  */
+  extensionSidebar?: boolean;
+  /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
+  /**
+  * Support Application Signals queries in the X-Ray datasource
+  */
+  xrayApplicationSignals?: boolean;
+  /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
+  /**
+  * Enables unified navbars
+  * @default false
+  */
+  unifiedNavbars?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default true
+  */
+  logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
 }

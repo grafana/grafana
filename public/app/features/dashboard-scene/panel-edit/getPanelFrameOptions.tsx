@@ -108,9 +108,13 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
+export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel; isNewElement?: boolean }) {
   const { title } = panel.useState();
-  let ref = useEditPaneInputAutoFocus({ noAutoFocus: panel.getPanelContext().app === CoreApp.PanelEditor });
+  const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
+
+  let ref = useEditPaneInputAutoFocus({
+    autoFocus: notInPanelEdit && isNewElement,
+  });
 
   return (
     <Input

@@ -340,14 +340,6 @@ func TestService_getUserPermissions(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			name: "should return permissions from cache if available",
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
-			},
-			cacheHit:      true,
-			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
-		},
-		{
 			name: "should return permissions from store if not in cache",
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
@@ -898,6 +890,111 @@ func TestService_Check(t *testing.T) {
 	})
 }
 
+func TestService_CacheCheck(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+	userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+
+	t.Run("Allow based on cached permissions", func(t *testing.T) {
+		s := setupService()
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": true})
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Fallback to the database on cache miss", func(t *testing.T) {
+		s := setupService()
+
+		// Populate database permission but not the cache
+		store := &fakeStore{
+			userID:          userID,
+			userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+		}
+
+		s.store = store
+		s.permissionStore = store
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash2",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Fallback to the database on outdated cache", func(t *testing.T) {
+		s := setupService()
+
+		store := &fakeStore{
+			userID:          userID,
+			userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
+		}
+
+		s.store = store
+		s.permissionStore = store
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		// The cache does not have the permission for dash2 (outdated)
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": true})
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash2",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+	t.Run("Should deny on explicit cache deny entry", func(t *testing.T) {
+		s := setupService()
+
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+
+		// Explicitly deny access to the dashboard
+		s.permDenialCache.Set(ctx, userPermDenialCacheKey("org-12", "test-uid", "dashboards:read", "dash1", "fold1"), true)
+
+		// Allow access to the dashboard to prove this is not checked
+		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"), map[string]bool{"dashboards:uid:dash1": false})
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "dash1",
+			Folder:    "fold1",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed)
+	})
+}
+
 func TestService_List(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -1191,6 +1288,123 @@ func TestService_List(t *testing.T) {
 	})
 }
 
+func TestService_getAnonymousPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		permissions   []accesscontrol.Permission
+		action        string
+		expectedPerms map[string]bool
+		expectedError bool
+		anonRole      string
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return permissions from store if not in cache",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name:          "should return error if store fails",
+			permissions:   nil,
+			action:        "dashboards:read",
+			expectedPerms: nil,
+			expectedError: true,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should handle wildcard permissions",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "*", Kind: "*"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"*": true},
+			expectedError: false,
+			anonRole:      "Viewer",
+		},
+		{
+			name: "should use custom anonymous role when specified",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			action:        "dashboards:read",
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+			expectedError: false,
+			anonRole:      "Editor",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			s := setupService()
+			if tc.anonRole != "" {
+				s.settings.AnonOrgRole = tc.anonRole
+			}
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			store := &fakeStore{
+				userPermissions: tc.permissions,
+				err:             tc.expectedError,
+				disableNsCheck:  true,
+			}
+			s.store = store
+			s.permissionStore = store
+
+			perms, err := s.getAnonymousPermissions(ctx, ns, tc.action, []string{})
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPerms, perms)
+
+			// cache should then be set
+			cached, ok := s.permCache.Get(ctx, anonymousPermCacheKey(ns.Value, tc.action))
+			require.True(t, ok)
+			require.Equal(t, tc.expectedPerms, cached)
+		})
+	}
+}
+
+func TestService_CacheList(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	t.Run("List based on cached permissions", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
+		s.permCache.Set(ctx,
+			userPermCacheKey("org-12", "test-uid", "dashboards:read"),
+			map[string]bool{"dashboards:uid:dash1": true, "dashboards:uid:dash2": true, "folders:uid:fold1": true},
+		)
+		s.identityStore = &fakeIdentityStore{}
+
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "list",
+		})
+
+		require.NoError(t, err)
+		require.ElementsMatch(t, resp.Items, []string{"dash1", "dash2"})
+		require.ElementsMatch(t, resp.Folders, []string{"fold1"})
+	})
+}
+
 func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
@@ -1202,9 +1416,11 @@ func setupService() *Service {
 		metrics:         newMetrics(nil),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
 		folderStore:     fStore,

@@ -371,9 +371,13 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
-		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash || k == utils.LabelGetFullpath {
 			return nil, NewBadRequestError("can not save label: " + k)
 		}
+	}
+
+	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
 	check := claims.CheckRequest{
@@ -476,22 +480,14 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
-	if found != nil && len(found.Value) > 0 {
-		rsp.Error = &ErrorResult{
-			Code:    http.StatusConflict,
-			Reason:  string(metav1.StatusReasonAlreadyExists),
-			Message: "key already exists", // TODO?? soft delete replace?
-		}
-		return rsp, nil
-	}
-
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
 
+	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
+	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
@@ -658,6 +654,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return &ReadResponse{Error: rsp.Error}, nil
+	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",

@@ -1,17 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { sortBy } from 'lodash';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
-import { getEditableElementFor, hasEditableElement } from './shared';
+import { getEditableElementFor } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -22,50 +24,84 @@ export function DashboardOutline({ editPane }: Props) {
 
   return (
     <Box padding={1} gap={0.25} display="flex" direction="column">
-      <DashboardOutlineNode sceneObject={dashboard} expandable />
+      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} />
     </Box>
   );
 }
 
-function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneObject; expandable: boolean }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+function DashboardOutlineNode({
+  sceneObject,
+  editPane,
+  depth,
+}: {
+  sceneObject: SceneObject;
+  editPane: DashboardEditPane;
+  depth: number;
+}) {
+  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { key } = sceneObject.useState();
   const styles = useStyles2(getStyles);
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
-  const children = collectEditableElementChildren(sceneObject);
+  const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
   const elementInfo = editableElement.getEditableElementInfo();
+  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
+  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
+  const elementCollapsed = editableElement.getCollapsedState?.();
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    // Only select via clicking outline never deselect
+    if (!isSelected) {
+      onSelect?.(evt);
+    }
+
+    setIsCollapsed(!isCollapsed);
+    editableElement.scrollIntoView?.();
+
+    // Sync expanded state with canvas element
+    if (editableElement.getCollapsedState) {
+      editableElement.setCollapsedState?.(!isCollapsed);
+    }
+  };
+
+  // Sync canvas element expanded state with outline element
+  useEffect(() => {
+    if (elementCollapsed != null && elementCollapsed !== isCollapsed) {
+      setIsCollapsed(elementCollapsed);
+    }
+  }, [isCollapsed, elementCollapsed]);
 
   return (
     <>
       <button
         role="treeitem"
         className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
-        onPointerDown={(evt) => {
-          onSelect?.(evt);
-          setIsExpanded(!isExpanded);
-        }}
+        onPointerDown={onPointerDown}
       >
-        {expandable && <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />}
+        {elementInfo.isContainer && <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />}
         <Icon size="sm" name={elementInfo.icon} />
-        <span>{elementInfo.instanceName}</span>
+        <span>{instanceName}</span>
+        {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
       </button>
 
-      {expandable && isExpanded && (
+      {elementInfo.isContainer && !isCollapsed && (
         <div className={styles.container} role="group">
           {children.length > 0 ? (
             children.map((child) => (
               <DashboardOutlineNode
                 key={child.sceneObject.state.key}
                 sceneObject={child.sceneObject}
-                expandable={child.expandable}
+                editPane={editPane}
+                depth={depth + 1}
               />
             ))
           ) : (
-            <Text element="p" color="secondary">
-              <Trans i18nKey="dashboard.outline.tree.item.empty">(empty)</Trans>
+            <Text color="secondary">
+              <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
             </Text>
           )}
         </div>
@@ -88,7 +124,7 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1),
+      padding: theme.spacing(0.25, 1, 0.25, 0),
       borderRadius: theme.shape.radius.default,
       color: theme.colors.text.secondary,
       display: 'flex',
@@ -109,11 +145,15 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     nodeButtonSelected: css({
       color: theme.colors.text.primary,
-      outline: `1px dashed ${theme.colors.primary.border}`,
+      outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
       '&:hover': {
         outline: `1px dashed ${theme.colors.primary.border}`,
       },
+    }),
+    hiddenIcon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(1),
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
@@ -124,29 +164,37 @@ function getStyles(theme: GrafanaTheme2) {
 
 interface EditableElementConfig {
   sceneObject: SceneObject;
-  expandable: boolean;
+  editableElement: EditableDashboardElement;
+  depth: number;
 }
 
 function collectEditableElementChildren(
   sceneObject: SceneObject,
-  children: EditableElementConfig[] = []
+  children: EditableElementConfig[],
+  depth: number
 ): EditableElementConfig[] {
   sceneObject.forEachChild((child) => {
+    const editableElement = getEditableElementFor(child);
+
+    if (editableElement) {
+      children.push({ sceneObject: child, editableElement, depth });
+      return;
+    }
+
     if (child instanceof DashboardGridItem) {
       // DashboardGridItem is a special case as it can contain repeated panels
       // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
       if (child.state.repeatedPanels?.length) {
-        children.push(...child.state.repeatedPanels.map((panel) => ({ sceneObject: panel, expandable: false })));
-      } else {
-        children.push({ sceneObject: child.state.body, expandable: false });
+        for (const repeatedPanel of child.state.repeatedPanels) {
+          const editableElement = getEditableElementFor(repeatedPanel)!;
+          children.push({ sceneObject: repeatedPanel, editableElement, depth });
+        }
+
+        return;
       }
-    } else if (child instanceof VizPanel) {
-      children.push({ sceneObject: child, expandable: false });
-    } else if (hasEditableElement(child)) {
-      children.push({ sceneObject: child, expandable: true });
-    } else {
-      collectEditableElementChildren(child, children);
     }
+
+    collectEditableElementChildren(child, children, depth + 1);
   });
 
   return children;

@@ -11,16 +11,19 @@ import { EditPaneHeader } from './EditPaneHeader';
 export interface Props {
   element: EditableDashboardElement;
   editPane: DashboardEditPane;
+  isNewElement: boolean;
 }
 
-export function ElementEditPane({ element, editPane }: Props) {
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
+export function ElementEditPane({ element, editPane, isNewElement }: Props) {
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
       <EditPaneHeader element={element} editPane={editPane} />
-      <ScrollContainer showScrollIndicators={true}>{categories.map((cat) => cat.render())}</ScrollContainer>
+      <ScrollContainer showScrollIndicators={true}>
+        <div className={styles.categories}>{categories.map((cat) => cat.render())}</div>
+      </ScrollContainer>
     </div>
   );
 }
@@ -32,6 +35,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: '1 1 0',
       height: '100%',
+    }),
+    categories: css({
+      display: 'flex',
+      flexDirection: 'column',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 }

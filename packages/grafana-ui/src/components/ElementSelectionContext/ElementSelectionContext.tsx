@@ -1,5 +1,13 @@
 import React, { createContext, useCallback, useContext } from 'react';
 
+export interface ElementSelectionOnSelectOptions {
+  /** If specified, this will ignore the shift key press */
+  multi?: boolean;
+
+  /** If true, this will make sure the element is selected */
+  force?: boolean;
+}
+
 /** @alpha */
 export interface ElementSelectionContextState {
   /**
@@ -8,7 +16,7 @@ export interface ElementSelectionContextState {
   enabled?: boolean;
   /** List of currently selected elements */
   selected: ElementSelectionContextItem[];
-  onSelect: (item: ElementSelectionContextItem, multi?: boolean) => void;
+  onSelect: (item: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) => void;
   onClear: () => void;
 }
 
@@ -21,7 +29,7 @@ export const ElementSelectionContext = createContext<ElementSelectionContextStat
 export interface UseElementSelectionResult {
   isSelected?: boolean;
   isSelectable?: boolean;
-  onSelect?: (evt: React.PointerEvent) => void;
+  onSelect?: (evt: React.PointerEvent, options?: ElementSelectionOnSelectOptions) => void;
   onClear?: () => void;
 }
 
@@ -36,8 +44,8 @@ export function useElementSelection(id: string | undefined): UseElementSelection
   }
 
   const isSelected = context.selected.some((item) => item.id === id);
-  const onSelect = useCallback<React.PointerEventHandler>(
-    (evt) => {
+  const onSelect = useCallback(
+    (evt: React.PointerEvent, options: ElementSelectionOnSelectOptions = {}) => {
       if (!context.enabled) {
         return;
       }
@@ -51,7 +59,7 @@ export function useElementSelection(id: string | undefined): UseElementSelection
         window.getSelection()?.empty();
       }
 
-      context.onSelect({ id }, evt.shiftKey);
+      context.onSelect({ id }, { ...options, multi: options.multi ?? evt.shiftKey });
     },
     [context, id]
   );

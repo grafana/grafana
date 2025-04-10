@@ -22,40 +22,20 @@ type JobList struct {
 	Items []Job `json:"items,omitempty"`
 }
 
-// HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.
-//
-// The repository name and type are stored as labels.
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HistoricJob struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   JobSpec   `json:"spec,omitempty"`
-	Status JobStatus `json:"status,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HistoricJobList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []HistoricJob `json:"items,omitempty"`
-}
-
 // +enum
 type JobAction string
 
 const (
-	// Sync the remote branch with the grafana instance
-	JobActionSync JobAction = "pull"
+	// JobActionPull replicates the remote branch in the local copy of the repository.
+	JobActionPull JobAction = "pull"
 
-	// Export from grafana into the remote repository
-	JobActionExport JobAction = "push"
+	// JobActionPush replicates the local copy of the repository in the remote branch.
+	JobActionPush JobAction = "push"
 
-	// Process a pull request -- apply comments with preview images, links etc
+	// JobActionPullRequest adds additional useful information to a PR, such as comments with preview links and rendered images.
 	JobActionPullRequest JobAction = "pr"
 
-	// Migration task -- this will migrate an full instance from SQL > Git
+	// JobActionMigrate acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
 	JobActionMigrate JobAction = "migrate"
 )
 
@@ -81,10 +61,11 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action"`
+	Action JobAction `json:"action,omitempty"`
 
 	// The the repository reference (for now also in labels)
-	Repository string `json:"repository"`
+	// This value is required, but will be popuplated from the job making the request
+	Repository string `json:"repository,omitempty"`
 
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
@@ -104,8 +85,10 @@ type PullRequestJobOptions struct {
 	Ref string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR   int    `json:"pr,omitempty"`
-	Hash string `json:"hash,omitempty"` // used in PR code... not sure it is necessary
+	PR int `json:"pr,omitempty"`
+
+	// The specific commit hash that triggered this notice
+	Hash string `json:"hash,omitempty"`
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
@@ -125,17 +108,11 @@ type ExportJobOptions struct {
 
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
-
-	// Include the identifier in the exported metadata
-	Identifier bool `json:"identifier"`
 }
 
 // The job status

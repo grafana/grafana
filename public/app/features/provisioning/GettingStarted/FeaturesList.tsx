@@ -1,80 +1,76 @@
-import { Stack, Text, Box, LinkButton, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack, Text, Box, LinkButton, useStyles2 } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
+import { Trans } from 'app/core/internationalization';
 
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
-interface FeatureItemProps {
-  children: NonNullable<React.ReactNode>;
-}
-
-const FeatureItem = ({ children }: FeatureItemProps) => {
-  // We use a stack here to ensure the icon and text are aligned correctly.
-  return (
-    <Stack direction="row" gap={1}>
-      <Icon name="check" className="text-success" />
-      <Text variant="body">{children}</Text>
-    </Stack>
-  );
-};
-
 interface FeaturesListProps {
   repos?: Repository[];
-  hasPublicAccess: boolean;
-  hasImageRenderer: boolean;
   hasRequiredFeatures: boolean;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({
-  repos,
-  hasPublicAccess,
-  hasImageRenderer,
-  hasRequiredFeatures,
-  onSetupFeatures,
-}: FeaturesListProps) => {
-  const actions = () => {
-    if (!hasRequiredFeatures) {
-      return (
-        <Box>
-          <LinkButton fill="outline" onClick={onSetupFeatures}>
-            Set up required feature toggles
-          </LinkButton>
-        </Box>
-      );
-    }
-
-    return (
-      <Stack direction="row" alignItems="center" gap={2}>
-        <ConnectRepositoryButton items={repos} />
-      </Stack>
-    );
-  };
+export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={2}>
-      <Text variant="h2">Manage your dashboards with remote provisioning</Text>
-      <FeatureItem>Manage dashboards as code and provision updates automatically</FeatureItem>
-      <FeatureItem>
-        Store dashboards in version-controlled storage for better organization and history tracking
-      </FeatureItem>
-      <FeatureItem>Migrate existing dashboards to storage for provisioning</FeatureItem>
-      {hasPublicAccess && (
-        <FeatureItem>
-          Automatically provision and update your dashboards as soon as changes are pushed to your GitHub repository
-        </FeatureItem>
+    <Stack direction="column" gap={3}>
+      <Text variant="h2">
+        <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
+          Get started with GitSync
+        </Trans>
+      </Text>
+      <ul className={styles.featuresList}>
+        <li>
+          <Trans i18nKey="provisioning.features-list.manage-dashboards-provision-updates-automatically">
+            Manage dashboards as code in GitHub and provision updates automatically
+          </Trans>
+        </li>
+        <li>
+          <Trans i18nKey="provisioning.features-list.store-dashboards-in-version-controlled-storage">
+            Store dashboards in version-controlled storage for better organization and history tracking
+          </Trans>
+        </li>
+      </ul>
+      {!hasRequiredFeatures ? (
+        <Box>
+          <LinkButton fill="outline" onClick={onSetupFeatures}>
+            <Trans i18nKey="provisioning.features-list.actions.set-up-required-feature-toggles">
+              Set up required feature toggles
+            </Trans>
+          </LinkButton>
+        </Box>
+      ) : (
+        <Stack direction="row" alignItems="center" gap={2}>
+          <ConnectRepositoryButton items={repos} />
+        </Stack>
       )}
-      {hasImageRenderer && hasPublicAccess && (
-        <FeatureItem>Visual previews in pull requests to review your changes before going live</FeatureItem>
-      )}
-
-      {false && (
-        // We haven't gotten the design for this quite yet.
-        <LinkButton fill="text" href="#" icon="external-link-alt">
-          Learn more
-        </LinkButton>
-      )}
-
-      {actions()}
     </Stack>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    featuresList: css({
+      listStyleType: 'none',
+      paddingLeft: 0,
+      marginLeft: theme.spacing(-1),
+      '& li': {
+        position: 'relative',
+        paddingLeft: theme.spacing(4),
+        marginBottom: theme.spacing(1),
+        '&:before': {
+          content: '"✓"',
+          position: 'absolute',
+          left: theme.spacing(1),
+          top: '0',
+          color: theme.colors.text.secondary,
+          fontWeight: theme.typography.fontWeightBold,
+        },
+      },
+    }),
+  };
 };
