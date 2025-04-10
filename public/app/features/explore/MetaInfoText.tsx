@@ -21,6 +21,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ['.logs-meta-item__error']: {
       color: theme.colors.error.text,
     },
+    whiteSpace: 'nowrap',
   }),
   metaLabel: css({
     marginRight: `calc(${theme.spacing(2)} / 2)`,
