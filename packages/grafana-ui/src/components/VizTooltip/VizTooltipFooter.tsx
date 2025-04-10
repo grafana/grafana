@@ -117,6 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       background: 'none',
     },
+    padding: 0,
   }),
   oneClickWrapper: css({
     display: 'flex',
