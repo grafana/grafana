@@ -37,11 +37,8 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 
 - All rules are given `rule_query_offset` offset value of 1m.
 - The `missing_series_evals_to_resolve` is set to 1 for the new rules.
-- The newly created rules are given unique UIDs.
-
-{{< admonition type="note" >}}
-Plugin rules that have the label `__grafana_origin` are not included on alert rule imports.
-{{< /admonition >}}
+- The newly created rules are given unique UIDs.  
+  If you don't want the UID to be automatically generated, you can specify a specific UID with the `__grafana_alert_rule_uid__` label.
 
 ## Import alert rules with Mimirtool
 
