@@ -86,7 +86,6 @@ export const useMetricsLabelsValues = (
   // Helper function to fetch metrics
   const fetchMetrics = useCallback(
     async (safeSelector?: string) => {
-      setStatus('Fetching metrics...');
       try {
         const fetchedMetrics = await languageProvider.fetchSeriesValuesWithMatch(
           timeRangeRef.current,
@@ -102,8 +101,6 @@ export const useMetricsLabelsValues = (
       } catch (e) {
         handleError(e, 'Error fetching metrics');
         return [];
-      } finally {
-        setStatus('')
       }
     },
     [getMetricDetails, handleError, languageProvider, seriesLimit]
@@ -123,11 +120,35 @@ export const useMetricsLabelsValues = (
       } catch (e) {
         handleError(e, 'Error fetching labels');
         return [];
-      } finally {
-        setStatus('');
       }
     },
     [handleError, languageProvider, seriesLimit]
+  );
+
+  const fetchLabelValues = useCallback(
+    async (labelKeys: string[], safeSelector?: string) => {
+      const transformedLabelValues: Record<string, string[]> = {};
+      const newSelectedLabelValues: Record<string, string[]> = {};
+      for (const lk of labelKeys) {
+        try {
+          const values = await languageProvider.fetchSeriesValuesWithMatch(
+            timeRangeRef.current,
+            lk,
+            safeSelector,
+            `MetricsBrowser_LV_${lk}`,
+            seriesLimit
+          );
+          transformedLabelValues[lk] = values;
+          if (selectedLabelValues[lk]) {
+            newSelectedLabelValues[lk] = [...selectedLabelValues[lk]];
+          }
+        } catch (e) {
+          handleError(e, 'Error fetching label values');
+        }
+      }
+      return [transformedLabelValues, newSelectedLabelValues];
+    },
+    [handleError, languageProvider, selectedLabelValues, seriesLimit]
   );
 
   // Initial set up of the Metrics Browser
@@ -146,21 +167,7 @@ export const useMetricsLabelsValues = (
       const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
 
       // Selected Labels' Values
-      const transformedLabelValues: Record<string, string[]> = {};
-      for (const lk of labelKeysInLocalStorage) {
-        try {
-          const values = await languageProvider.fetchSeriesValuesWithMatch(
-            timeRangeRef.current,
-            lk,
-            undefined,
-            `MetricsBrowser_LV_${lk}`,
-            seriesLimit
-          );
-          transformedLabelValues[lk] = values;
-        } catch (e) {
-          handleError(e, 'Error fetching label values');
-        }
-      }
+      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
 
       setMetrics(transformedMetrics);
       setLabelKeys(transformedLabelKeys);
@@ -185,26 +192,7 @@ export const useMetricsLabelsValues = (
     try {
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
-
-      const transformedLabelValues: Record<string, string[]> = {};
-      const newSelectedLabelValues: Record<string, string[]> = {};
-      for (const lk of newSelectedLabelKeys) {
-        try {
-          const values = await languageProvider.fetchSeriesValuesWithMatch(
-            timeRangeRef.current,
-            lk,
-            undefined,
-            `MetricsBrowser_LV_${lk}`,
-            seriesLimit
-          );
-          transformedLabelValues[lk] = values;
-          if (selectedLabelValues[lk]) {
-            newSelectedLabelValues[lk] = [...selectedLabelValues[lk]];
-          }
-        } catch (e: unknown) {
-          handleError(e, 'Error fetching label values');
-        }
-      }
+      const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(newSelectedLabelKeys);
 
       setLabelKeys(fetchedLabelKeys);
       setSelectedLabelKeys(newSelectedLabelKeys);
@@ -218,25 +206,14 @@ export const useMetricsLabelsValues = (
   const handleSelectedLabelKeyChange = async (labelKey: string) => {
     const newSelectedLabelKeys = [...selectedLabelKeys];
     const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
-
     const newLabelValues: Record<string, string[]> = { ...labelValues };
     const newSelectedLabelValues: Record<string, string[]> = { ...selectedLabelValues };
 
     if (lkIdx === -1) {
       newSelectedLabelKeys.push(labelKey);
       const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
-      try {
-        const values = await languageProvider.fetchSeriesValuesWithMatch(
-          timeRangeRef.current,
-          labelKey,
-          safeSelector,
-          `MetricsBrowser_LV_${labelKey}`,
-          seriesLimit
-        );
-        newLabelValues[labelKey] = values;
-      } catch (e: unknown) {
-        handleError(e, 'Error fetching label values');
-      }
+      const [values] = await fetchLabelValues([labelKey], safeSelector);
+      newLabelValues[labelKey] = values[labelKey];
     } else {
       newSelectedLabelKeys.splice(lkIdx, 1);
       delete newLabelValues[labelKey];
@@ -282,7 +259,6 @@ export const useMetricsLabelsValues = (
     // Fetch label keys
     const labelKeysSelector = `{${METRIC_LABEL}=~"${newMetrics.map((m) => m.name).join('|')}"}`;
     const newLabelKeys: string[] = await fetchLabelKeys(labelKeysSelector);
-
     const newSelectedLabelKeys: string[] = loadSelectedLabelsFromStorage(newLabelKeys);
 
     // adjust the label values
