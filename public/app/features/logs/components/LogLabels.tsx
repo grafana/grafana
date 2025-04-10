@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
-import { memo, forwardRef, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { memo, forwardRef, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
@@ -13,28 +13,34 @@ interface Props {
   labels: Labels;
   emptyMessage?: string;
   addTooltip?: boolean;
+  displayMax?: number;
 }
 
-export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true }: Props) => {
+export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true, displayMax }: Props) => {
+  const [displayAll, setDisplayAll] = useState(displayMax ? false : true);
   const styles = useStyles2(getStyles);
-  const displayLabels = useMemo(
+  const allLabels = useMemo(
     () =>
       Object.keys(labels)
         .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label) && labels[label])
         .map((label) => `${label}=${labels[label]}`),
     [labels]
   );
+  const displayLabels = useMemo(
+    () => allLabels.slice(0, !displayAll && displayMax ? displayMax : Infinity),
+    [allLabels, displayAll, displayMax]
+  );
 
   if (displayLabels.length === 0 && emptyMessage) {
     return (
-      <span className={cx([styles.logsLabels])}>
-        <span className={cx([styles.logsLabel])}>{emptyMessage}</span>
+      <span className={styles.logsLabels}>
+        <span className={styles.logsLabel}>{emptyMessage}</span>
       </span>
     );
   }
 
   return (
-    <span className={cx([styles.logsLabels])}>
+    <span className={styles.logsLabels}>
       {displayLabels.map((labelValue) => {
         return addTooltip ? (
           <Tooltip content={labelValue} key={labelValue} placement="top">
@@ -46,6 +52,11 @@ export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true }: Prop
           </LogLabel>
         );
       })}
+      {displayLabels.length < allLabels.length && !displayAll && (
+        <Button size="sm" fill="outline" variant="secondary" onClick={() => setDisplayAll(true)}>
+          +{allLabels.length - displayLabels.length}
+        </Button>
+      )}
     </span>
   );
 });
@@ -58,7 +69,7 @@ interface LogLabelsArrayProps {
 export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
   return (
-    <span className={cx([styles.logsLabels])}>
+    <span className={styles.logsLabels}>
       {labels.map((label) => (
         <LogLabel key={label} styles={styles} tooltip={label}>
           {label === LOG_LINE_BODY_FIELD_NAME ? 'log line' : label}
@@ -77,8 +88,8 @@ interface LogLabelProps {
 
 const LogLabel = forwardRef<HTMLSpanElement, LogLabelProps>(({ styles, tooltip, children }: LogLabelProps, ref) => {
   return (
-    <span className={cx([styles.logsLabel])} ref={ref}>
-      <span className={cx([styles.logsLabelValue])} title={tooltip}>
+    <span className={styles.logsLabel} ref={ref}>
+      <span className={styles.logsLabelValue} title={tooltip}>
         {children}
       </span>
     </span>
@@ -92,6 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexWrap: 'wrap',
       fontSize: theme.typography.size.xs,
+      alignItems: 'center',
     }),
     logsLabel: css({
       label: 'logs-label',
@@ -103,6 +115,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
+      maxHeight: theme.spacing(2),
     }),
     logsLabelValue: css({
       label: 'logs-label__value',
