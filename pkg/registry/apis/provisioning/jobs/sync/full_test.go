@@ -40,7 +40,6 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
-	progress.On("SetMessage", mock.Anything, "replicating changes").Return()
 
 	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress)
 	require.EqualError(t, err, "context canceled")
