@@ -1273,6 +1273,13 @@
             "type": "string",
             "default": ""
           },
+          "options": {
+            "description": "Catch-all field for datasource-specific properties",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
           "query": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
           }

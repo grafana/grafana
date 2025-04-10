@@ -3,9 +3,9 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
-import { AutoGridItem } from './ResponsiveGridItem';
-import { AutoGridLayout } from './ResponsiveGridLayout';
-import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayout } from './AutoGridLayout';
+import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 describe('AutoGridLayoutManager', () => {
   it('Should clone the layout', () => {

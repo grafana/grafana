@@ -915,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
@@ -1033,7 +1034,7 @@ export interface FeatureToggles {
   unifiedNavbars?: boolean;
   /**
   * Enables a control component for the logs panel in Explore
-  * @default false
+  * @default true
   */
   logsPanelControls?: boolean;
   /**
