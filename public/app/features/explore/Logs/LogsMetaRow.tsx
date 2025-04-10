@@ -3,11 +3,10 @@ import { memo } from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
-import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 
@@ -24,25 +23,12 @@ export type Props = {
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
   displayedFields: string[];
-  hasUnescapedContent: boolean;
-  forceEscape: boolean;
   logRows: LogRowModel[];
-  onEscapeNewlines: () => void;
   clearDetectedFields: () => void;
 };
 
 export const LogsMetaRow = memo(
-  ({
-    meta,
-    dedupStrategy,
-    dedupCount,
-    displayedFields,
-    clearDetectedFields,
-    hasUnescapedContent,
-    forceEscape,
-    onEscapeNewlines,
-    logRows,
-  }: Props) => {
+  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -53,14 +39,6 @@ export const LogsMetaRow = memo(
         label: 'Deduplication count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
-      });
-    }
-    // Add info about limit for highlighting
-    if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
-      logsMetaItem.push({
-        label: 'Info',
-        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
-        kind: LogsMetaKind.String,
       });
     }
 
@@ -91,22 +69,6 @@ export const LogsMetaRow = memo(
       downloadLogs(format, logRows, meta);
     }
 
-    // Add unescaped content info
-    if (hasUnescapedContent) {
-      logsMetaItem.push({
-        label: 'Your logs might have incorrectly escaped content',
-        value: (
-          <Tooltip
-            content="Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct."
-            placement="right"
-          >
-            <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>
-              {forceEscape ? 'Remove escaping' : 'Escape newlines'}
-            </Button>
-          </Tooltip>
-        ),
-      });
-    }
     const downloadMenu = (
       <Menu>
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
@@ -150,7 +112,7 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
     return <>{value}</>;
   }
   if (kind === LogsMetaKind.LabelsMap) {
-    return <LogLabels labels={value} />;
+    return <LogLabels labels={value} displayMax={3} />;
   }
   if (kind === LogsMetaKind.Error) {
     return <span className="logs-meta-item__error">{value.toString()}</span>;
