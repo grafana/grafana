@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Combobox, Input, TextArea, Stack, Button, Field } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -14,6 +14,8 @@ import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { VariableHideSelect } from '../../settings/variables/components/VariableHideSelect';
 import { getVariableTypeSelectOptions, validateVariableName } from '../../settings/variables/utils';
+
+import { getVariableSelectionOptionsCategory } from './useVariableSelectOptionCategory';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -33,8 +35,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
 
-    const options = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+    return useMemo(() => {
+      const mainCategory = new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
@@ -71,9 +73,15 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
             render: () => <VariableTypeSelect variable={variable} />,
           })
         );
-    }, [variable, isNewElement]);
 
-    return [options];
+      const categories = [mainCategory];
+
+      if (variable instanceof MultiValueVariable) {
+        categories.push(getVariableSelectionOptionsCategory(variable));
+      }
+
+      return categories;
+    }, [variable, isNewElement]);
   }
 
   public onDelete() {
