@@ -55,7 +55,7 @@ export function ValueSelector() {
               >
                 {({ index, style }) => {
                   const value = lv[index];
-                    const isSelected = selectedLabelValues[lk]?.includes(value);
+                  const isSelected = selectedLabelValues[lk]?.includes(value);
                   return (
                     <div style={style}>
                       <PromLabel
