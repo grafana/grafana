@@ -1,35 +1,15 @@
 import { css } from '@emotion/css';
-import saveAs from 'file-saver';
 import { memo } from 'react';
-import { lastValueFrom, map, Observable } from 'rxjs';
 
-import {
-  LogsDedupStrategy,
-  LogsMetaItem,
-  LogsMetaKind,
-  LogRowModel,
-  CoreApp,
-  dateTimeFormat,
-  transformDataFrame,
-  DataTransformerConfig,
-  CustomTransformOperator,
-  Labels,
-  DataFrame,
-  Field,
-  getTimeField,
-  dateTime,
-} from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
 import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
-import { logRowsToReadableJson } from '../../logs/utils';
+import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
-
-import { getLogsExtractFields } from './LogsTable';
 
 const getStyles = () => ({
   metaContainer: css({
@@ -51,12 +31,6 @@ export type Props = {
   clearDetectedFields: () => void;
 };
 
-enum DownloadFormat {
-  Text = 'text',
-  Json = 'json',
-  CSV = 'csv',
-}
-
 export const LogsMetaRow = memo(
   ({
     meta,
@@ -70,52 +44,6 @@ export const LogsMetaRow = memo(
     logRows,
   }: Props) => {
     const style = useStyles2(getStyles);
-
-    const downloadLogs = async (format: DownloadFormat) => {
-      reportInteraction('grafana_logs_download_logs_clicked', {
-        app: CoreApp.Explore,
-        format,
-        area: 'logs-meta-row',
-      });
-
-      switch (format) {
-        case DownloadFormat.Text:
-          downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
-          break;
-        case DownloadFormat.Json:
-          const jsonLogs = logRowsToReadableJson(logRows);
-          const blob = new Blob([JSON.stringify(jsonLogs)], {
-            type: 'application/json;charset=utf-8',
-          });
-          const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
-          saveAs(blob, fileName);
-          break;
-        case DownloadFormat.CSV:
-          const dataFrameMap = new Map<string, DataFrame>();
-          logRows.forEach((row) => {
-            if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
-              dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
-            }
-          });
-          dataFrameMap.forEach(async (dataFrame) => {
-            const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
-            transforms.push(
-              {
-                id: 'organize',
-                options: {
-                  excludeByName: {
-                    ['labels']: true,
-                    ['labelTypes']: true,
-                  },
-                },
-              },
-              addISODateTransformation
-            );
-            const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-            downloadDataFrameAsCsv(transformedDataFrame[0], `Explore-logs-${dataFrame.refId}`);
-          });
-      }
-    };
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
@@ -154,6 +82,15 @@ export const LogsMetaRow = memo(
       );
     }
 
+    function download(format: DownloadFormat) {
+      reportInteraction('grafana_logs_download_logs_clicked', {
+        app: CoreApp.Explore,
+        format,
+        area: 'logs-meta-row',
+      });
+      downloadLogs(format, logRows, meta);
+    }
+
     // Add unescaped content info
     if (hasUnescapedContent) {
       logsMetaItem.push({
@@ -173,11 +110,11 @@ export const LogsMetaRow = memo(
     const downloadMenu = (
       <Menu>
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
+        <Menu.Item label="txt" onClick={() => download(DownloadFormat.Text)} />
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
+        <Menu.Item label="json" onClick={() => download(DownloadFormat.Json)} />
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Menu.Item label="csv" onClick={() => downloadLogs(DownloadFormat.CSV)} />
+        <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
       </Menu>
     );
     return (
@@ -192,7 +129,7 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.exploreHideLogsDownload && (
+            {!config.featureToggles.logsPanelControls && !config.exploreHideLogsDownload && (
               <Dropdown overlay={downloadMenu}>
                 <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
                   <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
@@ -221,23 +158,3 @@ function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
   console.error(`Meta type ${typeof value} ${value} not recognized.`);
   return <></>;
 }
-
-const addISODateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
-  return source.pipe(
-    map((data: DataFrame[]) => {
-      return data.map((frame: DataFrame) => {
-        const timeField = getTimeField(frame);
-        return {
-          ...frame,
-          fields: [
-            {
-              name: 'Date',
-              values: timeField.timeField?.values.map((v) => dateTime(v).toISOString()),
-            } as Field,
-            ...frame.fields,
-          ],
-        };
-      });
-    })
-  );
-};

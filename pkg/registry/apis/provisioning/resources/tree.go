@@ -69,6 +69,7 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
+		// FIXME: missing slash here
 		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}

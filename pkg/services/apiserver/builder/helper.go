@@ -396,11 +396,12 @@ func InstallAPIs(
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
 			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:           scheme,
-				OptsGetter:       optsGetter,
-				DualWriteBuilder: dualWrite,
-				MetricsRegister:  reg,
-				StorageOptions:   optsregister,
+				Scheme:              scheme,
+				OptsGetter:          optsGetter,
+				DualWriteBuilder:    dualWrite,
+				MetricsRegister:     reg,
+				StorageOptsRegister: optsregister,
+				StorageOpts:         storageOpts,
 			}); err != nil {
 				return err
 			}
