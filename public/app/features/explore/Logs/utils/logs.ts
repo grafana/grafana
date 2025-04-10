@@ -5,6 +5,7 @@ export const SETTINGS_KEYS = {
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
   logsSortOrder: 'grafana.explore.logs.sortOrder',
   logContextWrapLogMessage: 'grafana.explore.logs.logContext.wrapLogMessage',
+  commonLabels: 'grafana.explore.logs.commonLabels',
 };
 
 export const SETTING_KEY_ROOT = 'grafana.explore.logs';

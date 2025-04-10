@@ -25,6 +25,7 @@ import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
+  hasUnescapedContent?: boolean;
   loading: boolean;
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
@@ -50,6 +51,7 @@ export type LogRowsComponentProps = Omit<
 export const ControlledLogRows = ({
   deduplicatedRows,
   dedupStrategy,
+  hasUnescapedContent,
   showLabels,
   showTime,
   logsMeta,
@@ -65,6 +67,7 @@ export const ControlledLogRows = ({
       app={rest.app || CoreApp.Unknown}
       displayedFields={[]}
       dedupStrategy={dedupStrategy}
+      hasUnescapedContent={hasUnescapedContent}
       logOptionsStorageKey={logOptionsStorageKey}
       logs={deduplicatedRows ?? []}
       logsMeta={logsMeta}
@@ -83,8 +86,17 @@ export const ControlledLogRows = ({
 };
 
 const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps) => {
-  const { app, dedupStrategy, filterLevels, prettifyJSON, sortOrder, showTime, showUniqueLabels, wrapLogMessage } =
-    useLogListContext();
+  const {
+    app,
+    dedupStrategy,
+    filterLevels,
+    forceEscape,
+    prettifyJSON,
+    sortOrder,
+    showTime,
+    showUniqueLabels,
+    wrapLogMessage,
+  } = useLogListContext();
   const eventBus = useMemo(() => new EventBusSrv(), []);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -124,6 +136,7 @@ const LogRowsComponent = ({ loading, loadMoreLogs, deduplicatedRows = [], range,
             app={app}
             dedupStrategy={dedupStrategy}
             deduplicatedRows={filteredLogs}
+            forceEscape={forceEscape}
             logRows={filteredLogs}
             logsSortOrder={sortOrder}
             scrollElement={scrollElementRef.current}
