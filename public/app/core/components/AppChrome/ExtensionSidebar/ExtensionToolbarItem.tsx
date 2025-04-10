@@ -98,7 +98,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.primary.transparent,
       border: `1px solid ${theme.colors.primary.borderTransparent}`,
-      color: theme.colors.getContrastText(purple),
+      color: theme.colors.text.primary,
     }),
   };
 }
