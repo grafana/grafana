@@ -5336,6 +5336,7 @@
     },
     "building-snapshot": {
       "description": "We're gathering your resources for migration to Grafana Cloud. This should only take a moment.",
+      "description-eta": "Creating a snapshot typically takes less than two minutes.",
       "title": "Building snapshot"
     },
     "can-i-move": {
