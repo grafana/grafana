@@ -126,7 +126,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({ isNew: true });
+    const newTab = tab ?? new TabItem({});
     const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
     const newTitle = generateUniqueTitle(newTab.state.title, existingNames);
     if (newTitle !== newTab.state.title) {
