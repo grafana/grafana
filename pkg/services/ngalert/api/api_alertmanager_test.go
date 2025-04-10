@@ -447,16 +447,6 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 }
 
-func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserConfig {
-	t.Helper()
-
-	request := apimodels.PostableUserConfig{}
-	err := request.UnmarshalJSON([]byte(config))
-	require.NoError(t, err)
-
-	return request
-}
-
 func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
@@ -605,40 +595,6 @@ var validConfigWithAutogen = `{
 }
 `
 
-var validConfigWithSecureSetting = `{
-	"template_files": {
-		"a": "template"
-	},
-	"alertmanager_config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]},
-			{
-			"name": "slack",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "slack1",
-				"type": "slack",
-				"settings": {"text": "slack text"},
-				"secureSettings": {
-					"url": "secure url"
-				}
-			}]
-		}]
-	}
-}
-`
-
 var brokenConfig = `
 	"alertmanager_config": {
 		"route": {
@@ -671,13 +627,6 @@ func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
 func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
-	require.NoError(t, err)
-}
-
-// setContactPointProvenance marks a contact point as provisioned.
-func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
-	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
