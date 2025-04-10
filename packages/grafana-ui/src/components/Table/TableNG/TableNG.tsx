@@ -59,16 +59,18 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
+  const { data, onColumnResize } = props;
+
   const rows = useMemo(() => frameToRecords(props.data), [props.data]);
 
-  const onColumnResizeDone = useCallback<OnColResizeDone>((idx, width) => {
-    console.log('set dirty & recalcColWidths!, setState, etc', {
-      idx,
-      width,
-    });
-  }, []);
+  const onColumnResizeDone = useCallback<OnColResizeDone>(
+    (idx, width) => {
+      onColumnResize?.(data.fields[idx].name, width);
+    },
+    [onColumnResize, data]
+  );
 
-  const onColumnResize = useColumnResizeDone(onColumnResizeDone);
+  const _onColumnResize = useColumnResizeDone(onColumnResizeDone);
 
   const columns = useMemo<TableColumn[]>(() => {
     const { fields } = props.data;
@@ -93,7 +95,7 @@ export function TableNG(props: TableNGProps) {
         sortable: true,
         // draggable: true,
       }}
-      onColumnResize={onColumnResize}
+      onColumnResize={_onColumnResize}
       style={{ blockSize: '100%' }}
     />
   );
