@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -158,18 +150,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-  */
-  alertStateHistoryLokiSecondary?: boolean;
-  /**
-  * Enable a remote Loki instance as the primary source for state history reads.
-  */
-  alertStateHistoryLokiPrimary?: boolean;
-  /**
-  * Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-  */
-  alertStateHistoryLokiOnly?: boolean;
-  /**
   * Writes error logs to the request logger
   * @default true
   */
@@ -238,11 +218,6 @@ export interface FeatureToggles {
   * Enable support for Machine Learning in server-side expressions
   */
   mlExpressions?: boolean;
-  /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
   /**
   * Expose some datasources as apiservers.
   */
@@ -562,10 +537,6 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
-  /**
-  * Changed the layout algorithm for the node graph
-  */
-  nodeGraphDotLayout?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -944,6 +915,7 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   /**
   * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
+  * @default true
   */
   exploreMetricsUseExternalAppPlugin?: boolean;
   /**
@@ -1009,10 +981,6 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Disables backdrop blur
-  */
-  noBackdropBlur?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
   */
   alertingMigrationUI?: boolean;
@@ -1059,4 +1027,18 @@ export interface FeatureToggles {
   * Enables localization for plugins
   */
   localizationForPlugins?: boolean;
+  /**
+  * Enables unified navbars
+  * @default false
+  */
+  unifiedNavbars?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default true
+  */
+  logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
 }

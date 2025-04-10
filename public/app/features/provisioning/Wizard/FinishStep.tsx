@@ -1,38 +1,20 @@
-import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, MultiCombobox, Stack, Switch, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 
 import { WizardFormData } from './types';
 
 export function FinishStep() {
-  const { register, watch, control, formState } = useFormContext<WizardFormData>();
-  const { errors } = formState;
+  const { register, watch, setValue } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
+  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
-  // Enable sync by default
-  const { setValue } = useFormContext<WizardFormData>();
-  const style = useStyles2(getStyles);
-
-  if (!isPublic || !hasImageRenderer) {
-    if (formState.defaultValues?.repository) {
-      formState.defaultValues.repository.generateDashboardPreviews = false;
-    }
-  }
-  if (!isPublic) {
-    if (formState.defaultValues?.repository) {
-      // TODO: Disable webhooks by default
-    }
-  }
 
   // Set sync enabled by default
   useEffect(() => {
@@ -61,92 +43,81 @@ export function FinishStep() {
         </Field>
       )}
 
-      <Field
-        label={t('provisioning.finish-step.label-workflows', 'Workflows')}
-        description={t(
-          'provisioning.finish-step.description-select-workflows-allowed-within-repository',
-          'Select the workflows that are allowed within this repository'
-        )}
-        required
-        error={errors.repository?.workflows?.message}
-        invalid={!!errors.repository?.workflows}
-      >
-        <Controller
-          name="repository.workflows"
-          control={control}
-          rules={{ required: t('provisioning.finish-step.error-field-required', 'This field is required.') }}
-          render={({ field: { ref, onChange, ...field } }) => (
-            <MultiCombobox
-              options={getWorkflowOptions(type)}
-              placeholder={t('provisioning.finish-step.placeholder-readonly-repository', 'Read-only repository')}
-              onChange={(val) => {
-                onChange(val.map((v) => v.value));
-              }}
-              {...field}
-            />
+      <Field>
+        <Checkbox
+          {...register('repository.readOnly', {
+            onChange: (e) => {
+              if (e.target.checked) {
+                setValue('repository.prWorkflow', false);
+              }
+            },
+          })}
+          label={t('provisioning.finish-step.label-read-only', 'Read only')}
+          description={t(
+            'provisioning.finish-step.description-read-only',
+            "Resources can't be modified through Grafana."
           )}
         />
       </Field>
 
-      {isGithub && false /* TODO */ && (
-        <Field
-          label={
-            t(
-              'provisioning.finish-step.label-enable-webhooks',
-              'Enable webhooks on changes'
-            ) /* TODO: Link to docs when !isPublic */
-          }
-          description={t(
-            'provisioning.finish-step.description-enable-webhooks',
-            'Enable webhooks to automatically notify Grafana when a change occurs in the repository. This will allow Grafana to pull changes as soon as they are made.'
-          )}
-          disabled={!isPublic}
-        >
-          {/* TODO: Make an option for the switch to control */}
-          <Switch id="repository.webhook.enable" />
-        </Field>
-      )}
-
       {isGithub && (
-        <Field
-          useLabel
-          label={
-            <span>
-              {t(
-                'provisioning.finish-step.label-enable-dashboard-previews',
-                'Enable dashboard previews in pull requests'
-              )}{' '}
-              <span className={style.explanation}>
-                {t('provisioning.finish-step.text-requires-image-rendering', '(Requires image rendering.')}{' '}
-                <a className={style.explanationLink} href="https://grafana.com">
-                  {t('provisioning.finish-step.link-setup-image-rendering', 'Set up image rendering')}
-                </a>
-                {')'}
-              </span>
-            </span>
-          }
-          description={t(
-            'provisioning.finish-step.description-dashboard-previews',
-            'Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.'
-          )}
-          disabled={!hasImageRenderer || !isPublic}
-        >
-          <Switch {...register('repository.generateDashboardPreviews')} id="repository.generateDashboardPreviews" />
-        </Field>
+        <>
+          <Field>
+            <Checkbox
+              {...register('repository.prWorkflow')}
+              disabled={readOnly}
+              label={t('provisioning.finish-step.label-pr-workflow', 'Enable pull request option when saving')}
+              description={
+                <Trans i18nKey="provisioning.finish-step.description-pr-enable-description">
+                  Allows users to choose whether to open a pull request when saving changes. If the repository does not
+                  allow direct changes to the main branch, a pull request may still be required.
+                </Trans>
+              }
+            />
+          </Field>
+
+          <Stack direction="column" gap={2}>
+            <Stack direction="column" gap={0}>
+              <Text element="h4">
+                <Trans i18nKey="provisioning.finish-step.title-enhance-github">Enhance your GitHub experience</Trans>
+              </Text>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="provisioning.finish-step.text-setup-later">You can always set this up later</Trans>
+              </Text>
+            </Stack>
+            <Field>
+              <Checkbox
+                disabled={!hasImageRenderer || !isPublic}
+                label={t(
+                  'provisioning.finish-step.label-enable-previews',
+                  'Enable dashboard previews in pull requests'
+                )}
+                description={
+                  <>
+                    <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                      Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
+                      will be shared in your Git repository and visible to anyone with repository access.
+                    </Trans>{' '}
+                    <Text italic>
+                      <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                        Requires image rendering.{' '}
+                        <TextLink
+                          variant="bodySmall"
+                          external
+                          href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                        >
+                          Set up image rendering
+                        </TextLink>
+                      </Trans>
+                    </Text>
+                  </>
+                }
+                {...register('repository.generateDashboardPreviews')}
+              />
+            </Field>
+          </Stack>
+        </>
       )}
     </Stack>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    explanation: css({
-      color: theme.colors.text.disabled,
-      fontStyle: 'italic',
-    }),
-    explanationLink: css({
-      color: theme.colors.text.link,
-      fontStyle: 'italic',
-    }),
-  };
 }

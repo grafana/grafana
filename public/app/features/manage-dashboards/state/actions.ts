@@ -268,7 +268,7 @@ export function createFolder(payload: any) {
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
 export async function searchFolders(
-  query: any,
+  query: string,
   permission?: PermissionLevelString,
   type: SearchQueryType = SearchQueryType.Folder
 ): Promise<DashboardSearchHit[]> {
