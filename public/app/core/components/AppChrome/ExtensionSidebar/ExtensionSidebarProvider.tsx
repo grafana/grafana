@@ -6,7 +6,11 @@ import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/featu
 
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
-const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
+const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
+  'grafana-investigations-app',
+  'grafana-aiassistant-app',
+  'grafana-dash-app',
+];
 
 type ExtensionSidebarContextType = {
   /**
