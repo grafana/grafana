@@ -16,7 +16,7 @@ weight: 570
 
 Grafana supports user authentication through Microsoft Entra ID. This topic shows you how to configure SAML authentication in Grafana with [Entra ID](https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If an Entra ID user belongs to more than 150 groups, a Graph API endpoint is used instead.
 
 Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows.
@@ -27,7 +27,7 @@ Related links:
 
 - [Entra ID SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - [Configure a Graph API application in Entra ID](#configure-a-graph-api-application-in-entra-id)
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 ## Before you begin
 

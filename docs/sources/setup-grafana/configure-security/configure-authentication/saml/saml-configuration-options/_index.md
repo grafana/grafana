@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/
 labels:
   products:
     - cloud

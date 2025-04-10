@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -9,11 +11,11 @@ title: Configure Role and Team sync for SAML
 weight: 540
 ---
 
-### Configure team sync
+# Configure team sync for SAML
 
-To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+To use SAML Team sync, set [`assertion_attribute_groups`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Grafana requires the SAML groups attribute to be configured with distinct `AttributeValue` elements for each group. Do not include multiple groups within a single `AttributeValue` delimited by a comma or any other character. Failure to do so will prevent correct group parsing. Example:
 
 ```xml
@@ -23,11 +25,11 @@ Grafana requires the SAML groups attribute to be configured with distinct `Attri
 </saml2:Attribute>
 ```
 
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Given the following partial SAML assertion:
 
@@ -63,20 +65,20 @@ The following `External Group ID`s would be valid for input in the desired team'
 
 [Learn more about Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)
 
-### Configure role sync
+# Configure role sync for SAML
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-1. In the configuration file, set [`assertion_attribute_role`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_role) option to the attribute name where the role information will be extracted from.
-1. Set the [`role_values_none`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_none) option to the values mapped to the `None` role.
-1. Set the [`role_values_viewer`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_viewer) option to the values mapped to the `Viewer` role.
-1. Set the [`role_values_editor`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_editor) option to the values mapped to the `Editor` role.
-1. Set the [`role_values_admin`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_admin) option to the values mapped to the organization `Admin` role.
-1. Set the [`role_values_grafana_admin`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_grafana_admin) option to the values mapped to the `Grafana Admin` role.
+1. In the configuration file, set [`assertion_attribute_role`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_role) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_none`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_none) option to the values mapped to the `None` role.
+1. Set the [`role_values_viewer`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_viewer) option to the values mapped to the `Viewer` role.
+1. Set the [`role_values_editor`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_editor) option to the values mapped to the `Editor` role.
+1. Set the [`role_values_admin`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_admin) option to the values mapped to the organization `Admin` role.
+1. Set the [`role_values_grafana_admin`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#role_values_grafana_admin) option to the values mapped to the `Grafana Admin` role.
 
 If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` config option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
-For more information about roles and permissions in Grafana, refer to [Roles and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
 Example configuration:
 

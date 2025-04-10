@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/index/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -9,16 +11,16 @@ title: Configure SAML authentication with Okta
 weight: 580
 ---
 
-## Set up SAML with Okta
+# Configure SAML Okta
 
 Grafana supports user authentication through Okta, which is useful when you want your users to access Grafana using single sign on. This guide will follow you through the steps of configuring SAML authentication in Grafana with [Okta](https://okta.com/). You need to be an admin in your Okta organization to access Admin Console and create SAML integration. You also need permissions to edit Grafana config file and restart Grafana server.
 
-**Before you begin:**
+## Before you begin
 
 - To configure SAML integration with Okta, create an app integration inside the Okta organization first. [Add app integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
 - Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-**To set up SAML with Okta:**
+## Set up SAML with Okta
 
 1. Log in to the [Okta portal](https://login.okta.com/).
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
@@ -32,9 +34,9 @@ Grafana supports user authentication through Okta, which is useful when you want
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
-     {{% admonition type="note" %}}
+     {{< admonition type="note" >}}
      If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
-     {{% /admonition %}}
+     {{< /admonition >}}
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
      | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |

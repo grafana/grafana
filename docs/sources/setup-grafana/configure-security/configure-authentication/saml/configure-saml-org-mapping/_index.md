@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -9,12 +11,12 @@ title: Configure Organisation mapping for SAML
 weight: 550
 ---
 
-### Configure organization mapping
+# Configure organization mapping for SAML
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
-1. In configuration file, set [`assertion_attribute_org`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_org) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
-1. Set [`org_mapping`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#org_mapping) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by ID. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
+1. In configuration file, set [`assertion_attribute_org`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_org) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
+1. Set [`org_mapping`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#org_mapping) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by ID. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
 
 For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with ID `2` as Editor and users from `Sales` - to the org with ID `3` as Admin, based on `Org` assertion attribute value:
 

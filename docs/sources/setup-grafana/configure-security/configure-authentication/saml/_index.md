@@ -8,6 +8,7 @@ aliases:
   - ../../../enterprise/saml/enable-saml/
   - ../../../enterprise/saml/set-up-saml-with-okta/
   - ../../../enterprise/saml/troubleshoot-saml/
+  - ../../../saml/
 description: Learn how to configure SAML authentication in Grafana's configuration
   file.
 labels:
@@ -21,9 +22,9 @@ weight: 500
 
 # SAML authentication in Grafana
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
@@ -39,15 +40,15 @@ If you are using Okta or Azure AD as Identity Provider, see the following docume
 - [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/)
 - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
-{{% /admonition %}}
+{{< /admonition >}}
 
 All methods offer the same configuration options. However, if you want to keep all of Grafana authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you are a Grafana Cloud user, you do not have access to Grafana configuration file. Instead, configure SAML through the other methods.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## SAML Bindings
 
@@ -209,15 +210,15 @@ If multiple bindings are supported for SAML Single Sign-On (SSO) by the Identity
 
 To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the IdP's domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## IdP-initiated Single Sign-On (SSO)
 
-By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
+By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana's login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
-IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
+IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
 
 ## Advanced configuration
 

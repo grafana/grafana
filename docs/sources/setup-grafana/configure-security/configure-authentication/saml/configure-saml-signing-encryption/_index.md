@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -24,9 +26,9 @@ If you are directly supplying the certificate and key, Grafana supports two ways
 - Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Always work with your company's security team on setting up certificates and private keys. If you need to generate them yourself (such as in the short term, for testing purposes, and so on), use the following example to generate your certificate and private key, including the step of ensuring that the key is generated with the [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 

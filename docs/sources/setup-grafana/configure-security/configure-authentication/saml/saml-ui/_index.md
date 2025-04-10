@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../../../../saml/saml-ui/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -11,9 +13,9 @@ weight: 510
 
 # Configure SAML authentication using the Grafana user interface
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) version 10.0 and later, and [Grafana Cloud Pro or Advanced](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication using the configuration file](../#configure-saml-using-the-grafana-config-file).
 
@@ -24,9 +26,9 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 - It doesn't require Grafana to be restarted after a configuration update
 - Access to the SAML UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file. For more information on how Grafana determines the order of precedence for its settings, please refer to the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
