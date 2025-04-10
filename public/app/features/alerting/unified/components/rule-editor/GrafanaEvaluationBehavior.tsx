@@ -227,7 +227,10 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       </div>
                     )}
-                    placeholder={'Select an evaluation group...'}
+                    placeholder={t(
+                      'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
+                      'Select an evaluation group...'
+                    )}
                   />
                 )}
                 name="group"
@@ -444,7 +447,7 @@ function EvaluationGroupCreationModal({
     <Modal
       className={styles.modal}
       isOpen={true}
-      title={'New evaluation group'}
+      title={t('alerting.evaluation-group-creation-modal.title-new-evaluation-group', 'New evaluation group')}
       onDismiss={onCancel}
       onClickBackdrop={onCancel}
     >
