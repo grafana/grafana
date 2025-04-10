@@ -413,7 +413,7 @@ describe('Variables name validation', () => {
   });
 
   it('should not return error if global variable name is used not at the beginning ', () => {
-    expect(validateVariableName(variable1, 'test__').isValid).toBe(false);
+    expect(validateVariableName(variable1, 'test__').isValid).toBe(true);
   });
 
   it('should return error if name is empty', () => {
