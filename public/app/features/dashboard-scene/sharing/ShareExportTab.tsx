@@ -4,7 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Alert, Button, ClipboardButton, CodeEditor, Field, Link, Modal, Stack, Switch, TextLink } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getDashboardExporter, DashboardExporterLike } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
