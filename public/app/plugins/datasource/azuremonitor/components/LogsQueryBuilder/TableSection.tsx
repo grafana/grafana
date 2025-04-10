@@ -5,7 +5,12 @@ import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/p
 import { Button, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
-import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
+import {
+  AzureMonitorQuery,
+  AzureLogAnalyticsMetadataColumn,
+  AzureLogAnalyticsMetadataTable,
+  TablePlan,
+} from '../../types';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -15,6 +20,7 @@ interface TableSectionProps {
   query: AzureMonitorQuery;
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
   templateVariableOptions?: SelectableValue<string>;
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
@@ -25,6 +31,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
     label: t.name,
     value: t.name,
+    description: t.plan === TablePlan.Basic ? 'Selecting this table will switch the query mode to Basic Logs' : '',
   }));
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
@@ -68,6 +75,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       groupBy: [],
       orderBy: [],
       columns: [],
+      basicLogsQuery: selectedTable.plan === TablePlan.Basic,
     });
   };
 

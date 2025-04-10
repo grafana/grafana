@@ -70,6 +70,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       orderBy,
       columns,
       from,
+      basicLogsQuery,
     }: {
       limit?: number;
       reduce?: BuilderQueryEditorReduceExpression[];
@@ -79,6 +80,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       orderBy?: BuilderQueryEditorOrderByExpression[];
       columns?: string[];
       from?: BuilderQueryEditorPropertyExpression;
+      basicLogsQuery?: boolean;
     }) => {
       const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 
@@ -122,6 +124,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           ...query.azureLogAnalytics,
           builderQuery: updatedBuilderQuery,
           query: updatedQueryString,
+          basicLogsQuery,
         },
       });
     },

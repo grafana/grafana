@@ -8,7 +8,14 @@ import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
+import {
+  AzureMonitorErrorish,
+  AzureMonitorOption,
+  AzureMonitorQuery,
+  ResultFormat,
+  EngineSchema,
+  AzureLogAnalyticsMetadataTable,
+} from '../../types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
@@ -84,11 +91,35 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
+      const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
+        const promises = [];
+        for (const table of tables) {
+          promises.push({
+            ...table,
+            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(query, table.name),
+          });
+        }
+
+        const tablesWithPlan = await Promise.all(promises);
+        return tablesWithPlan;
+      };
       datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]).then((schema) => {
-        setSchema(schema);
+        if (schema?.database?.tables) {
+          fetchAllPlans(schema?.database?.tables).then(async (t) => {
+            if (schema.database?.tables) {
+              schema.database.tables = t;
+            }
+            setSchema(schema);
+          });
+        }
       });
     }
-  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
+  }, [
+    query.azureLogAnalytics?.resources,
+    datasource.azureLogAnalyticsDatasource,
+    datasource.azureMonitorDatasource,
+    query,
+  ]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
