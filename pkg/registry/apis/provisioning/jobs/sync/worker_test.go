@@ -161,6 +161,41 @@ func TestSyncWorker_Process(t *testing.T) {
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
+		{
+			name: "failed getting clients for namespace",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				// Setup repository config
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "test-repo",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+
+				// Storage is migrated
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Initial status update succeeds
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+
+				// Repository resources creation succeeds
+				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
+
+				// Getting clients for namespace fails
+				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
+			},
+			expectedError: "get clients for test-repo: failed to get clients",
+		},
 	}
 
 	for _, tt := range tests {
