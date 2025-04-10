@@ -22,8 +22,6 @@ type JobProgressRecorder interface {
 	ResetResults()
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
-	SetRef(ref string)
-	GetRef() string
 	SetTotal(ctx context.Context, total int)
 	TooManyErrors() error
 	Complete(ctx context.Context, err error) provisioning.JobStatus

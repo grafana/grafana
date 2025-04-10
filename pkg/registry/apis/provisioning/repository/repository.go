@@ -184,6 +184,8 @@ type VersionedFileChange struct {
 
 // Versioned is a repository that supports versioning.
 // This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
+//
+//go:generate mockery --name Versioned --structname MockVersioned --inpackage --filename versioned_mock.go --with-expecter
 type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
