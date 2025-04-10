@@ -1034,7 +1034,7 @@ export interface FeatureToggles {
   unifiedNavbars?: boolean;
   /**
   * Enables a control component for the logs panel in Explore
-  * @default false
+  * @default true
   */
   logsPanelControls?: boolean;
   /**

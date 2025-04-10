@@ -3502,7 +3502,7 @@
     },
     "provisioned-resource-delete-modal": {
       "file-path": "File path:",
-      "managed-by-version-control": "This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
+      "managed-by-version-control": "This resource is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
     },
@@ -6352,14 +6352,14 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "ext-storage": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
-      "grafana": "Grafana",
+      "grafana": "Grafana instance",
       "include-history": "Include history",
       "label-display-name": "Display name",
       "label-migrate-options": "Migrate options",
       "placeholder-my-repository-connection": "My repository connection",
-      "repository": "Repository",
       "resources-will-be-added": "The {{count}} resources in grafana will be added to the repository. Grafana will then include both the current resources and anything from the repository when done.",
       "text-loading-resource-information": "Loading resource information...",
       "title-files-exist-in-the-target": "Files exist in the target",
@@ -6374,13 +6374,11 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-branch": "Create a branch (and pull request) for changes",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-path": "Path to a subdirectory in the Git repository",
+      "description-read-only": "Resources can't be modified through Grafana.",
       "description-repository-url": "Enter the GitHub repository URL",
       "description-title": "A human-readable name for the config",
-      "description-workflows-makes-repository": "No workflows makes the repository read only",
-      "description-write": "Allow writing updates to the remote repository",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "error-valid-github-url": "Please enter a valid GitHub repository URL",
@@ -6391,17 +6389,15 @@
       "label-interval-seconds": "Interval (seconds)",
       "label-local-path": "Local path",
       "label-path": "Path",
+      "label-pr-workflow": "Enable pull request option when saving",
       "label-repository-type": "Repository type",
       "label-repository-url": "Repository URL",
       "label-target": "Target",
       "label-title": "Title",
-      "label-workflows": "Workflows",
-      "option-branch": "Branch",
       "option-entire-instance": "Entire instance",
       "option-github": "GitHub",
       "option-local": "Local",
       "option-managed-folder": "Managed folder",
-      "option-write": "Write",
       "placeholder-branch": "main",
       "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
       "placeholder-github-url": "https://github.com/username/repo-name",
@@ -6409,7 +6405,6 @@
       "placeholder-local-path": "/path/to/repo",
       "placeholder-my-config": "My config",
       "placeholder-path": "grafana/",
-      "placeholder-readonly-repository": "Readonly repository",
       "placeholder-select-repository-type": "Select repository type"
     },
     "config-form-github-collapse": {
@@ -6427,30 +6422,28 @@
       "title-webhook-will-be-created": "Webhook will be created"
     },
     "connect-repository-button": {
+      "configure": "Configure",
       "configure-file": "Configure file provisioning",
-      "configure-git-sync": "Configure GitSync",
+      "configure-git-sync": "Configure Git Sync",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "connect-step": {
-      "description-choose-storage-resources": "Choose the type of storage for your resources",
-      "description-github-path": "Path to a subdirectory in the Git repository",
+      "description-branch": "Branch to use for the GitHub repository",
+      "description-github-path": "This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from",
       "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
       "description-repository-url": "Paste the URL of your GitHub repository",
       "error-field-required": "This field is required.",
       "error-invalid-github-url": "Please enter a valid GitHub repository URL",
-      "label-access-token": "Enter your access token",
-      "label-branch": "Branch",
+      "label-access-token": "GitHub access token",
+      "label-branch": "Branch name",
       "label-local-path": "Local path",
-      "label-path": "Path",
-      "label-repository-url": "Enter your Repository URL",
-      "label-storage-type": "Storage type",
+      "label-path": "Path to subdirectory in repository",
+      "label-repository-url": "GitHub repository URL",
       "placeholder-branch": "main",
       "placeholder-github-path": "grafana/",
       "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
       "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo",
-      "storage-type-github": "GitHub",
-      "storage-type-local": "Local"
+      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -6488,7 +6481,6 @@
       },
       "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
       "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
-      "migrate-existing-dashboards-storage-provisioning": "Migrate existing dashboards to GitHub for provisioning",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {
@@ -6506,19 +6498,19 @@
       "placeholder-search": "Search"
     },
     "finish-step": {
-      "description-dashboard-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
-      "description-enable-webhooks": "Enable webhooks to automatically notify Grafana when a change occurs in the repository. This will allow Grafana to pull changes as soon as they are made.",
+      "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
+      "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
       "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
-      "description-select-workflows-allowed-within-repository": "Select the workflows that are allowed within this repository",
-      "error-field-required": "This field is required.",
-      "label-enable-dashboard-previews": "Enable dashboard previews in pull requests",
-      "label-enable-webhooks": "Enable webhooks on changes",
+      "description-pr-enable-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "description-read-only": "Resources can't be modified through Grafana.",
+      "description-webhooks-enable": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "label-enable-previews": "Enable dashboard previews in pull requests",
+      "label-pr-workflow": "Enable pull request option when saving",
+      "label-read-only": "Read only",
       "label-update-instance-interval-seconds": "Update instance interval (seconds)",
-      "label-workflows": "Workflows",
-      "link-setup-image-rendering": "Set up image rendering",
       "placeholder": "60",
-      "placeholder-readonly-repository": "Read-only repository",
-      "text-requires-image-rendering": "(Requires image rendering."
+      "text-setup-later": "You can always set this up later",
+      "title-enhance-github": "Enhance your GitHub experience"
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No results matching your query",
@@ -6576,17 +6568,6 @@
       },
       "summary": "Summary"
     },
-    "job-step": {
-      "error-failed-to-start": "Failed to start operation",
-      "error-invalid-response": "Invalid response from operation",
-      "error-job-failed": "Job failed"
-    },
-    "migrate-step": {
-      "description-migrating-dashboards": "Migrating all dashboards from this instance to your repository, including their identifiers and complete history. After this one-time migration, all future updates will be automatically saved to the repository."
-    },
-    "pull-step": {
-      "description-pulling-content": "Pulling all content from your repository to this Grafana instance. This ensures your dashboards and other resources are synchronized with the repository."
-    },
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -6615,8 +6596,7 @@
       "title-repository-is-unhealthy": "Repository is unhealthy"
     },
     "repository-link": {
-      "grafana-repository": "Grafana and your repository are now in sync.",
-      "view-folder": "View folder",
+      "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
       "view-repository": "View repository"
     },
     "repository-overview": {
@@ -6695,30 +6675,37 @@
       "title-pull-not-enabled": "Pull is not enabled",
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
+    "synchronize-step": {
+      "error-job-failed": "Job failed",
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job",
+      "synchronization-description": "Include commits for each historical value",
+      "synchronization-options": "Synchronization options"
+    },
     "token-permissions-info": {
-      "access": "Access",
-      "contents": "Contents",
-      "github-instructions": "Go to <2>GitHub Personal Access Tokens</2>. Make sure to include these permissions under <4>Repository</4>:",
-      "metadata": "Metadata",
-      "permission": "Permission",
-      "pull-requests": "Pull requests",
-      "read-and-write": "Read and write",
-      "readonly": "Read-only",
-      "webhooks": "Webhooks"
+      "and-click": "and click",
+      "go-to": "Go to",
+      "make-sure": "Make sure to include these permissions"
     },
     "wizard": {
-      "button-finish": "Finish",
-      "button-next": "Next",
-      "button-start": "Start",
-      "step-bootstrap": "Bootstrap",
+      "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
+      "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
+      "alert-point-3": "The duration of this process depends on the number of resources involved.",
+      "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2>this guide</2> for step-by-step instructions.",
+      "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
+      "button-next": "Finish",
+      "button-start": "Begin synchronization",
+      "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
-      "step-finish": "Finish",
-      "step-resources": "Resources",
-      "title-bootstrap": "Bootstrap repository",
+      "step-finish": "Choose additional settings",
+      "step-synchronize": "Synchronize",
+      "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
+      "sync-option-history": "History",
+      "title-bootstrap": "Choose what to synchronize",
       "title-connect": "Connect to external storage",
-      "title-finish": "Finish setup",
-      "title-migrate": "Migrate resources",
-      "title-pull": "Pull resources"
+      "title-finish": "Choose additional settings",
+      "title-synchronize": "Synchronize with external storage"
     },
     "wizard-content": {
       "button-cancel": "Cancel",

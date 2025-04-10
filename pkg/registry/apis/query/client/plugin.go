@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -43,6 +44,22 @@ type pluginRegistry struct {
 
 var _ clientapi.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
+
+var k8sForbiddenError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Message: "Access denied to the data source",
+	},
+}
+
+var k8sNotFoundError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusNotFound,
+		Message: "Data source not found",
+	},
+}
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
 func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
@@ -89,18 +106,18 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	}
 
 	if !canQuery {
-		status := metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Message: "Access denied to the data source",
-		}
-		return nil, &apierrors.StatusError{ErrStatus: status}
+		return nil, k8sForbiddenError
 	}
 
 	// NOTE: this depends on uid unique across datasources
 	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
 	if err != nil {
-		return nil, err
+		// there is no better way to differentiate between plugin-not-found and other-error
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, k8sNotFoundError
+		} else {
+			return nil, err
+		}
 	}
 
 	qdr := &backend.QueryDataRequest{
