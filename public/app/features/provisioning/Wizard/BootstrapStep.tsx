@@ -21,6 +21,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     control,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -32,6 +33,20 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     () => getResourceStats(filesQuery.data, resourceStats.data),
     [filesQuery.data, resourceStats.data]
   );
+
+  useEffect(() => {
+    // Pick a name nice name based on type+settings
+    const repository = getValues('repository');
+    switch (repository.type) {
+      case 'github':
+        const name = repository.url ?? 'github';
+        setValue('repository.title', name.replace('https://github.com/', ''));
+        break;
+      case 'local':
+        setValue('repository.title', repository.path ?? 'local');
+        break;
+    }
+  }, [getValues, setValue]);
 
   useEffect(() => {
     const isLoading = resourceStats.isLoading || filesQuery.isLoading;

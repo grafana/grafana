@@ -148,19 +148,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const handleNext = async () => {
     const isLastStep = currentStepIndex === steps.length - 1;
-    if (activeStep === 'connection') {
-      // Pick a name nice name based on type+settings
-      const current = getValues();
-      switch (current.repository.type) {
-        case 'github':
-          const name = current.repository.url ?? 'github';
-          setValue('repository.title', name.replace('https://github.com/', ''));
-          break;
-        case 'local':
-          setValue('repository.title', current.repository.path ?? 'local');
-          break;
-      }
-    }
 
     // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
