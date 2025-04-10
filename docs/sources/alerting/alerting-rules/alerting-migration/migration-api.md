@@ -2,7 +2,6 @@
 description: Use the Grafana Alerting API import tool to convert your datasource managed alert rules into Grafana managed alert rules
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Import data source-managed alert rules with Grafana Mimirtool
