@@ -70,7 +70,7 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
   const singleTemplate = previews.length === 1;
 
   return (
-    <ul className={styles.viewer.container}>
+    <ul className={styles.viewer.container} data-testid="template-preview">
       {previews.map((preview) => {
         return (
           <li className={styles.viewer.box} key={preview.name}>
