@@ -46,7 +46,8 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const styles = useStyles2(getStyles, headerLevels * getChromeHeaderLevelHeight());
+  const headerHeight = headerLevels * getChromeHeaderLevelHeight();
+  const styles = useStyles2(getStyles, headerHeight);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -141,7 +142,7 @@ export function AppChrome({ children }: Props) {
               defaultSize={{ width: extensionSidebarWidth }}
               enable={{ left: true }}
               onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-              handleClasses={{ left: dragStyles.dragHandleVertical }}
+              handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
               minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
               maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
             >
@@ -287,7 +288,7 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
 const getContentSizeStyles = (_: GrafanaTheme2, extensionSidebarWidth = 0) => {
   return {
     contentWidth: css({
-      maxWidth: `calc(100% - ${extensionSidebarWidth}px)`,
+      maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
     }),
   };
 };
