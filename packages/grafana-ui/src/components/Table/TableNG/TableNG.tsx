@@ -70,21 +70,18 @@ export function TableNG(props: TableNGProps) {
 
   const onColumnResize = useColumnResizeDone(onColumnResizeDone);
 
-  const columns = useMemo<TableColumn[]>(
-    () => {
-      const { fields } = props.data;
+  const columns = useMemo<TableColumn[]>(() => {
+    const { fields } = props.data;
 
-      return computeColWidths(fields, props.width).map((width, i) => ({
-        key: fields[i].name,
-        name: fields[i].name,
-        field: fields[i],
-        width,
-      }));
-    },
-    // todo: invalidate on structureRev?, deep-diff
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+    const widths = computeColWidths(fields, props.width);
+
+    return fields.map((field, i) => ({
+      field,
+      key: field.name,
+      name: field.name,
+      width: widths[i],
+    }));
+  }, [props.width, props.data]);
 
   return (
     <DataGrid
