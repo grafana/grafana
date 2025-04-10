@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -76,9 +77,58 @@ func TestSyncWorker_Process(t *testing.T) {
 		{
 			name: "legacy storage not migrated",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				rw.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "test-repo",
+					},
+				})
+
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil).Twice()
 			},
 			expectedError: "sync not supported until storage has migrated",
+		},
+		{
+			name: "failed initial status patching",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				// Setup repository config with existing LastRef
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "test-repo",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+
+				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					if len(patch) != 1 {
+						return false
+					}
+
+					if patch[0]["op"] != "replace" || patch[0]["path"] != "/status/sync" {
+						return false
+					}
+
+					if patch[0]["value"].(provisioning.SyncStatus).LastRef != "existing-ref" || patch[0]["value"].(provisioning.SyncStatus).JobID != "test-job" {
+						return false
+					}
+
+					return true
+				})).Return(errors.New("failed to patch status"))
+			},
+			expectedError: "update repo with job status at start: failed to patch status",
 		},
 	}
 
@@ -99,15 +149,6 @@ func TestSyncWorker_Process(t *testing.T) {
 			// Setup mocks
 			tt.setupMocks(clientFactory, repoResourcesFactory, dualwriteService, repositoryPatchFn, syncer, readerWriter, progressRecorder)
 
-			readerWriter.MockRepository.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					Title: "test-repo",
-				},
-			})
-
 			// Create worker
 			worker := NewSyncWorker(
 				clientFactory,
@@ -119,6 +160,9 @@ func TestSyncWorker_Process(t *testing.T) {
 
 			// Create test job
 			job := provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
 					Pull:   &provisioning.SyncJobOptions{},
@@ -134,6 +178,10 @@ func TestSyncWorker_Process(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+
+			// Verify mock expectations
+			repositoryPatchFn.AssertExpectations(t)
+			progressRecorder.AssertExpectations(t)
 		})
 	}
 }
