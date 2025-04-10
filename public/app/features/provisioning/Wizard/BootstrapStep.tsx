@@ -93,24 +93,22 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         <Box alignItems="center" padding={4}>
           <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
             <Stack direction="column" gap={1} alignItems="center">
-              <Text variant="h4" color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana</Trans>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
               </Text>
               <Stack direction="row" gap={2}>
-                <Text variant="h3">
-                  <Text variant="h3">
-                    {state.resourceCount > 0
-                      ? state.resourceCountString
-                      : t('provisioning.bootstrap-step.empty', 'Empty')}
-                  </Text>
+                <Text variant="h4">
+                  {state.resourceCount > 0
+                    ? state.resourceCountString
+                    : t('provisioning.bootstrap-step.empty', 'Empty')}
                 </Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
-              <Text variant="h4" color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.repository">Repository</Trans>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
               </Text>
-              <Text variant="h3">
+              <Text variant="h4">
                 {state.fileCount > 0
                   ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: state.fileCount })
                   : t('provisioning.bootstrap-step.empty', 'Empty')}
@@ -134,7 +132,12 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                   autoFocus={index === 0}
                 >
                   <Card.Heading>{action.label}</Card.Heading>
-                  <Card.Description>{action.description}</Card.Description>
+                  <Card.Description>
+                    <Stack direction="column" gap={3}>
+                      {action.description}
+                      <Text color="primary">{action.subtitle}</Text>
+                    </Stack>
+                  </Card.Description>
                 </Card>
               ))}
             </>
@@ -199,6 +202,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
             )}
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}
+            required
           >
             <Input
               {...register('repository.title', {
@@ -208,7 +212,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 'provisioning.bootstrap-step.placeholder-my-repository-connection',
                 'My repository connection'
               )}
-              // Auto-focus the title field if it's the only available option
+              // Autofocus the title field if it's the only available option
               autoFocus={state.actions.length === 1 && state.actions[0].target === 'folder'}
             />
           </Field>

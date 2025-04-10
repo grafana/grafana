@@ -14,8 +14,8 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
