@@ -167,7 +167,7 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")
 
 	// Verify cell count was recorded
-	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCountSummary), "Expected cell count metric to be recorded")
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCount), "Expected cell count metric to be recorded")
 }
 
 type testTracer struct {

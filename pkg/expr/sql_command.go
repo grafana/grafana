@@ -114,7 +114,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			metrics.SqlCommandErrorCount.WithLabelValues().Inc()
 		}
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
-		metrics.SqlCommandCellCountSummary.WithLabelValues(statusLabel).Observe(float64(tc))
+		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
 
 	allFrames := []*data.Frame{}
