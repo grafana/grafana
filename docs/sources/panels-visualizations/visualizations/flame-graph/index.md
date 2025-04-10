@@ -29,7 +29,7 @@ Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/la
 
 For example, if you want to understand which parts of a program consume the most resources, such as CPU time, memory, or I/O operations, you can use a flame graph to visualize and analyze where potential performance issues are:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-dark-v12.0.png" max-width="750px" alt="A flame graph visualization for a system profile with both flame graph and top table mode." >}}
+{{< figure src="/static/img/docs/flame-graph-panel/flame-graph-dark-mode.png" max-width="750px" alt="A flame graph visualization for a system profile with both flame graph and top table mode." >}}
 
 You can use a flame graph visualization if you need to:
 
@@ -94,9 +94,8 @@ You can click a function to show a drop-down menu with additional actions:
 - [Focus block](#focus-block)
 - [Copy function name](#copy-function-name)
 - [Sandwich view](#sandwich-view)
-- [Grouping](#grouping)
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-menu-v12.0.png" max-width="700px" alt="A flame graph visualization with drop-down actions." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-menu-v11.1.png" max-width="700px" alt="A flame graph visualization with drop-down actions." >}}
 
 #### Focus block
 
@@ -113,15 +112,6 @@ When you click **Copy function name**, the full name of the function that the bl
 The sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees at the bottom. This shows the aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-sandwich-v11.6.png" max-width="700px" alt="A flame graph visualization with sandwich view selected.">}}
-
-#### Grouping
-
-Under the **Grouping** section of the menu, the following options let you expand and collapse groups of functions:
-
-- **Expand group** - Expands the grouped function you've clicked. Displayed if you click a function that's been automatically grouped in the flame graph.
-- **Expand all groups** - Expands all grouped functions in the flame graph. Always displayed when you click the graph.
-- **Collapse group** - Collapses the expanded function you've clicked. Displayed if you click a function in the flame graph that's been manually expanded.
-- **Collapse all groups** - Collapses all expanded functions in the flame graph. Displayed if there are any expanded functions when you click the graph.
 
 ### Status bar
 
@@ -148,7 +138,6 @@ The following table lists the features of the toolbar:
 | [Search](#search) | Use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions appear in gray. |
 | Reset | Reset the flame graph back to its original state from a focus block or sandwich view. The reset icon is only displayed when the flame graph is in one of those two states. |
 | [Color schema picker](#color-schema-picker) | Switch between coloring functions by their value or by their package name to visually tie functions from the same package together. |
-| Grouping | Expand or collapse all groups to show all instances of a function or show the function grouped. |
 | Text align | Align text either to the left or to the right to show more important parts of the function name when it does not fit into the block. |
 | Visualization picker | Choose to show only the flame graph, only table, or both at the same time. |
 
@@ -158,13 +147,13 @@ The following table lists the features of the toolbar:
 
 You can use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-search-v12.0.png" max-width="700px" alt="Searching for a function name in a flame graph visualization.">}}
+{{< figure src="/static/img/docs/flame-graph-panel/flame-graph-search-dark.png" max-width="700px" alt="Searching for a function name in a flame graph visualization.">}}
 
 ### Color schema picker
 
 You can switch between coloring functions by their value or by their package name to visually tie functions from the same package together.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-color-v11.6.png" max-width="700px" alt="Different color scheme" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-color-v11.0.png" max-width="700px" alt="Different color scheme" >}}
 
 ## Configuration options
 
@@ -173,24 +162,3 @@ You can switch between coloring functions by their value or by their package nam
 ### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Standard options
-
-**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations.
-When you set a standard option, the change is applied to all fields or series.
-For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
-
-You can customize the following standard options:
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
-| Unit | This option lets you choose which unit a field should use. For more information on unit options as well as creating custom units, refer to the [unit configuration documentation](ref:units). |
-| Decimals | Specify the number of decimals Grafana includes in the rendered value. |
-
-<!-- prettier-ignore-end -->
-
-### Field overrides
-
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
