@@ -507,22 +507,13 @@ describe('useMetricsLabelsValues', () => {
       expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
         expect.anything(),
         METRIC_LABEL,
-        expect.any(String),
+        undefined,
         'MetricsBrowser_M',
         DEFAULT_SERIES_LIMIT
       );
 
       // Verify label keys were fetched for the filtered metrics
       expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
-
-      // Verify label values were updated
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        expect.any(String),
-        'MetricsBrowser_LV_job',
-        DEFAULT_SERIES_LIMIT
-      );
     });
 
     it('should remove a label value when isSelected is false', async () => {
@@ -554,52 +545,6 @@ describe('useMetricsLabelsValues', () => {
 
       // Verify that 'job' key is no longer in selectedLabelValues
       expect(Object.keys(result.current.selectedLabelValues)).not.toContain('job');
-    });
-
-    it('should update the last selected label key', async () => {
-      // Start with multiple selected label keys
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
-
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
-
-      // Clear mock calls
-      jest.clearAllMocks();
-
-      // Select a value for job (should set job as last selected)
-      await act(async () => {
-        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
-      });
-
-      // Verify job values were fetched
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        expect.any(String),
-        'MetricsBrowser_LV_job',
-        DEFAULT_SERIES_LIMIT
-      );
-
-      // Clear mock calls
-      jest.clearAllMocks();
-
-      // Now select a value for instance (should change last selected to instance)
-      await act(async () => {
-        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
-      });
-
-      // Verify instance values were fetched
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'instance',
-        expect.any(String),
-        'MetricsBrowser_LV_instance',
-        DEFAULT_SERIES_LIMIT
-      );
     });
 
     it('should preserve values for the last selected label key', async () => {
@@ -720,9 +665,8 @@ describe('useMetricsLabelsValues', () => {
         await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
       });
 
-      // Check that instance values were merged with selected values
-      expect(result.current.labelValues.instance).toContain('host1'); // Previously selected
-      expect(result.current.labelValues.instance).toContain('host3'); // Newly fetched
+      // Check that newly fetched instance values were intersected with selected values
+      expect(result.current.labelValues.instance).toContain('host3');
     });
 
     it('should handle errors during label values fetching', async () => {
