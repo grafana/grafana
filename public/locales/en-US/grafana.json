@@ -5344,6 +5344,12 @@
       "link-title": "Learn about migrating other settings",
       "title": "Can I move this installation to Grafana Cloud?"
     },
+    "configure-snapshot": {
+      "description": "Select which resources you want to include in the snapshot to migrate.",
+      "description-sub-line": "Some resources may depend on others and will be automatically selected or deselected.",
+      "resource-include-all": "Include all",
+      "title": "Configure snapshot"
+    },
     "connect-modal": {
       "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
       "body-get-started": "To get started, you'll need a Grafana.com account.",
@@ -5533,7 +5539,7 @@
       "disconnect": "Disconnect",
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
-      "rebuild-snapshot": "Rebuild snapshot",
+      "rebuild-snapshot": "Reconfigure snapshot",
       "show-errors": "Only view errors",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
