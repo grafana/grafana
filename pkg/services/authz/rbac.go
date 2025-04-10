@@ -70,7 +70,7 @@ func ProvideAuthZClient(
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 
-		rbacSettings := rbac.Settings{}
+		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
 		}
@@ -215,7 +215,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
-		rbac.Settings{}, // anonymous org role can only be set in-proc
+		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

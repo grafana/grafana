@@ -2,6 +2,7 @@ package authz
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,6 +30,8 @@ type authzClientSettings struct {
 	token            string
 	tokenExchangeURL string
 	tokenNamespace   string
+
+	cacheTTL time.Duration
 }
 
 func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
@@ -48,6 +51,8 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 
 	s.remoteAddress = authzSection.Key("remote_address").MustString("")
 	s.certFile = authzSection.Key("cert_file").MustString("")
+	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
+
 	s.token = grpcClientAuthSection.Key("token").MustString("")
 	s.tokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
 	s.tokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
@@ -61,7 +66,8 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 }
 
 type RBACServerSettings struct {
-	Folder FolderAPISettings
+	Folder   FolderAPISettings
+	CacheTTL time.Duration
 }
 
 type FolderAPISettings struct {

@@ -64,6 +64,7 @@ type Service struct {
 
 type Settings struct {
 	AnonOrgRole string
+	CacheTTL    time.Duration
 }
 
 func NewService(
@@ -80,6 +81,9 @@ func NewService(
 	if settings.AnonOrgRole == "" {
 		settings.AnonOrgRole = "Viewer"
 	}
+	if settings.CacheTTL == 0 {
+		settings.CacheTTL = shortCacheTTL
+	}
 	return &Service{
 		store:           store.NewStore(sql, tracer),
 		folderStore:     folderStore,
@@ -91,11 +95,11 @@ func NewService(
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
