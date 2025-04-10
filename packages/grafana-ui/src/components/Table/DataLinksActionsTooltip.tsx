@@ -78,35 +78,20 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     return null;
   }
 
-  if (links.length === 1) {
-    const primaryLink = links[0];
-    return (
-      <a
-        href={primaryLink.href}
-        onClick={primaryLink.onClick}
-        target={primaryLink.target}
-        title={primaryLink.title}
-        className={styles.link}
-      >
-        {value}
-      </a>
-    );
-  } else {
-    return (
-      <>
-        {value}
-        {hasMultipleLinksOrActions && (
-          <Portal>
-            <div ref={refCallback} style={floatingStyles} {...getFloatingProps()} className={styles.tooltipWrapper}>
-              <VizTooltipWrapper>
-                <VizTooltipFooter dataLinks={links} actions={actions} />
-              </VizTooltipWrapper>
-            </div>
-          </Portal>
-        )}
-      </>
-    );
-  }
+  return (
+    <>
+      {value}
+      {hasMultipleLinksOrActions && (
+        <Portal>
+          <div ref={refCallback} style={floatingStyles} {...getFloatingProps()} className={styles.tooltipWrapper}>
+            <VizTooltipWrapper>
+              <VizTooltipFooter dataLinks={links} actions={actions} />
+            </VizTooltipWrapper>
+          </div>
+        </Portal>
+      )}
+    </>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -120,19 +105,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: theme.shadows.z3,
       userSelect: 'text',
       fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    link: css({
-      cursor: 'pointer',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      userSelect: 'text',
-      whiteSpace: 'nowrap',
-      fontWeight: theme.typography.fontWeightMedium,
-      paddingRight: theme.spacing(1.5),
-      color: `${theme.colors.text.link} !important`,
-      '&:hover': {
-        textDecoration: 'underline',
-      },
     }),
   };
 };

@@ -21,8 +21,6 @@ export const DefaultCell = (props: TableCellProps) => {
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
-  const hasActions = Boolean(actions?.length);
   let value: string | ReactElement;
 
   const OG_TWEET_LENGTH = 140; // 🙏
@@ -76,17 +74,32 @@ export const DefaultCell = (props: TableCellProps) => {
   const links = getCellLinks(field, row) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<{ clientX: number; clientY: number }>();
+  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
+  const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
 
   return (
     <div
       key={key}
       {...rest}
       className={cellStyle}
+      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
       onClick={({ clientX, clientY }) => {
         setTooltipCoords({ clientX, clientY });
       }}
     >
-      {(hasLinks || hasActions) && tooltipCoords ? (
+      {shouldShowLink ? (
+        <a
+          href={links[0].href}
+          onClick={links[0].onClick}
+          target={links[0].target}
+          title={links[0].title}
+          style={{ overflow: 'hidden', display: 'flex' }}
+          className={getLinkStyle(tableStyles, cellOptions)}
+        >
+          {value}
+        </a>
+      ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
           actions={actions}
@@ -103,6 +116,14 @@ export const DefaultCell = (props: TableCellProps) => {
       {showActions && <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />}
     </div>
   );
+};
+
+const getLinkStyle = (tableStyles: TableStyles, cellOptions: TableCellOptions) => {
+  if (cellOptions.type === TableCellDisplayMode.Auto) {
+    return tableStyles.cellLink;
+  }
+
+  return tableStyles.cellLinkForColoredCell;
 };
 
 function getCellStyle(
@@ -127,7 +148,7 @@ function getCellStyle(
   bgColor = colors.bgColor;
   bgHoverColor = colors.bgHoverColor;
 
-  // If we have definied colors return those styles
+  // If we have defined colors return those styles
   // Otherwise we return default styles
   return tableStyles.buildCellContainerStyle(
     textColor,
