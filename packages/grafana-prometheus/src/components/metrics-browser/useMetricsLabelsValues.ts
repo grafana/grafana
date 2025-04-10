@@ -9,7 +9,7 @@ import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, MET
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
-  const [initTrigger, setInitTrigger] = useState(Date.now());
+  // const [initTrigger, setInitTrigger] = useState(Date.now());
 
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
@@ -23,6 +23,18 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+
+  // We don't want to trigger fetching for small amount of time changes.
+  // When MetricsBrowser re-renders for any reason we might receive a new timerange.
+  // This particularly happens when we have relative time ranges: from: now, to: now-1h
+  useEffect(() => {
+    if (
+      timeRange.to.diff(timeRangeRef.current.to, 'second') >= 5 &&
+      timeRange.from.diff(timeRangeRef.current.from, 'second') >= 5
+    ) {
+      timeRangeRef.current = timeRange;
+    }
+  }, [timeRange]);
 
   //Handler for error processing - logs the error and updates UI state
   const handleError = useCallback((e: unknown, msg: string) => {
@@ -141,50 +153,41 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   );
 
   // Initial set up of the Metrics Browser
+  // This is called when when "Clear" button clicked.
+  const initialize = useCallback(async () => {
+    const selector = buildSelector(selectedMetric, selectedLabelValues);
+    const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+
+    // Metrics
+    const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
+
+    // Labels
+    const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
+
+    // Selected Labels
+    const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
+
+    // Selected Labels' Values
+    const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
+
+    setMetrics(transformedMetrics);
+    setLabelKeys(transformedLabelKeys);
+    setSelectedLabelKeys(labelKeysInLocalStorage);
+    setLabelValues(transformedLabelValues);
+  }, [
+    fetchLabelKeys,
+    fetchLabelValues,
+    fetchMetrics,
+    loadSelectedLabelsFromStorage,
+    selectedLabelValues,
+    selectedMetric,
+  ]);
+
+  // Initialize the hook
   useEffect(() => {
-    async function initialize() {
-      const selector = buildSelector(selectedMetric, selectedLabelValues);
-      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-
-      // Metrics
-      const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
-
-      // Labels
-      const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
-
-      // Selected Labels
-      const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
-
-      // Selected Labels' Values
-      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
-
-      setMetrics(transformedMetrics);
-      setLabelKeys(transformedLabelKeys);
-      setSelectedLabelKeys(labelKeysInLocalStorage);
-      setLabelValues(transformedLabelValues);
-    }
-
     initialize();
-
-    // This useEffect is the initialization of the hook.
-    // We don't want other dependencies effect this flow but only initTrigger.
-    // InitTrigger is here if we want to trigger this flow manually.
-    // We might want to trigger this when "Clear" button clicked.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initTrigger]);
-
-  // We don't want to trigger fetching for small amount of time changes.
-  // When MetricsBrowser re-renders for any reason we might receive a new timerange.
-  // This particularly happens when we have relative time ranges: from: now, to: now-1h
-  useEffect(() => {
-    if (
-      timeRange.to.diff(timeRangeRef.current.to, 'seconds') >= 1 &&
-      timeRange.from.diff(timeRangeRef.current.from, 'seconds') >= 1
-    ) {
-      timeRangeRef.current = timeRange;
-      setInitTrigger(Date.now());
-    }
-  }, [timeRange]);
+  }, []);
 
   const handleSelectedMetricChange = async (metricName: string) => {
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
@@ -327,7 +330,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setStatus('Ready');
     setValidationStatus('');
 
-    setInitTrigger(Date.now());
+    initialize();
   };
 
   return {
