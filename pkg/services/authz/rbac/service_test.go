@@ -1293,8 +1293,6 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 		name          string
 		permissions   []accesscontrol.Permission
 		action        string
-		actionSets    []string
-		cacheHit      bool
 		expectedPerms map[string]bool
 		expectedError bool
 		anonRole      string
@@ -1302,25 +1300,11 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			name: "should return permissions from cache if available",
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
-			},
-			action:        "dashboards:read",
-			actionSets:    []string{},
-			cacheHit:      true,
-			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
-			expectedError: false,
-			anonRole:      "Viewer",
-		},
-		{
 			name: "should return permissions from store if not in cache",
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
 			},
 			action:        "dashboards:read",
-			actionSets:    []string{},
-			cacheHit:      false,
 			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
 			expectedError: false,
 			anonRole:      "Viewer",
@@ -1329,8 +1313,6 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 			name:          "should return error if store fails",
 			permissions:   nil,
 			action:        "dashboards:read",
-			actionSets:    []string{},
-			cacheHit:      false,
 			expectedPerms: nil,
 			expectedError: true,
 			anonRole:      "Viewer",
@@ -1341,8 +1323,6 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 				{Action: "dashboards:read", Scope: "*", Kind: "*"},
 			},
 			action:        "dashboards:read",
-			actionSets:    []string{},
-			cacheHit:      false,
 			expectedPerms: map[string]bool{"*": true},
 			expectedError: false,
 			anonRole:      "Viewer",
@@ -1353,8 +1333,6 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
 			},
 			action:        "dashboards:read",
-			actionSets:    []string{},
-			cacheHit:      false,
 			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
 			expectedError: false,
 			anonRole:      "Editor",
@@ -1376,24 +1354,14 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 			}
 			s.store = store
 			s.permissionStore = store
-			if tc.cacheHit {
-				s.permCache.Set(ctx, anonymousPermCacheKey(ns.Value, tc.action), tc.expectedPerms)
-			}
 
-			perms, err := s.getAnonymousPermissions(ctx, ns, tc.action, tc.actionSets)
+			perms, err := s.getAnonymousPermissions(ctx, ns, tc.action, []string{})
 			if tc.expectedError {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedPerms, perms)
-
-			// should only be called if not a cache hit
-			if tc.cacheHit {
-				require.Zero(t, store.calls)
-			} else {
-				require.Equal(t, 1, store.calls)
-			}
 
 			// cache should then be set
 			cached, ok := s.permCache.Get(ctx, anonymousPermCacheKey(ns.Value, tc.action))
