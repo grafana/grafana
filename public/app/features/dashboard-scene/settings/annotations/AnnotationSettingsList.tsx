@@ -95,7 +95,11 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                       <DeleteButton
                         size="sm"
                         onConfirm={() => onDelete(idx)}
-                        aria-label={`Delete query with title "${annotation.name}"`}
+                        aria-label={t(
+                          'dashboard-scene.annotation-settings-list.delete-aria-label',
+                          'Delete query with title "{{title}}"',
+                          { title: annotation.name }
+                        )}
                       />
                     )}
                   </td>

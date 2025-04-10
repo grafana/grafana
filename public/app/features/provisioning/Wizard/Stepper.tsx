@@ -3,8 +3,6 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
-import { ValidationResult } from './types';
-
 export interface Step<T> {
   id: T;
   name: string;
@@ -17,41 +15,35 @@ export interface Props<T extends string | number> {
   reportId?: string;
   visitedSteps?: T[];
   steps: Array<Step<T>>;
-  validationResults: Record<T, ValidationResult>;
 }
 
-export function Stepper<T extends string | number>({
-  validationResults,
-  visitedSteps = [],
-  steps,
-  activeStep = steps[0]?.id,
-}: Props<T>) {
+export function Stepper<T extends string | number>({ visitedSteps = [], steps, activeStep = steps[0]?.id }: Props<T>) {
   const styles = useStyles2(getStyles);
-  const lastStep = steps[steps.length - 1];
 
   return (
     <ol className={styles.container}>
-      {steps.map((step) => {
-        const isLast = step.id === lastStep.id;
+      {steps.map((step, index) => {
         const isActive = step.id === activeStep;
-        const isVisited = visitedSteps.includes(step.id);
-        const hasMissingFields = !validationResults[step.id].valid;
-        const showIndicator = !isActive && isVisited;
-        const successField = showIndicator && !hasMissingFields;
-        const warnField = showIndicator && hasMissingFields;
-        const itemStyles = cx(styles.item, {
-          [styles.active]: isActive,
-          [styles.successItem]: successField,
-          [styles.warnItem]: warnField,
+        const isCompleted = visitedSteps.includes(step.id) && !isActive;
+        const isLast = index === steps.length - 1;
+
+        const stepTextClass = cx(styles.stepText, {
+          [styles.activeStepText]: isActive,
         });
 
         return (
-          <li key={step.id} className={itemStyles}>
-            {successField && <Icon name={'check'} size={'xl'} className={styles.successItem} />}
-            {warnField && <Icon name={'exclamation-triangle'} className={styles.warnItem} />}
-            <div className={styles.link}>{step.name}</div>
-            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-            {!isLast && <div className={styles.divider}>&#8212;</div>}
+          <li key={step.id} className={styles.stepContainer}>
+            <div className={styles.stepContent}>
+              {isCompleted ? (
+                <div className={cx(styles.stepNumber, styles.completedStepNumber)}>
+                  <Icon name="check" size="sm" />
+                </div>
+              ) : (
+                <div className={styles.stepNumber}>{index + 1}</div>
+              )}
+              <div className={stepTextClass}>{step.name}</div>
+            </div>
+            {!isLast && <div className={styles.connector} />}
           </li>
         );
       })}
@@ -62,54 +54,52 @@ export function Stepper<T extends string | number>({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
-      counterReset: 'item',
-      listStyleType: 'none',
-      width: '100%',
-      position: 'relative',
       display: 'flex',
-      justifyContent: 'center',
-      border: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(4, 0),
+      flexDirection: 'column',
+      margin: theme.spacing(2, 0),
+      padding: 0,
+      listStyle: 'none',
+      width: 200,
     }),
-    item: css({
-      color: theme.colors.text.secondary,
+    stepContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      position: 'relative',
+    }),
+    stepContent: css({
       display: 'flex',
       alignItems: 'center',
+      padding: theme.spacing(0.5, 0),
     }),
-    successItem: css({
-      'a::before': {
-        content: '""',
-      },
-      svg: {
-        color: theme.colors.success.text,
-        margin: theme.spacing(0, 0.5, 0, -1),
-      },
+    stepNumber: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: theme.spacing(3),
+      width: theme.spacing(3),
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginRight: theme.spacing(1),
     }),
-    warnItem: css({
-      'a::before': {
-        content: '""',
-      },
-      svg: {
-        color: theme.colors.warning.text,
-        margin: theme.spacing(0, 1, 0.5, -0.5),
-      },
+    completedStepNumber: css({
+      color: theme.colors.success.main,
     }),
-    link: css({
-      color: 'inherit',
-      '&::before': {
-        content: 'counter(item) "  "',
-        counterIncrement: 'item',
-      },
+    stepText: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.md,
     }),
-    active: css({
-      fontWeight: 500,
-      color: theme.colors.text.maxContrast,
-      '&::before': {
-        fontWeight: 500,
-      },
+    activeStepText: css({
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
-    divider: css({
-      padding: theme.spacing(2),
+    connector: css({
+      width: '1px',
+      backgroundColor: theme.colors.border.medium,
+      height: theme.spacing(2),
+      marginLeft: theme.spacing(1.5),
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

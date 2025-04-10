@@ -134,9 +134,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.rows.length === 1;
+  }
+
   public removeRow(row: RowItem) {
     // When removing last row replace ourselves with the inner row layout
-    if (this.state.rows.length === 1) {
+    if (this.shouldUngroup()) {
       ungroupLayout(this, row.state.layout);
       return;
     }
