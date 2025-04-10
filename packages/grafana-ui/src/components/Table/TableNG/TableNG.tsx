@@ -61,6 +61,19 @@ import {
 export function TableNG(props: TableNGProps) {
   const { data, onColumnResize } = props;
 
+  const availWidth = props.width;
+
+  // // vt scrollbar accounting
+  // const [availWidth, setAvailWidth] = useState(props.width);
+  // const dom = useRef<DataGridHandle>(null);
+  // useEffect(
+  //   () => {
+  //     setAvailWidth(dom.current!.element!.clientWidth);
+  //   },
+  //   // todo: account for pagination, subtable expansion, default row height changes
+  //   [data, props.height]
+  // );
+
   const rows = useMemo(() => frameToRecords(props.data), [props.data]);
 
   const onColumnResizeDone = useCallback<OnColResizeDone>(
@@ -75,7 +88,7 @@ export function TableNG(props: TableNGProps) {
   const columns = useMemo<TableColumn[]>(() => {
     const { fields } = props.data;
 
-    const widths = computeColWidths(fields, props.width);
+    const widths = computeColWidths(fields, availWidth);
 
     return fields.map((field, i) => ({
       field,
@@ -83,10 +96,11 @@ export function TableNG(props: TableNGProps) {
       name: field.name,
       width: widths[i],
     }));
-  }, [props.width, props.data]);
+  }, [availWidth, props.data]);
 
   return (
     <DataGrid
+      // ref={dom}
       columns={columns}
       rows={rows}
       defaultColumnOptions={{
@@ -96,7 +110,7 @@ export function TableNG(props: TableNGProps) {
         // draggable: true,
       }}
       onColumnResize={_onColumnResize}
-      style={{ blockSize: '100%' }}
+      style={{ blockSize: '100%', scrollbarWidth: 'thin' }}
     />
   );
 }
