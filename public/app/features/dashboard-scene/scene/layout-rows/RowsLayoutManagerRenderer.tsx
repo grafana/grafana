@@ -45,7 +45,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                   <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
                 </Button>
                 {hasCopiedRow && (
-                  <Button icon="plus" variant="primary" fill="text" onClick={() => model.pasteRow()}>
+                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteRow()}>
                     <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
                   </Button>
                 )}
