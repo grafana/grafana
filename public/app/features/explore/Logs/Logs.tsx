@@ -1000,10 +1000,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             meta={logsMeta || []}
             dedupStrategy={dedupStrategy}
             dedupCount={dedupCount}
-            hasUnescapedContent={hasUnescapedContent}
-            forceEscape={forceEscape}
             displayedFields={displayedFields}
-            onEscapeNewlines={onEscapeNewlines}
             clearDetectedFields={clearDetectedFields}
           />
         </div>
