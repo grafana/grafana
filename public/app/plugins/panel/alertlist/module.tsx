@@ -115,8 +115,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
           <Stack gap={1}>
             <DataSourcePicker
               {...props}
-              // to pass the type checker we'll convert this tuple to an array of strings
-              type={[...SUPPORTED_RULE_SOURCE_TYPES]}
+              type={SUPPORTED_RULE_SOURCE_TYPES}
               noDefault
               current={props.value}
               onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}

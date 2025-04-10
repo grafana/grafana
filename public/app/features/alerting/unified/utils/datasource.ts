@@ -387,4 +387,4 @@ export type SupportedRulesSourceType = 'grafana' | SupportedExternalRulesSourceT
 export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
-] as const;
+] as const satisfies string[];
