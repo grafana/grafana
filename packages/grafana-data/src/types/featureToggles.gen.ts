@@ -1041,4 +1041,8 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  libpqToPGX?: boolean;
 }

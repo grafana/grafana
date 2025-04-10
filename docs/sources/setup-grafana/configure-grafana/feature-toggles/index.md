@@ -216,6 +216,7 @@ Experimental features might be changed or removed without prior notice.
 | `extensionSidebar`                          | Enables the extension sidebar                                                                                                                                                                                                                                                     |
 | `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
 | `metricsFromProfiles`                       | Enables creating metrics from profiles and storing them as recording rules                                                                                                                                                                                                        |
+| `libpqToPGX`                                | Enables using PGX instead of libpq for PostgreSQL datasource                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 
