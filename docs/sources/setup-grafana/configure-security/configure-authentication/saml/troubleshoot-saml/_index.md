@@ -54,7 +54,7 @@ $ base64 -w0 key.pem > key.pem.base64
 $ base64 -w0 cert.pem > cert.pem.base64
 ```
 
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
+The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and `private_key`.
 
 The keys you provide should look like:
 
