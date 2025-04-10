@@ -119,14 +119,20 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Only add stats patch if stats are not nil
-	if stats, err := repositoryResources.Stats(ctx); err != nil {
+	stats, err := repositoryResources.Stats(ctx)
+	switch {
+	case err != nil:
 		logger.Error("unable to read stats", "error", err)
-	} else if stats != nil && len(stats.Managed) == 1 {
+	case stats == nil:
+		logger.Error("stats are nil")
+	case len(stats.Managed) == 1:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": stats.Managed[0].Stats,
 		})
+	default:
+		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
 	}
 
 	// Only patch the specific fields we want to update, not the entire status

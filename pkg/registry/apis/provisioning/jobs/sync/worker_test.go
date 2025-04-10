@@ -307,6 +307,178 @@ func TestSyncWorker_Process(t *testing.T) {
 			},
 			expectedError: "sync operation failed",
 		},
+		{
+			name: "stats call fails",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errors.New("stats error"))
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				// Simple mocks for other calls
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
+				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+			},
+			expectedError: "",
+		},
+		{
+			name: "stats returns nil stats and nil error",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				// Verify only sync status is patched
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					return len(patch) == 1 && patch[0]["path"] == "/status/sync"
+				})).Return(nil)
+
+				// Simple mocks for other calls
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
+				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+			},
+			expectedError: "",
+		},
+		{
+			name: "stats returns one managed stats",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				stats := &provisioning.ResourceStats{
+					Managed: []provisioning.ManagerStats{
+						{
+							Stats: []provisioning.ResourceCount{
+								{
+									Group:    "test",
+									Resource: "test",
+									Count:    42,
+								},
+							},
+						},
+					},
+				}
+				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				// Verify both sync status and stats are patched
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					if len(patch) != 2 {
+						return false
+					}
+					if patch[0]["path"] != "/status/sync" {
+						return false
+					}
+
+					if patch[1]["path"] != "/status/stats" {
+						return false
+					}
+
+					value := patch[1]["value"].([]provisioning.ResourceCount)
+					if len(value) != 1 {
+						return false
+					}
+
+					if value[0].Group != "test" || value[0].Resource != "test" || value[0].Count != 42 {
+						return false
+					}
+
+					return true
+				})).Return(nil).Once()
+
+				// Simple mocks for other calls
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
+				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+			},
+			expectedError: "",
+		},
+		{
+			name: "stats returns multiple managed stats",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, ds *dualwrite.MockService, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
+
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				stats := &provisioning.ResourceStats{
+					Managed: []provisioning.ManagerStats{
+						{
+							Stats: []provisioning.ResourceCount{
+								{
+									Group:    "test1",
+									Resource: "test1",
+									Count:    42,
+								},
+							},
+						},
+						{
+							Stats: []provisioning.ResourceCount{
+								{
+									Group:    "test2",
+									Resource: "test2",
+									Count:    24,
+								},
+							},
+						},
+					},
+				}
+				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				// Verify only sync status is patched (multiple stats should be ignored)
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
+					return len(patch) == 1 && patch[0]["path"] == "/status/sync"
+				})).Return(nil)
+
+				// Simple mocks for other calls
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
+				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
+			},
+			expectedError: "",
+		},
 	}
 
 	for _, tt := range tests {
