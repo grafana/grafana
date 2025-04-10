@@ -16,6 +16,7 @@ import {
   SceneObject,
   AdHocFiltersVariable,
   SceneVariableState,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
 
@@ -202,7 +203,7 @@ export function getOptionDataSourceTypes() {
   return optionTypes;
 }
 
-function isSceneVariable(sceneObject: SceneObject): sceneObject is SceneVariable {
+export function isSceneVariable(sceneObject: SceneObject): sceneObject is SceneVariable {
   return 'type' in sceneObject.state && 'getValue' in sceneObject;
 }
 
@@ -225,3 +226,32 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
 
 export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
 export const WORD_CHARACTERS_REGEX = /^\w+$/;
+
+export function validateVariableName(
+  variable: SceneVariable,
+  name: string
+): { isValid: boolean; errorMessage?: string } {
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    throw new Error('Variable parent is not a SceneVariableSet');
+  }
+
+  if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(name)) {
+    return {
+      isValid: false,
+      errorMessage: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
+    };
+  }
+
+  if (!WORD_CHARACTERS_REGEX.test(name)) {
+    return { isValid: false, errorMessage: 'Only word characters are allowed in variable names' };
+  }
+
+  const varLookupByName = set.getByName(name);
+
+  if (varLookupByName && varLookupByName !== variable) {
+    return { isValid: false, errorMessage: 'Variable with the same name already exists' };
+  }
+
+  return { isValid: true };
+}

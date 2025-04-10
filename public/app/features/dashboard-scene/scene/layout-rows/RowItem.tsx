@@ -190,6 +190,10 @@ export class RowItem
     this.setState({ title });
   }
 
+  public onChangeName(name: string) {
+    this.onChangeTitle(name);
+  }
+
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
     this.setState({ hideHeader });
   }
