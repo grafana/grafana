@@ -74,8 +74,11 @@ export const CreateTeam = (): JSX.Element => {
               </Field>
             )}
             <Field
-              label={'Email'}
-              description={'This is optional and is primarily used for allowing custom team avatars.'}
+              label={t('teams.create-team.label-email', 'Email')}
+              description={t(
+                'teams.create-team.description-email',
+                'This is optional and is primarily used for allowing custom team avatars'
+              )}
             >
               {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />

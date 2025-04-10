@@ -6161,7 +6161,8 @@
       "aria-label-plugin-type-filter": "Plugin type filter",
       "label-search": "Search",
       "label-state": "State",
-      "label-type": "Type"
+      "label-type": "Type",
+      "subtitle": "Extend the Grafana experience with panel plugins and apps. To find more data sources go to <2>Connections</2>."
     },
     "catalog": {
       "no-updates-available": "No updates available",
@@ -6345,6 +6346,7 @@
       "text-loading-organizations": "Loading organizations..."
     },
     "user-sessions": {
+      "browser-details": "{{browser}} on {{os}} {{osVersion}}",
       "now": "Now",
       "sessions": "Sessions"
     },
@@ -6921,6 +6923,7 @@
     },
     "query-group": {
       "add-query": "Add query",
+      "expression": "Expression",
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
@@ -7067,6 +7070,9 @@
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
+  "routes-wrapper": {
+    "close-aria-label": "Close"
+  },
   "sandbox": {
     "test-stuff-page": {
       "application-notifications-toasts-testing": "Application notifications (toasts) testing",
@@ -7198,6 +7204,7 @@
       "copy-clipboard": "Copy to clipboard",
       "copy-to-clipboard-and-close": "Copy to clipboard and close",
       "description-name-to-easily-identify-the-token": "Name to easily identify the token",
+      "description-token": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "generate-token": "Generate token",
       "label-display-name": "Display name",
       "label-expiration": "Expiration",
@@ -7206,8 +7213,10 @@
     },
     "get-actions-cell": {
       "add-token": "Add token",
+      "aria-label-delete-button": "Delete service account {{serviceAccountName}}",
       "disable": "Disable",
-      "enable": "Enable"
+      "enable": "Enable",
+      "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
     "get-role-cell": {
       "aria-label-role": "Role"
@@ -7217,7 +7226,9 @@
       "aria-label-role": "Role",
       "disable": "Disable",
       "enable": "Enable",
-      "title-tokens": "Tokens"
+      "title-tokens": "Tokens",
+      "tooltip-delete-button": "Delete service account {{serviceAccountName}}",
+      "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
@@ -7226,7 +7237,8 @@
       "enable-service-account": "Enable service account",
       "title-delete-service-account": "Delete service account",
       "title-disable-service-account": "Disable service account",
-      "tokens": "Tokens"
+      "tokens": "Tokens",
+      "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
     "service-account-permissions": {
       "title-permissions": "Permissions"
@@ -7252,6 +7264,7 @@
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
       "placeholder-search-service-account-by-name": "Search service account by name",
+      "sub-title": "Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our <2>documentation.</2>",
       "title-delete-service-account": "Delete service account",
       "title-disable-service-account": "Disable service account"
     },
@@ -7534,15 +7547,20 @@
     },
     "support-bundles-create-unconnected": {
       "cancel": "Cancel",
-      "create": "Create"
+      "create": "Create",
+      "sub-title": "Choose the components for the support bundle. The support bundle will be available for 3 days after creation."
     },
     "support-bundles-unconnected": {
       "created-on": "Created on",
       "download": "Download",
       "expires": "Expires",
       "requested-by": "Requested by",
+      "sub-title": "Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana Labs team.",
       "tooltip-remove-bundle": "Remove bundle"
     }
+  },
+  "swagger": {
+    "login": "Login"
   },
   "table": {
     "container": {
@@ -7566,6 +7584,8 @@
   "teams": {
     "create-team": {
       "create": "Create",
+      "description-email": "This is optional and is primarily used for allowing custom team avatars",
+      "label-email": "Email",
       "label-name": "Name",
       "label-role": "Role"
     },
@@ -7577,24 +7597,36 @@
     },
     "team-group-sync": {
       "add-group": "Add group",
+      "add-group-button": "Add group",
+      "aria-label-remove": "Remove group {{groupName}}",
       "external-group-id": "External Group ID",
       "external-group-sync": "External group sync",
-      "title-there-external-groups": "There are no external groups to sync with"
+      "label-add-external-group": "Add external group",
+      "team-sync-upgrade": "Add a group to enable team sync for free during your trial of Grafana Pro",
+      "title-there-external-groups": "There are no external groups to sync with",
+      "tooltip-add-external-group": "LDAP group example: {{example}}"
     },
     "team-list": {
       "columns": {
-        "title-edit-team": "Edit team"
+        "aria-label-delete-button": "Delete team {{teamName}}",
+        "aria-label-edit-team": "Edit team {{teamName}}",
+        "title-edit-team": "Edit team",
+        "tooltip-edit-team": "Edit team"
       },
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
     },
     "team-settings": {
+      "description-email": "This is optional and is primarily used to set the team profile avatar (via gravatar service)",
       "label-email": "Email",
       "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",
       "label-role": "Role",
       "label-team-details": "Team details",
       "save": "Save"
+    },
+    "team-sync-upgrade-content": {
+      "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
   },
   "theme-preview": {
@@ -7693,6 +7725,7 @@
       "date-created": "Date created: "
     },
     "create-bookmark-saved-notification": {
+      "description": "You can view bookmarks under <1>Explore > Metrics</1>",
       "view-bookmarks": "View bookmarks"
     },
     "data-trail-card": {
@@ -7714,11 +7747,13 @@
     },
     "label-breakdown-scene": {
       "label-search": "Search",
-      "label-view": "View"
+      "label-view": "View",
+      "title-warning-there-missing-telemetry-resource-attributes": "Warning: There may be missing Open Telemetry resource attributes"
     },
     "metric-action-bar": {
       "open": "Open",
       "select-new-metric": "Select new metric",
+      "tooltip-bookmark": "Bookmark",
       "tooltip-open-in-explore": "Open in explore",
       "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
     },
@@ -7730,6 +7765,7 @@
     },
     "metric-select-scene": {
       "label-otel-experience": "OTel experience",
+      "label-search-metrics": "Search metrics",
       "placeholder-search-metrics": "Search metrics",
       "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
       "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
@@ -7750,7 +7786,8 @@
       "now": "Now:",
       "previously": "Previously:",
       "see-examples": "> See examples",
-      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana."
+      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana.",
+      "title-native-histogram-support": "Native histogram support"
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Or view a recent exploration"
@@ -7758,11 +7795,15 @@
     "related-logs-scene": {
       "tooltip-navigate-to-the-explore-logs-app": "Navigate to the Explore Logs app"
     },
+    "search-input": {
+      "title-clear-search": "Clear search"
+    },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
       "show-previews-of-metric-graphs": "Show previews of metric graphs"
     },
     "sort-by-scene": {
+      "placeholder-choose-criteria": "Choose criteria",
       "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
@@ -7800,11 +7841,17 @@
       "label-config-query": "Config query"
     },
     "convert-field-type-transformer-editor": {
+      "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",
+      "aria-label-remove-convert-field-type-transformer": "Remove convert field type transformer",
+      "label-as": "as",
       "label-date-format": "Date format",
+      "label-field": "Field",
       "label-input-format": "Input format",
       "label-join-with": "Join with",
       "label-set-timezone": "Set timezone",
+      "placeholder-type": "Type",
       "tooltip-explicit-separator-joining-array-values": "Use an explicit separator when joining array values",
+      "tooltip-input-format": "Specify the format of the input field so Grafana can parse the date string correctly.",
       "tooltip-specify-the-output-format": "Specify the output format.",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
     },
@@ -7814,6 +7861,7 @@
       "placeholder-field": "Field"
     },
     "draggable-field-name": {
+      "rename-placeholder": "Rename {{fieldName}}",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
     "enum-mapping-editor": {
@@ -7826,7 +7874,19 @@
     },
     "extract-fields-transformer-editor": {
       "label-delimiter": "Delimiter",
+      "label-format": "Format",
+      "label-keep-time": "Keep time",
+      "label-replace-all-fields": "Replace all fields",
+      "label-source": "Source",
+      "placeholder-auto": "Auto",
       "placeholder-select-delimiter": "Select delimiter..."
+    },
+    "field-config-mapping-handler-arguments-editor": {
+      "aria-label-threshold-color": "Threshold color"
+    },
+    "field-lookup-transformer-editor": {
+      "label-field": "Field",
+      "label-lookup": "Lookup"
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Additional settings",
@@ -7854,6 +7914,7 @@
       "label-filter-type": "Filter type"
     },
     "format-string-transfomer-editor": {
+      "label-field": "Field",
       "label-format": "Format",
       "label-substring-range": "Substring range"
     },
@@ -7870,8 +7931,13 @@
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
+    "group-by-transformer-editor": {
+      "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on"
+    },
     "group-to-nested-table-transformer-editor": {
-      "label-show-field-names-in-nested-tables": "Show field names in nested tables"
+      "description-show-field-names": "If enabled nested tables will show field names as a table header",
+      "label-show-field-names-in-nested-tables": "Show field names in nested tables",
+      "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on."
     },
     "grouping-to-matrix-transformer-editor": {
       "label-cell-value": "Cell value",
@@ -7880,7 +7946,9 @@
       "label-row": "Row"
     },
     "histogram-transformer-editor": {
-      "placeholder-default": "Default: 30"
+      "placeholder-auto": "Auto",
+      "placeholder-default": "Default: 30",
+      "placeholder-none": "None"
     },
     "index-options-editor": {
       "label-as-percentile": "As percentile",
@@ -7893,6 +7961,8 @@
         "title-no-input-found": "No input found",
         "title-no-labels-found": "No labels found"
       },
+      "label-join": "Join",
+      "label-value": "Value",
       "tooltip-select-label-indicating-values": "Select the label indicating the values name"
     },
     "jsonpath-editor": {
@@ -7903,6 +7973,9 @@
       "tooltip-remove-path": "Remove path"
     },
     "labels-as-fields-transformer-editor": {
+      "label-labels": "Labels",
+      "label-mode": "Mode",
+      "label-value-field-name": "Value field name",
       "placeholder-optional-select-label": "(Optional) Select label",
       "tooltip-replace-value-field-label": "Replace the value field name with a label"
     },
@@ -7913,21 +7986,32 @@
       "ascending-order-duplicates": "Time in ascending order, but may have duplicates",
       "multiple-value-fields-may-exist": "Multiple value fields may exist",
       "single-frame": "Single frame",
-      "st-field-is-time": "1st field is time field"
+      "st-field-is-time": "1st field is time field",
+      "string-values-separate": "String values are represented as separate fields rather than as labels"
     },
     "merge-transformer-editor": {
       "merge-effect-applied-single-frame": "Merge has no effect when applied on a single frame."
     },
     "multi-info": {
       "all-values-are-numeric": "All values are numeric",
+      "frame-fields-value": "Each frame has two fields: {{field1}}, {{field2}}",
       "multiple-frames": "Multiple frames",
       "string-values-are-represented-as-labels": "String values are represented as labels",
       "time-in-ascending-order": "Time in ascending order"
     },
+    "organize-fields-transformer-editor": {
+      "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
+    },
+    "partion-by-values-editor": {
+      "tooltip-naming": "Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data"
+    },
     "partition-by-values-editor": {
       "label-field": "Field",
+      "label-keep-fields": "Keep fields",
+      "label-naming": "Naming",
       "label-select-field": "Select field",
-      "partition-values-works-single-frame": "Partition by values only works with a single frame."
+      "partition-values-works-single-frame": "Partition by values only works with a single frame.",
+      "tooltip-keeps-partition-fields-frames": "Keeps the partition fields in the frames"
     },
     "prepare-time-series-editor": {
       "label-format": "Format",
@@ -7957,7 +8041,8 @@
       "label-model-type": "Model type",
       "label-predicted-points": "Predicted points",
       "label-x-field": "X field",
-      "label-y-field": "Y field"
+      "label-y-field": "Y field",
+      "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer-editor": {
       "label-match": "Match",
@@ -7977,11 +8062,15 @@
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Time field",
-      "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series."
+      "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series.",
+      "tooltip-time-field": "The time field that will be used for the time series. If not selected the first found will be used."
     },
     "transpose-transfomer-editor": {
+      "label-first-field-name": "First field name",
+      "label-remaining-fields-name": "Remaining fields name",
       "placeholder-field": "Field",
-      "placeholder-value": "Value"
+      "placeholder-value": "Value",
+      "tooltip-name-for-value-fields": "Name for value fields"
     },
     "unary-operation-editor": {
       "label-operation": "Operation",
@@ -8049,6 +8138,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
+      "resume-message": "<0>To resume your session, sign in again.</0>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"
     },
@@ -8063,6 +8153,11 @@
       "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
+  "variabels": {
+    "variable-usages-button": {
+      "usage-title": "Showing usages for: {{variableId}}"
+    }
+  },
   "variable": {
     "adhoc": {
       "placeholder": "Select value"
@@ -8073,7 +8168,7 @@
     "picker": {
       "link-all": "All",
       "option-all": "All",
-      "option-selected-values": "Selected",
+      "option-selected-values": "Selected ({{numSelected}})",
       "option-tooltip": "Clear selections"
     },
     "textbox": {
@@ -8098,6 +8193,9 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
+    },
+    "picker-renderer": {
+      "couldnt-load-variable": "Couldn't load variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",
@@ -8151,9 +8249,12 @@
       "title-dependencies": "Dependencies"
     },
     "variables-unknown-button": {
+      "usage-title": "Showing usages for: {{variableId}}",
       "VariablesUnknownButton-tooltip-show-usages": "Show usages"
     },
     "variables-unknown-table": {
+      "collapse-label": "Renamed or missing variables",
+      "collapse-tooltip": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "loading": "Loading..."
     }
   },

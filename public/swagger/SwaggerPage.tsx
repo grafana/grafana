@@ -8,6 +8,8 @@ import { Stack, Select, UserIcon, UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
+import { Trans } from '../app/core/internationalization';
+
 import { NamespaceContext, WrappedPlugins } from './plugins';
 
 export const Page = () => {
@@ -106,7 +108,9 @@ export const Page = () => {
                   <UserIcon userView={userView} />
                 ) : (
                   <a href="/login">
-                    <Button variant="primary">Login</Button>
+                    <Button variant="primary">
+                      <Trans i18nKey="swagger.login">Login</Trans>
+                    </Button>
                   </a>
                 )}
               </div>
@@ -124,6 +128,7 @@ export const Page = () => {
             />
           )}
 
+          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>
