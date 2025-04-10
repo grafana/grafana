@@ -19,6 +19,8 @@ import (
 	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
+	ringclient "github.com/grafana/dskit/ring/client"
+
 	"github.com/grafana/authlib/types"
 )
 
@@ -79,6 +81,10 @@ type SearchBackend interface {
 		// The builder will write all documents before returning
 		builder func(index ResourceIndex) (int64, error),
 	) (ResourceIndex, error)
+
+	IsShardingEnabled() bool
+
+	GetClientPool() *ringclient.Pool
 
 	// Gets the total number of documents across all indexes
 	TotalDocs() int64

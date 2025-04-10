@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -46,7 +47,7 @@ type RingConfig struct {
 var ip = "127.0.0.2"
 
 // TODO make this configurable
-var cfg = RingConfig{
+var cfg_replaceme = RingConfig{
 	KVStore:                kv.Config{Store: "memberlist"},
 	HeartbeatPeriod:        15 * time.Second,
 	HeartbeatTimeout:       time.Minute,
@@ -95,17 +96,23 @@ func (cfg *RingConfig) ToRingConfig() ring.Config {
 	return rc
 }
 
-func InitRing(logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
+func initRing(cfg *setting.Cfg, logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
+	if (cfg.IndexMemberlistJoinMember == "") {
+		return nil, nil, fmt.Errorf("bad sharding configuration. Missing Join Member")
+	}
+
+	cfg_replaceme.InstanceAddr = cfg.IndexMemberlistBindAddr
+	cfg_replaceme.InstanceID = cfg.IndexMemberlistBindAddr
 	memberlistKVcfg := &memberlist.KVConfig{}
 	flagext.DefaultValues(memberlistKVcfg)
 	memberlistKVcfg.MetricsNamespace = ringName
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
-	memberlistKVcfg.AdvertiseAddr = ip
-	memberlistKVcfg.TCPTransport.BindAddrs = []string{ip}
+	memberlistKVcfg.AdvertiseAddr = cfg.IndexMemberlistBindAddr
+	memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.IndexMemberlistBindAddr}
 	memberlistKVcfg.NodeName = "node-2"
-	memberlistKVcfg.JoinMembers = []string{"127.0.0.1:7946"}
+	memberlistKVcfg.JoinMembers = []string{cfg.IndexMemberlistJoinMember}
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
 		metricsPrefix,
@@ -118,10 +125,10 @@ func InitRing(logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, 
 
 	memberlistKVsvc := memberlist.NewKVInitService(memberlistKVcfg, logger, dnsProvider, registerer)
 	memberlistKVsvc.StartAsync(context.Background())
-	cfg.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
+	cfg_replaceme.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
 
 	ringStore, err := kv.NewClient(
-		cfg.KVStore,
+		cfg_replaceme.KVStore,
 		ring.GetCodec(),
 		kv.RegistererWithKVName(prometheus.WrapRegistererWithPrefix(metricsPrefix, registerer), "ruler"),
 		logger,
@@ -130,16 +137,16 @@ func InitRing(logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, 
 		return nil, nil, errors.Wrap(err, "failed to create KV store client")
 	}
 
-	lifecyclerCfg, err := cfg.ToLifecyclerConfig(logger)
+	lifecyclerCfg, err := cfg_replaceme.ToLifecyclerConfig(logger)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to initialize ruler's lifecycler config")
 	}
 
 	// Define lifecycler delegates in reverse order (last to be called defined first because they're
 	// chained via "next delegate").
-	delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, cfg.NumTokens))
+	delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, cfg_replaceme.NumTokens))
 	delegate = ring.NewLeaveOnStoppingDelegate(delegate, logger)
-	delegate = ring.NewAutoForgetDelegate(cfg.HeartbeatTimeout*ringAutoForgetUnhealthyPeriods, delegate, logger)
+	delegate = ring.NewAutoForgetDelegate(cfg_replaceme.HeartbeatTimeout*ringAutoForgetUnhealthyPeriods, delegate, logger)
 
 	lifecycler, err := ring.NewBasicLifecycler(
 		lifecyclerCfg,
@@ -155,7 +162,7 @@ func InitRing(logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, 
 	}
 
 	rulerRing, err := ring.NewWithStoreClientAndStrategy(
-		cfg.ToRingConfig(),
+		cfg_replaceme.ToRingConfig(),
 		ringName,
 		ringKey,
 		ringStore,

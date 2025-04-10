@@ -32,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -55,6 +56,8 @@ type BleveOptions struct {
 	// How big should a batch get before flushing
 	// ?? not totally sure the units
 	BatchSize int
+
+	Cfg *setting.Cfg
 }
 
 type bleveBackend struct {
@@ -71,7 +74,7 @@ type bleveBackend struct {
 	indexMetrics *resource.BleveIndexMetrics
 
 	// sharding things
-	Pool *ringclient.Pool
+	pool *ringclient.Pool
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -99,22 +102,24 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	go bleveBackend.updateIndexSizeMetric(opts.Root)
 
 	// TODO wrap in feature flag
-	err = bleveBackend.enableSharding()
-	if err != nil {
-		return nil, fmt.Errorf("error sharding", err)
+	if (opts.Cfg.IndexEnableSharding) {
+		err = bleveBackend.enableSharding(opts.Cfg)
+		if err != nil {
+			return nil, fmt.Errorf("error sharding", err)
+		}
 	}
 
 	return bleveBackend, nil
 }
 
-func (b *bleveBackend) enableSharding() error {
+func (b *bleveBackend) enableSharding(cfg *setting.Cfg) error {
 	ctx := context.Background()
 	pool := newClientPool(grpcclient.Config{} /*TODO*/, b.log, nil)
 
-	ringsvc, lfcsvc, err := InitRing(log.New("bleve-ring"), nil)
+	ringsvc, lfcsvc, err := initRing(cfg, log.New("bleve-ring"), nil)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = ringsvc.StartAsync(ctx)
@@ -148,20 +153,30 @@ func (b *bleveBackend) enableSharding() error {
 		return fmt.Errorf("failed to create pool client: %w", err)
 	}
 
-	b.Pool = pool
+	b.pool = pool
 
-	// TODO remove this
-	listener, err := net.Listen("tcp", net.JoinHostPort(ip, "8100"))
-	if err != nil {
-		panic(err)
+	if (cfg.IndexRingDebugServerPort != "") {
+		listener, err := net.Listen("tcp", net.JoinHostPort(cfg.IndexMemberlistBindAddr, cfg.IndexRingDebugServerPort))
+		if err != nil {
+			panic(err)
+		}
+		mux := http.NewServeMux()
+		mux.Handle("/ring", lfcsvc)
+		http.Serve(listener, mux)
+		// mux.Handle("/kv", memberlistsvc)
 	}
-	mux := http.NewServeMux()
-	mux.Handle("/ring", lfcsvc)
-	http.Serve(listener, mux)
-	// mux.Handle("/kv", memberlistsvc)
 
 	return nil
 
+}
+
+func (b *bleveBackend) GetClientPool() *ringclient.Pool {
+	return b.pool
+}
+
+func (b *bleveBackend) IsShardingEnabled() bool {
+	// TODO configure this
+	return true
 }
 
 // This will return nil if the key does not exist
