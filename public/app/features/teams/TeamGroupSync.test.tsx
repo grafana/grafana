@@ -51,7 +51,7 @@ describe('TeamGroupSync', () => {
     setup({ removeTeamGroup: mockRemoveGroup, groups: [mockGroup] });
     await userEvent.click(screen.getByRole('button', { name: 'Remove group someGroup' }));
     await waitFor(() => {
-      expect(mockRemoveGroup).toHaveBeenCalledWith('some/group');
+      expect(mockRemoveGroup).toHaveBeenCalledWith('someGroup');
     });
   });
 });
