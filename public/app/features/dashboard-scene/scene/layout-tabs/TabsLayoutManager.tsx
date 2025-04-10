@@ -152,10 +152,15 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
+  public shouldUngroup(): boolean {
+    return this.state.tabs.length === 1;
+  }
+
   public removeTab(tabToRemove: TabItem) {
     // When removing last tab replace ourselves with the inner tab layout
-    if (this.state.tabs.length === 1) {
+    if (this.shouldUngroup()) {
       ungroupLayout(this, tabToRemove.state.layout);
+      return;
     }
 
     const currentTab = this.getCurrentTab();

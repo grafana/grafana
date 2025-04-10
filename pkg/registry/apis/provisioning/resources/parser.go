@@ -217,7 +217,12 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		return fmt.Errorf("no client configured")
 	}
 
-	var err error
+	// Use the same identity that would eventually write the resource (via Run)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})

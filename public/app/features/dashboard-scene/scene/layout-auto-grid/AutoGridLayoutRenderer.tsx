@@ -8,8 +8,8 @@ import { useHasClonedParents } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 
-import { AutoGridLayout, AutoGridLayoutState } from './ResponsiveGridLayout';
-import { AutoGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
+import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();

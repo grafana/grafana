@@ -311,7 +311,7 @@ var (
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaDatavizSquad,
+			Owner:             grafanaOSSBigTent,
 			HideFromAdminPage: true,
 		},
 		{
@@ -1554,8 +1554,9 @@ var (
 		{
 			Name:            "exploreMetricsUseExternalAppPlugin",
 			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaObservabilityMetricsSquad,
+			Expression:      "true",
 			FrontendOnly:    false,
 			RequiresRestart: true,
 		},
@@ -1778,10 +1779,10 @@ var (
 		{
 			Name:         "logsPanelControls",
 			Description:  "Enables a control component for the logs panel in Explore",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "metricsFromProfiles",

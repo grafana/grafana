@@ -9,17 +9,19 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -108,6 +110,32 @@ export class RowItem
 
   public onDelete() {
     this.getParentLayout().removeRow(this);
+  }
+
+  public onConfirmDelete() {
+    if (this.getLayout().getVizPanels().length === 0) {
+      this.onDelete();
+      return;
+    }
+
+    if (this.getParentLayout().shouldUngroup()) {
+      this.onDelete();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.rows-layout.delete-row-title', 'Delete row?'),
+        text: t(
+          'dashboard.rows-layout.delete-row-text',
+          'Deleting this row will also remove all panels. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.rows-layout.delete-row-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
