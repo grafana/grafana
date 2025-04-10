@@ -54,7 +54,7 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 				Namespace: "grafana",
 				Subsystem: subsystem,
 				Name:      "sql_command_cell_count",
-				Help:      "Summary of the number of cells in SQL command execution",
+				Help:      "Distribution of the total number of cells in each SQL command execution",
 				Buckets:   prometheus.ExponentialBuckets(100, 2, 10),
 			},
 			[]string{"status"},
