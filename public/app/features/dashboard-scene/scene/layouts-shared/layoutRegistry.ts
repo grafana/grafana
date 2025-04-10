@@ -1,7 +1,7 @@
 import { Registry } from '@grafana/data';
 
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
