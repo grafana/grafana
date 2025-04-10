@@ -48,6 +48,8 @@ const LINKS_ORDER = [
  */
 const MAX_LINKS = 3;
 
+const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
+
 export const getSpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
 
@@ -214,13 +216,13 @@ const createLinkModel = (
           // component that handles this for us and not pass the onClick in the
           // SpanLinkModel when link.href is defined (removing the need of having
           // if (link.onClick) in here.
-          try {
-            // if it's an absolute URL - open it in a new window
-            new URL(link.href);
-            window.open(link.href, '_blank');
-          } catch (e) {
-            // handle relative URLs by changing current UR:
+
+          // if it's an absolute URL - open it in a new window
+          if (!ABSOLUTE_LINK_PATTERN.test(link.href)) {
+            // handle relative URLs by changing current URL:
             locationService.push(link.href);
+          } else {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
           }
         }
       },
