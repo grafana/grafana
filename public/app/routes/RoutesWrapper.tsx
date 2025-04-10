@@ -6,7 +6,6 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
-  config,
   locationService,
   LocationServiceProvider,
   useChromeHeaderHeight,
@@ -17,6 +16,7 @@ import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } f
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
+import { t } from '../core/internationalization';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 
 function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
@@ -113,14 +113,14 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
             <Router history={locationService.getHistory()}>
               <LocationServiceProvider service={locationService}>
                 <CompatRouter>
-                  <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} />
+                  <GlobalStyles />
                   <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton
                         size={'lg'}
                         style={{ margin: '8px' }}
                         name={'times'}
-                        aria-label={'close'}
+                        aria-label={t('routes-wrapper.close-aria-label', 'Close')}
                         onClick={() => closeApp()}
                       />
                     </div>

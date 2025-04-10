@@ -28,6 +28,8 @@ const (
 
 	// Deprecated: legacy is a shim that is no longer necessary
 	StorageTypeLegacy StorageType = "legacy"
+
+	BlobThresholdDefault int = 0
 )
 
 type StorageOptions struct {
@@ -50,6 +52,9 @@ type StorageOptions struct {
 	// s3://my-bucket?region=us-west-1 (using default credentials)
 	// azblob://my-container
 	BlobStoreURL string
+	// Optional blob storage field. When an object's size in bytes exceeds the threshold
+	// value, it is considered large and gets partially stored in blob storage.
+	BlobThresholdBytes int
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
@@ -61,6 +66,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
+		BlobThresholdBytes:                     BlobThresholdDefault,
 	}
 }
 

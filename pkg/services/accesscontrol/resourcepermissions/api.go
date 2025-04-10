@@ -278,7 +278,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -335,7 +335,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -389,7 +389,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -437,7 +437,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	_, err := a.service.SetPermissions(ctx, c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
+	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
 	}

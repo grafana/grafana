@@ -29,7 +29,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
     <>
       {
         <Alert
-          title={'Native Histogram Support'}
+          title={t('trails.native-histogram-banner.title-native-histogram-support', 'Native histogram support')}
           severity={'info'}
           onRemove={() => {
             // when a user explicitly closes the banner, save that it has been closed in local storage to not show again

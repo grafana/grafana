@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable, Pagination, Stack } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack, Column, type FetchDataFunc } from '@grafana/ui';
 
 import { LocalPlugin } from '../../plugins/admin/types';
 import { MigrateDataResponseItemDto } from '../api';
@@ -17,12 +17,13 @@ export interface ResourcesTableProps {
   page: number;
   numberOfPages: number;
   onChangePage: (page: number) => void;
+  onChangeSort: FetchDataFunc<ResourceTableItem>;
 }
 
-const columns = [
-  { id: 'name', header: 'Name', cell: NameCell },
-  { id: 'type', header: 'Type', cell: TypeCell },
-  { id: 'status', header: 'Status', cell: StatusCell },
+const columns: Array<Column<ResourceTableItem>> = [
+  { id: 'name', header: 'Name', cell: NameCell, sortType: 'alphanumeric' },
+  { id: 'resource_type', header: 'Type', cell: TypeCell, sortType: 'alphanumeric' },
+  { id: 'status', header: 'Status', cell: StatusCell, sortType: 'alphanumeric' },
 ];
 
 export function ResourcesTable({
@@ -30,8 +31,10 @@ export function ResourcesTable({
   localPlugins,
   numberOfPages = 0,
   onChangePage,
+  onChangeSort,
   page = 1,
 }: ResourcesTableProps) {
+  const initialSortBy = useMemo(() => [{ id: 'resource_type', desc: true }], []);
   const [focusedResource, setfocusedResource] = useState<ResourceTableItem | undefined>();
 
   const handleShowDetailsModal = useCallback((resource: ResourceTableItem) => {
@@ -53,7 +56,13 @@ export function ResourcesTable({
   return (
     <>
       <Stack alignItems="flex-end" direction="column">
-        <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} />
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={(r) => r.refId}
+          fetchData={onChangeSort}
+          initialSortBy={initialSortBy}
+        ></InteractiveTable>
 
         <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
       </Stack>
