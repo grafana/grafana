@@ -1,5 +1,5 @@
-export const RECENT_SCOPES_PRIORITY = 6;
-export const RECENT_DASHBOARDS_PRIORITY = 7;
+export const RECENT_SCOPES_PRIORITY = 7;
+export const RECENT_DASHBOARDS_PRIORITY = 6;
 export const ACTIONS_PRIORITY = 5;
 export const DEFAULT_PRIORITY = 4;
 export const PREFERENCES_PRIORITY = 3;
