@@ -16,7 +16,7 @@ import (
 )
 
 func TestGenerateComment(t *testing.T) {
-	generator := NewCommentGenerator(nil, nil)
+	builder := newCommentBuilder()
 
 	for _, tc := range []struct {
 		Name  string
@@ -78,7 +78,7 @@ func TestGenerateComment(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			comment, err := generator.GenerateComment(context.Background(), tc.Input)
+			comment, err := builder.generateComment(context.Background(), tc.Input)
 			require.NoError(t, err)
 
 			fpath := filepath.Join("testdata", strings.ReplaceAll(tc.Name, " ", "-")+".md")

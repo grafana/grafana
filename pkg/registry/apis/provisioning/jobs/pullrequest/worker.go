@@ -24,17 +24,22 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers   resources.ParserFactory
-	commenter CommentGenerator
+	parsers        resources.ParserFactory
+	renderer       ScreenshotRenderer
+	urlProvider    func(namespace string) string
+	commentBuilder *commentBuilder
 }
 
 func NewPullRequestWorker(
 	parsers resources.ParserFactory,
-	commenter CommentGenerator,
+	renderer ScreenshotRenderer,
+	urlProvider func(namespace string) string,
 ) *PullRequestWorker {
 	return &PullRequestWorker{
-		parsers:   parsers,
-		commenter: commenter,
+		parsers:        parsers,
+		renderer:       renderer,
+		urlProvider:    urlProvider,
+		commentBuilder: newCommentBuilder(),
 	}
 }
 
@@ -85,31 +90,30 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return nil
 	}
 
-	progress.SetMessage(ctx, "clearing pull request comments")
-	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
-		return fmt.Errorf("failed to clear pull request comments: %+v", err)
-	}
-
 	parser, err := c.parsers.GetParser(ctx, reader)
 	if err != nil {
 		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	changes, err := c.commenter.PrepareChanges(ctx, ChangeOptions{
-		PullRequest: *options,
-		Changes:     files,
-		Parser:      parser,
-		Reader:      reader,
-		Progress:    progress,
+	var render ScreenshotRenderer
+	if repo.Config().Spec.GitHub.GenerateDashboardPreviews {
+		render = c.renderer
+	}
 
-		// Should we render images
-		GeneratePreview: repo.Config().Spec.GitHub.GenerateDashboardPreviews,
+	changeInfo, err := processChangedFiles(ctx, changeOptions{
+		grafanaBaseURL: c.urlProvider(repo.Config().Namespace),
+		pullRequest:    *options,
+		changes:        files,
+		parser:         parser,
+		reader:         reader,
+		progress:       progress,
+		render:         render,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to calculate changes: %w", err)
 	}
 
-	comment, err := c.commenter.GenerateComment(ctx, changes)
+	comment, err := c.commentBuilder.generateComment(ctx, changeInfo)
 	if err != nil {
 		return fmt.Errorf("unable to generate comment text: %w", err)
 	}

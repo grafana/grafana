@@ -10,20 +10,20 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
-
 type changeInfo struct {
 	GrafanaBaseURL string
 
-	Errors   []string
-	Warnings []string
-
 	// Files we tried to read
 	Changes []fileChangeInfo
+
+	// More files changed than we processed
+	SkippedFiles int
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
@@ -49,37 +49,53 @@ type fileChangeInfo struct {
 	PreviewScreenshotURL string
 }
 
-func (g *generator) PrepareChanges(ctx context.Context, opts ChangeOptions) (changeInfo, error) {
+type changeOptions struct {
+	grafanaBaseURL string
+	pullRequest    provisioning.PullRequestJobOptions
+	changes        []repository.VersionedFileChange
+	parser         resources.Parser
+	reader         repository.Reader
+	progress       jobs.JobProgressRecorder
+	render         ScreenshotRenderer // from config
+}
+
+// This will process the list of versioned file changes into changeInfo
+func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, error) {
 	info := changeInfo{
-		GrafanaBaseURL: g.urlProvider(opts.Reader.Config().Namespace),
+		GrafanaBaseURL: opts.grafanaBaseURL,
 	}
 
-	if opts.GeneratePreview {
-		if g.renderer == nil || !g.renderer.IsAvailable(ctx) {
+	if opts.render != nil {
+		if !opts.render.IsAvailable(ctx) {
 			info.MissingImageRenderer = true
-			opts.GeneratePreview = false
+			opts.render = nil
 		}
 
 		// Only render images when there is just one change
-		if len(opts.Changes) > 1 {
-			opts.GeneratePreview = false
+		if len(opts.changes) > 1 {
+			opts.render = nil
 		}
 	}
 
 	logger := logging.FromContext(ctx)
-	for _, change := range opts.Changes {
-		opts.Progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
+	for i, change := range opts.changes {
+		if i > 10 {
+			info.SkippedFiles = len(opts.changes) - i
+			break
+		}
+
+		opts.progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
 
-		v, err := g.calculateChangeInfo(ctx, logger, info.GrafanaBaseURL, change, opts)
+		v, err := calculateFileChangeInfo(ctx, info.GrafanaBaseURL, change, opts)
 		if err != nil {
 			return info, fmt.Errorf("error calculating changes")
 		}
 
 		// If everything applied OK, then render screenshots
-		if opts.GeneratePreview && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
-			opts.Progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
-			if err = g.renderScreenshots(ctx, logger, info.GrafanaBaseURL, &v); err != nil {
+		if opts.render != nil && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
+			opts.progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
+			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, opts.render); err != nil {
 				info.MissingImageRenderer = true
 				if v.Error == "" {
 					v.Error = "Error running image rendering"
@@ -96,13 +112,15 @@ func (g *generator) PrepareChanges(ctx context.Context, opts ChangeOptions) (cha
 	return info, nil
 }
 
-func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logger, baseURL string, change repository.VersionedFileChange, opts ChangeOptions) (fileChangeInfo, error) {
+var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
+
+func calculateFileChangeInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
 	if change.Action == repository.FileActionDeleted {
-		return g.calculateDeleteInfo(ctx, baseURL, change, opts)
+		return calculateFileDeleteInfo(ctx, baseURL, change, opts)
 	}
 
 	info := fileChangeInfo{Change: change}
-	fileInfo, err := opts.Reader.Read(ctx, change.Path, change.Ref)
+	fileInfo, err := opts.reader.Read(ctx, change.Path, change.Ref)
 	if err != nil {
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
@@ -110,7 +128,7 @@ func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logg
 	}
 
 	// Read the file as a resource
-	info.Parsed, err = opts.Parser.Parse(ctx, fileInfo)
+	info.Parsed, err = opts.parser.Parse(ctx, fileInfo)
 	if err != nil {
 		info.Error = err.Error()
 		return info, nil
@@ -136,8 +154,8 @@ func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logg
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if opts.PullRequest.URL != "" {
-			query.Set("pull_request_url", url.QueryEscape(opts.PullRequest.URL))
+		if opts.pullRequest.URL != "" {
+			query.Set("pull_request_url", url.QueryEscape(opts.pullRequest.URL))
 		}
 		info.PreviewURL += "?" + query.Encode()
 	}
@@ -145,20 +163,21 @@ func (g *generator) calculateChangeInfo(ctx context.Context, logger logging.Logg
 	return info, nil
 }
 
-func (g *generator) calculateDeleteInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts ChangeOptions) (fileChangeInfo, error) {
-	// TODO -- read the old?
-	return fileChangeInfo{Change: change}, nil
+func calculateFileDeleteInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
+	// TODO -- read the old and verify
+	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
 }
 
-func (g *generator) renderScreenshots(ctx context.Context, logger logging.Logger, baseURL string, change *fileChangeInfo) (err error) {
-	if change.GrafanaURL != "" {
-		change.GrafanaScreenshotURL, err = g.renderScreenshot(ctx, logger, baseURL, change.Parsed.Repo, change.GrafanaURL)
+// This will update render the linked screenshots and update the screenshotURLs
+func (f *fileChangeInfo) renderScreenshots(ctx context.Context, baseURL string, renderer ScreenshotRenderer) (err error) {
+	if f.GrafanaURL != "" {
+		f.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.GrafanaURL)
 		if err != nil {
 			return err
 		}
 	}
-	if change.PreviewURL != "" {
-		change.PreviewScreenshotURL, err = g.renderScreenshot(ctx, logger, baseURL, change.Parsed.Repo, change.PreviewURL)
+	if f.PreviewURL != "" {
+		f.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.PreviewURL)
 		if err != nil {
 			return err
 		}
@@ -166,20 +185,20 @@ func (g *generator) renderScreenshots(ctx context.Context, logger logging.Logger
 	return nil
 }
 
-func (g *generator) renderScreenshot(ctx context.Context,
-	logger logging.Logger,
+func renderScreenshotFromGrafanaURL(ctx context.Context,
 	baseURL string,
+	renderer ScreenshotRenderer,
 	repo provisioning.ResourceRepositoryInfo,
-	request string,
+	grafanaURL string,
 ) (string, error) {
-	parsed, err := url.Parse(request)
+	parsed, err := url.Parse(grafanaURL)
 	if err != nil {
-		logger.Warn("invalid", "url", request, "err", err)
+		logging.FromContext(ctx).Warn("invalid", "url", grafanaURL, "err", err)
 		return "", err
 	}
-	snap, err := g.renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
+	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
 	if err != nil {
-		logger.Warn("render failed", "url", request, "err", err)
+		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot %w", err)
 	}
 	if strings.Contains(snap, "://") {

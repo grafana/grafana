@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 )
 
 const previewsCommentTemplate = `Hey there! 🎉
@@ -39,7 +40,20 @@ NOTE: The image renderer is not configured
 {{end}}
 `
 
-func (g *generator) GenerateComment(ctx context.Context, info changeInfo) (string, error) {
+type commentBuilder struct {
+	template *template.Template
+}
+
+func newCommentBuilder() *commentBuilder {
+	return &commentBuilder{
+		template: template.Must(template.New("comment").Parse(previewsCommentTemplate)),
+	}
+}
+
+func (g *commentBuilder) generateComment(ctx context.Context, info changeInfo) (string, error) {
+	// NOTE: this is a simple function now, but we will likely pick differnet templates
+	// based on the values in changeInfo
+
 	var buf bytes.Buffer
 	if err := g.template.Execute(&buf, info); err != nil {
 		return "", fmt.Errorf("unable to execute template: %w", err)

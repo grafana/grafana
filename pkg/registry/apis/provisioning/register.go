@@ -555,8 +555,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Pull request worker
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
-			commenter := pullrequest.NewCommentGenerator(renderer, b.urlProvider)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, commenter)
+			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
 
 			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)

@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -21,14 +20,10 @@ import (
 )
 
 func TestCalculateChanges(t *testing.T) {
-	logger := &logging.NoOpLogger{}
-	renderer := NewMockScreenshotRenderer(t)
 	parser := resources.NewMockParser(t)
 	reader := repository.NewMockReader(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
-	generator := NewCommentGenerator(renderer, func(namespace string) string {
-		return "http://" + namespace + "/"
-	})
+	renderer := NewMockScreenshotRenderer(t)
 
 	finfo := &repository.FileInfo{
 		Path: "path/to/file.json",
@@ -49,6 +44,7 @@ func TestCalculateChanges(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info: finfo,
@@ -63,21 +59,25 @@ func TestCalculateChanges(t *testing.T) {
 		Meta:           meta,
 		DryRunResponse: obj, // avoid hitting the client
 	}, nil)
+	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+	renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(getDummyRenderedURL("x"), nil)
 
-	info, err := generator.calculateChangeInfo(context.Background(), logger, "http://host/", repository.VersionedFileChange{
-		Action: repository.FileActionCreated,
-		Path:   "path/to/file.json",
-		Ref:    "ref",
-	}, ChangeOptions{
-		PullRequest: v0alpha1.PullRequestJobOptions{
+	info, err := processChangedFiles(context.Background(), changeOptions{
+		grafanaBaseURL: "http://host/",
+		pullRequest: v0alpha1.PullRequestJobOptions{
 			Ref: "ref",
 			PR:  123,
 			URL: "http://github.com/pr/",
 		},
-		Parser:          parser,
-		Reader:          reader,
-		Progress:        progress,
-		GeneratePreview: true,
+		changes: []repository.VersionedFileChange{{
+			Action: repository.FileActionCreated,
+			Path:   "path/to/file.json",
+			Ref:    "ref",
+		}},
+		parser:   parser,
+		reader:   reader,
+		progress: progress,
+		render:   renderer,
 	})
 	require.NoError(t, err)
 
@@ -85,8 +85,17 @@ func TestCalculateChanges(t *testing.T) {
 	// require.NoError(t, err)
 	// fmt.Printf("%s", string(jj))
 
-	require.Equal(t, `http://host/d/id/hello`, info.GrafanaURL)
-	require.Equal(t, `http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref`, info.PreviewURL)
+	require.Equal(t, map[string]string{
+		"Grafana":         "http://host/d/id/hello",
+		"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+		"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+		"PreviewSnapshot": "https://cdn2.thecatapi.com/images/99c.jpg",
+	}, map[string]string{
+		"Grafana":         info.Changes[0].GrafanaURL,
+		"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
+		"Preview":         info.Changes[0].PreviewURL,
+		"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
+	})
 }
 
 func TestDummyImageURL(t *testing.T) {
