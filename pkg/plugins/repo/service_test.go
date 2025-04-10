@@ -117,7 +117,7 @@ func TestPluginInfo(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("/%s", pluginID), r.URL.Path)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(fmt.Sprintf(`{ "id": 1, "slug": "%s", "status": "active" }`, pluginID)))
+		_, _ = fmt.Fprintf(w, `{ "id": 1, "slug": "%s", "status": "active" }`, pluginID)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -190,7 +190,7 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 		if data.arch != "" {
 			platform += "-" + data.arch
 		}
-		_, _ = w.Write([]byte(fmt.Sprintf(`
+		_, _ = fmt.Fprintf(w, `
 				{
 					"items": [{
 						"version": "%s",
@@ -203,8 +203,7 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 						"isCompatible": true
 					}]
 				}
-			`, data.version, platform, data.sha, data.url),
-		))
+			`, data.version, platform, data.sha, data.url)
 	})
 
 	// mock plugin archive

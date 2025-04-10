@@ -14,5 +14,5 @@ func IsReadingLegacyDashboardsAndFolders(ctx context.Context, svc Service) bool 
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,
 	})
-	return !(f && d)
+	return !f || !d
 }

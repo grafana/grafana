@@ -55,7 +55,7 @@ func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatu
 			}
 
 			// Make sure we are writing something!
-			if !(v.WriteLegacy || v.WriteUnified) {
+			if !v.WriteLegacy && !v.WriteUnified {
 				v.WriteLegacy = true
 				m.db[k] = v
 				changed = true

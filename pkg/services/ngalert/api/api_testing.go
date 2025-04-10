@@ -67,7 +67,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
-		c.SignedInUser.GetOrgID(),
+		c.GetOrgID(),
 		folder.UID,
 		apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager),
 	)
@@ -264,7 +264,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		Title: cmd.Title,
 		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
 		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.SignedInUser.GetOrgID(),
+		OrgID:           c.GetOrgID(),
 		Condition:       cmd.Condition,
 		Data:            queries,
 		IntervalSeconds: intervalSeconds,

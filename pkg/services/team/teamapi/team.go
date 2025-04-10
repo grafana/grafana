@@ -34,7 +34,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 
 	t, err := tapi.teamService.CreateTeam(c.Req.Context(), &cmd)
 	if err != nil {
@@ -51,9 +51,9 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	if c.SignedInUser.IsIdentityType(claims.TypeUser) {
-		userID, _ := c.SignedInUser.GetInternalID()
-		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
+	if c.IsIdentityType(claims.TypeUser) {
+		userID, _ := c.GetInternalID()
+		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.GetOrgID(),
 			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
@@ -83,7 +83,7 @@ func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 	cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -123,7 +123,7 @@ func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Response {
-	orgID := c.SignedInUser.GetOrgID()
+	orgID := c.GetOrgID()
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -183,7 +183,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	}
 
 	query := team.SearchTeamsQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
 		TeamIds:      queryTeamIDs,
@@ -235,7 +235,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	}
 
 	query := team.GetTeamByIDQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  tapi.cfg.HiddenUsers,
@@ -271,7 +271,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.SignedInUser.GetOrgID(), 0, teamId)
+	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -294,7 +294,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences
@@ -396,11 +396,11 @@ func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	if len(c.SignedInUser.GetPermissions()) == 0 {
+	if len(c.GetPermissions()) == 0 {
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), c.GetPermissions(), prefix, resourceIDs)
 }
 
 // Metadata helpers
@@ -413,7 +413,7 @@ func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
 
 func (tapi *TeamAPI) getTeamDTOByID(c *contextmodel.ReqContext, teamID int64) (*team.TeamDTO, error) {
 	query := team.GetTeamByIDQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		ID:           teamID,
 		SignedInUser: c.SignedInUser,
 	}

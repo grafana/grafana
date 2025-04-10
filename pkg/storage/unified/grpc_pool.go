@@ -28,7 +28,7 @@ func (pc *pooledClientConn) Invoke(ctx context.Context, method string, args inte
 	defer func() {
 		_ = conn.Close()
 	}()
-	return conn.ClientConn.Invoke(ctx, method, args, reply, opts...)
+	return conn.Invoke(ctx, method, args, reply, opts...)
 }
 
 // NewStream implements the grpc.ClientConnInterface.NewStream method.

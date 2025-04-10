@@ -95,11 +95,11 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 
 		newCtx := proxy.createProxyContext(ctx, req, resp)
 
-		require.NotEqual(t, ctx.Context.Resp, newCtx.Context.Resp)
-		require.Equal(t, ctx.Context.Req, newCtx.Context.Req)
+		require.NotEqual(t, ctx.Resp, newCtx.Resp)
+		require.Equal(t, ctx.Req, newCtx.Req)
 
 		require.NotEqual(t, 123, resp.Status())
-		newCtx.Context.Resp.WriteHeader(123)
+		newCtx.Resp.WriteHeader(123)
 		require.Equal(t, 123, resp.Status())
 	})
 	t.Run("if access control is enabled", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 
 			newCtx := proxy.createProxyContext(&viewerCtx, req, resp)
 			require.NotEqual(t, viewerCtx.SignedInUser, newCtx.SignedInUser)
-			require.Truef(t, newCtx.SignedInUser.HasRole(org.RoleEditor), "user of the proxy request should have at least Editor role but has %s", newCtx.SignedInUser.OrgRole)
+			require.Truef(t, newCtx.HasRole(org.RoleEditor), "user of the proxy request should have at least Editor role but has %s", newCtx.OrgRole)
 		})
 		t.Run("should not alter user if it is Editor", func(t *testing.T) {
 			proxy := AlertingProxy{

@@ -47,7 +47,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	if ok {
 		ctxLogger := sessionLogger.FromContext(ctx)
 		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
-		sess.Session = sess.Session.Context(ctx)
+		sess.Session = sess.Context(ctx)
 
 		// This is a noop span to simplify later operations. purposefully not using existing context
 		_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
@@ -67,7 +67,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 			return nil, false, span, err
 		}
 	}
-	newSess.Session = newSess.Session.Context(tctx)
+	newSess.Session = newSess.Context(tctx)
 
 	return newSess, true, span, nil
 }
@@ -127,7 +127,7 @@ func (sess *DBSession) InsertId(bean any, dialect migrator.Dialect) error {
 	if err := dialect.PreInsertId(table, sess.Session); err != nil {
 		return err
 	}
-	_, err := sess.Session.InsertOne(bean)
+	_, err := sess.InsertOne(bean)
 	if err != nil {
 		return err
 	}

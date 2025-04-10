@@ -49,8 +49,8 @@ func ShouldRecordAnnotation(t state.StateTransition) bool {
 
 	// Do not record transitions between Normal and Normal (NoData)
 	if t.State.State == eval.Normal && t.PreviousState == eval.Normal {
-		if (t.State.StateReason == "" && t.PreviousStateReason == models.StateReasonNoData) ||
-			(t.State.StateReason == models.StateReasonNoData && t.PreviousStateReason == "") {
+		if (t.StateReason == "" && t.PreviousStateReason == models.StateReasonNoData) ||
+			(t.StateReason == models.StateReasonNoData && t.PreviousStateReason == "") {
 			return false
 		}
 	}

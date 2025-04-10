@@ -361,9 +361,12 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	errorIds := make(map[errId][]any)
 
 	for _, r := range resources {
-		if r.Status == cloudmigration.ItemStatusOK {
+		switch r.Status {
+		case cloudmigration.ItemStatusPending:
+			// Do nothing. A pending item should not be updated, as it is still in progress.
+		case cloudmigration.ItemStatusOK:
 			okIds = append(okIds, r.RefID)
-		} else if r.Status == cloudmigration.ItemStatusError {
+		case cloudmigration.ItemStatusError:
 			key := errId{errCode: r.ErrorCode, errStr: r.Error}
 			if ids, ok := errorIds[key]; ok {
 				errorIds[key] = append(ids, r.RefID)

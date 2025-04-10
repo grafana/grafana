@@ -294,7 +294,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	// It's not necessary to be careful about not modifying the original, as it's used only in a specific context where
 	// the config is read from json and then immediately sent to the remote Alertmanager.
 	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, gmr := range rcv.GrafanaManagedReceivers {
 			decrypted, err := gmr.DecryptSecureSettings(fn)
 			if err != nil {
 				return nil, [16]byte{}, fmt.Errorf("unable to decrypt settings on receiver %q (uid: %q): %w", gmr.Name, gmr.UID, err)
@@ -560,7 +560,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
-		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, gr := range r.GrafanaManagedReceivers {
 			decrypted, err := gr.DecryptSecureSettings(fn)
 			if err != nil {
 				return nil, 0, err

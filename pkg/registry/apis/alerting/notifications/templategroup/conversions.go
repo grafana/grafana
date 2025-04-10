@@ -45,7 +45,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 
 func convertToDomainModel(template *model.TemplateGroup) definitions.NotificationTemplate {
 	return definitions.NotificationTemplate{
-		UID:             template.ObjectMeta.Name,
+		UID:             template.Name,
 		Name:            template.Spec.Title,
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,

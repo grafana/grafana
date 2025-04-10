@@ -18,8 +18,8 @@ type PostgresDialect struct {
 
 func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Postgres
+	d.dialect = &d
+	d.driverName = Postgres
 	return &d
 }
 

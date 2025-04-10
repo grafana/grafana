@@ -348,7 +348,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
 			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
 			// replace with compatible system var for transaction isolation
-			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
+			connectionString = strings.ReplaceAll(connectionString, "&transaction_isolation", "&tx_isolation")
 			// recreate the xorm engine with new connection string that is compatible
 			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
 			if err != nil {

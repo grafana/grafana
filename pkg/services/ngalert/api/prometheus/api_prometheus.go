@@ -88,7 +88,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 	c.Query("")
 
 	resp := PrepareAlertStatuses(srv.manager, AlertStatusesOptions{
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 		Query: c.Req.Form,
 	})
 
@@ -238,11 +238,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
 	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
@@ -277,15 +277,15 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	dashboardUID := opts.Query.Get("dashboard_uid")
 	panelID, err := getPanelIDFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
 	if dashboardUID == "" && panelID != 0 {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = "panel_id must be set with dashboard_uid"
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		ruleResponse.Status = "error"
+		ruleResponse.Error = "panel_id must be set with dashboard_uid"
+		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
 
@@ -293,16 +293,16 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
 	matchers, err := getMatchersFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = err.Error()
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
 	withStates, err := getStatesFromQuery(opts.Query)
 	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = err.Error()
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
 	withStatesFast := make(map[eval.State]struct{})
@@ -343,9 +343,9 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
 		return ruleResponse
 	}
 
@@ -370,9 +370,9 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	for _, rg := range groupedRules {
 		ok, err := opts.AuthorizeRuleGroup(rg.Rules)
 		if err != nil {
-			ruleResponse.DiscoveryBase.Status = "error"
-			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
-			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
 			return ruleResponse
 		}
 		if !ok {

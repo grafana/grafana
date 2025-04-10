@@ -91,7 +91,7 @@ func (p *AlertingProxy) createProxyContext(ctx *contextmodel.ReqContext, request
 	// Some data sources require legacy Editor role in order to perform mutating operations. In this case, we elevate permissions for the context that we
 	// will provide downstream.
 	// TODO (yuri) remove this after RBAC for plugins is implemented
-	if !ctx.SignedInUser.HasRole(org.RoleEditor) {
+	if !ctx.HasRole(org.RoleEditor) {
 		newUser := *ctx.SignedInUser
 		newUser.OrgRole = org.RoleEditor
 		cpy.SignedInUser = &newUser
@@ -221,7 +221,7 @@ func ErrResp(status int, err error, msg string, args ...any) *response.NormalRes
 
 // accessForbiddenResp creates a response of forbidden access.
 func accessForbiddenResp() response.Response {
-	//nolint:stylecheck // Grandfathered capitalization of error.
+	//nolint:staticcheck // Grandfathered capitalization of error.
 	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }
 

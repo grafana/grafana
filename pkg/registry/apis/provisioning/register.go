@@ -518,7 +518,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 

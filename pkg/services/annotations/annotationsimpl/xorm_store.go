@@ -312,9 +312,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.To, query.From)
 		}
 
-		if query.Type == "alert" {
+		switch query.Type {
+		case "alert":
 			sql.WriteString(` AND a.alert_id > 0`)
-		} else if query.Type == "annotation" {
+		case "annotation":
 			sql.WriteString(` AND a.alert_id = 0`)
 		}
 

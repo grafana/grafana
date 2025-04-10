@@ -155,7 +155,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
-			if err := s.NamedService.AwaitRunning(c.Req.Context()); err != nil {
+			if err := s.AwaitRunning(c.Req.Context()); err != nil {
 				c.Resp.WriteHeader(http.StatusInternalServerError)
 				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 				return
@@ -198,7 +198,7 @@ func ProvideService(
 }
 
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
 	return s.restConfig, nil
@@ -210,11 +210,11 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.NamedService.StartAsync(ctx); err != nil {
+	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
 
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
@@ -304,7 +304,7 @@ func (s *service) start(ctx context.Context) error {
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = getter
+		serverConfig.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -499,7 +499,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
-				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
+				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
@@ -511,7 +511,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := s.NamedService.AwaitRunning(r.Context()); err != nil {
+	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
 	}
 	s.handler.ServeHTTP(w, r)

@@ -1107,7 +1107,7 @@ func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
 
 	// We modify the receiver, this should cause the POST to be rejected.
 	userDefinedReceiver := amConfig.AlertmanagerConfig.Receivers[slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.Receiver.Name == "user-defined"
+		return receiver.Name == "user-defined"
 	})]
 	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
 	success, err := legacyCli.PostConfiguration(t, amConfig)

@@ -213,8 +213,8 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
 			newFolder := createFolder(t, sc, "NewFolder", nil)
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
 			_, err = sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -404,9 +404,9 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc fold
 	require.NoError(t, err)
 
 	// Set user permissions on the newly created folder so that they can interact with library elements stored in it
-	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
-	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
-	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
 
 	return folder
 }

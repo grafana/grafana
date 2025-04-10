@@ -32,8 +32,8 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 	}
 
 	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
-	if !reqCtx.SignedInUser.IsIdentityType(claims.TypeAnonymous) {
-		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.SignedInUser.GetLogin())
+	if !reqCtx.IsIdentityType(claims.TypeAnonymous) {
+		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.GetLogin())
 	}
 }
 

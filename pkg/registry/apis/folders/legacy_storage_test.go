@@ -59,7 +59,7 @@ func TestLegacyStorageList(t *testing.T) {
 	for _, obj := range list {
 		f, ok := obj.(*v0alpha1.Folder)
 		require.Equal(t, true, ok)
-		uidsReturnedByList = append(uidsReturnedByList, f.ObjectMeta.Name)
+		uidsReturnedByList = append(uidsReturnedByList, f.Name)
 	}
 	require.ElementsMatch(t, uidsFromServiceFolder, uidsReturnedByList)
 }

@@ -857,7 +857,7 @@ func (b *BlobInfo) ContentType() string {
 func (b *BlobInfo) String() string {
 	sb := bytes.NewBufferString(b.UID)
 	if b.Size > 0 {
-		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+		fmt.Fprintf(sb, "; size=%d", b.Size)
 	}
 	if b.Hash != "" {
 		sb.WriteString("; hash=")

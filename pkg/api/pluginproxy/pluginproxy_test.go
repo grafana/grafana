@@ -239,11 +239,11 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
-		requestHandled := false
+		requestHandled := make(chan struct{})
 		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
 			_, _ = w.Write([]byte("I am the backend"))
-			requestHandled = true
+			close(requestHandled)
 		}))
 		t.Cleanup(backendServer.Close)
 
@@ -271,10 +271,10 @@ func TestPluginProxy(t *testing.T) {
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
-		for {
-			if requestHandled {
-				break
-			}
+		select {
+		case <-requestHandled:
+		case <-t.Context().Done():
+			t.Fatal("timeout waiting for request to be handled")
 		}
 
 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
@@ -427,10 +427,8 @@ func TestPluginProxyRoutes(t *testing.T) {
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -561,10 +559,8 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())

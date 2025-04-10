@@ -130,11 +130,12 @@ func RemainingDaysUntil(expiration time.Time) string {
 
 	daysUntil := int(durationUntil.Hours() / 24)
 
-	if daysUntil == 0 {
+	switch daysUntil {
+	case 0:
 		return "Today"
-	} else if daysUntil == 1 {
+	case 1:
 		return "Tomorrow"
-	} else {
+	default:
 		return fmt.Sprintf("%d days", daysUntil)
 	}
 }

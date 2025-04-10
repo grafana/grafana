@@ -430,7 +430,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			sut, _ := createSutForAutogen(t)
 
 			rc := createRequestCtxInOrg(2)
-			rc.SignedInUser.OrgRole = org.RoleAdmin
+			rc.OrgRole = org.RoleAdmin
 
 			response := sut.RouteGetAlertingConfig(rc)
 			require.Equal(t, 200, response.Status())
@@ -455,7 +455,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			sut, _ := createSutForAutogen(t)
 
 			rc := createRequestCtxInOrg(2)
-			rc.SignedInUser.OrgRole = org.RoleAdmin
+			rc.OrgRole = org.RoleAdmin
 
 			response := sut.RouteGetAMStatus(rc)
 			require.Equal(t, 200, response.Status())

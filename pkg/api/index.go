@@ -32,9 +32,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
@@ -103,13 +103,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			UID:                        c.UserUID, // << not set yet
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
-			Email:                      c.SignedInUser.GetEmail(),
+			Email:                      c.GetEmail(),
 			Name:                       c.Name,
-			OrgId:                      c.SignedInUser.GetOrgID(),
+			OrgId:                      c.GetOrgID(),
 			OrgName:                    c.OrgName,
-			OrgRole:                    c.SignedInUser.GetOrgRole(),
+			OrgRole:                    c.GetOrgRole(),
 			OrgCount:                   hs.getUserOrgCount(c, userID),
-			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.SignedInUser.GetEmail()),
+			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -177,7 +177,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
 	// Anonymous users do not have an email or auth info
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 
@@ -185,10 +185,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		return dtos.AnalyticsSettings{}
 	}
 
-	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
+	identifier := c.GetEmail() + "@" + hs.Cfg.AppURL
 
-	if authenticatedBy := c.SignedInUser.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
-		identifier = c.SignedInUser.GetAuthID()
+	if authenticatedBy := c.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
+		identifier = c.GetAuthID()
 	}
 
 	return dtos.AnalyticsSettings{

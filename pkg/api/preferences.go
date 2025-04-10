@@ -22,13 +22,13 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", err)
 	}
 
 	cmd.UserID = userID
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 
 	// the default value of HomeDashboardID is taken from input, when HomeDashboardID is set also,
 	// UID is used in preference to identify dashboard
@@ -64,12 +64,12 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.SignedInUser.GetOrgID(), userID, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)
 }
 
 // swagger:route PUT /user/preferences user_preferences updateUserPreferences
@@ -89,13 +89,13 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService,
-		hs.preferenceService, hs.Features, c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
+		hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /user/preferences user_preferences patchUserPreferences
@@ -113,12 +113,12 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
-	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
@@ -176,7 +176,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.SignedInUser.GetOrgID(), 0, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
 // swagger:route PUT /org/preferences org_preferences updateOrgPreferences
@@ -195,7 +195,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
@@ -213,7 +213,7 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:parameters  updateUserPreferences

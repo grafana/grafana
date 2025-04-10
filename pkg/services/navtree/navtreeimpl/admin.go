@@ -151,7 +151,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
+	disabled, err := s.apiKeyService.IsDisabled(ctx, c.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.SignedInUser.GetOrgName(),
+		SubTitle:   "Organization: " + c.GetOrgName(),
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,

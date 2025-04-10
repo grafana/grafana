@@ -35,8 +35,8 @@ func TestDeleteLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			sc.reqContext.SignedInUser.OrgID = 2
-			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
+			sc.reqContext.OrgID = 2
+			sc.reqContext.OrgRole = org.RoleAdmin
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})

@@ -13,7 +13,7 @@ require (
 
 require (
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/dave/jennifer v1.6.0 // indirect
+	github.com/dave/jennifer v1.7.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/proto v1.13.2 // indirect
 	github.com/expr-lang/expr v1.17.0 // indirect

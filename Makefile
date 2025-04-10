@@ -358,7 +358,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.toml
+		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck

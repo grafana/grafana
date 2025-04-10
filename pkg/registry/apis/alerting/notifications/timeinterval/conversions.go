@@ -80,7 +80,7 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 	result.Version = interval.ResourceVersion
-	result.UID = interval.ObjectMeta.Name
+	result.UID = interval.Name
 	result.Provenance = definitions.Provenance(ngmodels.ProvenanceNone)
 	err = result.Validate()
 	if err != nil {

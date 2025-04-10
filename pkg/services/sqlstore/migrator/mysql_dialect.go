@@ -19,8 +19,8 @@ type MySQLDialect struct {
 
 func NewMysqlDialect() Dialect {
 	d := MySQLDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = MySQL
+	d.dialect = &d
+	d.driverName = MySQL
 	return &d
 }
 

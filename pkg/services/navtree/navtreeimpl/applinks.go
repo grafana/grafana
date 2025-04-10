@@ -20,7 +20,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
-	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
 	if err != nil {
 		return err
 	}

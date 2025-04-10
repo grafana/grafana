@@ -150,7 +150,7 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 			items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
 			for i := 0; i < defaultMaxHistory+1; i++ {
 				item := advisorv0alpha1.Check{}
-				item.ObjectMeta.SetLabels(map[string]string{
+				item.SetLabels(map[string]string{
 					checks.TypeLabel: "mock",
 				})
 				items = append(items, item)
@@ -178,11 +178,11 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
 	for i := 0; i < defaultMaxHistory+1; i++ {
 		item := advisorv0alpha1.Check{}
-		item.ObjectMeta.SetName(fmt.Sprintf("check-%d", i))
-		item.ObjectMeta.SetLabels(map[string]string{
+		item.SetName(fmt.Sprintf("check-%d", i))
+		item.SetLabels(map[string]string{
 			checks.TypeLabel: "mock",
 		})
-		item.ObjectMeta.SetCreationTimestamp(metav1.NewTime(time.Time{}.Add(time.Duration(i) * time.Hour)))
+		item.SetCreationTimestamp(metav1.NewTime(time.Time{}.Add(time.Duration(i) * time.Hour)))
 		items = append(items, item)
 	}
 	// shuffle the items to ensure the oldest are deleted

@@ -471,7 +471,7 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		ac.EvalPermission(datasources.ActionCreate),
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
-	if !(userIsOrgAdmin || hasAccess) {
+	if !userIsOrgAdmin && !hasAccess {
 		s.log.Info("user is not allowed to list non-core plugins", "UID", signedInUser.UserUID)
 		return results, nil
 	}
@@ -498,7 +498,7 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		}
 
 		pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
-			Enabled:       plugin.JSONData.AutoEnabled,
+			Enabled:       plugin.AutoEnabled,
 			Pinned:        plugin.Pinned,
 			PluginVersion: plugin.Info.Version,
 			PluginId:      plugin.ID,

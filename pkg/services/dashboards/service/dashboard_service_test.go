@@ -2007,9 +2007,9 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		assert.Equal(t, false, result.HasACL)
 		assert.Equal(t, false, result.IsFolder)
 		assert.Equal(t, int64(1), result.ID)
-		assert.Equal(t, now.Time.Format(time.RFC3339), result.Created.Format(time.RFC3339))
+		assert.Equal(t, now.Format(time.RFC3339), result.Created.Format(time.RFC3339))
 		assert.Equal(t, int64(10), result.CreatedBy)
-		assert.Equal(t, now.Time.Format(time.RFC3339), result.Updated.Format(time.RFC3339)) // updated should default to created
+		assert.Equal(t, now.Format(time.RFC3339), result.Updated.Format(time.RFC3339)) // updated should default to created
 		assert.Equal(t, int64(10), result.UpdatedBy)
 	})
 

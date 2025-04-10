@@ -386,10 +386,10 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, name, alert.RuleGroup)
 				require.Equal(t, models.NoDataState(api.GrafanaManagedAlert.NoDataState), alert.NoDataState)
 				require.Equal(t, models.ExecutionErrorState(api.GrafanaManagedAlert.ExecErrState), alert.ExecErrState)
-				require.Equal(t, time.Duration(*api.ApiRuleNode.For), alert.For)
-				require.Equal(t, time.Duration(*api.ApiRuleNode.KeepFiringFor), alert.KeepFiringFor)
-				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
-				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
+				require.Equal(t, time.Duration(*api.For), alert.For)
+				require.Equal(t, time.Duration(*api.KeepFiringFor), alert.KeepFiringFor)
+				require.Equal(t, api.Annotations, alert.Annotations)
+				require.Equal(t, api.Labels, alert.Labels)
 				require.Nil(t, alert.Record)
 			},
 		},
@@ -433,15 +433,15 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			name: "extracts Dashboard UID and Panel Id from annotations",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 					models.PanelIDAnnotation:      strconv.Itoa(rand.Int()),
 				}
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
-				require.Equal(t, api.ApiRuleNode.Annotations[models.DashboardUIDAnnotation], *alert.DashboardUID)
-				panelId, err := strconv.Atoi(api.ApiRuleNode.Annotations[models.PanelIDAnnotation])
+				require.Equal(t, api.Annotations[models.DashboardUIDAnnotation], *alert.DashboardUID)
+				panelId, err := strconv.Atoi(api.Annotations[models.PanelIDAnnotation])
 				require.NoError(t, err)
 				require.Equal(t, int64(panelId), *alert.PanelID)
 			},
@@ -456,8 +456,8 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = ""
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.ApiRuleNode.For = nil
-				r.ApiRuleNode.KeepFiringFor = nil
+				r.For = nil
+				r.KeepFiringFor = nil
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
@@ -474,8 +474,8 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Nil(t, alert.DashboardUID)
 				require.Nil(t, alert.PanelID)
 				require.Equal(t, name, alert.RuleGroup)
-				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
-				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
+				require.Equal(t, api.Annotations, alert.Annotations)
+				require.Equal(t, api.Labels, alert.Labels)
 				// Alerting fields
 				require.Empty(t, alert.Condition)
 				require.Empty(t, alert.NoDataState)
@@ -498,8 +498,8 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = apimodels.OK
 				r.GrafanaManagedAlert.ExecErrState = apimodels.AlertingErrState
 				r.GrafanaManagedAlert.NotificationSettings = &apimodels.AlertRuleNotificationSettings{}
-				r.ApiRuleNode.For = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
-				r.ApiRuleNode.KeepFiringFor = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
+				r.For = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
+				r.KeepFiringFor = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
@@ -613,7 +613,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if Dashboard UID is specified but not Panel ID",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 				}
 				return &r
@@ -623,7 +623,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if Dashboard UID is specified and Panel ID is NaN",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 					models.PanelIDAnnotation:      util.GenerateShortUID(),
 				}
@@ -634,7 +634,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if PanelID is specified but not Dashboard UID ",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.PanelIDAnnotation: "0",
 				}
 				return &r
@@ -681,7 +681,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = ""
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.ApiRuleNode.For = nil
+				r.For = nil
 				return &r
 			},
 			expErr: "recording rules cannot be created",
@@ -696,7 +696,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = ""
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.ApiRuleNode.For = nil
+				r.For = nil
 				return &r
 			},
 			expErr: "must be a valid Prometheus metric name",
@@ -711,7 +711,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = ""
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.ApiRuleNode.For = nil
+				r.For = nil
 				return &r
 			},
 			expErr: "cannot be empty",
@@ -726,7 +726,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = ""
 				r.GrafanaManagedAlert.ExecErrState = ""
 				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.ApiRuleNode.For = nil
+				r.For = nil
 				return &r
 			},
 			expErr: "NOTEXIST does not exist",
@@ -837,15 +837,15 @@ func TestValidateRuleNode_UID(t *testing.T) {
 			name: "extracts Dashboard UID and Panel Id from annotations",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 					models.PanelIDAnnotation:      strconv.Itoa(rand.Int()),
 				}
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
-				require.Equal(t, api.ApiRuleNode.Annotations[models.DashboardUIDAnnotation], *alert.DashboardUID)
-				panelId, err := strconv.Atoi(api.ApiRuleNode.Annotations[models.PanelIDAnnotation])
+				require.Equal(t, api.Annotations[models.DashboardUIDAnnotation], *alert.DashboardUID)
+				panelId, err := strconv.Atoi(api.Annotations[models.PanelIDAnnotation])
 				require.NoError(t, err)
 				require.Equal(t, int64(panelId), *alert.PanelID)
 			},
@@ -921,7 +921,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if Dashboard UID is specified but not Panel ID",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 				}
 				return &r
@@ -931,7 +931,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if Dashboard UID is specified and Panel ID is NaN",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.DashboardUIDAnnotation: util.GenerateShortUID(),
 					models.PanelIDAnnotation:      util.GenerateShortUID(),
 				}
@@ -942,7 +942,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if PanelID is specified but not Dashboard UID ",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.ApiRuleNode.Annotations = map[string]string{
+				r.Annotations = map[string]string{
 					models.PanelIDAnnotation: "0",
 				}
 				return &r
@@ -1133,7 +1133,7 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 	for label := range models.LabelsUserCannotSpecify {
 		t.Run(label, func(t *testing.T) {
 			r := validRule()
-			r.ApiRuleNode.Labels = map[string]string{
+			r.Labels = map[string]string{
 				label: "true",
 			}
 			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)

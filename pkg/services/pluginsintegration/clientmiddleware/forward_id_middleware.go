@@ -31,7 +31,7 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 		return nil
 	}
 
-	if token := reqCtx.SignedInUser.GetIDToken(); token != "" {
+	if token := reqCtx.GetIDToken(); token != "" {
 		req.SetHTTPHeader(forwardIDHeaderName, token)
 	}
 

@@ -89,11 +89,12 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	var queryType string
-	if req.Options.Key.Resource == dashboard.DASHBOARD_RESOURCE {
+	switch req.Options.Key.Resource {
+	case dashboard.DASHBOARD_RESOURCE:
 		queryType = searchstore.TypeDashboard
-	} else if req.Options.Key.Resource == folderv0alpha1.RESOURCE {
+	case folderv0alpha1.RESOURCE:
 		queryType = searchstore.TypeFolder
-	} else {
+	default:
 		return nil, fmt.Errorf("bad type request")
 	}
 

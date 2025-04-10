@@ -148,8 +148,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Name),
 		attribute.String("datasource_type", proxy.ds.Type),
-		attribute.String("user", proxy.ctx.SignedInUser.Login),
-		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+		attribute.String("user", proxy.ctx.Login),
+		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")

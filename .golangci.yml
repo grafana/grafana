@@ -1,214 +1,15 @@
+# This file is best edited with some JSON-schema-aware editor.
+# VSCode/Cursor/... user? See: https://github.com/redhat-developer/vscode-yaml
+# Others can set up the YAML LSP manually, which supports schemas: https://github.com/redhat-developer/yaml-language-server
+
+# $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
+version: "2"
 run:
   timeout: 15m
   concurrency: 10
   allow-parallel-runners: true
-linters-settings:
-  exhaustive:
-    default-signifies-exhaustive: true
-  revive:
-    ignore-generated-header: false
-    severity: warning
-    confidence: 3
-  depguard:
-    rules:
-      main:
-        allow: []
-        deny:
-          - pkg: io/ioutil
-            desc: >-
-              Deprecated: As of Go 1.16, the same functionality is now provided
-              by package io or package os, and those implementations should be
-              preferred in new code. See the specific function documentation for
-              details.
-          - pkg: gopkg.in/yaml.v2
-            desc: >-
-              Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as
-              gopkg.in/yaml.v3 is now available
-          - pkg: github.com/pkg/errors
-            desc: >-
-              Deprecated: Go 1.13 supports the functionality provided by
-              pkg/errors in the standard library.
-          - pkg: github.com/xorcare/pointer
-            desc: >-
-              Use pkg/util.Pointer instead, which is a generic one-liner
-              alternative
-          - pkg: github.com/gofrs/uuid
-            desc: 'Use github.com/google/uuid instead, which we already depend on.'
-          - pkg: github.com/bmizerany/assert
-            desc: >-
-              Use github.com/stretchr/testify/assert instead, which we already
-              depend on.
-      coreplugins:
-        deny:
-          - pkg: github.com/grafana/grafana/pkg/api
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/cmd
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/cuectx
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/extensions
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/kinds
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/middleware
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/modules
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/registry
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/services
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/build
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/codegen
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/events
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/ifaces
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/kindsysreport
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/mocks
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/plugins
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/setting
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/util
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/bus
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/components
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/expr
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/infra
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/login
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/models
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/server
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/tests
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/web
-            desc: Core plugins are not allowed to depend on Grafana core packages
-          - pkg: github.com/grafana/grafana/pkg/tsdb/intervalv2
-            desc: Core plugins are not allowed to depend on Grafana core packages
-        files:
-          - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
-          - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
-          - '**/pkg/tsdb/grafana-testdata-datasource/*'
-          - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
-          - '**/pkg/tsdb/azuremonitor/*'
-          - '**/pkg/tsdb/azuremonitor/**/*'
-          - '**/pkg/tsdb/cloud-monitoring/*'
-          - '**/pkg/tsdb/cloud-monitoring/**/*'
-          - '**/pkg/tsdb/mysql/*'
-          - '**/pkg/tsdb/mysql/**/*'
-          - '**/pkg/tsdb/parca/*'
-          - '**/pkg/tsdb/parca/**/*'
-          - '**/pkg/tsdb/tempo/*'
-          - '**/pkg/tsdb/tempo/**/*'
-          - '**/pkg/tsdb/cloudwatch/*'
-          - '**/pkg/tsdb/cloudwatch/**/*'
-      apiserver:
-        list-mode: lax
-        allow:
-          - github.com/grafana/grafana/pkg/apimachinery
-          - github.com/grafana/grafana/pkg/apiserver
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: apiserver is not allowed to import grafana core
-        files:
-          - '**/pkg/apiserver/*'
-          - '**/pkg/apiserver/**/*'
-      apimachinery:
-        list-mode: lax
-        allow:
-          - github.com/grafana/grafana/pkg/apimachinery
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: apimachinery is not allowed to import grafana core
-        files:
-          - '**/pkg/apimachinery/*'
-          - '**/pkg/apimachinery/**/*'
-      aggregator:
-        list-mode: lax
-        allow:
-          - github.com/grafana/grafana/pkg/aggregator
-          - github.com/grafana/grafana/pkg/semconv
-          - github.com/grafana/grafana/pkg/apimachinery
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: apimachinery is not allowed to import grafana core
-        files:
-          - ./pkg/aggregator/*
-          - ./pkg/aggregator/**/*
-      promlib:
-        list-mode: lax
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: promlib is not allowed to import grafana core
-        allow:
-          - github.com/grafana/grafana/pkg/promlib
-        files:
-          - '**/pkg/promlib/**/*'
-      storage-unified-resource:
-        list-mode: lax
-        allow:
-          - github.com/grafana/grafana/pkg/apimachinery
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: pkg/storage/unified/resource is not allowed to import grafana core
-        files:
-          - ./pkg/storage/unified/resource/*
-          - ./pkg/storage/unified/resource/**/*
-      storage-unified-apistore:
-        list-mode: lax
-        allow:
-          - github.com/grafana/grafana/pkg/apimachinery
-          - github.com/grafana/grafana/pkg/apiserver
-          - github.com/grafana/grafana/pkg/unified/resource
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: pkg/storage/unified/apistore is not allowed to import grafana core
-        files:
-          - ./pkg/storage/unified/apistore/*
-          - ./pkg/storage/unified/apistore/**/*
-      apps-playlist:
-        list-mode: lax
-        allow: []
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: apps/playlist is not allowed to import grafana core
-        files:
-          - ./apps/playlist/*
-          - ./apps/playlist/**/*
-      apps-investigation:
-        list-mode: lax
-        allow: []
-        deny:
-          - pkg: github.com/grafana/grafana/pkg
-            desc: apps/investigations is not allowed to import grafana core
-        files:
-          - ./apps/investigations/*
-          - ./apps/investigations/**/*
-  gocritic:
-    enabled-checks:
-      - ruleguard
-    settings:
-      ruleguard:
-        rules: pkg/ruleguard.rules.go
-  misspell:
-    ignore-words:
-      - Unknwon
-      - Creater
-  nakedret:
-    max-func-lines: 60
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
@@ -218,10 +19,8 @@ linters:
     - errorlint
     - exhaustive
     - gocyclo
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -229,78 +28,281 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - stylecheck
     - unconvert
     - unused
     - whitespace
+  settings:
+    depguard:
+      rules:
+        aggregator:
+          list-mode: lax
+          files:
+            - ./pkg/aggregator/*
+            - ./pkg/aggregator/**/*
+          allow:
+            - github.com/grafana/grafana/pkg/aggregator
+            - github.com/grafana/grafana/pkg/semconv
+            - github.com/grafana/grafana/pkg/apimachinery
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apimachinery is not allowed to import grafana core
+        apimachinery:
+          list-mode: lax
+          files:
+            - '**/pkg/apimachinery/*'
+            - '**/pkg/apimachinery/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apimachinery is not allowed to import grafana core
+        apiserver:
+          list-mode: lax
+          files:
+            - '**/pkg/apiserver/*'
+            - '**/pkg/apiserver/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/apiserver
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apiserver is not allowed to import grafana core
+        apps-investigation:
+          list-mode: lax
+          files:
+            - ./apps/investigations/*
+            - ./apps/investigations/**/*
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/investigations is not allowed to import grafana core
+        apps-playlist:
+          list-mode: lax
+          files:
+            - ./apps/playlist/*
+            - ./apps/playlist/**/*
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/playlist is not allowed to import grafana core
+        coreplugins:
+          files:
+            - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
+            - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
+            - '**/pkg/tsdb/grafana-testdata-datasource/*'
+            - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
+            - '**/pkg/tsdb/azuremonitor/*'
+            - '**/pkg/tsdb/azuremonitor/**/*'
+            - '**/pkg/tsdb/cloud-monitoring/*'
+            - '**/pkg/tsdb/cloud-monitoring/**/*'
+            - '**/pkg/tsdb/mysql/*'
+            - '**/pkg/tsdb/mysql/**/*'
+            - '**/pkg/tsdb/parca/*'
+            - '**/pkg/tsdb/parca/**/*'
+            - '**/pkg/tsdb/tempo/*'
+            - '**/pkg/tsdb/tempo/**/*'
+            - '**/pkg/tsdb/cloudwatch/*'
+            - '**/pkg/tsdb/cloudwatch/**/*'
+          deny:
+            - pkg: github.com/grafana/grafana/pkg/api
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/cmd
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/cuectx
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/extensions
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/kinds
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/middleware
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/modules
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/registry
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/services
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/build
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/codegen
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/events
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/ifaces
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/kindsysreport
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/mocks
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/plugins
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/setting
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/util
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/bus
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/components
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/expr
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/infra
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/login
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/models
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/server
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/tests
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/web
+              desc: Core plugins are not allowed to depend on Grafana core packages
+            - pkg: github.com/grafana/grafana/pkg/tsdb/intervalv2
+              desc: Core plugins are not allowed to depend on Grafana core packages
+        main:
+          deny:
+            - pkg: io/ioutil
+              desc: 'Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details.'
+            - pkg: gopkg.in/yaml.v2
+              desc: Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available
+            - pkg: github.com/pkg/errors
+              desc: 'Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library.'
+            - pkg: github.com/xorcare/pointer
+              desc: Use pkg/util.Pointer instead, which is a generic one-liner alternative
+            - pkg: github.com/gofrs/uuid
+              desc: Use github.com/google/uuid instead, which we already depend on.
+            - pkg: github.com/bmizerany/assert
+              desc: Use github.com/stretchr/testify/assert instead, which we already depend on.
+        promlib:
+          list-mode: lax
+          files:
+            - '**/pkg/promlib/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/promlib
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: promlib is not allowed to import grafana core
+        storage-unified-apistore:
+          list-mode: lax
+          files:
+            - ./pkg/storage/unified/apistore/*
+            - ./pkg/storage/unified/apistore/**/*
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/apiserver
+            - github.com/grafana/grafana/pkg/unified/resource
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: pkg/storage/unified/apistore is not allowed to import grafana core
+        storage-unified-resource:
+          list-mode: lax
+          files:
+            - ./pkg/storage/unified/resource/*
+            - ./pkg/storage/unified/resource/**/*
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: pkg/storage/unified/resource is not allowed to import grafana core
+    exhaustive:
+      default-signifies-exhaustive: true
+    gocritic:
+      enabled-checks:
+        - ruleguard
+      settings:
+        ruleguard:
+          rules: pkg/ruleguard.rules.go
+    misspell:
+      ignore-rules:
+        - Unknwon
+        - Creater
+    nakedret:
+      max-func-lines: 60
+    revive:
+      confidence: 3
+      severity: warning
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - staticcheck
+        text: ST1003
+      - linters:
+          - staticcheck
+        text: ST1001
+      - linters:
+          - staticcheck
+        text: 'SA1019: http.CloseNotifier'
+      - linters:
+          - staticcheck
+        text: 'SA1019: strings.Title'
+      - linters:
+          - staticcheck
+        text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
+      - linters:
+          - staticcheck
+        text: use fake service and real access control evaluator instead
+      - linters:
+          - gosec
+        text: G108
+      - linters:
+          - gosec
+        text: G110
+      - linters:
+          - gosec
+        text: G115
+      - linters:
+          - gosec
+        text: G201
+      - linters:
+          - gosec
+        text: G202
+      - linters:
+          - gosec
+        text: G306
+      - linters:
+          - gosec
+        text: "401"
+      - linters:
+          - gosec
+        text: "402"
+      - linters:
+          - gosec
+        text: "501"
+      - linters:
+          - gosec
+        text: "404"
+      - linters:
+          - errorlint
+        text: non-wrapping format verb for fmt.Errorf
+      - linters:
+          - staticcheck
+        text: ST1000
+      - linters:
+          - staticcheck
+        text: ST1020
+      - linters:
+          - staticcheck
+        text: ST1021
+      - linters:
+          - gosec
+        path: (.+)_test\.go
+        text: G601
+    paths:
+      - devenv
+      - scripts
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-use-default: false
   max-same-issues: 0
-  exclude-dirs:
-    - devenv
-    - scripts
-  exclude-rules:
-    - linters:
-        - stylecheck
-      text: ST1003
-    - linters:
-        - stylecheck
-      text: ST1001
-    - linters:
-        - staticcheck
-      text: 'SA1019: http.CloseNotifier'
-    - linters:
-        - staticcheck
-      text: 'SA1019: strings.Title'
-    - linters:
-        - staticcheck
-      text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
-    - linters:
-        - staticcheck
-      text: use fake service and real access control evaluator instead
-    - linters:
-        - gosec
-      text: G108
-    - linters:
-        - gosec
-      text: G110
-    - linters:
-        - gosec
-      text: G115
-    - linters:
-        - gosec
-      text: G201
-    - linters:
-        - gosec
-      text: G202
-    - linters:
-        - gosec
-      text: G306
-    - linters:
-        - gosec
-      text: '401'
-    - linters:
-        - gosec
-      text: '402'
-    - linters:
-        - gosec
-      text: '501'
-    - linters:
-        - gosec
-      text: '404'
-    - linters:
-        - errorlint
-      text: non-wrapping format verb for fmt.Errorf
-    - linters:
-        - stylecheck
-      text: ST1000
-    - linters:
-        - stylecheck
-      text: ST1020
-    - linters:
-        - stylecheck
-      text: ST1021
-    - linters:
-        - gosec
-      path: (.+)_test\.go
-      text: G601
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - devenv
+      - scripts
+      - third_party$
+      - builtin$
+      - examples$

@@ -398,7 +398,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		var receivers []*definitions.PostableApiReceiver
 		for _, apiReceiver := range cfg.AlertmanagerConfig.Receivers {
 			var recv []*definitions.PostableGrafanaReceiver
-			for _, r := range apiReceiver.GettableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, r := range apiReceiver.GrafanaManagedReceivers {
 				recv = append(recv, &definitions.PostableGrafanaReceiver{
 					UID:                   r.UID,
 					Name:                  r.Name,

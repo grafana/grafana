@@ -27,7 +27,7 @@ func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.GetOrgID())
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			c.JsonApiErr(404, "Plugin not found", nil)

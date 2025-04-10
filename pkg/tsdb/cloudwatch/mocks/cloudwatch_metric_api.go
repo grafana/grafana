@@ -34,10 +34,7 @@ func (c *FakeMetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *clo
 
 func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
 	var chunks [][]*cloudwatch.Metric
-	for {
-		if len(slice) == 0 {
-			break
-		}
+	for len(slice) != 0 {
 		if len(slice) < chunkSize {
 			chunkSize = len(slice)
 		}

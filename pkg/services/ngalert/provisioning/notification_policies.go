@@ -47,7 +47,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, "", err
 	}
 
-	if rev.Config.AlertmanagerConfig.Config.Route == nil {
+	if rev.Config.AlertmanagerConfig.Route == nil {
 		return definitions.Route{}, "", fmt.Errorf("no route present in current alertmanager config")
 	}
 
@@ -109,7 +109,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
-	revision.Config.AlertmanagerConfig.Config.Route = &tree
+	revision.Config.AlertmanagerConfig.Route = &tree
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -143,7 +143,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	revision.Config.AlertmanagerConfig.Config.Route = route
+	revision.Config.AlertmanagerConfig.Route = route
 	err = nps.ensureDefaultReceiverExists(revision.Config, defaultCfg)
 	if err != nil {
 		return definitions.Route{}, err
