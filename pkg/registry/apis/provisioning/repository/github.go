@@ -733,15 +733,16 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				logger.Error("ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 			}
 		case "removed":
-			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			previousPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
 			if err != nil {
-				logger.Debug("ignore deleted file outside of configured path", "file", f.GetFilename())
+				// do nothing as it's outside of configured path
 				continue
 			}
 
 			changes = append(changes, VersionedFileChange{
+				// FIXME: we are passing the wrong ref for incremental sync
 				Ref:    base,
-				Path:   currentPath,
+				Path:   previousPath,
 				Action: FileActionDeleted,
 			})
 		case "unchanged":
