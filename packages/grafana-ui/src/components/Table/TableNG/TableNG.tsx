@@ -69,6 +69,8 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
+  const styles = useStyles2(getStyles2);
+
   const { data, onColumnResize, width } = props;
   const gridHandle = useRef<DataGridHandle>(null);
 
@@ -78,6 +80,8 @@ export function TableNG(props: TableNGProps) {
   const [sorts, setSorts] = useState([]);
 
   const renderedRows = useMemo(() => filterAndSort(rows, filts, sorts), [rows, filts, sorts]);
+
+  // const [expandedRows]?
 
   // const [page, setPage] = useState(0);
   // const [scrollPos, setScrollPos] = useState(0);
@@ -105,8 +109,14 @@ export function TableNG(props: TableNGProps) {
       key: field.name,
       name: field.name,
       width: widths[i],
+      cellClass: field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : undefined,
     }));
-  }, [width, scrollbarWidth, data]);
+  }, [width, scrollbarWidth, data, styles.cellWrapped]);
+
+  const hasSubTable = false;
+
+  // todo: don't re-init this on each data change, only schema/config changes
+  const rowHeight = useRowHeight(columns, data, hasSubTable);
 
   return (
     <DataGrid
@@ -121,6 +131,7 @@ export function TableNG(props: TableNGProps) {
       }}
       onColumnResize={_onColumnResize}
       style={{ blockSize: '100%', scrollbarWidth: 'thin' }}
+      rowHeight={rowHeight}
     />
   );
 }
@@ -448,6 +459,20 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
+const getStyles2 = (theme: GrafanaTheme2) => ({
+  cellWrapped: css({
+    // '--rdg-border-color': theme.colors.border.medium,
+    // borderLeft: 'none',
+    whiteSpace: 'pre-line',
+    wordWrap: 'break-word',
+    // overflow: 'hidden',
+    // textOverflow: 'ellipsis',
+
+    // Reset default cell styles for custom cell component styling
+    // paddingInline: '0',
+  }),
+});
+
 const getStyles = (theme: GrafanaTheme2) => ({
   dataGrid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -624,3 +649,102 @@ function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGPr
 function filterAndSort(rows: TableRow[], filts = [], sorts = []) {
   return rows;
 }
+
+const useRowHeight = (columns: TableColumn[], data: DataFrame, hasSubTable: boolean) => {
+  const theme = useTheme2();
+
+  const wrappedColIdxs = useMemo(
+    () =>
+      data.fields.map((field) => {
+        if (field.type === FieldType.string) {
+          const { wrapText = false, type = TableCellDisplayMode.Auto } = field.config.custom?.cellOptions ?? {};
+          return wrapText && type !== TableCellDisplayMode.Image;
+        }
+        return false;
+      }),
+    [data]
+  );
+
+  const { ctx, avgCharWidth } = useMemo(() => {
+    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    // set in grafana/data in createTypography.ts
+    const letterSpacing = 0.15;
+
+    ctx.letterSpacing = `${letterSpacing}px`;
+    ctx.font = font;
+    let txt =
+      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+    const txtWidth = ctx.measureText(txt).width;
+    const avgCharWidth = txtWidth / txt.length + letterSpacing;
+
+    return {
+      ctx,
+      font,
+      avgCharWidth,
+    };
+  }, [theme.typography.fontSize, theme.typography.fontFamily]);
+
+  const rowHeight = useMemo(() => {
+    const defaultRowHeight = 35;
+
+    if (hasSubTable || wrappedColIdxs.some((v) => v)) {
+      const HPADDING = 8;
+      const BORDER_RIGHT = 0.666667;
+      const lineHeight = 22;
+      const VPADDING = 0;
+
+      const wrapWidths = columns.map((c) => Number(c.width) - 2 * HPADDING - BORDER_RIGHT);
+
+      // TODO: pass line height, row height, padding here
+      const calc = getCellHeightCalculator(ctx, lineHeight, defaultRowHeight, VPADDING);
+
+      const getRowHeight = ({ __index: rowIdx }: TableRow) => {
+        let maxLines = 1;
+        let maxLinesIdx = -1;
+        let maxLinesText = '';
+
+        for (let i = 0; i < columns.length; i++) {
+          if (wrappedColIdxs[i]) {
+            const cellText = String(columns[i].field.values[rowIdx]);
+
+            if (cellText != null) {
+              const charsPerLine = wrapWidths[i] / avgCharWidth;
+              const approxLines = cellText.length / charsPerLine;
+
+              if (approxLines > maxLines) {
+                maxLines = approxLines;
+                maxLinesIdx = i;
+                maxLinesText = cellText;
+              }
+            }
+          }
+        }
+
+        return maxLinesIdx === -1 ? defaultRowHeight : calc(maxLinesText, wrapWidths[maxLinesIdx]);
+      };
+
+      return getRowHeight;
+    }
+
+    return defaultRowHeight;
+  }, [wrappedColIdxs, hasSubTable, columns, avgCharWidth, ctx]);
+
+  return rowHeight;
+};
+
+/*
+TODO:
+
+styling
+value formatting
+sorting
+filtering
+footer reducers
+hidden
+overlay/expand on hover, active line and cell styling
+inspect? actions?
+subtable/ expand
+cell types, backgrounds
+*/

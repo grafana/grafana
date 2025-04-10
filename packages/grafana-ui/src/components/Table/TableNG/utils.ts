@@ -111,10 +111,8 @@ export function getCellHeightCalculator(
   const { count } = varPreLine(ctx);
 
   return (text: string, cellWidth: number) => {
-    const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
-    const TOTAL_PADDING = padding * 2;
-    const numLines = count(text, effectiveCellWidth);
-    const totalHeight = numLines * lineHeight + TOTAL_PADDING;
+    const numLines = count(text, cellWidth);
+    const totalHeight = numLines * lineHeight + 2 * padding;
     return Math.max(totalHeight, defaultRowHeight);
   };
 }
