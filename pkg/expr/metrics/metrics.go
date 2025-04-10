@@ -7,10 +7,11 @@ import (
 // ExprMetrics is a struct that contains all the metrics for an implementation of the expressions service
 // shared between multiple versions of expressions service, which are delineated by the subsystem string
 type ExprMetrics struct {
-	DSRequests              *prometheus.CounterVec
-	ExpressionsQuerySummary *prometheus.SummaryVec
-	SqlCommandDuration      *prometheus.HistogramVec
-	SqlCommandErrorCount    *prometheus.CounterVec
+	DSRequests                 *prometheus.CounterVec
+	ExpressionsQuerySummary    *prometheus.SummaryVec
+	SqlCommandDuration         *prometheus.HistogramVec
+	SqlCommandErrorCount       *prometheus.CounterVec
+	SqlCommandCellCountSummary *prometheus.SummaryVec
 }
 
 func newExprMetrics(subsystem string) *ExprMetrics {
@@ -39,14 +40,25 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Name:      "sql_command_duration_seconds",
 			Help:      "Duration of SQL command execution",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"ref_id"}),
+		}, []string{"status"}),
 
 		SqlCommandErrorCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: subsystem,
 			Name:      "sql_command_errors_total",
 			Help:      "Total number of SQL command execution errors",
-		}, []string{"ref_id"}),
+		}, []string{}),
+
+		SqlCommandCellCountSummary: prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Namespace:  "grafana",
+				Subsystem:  subsystem,
+				Name:       "sql_command_cell_count",
+				Help:       "Summary of the number of cells in SQL command execution",
+				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			},
+			[]string{"status"},
+		),
 	}
 }
 
@@ -62,6 +74,8 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
 
 		SqlCommandErrorCount: newExprMetrics(metricsSubSystem).SqlCommandErrorCount,
+
+		SqlCommandCellCountSummary: newExprMetrics(metricsSubSystem).SqlCommandCellCountSummary,
 	}
 
 	if reg != nil {
@@ -70,6 +84,7 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.ExpressionsQuerySummary,
 			m.SqlCommandDuration,
 			m.SqlCommandErrorCount,
+			m.SqlCommandCellCountSummary,
 		)
 	}
 
@@ -96,6 +111,7 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.ExpressionsQuerySummary,
 			m.SqlCommandDuration,
 			m.SqlCommandErrorCount,
+			m.SqlCommandCellCountSummary,
 		)
 	}
 

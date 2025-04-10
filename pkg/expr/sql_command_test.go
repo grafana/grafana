@@ -161,11 +161,13 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify error count was not incremented
-	errorCount := testutil.ToFloat64(m.SqlCommandErrorCount.WithLabelValues("A"))
-	require.Equal(t, 0.0, errorCount, "Expected error count to be 0")
+	require.Equal(t, 0, testutil.CollectAndCount(m.SqlCommandErrorCount), "Expected error metric not to be recorded")
 
 	// Verify duration was recorded
-	require.Greater(t, testutil.CollectAndCount(m.SqlCommandDuration), 0, "Expected duration metric to be recorded")
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")
+
+	// Verify cell count was recorded
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCountSummary), "Expected cell count metric to be recorded")
 }
 
 type testTracer struct {

@@ -103,14 +103,18 @@ func (gr *SQLCommand) NeedsVars() []string {
 func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathExprResult mathexp.Results, resultError error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
+	tc := int64(0)
 
 	defer func() {
 		span.End()
+		statusLabel := "ok"
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		metrics.SqlCommandDuration.WithLabelValues(gr.refID).Observe(duration)
 		if resultError != nil {
-			metrics.SqlCommandErrorCount.WithLabelValues(gr.refID).Inc()
+			statusLabel = "error"
+			metrics.SqlCommandErrorCount.WithLabelValues().Inc()
 		}
+		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
+		metrics.SqlCommandCellCountSummary.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
 
 	allFrames := []*data.Frame{}
@@ -124,14 +128,15 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
-	totalCells := totalCells(allFrames)
+	tc = totalCells(allFrames)
+
 	// limit of 0 or less means no limit (following convention)
-	if gr.limit > 0 && totalCells > gr.limit {
+	if gr.limit > 0 && tc > gr.limit {
 		return mathexp.Results{},
 			fmt.Errorf(
 				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
 				gr.limit,
-				totalCells,
+				tc,
 			)
 	}
 
