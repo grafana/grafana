@@ -1,19 +1,24 @@
-import * as React from 'react';
+import { useState } from 'react';
 
 import { getCellLinks } from '../../../utils';
-import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
+import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellDisplayMode, TableCellProps } from '../types';
-import { getCellOptions } from '../utils';
+import { DataLinksActionsTooltipCoords, getCellOptions, getDataLinksActionsTooltipUtils } from '../utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
 export const ImageCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps } = props;
+  const { field, cell, tableStyles, row, cellProps, actions } = props;
   const cellOptions = getCellOptions(field);
   const { title, alt } =
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+
+  const links = getCellLinks(field, row) || [];
+
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   // The image element
   const img = (
@@ -27,36 +32,28 @@ export const ImageCell = (props: TableCellProps) => {
   );
 
   return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
+    <div
+      {...cellProps}
+      className={tableStyles.cellContainer}
+      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      onClick={({ clientX, clientY }) => {
+        setTooltipCoords({ clientX, clientY });
+      }}
+    >
       {/* If there are data links/actions, we render them with image */}
       {/* Otherwise we simply render the image */}
-      {hasLinks ? (
-        <DataLinksContextMenu
-          style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
-          links={() => getCellLinks(field, row) || []}
-        >
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <div
-                  onClick={api.openMenu}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter' && api.openMenu) {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-                      api.openMenu(e as any);
-                    }
-                  }}
-                >
-                  {img}
-                </div>
-              );
-            } else {
-              return img;
-            }
-          }}
-        </DataLinksContextMenu>
+      {shouldShowLink ? (
+        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
+          {img}
+        </a>
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          actions={actions}
+          value={img}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
         img
       )}

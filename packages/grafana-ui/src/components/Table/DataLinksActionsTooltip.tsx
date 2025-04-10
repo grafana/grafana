@@ -9,11 +9,13 @@ import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
 
+import { DataLinksActionsTooltipCoords } from './utils';
+
 interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
   value?: string | ReactElement;
-  coords: { clientX: number; clientY: number };
+  coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
 }
 

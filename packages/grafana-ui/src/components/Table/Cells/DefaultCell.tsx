@@ -10,7 +10,12 @@ import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableStyles } from '../TableRT/styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
-import { getCellColors, getCellOptions } from '../utils';
+import {
+  DataLinksActionsTooltipCoords,
+  getCellColors,
+  getCellOptions,
+  getDataLinksActionsTooltipUtils,
+} from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
@@ -73,10 +78,9 @@ export const DefaultCell = (props: TableCellProps) => {
   const { key, ...rest } = cellProps;
   const links = getCellLinks(field, row) || [];
 
-  const [tooltipCoords, setTooltipCoords] = useState<{ clientX: number; clientY: number }>();
-  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
-  const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
 
   return (
     <div
