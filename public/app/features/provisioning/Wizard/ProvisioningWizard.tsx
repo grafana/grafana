@@ -118,17 +118,14 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       if (activeStep === 'connection') {
         return;
       }
-      if (status === 'error' && errorMessage) {
-        setStepStatusInfo({ status: 'error', error: errorMessage });
-      } else if (status === 'error') {
-        // Require error message for error status
-        setStepStatusInfo({ status: 'error', error: 'An unexpected error occurred' });
+      if (status === 'error') {
+        setStepStatusInfo({ status: 'error', error: errorMessage || 'An unexpected error occurred' });
       } else {
         setStepStatusInfo({ status });
       }
 
       if (status === 'success') {
-        setCompletedSteps((prev) => (prev.includes(activeStep) ? prev : [...prev, activeStep]));
+        setCompletedSteps((prev) => [...prev, activeStep]);
       }
     },
     [activeStep]
@@ -172,16 +169,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   );
 
   const handleNext = async () => {
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     const isLastStep = currentStepIndex === steps.length - 1;
-
     if (activeStep === 'connection') {
-      // Validate repository form data before proceeding
-      const isValid = await trigger('repository');
-      if (!isValid) {
-        return;
-      }
-
       // Pick a name nice name based on type+settings
       const current = getValues();
       switch (current.repository.type) {
@@ -233,6 +222,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         const name = rsp.data?.metadata?.name;
         if (name) {
           setValue('repositoryName', name);
+          setStepStatusInfo({ status: 'success' });
           handleNext();
         } else {
           console.error('Saved repository without a name:', rsp);
