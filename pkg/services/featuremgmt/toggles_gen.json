@@ -1388,16 +1388,20 @@
     {
       "metadata": {
         "name": "grafanaconThemes",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744293476104",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-10 13:57:56.104154 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
