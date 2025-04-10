@@ -152,7 +152,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   );
 
   // Initial set up of the Metrics Browser
-  // This is called when when "Clear" button clicked.
+  // This is called when "Clear" button clicked.
   const initialize = useCallback(
     async (metric: string, labelValues: Record<string, string[]>) => {
       const selector = buildSelector(metric, labelValues);
@@ -184,6 +184,11 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Handles metric selection changes.
+  // If a metric selected it fetches the labels of that metric
+  // Otherwise it fetches all the labels.
+  // Based on the fetched labels, label value list is updated.
+  // If a label key is not present, its values are removed from the list.
   const handleSelectedMetricChange = async (metricName: string) => {
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
     const selector = buildSafeSelector(newSelectedMetric, selectedLabelValues);
@@ -205,6 +210,9 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     }
   };
 
+  // Handles when a label key selection changed
+  // If it's a selection, it fetches the values based on the up-to-date selector
+  // If it's a de-selection, it clears the values from the list
   const handleSelectedLabelKeyChange = async (labelKey: string) => {
     const newSelectedLabelKeys = [...selectedLabelKeys];
     const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
@@ -212,17 +220,19 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     const newSelectedLabelValues: Record<string, string[]> = { ...selectedLabelValues };
 
     if (lkIdx === -1) {
+      // Label key is not in the selectedLabelKeys. Let's add it.
       newSelectedLabelKeys.push(labelKey);
       const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
       const [values] = await fetchLabelValues([labelKey], safeSelector);
       newLabelValues[labelKey] = values[labelKey];
     } else {
+      // Label key is in the selectedLabelKeys. Removing it and its values.
       newSelectedLabelKeys.splice(lkIdx, 1);
       delete newLabelValues[labelKey];
       delete newSelectedLabelValues[labelKey];
     }
-    localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
 
+    localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
     setSelectedLabelKeys(newSelectedLabelKeys);
     setLabelValues(newLabelValues);
     setSelectedLabelValues(newSelectedLabelValues);
@@ -231,7 +241,12 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Handle the labelValue click based on isSelected value.
   // If it is false we need to remove it from selected values
   // If it is true then we need to add it to selected values
-  // The change should effect metrics list and label keys
+  // Then we first fetch the values of each selected label key using the up-to-date selector
+  // We merged the fetched and existing list for the list we interact.
+  // Because we might want to select more labels from the same list.
+  // For other value lists we use the intersection of fetched and selected values.
+  // Then we fetch the metrics based on new selector we have after value fetch
+  // Then we fetch the labels keys of the metrics we fetched.
   const handleSelectedLabelValueChange = async (labelKey: string, labelValue: string, isSelected: boolean) => {
     const newSelectedLabelValues = { ...selectedLabelValues };
     let newLastSelectedLabelKey = lastSelectedLabelKey;
@@ -304,6 +319,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setSelectedLabelValues(newSelectedLabelValues);
   };
 
+  // Validating if the selections we have can create a valid query
   const handleValidation = async () => {
     const selector = buildSelector(selectedMetric, selectedLabelValues);
     setValidationStatus(`Validating selector ${selector}`);
@@ -318,6 +334,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     }
   };
 
+  // Clears all the selections even the ones in localStorage
   const handleClear = () => {
     localStorage.setItem(LAST_USED_LABELS_KEY, '[]');
 
