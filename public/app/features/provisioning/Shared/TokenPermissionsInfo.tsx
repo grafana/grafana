@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 export function TokenPermissionsInfo() {
@@ -9,36 +9,34 @@ export function TokenPermissionsInfo() {
 
   return (
     <div className={styles.container}>
-      <div>
-        <Trans i18nKey="provisioning.token-permissions-info.github-instructions">
-          Go to{' '}
-          <TextLink external href="https://github.com/settings/personal-access-tokens/new">
-            GitHub Personal Access Tokens
-          </TextLink>{' '}
-          and click <strong>"Fine-grained token"</strong>. Make sure to include these permissions:
-        </Trans>
-      </div>
+      {/* GitHub UI is English only, so these strings are not translated */}
+      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+      <Stack gap={0.5}>
+        <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
+        <TextLink external href="https://github.com/settings/personal-access-tokens/new">
+          GitHub Personal Access Tokens
+        </TextLink>
+        <Trans i18nKey="provisioning.token-permissions-info.and-click">and click</Trans>
+        <strong>"Fine-grained token".</strong>
+        <Trans i18nKey="provisioning.token-permissions-info.make-sure">Make sure to include these permissions</Trans>:
+      </Stack>
 
       <ul className={styles.permissionsList}>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <li>
-          <Trans i18nKey="provisioning.token-permissions-info.content-permission">
-            Content: <span className={styles.accessLevel}>Read and write</span>
-          </Trans>
+          Content: <span className={styles.accessLevel}>Read and write</span>
         </li>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <li>
-          <Trans i18nKey="provisioning.token-permissions-info.metadata-permission">
-            Metadata: <span className={styles.accessLevel}>Read only</span>
-          </Trans>
+          Metadata: <span className={styles.accessLevel}>Read only</span>
         </li>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <li>
-          <Trans i18nKey="provisioning.token-permissions-info.pull-requests-permission">
-            Pull requests: <span className={styles.accessLevel}>Read and write</span>
-          </Trans>
+          Pull requests: <span className={styles.accessLevel}>Read and write</span>
         </li>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <li>
-          <Trans i18nKey="provisioning.token-permissions-info.webhooks-permission">
-            Webhooks: <span className={styles.accessLevel}>Read and write</span>
-          </Trans>
+          Webhooks: <span className={styles.accessLevel}>Read and write</span>
         </li>
       </ul>
     </div>
