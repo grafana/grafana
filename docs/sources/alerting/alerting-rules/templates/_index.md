@@ -106,7 +106,7 @@ Both types of templates are written in the Go templating system. However, it's i
 
 Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
 
-Grafana includes several optional annotations, such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
+Grafana includes several optional annotations, such as `description`, `summary`, and `runbook_url`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
 
 Here’s an example of a `summary` annotation explaining why the alert was triggered, using plain text.
 
@@ -176,7 +176,7 @@ Template labels when the labels returned by your queries are insufficient. For i
 
 Here’s an example of templating a `severity` label based on the query value.
 
-```
+```go
 {{ if (gt $values.A.Value 90.0) -}}
 critical
 {{ else if (gt $values.A.Value 80.0) -}}
@@ -190,9 +190,7 @@ low
 
 In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
 
-{{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create numerous unique alert instances—one for each distinct label value. Instead, use annotations for query values.
-{{% /admonition %}}
+{{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### How to template a label
 

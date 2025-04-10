@@ -32,6 +32,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService,                      // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
+			featuremgmt.FlagGrafanaAdvisor,
 		},
 	})
 
@@ -63,16 +64,25 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "dashboard.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
+		Group:   "dashboard.grafana.app",
+		Version: "v1alpha1",
 	}, {
-		Group:   "iam.grafana.app",
+		Group:   "dashboard.grafana.app",
+		Version: "v2alpha1",
+	}, {
+		Group:   "folder.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "iam.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "investigations.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "advisor.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

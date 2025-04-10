@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,11 +35,10 @@ var (
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
-	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
-	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
-	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
-	ErrAlertRuleUniqueConstraintViolation = errors.New("rule title under the same organisation and folder should be unique")
-	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	ErrCannotEditNamespace        = errors.New("user does not have permissions to edit the namespace")
+	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
+	ErrAlertRuleFailedValidation  = errors.New("invalid alert rule")
+	ErrQuotaReached               = errors.New("quota has been exceeded")
 	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
 	// in its annotations or the dashboard does not exist.
 	ErrNoDashboard = errors.New("no dashboard")
@@ -242,10 +242,10 @@ func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKe
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
 func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
-		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
-			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		if g[i].FolderUID == g[j].FolderUID {
+			return g[i].Title < g[j].Title
 		}
-		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+		return g[i].FolderUID < g[j].FolderUID
 	})
 }
 
@@ -289,11 +289,17 @@ type AlertRule struct {
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For                  time.Duration
+	KeepFiringFor        time.Duration
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
 	Metadata             AlertRuleMetadata
+	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
+	// required before resolving an alert state (a dimension) when data is missing.
+	// If nil, alerts resolve after 2 missing evaluation intervals
+	// (i.e., resolution occurs during the second evaluation where data is absent).
+	MissingSeriesEvalsToResolve *int
 }
 
 type AlertRuleMetadata struct {
@@ -315,7 +321,7 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.Folder
+type Namespace folder.FolderReference
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
@@ -397,19 +403,18 @@ func WithoutInternalLabels() LabelOption {
 }
 
 func (alertRule *AlertRule) ImportedFromPrometheus() bool {
-	if alertRule.Metadata.PrometheusStyleRule == nil {
-		return false
-	}
-
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != ""
+	_, err := alertRule.PrometheusRuleDefinition()
+	return err == nil
 }
 
-func (alertRule *AlertRule) PrometheusRuleDefinition() string {
-	if !alertRule.ImportedFromPrometheus() {
-		return ""
+func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		if alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition != "" {
+			return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition, nil
+		}
 	}
 
-	return alertRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition
+	return "", fmt.Errorf("prometheus rule definition is missing")
 }
 
 // GetLabels returns the labels specified as part of the alert rule.
@@ -579,6 +584,18 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
 }
 
+// GetMissingSeriesEvalsToResolve returns the number of consecutive evaluation intervals
+// to wait before resolving an alert rule instance when its data is missing.
+// If not configured, it returns the default value (2), which means the alert
+// resolves after missing for two evaluation intervals.
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+	if alertRule.MissingSeriesEvalsToResolve == nil {
+		return 2 // default value
+	}
+
+	return *alertRule.MissingSeriesEvalsToResolve
+}
+
 // PreSave sets default values and loads the updated model for each alert query.
 func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
@@ -632,6 +649,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
 	}
 
+	if alertRule.KeepFiringFor < 0 {
+		return fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.Labels) > 0 {
 		for label := range alertRule.Labels {
 			if _, ok := LabelsUserCannotSpecify[label]; ok {
@@ -658,6 +679,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 
 	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
 		return err
+	}
+
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
+		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
 	}
 
 	return nil
@@ -709,25 +734,27 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		return nil
 	}
 	result := AlertRule{
-		ID:              alertRule.ID,
-		GUID:            alertRule.GUID,
-		OrgID:           alertRule.OrgID,
-		Title:           alertRule.Title,
-		Condition:       alertRule.Condition,
-		Updated:         alertRule.Updated,
-		UpdatedBy:       alertRule.UpdatedBy,
-		IntervalSeconds: alertRule.IntervalSeconds,
-		Version:         alertRule.Version,
-		UID:             alertRule.UID,
-		NamespaceUID:    alertRule.NamespaceUID,
-		RuleGroup:       alertRule.RuleGroup,
-		RuleGroupIndex:  alertRule.RuleGroupIndex,
-		NoDataState:     alertRule.NoDataState,
-		ExecErrState:    alertRule.ExecErrState,
-		For:             alertRule.For,
-		Record:          alertRule.Record,
-		IsPaused:        alertRule.IsPaused,
-		Metadata:        alertRule.Metadata,
+		ID:                          alertRule.ID,
+		GUID:                        alertRule.GUID,
+		OrgID:                       alertRule.OrgID,
+		Title:                       alertRule.Title,
+		Condition:                   alertRule.Condition,
+		Updated:                     alertRule.Updated,
+		UpdatedBy:                   alertRule.UpdatedBy,
+		IntervalSeconds:             alertRule.IntervalSeconds,
+		Version:                     alertRule.Version,
+		UID:                         alertRule.UID,
+		NamespaceUID:                alertRule.NamespaceUID,
+		RuleGroup:                   alertRule.RuleGroup,
+		RuleGroupIndex:              alertRule.RuleGroupIndex,
+		NoDataState:                 alertRule.NoDataState,
+		ExecErrState:                alertRule.ExecErrState,
+		For:                         alertRule.For,
+		Record:                      alertRule.Record,
+		IsPaused:                    alertRule.IsPaused,
+		Metadata:                    alertRule.Metadata,
+		KeepFiringFor:               alertRule.KeepFiringFor,
+		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
 	}
 
 	if alertRule.DashboardUID != nil {
@@ -789,7 +816,9 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.Condition = ""
 	rule.For = 0
+	rule.KeepFiringFor = 0
 	rule.NotificationSettings = nil
+	rule.MissingSeriesEvalsToResolve = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -937,11 +966,17 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
+	if ruleToPatch.KeepFiringFor == -1 {
+		ruleToPatch.KeepFiringFor = existingRule.KeepFiringFor
+	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 	if !ruleToPatch.HasEditorSettings {
 		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
+	}
+	if ruleToPatch.MissingSeriesEvalsToResolve != nil && *ruleToPatch.MissingSeriesEvalsToResolve == -1 {
+		ruleToPatch.MissingSeriesEvalsToResolve = existingRule.MissingSeriesEvalsToResolve
 	}
 
 	if ruleToPatch.GUID == "" {
@@ -959,13 +994,22 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 
 type RulesGroup []*AlertRule
 
+func RulesGroupComparer(a, b *AlertRule) int {
+	if a.RuleGroupIndex < b.RuleGroupIndex {
+		return -1
+	} else if a.RuleGroupIndex > b.RuleGroupIndex {
+		return 1
+	}
+	if a.ID < b.ID {
+		return -1
+	} else if a.ID > b.ID {
+		return 1
+	}
+	return 0
+}
+
 func (g RulesGroup) SortByGroupIndex() {
-	sort.Slice(g, func(i, j int) bool {
-		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
-			return g[i].ID < g[j].ID
-		}
-		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
-	})
+	slices.SortFunc(g, RulesGroupComparer)
 }
 
 func SortAlertRulesByGroupIndex(rules []AlertRule) {
@@ -1011,6 +1055,8 @@ type Record struct {
 	Metric string
 	// From contains a query RefID, indicating which expression node is the output of the recording rule.
 	From string
+	// TargetDatasourceUID is the data source to write the result of the recording rule.
+	TargetDatasourceUID string
 }
 
 func (r *Record) Fingerprint() data.Fingerprint {
@@ -1025,6 +1071,7 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 	writeString(r.Metric)
 	writeString(r.From)
+	writeString(r.TargetDatasourceUID)
 	return data.Fingerprint(h.Sum64())
 }
 

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -672,6 +673,42 @@ func TestAlertRuleService(t *testing.T) {
 				name:   "should not be able to update from provenance file to none",
 				from:   models.ProvenanceFile,
 				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+			{
+				name:   "should be able to update from provenance none to 'converted prometheus'",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance 'converted prometheus' to none",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceNone,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to api",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to file",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to 'converted prometheus'",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to 'converted prometheus'",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceConvertedPrometheus,
 				errNil: false,
 			},
 		}
@@ -1726,7 +1763,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestDeleteRuleGroups(t *testing.T) {
 	orgID1 := rand.Int63()
 	orgID2 := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID1}
+	u := &user.SignedInUser{OrgID: orgID1, UserUID: "test-test"}
 
 	// Create groups across different orgs and namespaces
 	groupKey1 := models.AlertRuleGroupKey{
@@ -1805,6 +1842,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 			// Verify only rules from group1 in org1 were deleted
 			deletes := getDeletedRules(t, ruleStore)
 			require.Len(t, deletes, 1)
+			require.Equal(t, "test-test", deletes[0].userID)
 			require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
 		})
 
@@ -1956,7 +1994,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, ac, inProcBus, dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -2045,8 +2083,9 @@ func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 }
 
 type deleteRuleOperation struct {
-	orgID int64
-	uids  []string
+	orgID  int64
+	userID string
+	uids   []string
 }
 
 func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOperation {
@@ -2058,12 +2097,20 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 		orgID, ok := q.Params[0].(int64)
 		require.True(t, ok, "orgID parameter should be int64")
 
-		uids, ok := q.Params[1].([]string)
+		uid := ""
+		userUID, ok := q.Params[1].(*models.UserUID)
+		require.True(t, ok, "parameter should be UserUID")
+		if userUID != nil {
+			uid = string(*userUID)
+		}
+
+		uids, ok := q.Params[3].([]string)
 		require.True(t, ok, "uids parameter should be []string")
 
 		operations = append(operations, deleteRuleOperation{
-			orgID: orgID,
-			uids:  uids,
+			orgID:  orgID,
+			userID: uid,
+			uids:   uids,
 		})
 	}
 	return operations
@@ -2077,9 +2124,10 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger:        log.NewNopLogger(),
-		FolderService: folderService,
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		Logger:         log.NewNopLogger(),
+		FolderService:  folderService,
+		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

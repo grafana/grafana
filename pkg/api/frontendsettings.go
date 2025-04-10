@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
@@ -103,7 +102,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
-	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +154,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
 			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
+			Translations:    panel.Translations,
 		}
 	}
 
@@ -174,7 +174,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
 	featureToggles := hs.Features.GetEnabled(c.Req.Context())
@@ -196,6 +195,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
+		LiveMessageSizeLimit:                hs.Cfg.LiveMessageSizeLimit,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
@@ -228,26 +228,24 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
 		ExternalUserMngAnalytics:            hs.Cfg.ExternalUserMngAnalytics,
 		ExternalUserMngAnalyticsParams:      hs.Cfg.ExternalUserMngAnalyticsParams,
-		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
-		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
-		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
-		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
-		TrustedTypesDefaultPolicyEnabled:    trustedTypesDefaultPolicyEnabled,
-		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
-		DateFormats:                         hs.Cfg.DateFormats,
-		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		EnableFrontendSandboxForPlugins:     hs.Cfg.EnableFrontendSandboxForPlugins,
-		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
-		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
-		CloudMigrationIsTarget:              isCloudMigrationTarget,
-		CloudMigrationFeedbackURL:           hs.Cfg.CloudMigration.FeedbackURL,
-		CloudMigrationPollIntervalMs:        int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
-		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
-		RootFolderUID:                       accesscontrol.GeneralFolderUID,
-		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
-		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
-		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
-		ExploreHideLogsDownload:             hs.Cfg.ExploreHideLogsDownload,
+		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
+		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
+		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
+		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
+		DateFormats:                      hs.Cfg.DateFormats,
+		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
+		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
+		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
+		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationIsTarget:           isCloudMigrationTarget,
+		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
+		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
+		RootFolderUID:                    accesscontrol.GeneralFolderUID,
+		LocalFileSystemAvailable:         hs.Cfg.LocalFileSystemAvailable,
+		ReportingStaticContext:           hs.Cfg.ReportingStaticContext,
+		ExploreDefaultTimeOffset:         hs.Cfg.ExploreDefaultTimeOffset,
+		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,
 
 		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
 
@@ -280,7 +278,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
 		RendererDefaultImageHeight:       hs.Cfg.RendererDefaultImageHeight,
 		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
-		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
@@ -340,6 +337,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
 
+	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
+
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
@@ -367,6 +366,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
+		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
 	}
 
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
@@ -404,7 +404,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	// Set the kubernetes namespace
-	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
+	frontendSettings.Namespace = hs.namespacer(c.OrgID)
 
 	// experimental scope features
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
@@ -431,8 +431,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	defer span.End()
 
 	orgDataSources := make([]*datasources.DataSource, 0)
-	if c.SignedInUser.GetOrgID() != 0 {
-		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+	if c.GetOrgID() != 0 {
+		query := datasources.GetDataSourcesQuery{OrgID: c.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
@@ -489,6 +489,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			Translations:              plugin.Translations,
 		}
 
 		if ds.JsonData == nil {
@@ -571,8 +572,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
-					BaseURL: ds.BaseURL,
-					Angular: ds.Angular,
+					BaseURL:      ds.BaseURL,
+					Angular:      ds.Angular,
+					Translations: ds.Translations,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -597,6 +599,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
+		Translations:    plugin.Translations,
 	}
 
 	if settings.Enabled {

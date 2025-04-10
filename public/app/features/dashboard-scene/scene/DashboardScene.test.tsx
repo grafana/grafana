@@ -48,7 +48,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    angularSupportEnabled: true,
     panels: {
       'briangann-datatable-panel': {
         id: 'briangann-datatable-panel',
@@ -81,7 +80,7 @@ locationUtil.initialize({
 });
 
 const worker = createWorker();
-mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+mockResultsOfDetectChangesWorker({ hasChanges: true });
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -224,7 +223,7 @@ describe('DashboardScene', () => {
         const prevMeta = { ...scene.state.meta };
 
         // The worker only detects changes in the model, so the folder change should be detected anyway
-        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
           meta: {
@@ -450,6 +449,27 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+      });
+
+      it('Should select new panel', () => {
+        scene.state.editPane.activate();
+
+        const panel = scene.onCreateNewPanel();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(panel);
+      });
+
+      it('Should select new row', () => {
+        scene.state.editPane.activate();
+
+        const row = scene.onCreateNewRow();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
+      });
+
+      it('Should select new tab', () => {
+        scene.state.editPane.activate();
+
+        const tab = scene.onCreateNewTab();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(tab);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -685,7 +705,7 @@ describe('DashboardScene', () => {
     });
 
     it('A change to a variable state should set isDirty true', () => {
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       const variable = new TestVariable({ name: 'A' });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [variable] }),
@@ -709,13 +729,10 @@ describe('DashboardScene', () => {
       scene.activate();
       scene.onEnterEditMode();
 
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       variable.setState({ name: 'B' });
       expect(scene.state.isDirty).toBe(true);
-      mockResultsOfDetectChangesWorker(
-        // No changes, it is the same name than before comparing saving models
-        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
-      );
+      mockResultsOfDetectChangesWorker({ hasChanges: false });
       variable.setState({ name: 'A' });
       expect(scene.state.isDirty).toBe(false);
     });
@@ -778,75 +795,6 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
-    });
-  });
-
-  describe('When a dashboard contain angular panels', () => {
-    it('should return true if the dashboard contains angular panels', () => {
-      // create a scene with angular panels inside
-      const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'briangann-datatable-panel',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
-      });
-
-      scene.activate();
-
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
-    });
-    it('should return true if the dashboard contains explicitControllerMigration panels', () => {
-      // create a scene with angular panels inside
-      const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'graph',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
-      });
-
-      scene.activate();
-
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
     });
   });
 });
@@ -938,21 +886,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   return scene;
 }
 
-function mockResultsOfDetectChangesWorker({
-  hasChanges,
-  hasTimeChanges,
-  hasVariableValueChanges,
-}: {
-  hasChanges: boolean;
-  hasTimeChanges: boolean;
-  hasVariableValueChanges: boolean;
-}) {
+function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
   jest.mocked(worker.postMessage).mockImplementationOnce(() => {
     worker.onmessage?.({
       data: {
-        hasChanges: hasChanges ?? true,
-        hasTimeChanges: hasTimeChanges ?? true,
-        hasVariableValueChanges: hasVariableValueChanges ?? true,
+        hasChanges,
       },
     } as unknown as MessageEvent);
   });

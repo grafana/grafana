@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -264,8 +265,6 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
-
-	IncludeDeleted bool // only supported when using unified storage
 }
 
 type DashboardTagCloudItem struct {
@@ -289,8 +288,9 @@ type GetDashboardsByPluginIDQuery struct {
 }
 
 type DashboardRef struct {
-	UID  string `xorm:"uid"`
-	Slug string
+	UID       string `xorm:"uid"`
+	Slug      string
+	FolderUID string `xorm:"folder_uid"`
 }
 
 type GetDashboardRefByIDQuery struct {
@@ -438,9 +438,10 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	ProvisionedRepo       string
-	ProvisionedPath       string
-	ProvisionedReposNotIn []string
+	ManagedBy            utils.ManagerKind
+	ManagerIdentity      string
+	SourcePath           string
+	ManagerIdentityNotIn []string
 
 	Filters []any
 

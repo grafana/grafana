@@ -53,7 +53,7 @@ func generateLogin(prefix string, orgId int64, name string) string {
 	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
 	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
 	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
-	return strings.Replace(generatedLogin, " ", "-", -1)
+	return strings.ReplaceAll(generatedLogin, " ", "-")
 }
 
 // CreateServiceAccount creates service account
@@ -169,7 +169,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId, serviceAccountId int64) error {
 	user := user.User{}
 	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-		orgId, serviceAccountId, s.sqlStore.GetDialect().BooleanStr(true)).Get(&user)
+		orgId, serviceAccountId, s.sqlStore.GetDialect().BooleanValue(true)).Get(&user)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereConditions = append(
 				whereConditions,
 				"is_disabled = ?")
-			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
+			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanValue(true))
 		case serviceaccounts.FilterOnlyExternal:
 			whereConditions = append(
 				whereConditions,

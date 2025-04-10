@@ -53,7 +53,7 @@ import (
 var testData embed.FS
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	testsuite.RunButSkipOnSpanner(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
@@ -781,7 +781,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
@@ -825,7 +825,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Remove the extra rules.
 	ruleGroup.Rules = ruleGroup.Rules[:1]
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -840,7 +840,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
 
 	ruleGroup.Rules = nil
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -1107,7 +1107,7 @@ func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
 
 	// We modify the receiver, this should cause the POST to be rejected.
 	userDefinedReceiver := amConfig.AlertmanagerConfig.Receivers[slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.Receiver.Name == "user-defined"
+		return receiver.Name == "user-defined"
 	})]
 	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
 	success, err := legacyCli.PostConfiguration(t, amConfig)
@@ -1187,7 +1187,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})

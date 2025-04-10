@@ -1,8 +1,8 @@
 import { cx } from '@emotion/css';
 
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { Trans } from 'app/core/internationalization';
+import { getSelectStyles } from '@grafana/ui/internal';
+import { t, Trans } from 'app/core/internationalization';
 import { Role } from 'app/types';
 
 import { RoleMenuOption } from './RoleMenuOption';
@@ -40,13 +40,14 @@ export const RolePickerSubMenu = ({
   return (
     <div
       className={cx(customStyles.subMenu, { [customStyles.subMenuLeft]: showOnLeft })}
-      aria-label="Role picker submenu"
+      aria-label={t('role-picker.sub-menu-aria-label', 'Role picker submenu')}
     >
       <ScrollContainer maxHeight={`${MENU_MAX_HEIGHT}px`}>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
             <RoleMenuOption
               data={option}
+              useFilteredDisplayName={false}
               key={i}
               isSelected={
                 !!(

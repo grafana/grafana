@@ -9,6 +9,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
+import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -118,7 +119,10 @@ export function InstallControlsButton({
     }
   };
 
-  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin) ?? false;
+  const uninstallTooltip = isDisabledAngularPlugin(plugin)
+    ? 'To uninstall this plugin, upgrade to a compatible version first, then uninstall it.'
+    : '';
 
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
@@ -137,7 +141,13 @@ export function InstallControlsButton({
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
       />
-      <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
+      <Button
+        variant="destructive"
+        disabled={disableUninstall}
+        onClick={showConfirmModal}
+        title={uninstallTitle}
+        tooltip={uninstallTooltip}
+      >
         {uninstallBtnText}
       </Button>
     </>
@@ -170,7 +180,9 @@ export function InstallControlsButton({
       </Stack>
     );
   }
-  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
+
+  const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
@@ -179,6 +191,10 @@ export function InstallControlsButton({
 }
 
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
+  if (isDisabledAngularPlugin(plugin)) {
+    return true;
+  }
+
   if (config.pluginAdminExternalManageEnabled) {
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }

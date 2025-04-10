@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -56,10 +57,22 @@ type Folder struct {
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
 
-	// When the folder belongs to a repository
+	// The folder is managed by an external process
 	// NOTE: this is only populated when folders are managed by unified storage
 	// This is not ever used by xorm, but the translation functions flow through this type
-	Repository string `json:"repository,omitempty"`
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
+}
+
+type FolderReference struct {
+	// Deprecated: use UID instead
+	ID        int64  `xorm:"pk autoincr 'id'"`
+	UID       string `xorm:"uid"`
+	Title     string
+	ParentUID string `xorm:"parent_uid"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -86,6 +99,16 @@ func (f *Folder) WithURL() *Folder {
 	// copy of dashboards.GetFolderURL()
 	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
 	return f
+}
+
+func (f *Folder) ToFolderReference() *FolderReference {
+	return &FolderReference{
+		ID:        f.ID,
+		UID:       f.UID,
+		Title:     f.Title,
+		ParentUID: f.ParentUID,
+		ManagedBy: f.ManagedBy,
+	}
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -173,6 +196,10 @@ type GetFoldersQuery struct {
 	WithFullpath     bool
 	WithFullpathUIDs bool
 	BatchSize        uint64
+
+	// Pagination options
+	Limit int64
+	Page  int64
 
 	// OrderByTitle is used to sort the folders by title
 	// Set to true when ordering is meaningful (used for listing folders)

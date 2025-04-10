@@ -9,6 +9,7 @@ import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, Role, TeamDTO } from 'app/types';
 
 const pageNav: NavModelItem = {
@@ -51,11 +52,16 @@ export const CreateTeam = (): JSX.Element => {
       <Page.Contents>
         <form onSubmit={handleSubmit(createTeam)} style={{ maxWidth: '600px' }}>
           <FieldSet>
-            <Field label="Name" required invalid={!!errors.name} error="Team name is required">
+            <Field
+              label={t('teams.create-team.label-name', 'Name')}
+              required
+              invalid={!!errors.name}
+              error="Team name is required"
+            >
               <Input {...register('name', { required: true })} id="team-name" />
             </Field>
             {contextSrv.licensedAccessControlEnabled() && (
-              <Field label="Role">
+              <Field label={t('teams.create-team.label-role', 'Role')}>
                 <TeamRolePicker
                   teamId={0}
                   roleOptions={roleOptions}
@@ -68,15 +74,19 @@ export const CreateTeam = (): JSX.Element => {
               </Field>
             )}
             <Field
-              label={'Email'}
-              description={'This is optional and is primarily used for allowing custom team avatars.'}
+              label={t('teams.create-team.label-email', 'Email')}
+              description={t(
+                'teams.create-team.description-email',
+                'This is optional and is primarily used for allowing custom team avatars'
+              )}
             >
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
             </Field>
           </FieldSet>
 
           <Button type="submit" variant="primary">
-            Create
+            <Trans i18nKey="teams.create-team.create">Create</Trans>
           </Button>
         </form>
       </Page.Contents>

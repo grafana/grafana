@@ -16,6 +16,7 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  Tag,
   TextLink,
   useStyles2,
 } from '@grafana/ui';
@@ -43,6 +44,7 @@ const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => 
   memberCount: 0,
   name: '',
   orgId: 0,
+  isProvisioned: false,
 }));
 
 export const TeamList = ({
@@ -103,7 +105,12 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
+            <TextLink
+              color="primary"
+              inline={false}
+              href={`/org/teams/edit/${original.uid}`}
+              title={t('teams.team-list.columns.title-edit-team', 'Edit team')}
+            >
               {value}
             </TextLink>
           );
@@ -162,6 +169,16 @@ export const TeamList = ({
           ]
         : []),
       {
+        id: 'isProvisioned',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => {
+          if (!hasFetched) {
+            return <Skeleton width={240} />;
+          }
+          return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
+        },
+      },
+      {
         id: 'actions',
         header: '',
         disableGrow: true,
@@ -176,21 +193,27 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+          const canDelete =
+            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
+            !original.isProvisioned;
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <LinkButton
                   href={`org/teams/edit/${original.uid}`}
-                  aria-label={`Edit team ${original.name}`}
+                  aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
+                    teamName: original.name,
+                  })}
                   icon="pen"
                   size="sm"
                   variant="secondary"
-                  tooltip={'Edit team'}
+                  tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
                 />
               )}
               <DeleteButton
-                aria-label={`Delete team ${original.name}`}
+                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
+                  teamName: original.name,
+                })}
                 size="sm"
                 disabled={!canDelete}
                 onConfirm={() => deleteTeam(original.uid)}
@@ -209,7 +232,7 @@ export const TeamList = ({
       actions={
         !noTeams ? (
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            New Team
+            <Trans i18nKey="teams.team-list.new-team">New Team</Trans>
           </LinkButton>
         ) : undefined
       }
@@ -236,7 +259,11 @@ export const TeamList = ({
           <>
             <div className="page-action-bar">
               <InlineField grow>
-                <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
+                <FilterInput
+                  placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
+                  value={query}
+                  onChange={changeQuery}
+                />
               </InlineField>
             </div>
             {hasFetched && teams.length === 0 ? (

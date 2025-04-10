@@ -97,7 +97,7 @@ module.exports = [
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**', '**/mocks.{ts,tsx}'],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
     },
@@ -112,7 +112,16 @@ module.exports = [
     files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
     ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
     rules: {
-      '@grafana/no-untranslated-strings': 'error',
+      '@grafana/no-untranslated-strings': [
+        'error',
+        {
+          forceFix: [
+            // Add paths here that are happy to be auto fixed by this rule,
+            // for example
+            // 'public/app/features/alerting'
+          ],
+        },
+      ],
       '@grafana/no-translation-top-level': 'error',
     },
   },

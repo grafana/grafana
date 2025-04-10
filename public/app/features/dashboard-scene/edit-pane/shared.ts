@@ -1,10 +1,14 @@
 import { useSessionStorage } from 'react-use';
 
-import { SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
+import { BusEventWithPayload } from '@grafana/data';
+import { SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
+import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
+import { isSceneVariable } from '../settings/variables/utils';
 
 import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -34,22 +38,29 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new DashboardEditableElement(sceneObj);
   }
 
+  if (sceneObj instanceof SceneVariableSet) {
+    return new VariableSetEditableElement(sceneObj);
+  }
+
+  if (isSceneVariable(sceneObj)) {
+    return new VariableEditableElement(sceneObj);
+  }
+
   return undefined;
 }
 
-export function hasEditableElement(sceneObj: SceneObject | undefined): boolean {
-  if (!sceneObj) {
-    return false;
-  }
+export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'new-object-added-to-canvas';
+}
 
-  if (
-    isEditableDashboardElement(sceneObj) ||
-    sceneObj instanceof VizPanel ||
-    sceneObj instanceof SceneGridRow ||
-    sceneObj instanceof DashboardScene
-  ) {
-    return true;
-  }
+export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'object-removed-from-canvas';
+}
 
-  return false;
+export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'objects-reordered-on-canvas';
+}
+
+export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'conditional-rendering-changed';
 }

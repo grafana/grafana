@@ -2,8 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -42,6 +46,46 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
+type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
+
+type CloneOptions struct {
+	// If the branch does not exist, create it
+	CreateIfNotExists bool
+
+	// Push on every write
+	PushOnWrites bool
+
+	// Maximum allowed size for repository clone in bytes (0 means no limit)
+	MaxSize int64
+
+	// Maximum time allowed for clone operation in seconds (0 means no limit)
+	Timeout time.Duration
+
+	// Progress is the writer to report progress to
+	Progress io.Writer
+
+	// BeforeFn is called before the clone operation starts
+	BeforeFn func() error
+}
+
+//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
+type ClonableRepository interface {
+	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
+}
+
+type PushOptions struct {
+	Timeout  time.Duration
+	Progress io.Writer
+	BeforeFn func() error
+}
+
+//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
+type ClonedRepository interface {
+	ReaderWriter
+	Push(ctx context.Context, opts PushOptions) error
+	Remove(ctx context.Context) error
+}
+
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
 type FileTreeEntry struct {
 	// The path to the file from the base path given (if any).
@@ -58,7 +102,10 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+//go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
 type Reader interface {
+	Repository
+
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
@@ -72,6 +119,8 @@ type Reader interface {
 }
 
 type Writer interface {
+	Repository
+
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
 	Create(ctx context.Context, path, ref string, data []byte, message string) error
@@ -88,8 +137,23 @@ type Writer interface {
 	Delete(ctx context.Context, path, ref, message string) error
 }
 
+type ReaderWriter interface {
+	Reader
+	Writer
+}
+
+// Hooks called after the repository has been created, updated or deleted
+type RepositoryWithURLs interface {
+	Repository
+
+	// Get resource URLs for a file inside a repository
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+}
+
 // Hooks called after the repository has been created, updated or deleted
 type Hooks interface {
+	Repository
+
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
@@ -120,9 +184,22 @@ type VersionedFileChange struct {
 
 // Versioned is a repository that supports versioning.
 // This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
+//
+//go:generate mockery --name Versioned --structname MockVersioned --inpackage --filename versioned_mock.go --with-expecter
 type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+}
+
+func writeWithReadThenCreateOrUpdate(ctx context.Context, r ReaderWriter, path, ref string, data []byte, comment string) error {
+	_, err := r.Read(ctx, path, ref)
+	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
+		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+	}
+	if err == nil {
+		return r.Update(ctx, path, ref, data, comment)
+	}
+	return r.Create(ctx, path, ref, data, comment)
 }

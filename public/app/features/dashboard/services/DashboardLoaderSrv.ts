@@ -4,7 +4,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -13,9 +13,10 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
-import { DashboardWithAccessInfo } from '../api/types';
+import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -118,11 +119,13 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<DashboardDTO> {
-    const stateManager = getDashboardScenePageStateManager();
+    const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+    } else if (type === 'provisioning' && uid && slug) {
+      promise = loadDashboardFromProvisioning(slug, uid);
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
@@ -139,11 +142,14 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         }
       }
 
-      promise = getDashboardAPI()
+      promise = getDashboardAPI('v1')
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          return result;
+        })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -194,6 +200,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = backendSrv.getPublicDashboardByUid(uid).then((result) => {
         return ResponseTransformers.ensureV2Response(result);
       });
+    } else if (type === 'provisioning' && uid && slug) {
+      promise = loadDashboardFromProvisioning(slug, uid).then((r) => ResponseTransformers.ensureV2Response(r));
     } else if (uid) {
       if (!params) {
         const cachedDashboard = stateManager.getDashboardFromCache(uid);
@@ -204,9 +212,12 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          return result;
+        })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);

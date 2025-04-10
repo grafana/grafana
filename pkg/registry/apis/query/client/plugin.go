@@ -13,9 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -26,6 +28,7 @@ import (
 type pluginClient struct {
 	pluginClient plugins.Client
 	pCtxProvider *plugincontext.Provider
+	ac           accesscontrol.AccessControl
 }
 
 type pluginRegistry struct {
@@ -42,11 +45,28 @@ type pluginRegistry struct {
 var _ clientapi.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
+var k8sForbiddenError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Message: "Access denied to the data source",
+	},
+}
+
+var k8sNotFoundError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusNotFound,
+		Message: "Data source not found",
+	},
+}
+
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) clientapi.QueryDataClient {
+func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
+		ac:           accessControl,
 	}
 }
 
@@ -59,6 +79,17 @@ func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 	}
 }
 
+func (d *pluginClient) CanQueryDataSource(ctx context.Context, uid string) (bool, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	requiredScope := "datasources:uid:" + uid
+	evaluate := accesscontrol.EvalPermission(datasources.ActionQuery, requiredScope)
+	return d.ac.Evaluate(ctx, user, evaluate)
+}
+
 // ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
@@ -69,18 +100,24 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 		return nil, fmt.Errorf("expected single datasource request")
 	}
 
+	canQuery, err := d.CanQueryDataSource(ctx, dsRef.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !canQuery {
+		return nil, k8sForbiddenError
+	}
+
 	// NOTE: this depends on uid unique across datasources
 	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
 	if err != nil {
+		// there is no better way to differentiate between plugin-not-found and other-error
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			status := metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusNotFound,
-				Message: "datasource not found",
-			}
-			return nil, &apierrors.StatusError{ErrStatus: status}
+			return nil, k8sNotFoundError
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	qdr := &backend.QueryDataRequest{

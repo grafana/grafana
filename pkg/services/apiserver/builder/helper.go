@@ -170,6 +170,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here
@@ -394,11 +396,12 @@ func InstallAPIs(
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
 			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:           scheme,
-				OptsGetter:       optsGetter,
-				DualWriteBuilder: dualWrite,
-				MetricsRegister:  reg,
-				StorageOptions:   optsregister,
+				Scheme:              scheme,
+				OptsGetter:          optsGetter,
+				DualWriteBuilder:    dualWrite,
+				MetricsRegister:     reg,
+				StorageOptsRegister: optsregister,
+				StorageOpts:         storageOpts,
 			}); err != nil {
 				return err
 			}
