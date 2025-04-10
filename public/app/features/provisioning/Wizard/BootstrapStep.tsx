@@ -5,14 +5,12 @@ import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafa
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
-import { StepStatus } from '../hooks/useStepStatus';
-
 import { getResourceStats, isMigrateOperation, useModeOptions } from './actions';
-import { ModeOption, WizardFormData } from './types';
+import { ModeOption, StepStatusInfo, WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepUpdate: (status: StepStatus, error?: string) => void;
+  onStepUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
@@ -34,11 +32,11 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepUp
     () => getResourceStats(filesQuery.data, resourceStats.data),
     [filesQuery.data, resourceStats.data]
   );
-
+  console.log('sel', selectedTarget);
   useEffect(() => {
     const isLoading = resourceStats.isLoading || filesQuery.isLoading;
 
-    onStepUpdate(isLoading ? 'running' : 'idle');
+    onStepUpdate({ status: isLoading ? 'running' : 'idle' });
   }, [filesQuery.isLoading, onStepUpdate, resourceStats.isLoading]);
 
   // Auto select the first option on mount

@@ -32,3 +32,6 @@ export interface SystemState {
   fileCount: number;
   actions: ModeOption[];
 }
+
+export type StepStatus = 'idle' | 'running' | 'error' | 'success';
+export type StepStatusInfo = { status: StepStatus } | { status: 'error'; error: string };

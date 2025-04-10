@@ -13,7 +13,6 @@ import { t } from 'app/core/internationalization';
 import { getDefaultValues } from '../Config/ConfigForm';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { StepStatus } from '../hooks/useStepStatus';
 import { dataToSpec } from '../utils/data';
 
 import { BootstrapStep } from './BootstrapStep';
@@ -22,7 +21,7 @@ import { FinishStep } from './FinishStep';
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
-import { RepoType, WizardFormData, WizardStep } from './types';
+import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
 
@@ -54,8 +53,6 @@ const getSteps = (): Array<Step<WizardStep>> => {
     },
   ];
 };
-
-type StepStatusInfo = { status: 'idle' | 'running' | 'success' } | { status: 'error'; error: string };
 
 export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
@@ -96,7 +93,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
-
+  console.log('currentStepConfig', completedSteps);
   const isStepSuccess = stepStatusInfo.status === 'success';
 
   // A different repository is marked with instance target -- nothing will succeed
@@ -112,24 +109,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       navigate(PROVISIONING_URL);
     }
   }, [navigate, repoName, settingsQuery.data?.items]);
-
-  const updateStepStatus = useCallback(
-    (status: StepStatus, errorMessage?: string) => {
-      if (activeStep === 'connection') {
-        return;
-      }
-      if (status === 'error') {
-        setStepStatusInfo({ status: 'error', error: errorMessage || 'An unexpected error occurred' });
-      } else {
-        setStepStatusInfo({ status });
-      }
-
-      if (status === 'success') {
-        setCompletedSteps((prev) => [...prev, activeStep]);
-      }
-    },
-    [activeStep]
-  );
 
   const handleRepositoryDeletion = async (name: string) => {
     try {
@@ -185,15 +164,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     }
 
     // Only navigate to provisioning URL if we're on the actual last step and it's completed
-    if (isLastStep && isStepSuccess) {
-      settingsQuery.refetch();
+    if (isLastStep) {
       navigate(PROVISIONING_URL);
-      return;
-    }
-
-    // For all other cases, proceed to next step
-    if (currentStepIndex < steps.length - 1) {
+    } else {
       setActiveStep(steps[currentStepIndex + 1].id);
+      setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
     }
   };
@@ -214,7 +189,10 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         const spec = dataToSpec(formData.repository);
         const rsp = await submitData(spec);
         if (rsp.error) {
-          updateStepStatus('error', 'Repository request failed');
+          setStepStatusInfo({
+            status: 'error',
+            error: 'Repository request failed',
+          });
           return;
         }
 
@@ -228,7 +206,10 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           console.error('Saved repository without a name:', rsp);
         }
       } catch (error) {
-        updateStepStatus('error', 'Repository connection failed');
+        setStepStatusInfo({
+          status: 'error',
+          error: 'Repository connection failed',
+        });
       } finally {
         setIsSubmitting(false);
       }
@@ -275,18 +256,20 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               {activeStep === 'bootstrap' && (
                 <BootstrapStep
                   onOptionSelect={setRequiresMigration}
-                  onStepUpdate={updateStepStatus}
+                  onStepUpdate={setStepStatusInfo}
                   settingsData={settingsQuery.data}
                   repoName={repoName ?? ''}
                 />
               )}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepUpdate={updateStepStatus} requiresMigration={requiresMigration} />
+                <SynchronizeStep onStepUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 
-            {stepStatusInfo.status === 'error' && <Alert severity="error" title={stepStatusInfo.error} />}
+            {stepStatusInfo.status === 'error' && (
+              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
+            )}
 
             <Stack gap={2} justifyContent="flex-end">
               <Button
