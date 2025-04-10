@@ -355,9 +355,7 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
 export function isSupportedExternalPrometheusFlavoredRulesSourceType(
   type: string
 ): type is SupportedExternalPrometheusFlavoredRulesSourceType {
-  return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.includes(
-    type as SupportedExternalPrometheusFlavoredRulesSourceType
-  );
+  return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
 }
 export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
@@ -371,7 +369,7 @@ export type SupportedExternalPrometheusFlavoredRulesSourceType =
  * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
  */
 export function isSupportedExternalRulesSourceType(type: string): type is SupportedExternalRulesSourceType {
-  return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.includes(type as SupportedExternalRulesSourceType);
+  return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
 }
 export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
 export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
