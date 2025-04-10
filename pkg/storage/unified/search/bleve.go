@@ -29,10 +29,12 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -111,6 +113,10 @@ func (b *bleveBackend) enableSharding() error {
 
 	ringsvc, lfcsvc, err := InitRing(log.New("bleve-ring"), nil)
 
+	if err != nil {
+		return nil
+	}
+
 	err = ringsvc.StartAsync(ctx)
 	if err != nil {
 		return err
@@ -145,7 +151,7 @@ func (b *bleveBackend) enableSharding() error {
 	b.Pool = pool
 
 	// TODO remove this
-	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", "8100"))
+	listener, err := net.Listen("tcp", net.JoinHostPort(ip, "8100"))
 	if err != nil {
 		panic(err)
 	}

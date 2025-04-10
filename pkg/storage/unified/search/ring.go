@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/kv/codec"
 	"github.com/grafana/dskit/kv/memberlist"
+	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
 	"github.com/pkg/errors"
@@ -42,21 +43,25 @@ type RingConfig struct {
 	SkipUnregister bool `yaml:"-"`
 }
 
+var ip = "127.0.0.2"
+
 // TODO make this configurable
 var cfg = RingConfig{
-	KVStore: kv.Config{Store: "memberlist"},
-	HeartbeatPeriod: 15*time.Second,
-	HeartbeatTimeout: time.Minute,
-	// InstanceInterfaceNames: , maybe skip this. only needed if instanceaddr is not defined
-	InstanceAddr: "127.0.0.1",
-	InstancePort: 9378,
-	InstanceID: "1",
-	NumTokens: 128,
+	KVStore:                kv.Config{Store: "memberlist"},
+	HeartbeatPeriod:        15 * time.Second,
+	HeartbeatTimeout:       time.Minute,
+	InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, log.NewNopLogger()),
+	InstanceAddr:           ip,
+	InstancePort:           9378,
+	InstanceID:             ip,
+	NumTokens:              128,
 }
 
 const ringKey = "ring"
 const ringName = "bleve"
+
 var metricsPrefix = ringName + "_"
+
 const ringAutoForgetUnhealthyPeriods = 2
 
 func (cfg *RingConfig) ToLifecyclerConfig(logger log.Logger) (ring.BasicLifecyclerConfig, error) {
@@ -92,11 +97,15 @@ func (cfg *RingConfig) ToRingConfig() ring.Config {
 
 func InitRing(logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
 	memberlistKVcfg := &memberlist.KVConfig{}
+	flagext.DefaultValues(memberlistKVcfg)
 	memberlistKVcfg.MetricsNamespace = ringName
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
-	//m.Cfg.MemberlistKV.AdvertisePort = m.Cfg.Server.GRPCListenPort
+	memberlistKVcfg.AdvertiseAddr = ip
+	memberlistKVcfg.TCPTransport.BindAddrs = []string{ip}
+	memberlistKVcfg.NodeName = "node-2"
+	memberlistKVcfg.JoinMembers = []string{"127.0.0.1:7946"}
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
 		metricsPrefix,
@@ -219,5 +228,3 @@ func (c *bleveRingClient) String() string {
 func (c *bleveRingClient) RemoteAddress() string {
 	return c.conn.Target()
 }
-
-
