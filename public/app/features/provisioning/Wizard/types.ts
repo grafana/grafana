@@ -1,8 +1,10 @@
-import { SyncOptions } from 'app/api/clients/provisioning';
+import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning';
 
 import { RepositoryFormData } from '../types';
 
-export type WizardStep = 'connection' | 'bootstrap' | 'migrate' | 'pull' | 'finish';
+export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
+
+export type RepoType = RepositorySpec['type'];
 
 export interface MigrateFormData {
   history: boolean;
@@ -15,11 +17,6 @@ export interface WizardFormData {
   repositoryName?: string;
 }
 
-export type ValidationResult = {
-  valid: boolean;
-  errors?: string[];
-};
-
 export type Target = SyncOptions['target'];
 export type Operation = 'pull' | 'migrate';
 
@@ -29,6 +26,7 @@ export interface ModeOption {
   label: string;
   description: string;
   disabledReason?: string;
+  subtitle: string;
 }
 
 export interface SystemState {

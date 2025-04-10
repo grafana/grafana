@@ -11,6 +11,7 @@ import {
   useDeleteRepositoryMutation,
   useGetFrontendSettingsQuery,
 } from 'app/api/clients/provisioning';
+import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
@@ -21,10 +22,9 @@ import { dataToSpec } from '../utils/data';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
-import { MigrateStep } from './MigrateStep';
-import { PullStep } from './PullStep';
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
+import { SynchronizeStep } from './SynchronizeStep';
 import { WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -54,7 +54,13 @@ export function WizardContent({
   stepSuccess,
   settingsData,
 }: WizardContentProps) {
-  const { watch, setValue, getValues, trigger } = useFormContext<WizardFormData>();
+  const {
+    watch,
+    setValue,
+    getValues,
+    trigger,
+    formState: { isDirty },
+  } = useFormContext<WizardFormData>();
   const navigate = useNavigate();
 
   const repoName = watch('repositoryName');
@@ -96,9 +102,8 @@ export function WizardContent({
       await deleteRepository({ name });
       // Wait before redirecting to ensure deletion is processed
       setTimeout(() => {
-        settingsQuery.refetch();
         navigate(PROVISIONING_URL);
-      }, 1500);
+      }, 1000);
     } catch (error) {
       setIsCancelling(false);
     }
@@ -169,75 +174,85 @@ export function WizardContent({
   }, [saveRequest, setValue, handleStatusChange]);
 
   const isNextButtonDisabled = () => {
+    if (activeStep === 'synchronize') {
+      return stepStatus !== 'success';
+    }
     return isSubmitting || isCancelling || stepStatus === 'running' || stepStatus === 'error';
   };
 
   return (
-    <form className={styles.form}>
-      <Stepper
-        steps={availableSteps}
-        activeStep={activeStep}
-        visitedSteps={completedSteps}
-        validationResults={{
-          connection: { valid: true },
-          bootstrap: { valid: true },
-          migrate: { valid: true },
-          pull: { valid: true },
-          finish: { valid: true },
-        }}
-      />
-      <Box marginBottom={2}>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <Text element="h2">
-          {currentStepIndex + 1}. {currentStep?.title}
-        </Text>
-      </Box>
+    <Stack gap={6} direction="row" alignItems="flex-start">
+      <Stepper steps={availableSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+      <div className={styles.divider} />
+      <form className={styles.form}>
+        <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
+        <Stack direction="column">
+          <Box marginBottom={2}>
+            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+            <Text element="h2">
+              {currentStepIndex + 1}. {currentStep?.title}
+            </Text>
+          </Box>
 
-      <RequestErrorAlert
-        request={saveRequest}
-        title={t('provisioning.wizard-content.title-repository-verification-failed', 'Repository verification failed')}
-      />
-
-      <div className={styles.content}>
-        {activeStep === 'connection' && <ConnectStep />}
-        {activeStep === 'bootstrap' && (
-          <BootstrapStep
-            onOptionSelect={onOptionSelect}
-            onStepUpdate={handleStepUpdate}
-            settingsData={settingsData}
-            repoName={repoName!}
+          <RequestErrorAlert
+            request={saveRequest}
+            title={t(
+              'provisioning.wizard-content.title-repository-verification-failed',
+              'Repository verification failed'
+            )}
           />
-        )}
-        {activeStep === 'migrate' && requiresMigration && <MigrateStep onStepUpdate={handleStepUpdate} />}
-        {activeStep === 'pull' && !requiresMigration && <PullStep onStepUpdate={handleStepUpdate} />}
-        {activeStep === 'finish' && <FinishStep />}
-      </div>
 
-      {stepError && <Alert severity="error" title={stepError} />}
+          <div className={styles.content}>
+            {activeStep === 'connection' && <ConnectStep />}
+            {activeStep === 'bootstrap' && (
+              <BootstrapStep
+                onOptionSelect={onOptionSelect}
+                onStepUpdate={handleStepUpdate}
+                settingsData={settingsData}
+                repoName={repoName ?? ''}
+              />
+            )}
+            {activeStep === 'synchronize' && (
+              <SynchronizeStep onStepUpdate={handleStepUpdate} requiresMigration={requiresMigration} />
+            )}
+            {activeStep === 'finish' && <FinishStep />}
+          </div>
 
-      <Stack gap={2} justifyContent="flex-end">
-        <Button
-          variant={stepStatus === 'error' ? 'primary' : 'secondary'}
-          onClick={handleCancel}
-          disabled={isSubmitting || isCancelling}
-        >
-          {isCancelling
-            ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
-            : t('provisioning.wizard-content.button-cancel', 'Cancel')}
-        </Button>
-        <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
-          {isSubmitting
-            ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
-            : getNextButtonText(activeStep)}
-        </Button>
-      </Stack>
-    </form>
+          {stepError && <Alert severity="error" title={stepError} />}
+
+          <Stack gap={2} justifyContent="flex-end">
+            <Button
+              variant={stepStatus === 'error' ? 'primary' : 'secondary'}
+              onClick={handleCancel}
+              disabled={isSubmitting || isCancelling}
+            >
+              {isCancelling
+                ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
+                : t('provisioning.wizard-content.button-cancel', 'Cancel')}
+            </Button>
+            <Button onClick={handleNextWithSubmit} disabled={isNextButtonDisabled()}>
+              {isSubmitting
+                ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
+                : getNextButtonText(activeStep)}
+            </Button>
+          </Stack>
+        </Stack>
+      </form>
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
     maxWidth: '900px',
+    flexGrow: 1,
+  }),
+  divider: css({
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: theme.colors.border.weak,
+    // align with the button row
+    marginBottom: theme.spacing(13),
   }),
   content: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,

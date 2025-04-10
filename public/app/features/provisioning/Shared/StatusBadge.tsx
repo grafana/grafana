@@ -63,7 +63,7 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
       style={{ cursor: 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=overview`);
+        locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
       }}
     />
   );

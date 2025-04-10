@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { LinkButton, Stack, Text } from '@grafana/ui';
+import { Stack, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Trans } from 'app/core/internationalization';
 
@@ -19,7 +19,6 @@ export function RepositoryLink({ name }: RepositoryLinkProps) {
   }
 
   const repoHref = getRepoHref(repo.spec?.github);
-  const folderHref = repo.spec?.sync.target === 'folder' ? `/dashboards/f/${repo.metadata?.name}` : '/dashboards';
 
   if (!repoHref) {
     return null;
@@ -28,17 +27,15 @@ export function RepositoryLink({ name }: RepositoryLinkProps) {
   return (
     <Stack direction="column" gap={1}>
       <Text>
-        <Trans i18nKey="provisioning.repository-link.grafana-repository">
-          Grafana and your repository are now in sync.
+        <Trans i18nKey="provisioning.repository-link.grafana-repository-synced">
+          Your resources are now in your external storage and provisioned into your instance. From now on, your instance
+          and the external storage will be synchronized.
         </Trans>
       </Text>
       <Stack direction="row" gap={2}>
-        <LinkButton fill="outline" href={repoHref} icon="external-link-alt" target="_blank" rel="noopener noreferrer">
+        <TextLink href={repoHref} external>
           <Trans i18nKey="provisioning.repository-link.view-repository">View repository</Trans>
-        </LinkButton>
-        <LinkButton fill="outline" href={folderHref} icon="folder-open">
-          <Trans i18nKey="provisioning.repository-link.view-folder">View folder</Trans>
-        </LinkButton>
+        </TextLink>
       </Stack>
     </Stack>
   );

@@ -16,7 +16,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
   const style = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={5}>
       <Stack direction="column">
         <Text variant="h4">
           <Trans i18nKey="provisioning.enhanced-features.header">Enhance your GitHub experience</Trans>
@@ -28,7 +28,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
         </Text>
       </Stack>
       <Stack gap={2} direction="row" height="100%">
-        <Box width="40%" height="100%" padding={2} display="flex" direction="column" gap={2} alignItems="flex-start">
+        <Box width="40%" height="100%" display="flex" direction="column" gap={2} alignItems="flex-start">
           <Stack gap={2}>
             <IconCircle icon="sync" color="blue" />
             <IconCircle icon="code-branch" color="purple" />
@@ -44,16 +44,28 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
               </Trans>
             </Text>
           </Box>
-          {!hasPublicAccess && (
-            <LinkButton fill="outline" variant="secondary" onClick={onSetupPublicAccess}>
-              <Trans i18nKey="provisioning.enhanced-features.set-up-public-webhooks">Set up public webhooks</Trans>
-            </LinkButton>
-          )}
+          <LinkButton
+            fill="outline"
+            variant="secondary"
+            onClick={onSetupPublicAccess}
+            disabled={hasPublicAccess}
+            icon={hasPublicAccess ? 'check' : undefined}
+          >
+            <Trans i18nKey="provisioning.enhanced-features.set-up-public-webhooks">Set up public webhooks</Trans>
+          </LinkButton>
         </Box>
 
         <div className={style.separator} />
 
-        <Box width="40%" height="100%" padding={2} display="flex" direction="column" gap={2} alignItems="flex-start">
+        <Box
+          width="40%"
+          height="100%"
+          paddingLeft={2}
+          display="flex"
+          direction="column"
+          gap={2}
+          alignItems="flex-start"
+        >
           <IconCircle icon="camera" color="orange" />
           <Trans i18nKey="provisioning.enhanced-features.title-visual-previews-in-pull-requests">
             Visual previews in pull requests with image rendering
@@ -65,16 +77,15 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
               </Trans>
             </Text>
           </Box>
-          {hasImageRenderer && (
-            <LinkButton
-              fill="outline"
-              variant="secondary"
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
-              icon="external-link-alt"
-            >
-              <Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">Set up image rendering</Trans>
-            </LinkButton>
-          )}
+          <LinkButton
+            fill="outline"
+            variant="secondary"
+            href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+            icon={hasImageRenderer ? 'check' : 'external-link-alt'}
+            disabled={hasImageRenderer}
+          >
+            <Trans i18nKey="provisioning.enhanced-features.set-up-image-rendering">Set up image rendering</Trans>
+          </LinkButton>
         </Box>
       </Stack>
     </Stack>
