@@ -65,7 +65,7 @@ $ base64 -i key.pem -o key.pem.base64
 $ base64 -i cert.pem -o cert.pem.base64
 ```
 
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private key.
+The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for `certificate` and `private key`.
 
 The key you provide should look like:
 

@@ -65,9 +65,9 @@ The keys you provide should look like:
 -----END PRIVATE KEY-----
 ```
 
-### SAML login attempts fail with request response "origin not allowed"
+### SAML login attempts fail with request response `origin not allowed`
 
-When the user logs in using SAML and gets presented with "origin not allowed", the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as Grafana's CSRF checks deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
+When the user logs in using SAML and gets presented with `origin not allowed`, the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as the CSRF checks in Grafana deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
 
 To solve this issue, you can configure either the [`csrf_trusted_origins`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#csrf_trusted_origins) or [`csrf_additional_headers`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#csrf_additional_headers) option in the SAML configuration.
 
@@ -87,25 +87,25 @@ csrf_additional_headers = X-Forwarded-Host
 Accessing the Grafana login page from a URL that is not the root URL of the
 Grafana server can cause the instance to return the following error: "login session has expired".
 
-If you are accessing grafana through a proxy server, ensure that cookies are correctly
+If you are accessing Grafana through a proxy server, ensure that cookies are correctly
 rewritten to the root URL of Grafana.
-Cookies must be set on the same url as the `root_url` of Grafana. This is normally the reverse proxy's domain/address.
+Cookies must be set on the same URL as the `root_url` of Grafana. This is normally the reverse proxy's domain/address.
 
 Review the cookie settings in your proxy server configuration to ensure that cookies are
 not being discarded
 
-Review the following settings in your grafana config:
+Review the following settings in your Grafana configuration:
 
 ```ini
 [security]
 cookie_samesite = none
 ```
 
-This setting should be set to none to allow grafana session cookies to work correctly with redirects.
+This setting should be set to none to allow Grafana session cookies to work correctly with redirects.
 
 ```ini
 [security]
 cookie_secure = true
 ```
 
-Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.
+Ensure `cookie_secure` is set to true to ensure that cookies are only sent over HTTPS.
