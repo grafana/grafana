@@ -90,7 +90,7 @@ func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, e
 
 		v, err := calculateFileChangeInfo(ctx, info.GrafanaBaseURL, change, opts)
 		if err != nil {
-			return info, fmt.Errorf("error calculating changes")
+			return info, fmt.Errorf("error calculating changes %w", err)
 		}
 
 		// If everything applied OK, then render screenshots
@@ -149,7 +149,11 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 
 	// Dashboards get special handling
 	if info.Parsed.GVK.Kind == dashboardKind {
-		info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(), info.Title)
+		if info.Parsed.Existing != nil {
+			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(), info.Title)
+		}
+
+		// Load this file directly
 		info.PreviewURL = baseURL + path.Join("admin/provisioning",
 			info.Parsed.Repo.Name, "dashboard/preview", info.Parsed.Info.Path)
 
@@ -164,7 +168,7 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 	return info, nil
 }
 
-func calculateFileDeleteInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
+func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
 	// TODO -- read the old and verify
 	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
 }

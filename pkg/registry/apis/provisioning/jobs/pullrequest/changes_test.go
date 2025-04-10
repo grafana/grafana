@@ -55,6 +55,7 @@ func TestCalculateChanges(t *testing.T) {
 			Kind: dashboardKind,
 		},
 		Obj:            obj,
+		Existing:       obj,
 		Meta:           meta,
 		DryRunResponse: obj, // avoid hitting the client
 	}, nil)

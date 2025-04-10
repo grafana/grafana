@@ -24,10 +24,10 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers        resources.ParserFactory
-	renderer       ScreenshotRenderer
-	urlProvider    func(namespace string) string
-	commentBuilder *commentBuilder
+	parsers     resources.ParserFactory
+	renderer    ScreenshotRenderer
+	urlProvider func(namespace string) string
+	commenter   *commentBuilder
 }
 
 func NewPullRequestWorker(
@@ -36,10 +36,10 @@ func NewPullRequestWorker(
 	urlProvider func(namespace string) string,
 ) *PullRequestWorker {
 	return &PullRequestWorker{
-		parsers:        parsers,
-		renderer:       renderer,
-		urlProvider:    urlProvider,
-		commentBuilder: newCommentBuilder(),
+		parsers:     parsers,
+		renderer:    renderer,
+		urlProvider: urlProvider,
+		commenter:   newCommentBuilder(),
 	}
 }
 
@@ -117,12 +117,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("unable to calculate changes: %w", err)
 	}
 
-	comment, err := c.commentBuilder.generateComment(ctx, changeInfo)
-	if err != nil {
-		return fmt.Errorf("unable to generate comment text: %w", err)
-	}
-
-	if err := prRepo.CommentPullRequest(ctx, options.PR, comment); err != nil {
+	if err := c.commenter.Comment(ctx, prRepo, options.PR, changeInfo); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
 	logger.Info("preview comment added")

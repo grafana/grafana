@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -22,7 +23,7 @@ func TestGenerateComment(t *testing.T) {
 		Name  string
 		Input changeInfo
 	}{
-		{"single dashboard missing renderer", changeInfo{
+		{"new dashbaord", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
 				{
@@ -30,16 +31,16 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 						Action: v0alpha1.ResourceActionCreate,
 					},
-					Title:      "Title",
-					GrafanaURL: "http://grafana/d/uid",
-					PreviewURL: "http://grafana/admin/preview",
+					Title:                "New Dashboard",
+					PreviewURL:           "http://grafana/admin/preview",
+					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
 				},
 			},
-			MissingImageRenderer: true,
 		}},
-		{"single dashboard with snapshots", changeInfo{
+		{"update dashboard", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
 				{
@@ -47,9 +48,10 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionCreate,
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
-					Title:      "Title",
+					Title:      "Existing Dashboard",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
 
@@ -58,7 +60,7 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
-		{"single dashboard only preview", changeInfo{
+		{"update dashboard missing renderer", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
 				{
@@ -66,15 +68,15 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionCreate,
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
-					Title:      "Title",
+					Title:      "Existing Dashboard",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
-
-					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
 				},
 			},
+			MissingImageRenderer: true,
 		}},
 		{"multiple files", changeInfo{
 			GrafanaBaseURL: "http://host/",
@@ -86,9 +88,21 @@ func TestGenerateComment(t *testing.T) {
 							Path: "aaa.json",
 						},
 						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "AAA",
-					GrafanaURL: "http://grafana/d/aaa",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "bbb.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "BBB",
+					GrafanaURL: "http://grafana/d/bbb",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
@@ -97,10 +111,9 @@ func TestGenerateComment(t *testing.T) {
 							Path: "bbb.json",
 						},
 						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Playlist"},
 					},
-					Title:      "BBB",
-					GrafanaURL: "http://grafana/d/bbb",
-					PreviewURL: "http://grafana/admin/preview",
+					Title: "CCC",
 				},
 			},
 		}},

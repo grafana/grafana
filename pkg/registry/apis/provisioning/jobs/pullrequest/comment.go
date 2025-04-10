@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"path/filepath"
+	"strings"
 )
 
 type commentBuilder struct {
@@ -21,7 +23,19 @@ func newCommentBuilder() *commentBuilder {
 	}
 }
 
-func (g *commentBuilder) generateComment(_ context.Context, info changeInfo) (string, error) {
+func (c *commentBuilder) Comment(ctx context.Context, prRepo PullRequestRepo, pr int, info changeInfo) error {
+	comment, err := c.generateComment(ctx, info)
+	if err != nil {
+		return fmt.Errorf("unable to generate comment text: %w", err)
+	}
+
+	if err := prRepo.CommentPullRequest(ctx, pr, comment); err != nil {
+		return fmt.Errorf("comment pull request: %w", err)
+	}
+	return nil
+}
+
+func (c *commentBuilder) generateComment(_ context.Context, info changeInfo) (string, error) {
 	if len(info.Changes) == 0 {
 		return "no changes found", nil
 	}
@@ -29,22 +43,22 @@ func (g *commentBuilder) generateComment(_ context.Context, info changeInfo) (st
 	var buf bytes.Buffer
 
 	if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
-		if err := g.templateDashboard.Execute(&buf, info.Changes[0]); err != nil {
+		if err := c.templateDashboard.Execute(&buf, info.Changes[0]); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 	} else {
-		if err := g.templateTable.Execute(&buf, info); err != nil {
+		if err := c.templateTable.Execute(&buf, info); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 	}
 
 	if info.MissingImageRenderer {
-		if err := g.templateRenderInfo.Execute(&buf, info); err != nil {
+		if err := c.templateRenderInfo.Execute(&buf, info); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 	}
 
-	return buf.String(), nil
+	return strings.TrimSpace(buf.String()), nil
 }
 
 const commentTemplateSingleDashboard = `Hey there! 🎉
@@ -75,10 +89,10 @@ See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
 const commentTemplateTable = `Hey there! 🎉
 Grafana spotted some changes.
 
-| Action | Resource | Preview |
-|----------|---------|-------|
+| Action | Kind | Resource | Preview |
+|--------|------|----------|---------|
 {{- range .Changes}}
-| {{.Parsed.Action}} | {{.Title}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} |
+| {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} |
 {{- end}}
 
 {{ if .SkippedFiles }}
@@ -90,3 +104,21 @@ and {{ .SkippedFiles }} more files.
 const commentTemplateMissingImageRenderer = `
 NOTE: The image renderer is not configured
 `
+
+func (f *fileChangeInfo) Kind() string {
+	if f.Parsed == nil {
+		return filepath.Ext(f.Change.Path)
+	}
+	v := f.Parsed.GVK.Kind
+	if v == "" {
+		return filepath.Ext(f.Parsed.Info.Path)
+	}
+	return f.Parsed.GVK.Kind
+}
+
+func (f *fileChangeInfo) ExistingLink() string {
+	if f.GrafanaURL != "" {
+		return fmt.Sprintf("[%s](%s)", f.Title, f.GrafanaURL)
+	}
+	return f.Title
+}
