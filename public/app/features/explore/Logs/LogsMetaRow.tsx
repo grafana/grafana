@@ -15,6 +15,9 @@ const getStyles = () => ({
     flex: 1,
     display: 'flex',
     flexWrap: 'wrap',
+    '& span': {
+      fontWeight: 'normal',
+    }
   }),
 });
 

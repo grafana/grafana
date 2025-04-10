@@ -21,12 +21,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ['.logs-meta-item__error']: {
       color: theme.colors.error.text,
     },
-    whiteSpace: 'nowrap',
   }),
   metaLabel: css({
     marginRight: `calc(${theme.spacing(2)} / 2)`,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
   }),
   metaValue: css({
     fontFamily: theme.typography.fontFamilyMonospace,
