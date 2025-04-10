@@ -19,7 +19,7 @@ SELECT {{ .Ident "guid" }},
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 1 = 1 AND
-  {{ .Ident "name" }} IN {{ .ArgList .UsedSecureValues }} AND
+  {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }}) AND
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
 {{ .SelectFor "UPDATE" }}
 ;
