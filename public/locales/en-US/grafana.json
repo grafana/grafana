@@ -5440,7 +5440,7 @@
       "get-session-error-title": "Error loading migration configuration",
       "get-snapshot-error-title": "Error loading snapshot",
       "migration-finished-with-caveat-title": "Resource migration complete",
-      "migration-finished-with-errors-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details",
+      "migration-finished-with-errors-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details.",
       "migration-finished-with-warnings-body": "The migration has completed with some warnings. Check individual resources for more details",
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
