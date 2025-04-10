@@ -353,8 +353,8 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"

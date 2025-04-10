@@ -13,7 +13,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
-		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, gr := range r.GrafanaManagedReceivers {
 			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
