@@ -9,6 +9,7 @@ import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, MET
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
+  const [initTrigger, setInitTrigger] = useState(Date.now());
 
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
@@ -139,52 +140,51 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     [handleError, languageProvider, selectedLabelValues, seriesLimit]
   );
 
-  const initialize = useCallback(async () => {
-    const selector = buildSelector(selectedMetric, selectedLabelValues);
-    const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
-
-    // Metrics
-    const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
-
-    // Labels
-    const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
-
-    // Selected Labels
-    const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
-
-    // Selected Labels' Values
-    const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
-
-    setMetrics(transformedMetrics);
-    setLabelKeys(transformedLabelKeys);
-    setSelectedLabelKeys(labelKeysInLocalStorage);
-    setLabelValues(transformedLabelValues);
-  }, [
-    fetchLabelKeys,
-    fetchLabelValues,
-    fetchMetrics,
-    loadSelectedLabelsFromStorage,
-    selectedLabelValues,
-    selectedMetric,
-  ]);
-
   // Initial set up of the Metrics Browser
   useEffect(() => {
+    async function initialize() {
+      const selector = buildSelector(selectedMetric, selectedLabelValues);
+      const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
+
+      // Metrics
+      const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
+
+      // Labels
+      const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
+
+      // Selected Labels
+      const labelKeysInLocalStorage: string[] = loadSelectedLabelsFromStorage(transformedLabelKeys);
+
+      // Selected Labels' Values
+      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
+
+      setMetrics(transformedMetrics);
+      setLabelKeys(transformedLabelKeys);
+      setSelectedLabelKeys(labelKeysInLocalStorage);
+      setLabelValues(transformedLabelValues);
+    }
+
     initialize();
-  }, [initialize]);
+
+    // This useEffect is the initialization of the hook.
+    // We don't want other dependencies effect this flow but only initTrigger.
+    // InitTrigger is here if we want to trigger this flow manually.
+    // We might want to trigger this when "Clear" button clicked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initTrigger]);
 
   // We don't want to trigger fetching for small amount of time changes.
   // When MetricsBrowser re-renders for any reason we might receive a new timerange.
   // This particularly happens when we have relative time ranges: from: now, to: now-1h
   useEffect(() => {
     if (
-        timeRange.to.diff(timeRangeRef.current.to, 'seconds') >= 1 &&
-        timeRange.from.diff(timeRangeRef.current.from, 'seconds') >= 1
+      timeRange.to.diff(timeRangeRef.current.to, 'seconds') >= 1 &&
+      timeRange.from.diff(timeRangeRef.current.from, 'seconds') >= 1
     ) {
       timeRangeRef.current = timeRange;
-      initialize();
+      setInitTrigger(Date.now());
     }
-  }, [initialize, timeRange]);
+  }, [timeRange]);
 
   const handleSelectedMetricChange = async (metricName: string) => {
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
@@ -236,7 +236,6 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // If it is false we need to remove it from selected values
   // If it is true then we need to add it to selected values
   // The change should effect metrics list and label keys
-  // TODO if user clicks to fast to the values how this will affect the flow?
   const handleSelectedLabelValueChange = async (labelKey: string, labelValue: string, isSelected: boolean) => {
     const newSelectedLabelValues = { ...selectedLabelValues };
     let newLastSelectedLabelKey = lastSelectedLabelKey;
@@ -327,6 +326,8 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setErr('');
     setStatus('Ready');
     setValidationStatus('');
+
+    setInitTrigger(Date.now());
   };
 
   return {

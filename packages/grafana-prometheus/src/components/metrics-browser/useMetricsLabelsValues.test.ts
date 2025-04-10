@@ -127,17 +127,19 @@ describe('useMetricsLabelsValues', () => {
   it('should load saved label keys from localStorage and fetch values', async () => {
     // Set up localStorage with saved label keys
     localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
-    
+
     renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-    
+
     // Wait for the fetchSeriesValuesWithMatch to be called for both job and instance
     await waitFor(() => {
       const fetchCalls = (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
-      const jobCall = fetchCalls.find(call => call[1] === 'job' && call[3] === 'MetricsBrowser_LV_job');
-      const instanceCall = fetchCalls.find(call => call[1] === 'instance' && call[3] === 'MetricsBrowser_LV_instance');
+      const jobCall = fetchCalls.find((call) => call[1] === 'job' && call[3] === 'MetricsBrowser_LV_job');
+      const instanceCall = fetchCalls.find(
+        (call) => call[1] === 'instance' && call[3] === 'MetricsBrowser_LV_instance'
+      );
       return jobCall && instanceCall;
     });
-    
+
     // Verify that fetchSeriesValuesWithMatch was called with the expected parameters for job
     expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
       expect.anything(),
@@ -146,7 +148,7 @@ describe('useMetricsLabelsValues', () => {
       'MetricsBrowser_LV_job',
       DEFAULT_SERIES_LIMIT
     );
-    
+
     // Verify that fetchSeriesValuesWithMatch was called with the expected parameters for instance
     expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
       expect.anything(),
@@ -160,14 +162,14 @@ describe('useMetricsLabelsValues', () => {
   it('should set label values as string arrays', async () => {
     // Set up localStorage with saved label keys
     localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
-    
+
     const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-    
+
     // Wait for the label values to be set
     await waitFor(() => {
       return result.current.labelValues.job !== undefined;
     });
-    
+
     // Verify label values are stored as string arrays
     expect(Array.isArray(result.current.labelValues.job)).toBe(true);
     expect(result.current.labelValues.job).toEqual(['grafana', 'prometheus']);
