@@ -362,6 +362,8 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 
 	for _, r := range resources {
 		switch r.Status {
+		case cloudmigration.ItemStatusPending:
+			// Do nothing. A pending item should not be updated, as it is still in progress.
 		case cloudmigration.ItemStatusOK:
 			okIds = append(okIds, r.RefID)
 		case cloudmigration.ItemStatusError:

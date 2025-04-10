@@ -457,8 +457,10 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quota.TargetSrv, target quota.Target, scope quota.Scope, scopeParams *quota.ScopeParameters) (quota.QuotaDTO, error) {
 	t.Helper()
 
-	var id int64 = 0
+	var id int64
 	switch scope {
+	case quota.GlobalScope:
+		id = 0
 	case quota.OrgScope:
 		id = scopeParams.OrgID
 	case quota.UserScope:

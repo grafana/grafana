@@ -47,7 +47,12 @@ func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID in
 			scopes = append(scopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid))
 			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
 			return canReadDashboard(scopes...)
+
+		case entityKindPanel, entityKindDatasource, entityKindQuery:
+			// Not a dashboard or folder. Assume no access.
+			fallthrough
+		default:
+			return false
 		}
-		return false
 	}, nil
 }

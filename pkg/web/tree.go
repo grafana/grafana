@@ -360,6 +360,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 			params["*"] = unescapedURL
 			params["*"+strconv.Itoa(globLevel)] = unescapedURL
 			return leaf.handle, true
+		default: // ignore
 		}
 	}
 	return nil, false

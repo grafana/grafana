@@ -107,6 +107,8 @@ func (s *service) GetQuotasByScope(ctx context.Context, scope quota.Scope, id in
 
 	scopeParams := quota.ScopeParameters{}
 	switch scope {
+	case quota.GlobalScope:
+		scopeParams.OrgID = 0
 	case quota.OrgScope:
 		scopeParams.OrgID = id
 	case quota.UserScope:
