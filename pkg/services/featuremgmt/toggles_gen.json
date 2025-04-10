@@ -2250,8 +2250,8 @@
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-        "stage": "preview",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
       }

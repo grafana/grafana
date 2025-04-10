@@ -33,11 +33,11 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "entity not allowed to get tokens", nil)
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}
@@ -63,11 +63,11 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}
