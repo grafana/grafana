@@ -6,41 +6,67 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { clearLoadedDashboard } from 'app/features/manage-dashboards/state/actions';
+import { useDispatch, useSelector, StoreState } from 'app/types';
 
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-type Props = {
-  dashboard: DashboardV2Spec;
-};
-
-export function ImportDashboardOverviewV2({ dashboard }: Props) {
+export function ImportDashboardOverviewV2() {
   const [uidReset, setUidReset] = useState(false);
+  const dispatch = useDispatch();
+
+  // Get state from Redux store
+  const searchObj = locationService.getSearchObject();
+  const dashboard = useSelector((state: StoreState) => state.importDashboard.dashboard);
+  const meta = useSelector((state: StoreState) => state.importDashboard.meta);
+  const source = useSelector((state: StoreState) => state.importDashboard.source);
+  const inputs = useSelector((state: StoreState) => state.importDashboard.inputs);
+  const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
 
   function onUidReset() {
     setUidReset(true);
   }
 
+  function onCancel() {
+    dispatch(clearLoadedDashboard());
+  }
+
+  async function onSubmit(form: SaveDashboardCommand<DashboardV2Spec>) {
+    reportInteraction(IMPORT_FINISHED_EVENT_NAME);
+
+    console.log('form', form);
+
+    const result = await getDashboardAPI('v2').saveDashboard(form);
+
+    if (result.url) {
+      console.log('getting the url');
+      const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
+      locationService.push(dashboardUrl);
+    }
+  }
+
   return (
     <>
-      <Form<SaveDashboardCommand<DashboardV2Spec>>
+      <Form<DashboardV2Spec>
         onSubmit={() => onSubmit({ dashboard })}
-        defaultValues={{ dashboard }}
+        defaultValues={dashboard}
         validateOnMount
-        validateFieldsOnMount={['dashboard.title']}
+        validateFieldsOnMount={['title']}
         validateOn="onChange"
       >
         {({ register, errors, control, watch, getValues }) => (
           <ImportDashboardFormV2
             register={register}
+            inputs={inputs}
             errors={errors}
             control={control}
             getValues={getValues}
             uidReset={uidReset}
             onCancel={onCancel}
             onUidReset={onUidReset}
-            onSubmit={() => onSubmit({ dashboard })}
+            onSubmit={onSubmit}
             watch={watch}
           />
         )}
@@ -48,20 +74,3 @@ export function ImportDashboardOverviewV2({ dashboard }: Props) {
     </>
   );
 }
-
-async function onSubmit(form: SaveDashboardCommand<DashboardV2Spec>) {
-  reportInteraction(IMPORT_FINISHED_EVENT_NAME);
-
-  console.log('form', form);
-
-  const result = await getDashboardAPI('v2').saveDashboard(form);
-
-  if (result.url) {
-    console.log('getting the url');
-    const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
-    locationService.push(dashboardUrl);
-  }
-}
-
-// TODO:
-function onCancel() {}

@@ -2,21 +2,17 @@ import {
   AnnotationQueryKind,
   DashboardV2Spec,
   DatasourceVariableKind,
-  LibraryPanelSpec,
   PanelQueryKind,
   PanelSpec,
   QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { config } from 'app/core/config';
-import { addLibraryPanel, getLibraryPanel } from 'app/features/library-panels/state/api';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export async function processImportedDashboard(dashboard: DashboardV2Spec) {
   for (const element of Object.values(dashboard.elements)) {
     if (element.kind === 'Panel') {
       processPanel(element.spec);
-    } else if (element.kind === 'LibraryPanel') {
-      await processLibraryPanel(element.spec);
     }
   }
 
@@ -43,24 +39,11 @@ function processPanel(panel: PanelSpec) {
   return panel;
 }
 
-async function processLibraryPanel(panel: LibraryPanelSpec) {
-  const libPanel = await getLibraryPanel(panel.libraryPanel.uid, true);
-
-  if (libPanel === undefined) {
-    const newLibPanel = await addLibraryPanel(panel.model, '');
-    panel.libraryPanel.uid = newLibPanel.uid;
-    panel.libraryPanel.name = newLibPanel.name;
-  }
-
-  return panel;
-}
-
 async function resolveDatasource(
   querySpec: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
 ) {
-  const datasource = querySpec.datasource || querySpec.query?.kind;
+  const datasource = querySpec.datasource || { type: querySpec.query?.kind };
   // use datasourceSrv to get datasource by uid
-  // TODO: with Ryan's implementation, get should also return the first of the same type if it doesn't find an exact match by uid
   const resolvedDS = await getDatasourceSrv().get(datasource);
 
   const type = resolvedDS.type;

@@ -2,25 +2,29 @@ import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { DashboardInputs, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { validateTitle } from 'app/features/manage-dashboards/utils/validation';
-
 interface Props
   extends Pick<UseFormReturn<SaveDashboardCommand<DashboardV2Spec>>, 'register' | 'control' | 'getValues' | 'watch'> {
+  inputs: DashboardInputs;
   uidReset: boolean;
-  errors: FieldErrors<SaveDashboardCommand<DashboardV2Spec>>;
+  errors: FieldErrors<DashboardV2Spec>;
   onCancel: () => void;
   onUidReset: () => void;
-  onSubmit: FormsOnSubmit<SaveDashboardCommand<DashboardV2Spec>>;
+  onSubmit: FormsOnSubmit<DashboardV2Spec>;
 }
 
 export const ImportDashboardFormV2 = ({
   register,
   errors,
   control,
+  inputs,
   getValues,
   uidReset,
   onUidReset,
@@ -29,13 +33,13 @@ export const ImportDashboardFormV2 = ({
   watch,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
-
+  const watchDataSources = watch('dashboard');
   /*
     This useEffect is needed for overwriting a dashboard. It
     submits the form even if there's validation errors on title or uid.
   */
   useEffect(() => {
-    if (isSubmitted && (errors.dashboard?.title || errors.k8s?.name)) {
+    if (isSubmitted && errors.title) {
       onSubmit(getValues());
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
@@ -43,20 +47,8 @@ export const ImportDashboardFormV2 = ({
   return (
     <>
       <Legend>Options</Legend>
-      <Field
-        label="Name"
-        invalid={!!errors.dashboard?.title}
-        error={errors.dashboard?.title && errors.dashboard?.title.message}
-      >
-        <Input
-          // TODO: name in the form is not being updated
-          {...register('dashboard.title', {
-            required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folderUid ?? ''),
-          })}
-          type="text"
-          data-testid={selectors.components.ImportDashboardForm.name}
-        />
+      <Field label="Name" invalid={!!errors.title} error={errors.title && errors.title.message}>
+        <Input type="text" data-testid={selectors.components.ImportDashboardForm.name} />
       </Field>
       <Field label="Folder">
         <Controller
@@ -75,6 +67,39 @@ export const ImportDashboardFormV2 = ({
           control={control}
         />
       </Field>
+
+      {inputs.dataSources &&
+        inputs.dataSources.map((input: DataSourceInput, index: number) => {
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
+          const dataSourceOption = `dataSources.${index}` as const;
+          const current = watchDataSources ?? [];
+          return (
+            <Field
+              label={input.label}
+              description={input.description}
+              key={dataSourceOption}
+              // invalid={errors}
+              error={errors && 'A data source is required'}
+            >
+              <Controller
+                name={dataSourceOption}
+                render={({ field: { ref, ...field } }) => (
+                  <DataSourcePicker
+                    {...field}
+                    noDefault={true}
+                    placeholder={input.info}
+                    pluginId={input.pluginId}
+                    current={current[index]?.uid}
+                  />
+                )}
+                control={control}
+                rules={{ required: true }}
+              />
+            </Field>
+          );
+        })}
 
       <Stack>
         <Button

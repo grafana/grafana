@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   Button,
   Field,
@@ -113,7 +113,6 @@ class UnthemedDashboardImport extends PureComponent<Props, State> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
-    // TODO: replace this with dashboard.kind check - this is just for dev purposes
     if (dashboard.elements) {
       console.log('V2 dashboard detected');
       processImportedDashboard(dashboard).then((processedDashboard) => {
@@ -258,7 +257,7 @@ class UnthemedDashboardImport extends PureComponent<Props, State> {
 
     if (loadingState === LoadingState.Done) {
       if (v2Dashboard) {
-        return <ImportDashboardOverviewV2 dashboard={v2Dashboard} />;
+        return <ImportDashboardOverviewV2 />;
       }
       return <ImportDashboardOverview />;
     }
