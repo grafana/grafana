@@ -15,9 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -273,101 +271,6 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	return result, nil
-}
-
-func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
-	// We cannot add this validation to PostableUserConfig as that struct is used for both
-	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
-	// (including Mimir) where inhibition rules are supported.
-	if len(config.AlertmanagerConfig.InhibitRules) > 0 {
-		return errors.New("inhibition rules are not supported")
-	}
-
-	// Get the last known working configuration
-	previousConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
-	if err != nil {
-		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
-		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return fmt.Errorf("failed to get latest configuration %w", err)
-		}
-	}
-	cleanPermissionsErr := err
-
-	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
-		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
-	}
-
-	if err := assignReceiverConfigsUIDs(config.AlertmanagerConfig.Receivers); err != nil {
-		return fmt.Errorf("failed to assign missing uids: %w", err)
-	}
-
-	am, err := moa.AlertmanagerFor(org)
-	if err != nil {
-		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
-		if !errors.Is(err, ErrAlertmanagerNotReady) {
-			return err
-		}
-	}
-
-	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
-		errReceiverDoesNotExist := ErrorReceiverDoesNotExist{}
-		if errors.As(err, &errReceiverDoesNotExist) {
-			return ErrAlertmanagerReceiverInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Receiver": errReceiverDoesNotExist.Reference}, Error: err})
-		}
-		errTimeIntervalDoesNotExist := ErrorTimeIntervalDoesNotExist{}
-		if errors.As(err, &errTimeIntervalDoesNotExist) {
-			return ErrAlertmanagerTimeIntervalInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Interval": errTimeIntervalDoesNotExist.Reference}, Error: err})
-		}
-		return AlertmanagerConfigRejectedError{err}
-	}
-
-	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
-	// Failure should not prevent the default config from being applied.
-	if cleanPermissionsErr == nil {
-		cleanPermissionsErr = func() error {
-			newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
-			for _, r := range config.AlertmanagerConfig.Receivers {
-				newReceiverNames.Insert(r.Name)
-			}
-			return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
-		}()
-	}
-	if cleanPermissionsErr != nil {
-		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
-	}
-
-	return nil
-}
-
-// assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
-func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
-	seenUIDs := make(map[string]struct{})
-	// encrypt secure settings for storing them in DB
-	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
-					}
-				}
-				seenUIDs[gr.UID] = struct{}{}
-			}
-		default:
-		}
-	}
-	return nil
 }
 
 type provisioningStore interface {

@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,9 +31,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		DisableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -62,74 +58,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		expStatus int
 		expBody   string
 	}
-
-	t.Run("when creating alertmanager configuration", func(t *testing.T) {
-		body := `
-		{
-			"alertmanager_config": {
-				"route": {
-					"receiver": "grafana-default-email"
-				},
-				"receivers": [{
-					"name": "grafana-default-email",
-					"grafana_managed_receiver_configs": [{
-						"uid": "",
-						"name": "email receiver",
-						"type": "email",
-						"isDefault": true,
-						"settings": {
-							"addresses": "<example@email.com>"
-						}
-					}]
-				}]
-			}
-		}
-		`
-
-		testCases := []testCase{
-			{
-				desc:      "un-authenticated request should fail",
-				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusUnauthorized,
-				expBody:   `"message":"Unauthorized"`,
-			},
-			{
-				desc:      "viewer request should fail",
-				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusForbidden,
-				expBody:   `"title":"Access denied"`,
-			},
-			{
-				desc:      "editor request should succeed",
-				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusAccepted,
-				expBody:   `{"message":"configuration created"}`,
-			},
-			{
-				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusAccepted,
-				expBody:   `{"message":"configuration created"}`,
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.desc, func(t *testing.T) {
-				url := fmt.Sprintf(tc.url, grafanaListedAddr)
-				buf := bytes.NewReader([]byte(body))
-				// nolint:gosec
-				resp, err := http.Post(url, "application/json", buf)
-				t.Cleanup(func() {
-					require.NoError(t, resp.Body.Close())
-				})
-				require.NoError(t, err)
-				require.Equal(t, tc.expStatus, resp.StatusCode)
-				b, err := io.ReadAll(resp.Body)
-				require.NoError(t, err)
-				require.Contains(t, string(b), tc.expBody)
-			})
-		}
-	})
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
 		cfgTemplate := `

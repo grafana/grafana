@@ -16,17 +16,6 @@ import (
 	alertingmodels "github.com/grafana/alerting/models"
 )
 
-// swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
-//
-// sets an Alerting config
-//
-// This API is designated to internal use only and can be removed or changed at any time without prior notice.
-//
-// Deprecated: true
-//     Responses:
-//       201: Ack
-//       400: ValidationError
-
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
