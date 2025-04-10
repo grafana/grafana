@@ -166,7 +166,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 	client := authzlib.NewClient(
 		conn,
 		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
+			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
 		})),
 		authzlib.WithTracerClientOption(tracer),
