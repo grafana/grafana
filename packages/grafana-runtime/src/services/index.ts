@@ -10,24 +10,6 @@ export * from './SidecarService_EXPERIMENTAL';
 export * from './SidecarContext_EXPERIMENTAL';
 
 export {
-  setPluginExtensionGetter,
-  getPluginExtensions,
-  getPluginLinkExtensions,
-  getPluginComponentExtensions,
-  type GetPluginExtensions,
-  type GetPluginExtensionsOptions,
-  type GetPluginExtensionsResult,
-  type UsePluginExtensions,
-  type UsePluginExtensionsResult,
-} from './pluginExtensions/getPluginExtensions';
-export {
-  setPluginExtensionsHook,
-  usePluginExtensions,
-  usePluginLinkExtensions,
-  usePluginComponentExtensions,
-} from './pluginExtensions/usePluginExtensions';
-
-export {
   setPluginComponentHook,
   usePluginComponent,
   type UsePluginComponentResult,

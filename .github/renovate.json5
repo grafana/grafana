@@ -51,12 +51,16 @@
       matchPackageNames: ["@grafana/scenes", "@grafana/scenes-react"],
     },
     {
+      groupName: "faro",
+      matchPackageNames: ["@grafana/faro*"],
+    },
+    {
       groupName: "visx",
       matchPackageNames: ["@visx/{/,}**"],
     },
     {
       groupName: "uLibraries",
-      matchPackageNames: ["@leeoniya/ufuzzy", "uplot"],
+      matchPackageNames: ["@leeoniya/**", "uplot"],
       reviewers: ["leeoniya"],
     },
     {
@@ -68,6 +72,10 @@
       groupName: "augurs",
       matchPackageNames: ["@bsull/augurs"],
       reviewers: ["sd2k"],
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "prPriority": -1
     },
   ],
   pin: {

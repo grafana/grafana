@@ -39,13 +39,12 @@ lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,tr
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 frontendSandboxMonitorOnly,privatePreview,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
-sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
+sqlDatasourceDatabaseSelection,preview,@grafana/oss-big-tent,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
-traceQLStreaming,GA,@grafana/observability-traces-and-profiling,false,false,true
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -119,7 +118,6 @@ scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,experimental,@grafana/grafana-datasources-core-services,false,false,false
-nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,false,false,true
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
 newPDFRendering,GA,@grafana/sharing-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
@@ -206,7 +204,7 @@ templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,fa
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
-exploreMetricsUseExternalAppPlugin,preview,@grafana/observability-metrics,false,true,false
+exploreMetricsUseExternalAppPlugin,GA,@grafana/observability-metrics,false,true,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
@@ -233,4 +231,6 @@ alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
-logsPanelControls,privatePreview,@grafana/observability-logs,false,false,true
+unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
+logsPanelControls,preview,@grafana/observability-logs,false,false,true
+metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
