@@ -273,6 +273,11 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	resp := a.validateTeamResource(c, resourceID)
+	if resp != nil {
+		return resp
+	}
+
 	var cmd setPermissionCommand
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -443,6 +448,36 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	}
 
 	return response.Success("Permissions updated")
+}
+
+func (a *api) validateTeamResource(c *contextmodel.ReqContext, resourceID string) response.Response {
+	if a.service.options.Resource != "teams" {
+		return nil
+	}
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid ResourceID", err)
+	}
+
+	existingTeam, err := a.service.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		ID:           teamID,
+		SignedInUser: c.SignedInUser,
+	})
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned {
+		return response.Error(http.StatusBadRequest, "Team permissions cannot be updated for provisioned teams", nil)
+	}
+
+	return nil
 }
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {
