@@ -172,6 +172,10 @@ export class TabItem
     this.setState({ title });
   }
 
+  public onChangeName(name: string): void {
+    this.onChangeTitle(name);
+  }
+
   public setIsDropTarget(isDropTarget: boolean) {
     if (!!this.state.isDropTarget !== isDropTarget) {
       this.setState({ isDropTarget });
