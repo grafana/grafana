@@ -13,6 +13,8 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  ManagerKind,
+  Resource,
 } from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -113,7 +115,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract processDashboardFromProvisioning(
     repo: string,
     path: string,
-    dryRun: any,
+    dryRun: Resource<DashboardDataDTO>,
     provisioningPreview: ProvisioningPreview
   ): T;
 
@@ -198,7 +200,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       .get(url, ref ? { ref } : undefined)
       .then((v) => {
         // Load the results from dryRun
-        const dryRun = v.resource.dryRun;
+        const dryRun: Resource<DashboardDataDTO> = v.resource.dryRun;
         if (!dryRun) {
           return Promise.reject('failed to read provisioned dashboard');
         }
@@ -516,15 +518,15 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   processDashboardFromProvisioning(
     repo: string,
     path: string,
-    dryRun: any,
+    dryRun: Resource<DashboardDataDTO>,
     provisioningPreview: ProvisioningPreview
   ): DashboardDTO {
     // Make sure the annotation key exists
-    let anno = dryRun.metadata.annotations;
+    let anno = dryRun.metadata?.annotations;
     if (!anno) {
-      dryRun.metadata.annotations = {};
+      anno = {};
     }
-    anno[AnnoKeyManagerKind] = 'repo';
+    anno[AnnoKeyManagerKind] = ManagerKind.Repo;
     anno[AnnoKeyManagerIdentity] = repo;
     anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
 
@@ -540,7 +542,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         canEdit: true,
 
         // Includes additional k8s metadata
-        k8s: dryRun.metadata,
+        k8s: { ...dryRun.metadata, annotations: anno },
 
         // lookup info
         provisioning: provisioningPreview,
@@ -853,7 +855,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 
-  processDashboardFromProvisioning(repo: string, path: string, dryRun: any, provisioningPreview: ProvisioningPreview) {
+  processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: Resource<DashboardDataDTO>,
+    provisioningPreview: ProvisioningPreview
+  ) {
     return this.activeManager.processDashboardFromProvisioning(repo, path, dryRun, provisioningPreview);
   }
 }
