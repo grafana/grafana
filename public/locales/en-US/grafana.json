@@ -1963,7 +1963,6 @@
       "tooltip-delete": "delete"
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "Preview with the default payload",
       "label-template-content": "Template content"
     },
     "template-data-table": {
