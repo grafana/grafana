@@ -67,13 +67,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
-	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagKubernetesClientDashboardsFolders,
-		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		featuremgmt.FlagProvisioning) {
-		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
-	}
-
 	builder := &FolderAPIBuilder{
 		gv:                   resourceInfo.GroupVersion(),
 		features:             features,
