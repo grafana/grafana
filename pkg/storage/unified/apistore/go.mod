@@ -202,7 +202,7 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/grafana/alerting v0.0.0-20250408102153-2412c378a692 // indirect
+	github.com/grafana/alerting v0.0.0-20250411135245-cad0d384d430 // indirect
 	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
@@ -212,7 +212,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9 // indirect
+	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect

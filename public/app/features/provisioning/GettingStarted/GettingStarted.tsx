@@ -17,7 +17,6 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-unifiedStorageSearch = true
 kubernetesClientDashboardsFolders = true
 kubernetesDashboards = true ; use k8s from browser
 
