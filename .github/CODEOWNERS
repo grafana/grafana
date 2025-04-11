@@ -823,8 +823,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
-/.github/workflows/e2e-suite-various.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/run-e2e-suite.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
