@@ -329,6 +329,7 @@
     "alert-groups": {
       "no-results": "",
       "text-loading-notifications": "",
+      "title-error-loading-notifications": "",
       "title-grafana-alerts-delivered-alertmanager": ""
     },
     "alert-instance-details": {
@@ -436,6 +437,7 @@
       },
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
+      "title-restore-version": "",
       "title-restoring-alertmanager-configuration": ""
     },
     "alerts-folder-view": {
@@ -510,6 +512,7 @@
       "label-continue-matching-subsequent-sibling-nodes": "",
       "label-group-by": "",
       "label-label": "",
+      "label-operator": "",
       "label-override-general-timings": "",
       "label-override-grouping": "",
       "label-value": "",
@@ -801,7 +804,8 @@
       "title-failed-to-fetch-notification-template": ""
     },
     "error-modal": {
-      "failed-to-update-your-configuration": ""
+      "failed-to-update-your-configuration": "",
+      "title-something-went-wrong": ""
     },
     "error-summary-button": {
       "error": ""
@@ -822,7 +826,8 @@
     },
     "evaluation-group-creation-modal": {
       "description-often-rules-group-evaluated": "",
-      "placeholder-enter-a-name": ""
+      "placeholder-enter-a-name": "",
+      "title-new-evaluation-group": ""
     },
     "evaluation-group-loader": {
       "title-something-wrong-trying-fetch-group-details": ""
@@ -894,7 +899,8 @@
     "generate-alert-data-modal": {
       "add-alert-data": "",
       "add-alert-data-to-payload": "",
-      "review-alert-payload": ""
+      "review-alert-payload": "",
+      "title-add-custom-alerts": ""
     },
     "get-preview-results": {
       "title-error": ""
@@ -925,6 +931,7 @@
     "grafana-evaluation-behavior-step": {
       "missing-series-resolve-placeholder": "",
       "or": "",
+      "placeholder-select-an-evaluation-group": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
     },
@@ -955,6 +962,9 @@
     },
     "grafana-rule-design-export-preview": {
       "text-loading": ""
+    },
+    "grafana-rule-design-exporter": {
+      "title-export-group": ""
     },
     "grafana-rule-export-preview": {
       "text-loading": ""
@@ -988,6 +998,7 @@
       "namespace-picker-label-namespace": ""
     },
     "group-by": {
+      "aria-label-group-by-label-keys": "",
       "placeholder-group-by": ""
     },
     "group-details": {
@@ -1046,12 +1057,15 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "loading": "",
+        "loading-body": "",
         "no-rules-body": "",
         "no-rules-title": "",
         "plugin-rules-warning": {
           "text": "",
           "title": ""
         },
+        "target-folder-rules": "",
         "title": ""
       },
       "datasource": {
@@ -1312,6 +1326,10 @@
       "title-error-loading-alertmanager-config": "",
       "title-notification-policies-have-changed": ""
     },
+    "notification-policies-tabs": {
+      "label-mute-timings": "",
+      "label-notification-policies": ""
+    },
     "notification-policy-matchers": {
       "default-policy": "",
       "no-matchers": ""
@@ -1524,7 +1542,8 @@
       "label-target-data-source": "대상 데이터 소스"
     },
     "recording-rules-name-space-and-group-step": {
-      "description-select-namespace-group-recording": ""
+      "description-select-namespace-group-recording": "",
+      "title-add-namespace-and-group": ""
     },
     "redirect-to-clone-rule": {
       "title-copy-provisioned-alert-rule": ""
@@ -1799,7 +1818,9 @@
       "dashboard": "",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "",
       "filter-options": {
-        "aria-label-show-filters": ""
+        "aria-label-show-filters": "",
+        "label-custom-filter": "",
+        "label-saved-searches": ""
       },
       "health": "",
       "placeholder-all-data-sources": "",
@@ -1868,7 +1889,8 @@
       "title-silence-alert-rule": ""
     },
     "silence-period": {
-      "label-silence-start-and-end": ""
+      "label-silence-start-and-end": "",
+      "placeholder-select-time-range": ""
     },
     "silenced-instances-preview": {
       "no-firing-alert-instances-found": "",
@@ -1913,7 +1935,9 @@
     },
     "state-history": {
       "filter-group": "",
-      "placeholder-search": ""
+      "placeholder-search": "",
+      "text-loading-history": "",
+      "title-failed-to-fetch-alert-state-history": ""
     },
     "string-array-input": {
       "add": "",
@@ -1938,6 +1962,7 @@
     },
     "template-form": {
       "aria-label-template-form": "",
+      "label-examples-documentation": "",
       "label-template-group": "",
       "label-template-group-name": "",
       "new-template-name-placeholder-give-your-template-group-a-name": "",
@@ -1982,7 +2007,8 @@
     },
     "test-contact-point-modal": {
       "notification-message": "",
-      "send-test-notification": ""
+      "send-test-notification": "",
+      "title-test-contact-point": ""
     },
     "threshold": {
       "to": "다음으로 설정"
@@ -2002,6 +2028,9 @@
         "summary": "",
         "title-warning": ""
       }
+    },
+    "unknown-rule-list-item": {
+      "title-unknown-rule-type": ""
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "",
@@ -2611,6 +2640,7 @@
       "group-panels": "",
       "new-row": "",
       "new-tab": "",
+      "paste-panel": "",
       "paste-row": "",
       "paste-tab": "",
       "un-group-panels": ""
@@ -2686,7 +2716,8 @@
     },
     "dash-nav": {
       "render-left-actions": {
-        "text-public": ""
+        "text-public": "",
+        "tooltip-view-as-scene": ""
       }
     },
     "dashboard-loading": {
@@ -2775,7 +2806,8 @@
         "rows": "행",
         "tab": "탭",
         "tabs": "탭",
-        "variable": ""
+        "variable": "",
+        "variable-set": ""
       },
       "open": "옵션 창 열기",
       "row": {
@@ -2783,6 +2815,10 @@
           "hide": "숨기기",
           "title": "행 헤더"
         }
+      },
+      "variables": {
+        "add-variable": "",
+        "select-variable": ""
       }
     },
     "empty": {
@@ -2901,13 +2937,13 @@
       "title-option": "제목"
     },
     "options-pane-options": {
+      "placeholder-search-options": "",
       "Recent options-title-recent-options": ""
     },
     "outline": {
-      "tree": {
-        "item": {
-          "empty": "(비어 있음)"
-        }
+      "tree-item": {
+        "empty": "",
+        "no-title": ""
       }
     },
     "override-category-title": {
@@ -3019,7 +3055,13 @@
     },
     "save-dashboard-diff": {
       "full-json-diff": "",
-      "no-changes-in-the-dashboard-json": ""
+      "no-changes-in-the-dashboard-json": "",
+      "title-because-dashboard-migrated-grafana-format": "",
+      "title-folder": ""
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "",
+      "label-details": ""
     },
     "save-dashboard-error-proxy": {
       "title-conflict": ""
@@ -3491,7 +3533,7 @@
     },
     "provisioned-resource-delete-modal": {
       "file-path": "파일 경로:",
-      "managed-by-version-control": "이 {type}은(는) 버전 제어에 의해 관리되며 삭제할 수 없습니다. 제거하려면 리포지토리에서 삭제하고 동기화하여 변경 사항을 적용하세요.",
+      "managed-by-version-control": "",
       "ok": "확인",
       "title-cannot-delete-provisioned-resource": "프로비저닝된 리소스는 삭제할 수 없습니다."
     },
@@ -3887,6 +3929,7 @@
     },
     "resource-dimension-editor": {
       "label-field": "",
+      "label-mappings": "",
       "label-source": ""
     },
     "resource-picker": {
@@ -3912,7 +3955,8 @@
     "text-dimension-editor": {
       "label-field": "",
       "label-source": "",
-      "label-template": ""
+      "label-template": "",
+      "label-value": ""
     },
     "thresholds-editor": {
       "add-threshold": "",
@@ -4026,6 +4070,10 @@
       "description": "Grafana 탐색 앱을 찾고 계신가요? 이제 Grafana 드릴다운 앱이라고 불리며, <1>메뉴 > 드릴다운</1>에서 찾을 수 있습니다.",
       "title": "Explore Metrics, Logs, Traces 및 Profiles 위치가 변경되었습니다!"
     },
+    "drop-down-menu": {
+      "aria-label-links": "",
+      "links": ""
+    },
     "explore": {
       "title-flame-graph": "",
       "title-graph": "",
@@ -4074,6 +4122,9 @@
       "scan-for-older-logs": "이전 로그 검색",
       "stop-scan": "스캔 중지"
     },
+    "logs-column-search": {
+      "placeholder-search-fields-by-name": ""
+    },
     "logs-container": {
       "label-logs": ""
     },
@@ -4100,6 +4151,7 @@
       "title-drag-and-drop-to-reorder": ""
     },
     "logs-table-wrap": {
+      "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
     },
@@ -4130,6 +4182,9 @@
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": ""
+    },
+    "references": {
+      "label-attributes": ""
     },
     "rich-history": {
       "close-tooltip": "쿼리 이력을 닫습니다.",
@@ -4258,6 +4313,7 @@
       "title-span-bar": ""
     },
     "span-bar-settings": {
+      "aria-label-selectlabelname": "",
       "label-label": "",
       "label-tag-key": "",
       "placeholder-duration": "",
@@ -4337,7 +4393,11 @@
     },
     "trace-page-actions": {
       "give-feedback": "",
+      "label-export": "",
       "title-share-thoughts-about-tracing-grafana": ""
+    },
+    "trace-page-header": {
+      "text-partial-trace": ""
     },
     "trace-view": {
       "no-data": ""
@@ -4353,6 +4413,7 @@
       "label-unique-labels": "",
       "label-wrap-lines": "",
       "title-feedback": "",
+      "title-logs": "",
       "title-logs-volume": ""
     },
     "unthemed-viewing-layer": {
@@ -5196,6 +5257,10 @@
         "tooltip-show-log-line": ""
       }
     },
+    "log-labels": {
+      "collapse": "",
+      "expand": ""
+    },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
       "copy-log": "로그 라인 복사",
@@ -5248,11 +5313,13 @@
         "txt": ""
       },
       "enable-highlighting": "",
+      "escape-newlines": "",
       "hide-timestamps": "",
       "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
       "prettify-json": "",
+      "remove-escaping": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
@@ -5319,14 +5386,20 @@
       "when-complete": "스냅샷이 완료되면 클라우드 스택에 업로드할 수 있습니다."
     },
     "building-snapshot": {
-      "description": "이 설치 인스턴스의 현재 상태에 대해 지정된 시점의 스냅샷을 생성하고 있습니다. 스냅샷이 완료되면 Grafana Cloud에 업로드할 수 있습니다.",
+      "description": "",
       "description-eta": "스냅샷을 생성하는 데는 일반적으로 2분이 채 걸리지 않습니다.",
-      "title": "설치 인스턴스 스냅샷 구축"
+      "title": ""
     },
     "can-i-move": {
-      "body": "이 설치를 클라우드 스택에 연결하면 데이터 소스와 대시보드를 업로드할 수 있습니다.",
-      "link-title": "다른 설정 마이그레이션하는 방법 자세히 알아보기",
-      "title": "이 설치를 Grafana Cloud로 이동할 수 있나요?"
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "configure-snapshot": {
+      "description": "",
+      "description-sub-line": "",
+      "resource-include-all": "",
+      "title": ""
     },
     "connect-modal": {
       "body-cloud-stack": "이를 위해서는 클라우드 스택도 필요합니다. 방금 가입하셨다면 첫 번째 스택이 자동으로 생성됩니다. 계정이 있는 경우 스택을 선택하거나 생성해야 합니다.",
@@ -5335,7 +5408,7 @@
       "body-token": "자체 관리 Grafana 설치는 안전한 콘텐츠 마이그레이션을 위한 특별한 액세스 권한이 필요합니다. 선택한 클라우드 스택에서 마이그레이션 토큰을 생성해야 합니다.",
       "body-token-field": "마이그레이션 토큰",
       "body-token-field-placeholder": "여기에 토큰 붙여넣기",
-      "body-token-instructions": "클라우드 스택에 로그인하고 '관리', '일반', 'Grafana Cloud로 마이그레이션'으로 이동하세요. 해당 화면에서 마이그레이션 토큰을 생성하고 여기에 토큰을 붙여넣으세요.",
+      "body-token-instructions": "",
       "body-view-stacks": "내 클라우드 스택 보기",
       "cancel": "취소",
       "connect": "이 스택에 연결",
@@ -5379,11 +5452,12 @@
       "body": "마이그레이션 프로세스는 자체 관리 Grafana 인스턴스에서 시작해야 합니다.",
       "configure-pdc-link": "이 스택에 대해 PDC 구성하기",
       "link-title": "Private Data Source Connect(PDC)에 대해 자세히 알아보기",
-      "step-1": "자체 관리 인스턴스에 로그인하고 '관리', '일반', 'Grafana Cloud로 마이그레이션'으로 이동하세요.",
+      "step-1": "",
       "step-2": "'이 인스턴스를 클라우드로 마이그레이션'을 선택하세요.",
-      "step-3": "그러면 마이그레이션 토큰을 입력하라는 메시지가 표시됩니다. 이 화면에서 토큰을 생성하세요.",
-      "step-4": "자체 관리 인스턴스에서 '모두 업로드'를 선택하여 데이터 소스와 대시보드를 이 클라우드 스택에 업로드하세요.",
-      "step-5": "일부 데이터 소스가 공개 인터넷에서 작동하지 않는 경우 자체 관리 환경에서 비공개 데이터 소스 연결(PDC)을 설치해야 합니다.",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "step-6": "",
       "title": "마이그레이션 수행하기"
     },
     "is-it-secure": {
@@ -5392,7 +5466,7 @@
       "title": "안전한가요?"
     },
     "migrate-to-this-stack": {
-      "body": "자체 관리 Grafana 설치 인스턴스에서 이 클라우드 스택으로 일부 리소스를 마이그레이션할 수 있습니다. 이를 안전하게 수행하려면 마이그레이션 토큰을 생성해야 합니다. 자체 관리 인스턴스는 이 클라우드 스택의 인증을 위해 토큰을 사용합니다.",
+      "body": "",
       "link-title": "전체 마이그레이션 가이드 보기",
       "title": "저희가 이 스택으로 마이그레이션할 수 있도록 도와드리겠습니다."
     },
@@ -5410,7 +5484,7 @@
       "modal-close": "닫기",
       "modal-copy-and-close": "클립보드로 복사하고 닫기",
       "modal-copy-button": "클립보드로 복사",
-      "modal-field-description": "토큰이 다시 표시되지 않으므로 지금 복사해 두세요. 토큰을 분실하면 새 토큰을 생성해야 합니다.",
+      "modal-field-description": "",
       "modal-field-label": "토큰",
       "modal-title": "마이그레이션 토큰 생성됨",
       "status": "현재 상태: <2></2>"
@@ -5427,7 +5501,7 @@
       "get-session-error-title": "마이그레이션 구성 로딩 중 오류 발생",
       "get-snapshot-error-title": "스냅샷 로딩 중 오류 발생",
       "migration-finished-with-caveat-title": "리소스 마이그레이션 완료",
-      "migration-finished-with-errors-body": "마이그레이션이 완료되었지만 일부 항목을 클라우드 스택으로 마이그레이션하지 못했습니다. 자세한 내용은 실패한 리소스를 확인하세요.",
+      "migration-finished-with-errors-body": "",
       "migration-finished-with-warnings-body": "경고가 몇 건 발생한 상태에서 마이그레이션이 완료되었습니다. 자세한 내용은 개별 리소스를 확인하세요.",
       "snapshot-error-status-body": "스냅샷을 생성하거나 마이그레이션 프로세스를 시작하는 중에 오류가 발생했습니다. 자세한 내용은 Grafana 서버 로그를 참고하세요.",
       "snapshot-error-status-title": "리소스 마이그레이션 중 오류 발생",
@@ -5439,7 +5513,7 @@
     "pdc": {
       "body": "데이터 소스를 인터넷에 노출하면 보안 문제가 발생할 수 있습니다. 비공개 데이터 소스 연결(PDC)을 사용하면 Grafana Cloud가 보안 네트워크 터널을 통해 기존 데이터 소스에 액세스할 수 있습니다.",
       "link-title": "PDC에 대해 알아보기",
-      "title": "모든 데이터 소스가 공개 인터넷에 있지 않은 경우"
+      "title": ""
     },
     "pricing": {
       "body": "Grafana Cloud에는 넉넉한 무료 플랜과 14일 무제한 사용 체험판이 있습니다. 체험판이 만료된 후에는 무료 플랜 한도를 기준으로 초과한 사용량만큼 요금이 청구됩니다.",
@@ -5517,7 +5591,7 @@
       "disconnect": "연결 해제",
       "errored-resource-count": "오류",
       "page-loading": "로딩 중...",
-      "rebuild-snapshot": "스냅샷 재구축",
+      "rebuild-snapshot": "",
       "show-errors": "",
       "snapshot-date": "스냅샷 타임스탬프",
       "snapshot-not-created": "아직 생성되지 않음",
@@ -5774,7 +5848,7 @@
       "subtitle": "폴더 대시보드 및 권한 관리"
     },
     "migrate-to-cloud": {
-      "subtitle": "자체 관리 설치 인스턴스에서 클라우드 스택으로 구성 복사",
+      "subtitle": "",
       "title": "Grafana Cloud로 마이그레이션"
     },
     "monitoring": {
@@ -6138,7 +6212,8 @@
       "aria-label-plugin-type-filter": "",
       "label-search": "",
       "label-state": "",
-      "label-type": ""
+      "label-type": "",
+      "subtitle": ""
     },
     "catalog": {
       "no-updates-available": "사용 가능 업데이트 없음",
@@ -6322,6 +6397,7 @@
       "text-loading-organizations": ""
     },
     "user-sessions": {
+      "browser-details": "",
       "now": "",
       "sessions": ""
     },
@@ -6336,21 +6412,14 @@
   },
   "provisioning": {
     "bootstrap-step": {
-      "dashboards-unavailable-while-running-process": "",
       "description-clear-repository-connection": "",
       "empty": "",
       "error-field-required": "",
+      "ext-storage": "",
       "grafana": "",
-      "include-history": "",
       "label-display-name": "",
-      "label-migrate-options": "",
       "placeholder-my-repository-connection": "",
-      "repository": "",
-      "resources-will-be-added": "",
       "text-loading-resource-information": "",
-      "title-files-exist-in-the-target": "",
-      "title-note": "",
-      "tooltip-include-history": "",
       "files-count_other": ""
     },
     "check-repository": {
@@ -6361,13 +6430,11 @@
       "alert-repository-settings-updated": "",
       "button-save": "",
       "button-saving": "",
-      "description-branch": "",
       "description-enabled": "",
       "description-path": "",
+      "description-read-only": "",
       "description-repository-url": "",
       "description-title": "",
-      "description-workflows-makes-repository": "",
-      "description-write": "",
       "error-required": "",
       "error-save-repository": "",
       "error-valid-github-url": "",
@@ -6378,25 +6445,21 @@
       "label-interval-seconds": "",
       "label-local-path": "",
       "label-path": "",
+      "label-pr-workflow": "",
       "label-repository-type": "",
       "label-repository-url": "",
       "label-target": "",
       "label-title": "",
-      "label-workflows": "",
-      "option-branch": "",
       "option-entire-instance": "",
       "option-github": "",
       "option-local": "",
       "option-managed-folder": "",
-      "option-write": "",
       "placeholder-branch": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
       "placeholder-interval-seconds": "",
       "placeholder-local-path": "",
       "placeholder-my-config": "",
-      "placeholder-path": "",
-      "placeholder-readonly-repository": "",
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
@@ -6414,12 +6477,13 @@
       "title-webhook-will-be-created": ""
     },
     "connect-repository-button": {
+      "configure": "",
       "configure-file": "",
       "configure-git-sync": "",
       "repository-limit-info-alert": ""
     },
     "connect-step": {
-      "description-choose-storage-resources": "",
+      "description-branch": "",
       "description-github-path": "",
       "description-paste-your-git-hub-personal-access-token": "",
       "description-repository-url": "",
@@ -6430,14 +6494,10 @@
       "label-local-path": "",
       "label-path": "",
       "label-repository-url": "",
-      "label-storage-type": "",
       "placeholder-branch": "",
-      "placeholder-github-path": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
-      "placeholder-local-path": "",
-      "storage-type-github": "",
-      "storage-type-local": ""
+      "placeholder-local-path": ""
     },
     "delete-repository-button": {
       "button-delete": "",
@@ -6475,7 +6535,6 @@
       },
       "manage-dashboards-provision-updates-automatically": "",
       "manage-your-dashboards-with-remote-provisioning": "",
-      "migrate-existing-dashboards-storage-provisioning": "",
       "store-dashboards-in-version-controlled-storage": ""
     },
     "file-history-page": {
@@ -6493,19 +6552,19 @@
       "placeholder-search": ""
     },
     "finish-step": {
-      "description-dashboard-previews": "",
-      "description-enable-webhooks": "",
+      "description-enable-previews": "",
+      "description-image-rendering": "",
       "description-often-shall-instance-updates-git-hub": "",
-      "description-select-workflows-allowed-within-repository": "",
-      "error-field-required": "",
-      "label-enable-dashboard-previews": "",
-      "label-enable-webhooks": "",
+      "description-pr-enable-description": "",
+      "description-read-only": "",
+      "description-webhooks-enable": "",
+      "label-enable-previews": "",
+      "label-pr-workflow": "",
+      "label-read-only": "",
       "label-update-instance-interval-seconds": "",
-      "label-workflows": "",
-      "link-setup-image-rendering": "",
       "placeholder": "",
-      "placeholder-readonly-repository": "",
-      "text-requires-image-rendering": ""
+      "text-setup-later": "",
+      "title-enhance-github": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "",
@@ -6563,16 +6622,17 @@
       },
       "summary": ""
     },
-    "job-step": {
-      "error-failed-to-start": "",
-      "error-invalid-response": "",
-      "error-job-failed": ""
-    },
-    "migrate-step": {
-      "description-migrating-dashboards": ""
-    },
-    "pull-step": {
-      "description-pulling-content": ""
+    "mode-options": {
+      "folder": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      },
+      "instance": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      }
     },
     "recent-jobs": {
       "active-jobs": "",
@@ -6602,8 +6662,7 @@
       "title-repository-is-unhealthy": ""
     },
     "repository-link": {
-      "grafana-repository": "",
-      "view-folder": "",
+      "grafana-repository-synced": "",
       "view-repository": ""
     },
     "repository-overview": {
@@ -6682,30 +6741,36 @@
       "title-pull-not-enabled": "",
       "tooltip-unhealthy-repository": ""
     },
+    "synchronize-step": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": "",
+      "synchronization-description": "",
+      "synchronization-options": ""
+    },
     "token-permissions-info": {
-      "access": "",
-      "contents": "",
-      "github-instructions": "",
-      "metadata": "",
-      "permission": "",
-      "pull-requests": "",
-      "read-and-write": "",
-      "readonly": "",
-      "webhooks": ""
+      "and-click": "",
+      "go-to": "",
+      "make-sure": ""
     },
     "wizard": {
-      "button-finish": "",
+      "alert-point-1": "",
+      "alert-point-2": "",
+      "alert-point-3": "",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-next": "",
       "button-start": "",
       "step-bootstrap": "",
       "step-connect": "",
       "step-finish": "",
-      "step-resources": "",
+      "step-synchronize": "",
+      "sync-description": "",
+      "sync-option-history": "",
       "title-bootstrap": "",
       "title-connect": "",
       "title-finish": "",
-      "title-migrate": "",
-      "title-pull": ""
+      "title-synchronize": ""
     },
     "wizard-content": {
       "button-cancel": "",
@@ -6909,6 +6974,7 @@
     },
     "query-group": {
       "add-query": "",
+      "expression": "",
       "title-data-source-help": ""
     },
     "query-group-options-editor": {
@@ -7183,6 +7249,7 @@
       "copy-clipboard": "",
       "copy-to-clipboard-and-close": "",
       "description-name-to-easily-identify-the-token": "",
+      "description-token": "",
       "generate-token": "",
       "label-display-name": "",
       "label-expiration": "",
@@ -7191,8 +7258,10 @@
     },
     "get-actions-cell": {
       "add-token": "",
+      "aria-label-delete-button": "",
       "disable": "",
-      "enable": ""
+      "enable": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "get-role-cell": {
       "aria-label-role": ""
@@ -7202,7 +7271,9 @@
       "aria-label-role": "",
       "disable": "",
       "enable": "",
-      "title-tokens": ""
+      "title-tokens": "",
+      "tooltip-delete-button": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "",
@@ -7211,7 +7282,8 @@
       "enable-service-account": "",
       "title-delete-service-account": "",
       "title-disable-service-account": "",
-      "tokens": ""
+      "tokens": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-permissions": {
       "title-permissions": ""
@@ -7237,6 +7309,7 @@
     "service-accounts-list-page-unconnected": {
       "add-service-account": "",
       "placeholder-search-service-account-by-name": "",
+      "sub-title": "",
       "title-delete-service-account": "",
       "title-disable-service-account": ""
     },
@@ -7519,15 +7592,20 @@
     },
     "support-bundles-create-unconnected": {
       "cancel": "",
-      "create": ""
+      "create": "",
+      "sub-title": ""
     },
     "support-bundles-unconnected": {
       "created-on": "",
       "download": "",
       "expires": "",
       "requested-by": "",
+      "sub-title": "",
       "tooltip-remove-bundle": ""
     }
+  },
+  "swagger": {
+    "login": ""
   },
   "table": {
     "container": {
@@ -7551,6 +7629,8 @@
   "teams": {
     "create-team": {
       "create": "",
+      "description-email": "",
+      "label-email": "",
       "label-name": "",
       "label-role": ""
     },
@@ -7562,24 +7642,36 @@
     },
     "team-group-sync": {
       "add-group": "",
+      "add-group-button": "",
+      "aria-label-remove": "",
       "external-group-id": "",
       "external-group-sync": "",
-      "title-there-external-groups": ""
+      "label-add-external-group": "",
+      "team-sync-upgrade": "",
+      "title-there-external-groups": "",
+      "tooltip-add-external-group": ""
     },
     "team-list": {
       "columns": {
-        "title-edit-team": ""
+        "aria-label-delete-button": "",
+        "aria-label-edit-team": "",
+        "title-edit-team": "",
+        "tooltip-edit-team": ""
       },
       "new-team": "",
       "placeholder-search-teams": ""
     },
     "team-settings": {
+      "description-email": "",
       "label-email": "",
       "label-name": "",
       "label-numerical-identifier": "",
       "label-role": "",
       "label-team-details": "",
       "save": ""
+    },
+    "team-sync-upgrade-content": {
+      "description": ""
     }
   },
   "theme-preview": {
@@ -7678,6 +7770,7 @@
       "date-created": "생성 날짜: "
     },
     "create-bookmark-saved-notification": {
+      "description": "",
       "view-bookmarks": ""
     },
     "data-trail-card": {
@@ -7699,11 +7792,13 @@
     },
     "label-breakdown-scene": {
       "label-search": "",
-      "label-view": ""
+      "label-view": "",
+      "title-warning-there-missing-telemetry-resource-attributes": ""
     },
     "metric-action-bar": {
       "open": "",
       "select-new-metric": "",
+      "tooltip-bookmark": "",
       "tooltip-open-in-explore": "",
       "tooltip-remove-existing-metric-choose": ""
     },
@@ -7715,6 +7810,7 @@
     },
     "metric-select-scene": {
       "label-otel-experience": "",
+      "label-search-metrics": "",
       "placeholder-search-metrics": "",
       "title-unable-to-retrieve-all-metric-names": "",
       "unable-to-retrieve-metric-names": ""
@@ -7735,7 +7831,8 @@
       "now": "현재:",
       "previously": "이전: ",
       "see-examples": "> 예시 보기",
-      "sentence": "Prometheus 기본 히스토그램은 고해상도, 고정밀도, 간단한 계측 사용법을 제공하며, 쿼리 및 Grafana에서 히스토그램을 결합하고 조작하는 방법을 제공합니다."
+      "sentence": "Prometheus 기본 히스토그램은 고해상도, 고정밀도, 간단한 계측 사용법을 제공하며, 쿼리 및 Grafana에서 히스토그램을 결합하고 조작하는 방법을 제공합니다.",
+      "title-native-histogram-support": ""
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "또는 최근 탐색 보기"
@@ -7743,11 +7840,15 @@
     "related-logs-scene": {
       "tooltip-navigate-to-the-explore-logs-app": ""
     },
+    "search-input": {
+      "title-clear-search": ""
+    },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "선택한 메트릭 그래프가 항상 화면에 보이도록 표시",
       "show-previews-of-metric-graphs": "메트릭 그래프 미리 보기 표시"
     },
     "sort-by-scene": {
+      "placeholder-choose-criteria": "",
       "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
@@ -7785,11 +7886,17 @@
       "label-config-query": ""
     },
     "convert-field-type-transformer-editor": {
+      "aria-label-add-a-convert-field-type-transformer": "",
+      "aria-label-remove-convert-field-type-transformer": "",
+      "label-as": "",
       "label-date-format": "",
+      "label-field": "",
       "label-input-format": "",
       "label-join-with": "",
       "label-set-timezone": "",
+      "placeholder-type": "",
       "tooltip-explicit-separator-joining-array-values": "",
+      "tooltip-input-format": "",
       "tooltip-specify-the-output-format": "",
       "tooltip-timezone-manually": ""
     },
@@ -7799,6 +7906,7 @@
       "placeholder-field": ""
     },
     "draggable-field-name": {
+      "rename-placeholder": "",
       "title-drag-and-drop-to-reorder": ""
     },
     "enum-mapping-editor": {
@@ -7811,7 +7919,19 @@
     },
     "extract-fields-transformer-editor": {
       "label-delimiter": "",
+      "label-format": "",
+      "label-keep-time": "",
+      "label-replace-all-fields": "",
+      "label-source": "",
+      "placeholder-auto": "",
       "placeholder-select-delimiter": ""
+    },
+    "field-config-mapping-handler-arguments-editor": {
+      "aria-label-threshold-color": ""
+    },
+    "field-lookup-transformer-editor": {
+      "label-field": "",
+      "label-lookup": ""
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "",
@@ -7839,6 +7959,7 @@
       "label-filter-type": ""
     },
     "format-string-transfomer-editor": {
+      "label-field": "",
       "label-format": "",
       "label-substring-range": ""
     },
@@ -7855,8 +7976,13 @@
       "placeholder-ignored": "",
       "placeholder-select-stats": ""
     },
+    "group-by-transformer-editor": {
+      "title-calc-alert": ""
+    },
     "group-to-nested-table-transformer-editor": {
-      "label-show-field-names-in-nested-tables": ""
+      "description-show-field-names": "",
+      "label-show-field-names-in-nested-tables": "",
+      "title-calc-alert": ""
     },
     "grouping-to-matrix-transformer-editor": {
       "label-cell-value": "",
@@ -7865,7 +7991,9 @@
       "label-row": ""
     },
     "histogram-transformer-editor": {
-      "placeholder-default": ""
+      "placeholder-auto": "",
+      "placeholder-default": "",
+      "placeholder-none": ""
     },
     "index-options-editor": {
       "label-as-percentile": "",
@@ -7878,6 +8006,8 @@
         "title-no-input-found": "",
         "title-no-labels-found": ""
       },
+      "label-join": "",
+      "label-value": "",
       "tooltip-select-label-indicating-values": ""
     },
     "jsonpath-editor": {
@@ -7888,6 +8018,9 @@
       "tooltip-remove-path": ""
     },
     "labels-as-fields-transformer-editor": {
+      "label-labels": "",
+      "label-mode": "",
+      "label-value-field-name": "",
       "placeholder-optional-select-label": "",
       "tooltip-replace-value-field-label": ""
     },
@@ -7898,21 +8031,32 @@
       "ascending-order-duplicates": "",
       "multiple-value-fields-may-exist": "",
       "single-frame": "",
-      "st-field-is-time": ""
+      "st-field-is-time": "",
+      "string-values-separate": ""
     },
     "merge-transformer-editor": {
       "merge-effect-applied-single-frame": ""
     },
     "multi-info": {
       "all-values-are-numeric": "",
+      "frame-fields-value": "",
       "multiple-frames": "",
       "string-values-are-represented-as-labels": "",
       "time-in-ascending-order": ""
     },
+    "organize-fields-transformer-editor": {
+      "first-frame-warning": ""
+    },
+    "partion-by-values-editor": {
+      "tooltip-naming": ""
+    },
     "partition-by-values-editor": {
       "label-field": "",
+      "label-keep-fields": "",
+      "label-naming": "",
       "label-select-field": "",
-      "partition-values-works-single-frame": ""
+      "partition-values-works-single-frame": "",
+      "tooltip-keeps-partition-fields-frames": ""
     },
     "prepare-time-series-editor": {
       "label-format": "",
@@ -7942,7 +8086,8 @@
       "label-model-type": "",
       "label-predicted-points": "",
       "label-x-field": "",
-      "label-y-field": ""
+      "label-y-field": "",
+      "tooltip-number-of-xy-points-to-predict": ""
     },
     "rename-by-regex-transformer-editor": {
       "label-match": "",
@@ -7962,11 +8107,15 @@
     "time-series-table-transform-editor": {
       "label-stat": "",
       "label-time-field": "",
-      "tooltip-statistic-should-calculated-series": ""
+      "tooltip-statistic-should-calculated-series": "",
+      "tooltip-time-field": ""
     },
     "transpose-transfomer-editor": {
+      "label-first-field-name": "",
+      "label-remaining-fields-name": "",
       "placeholder-field": "",
-      "placeholder-value": ""
+      "placeholder-value": "",
+      "tooltip-name-for-value-fields": ""
     },
     "unary-operation-editor": {
       "label-operation": "",
@@ -8034,6 +8183,7 @@
       "message": "찾은 사용자 없음"
     },
     "token-revoked-modal": {
+      "resume-message": "",
       "sign-in": "",
       "title-you-have-been-automatically-signed-out": ""
     },
@@ -8048,6 +8198,11 @@
       "shared-dashboard-users-tab-title": "공유 대시보드 사용자"
     }
   },
+  "variabels": {
+    "variable-usages-button": {
+      "usage-title": ""
+    }
+  },
   "variable": {
     "adhoc": {
       "placeholder": "값 선택"
@@ -8058,7 +8213,7 @@
     "picker": {
       "link-all": "전체",
       "option-all": "전체",
-      "option-selected-values": "선택됨",
+      "option-selected-values": "",
       "option-tooltip": "선택 항목 지우기"
     },
     "textbox": {
@@ -8083,6 +8238,9 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": ""
+    },
+    "picker-renderer": {
+      "couldnt-load-variable": ""
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "",
@@ -8136,9 +8294,12 @@
       "title-dependencies": ""
     },
     "variables-unknown-button": {
+      "usage-title": "",
       "VariablesUnknownButton-tooltip-show-usages": ""
     },
     "variables-unknown-table": {
+      "collapse-label": "",
+      "collapse-tooltip": "",
       "loading": ""
     }
   },

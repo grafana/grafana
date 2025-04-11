@@ -329,6 +329,7 @@
     "alert-groups": {
       "no-results": "",
       "text-loading-notifications": "",
+      "title-error-loading-notifications": "",
       "title-grafana-alerts-delivered-alertmanager": ""
     },
     "alert-instance-details": {
@@ -436,6 +437,7 @@
       },
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
+      "title-restore-version": "",
       "title-restoring-alertmanager-configuration": ""
     },
     "alerts-folder-view": {
@@ -510,6 +512,7 @@
       "label-continue-matching-subsequent-sibling-nodes": "",
       "label-group-by": "",
       "label-label": "",
+      "label-operator": "",
       "label-override-general-timings": "",
       "label-override-grouping": "",
       "label-value": "",
@@ -801,7 +804,8 @@
       "title-failed-to-fetch-notification-template": ""
     },
     "error-modal": {
-      "failed-to-update-your-configuration": ""
+      "failed-to-update-your-configuration": "",
+      "title-something-went-wrong": ""
     },
     "error-summary-button": {
       "error": ""
@@ -822,7 +826,8 @@
     },
     "evaluation-group-creation-modal": {
       "description-often-rules-group-evaluated": "",
-      "placeholder-enter-a-name": ""
+      "placeholder-enter-a-name": "",
+      "title-new-evaluation-group": ""
     },
     "evaluation-group-loader": {
       "title-something-wrong-trying-fetch-group-details": ""
@@ -894,7 +899,8 @@
     "generate-alert-data-modal": {
       "add-alert-data": "",
       "add-alert-data-to-payload": "",
-      "review-alert-payload": ""
+      "review-alert-payload": "",
+      "title-add-custom-alerts": ""
     },
     "get-preview-results": {
       "title-error": ""
@@ -925,6 +931,7 @@
     "grafana-evaluation-behavior-step": {
       "missing-series-resolve-placeholder": "",
       "or": "",
+      "placeholder-select-an-evaluation-group": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
     },
@@ -955,6 +962,9 @@
     },
     "grafana-rule-design-export-preview": {
       "text-loading": ""
+    },
+    "grafana-rule-design-exporter": {
+      "title-export-group": ""
     },
     "grafana-rule-export-preview": {
       "text-loading": ""
@@ -988,6 +998,7 @@
       "namespace-picker-label-namespace": ""
     },
     "group-by": {
+      "aria-label-group-by-label-keys": "",
       "placeholder-group-by": ""
     },
     "group-details": {
@@ -1046,12 +1057,15 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "loading": "",
+        "loading-body": "",
         "no-rules-body": "",
         "no-rules-title": "",
         "plugin-rules-warning": {
           "text": "",
           "title": ""
         },
+        "target-folder-rules": "",
         "title": ""
       },
       "datasource": {
@@ -1312,6 +1326,10 @@
       "title-error-loading-alertmanager-config": "",
       "title-notification-policies-have-changed": ""
     },
+    "notification-policies-tabs": {
+      "label-mute-timings": "",
+      "label-notification-policies": ""
+    },
     "notification-policy-matchers": {
       "default-policy": "",
       "no-matchers": ""
@@ -1524,7 +1542,8 @@
       "label-target-data-source": "Sumber data target"
     },
     "recording-rules-name-space-and-group-step": {
-      "description-select-namespace-group-recording": ""
+      "description-select-namespace-group-recording": "",
+      "title-add-namespace-and-group": ""
     },
     "redirect-to-clone-rule": {
       "title-copy-provisioned-alert-rule": ""
@@ -1799,7 +1818,9 @@
       "dashboard": "",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "",
       "filter-options": {
-        "aria-label-show-filters": ""
+        "aria-label-show-filters": "",
+        "label-custom-filter": "",
+        "label-saved-searches": ""
       },
       "health": "",
       "placeholder-all-data-sources": "",
@@ -1868,7 +1889,8 @@
       "title-silence-alert-rule": ""
     },
     "silence-period": {
-      "label-silence-start-and-end": ""
+      "label-silence-start-and-end": "",
+      "placeholder-select-time-range": ""
     },
     "silenced-instances-preview": {
       "no-firing-alert-instances-found": "",
@@ -1913,7 +1935,9 @@
     },
     "state-history": {
       "filter-group": "",
-      "placeholder-search": ""
+      "placeholder-search": "",
+      "text-loading-history": "",
+      "title-failed-to-fetch-alert-state-history": ""
     },
     "string-array-input": {
       "add": "",
@@ -1938,6 +1962,7 @@
     },
     "template-form": {
       "aria-label-template-form": "",
+      "label-examples-documentation": "",
       "label-template-group": "",
       "label-template-group-name": "",
       "new-template-name-placeholder-give-your-template-group-a-name": "",
@@ -1982,7 +2007,8 @@
     },
     "test-contact-point-modal": {
       "notification-message": "",
-      "send-test-notification": ""
+      "send-test-notification": "",
+      "title-test-contact-point": ""
     },
     "threshold": {
       "to": "KE"
@@ -2002,6 +2028,9 @@
         "summary": "",
         "title-warning": ""
       }
+    },
+    "unknown-rule-list-item": {
+      "title-unknown-rule-type": ""
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "",
@@ -2611,6 +2640,7 @@
       "group-panels": "",
       "new-row": "",
       "new-tab": "",
+      "paste-panel": "",
       "paste-row": "",
       "paste-tab": "",
       "un-group-panels": ""
@@ -2686,7 +2716,8 @@
     },
     "dash-nav": {
       "render-left-actions": {
-        "text-public": ""
+        "text-public": "",
+        "tooltip-view-as-scene": ""
       }
     },
     "dashboard-loading": {
@@ -2775,7 +2806,8 @@
         "rows": "Baris",
         "tab": "Tab",
         "tabs": "Tab",
-        "variable": ""
+        "variable": "",
+        "variable-set": ""
       },
       "open": "Buka panel opsi",
       "row": {
@@ -2783,6 +2815,10 @@
           "hide": "Sembunyikan",
           "title": "Header baris"
         }
+      },
+      "variables": {
+        "add-variable": "",
+        "select-variable": ""
       }
     },
     "empty": {
@@ -2901,13 +2937,13 @@
       "title-option": "Judul"
     },
     "options-pane-options": {
+      "placeholder-search-options": "",
       "Recent options-title-recent-options": ""
     },
     "outline": {
-      "tree": {
-        "item": {
-          "empty": "(kosong)"
-        }
+      "tree-item": {
+        "empty": "",
+        "no-title": ""
       }
     },
     "override-category-title": {
@@ -3019,7 +3055,13 @@
     },
     "save-dashboard-diff": {
       "full-json-diff": "",
-      "no-changes-in-the-dashboard-json": ""
+      "no-changes-in-the-dashboard-json": "",
+      "title-because-dashboard-migrated-grafana-format": "",
+      "title-folder": ""
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "",
+      "label-details": ""
     },
     "save-dashboard-error-proxy": {
       "title-conflict": ""
@@ -3491,7 +3533,7 @@
     },
     "provisioned-resource-delete-modal": {
       "file-path": "Jalur file:",
-      "managed-by-version-control": "{type} ini dikelola oleh kontrol versi dan tidak dapat dihapus. Untuk menghapusnya, hapus dari repositori dan sinkronkan untuk menerapkan perubahan.",
+      "managed-by-version-control": "",
       "ok": "OK",
       "title-cannot-delete-provisioned-resource": "Tidak dapat menghapus sumber daya yang disediakan"
     },
@@ -3887,6 +3929,7 @@
     },
     "resource-dimension-editor": {
       "label-field": "",
+      "label-mappings": "",
       "label-source": ""
     },
     "resource-picker": {
@@ -3912,7 +3955,8 @@
     "text-dimension-editor": {
       "label-field": "",
       "label-source": "",
-      "label-template": ""
+      "label-template": "",
+      "label-value": ""
     },
     "thresholds-editor": {
       "add-threshold": "",
@@ -4026,6 +4070,10 @@
       "description": "Mencari aplikasi Grafana Explore? Aplikasi ini sekarang disebut sebagai aplikasi Grafana Drilldown dan dapat ditemukan dalam <1>Menu > Drilldown</1>",
       "title": "Explore Metrics, Logs, Traces, dan Profiles telah dipindahkan!"
     },
+    "drop-down-menu": {
+      "aria-label-links": "",
+      "links": ""
+    },
     "explore": {
       "title-flame-graph": "",
       "title-graph": "",
@@ -4074,6 +4122,9 @@
       "scan-for-older-logs": "Pindai log yang lebih lama",
       "stop-scan": "Hentikan pemindaian"
     },
+    "logs-column-search": {
+      "placeholder-search-fields-by-name": ""
+    },
     "logs-container": {
       "label-logs": ""
     },
@@ -4100,6 +4151,7 @@
       "title-drag-and-drop-to-reorder": ""
     },
     "logs-table-wrap": {
+      "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
     },
@@ -4130,6 +4182,9 @@
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": ""
+    },
+    "references": {
+      "label-attributes": ""
     },
     "rich-history": {
       "close-tooltip": "Tutup riwayat kueri",
@@ -4258,6 +4313,7 @@
       "title-span-bar": ""
     },
     "span-bar-settings": {
+      "aria-label-selectlabelname": "",
       "label-label": "",
       "label-tag-key": "",
       "placeholder-duration": "",
@@ -4337,7 +4393,11 @@
     },
     "trace-page-actions": {
       "give-feedback": "",
+      "label-export": "",
       "title-share-thoughts-about-tracing-grafana": ""
+    },
+    "trace-page-header": {
+      "text-partial-trace": ""
     },
     "trace-view": {
       "no-data": ""
@@ -4353,6 +4413,7 @@
       "label-unique-labels": "",
       "label-wrap-lines": "",
       "title-feedback": "",
+      "title-logs": "",
       "title-logs-volume": ""
     },
     "unthemed-viewing-layer": {
@@ -5196,6 +5257,10 @@
         "tooltip-show-log-line": ""
       }
     },
+    "log-labels": {
+      "collapse": "",
+      "expand": ""
+    },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
       "copy-log": "Salin baris log",
@@ -5248,11 +5313,13 @@
         "txt": ""
       },
       "enable-highlighting": "",
+      "escape-newlines": "",
       "hide-timestamps": "",
       "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
       "prettify-json": "",
+      "remove-escaping": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
@@ -5319,14 +5386,20 @@
       "when-complete": "Setelah snapshot selesai, Anda akan dapat mengunggahnya ke tumpukan cloud Anda."
     },
     "building-snapshot": {
-      "description": "Kami sedang membuat snapshot titik waktu dari keadaan instalasi saat ini. Setelah snapshot selesai, Anda akan dapat mengunggahnya ke Grafana Cloud.",
+      "description": "",
       "description-eta": "Membuat snapshot biasanya membutuhkan waktu kurang dari dua menit. ",
-      "title": "Menyusun snapshot instalasi"
+      "title": ""
     },
     "can-i-move": {
-      "body": "Setelah menghubungkan instalasi ini ke tumpukan cloud, Anda akan dapat mengunggah sumber data dan dasbor.",
-      "link-title": "Pelajari tentang memigrasikan pengaturan lain",
-      "title": "Bisakah saya memindahkan instalasi ini ke Grafana Cloud?"
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "configure-snapshot": {
+      "description": "",
+      "description-sub-line": "",
+      "resource-include-all": "",
+      "title": ""
     },
     "connect-modal": {
       "body-cloud-stack": "Anda juga akan membutuhkan tumpukan cloud. Jika Anda baru saja mendaftar, kami akan secara otomatis membuat tumpukan pertama Anda. Jika sudah punya akun, Anda harus memilih atau membuat tumpukan.",
@@ -5335,7 +5408,7 @@
       "body-token": "Instalasi Grafana yang dikelola sendiri memerlukan akses khusus untuk memigrasikan konten dengan aman. Anda harus membuat token migrasi di tumpukan cloud yang Anda pilih.",
       "body-token-field": "Token migrasi",
       "body-token-field-placeholder": "Tempel token di sini",
-      "body-token-instructions": "Login ke tumpukan cloud Anda dan buka Administrasi, Umum, Bermigrasi ke Grafana Cloud. Buat token migrasi di layar tersebut dan tempelkan token di sini.",
+      "body-token-instructions": "",
       "body-view-stacks": "Lihat tumpukan cloud saya",
       "cancel": "Batalkan",
       "connect": "Hubungkan ke tumpukan ini",
@@ -5379,11 +5452,12 @@
       "body": "Proses migrasi harus dimulai dari instans Grafana yang dikelola sendiri.",
       "configure-pdc-link": "Konfigurasikan PDC untuk tumpukan ini",
       "link-title": "Pelajari selengkapnya tentang Private Data Source Connect",
-      "step-1": "Login ke instans yang dikelola sendiri dan buka Administrasi, Umum, Bermigrasi ke Grafana Cloud.",
+      "step-1": "",
       "step-2": "Pilih \"Migrasikan instans ini ke Cloud\".",
-      "step-3": "Anda akan dimintai token migrasi. Buat dari layar ini.",
-      "step-4": "Dalam instans yang dikelola sendiri, pilih \"Unggah semuanya\" untuk mengunggah sumber data dan dasbor ke tumpukan cloud ini.",
-      "step-5": "Jika beberapa sumber data Anda tidak akan berfungsi melalui internet publik, Anda harus menginstal Private Data Source Connect di lingkungan yang dikelola sendiri.",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "step-6": "",
       "title": "Melakukan migrasi"
     },
     "is-it-secure": {
@@ -5392,7 +5466,7 @@
       "title": "Apakah aman?"
     },
     "migrate-to-this-stack": {
-      "body": "Anda dapat memigrasikan beberapa sumber daya dari instalasi Grafana yang dikelola sendiri ke tumpukan cloud ini. Untuk melakukan ini dengan aman, Anda harus membuat token migrasi. Instans yang dikelola sendiri akan menggunakan token untuk mengautentikasi dengan tumpukan cloud ini.",
+      "body": "",
       "link-title": "Lihat panduan migrasi lengkap",
       "title": "Biarkan kami membantu Anda bermigrasi ke tumpukan ini"
     },
@@ -5410,7 +5484,7 @@
       "modal-close": "Tutup",
       "modal-copy-and-close": "Salin ke papan klip dan tutup",
       "modal-copy-button": "Salin ke papan klip",
-      "modal-field-description": "Salin token sekarang karena Anda tidak akan dapat melihatnya lagi. Kehilangan token membutuhkan pembuatan token baru.",
+      "modal-field-description": "",
       "modal-field-label": "Token",
       "modal-title": "Token migrasi dibuat",
       "status": "Status saat ini: <2></2>"
@@ -5427,7 +5501,7 @@
       "get-session-error-title": "Kesalahan saat memuat konfigurasi migrasi",
       "get-snapshot-error-title": "Kesalahan saat memuat snapshot",
       "migration-finished-with-caveat-title": "Migrasi sumber daya selesai",
-      "migration-finished-with-errors-body": "Migrasi telah selesai, tetapi beberapa item tidak dapat dimigrasikan ke tumpukan cloud. Periksa sumber daya yang gagal untuk detail selengkapnya",
+      "migration-finished-with-errors-body": "",
       "migration-finished-with-warnings-body": "Migrasi telah selesai dengan beberapa peringatan. Periksa sumber daya individu untuk detail selengkapnya",
       "snapshot-error-status-body": "Terjadi kesalahan saat membuat snapshot atau memulai proses migrasi. Lihat log server Grafana untuk detail selengkapnya",
       "snapshot-error-status-title": "Kesalahan saat memigrasikan sumber daya",
@@ -5439,7 +5513,7 @@
     "pdc": {
       "body": "Memaparkan sumber data Anda ke internet dapat menimbulkan masalah keamanan. Private data source connect (PDC) memungkinkan Grafana Cloud mengakses sumber data yang ada melalui terowongan jaringan yang aman.",
       "link-title": "Pelajari tentang PDC",
-      "title": "Tidak semua sumber data saya berada di internet publik"
+      "title": ""
     },
     "pricing": {
       "body": "Grafana Cloud memiliki paket gratis dan uji coba penggunaan tanpa batas selama 14 hari. Setelah uji coba berakhir, Anda akan ditagih berdasarkan penggunaan yang melebihi batas paket gratis.",
@@ -5517,7 +5591,7 @@
       "disconnect": "Putuskan koneksi",
       "errored-resource-count": "Kesalahan",
       "page-loading": "Memuat...",
-      "rebuild-snapshot": "Menyusun kembali snapshot",
+      "rebuild-snapshot": "",
       "show-errors": "",
       "snapshot-date": "Stempel waktu Snapshot",
       "snapshot-not-created": "Belum dibuat",
@@ -5774,7 +5848,7 @@
       "subtitle": "Kelola dasbor dan izin folder"
     },
     "migrate-to-cloud": {
-      "subtitle": "Salin konfigurasi dari instalasi yang dikelola sendiri ke tumpukan cloud",
+      "subtitle": "",
       "title": "Bermigrasi ke Grafana Cloud"
     },
     "monitoring": {
@@ -6138,7 +6212,8 @@
       "aria-label-plugin-type-filter": "",
       "label-search": "",
       "label-state": "",
-      "label-type": ""
+      "label-type": "",
+      "subtitle": ""
     },
     "catalog": {
       "no-updates-available": "Tidak ada pembaruan yang tersedia",
@@ -6322,6 +6397,7 @@
       "text-loading-organizations": ""
     },
     "user-sessions": {
+      "browser-details": "",
       "now": "",
       "sessions": ""
     },
@@ -6336,21 +6412,14 @@
   },
   "provisioning": {
     "bootstrap-step": {
-      "dashboards-unavailable-while-running-process": "",
       "description-clear-repository-connection": "",
       "empty": "",
       "error-field-required": "",
+      "ext-storage": "",
       "grafana": "",
-      "include-history": "",
       "label-display-name": "",
-      "label-migrate-options": "",
       "placeholder-my-repository-connection": "",
-      "repository": "",
-      "resources-will-be-added": "",
       "text-loading-resource-information": "",
-      "title-files-exist-in-the-target": "",
-      "title-note": "",
-      "tooltip-include-history": "",
       "files-count_other": ""
     },
     "check-repository": {
@@ -6361,13 +6430,11 @@
       "alert-repository-settings-updated": "",
       "button-save": "",
       "button-saving": "",
-      "description-branch": "",
       "description-enabled": "",
       "description-path": "",
+      "description-read-only": "",
       "description-repository-url": "",
       "description-title": "",
-      "description-workflows-makes-repository": "",
-      "description-write": "",
       "error-required": "",
       "error-save-repository": "",
       "error-valid-github-url": "",
@@ -6378,25 +6445,21 @@
       "label-interval-seconds": "",
       "label-local-path": "",
       "label-path": "",
+      "label-pr-workflow": "",
       "label-repository-type": "",
       "label-repository-url": "",
       "label-target": "",
       "label-title": "",
-      "label-workflows": "",
-      "option-branch": "",
       "option-entire-instance": "",
       "option-github": "",
       "option-local": "",
       "option-managed-folder": "",
-      "option-write": "",
       "placeholder-branch": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
       "placeholder-interval-seconds": "",
       "placeholder-local-path": "",
       "placeholder-my-config": "",
-      "placeholder-path": "",
-      "placeholder-readonly-repository": "",
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
@@ -6414,12 +6477,13 @@
       "title-webhook-will-be-created": ""
     },
     "connect-repository-button": {
+      "configure": "",
       "configure-file": "",
       "configure-git-sync": "",
       "repository-limit-info-alert": ""
     },
     "connect-step": {
-      "description-choose-storage-resources": "",
+      "description-branch": "",
       "description-github-path": "",
       "description-paste-your-git-hub-personal-access-token": "",
       "description-repository-url": "",
@@ -6430,14 +6494,10 @@
       "label-local-path": "",
       "label-path": "",
       "label-repository-url": "",
-      "label-storage-type": "",
       "placeholder-branch": "",
-      "placeholder-github-path": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
-      "placeholder-local-path": "",
-      "storage-type-github": "",
-      "storage-type-local": ""
+      "placeholder-local-path": ""
     },
     "delete-repository-button": {
       "button-delete": "",
@@ -6475,7 +6535,6 @@
       },
       "manage-dashboards-provision-updates-automatically": "",
       "manage-your-dashboards-with-remote-provisioning": "",
-      "migrate-existing-dashboards-storage-provisioning": "",
       "store-dashboards-in-version-controlled-storage": ""
     },
     "file-history-page": {
@@ -6493,19 +6552,19 @@
       "placeholder-search": ""
     },
     "finish-step": {
-      "description-dashboard-previews": "",
-      "description-enable-webhooks": "",
+      "description-enable-previews": "",
+      "description-image-rendering": "",
       "description-often-shall-instance-updates-git-hub": "",
-      "description-select-workflows-allowed-within-repository": "",
-      "error-field-required": "",
-      "label-enable-dashboard-previews": "",
-      "label-enable-webhooks": "",
+      "description-pr-enable-description": "",
+      "description-read-only": "",
+      "description-webhooks-enable": "",
+      "label-enable-previews": "",
+      "label-pr-workflow": "",
+      "label-read-only": "",
       "label-update-instance-interval-seconds": "",
-      "label-workflows": "",
-      "link-setup-image-rendering": "",
       "placeholder": "",
-      "placeholder-readonly-repository": "",
-      "text-requires-image-rendering": ""
+      "text-setup-later": "",
+      "title-enhance-github": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "",
@@ -6563,16 +6622,17 @@
       },
       "summary": ""
     },
-    "job-step": {
-      "error-failed-to-start": "",
-      "error-invalid-response": "",
-      "error-job-failed": ""
-    },
-    "migrate-step": {
-      "description-migrating-dashboards": ""
-    },
-    "pull-step": {
-      "description-pulling-content": ""
+    "mode-options": {
+      "folder": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      },
+      "instance": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      }
     },
     "recent-jobs": {
       "active-jobs": "",
@@ -6602,8 +6662,7 @@
       "title-repository-is-unhealthy": ""
     },
     "repository-link": {
-      "grafana-repository": "",
-      "view-folder": "",
+      "grafana-repository-synced": "",
       "view-repository": ""
     },
     "repository-overview": {
@@ -6682,30 +6741,36 @@
       "title-pull-not-enabled": "",
       "tooltip-unhealthy-repository": ""
     },
+    "synchronize-step": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": "",
+      "synchronization-description": "",
+      "synchronization-options": ""
+    },
     "token-permissions-info": {
-      "access": "",
-      "contents": "",
-      "github-instructions": "",
-      "metadata": "",
-      "permission": "",
-      "pull-requests": "",
-      "read-and-write": "",
-      "readonly": "",
-      "webhooks": ""
+      "and-click": "",
+      "go-to": "",
+      "make-sure": ""
     },
     "wizard": {
-      "button-finish": "",
+      "alert-point-1": "",
+      "alert-point-2": "",
+      "alert-point-3": "",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-next": "",
       "button-start": "",
       "step-bootstrap": "",
       "step-connect": "",
       "step-finish": "",
-      "step-resources": "",
+      "step-synchronize": "",
+      "sync-description": "",
+      "sync-option-history": "",
       "title-bootstrap": "",
       "title-connect": "",
       "title-finish": "",
-      "title-migrate": "",
-      "title-pull": ""
+      "title-synchronize": ""
     },
     "wizard-content": {
       "button-cancel": "",
@@ -6909,6 +6974,7 @@
     },
     "query-group": {
       "add-query": "",
+      "expression": "",
       "title-data-source-help": ""
     },
     "query-group-options-editor": {
@@ -7183,6 +7249,7 @@
       "copy-clipboard": "",
       "copy-to-clipboard-and-close": "",
       "description-name-to-easily-identify-the-token": "",
+      "description-token": "",
       "generate-token": "",
       "label-display-name": "",
       "label-expiration": "",
@@ -7191,8 +7258,10 @@
     },
     "get-actions-cell": {
       "add-token": "",
+      "aria-label-delete-button": "",
       "disable": "",
-      "enable": ""
+      "enable": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "get-role-cell": {
       "aria-label-role": ""
@@ -7202,7 +7271,9 @@
       "aria-label-role": "",
       "disable": "",
       "enable": "",
-      "title-tokens": ""
+      "title-tokens": "",
+      "tooltip-delete-button": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "",
@@ -7211,7 +7282,8 @@
       "enable-service-account": "",
       "title-delete-service-account": "",
       "title-disable-service-account": "",
-      "tokens": ""
+      "tokens": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-permissions": {
       "title-permissions": ""
@@ -7237,6 +7309,7 @@
     "service-accounts-list-page-unconnected": {
       "add-service-account": "",
       "placeholder-search-service-account-by-name": "",
+      "sub-title": "",
       "title-delete-service-account": "",
       "title-disable-service-account": ""
     },
@@ -7519,15 +7592,20 @@
     },
     "support-bundles-create-unconnected": {
       "cancel": "",
-      "create": ""
+      "create": "",
+      "sub-title": ""
     },
     "support-bundles-unconnected": {
       "created-on": "",
       "download": "",
       "expires": "",
       "requested-by": "",
+      "sub-title": "",
       "tooltip-remove-bundle": ""
     }
+  },
+  "swagger": {
+    "login": ""
   },
   "table": {
     "container": {
@@ -7551,6 +7629,8 @@
   "teams": {
     "create-team": {
       "create": "",
+      "description-email": "",
+      "label-email": "",
       "label-name": "",
       "label-role": ""
     },
@@ -7562,24 +7642,36 @@
     },
     "team-group-sync": {
       "add-group": "",
+      "add-group-button": "",
+      "aria-label-remove": "",
       "external-group-id": "",
       "external-group-sync": "",
-      "title-there-external-groups": ""
+      "label-add-external-group": "",
+      "team-sync-upgrade": "",
+      "title-there-external-groups": "",
+      "tooltip-add-external-group": ""
     },
     "team-list": {
       "columns": {
-        "title-edit-team": ""
+        "aria-label-delete-button": "",
+        "aria-label-edit-team": "",
+        "title-edit-team": "",
+        "tooltip-edit-team": ""
       },
       "new-team": "",
       "placeholder-search-teams": ""
     },
     "team-settings": {
+      "description-email": "",
       "label-email": "",
       "label-name": "",
       "label-numerical-identifier": "",
       "label-role": "",
       "label-team-details": "",
       "save": ""
+    },
+    "team-sync-upgrade-content": {
+      "description": ""
     }
   },
   "theme-preview": {
@@ -7678,6 +7770,7 @@
       "date-created": "Tanggal Diciptakan: "
     },
     "create-bookmark-saved-notification": {
+      "description": "",
       "view-bookmarks": ""
     },
     "data-trail-card": {
@@ -7699,11 +7792,13 @@
     },
     "label-breakdown-scene": {
       "label-search": "",
-      "label-view": ""
+      "label-view": "",
+      "title-warning-there-missing-telemetry-resource-attributes": ""
     },
     "metric-action-bar": {
       "open": "",
       "select-new-metric": "",
+      "tooltip-bookmark": "",
       "tooltip-open-in-explore": "",
       "tooltip-remove-existing-metric-choose": ""
     },
@@ -7715,6 +7810,7 @@
     },
     "metric-select-scene": {
       "label-otel-experience": "",
+      "label-search-metrics": "",
       "placeholder-search-metrics": "",
       "title-unable-to-retrieve-all-metric-names": "",
       "unable-to-retrieve-metric-names": ""
@@ -7735,7 +7831,8 @@
       "now": "Sekarang:",
       "previously": "Sebelumnya:",
       "see-examples": "> Lihat contoh",
-      "sentence": "Histogram asli Prometheus menawarkan resolusi tinggi, presisi tinggi, penggunaan sederhana dalam instrumentasi, serta cara untuk menggabungkan dan memanipulasi histogram dalam kueri dan di Grafana."
+      "sentence": "Histogram asli Prometheus menawarkan resolusi tinggi, presisi tinggi, penggunaan sederhana dalam instrumentasi, serta cara untuk menggabungkan dan memanipulasi histogram dalam kueri dan di Grafana.",
+      "title-native-histogram-support": ""
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Atau lihat eksplorasi terbaru"
@@ -7743,11 +7840,15 @@
     "related-logs-scene": {
       "tooltip-navigate-to-the-explore-logs-app": ""
     },
+    "search-input": {
+      "title-clear-search": ""
+    },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Selalu pertahankan tampilan grafik metrik yang dipilih",
       "show-previews-of-metric-graphs": "Tampilkan pratinjau grafik metrik"
     },
     "sort-by-scene": {
+      "placeholder-choose-criteria": "",
       "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
@@ -7785,11 +7886,17 @@
       "label-config-query": ""
     },
     "convert-field-type-transformer-editor": {
+      "aria-label-add-a-convert-field-type-transformer": "",
+      "aria-label-remove-convert-field-type-transformer": "",
+      "label-as": "",
       "label-date-format": "",
+      "label-field": "",
       "label-input-format": "",
       "label-join-with": "",
       "label-set-timezone": "",
+      "placeholder-type": "",
       "tooltip-explicit-separator-joining-array-values": "",
+      "tooltip-input-format": "",
       "tooltip-specify-the-output-format": "",
       "tooltip-timezone-manually": ""
     },
@@ -7799,6 +7906,7 @@
       "placeholder-field": ""
     },
     "draggable-field-name": {
+      "rename-placeholder": "",
       "title-drag-and-drop-to-reorder": ""
     },
     "enum-mapping-editor": {
@@ -7811,7 +7919,19 @@
     },
     "extract-fields-transformer-editor": {
       "label-delimiter": "",
+      "label-format": "",
+      "label-keep-time": "",
+      "label-replace-all-fields": "",
+      "label-source": "",
+      "placeholder-auto": "",
       "placeholder-select-delimiter": ""
+    },
+    "field-config-mapping-handler-arguments-editor": {
+      "aria-label-threshold-color": ""
+    },
+    "field-lookup-transformer-editor": {
+      "label-field": "",
+      "label-lookup": ""
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "",
@@ -7839,6 +7959,7 @@
       "label-filter-type": ""
     },
     "format-string-transfomer-editor": {
+      "label-field": "",
       "label-format": "",
       "label-substring-range": ""
     },
@@ -7855,8 +7976,13 @@
       "placeholder-ignored": "",
       "placeholder-select-stats": ""
     },
+    "group-by-transformer-editor": {
+      "title-calc-alert": ""
+    },
     "group-to-nested-table-transformer-editor": {
-      "label-show-field-names-in-nested-tables": ""
+      "description-show-field-names": "",
+      "label-show-field-names-in-nested-tables": "",
+      "title-calc-alert": ""
     },
     "grouping-to-matrix-transformer-editor": {
       "label-cell-value": "",
@@ -7865,7 +7991,9 @@
       "label-row": ""
     },
     "histogram-transformer-editor": {
-      "placeholder-default": ""
+      "placeholder-auto": "",
+      "placeholder-default": "",
+      "placeholder-none": ""
     },
     "index-options-editor": {
       "label-as-percentile": "",
@@ -7878,6 +8006,8 @@
         "title-no-input-found": "",
         "title-no-labels-found": ""
       },
+      "label-join": "",
+      "label-value": "",
       "tooltip-select-label-indicating-values": ""
     },
     "jsonpath-editor": {
@@ -7888,6 +8018,9 @@
       "tooltip-remove-path": ""
     },
     "labels-as-fields-transformer-editor": {
+      "label-labels": "",
+      "label-mode": "",
+      "label-value-field-name": "",
       "placeholder-optional-select-label": "",
       "tooltip-replace-value-field-label": ""
     },
@@ -7898,21 +8031,32 @@
       "ascending-order-duplicates": "",
       "multiple-value-fields-may-exist": "",
       "single-frame": "",
-      "st-field-is-time": ""
+      "st-field-is-time": "",
+      "string-values-separate": ""
     },
     "merge-transformer-editor": {
       "merge-effect-applied-single-frame": ""
     },
     "multi-info": {
       "all-values-are-numeric": "",
+      "frame-fields-value": "",
       "multiple-frames": "",
       "string-values-are-represented-as-labels": "",
       "time-in-ascending-order": ""
     },
+    "organize-fields-transformer-editor": {
+      "first-frame-warning": ""
+    },
+    "partion-by-values-editor": {
+      "tooltip-naming": ""
+    },
     "partition-by-values-editor": {
       "label-field": "",
+      "label-keep-fields": "",
+      "label-naming": "",
       "label-select-field": "",
-      "partition-values-works-single-frame": ""
+      "partition-values-works-single-frame": "",
+      "tooltip-keeps-partition-fields-frames": ""
     },
     "prepare-time-series-editor": {
       "label-format": "",
@@ -7942,7 +8086,8 @@
       "label-model-type": "",
       "label-predicted-points": "",
       "label-x-field": "",
-      "label-y-field": ""
+      "label-y-field": "",
+      "tooltip-number-of-xy-points-to-predict": ""
     },
     "rename-by-regex-transformer-editor": {
       "label-match": "",
@@ -7962,11 +8107,15 @@
     "time-series-table-transform-editor": {
       "label-stat": "",
       "label-time-field": "",
-      "tooltip-statistic-should-calculated-series": ""
+      "tooltip-statistic-should-calculated-series": "",
+      "tooltip-time-field": ""
     },
     "transpose-transfomer-editor": {
+      "label-first-field-name": "",
+      "label-remaining-fields-name": "",
       "placeholder-field": "",
-      "placeholder-value": ""
+      "placeholder-value": "",
+      "tooltip-name-for-value-fields": ""
     },
     "unary-operation-editor": {
       "label-operation": "",
@@ -8034,6 +8183,7 @@
       "message": "Pengguna tidak ditemukan"
     },
     "token-revoked-modal": {
+      "resume-message": "",
       "sign-in": "",
       "title-you-have-been-automatically-signed-out": ""
     },
@@ -8048,6 +8198,11 @@
       "shared-dashboard-users-tab-title": "Pengguna dasbor bersama"
     }
   },
+  "variabels": {
+    "variable-usages-button": {
+      "usage-title": ""
+    }
+  },
   "variable": {
     "adhoc": {
       "placeholder": "Pilih nilai"
@@ -8058,7 +8213,7 @@
     "picker": {
       "link-all": "Semua",
       "option-all": "Semua",
-      "option-selected-values": "Dipilih",
+      "option-selected-values": "",
       "option-tooltip": "Hapus pilihan"
     },
     "textbox": {
@@ -8083,6 +8238,9 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": ""
+    },
+    "picker-renderer": {
+      "couldnt-load-variable": ""
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "",
@@ -8136,9 +8294,12 @@
       "title-dependencies": ""
     },
     "variables-unknown-button": {
+      "usage-title": "",
       "VariablesUnknownButton-tooltip-show-usages": ""
     },
     "variables-unknown-table": {
+      "collapse-label": "",
+      "collapse-tooltip": "",
       "loading": ""
     }
   },
