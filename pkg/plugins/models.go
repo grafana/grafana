@@ -174,10 +174,9 @@ func (e Includes) RequiresRBACAction() bool {
 }
 
 type Dependency struct {
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Name string `json:"name"`
 }
 
 type BuildInfo struct {
@@ -267,14 +266,15 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus `json:"signature"`
-	Module                    string          `json:"module"`
-	ModuleHash                string          `json:"moduleHash,omitempty"`
-	BaseURL                   string          `json:"baseUrl"`
-	Angular                   AngularMeta     `json:"angular"`
-	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
-	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
-	Extensions                Extensions      `json:"extensions"`
+	Signature                 SignatureStatus   `json:"signature"`
+	Module                    string            `json:"module"`
+	ModuleHash                string            `json:"moduleHash,omitempty"`
+	BaseURL                   string            `json:"baseUrl"`
+	Angular                   AngularMeta       `json:"angular"`
+	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
+	LoadingStrategy           LoadingStrategy   `json:"loadingStrategy"`
+	Extensions                Extensions        `json:"extensions"`
+	Translations              map[string]string `json:"translations,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -310,32 +310,34 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	AliasIDs        []string        `json:"aliasIds,omitempty"`
-	Info            Info            `json:"info"`
-	HideFromList    bool            `json:"hideFromList"`
-	Sort            int             `json:"sort"`
-	SkipDataQuery   bool            `json:"skipDataQuery"`
-	ReleaseState    string          `json:"state"`
-	BaseURL         string          `json:"baseUrl"`
-	Signature       string          `json:"signature"`
-	Module          string          `json:"module"`
-	Angular         AngularMeta     `json:"angular"`
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	ModuleHash      string          `json:"moduleHash,omitempty"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	AliasIDs        []string          `json:"aliasIds,omitempty"`
+	Info            Info              `json:"info"`
+	HideFromList    bool              `json:"hideFromList"`
+	Sort            int               `json:"sort"`
+	SkipDataQuery   bool              `json:"skipDataQuery"`
+	ReleaseState    string            `json:"state"`
+	BaseURL         string            `json:"baseUrl"`
+	Signature       string            `json:"signature"`
+	Module          string            `json:"module"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	ModuleHash      string            `json:"moduleHash,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
 }
 
 type AppDTO struct {
-	ID              string          `json:"id"`
-	Path            string          `json:"path"`
-	Version         string          `json:"version"`
-	Preload         bool            `json:"preload"`
-	Angular         AngularMeta     `json:"angular"`
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	Extensions      Extensions      `json:"extensions"`
-	Dependencies    Dependencies    `json:"dependencies"`
-	ModuleHash      string          `json:"moduleHash,omitempty"`
+	ID              string            `json:"id"`
+	Path            string            `json:"path"`
+	Version         string            `json:"version"`
+	Preload         bool              `json:"preload"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	Extensions      Extensions        `json:"extensions"`
+	Dependencies    Dependencies      `json:"dependencies"`
+	ModuleHash      string            `json:"moduleHash,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
 }
 
 const (

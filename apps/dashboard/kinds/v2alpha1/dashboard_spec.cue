@@ -18,7 +18,7 @@ DashboardSpec: {
 
 	elements: [ElementReference.name]: Element
 
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
 	links: [...DashboardLink]
@@ -394,6 +394,7 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
+	options?:     [string]: _ //Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -494,7 +495,12 @@ RowRepeatOptions: {
 	value: string
 }
 
-ResponsiveGridRepeatOptions: {
+TabRepeatOptions: {
+	mode:  RepeatMode
+	value: string
+}
+
+AutoGridRepeatOptions: {
 	mode:  RepeatMode
 	value: string
 }
@@ -522,8 +528,8 @@ GridLayoutRowSpec: {
 	y:         int
 	collapsed: bool
 	title:     string
-	elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	repeat?:                          RowRepeatOptions
+	elements:  [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
+	repeat?:   RowRepeatOptions
 }
 
 GridLayoutSpec: {
@@ -556,32 +562,32 @@ RowsLayoutRowSpec: {
 	fillScreen?:           bool
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
-	layout:                GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind
+	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-	kind: "ResponsiveGridLayout"
-	spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+	kind: "AutoGridLayout"
+	spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
+AutoGridLayoutSpec: {
 	maxColumnCount?: number | *3
 	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
 	columnWidth?: number
 	rowHeightMode: "short" | *"standard" | "tall" | "custom"
 	rowHeight?: number
 	fillScreen?: bool | *false
-	items: [...ResponsiveGridLayoutItemKind]
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-	kind: "ResponsiveGridLayoutItem"
-	spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+	kind: "AutoGridLayoutItem"
+	spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
+AutoGridLayoutItemSpec: {
 	element:               ElementReference
-	repeat?:               ResponsiveGridRepeatOptions
+	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
@@ -600,8 +606,10 @@ TabsLayoutTabKind: {
 }
 
 TabsLayoutTabSpec: {
-	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	title?:                string
+	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	conditionalRendering?: ConditionalRenderingGroupKind
+	repeat?:               TabRepeatOptions
 }
 
 PanelSpec: {
@@ -924,8 +932,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+	visibility: "show" | "hide"
 	condition: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -948,11 +957,11 @@ ConditionalRenderingDataSpec: {
 	value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-	kind: "ConditionalRenderingTimeInterval"
-	spec: ConditionalRenderingTimeIntervalSpec
+ConditionalRenderingTimeRangeSizeKind: {
+	kind: "ConditionalRenderingTimeRangeSize"
+	spec: ConditionalRenderingTimeRangeSizeSpec
 }
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
 }

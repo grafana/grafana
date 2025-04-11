@@ -26,6 +26,7 @@ jobs:
     - name: Set go version
       uses: actions/setup-go@v4
       with:
+        cache: false
         go-version-file: go.mod
 
     - name: Update workspace

@@ -37,9 +37,9 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
 
 /**
  * A class for interacting with the backend user storage.
- * Unexported because it is currently only be used through the useUserStorage hook.
+ * Exposed internally only to avoid misuse (wrong service name)..
  */
-class UserStorage {
+export class UserStorage {
   private service: string;
   private resourceName: string;
   private userUID: string;
@@ -50,7 +50,7 @@ class UserStorage {
     this.service = service;
     this.userUID = config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
     this.resourceName = `${service}:${this.userUID}`;
-    this.canUseUserStorage = config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
+    this.canUseUserStorage = config.bootData.user.isSignedIn;
   }
 
   private async init() {
@@ -76,13 +76,13 @@ class UserStorage {
   async getItem(key: string): Promise<string | null> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
-      return localStorage.getItem(this.resourceName);
+      return localStorage.getItem(`${this.resourceName}:${key}`);
     }
     // Ensure this.storageSpec is initialized
     await this.init();
     if (!this.storageSpec) {
-      // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
-      return localStorage.getItem(this.resourceName);
+      // Also, fallback to localStorage for backward compatibility
+      return localStorage.getItem(`${this.resourceName}:${key}`);
     }
     return this.storageSpec.data[key];
   }
@@ -90,7 +90,7 @@ class UserStorage {
   async setItem(key: string, value: string): Promise<void> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
-      localStorage.setItem(key, value);
+      localStorage.setItem(`${this.resourceName}:${key}`, value);
       return;
     }
 

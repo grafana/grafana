@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -29,7 +29,7 @@ const CleanFinalizer = "cleanup"
 
 type finalizer struct {
 	lister        resources.ResourceLister
-	clientFactory *resources.ClientFactory
+	clientFactory resources.ClientFactory
 }
 
 func (f *finalizer) process(ctx context.Context,

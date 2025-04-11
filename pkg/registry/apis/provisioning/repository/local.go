@@ -19,6 +19,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -269,6 +270,10 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			Path: strings.TrimLeft(path[rootlen:], "/"),
 			Size: info.Size(),
 		}
+		if entry.Path == "" {
+			return nil // skip the root file
+		}
+
 		if !info.IsDir() {
 			entry.Blob = true
 			entry.Hash, _, err = r.calculateFileHash(path)
@@ -308,18 +313,18 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, fpath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath = safepath.Join(r.path, fpath)
+	fpath := safepath.Join(r.path, filepath)
 	_, err := os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
 		}
-		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), fpath)
+		return apierrors.NewAlreadyExists(schema.GroupResource{}, filepath)
 	}
 
 	if safepath.IsDir(fpath) {
@@ -352,7 +357,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	}
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("file does not exist")
+		return ErrFileNotFound
 	}
 	return os.WriteFile(path, data, 0600)
 }

@@ -17,7 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	foldersv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -59,9 +59,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	m := map[string]v0alpha1.Folder{}
+	m := map[string]foldersv1.Folder{}
 
-	unifiedStorageFolder := &v0alpha1.Folder{}
+	unifiedStorageFolder := &foldersv1.Folder{}
 	unifiedStorageFolder.Kind = "folder"
 
 	fooFolder := &folder.Folder{
@@ -82,19 +82,19 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("DELETE /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		l := &v0alpha1.FolderList{}
+		l := &foldersv1.FolderList{}
 		l.Kind = "Folder"
 		err := json.NewEncoder(w).Encode(l)
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(fooFolder, namespacer)
@@ -104,7 +104,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(updateFolder, namespacer)
@@ -114,12 +114,12 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
-		var foldr v0alpha1.Folder
+		var foldr foldersv1.Folder
 		err = json.Unmarshal(buf, &foldr)
 		require.NoError(t, err)
 
@@ -133,22 +133,22 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("POST /apis/folder.grafana.app/v0alpha1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("POST /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
-		var folder v0alpha1.Folder
+		var folder foldersv1.Folder
 		err = json.Unmarshal(buf, &folder)
 		require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), foldersv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
 	ctx := context.Background()
@@ -362,8 +362,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := false
@@ -376,8 +375,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
-				folderService.features = featuremgmt.WithFeatures(append(featuresArr, featuremgmt.FlagDashboardRestore)...)
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := true
@@ -532,6 +530,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -542,8 +541,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{
 					{
@@ -602,9 +601,6 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		expectedResult := model.HitList{
 			{
 				UID: "uid1",
-				// no parent folder is returned, so the general folder should be set
-				FolderID:    0,
-				FolderTitle: "General",
 				// orgID should be taken from signed in user
 				OrgID: 1,
 				// the rest should be automatically set when parsing the hit results from search
@@ -614,14 +610,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				URL:   "/dashboards/f/uid1/folder0",
 			},
 			{
-				UID:         "uid2",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/uid2/folder1",
+				UID:   "uid2",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/uid2/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -637,8 +631,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{
@@ -681,14 +675,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		require.NoError(t, err)
 		expectedResult := model.HitList{
 			{
-				UID:         "foo",
-				FolderID:    0,
-				FolderTitle: "General",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/folder1",
-				Title:       "folder1",
-				URL:         "/dashboards/f/foo/folder1",
+				UID:   "foo",
+				OrgID: 1,
+				Type:  model.DashHitFolder,
+				URI:   "db/folder1",
+				Title: "folder1",
+				URL:   "/dashboards/f/foo/folder1",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -708,8 +700,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{},
@@ -753,15 +745,13 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 
 		expectedResult := model.HitList{
 			{
-				UID:         "uid",
-				FolderID:    2,
-				FolderTitle: "parent title",
-				FolderUID:   "parent-uid",
-				OrgID:       1,
-				Type:        model.DashHitFolder,
-				URI:         "db/testing-123",
-				Title:       "testing-123",
-				URL:         "/dashboards/f/uid/testing-123",
+				UID:       "uid",
+				FolderUID: "parent-uid",
+				OrgID:     1,
+				Type:      model.DashHitFolder,
+				URI:       "db/testing-123",
+				Title:     "testing-123",
+				URL:       "/dashboards/f/uid/testing-123",
 			},
 		}
 		require.Equal(t, expectedResult, result)
@@ -785,6 +775,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		k8sclient:    fakeK8sClient,
 		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore: folderStore,
+		tracer:       tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -806,8 +797,8 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{},
@@ -876,6 +867,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardService: publicDashboardFakeService,
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		tracer:                 tracing.NewNoopTracerService(),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
