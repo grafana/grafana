@@ -91,8 +91,8 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	}
 
 	list := &iamv0.TeamList{Items: res.Items}
-	list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	list.Continue = common.OptionalFormatInt(res.Continue)
+	list.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return list, nil
 }

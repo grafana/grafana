@@ -353,14 +353,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		b.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		b.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
 		span.End()
 	}()
@@ -403,7 +403,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		}
 
 		refId := expression.RefID
-		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
+		results, err := expression.Command.Execute(ctx, now, vars, b.tracer, b.metrics)
 		if err != nil {
 			expressionsLogger.Error("error executing expression", "error", err)
 			results.Error = err
