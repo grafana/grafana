@@ -2834,11 +2834,14 @@
     {
       "metadata": {
         "name": "scopeSearchAllLevels",
-        "resourceVersion": "1744289349951",
-        "creationTimestamp": "2025-04-10T12:49:09Z"
+        "resourceVersion": "1744370973814",
+        "creationTimestamp": "2025-04-10T12:49:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-11 11:29:33.814419 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable scope search to include all levels",
+        "description": "Enable scope search to include all levels of the scope node tree",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromAdminPage": true,

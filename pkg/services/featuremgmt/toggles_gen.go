@@ -856,7 +856,7 @@ const (
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
 
 	// FlagScopeSearchAllLevels
-	// Enable scope search to include all levels
+	// Enable scope search to include all levels of the scope node tree
 	FlagScopeSearchAllLevels = "scopeSearchAllLevels"
 
 	// FlagAlertingRuleVersionHistoryRestore

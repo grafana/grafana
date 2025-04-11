@@ -944,7 +944,7 @@ export interface FeatureToggles {
   */
   useScopesNavigationEndpoint?: boolean;
   /**
-  * Enable scope search to include all levels
+  * Enable scope search to include all levels of the scope node tree
   */
   scopeSearchAllLevels?: boolean;
   /**
