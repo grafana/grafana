@@ -24,8 +24,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public variable: SceneVariable) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const option = getVariableTypeOption(this.variable);
+
     return {
-      typeName: t('dashboard.edit-pane.elements.variable', 'Variable'),
+      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: option.label }),
       icon: 'dollar-alt',
       instanceName: this.variable.state.name,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
@@ -63,15 +65,9 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
             skipField: true,
             render: () => <VariableHideInput variable={variable} />,
           })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.edit-pane.variable.type', 'Type'),
-            render: () => <VariableTypeSelect variable={variable} />,
-          })
         );
 
-      const categories = [mainCategory];
+      const categories = [mainCategory, getVariableTypeCategory(variable)];
 
       if (variable instanceof MultiValueVariable) {
         categories.push(getVariableSelectionOptionsCategory(variable));
@@ -99,6 +95,30 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     return;
   }
+}
+
+function getVariableTypeOption(variable: SceneVariable) {
+  const option = getVariableTypeSelectOptions().find((o) => o.value === variable.state.type);
+
+  if (!option) {
+    throw new Error(`Variable type ${variable.state.type} not found`);
+  }
+
+  return option;
+}
+
+function getVariableTypeCategory(variable: SceneVariable) {
+  const option = getVariableTypeOption(variable);
+
+  return new OptionsPaneCategoryDescriptor({
+    renderTitle: () => (
+      <Stack direction="row" gap={1} alignItems="center">
+        <div>{option.label} options</div>
+      </Stack>
+    ),
+    title: 'Type',
+    id: 'variable-type',
+  });
 }
 
 interface VariableInputProps {
