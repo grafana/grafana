@@ -38,17 +38,21 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, fmt.Errorf("read file: %w", err)
+		_, ok := utils.ExtractApiErrorStatus(err)
+		if ok {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Read file failed: %w", err)
 	}
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, fmt.Errorf("parse file: %w", err)
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
-		return nil, fmt.Errorf("run dry run: %w", err)
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("Dry run failed: %v", err))
 	}
 
 	// Authorize based on the existing resource
