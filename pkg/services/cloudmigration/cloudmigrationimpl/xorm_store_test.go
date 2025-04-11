@@ -357,6 +357,48 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "2", results[0].UID)
 		})
 	})
+
+	t.Run("test case-insensitive sorting", func(t *testing.T) {
+		// Create test data with mixed case names
+		resources := []cloudmigration.CloudMigrationResource{
+			{UID: "1", SnapshotUID: "abc123", Name: "B", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusOK},
+			{UID: "2", SnapshotUID: "abc123", Name: "aa", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusOK},
+			{UID: "3", SnapshotUID: "abc123", Name: "ba", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusOK},
+			{UID: "4", SnapshotUID: "abc123", Name: "A", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusOK},
+		}
+
+		err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Insert(resources)
+			return err
+		})
+		require.NoError(t, err)
+
+		// Test ascending sort
+		results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnName,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "A", results[0].Name)
+		assert.Equal(t, "aa", results[1].Name)
+		assert.Equal(t, "B", results[2].Name)
+		assert.Equal(t, "ba", results[3].Name)
+
+		// Test descending sort
+		results, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: 100,
+			SortColumn:  cloudmigration.SortColumnName,
+			SortOrder:   cloudmigration.SortOrderDesc,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "ba", results[0].Name)
+		assert.Equal(t, "B", results[1].Name)
+		assert.Equal(t, "aa", results[2].Name)
+		assert.Equal(t, "A", results[3].Name)
+	})
 }
 
 func TestGetSnapshotList(t *testing.T) {
