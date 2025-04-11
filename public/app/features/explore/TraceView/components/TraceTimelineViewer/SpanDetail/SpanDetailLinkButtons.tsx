@@ -49,6 +49,8 @@ const LINKS_ORDER = [
  */
 const MAX_LINKS = 3;
 
+const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
+
 export const getSpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
 
@@ -212,7 +214,22 @@ const createLinkModel = (
         if (link.onClick) {
           link.onClick?.(event);
         } else {
-          locationService.push(link.href);
+          // TODO: Replace with https://github.com/grafana/grafana/issues/103593
+          // We need to handle absolute and relative URLs correctly because when
+          // there are multiple links we group them into a dropdown and not use
+          // the grafana/ui DataLinkButton component which handles relative and
+          // absolute URLs nicely. A nice solution would be to have a separate
+          // component that handles this for us and not pass the onClick in the
+          // SpanLinkModel when link.href is defined (removing the need of having
+          // if (link.onClick) in here.
+
+          // if it's an absolute URL - open it in a new window
+          if (!ABSOLUTE_LINK_PATTERN.test(link.href)) {
+            // handle relative URLs by changing current URL:
+            locationService.push(link.href);
+          } else {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+          }
         }
       },
     },

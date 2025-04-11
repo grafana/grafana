@@ -17,7 +17,6 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -32,7 +31,10 @@ require (
 	k8s.io/apimachinery v0.32.3
 )
 
-require github.com/go-jose/go-jose/v3 v3.0.4
+require (
+	github.com/go-jose/go-jose/v3 v3.0.4
+	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991
+)
 
 require (
 	cel.dev/expr v0.19.1 // indirect
