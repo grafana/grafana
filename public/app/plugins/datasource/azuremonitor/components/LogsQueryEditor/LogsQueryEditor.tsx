@@ -107,18 +107,25 @@ const LogsQueryEditor = ({
         return tablesWithPlan;
       };
       datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
-        if (schema?.database?.tables) {
+        if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
           fetchAllPlans(schema?.database?.tables).then(async (t) => {
             if (schema.database?.tables) {
               schema.database.tables = t;
             }
             setSchema(schema);
           });
+        } else {
+          setSchema(schema);
         }
         setIsLoadingSchema(false);
       });
     }
-  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource, datasource.azureMonitorDatasource]);
+  }, [
+    query.azureLogAnalytics?.resources,
+    datasource.azureLogAnalyticsDatasource,
+    datasource.azureMonitorDatasource,
+    query.azureLogAnalytics?.mode,
+  ]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
