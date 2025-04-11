@@ -1,12 +1,20 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
+import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+
 export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
-const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = ['grafana-investigations-app'];
+export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
+const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
+  'grafana-investigations-app',
+  'grafana-aiassistant-app',
+  'grafana-dash-app',
+];
 
 type ExtensionSidebarContextType = {
   /**
@@ -29,6 +37,14 @@ type ExtensionSidebarContextType = {
    * A map of all components that are available for the extension point.
    */
   availableComponents: ExtensionPointPluginMeta;
+  /**
+   * The width of the extension sidebar.
+   */
+  extensionSidebarWidth: number;
+  /**
+   * Set the width of the extension sidebar.
+   */
+  setExtensionSidebarWidth: (width: number) => void;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
@@ -37,6 +53,8 @@ export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
   availableComponents: new Map(),
+  extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+  setExtensionSidebarWidth: () => {},
 });
 
 export function useExtensionSidebarContext() {
@@ -49,6 +67,10 @@ interface ExtensionSidebarContextProps {
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+  const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
+    EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
+    DEFAULT_EXTENSION_SIDEBAR_WIDTH
+  );
   const isEnabled = !!config.featureToggles.extensionSidebar;
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
@@ -99,6 +121,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         dockedComponentId,
         setDockedComponentId,
         availableComponents,
+        extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+        setExtensionSidebarWidth,
       }}
     >
       {children}

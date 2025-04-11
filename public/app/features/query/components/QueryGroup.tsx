@@ -312,7 +312,9 @@ export class QueryGroup extends PureComponent<Props, State> {
             className={styles.expressionButton}
             data-testid="query-tab-add-expression"
           >
-            <span>Expression&nbsp;</span>
+            <span>
+              <Trans i18nKey="query.query-group.expression">Expression</Trans>
+            </span>
           </Button>
         )}
         {this.renderExtraActions()}

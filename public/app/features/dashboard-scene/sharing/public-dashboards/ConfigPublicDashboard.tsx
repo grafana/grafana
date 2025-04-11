@@ -9,6 +9,7 @@ import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/Sha
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types';
 
+import { Trans } from '../../../../core/internationalization';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareModal } from '../ShareModal';
@@ -49,7 +50,9 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
             confirmText: 'Revoke public URL',
             body: (
               <p className={styles.description}>
-                Are you sure you want to revoke this URL? The dashboard will no longer be public.
+                <Trans i18nKey="public-dashboard.config.revoke-body">
+                  Are you sure you want to revoke this URL? The dashboard will no longer be public.
+                </Trans>
               </p>
             ),
             onDismiss: () => {

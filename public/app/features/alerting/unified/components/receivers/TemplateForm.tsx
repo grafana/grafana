@@ -259,7 +259,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                         ))}
                                         <Menu.Divider />
                                         <Menu.Item
-                                          label={'Examples documentation'}
+                                          label={t(
+                                            'alerting.template-form.label-examples-documentation',
+                                            'Examples documentation'
+                                          )}
                                           url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
                                           target="_blank"
                                           icon="external-link-alt"

@@ -167,7 +167,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			branch = val.Spec.GitHub.Branch
 		}
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:      val.ObjectMeta.Name,
+			Name:      val.Name,
 			Title:     val.Spec.Title,
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,
