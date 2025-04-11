@@ -170,7 +170,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 37,
   "tags": [],
   "templating": {
     "list": [

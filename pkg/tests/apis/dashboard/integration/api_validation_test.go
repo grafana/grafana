@@ -10,7 +10,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -759,7 +759,7 @@ func getDashboardGVR() schema.GroupVersionResource {
 
 // getFolderGVR returns the folder GroupVersionResource
 func getFolderGVR() schema.GroupVersionResource {
-	return folderv1.FolderResourceInfo.GroupVersionResource()
+	return folders.FolderResourceInfo.GroupVersionResource()
 }
 
 // Get a resource client for the specified user
@@ -791,8 +791,8 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 
 	folderObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": folderv1.FolderResourceInfo.GroupVersion().String(),
-			"kind":       folderv1.FolderResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": folders.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folders.FolderResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
