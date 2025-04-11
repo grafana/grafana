@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 )
 
-func TestGetAllLibraryElements(t *testing.T) {
+func TestIntegration_GetAllLibraryElements(t *testing.T) {
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
