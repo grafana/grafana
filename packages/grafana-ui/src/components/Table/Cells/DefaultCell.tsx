@@ -18,8 +18,7 @@ import {
 } from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
-    props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
@@ -79,7 +78,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const links = getCellLinks(field, row) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links);
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   return (
@@ -106,7 +105,6 @@ export const DefaultCell = (props: TableCellProps) => {
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
-          actions={actions}
           value={value}
           coords={tooltipCoords}
           onTooltipClose={() => setTooltipCoords(undefined)}

@@ -8,7 +8,7 @@ import { DataLinksActionsTooltipCoords, getCellOptions, getDataLinksActionsToolt
 const DATALINKS_HEIGHT_OFFSET = 10;
 
 export const ImageCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, actions } = props;
+  const { field, cell, tableStyles, row, cellProps } = props;
   const cellOptions = getCellOptions(field);
   const { title, alt } =
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
@@ -17,7 +17,7 @@ export const ImageCell = (props: TableCellProps) => {
   const links = getCellLinks(field, row) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links);
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   // The image element
@@ -49,7 +49,6 @@ export const ImageCell = (props: TableCellProps) => {
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
-          actions={actions}
           value={img}
           coords={tooltipCoords}
           onTooltipClose={() => setTooltipCoords(undefined)}

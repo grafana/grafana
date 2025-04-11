@@ -10,7 +10,7 @@ import { TableCellProps } from '../types';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps, field, row, actions } = props;
+  const { cell, tableStyles, cellProps, field, row } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const txt = css({
     cursor: 'pointer',
@@ -31,7 +31,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   const links = getCellLinks(field, row) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links);
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   return (
@@ -47,7 +47,6 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
         ) : shouldShowTooltip ? (
           <DataLinksActionsTooltip
             links={links}
-            actions={actions}
             value={displayValue}
             coords={tooltipCoords}
             onTooltipClose={() => setTooltipCoords(undefined)}

@@ -30,7 +30,7 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell = (props: TableCellProps) => {
-  const { field, innerWidth, tableStyles, cell, cellProps, row, actions } = props;
+  const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
 
@@ -88,7 +88,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   };
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(getLinks(), actions);
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(getLinks());
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   const links = getLinks();
@@ -109,7 +109,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
-          actions={actions}
           value={renderComponent({})}
           coords={tooltipCoords}
           onTooltipClose={() => setTooltipCoords(undefined)}
