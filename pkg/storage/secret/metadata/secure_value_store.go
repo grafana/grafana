@@ -2,9 +2,14 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	claims "github.com/grafana/authlib/types"
+	"github.com/lib/pq"
+	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -37,10 +42,7 @@ func ProvideSecureValueMetadataStorage(
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get keepers: %w", err)
-	}
+	keepers := keeperService.GetKeepers()
 
 	return &secureValueMetadataStorage{
 		db:                    db,
@@ -64,43 +66,39 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// Store in keeper.
-	// TODO: here temporary, the moment of storing will change in the async flow.
-	externalID, err := s.storeInKeeper(ctx, sv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store in keeper: %w", err)
-	}
-
-	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-	// Temporarily mark succeeded here since the value is already stored in the keeper.
-	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
+	row, err := toCreateRow(sv, authInfo.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if row.Keeper != contracts.DefaultSQLKeeper {
-			// Validate before inserting that the chosen `keeper` exists.
-			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if row.Keeper != contracts.DefaultSQLKeeper {
+				// Validate before inserting that the chosen `keeper` exists.
+				keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
-			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-			if err != nil {
-				return fmt.Errorf("check keeper existence: %w", err)
+				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+				if err != nil {
+					return fmt.Errorf("check keeper existence: %w", err)
+				}
+
+				if !keeperExists {
+					return contracts.ErrKeeperNotFound
+				}
 			}
 
-			if !keeperExists {
-				return contracts.ErrKeeperNotFound
+			if _, err := sess.Insert(row); err != nil {
+				if isUniqueConstraintError(err) {
+					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
+				}
+				return fmt.Errorf("insert row: %w", err)
 			}
-		}
 
-		if _, err := sess.Insert(row); err != nil {
-			return fmt.Errorf("insert row: %w", err)
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
@@ -361,4 +359,43 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 			return nil
 		})
 	})
+}
+
+func isUniqueConstraintError(err error) bool {
+	return isMySQLUniqueConstraintError(err) ||
+		isPostgresUniqueConstraintError(err) ||
+		isSQliteUniqueConstraintError(err)
+}
+
+func isMySQLUniqueConstraintError(err error) bool {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isPostgresUniqueConstraintError(err error) bool {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
+		if string(driverErr.Code) == "23505" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isSQliteUniqueConstraintError(err error) bool {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
+		if int(driverErr.ExtendedCode) == int(sqlite3.ErrConstraintUnique) {
+			return true
+		}
+	}
+
+	return false
 }

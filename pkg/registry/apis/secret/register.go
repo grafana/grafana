@@ -2,7 +2,9 @@ package secret
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -50,6 +53,7 @@ type SecretAPIBuilder struct {
 	secretsOutboxQueue         contracts.OutboxQueue
 	database                   contracts.Database
 	accessClient               claims.AccessClient
+	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
 	isDevMode                  bool // REMOVE ME
 }
@@ -75,8 +79,19 @@ func NewSecretAPIBuilder(
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
-		decryptersAllowList:        decryptersAllowList,
-		isDevMode:                  isDevMode}
+		worker: worker.NewWorker(worker.Config{
+			BatchSize:      1,
+			ReceiveTimeout: 5 * time.Second,
+		},
+			log.New("secret.worker"),
+			database,
+			secretsOutboxQueue,
+			secureValueMetadataStorage,
+			keeperMetadataStorage,
+			keeperService.GetKeepers(),
+		),
+		decryptersAllowList: decryptersAllowList,
+		isDevMode:           isDevMode}
 }
 
 func RegisterAPIService(
@@ -698,7 +713,15 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 // TODO: use this for starting the outbox queue async process?
 func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	return map[string]genericapiserver.PostStartHookFunc{
-		"start-outbox-queue-workers": func(context genericapiserver.PostStartHookContext) error {
+		"start-outbox-queue-workers": func(hookCtx genericapiserver.PostStartHookContext) error {
+			go func() {
+				if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
+					if !errors.Is(err, context.Canceled) {
+						b.log.Error("secrets worker exited control loop with error: %+v", err)
+					}
+				}
+			}()
+
 			return nil
 		},
 	}, nil

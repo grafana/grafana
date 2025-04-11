@@ -5,12 +5,14 @@ import (
 	"errors"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.

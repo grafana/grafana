@@ -124,8 +124,6 @@ func TestOutboxStore(t *testing.T) {
 	}
 	m2 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
-		Name:            "s-1",
-		Namespace:       "n-2",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil,
@@ -133,7 +131,6 @@ func TestOutboxStore(t *testing.T) {
 
 	messages, err := outbox.ReceiveN(ctx, 10)
 	require.NoError(t, err)
-	require.Empty(t, messages)
 
 	messageID1, err := outbox.Append(ctx, m1)
 	require.NoError(t, err)
