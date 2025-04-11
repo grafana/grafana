@@ -29,7 +29,7 @@ type fakeKeeperMetadataStorage struct {
 func (s *fakeKeeperMetadataStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	v := *k
 	v.SetUID(types.UID(uuid.NewString()))
-	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
+	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	ns, ok := s.values[k.Namespace]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.Keeper)
@@ -57,7 +57,7 @@ func (s *fakeKeeperMetadataStorage) Read(ctx context.Context, namespace xkube.Na
 
 func (s *fakeKeeperMetadataStorage) Update(ctx context.Context, nk *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	v := *nk
-	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
+	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	ns, ok := s.values[nk.Namespace]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound

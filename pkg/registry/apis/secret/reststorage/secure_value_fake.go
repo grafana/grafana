@@ -33,7 +33,7 @@ func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv
 
 	v := *sv
 	v.SetUID(types.UID(uuid.NewString()))
-	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
+	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	v.Spec.Value = ""
 	ns, ok := s.values[sv.Namespace]
 	if !ok {
