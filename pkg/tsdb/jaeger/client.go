@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -100,6 +101,25 @@ func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
 		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
 	}
 	jaegerURL.Path = "/api/traces"
+
+	if query.Tags != "" {
+		tagMap := make(map[string]string)
+		pairs := strings.Split(query.Tags, " ")
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				continue
+			}
+			tagMap[kv[0]] = kv[1]
+		}
+
+		marshaledTags, err := json.Marshal(tagMap)
+		if err != nil {
+			return []TraceResponse{}, fmt.Errorf("failed to convert tags to JSON: %w", err)
+		}
+
+		query.Tags = string(marshaledTags)
+	}
 
 	queryParams := map[string]string{
 		"service":     query.Service,
