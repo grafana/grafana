@@ -48,6 +48,7 @@ type provisioningTestHelper struct {
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
+	EditorREST   *rest.RESTClient
 	ViewerREST   *rest.RESTClient
 }
 
@@ -260,6 +261,9 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Group: "provisioning.grafana.app", Version: "v0alpha1",
 	})
 
+	editorClient := helper.Org1.Editor.RESTClient(t, &schema.GroupVersion{
+		Group: "provisioning.grafana.app", Version: "v0alpha1",
+	})
 	viewerClient := helper.Org1.Viewer.RESTClient(t, &schema.GroupVersion{
 		Group: "provisioning.grafana.app", Version: "v0alpha1",
 	})
@@ -288,6 +292,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 
 		Repositories: repositories,
 		AdminREST:    restClient,
+		EditorREST:   editorClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
 		Folders:      folders,
