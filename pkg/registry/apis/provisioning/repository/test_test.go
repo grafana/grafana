@@ -211,7 +211,7 @@ func TestTestRepository(t *testing.T) {
 			expectedCode: http.StatusUnprocessableEntity,
 			expectedErrs: map[string]provisioning.FieldError{
 				"spec.title": {
-					Type:   field.ErrorTypeRequired,
+					Type:   metav1.CauseTypeFieldValueRequired,
 					Detail: "a repository title must be given",
 				},
 			},
@@ -265,7 +265,7 @@ func TestTestRepository(t *testing.T) {
 					Success: false,
 					Fields: map[string]provisioning.FieldError{
 						"spec.property": {
-							Type: field.ErrorTypeTooLong,
+							Type: metav1.CauseTypeFieldValueInvalid,
 						},
 					},
 				}, nil)
@@ -274,7 +274,7 @@ func TestTestRepository(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 			expectedErrs: map[string]provisioning.FieldError{
 				"spec.property": {
-					Type: field.ErrorTypeTooLong,
+					Type: metav1.CauseTypeFieldValueInvalid,
 				},
 			},
 		},
