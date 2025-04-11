@@ -328,6 +328,7 @@ export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: newPanelTitle,
     pluginId: defaultPluginId,
+    seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],

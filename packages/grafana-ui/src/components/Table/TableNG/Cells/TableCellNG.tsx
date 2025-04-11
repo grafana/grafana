@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { WKT } from 'ol/format';
+import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
@@ -21,6 +23,7 @@ import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
+import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
@@ -78,21 +81,19 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Common props for all cells
+  const commonProps = {
+    value,
+    field,
+    rowIdx,
+    justifyContent,
+  };
+
   // Get the correct cell type
   let cell: ReactNode = null;
   switch (cellType) {
     case TableCellDisplayMode.Sparkline:
-      cell = (
-        <SparklineCell
-          value={value}
-          field={field}
-          theme={theme}
-          timeRange={timeRange}
-          width={divWidth}
-          rowIdx={rowIdx}
-          justifyContent={justifyContent}
-        />
-      );
+      cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
       break;
     case TableCellDisplayMode.Gauge:
     case TableCellDisplayMode.BasicGauge:
@@ -100,32 +101,20 @@ export function TableCellNG(props: TableCellNGProps) {
     case TableCellDisplayMode.LcdGauge:
       cell = (
         <BarGaugeCell
-          value={value}
-          field={field}
+          {...commonProps}
           theme={theme}
           timeRange={timeRange}
           height={height}
           width={divWidth}
-          rowIdx={rowIdx}
           actions={actions}
         />
       );
       break;
     case TableCellDisplayMode.Image:
-      cell = (
-        <ImageCell
-          cellOptions={cellOptions}
-          field={field}
-          height={height}
-          justifyContent={justifyContent}
-          value={value}
-          rowIdx={rowIdx}
-          actions={actions}
-        />
-      );
+      cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} actions={actions} />;
+      cell = <JSONCell {...commonProps} actions={actions} />;
       break;
     case TableCellDisplayMode.DataLinks:
       cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
@@ -139,16 +128,22 @@ export function TableCellNG(props: TableCellNGProps) {
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = (
-        <AutoCell
-          value={value}
-          field={field}
-          justifyContent={justifyContent}
-          rowIdx={rowIdx}
-          cellOptions={cellOptions}
-          actions={actions}
-        />
-      );
+      // Handle auto cell type detection
+      if (field.type === FieldType.geo) {
+        cell = <GeoCell {...commonProps} height={height} />;
+      } else if (field.type === FieldType.frame) {
+        const firstValue = field.values[0];
+        if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+          cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+        } else {
+          cell = <JSONCell {...commonProps} actions={actions} />;
+        }
+      } else if (field.type === FieldType.other) {
+        cell = <JSONCell {...commonProps} actions={actions} />;
+      } else {
+        cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+      }
+      break;
   }
 
   const handleMouseEnter = () => {
@@ -162,6 +157,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.setProperty('min-height', `100%`);
       tableCellDiv?.style.setProperty('height', `fit-content`);
       tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
+      tableCellDiv?.style.setProperty('min-width', 'min-content');
     }
   };
 
@@ -176,6 +172,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.removeProperty('min-height');
       tableCellDiv?.style.removeProperty('height');
       tableCellDiv?.style.removeProperty('background');
+      tableCellDiv?.style.removeProperty('min-width');
     }
   };
 
@@ -201,12 +198,22 @@ export function TableCellNG(props: TableCellNGProps) {
               name="eye"
               tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
               onClick={() => {
+                let inspectValue = value;
+                let mode = TableCellInspectorMode.text;
+
+                if (field.type === FieldType.geo && value instanceof Geometry) {
+                  inspectValue = new WKT().writeGeometry(value, {
+                    featureProjection: 'EPSG:3857',
+                    dataProjection: 'EPSG:4326',
+                  });
+                  mode = TableCellInspectorMode.code;
+                } else if (cellType === TableCellDisplayMode.JSONView) {
+                  mode = TableCellInspectorMode.code;
+                }
+
                 setContextMenuProps({
-                  value: String(value ?? ''),
-                  mode:
-                    cellType === TableCellDisplayMode.JSONView
-                      ? TableCellInspectorMode.code
-                      : TableCellInspectorMode.text,
+                  value: String(inspectValue ?? ''),
+                  mode,
                 });
                 setIsInspecting(true);
               }}

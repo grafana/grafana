@@ -28,12 +28,12 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const { loading: isDeleting, error: deletingError } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving, error: savingError } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const isGrafanaManagedAlertmanager = alertmanagerName === GRAFANA_RULES_SOURCE_NAME;
 
   // ⚠️ provisioned data sources should not prevent the configuration from being edited
   const immutableDataSource = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
-  const readOnly = immutableDataSource;
+  const readOnly = immutableDataSource || isGrafanaManagedAlertmanager;
 
-  const isGrafanaManagedAlertmanager = alertmanagerName === GRAFANA_RULES_SOURCE_NAME;
   const styles = useStyles2(getStyles);
 
   const {
@@ -128,12 +128,28 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     );
   }
 
-  const confirmationText = isGrafanaManagedAlertmanager
-    ? `Are you sure you want to reset configuration for the Grafana Alertmanager? Contact points and notification policies will be reset to their defaults.`
-    : `Are you sure you want to reset configuration for "${alertmanagerName}"? Contact points and notification policies will be reset to their defaults.`;
+  const confirmationText = t(
+    'alerting.alertmanager-config.reset-confirmation',
+    'Are you sure you want to reset configuration for "{{alertmanagerName}}"? Contact points and notification policies will be reset to their defaults.',
+    { alertmanagerName }
+  );
 
   return (
     <div className={styles.container}>
+      {isGrafanaManagedAlertmanager && (
+        <Alert
+          severity="info"
+          title={t(
+            'alerting.alertmanager-config.gma-manual-configuration-is-not-supported',
+            'Manual configuration changes not supported'
+          )}
+        >
+          <Trans i18nKey="alerting.alertmanager-config.gma-manual-configuration-description">
+            The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration,
+            edit the individual resources through the UI.
+          </Trans>
+        </Alert>
+      )}
       {/* form error state */}
       {errors.configJSON && (
         <Alert

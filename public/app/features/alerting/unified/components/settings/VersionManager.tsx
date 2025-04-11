@@ -94,11 +94,15 @@ const AlertmanagerConfigurationVersionManager = ({
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return <Trans i18nKey="alerting.alertmanager-configuration-version-manager.loading">Loading...</Trans>;
   }
 
   if (!historicalConfigs.length) {
-    return 'No previous configurations';
+    return (
+      <Trans i18nKey="alerting.alertmanager-configuration-version-manager.no-previous-configurations">
+        No previous configurations
+      </Trans>
+    );
   }
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied

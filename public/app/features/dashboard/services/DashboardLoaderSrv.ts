@@ -13,7 +13,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
-import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
@@ -37,6 +36,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<T>;
+
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string) {
@@ -124,10 +124,6 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
-    } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid);
-      // needed for the old architecture
-      // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv().getSnapshot(slug);
     } else if (type === 'public' && uid) {
@@ -200,8 +196,6 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = backendSrv.getPublicDashboardByUid(uid).then((result) => {
         return ResponseTransformers.ensureV2Response(result);
       });
-    } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid).then((r) => ResponseTransformers.ensureV2Response(r));
     } else if (uid) {
       if (!params) {
         const cachedDashboard = stateManager.getDashboardFromCache(uid);
@@ -263,5 +257,6 @@ export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('dashboardLoaderSrv can be only overriden in test environment');
   }
+
   dashboardLoaderSrv = srv;
 };

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,6 +21,7 @@ const (
 	CheckID             = "datasource"
 	HealthCheckStepID   = "health-check"
 	UIDValidationStepID = "uid-validation"
+	MissingPluginStepID = "missing-plugin"
 )
 
 type check struct {
@@ -27,6 +29,7 @@ type check struct {
 	PluginStore           pluginstore.Store
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
+	PluginRepo            repo.Service
 	log                   log.Logger
 }
 
@@ -35,12 +38,14 @@ func New(
 	pluginStore pluginstore.Store,
 	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
+	pluginRepo repo.Service,
 ) checks.Check {
 	return &check{
 		DatasourceSvc:         datasourceSvc,
 		PluginStore:           pluginStore,
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
+		PluginRepo:            pluginRepo,
 		log:                   log.New("advisor.datasourcecheck"),
 	}
 }
@@ -68,6 +73,11 @@ func (c *check) Steps() []checks.Step {
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
 			log:                   c.log,
+		},
+		&missingPluginStep{
+			PluginStore: c.PluginStore,
+			PluginRepo:  c.PluginRepo,
+			log:         c.log,
 		},
 	}
 }
@@ -145,22 +155,8 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
-			// The plugin is not installed
-			return checks.NewCheckReportFailure(
-				advisor.CheckReportFailureSeverityHigh,
-				s.ID(),
-				ds.Name,
-				[]advisor.CheckErrorLink{
-					{
-						Message: "Delete data source",
-						Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-					},
-					{
-						Message: "Install plugin",
-						Url:     fmt.Sprintf("/plugins/%s", ds.Type),
-					},
-				},
-			), nil
+			// The plugin is not installed, handle this in the missing plugin step
+			return nil, nil
 		}
 		// Unable to check health check
 		s.log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
@@ -191,6 +187,61 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 				},
 			},
+		), nil
+	}
+	return nil, nil
+}
+
+type missingPluginStep struct {
+	PluginStore pluginstore.Store
+	PluginRepo  repo.Service
+	log         log.Logger
+}
+
+func (s *missingPluginStep) Title() string {
+	return "Missing plugin check"
+}
+
+func (s *missingPluginStep) Description() string {
+	return "Checks if the plugin associated with the data source is installed."
+}
+
+func (s *missingPluginStep) Resolution() string {
+	return "Delete the datasource or install the plugin."
+}
+
+func (s *missingPluginStep) ID() string {
+	return MissingPluginStepID
+}
+
+func (s *missingPluginStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+	ds, ok := i.(*datasources.DataSource)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", i)
+	}
+
+	_, exists := s.PluginStore.Plugin(ctx, ds.Type)
+	if !exists {
+		links := []advisor.CheckErrorLink{
+			{
+				Message: "Delete data source",
+				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+			},
+		}
+		_, err := s.PluginRepo.PluginInfo(ctx, ds.Type)
+		if err == nil {
+			// Plugin is available in the repo
+			links = append(links, advisor.CheckErrorLink{
+				Message: "Install plugin",
+				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
+			})
+		}
+		// The plugin is not installed
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityHigh,
+			s.ID(),
+			ds.Name,
+			links,
 		), nil
 	}
 	return nil, nil
