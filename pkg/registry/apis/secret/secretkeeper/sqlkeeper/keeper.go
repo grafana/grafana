@@ -29,7 +29,8 @@ func NewSQLKeeper(
 	}, nil
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
+// TODO: parameter cfg is not being used
+func (s *SQLKeeper) Store(ctx context.Context, _ secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Store")
 	defer span.End()
 

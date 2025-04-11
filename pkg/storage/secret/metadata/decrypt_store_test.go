@@ -342,6 +342,10 @@ func createSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVal
 	_, err := db.Create(ctx, sv)
 	require.NoError(t, err)
 
+	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
+	_, err = db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
 		require.NoError(t, db.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name))
 	})

@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
