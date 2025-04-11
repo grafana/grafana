@@ -71,7 +71,6 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 class UnthemedDashboardImport extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
     const { gcomDashboardId } = this.props.queryParams;
     if (gcomDashboardId) {
       this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
