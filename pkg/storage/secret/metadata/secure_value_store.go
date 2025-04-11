@@ -80,7 +80,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 
 				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 				if err != nil {
-					return fmt.Errorf("check keeper existence: %w", err)
+					return fmt.Errorf("checking keeper existence: %w", err)
 				}
 
 				if !keeperExists {
@@ -92,7 +92,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 				if s.db.GetDialect().IsUniqueConstraintViolation(err) {
 					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
 				}
-				return fmt.Errorf("insert row: %w", err)
+				return fmt.Errorf("inserting row: %w", err)
 			}
 
 			return nil
