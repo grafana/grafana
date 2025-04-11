@@ -659,7 +659,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    // Start with v2 if newDashboardLayout is enabled, otherwise v1
     this.activeManager = this.v1Manager;
   }
 
@@ -752,7 +751,19 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
+    if (options.route === DashboardRoutes.New) {
+      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      this.setActiveManager(newDashboardVersion);
+    }
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
+  }
+
+  public setActiveManager(manager: 'v1' | 'v2') {
+    if (manager === 'v1') {
+      this.activeManager = this.v1Manager;
+    } else {
+      this.activeManager = this.v2Manager;
+    }
   }
 }
 
