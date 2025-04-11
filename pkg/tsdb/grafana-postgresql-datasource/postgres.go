@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,18 +17,22 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/tls"
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 		logger:     logger,
+		features:   features,
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
 	return s
@@ -36,6 +42,7 @@ type Service struct {
 	tlsManager tlsSettingsProvider
 	im         instancemgmt.InstanceManager
 	logger     log.Logger
+	features   featuremgmt.FeatureToggles
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
@@ -52,6 +59,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+		return dsInfo.QueryDataPGX(ctx, req)
+	}
+
 	return dsInfo.QueryData(ctx, req)
 }
 
@@ -104,6 +116,62 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	return db, handler, nil
 }
 
+func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Conn, *sqleng.DataSourceHandler, error) {
+	pgxConf, err := pgxpool.ParseConfig(cnnstr)
+	if err != nil {
+		logger.Error("postgres config creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres config creation failed")
+	}
+
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("postgres proxy creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres proxy creation failed")
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			logger.Error("postgres proxy creation failed", "error", err)
+			return nil, nil, fmt.Errorf("postgres proxy creation failed")
+		}
+
+		pgxConf.ConnConfig.DialFunc = newPgxDialFunc(dialer)
+	}
+
+	config := sqleng.DataPluginConfiguration{
+		DSInfo:            dsInfo,
+		MetricColumnTypes: []string{"unknown", "text", "varchar", "char", "bpchar"},
+		RowLimit:          rowLimit,
+	}
+
+	queryResultTransformer := postgresQueryResultTransformer{}
+
+	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
+	// TODO: Figure out how to set MaxOpenConns and MaxIdleConns in pgxpool.NewWithConfig
+	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	c, err := p.Acquire(ctx)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	handler, err := sqleng.NewQueryDataHandlerPGX(userFacingDefaultError, c, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		logger)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	logger.Debug("Successfully connected to Postgres")
+	return c, handler, nil
+}
+
 func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 	logger := s.logger
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -143,7 +211,12 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		cnnstr, err := s.generateConnectionString(dsInfo)
+		var cnnstr string
+		if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+			cnnstr, err = s.generateConnectionString(dsInfo)
+		} else {
+			cnnstr, err = generateConnectionConfigPGX(dsInfo)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +226,12 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, err
 		}
 
-		_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+		var handler instancemgmt.Instance
+		if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+			_, handler, err = newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+		} else {
+			_, handler, err = newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+		}
 
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
@@ -250,6 +328,71 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	return connStr, nil
 }
 
+func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
+	var host string
+	var port int
+	if strings.HasPrefix(dsInfo.URL, "/") {
+		host = dsInfo.URL
+	} else {
+		index := strings.LastIndex(dsInfo.URL, ":")
+		v6Index := strings.Index(dsInfo.URL, "]")
+		sp := strings.SplitN(dsInfo.URL, ":", 2)
+		host = sp[0]
+		if v6Index == -1 {
+			if len(sp) > 1 {
+				var err error
+				port, err = strconv.Atoi(sp[1])
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
+				}
+			}
+		} else {
+			if index == v6Index+1 {
+				host = dsInfo.URL[1 : index-1]
+				var err error
+				port, err = strconv.Atoi(dsInfo.URL[index+1:])
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
+				}
+			} else {
+				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
+			}
+		}
+	}
+
+	// NOTE: we always set sslmode=disable in the connection string, we handle TLS manually later
+	connStr := fmt.Sprintf("sslmode=disable user='%s' password='%s' host='%s' dbname='%s'",
+		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
+	if port > 0 {
+		connStr += fmt.Sprintf(" port=%d", port)
+	}
+
+	conf, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return "", err
+	}
+
+	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, host)
+	if err != nil {
+		return "", err
+	}
+
+	// before we set the TLS config, we need to make sure the `.Fallbacks` attribute is unset, see:
+	// https://github.com/jackc/pgx/discussions/1903#discussioncomment-8430146
+	if len(conf.ConnConfig.Fallbacks) > 0 {
+		return "", errors.New("tls: fallbacks configured, unable to set up TLS config")
+	}
+	conf.ConnConfig.TLSConfig = tlsConf
+
+	// by default pgx resolves hostnames to ip addresses. we must avoid this.
+	// (certain socks-proxy related functionality relies on the hostname being preserved)
+	conf.ConnConfig.LookupFunc = func(ctx context.Context, host string) ([]string, error) {
+		return []string{host}, nil
+	}
+
+	return conf.ConnString(), nil
+}
+
 type postgresQueryResultTransformer struct{}
 
 func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
@@ -262,7 +405,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil {
 		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
 	}
-	return dsHandler.CheckHealth(ctx, req)
+	return dsHandler.CheckHealth(ctx, req, s.features)
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

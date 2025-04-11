@@ -33,3 +33,14 @@ func (p *postgresProxyDialer) DialTimeout(network, address string, timeout time.
 
 	return p.d.(proxy.ContextDialer).DialContext(ctx, network, address)
 }
+
+type PgxDialFunc = func(ctx context.Context, network string, address string) (net.Conn, error)
+
+func newPgxDialFunc(dialer proxy.Dialer) PgxDialFunc {
+	dialFunc :=
+		func(ctx context.Context, network string, addr string) (net.Conn, error) {
+			return dialer.Dial(network, addr)
+		}
+
+	return dialFunc
+}

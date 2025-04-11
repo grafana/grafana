@@ -237,7 +237,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case Tempo:
 		svc = tempo.ProvideService(httpClientProvider)
 	case PostgreSQL:
-		svc = postgres.ProvideService(cfg)
+		svc = postgres.ProvideService(cfg, features)
 	case MySQL:
 		svc = mysql.ProvideService()
 	case MSSQL:
