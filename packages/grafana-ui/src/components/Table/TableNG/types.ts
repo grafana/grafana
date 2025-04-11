@@ -193,6 +193,7 @@ export interface ImageCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
+  actions?: ActionModel[];
 }
 
 export interface JSONCellProps {

@@ -119,6 +119,7 @@ export function TableCellNG(props: TableCellNGProps) {
           justifyContent={justifyContent}
           value={value}
           rowIdx={rowIdx}
+          actions={actions}
         />
       );
       break;
