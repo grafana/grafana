@@ -309,9 +309,9 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   });
 
-  if (options.folder) {
+  if (options.folder && options.folder.uid) {
     filteredRules = filteredRules.filter((rule) => {
-      return rule.namespaceName === options.folder.title;
+      return rule.namespace.uid === options.folder.uid;
     });
   }
   if (options.datasource) {

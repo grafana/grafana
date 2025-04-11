@@ -39,6 +39,7 @@ interface RuleBase {
   evaluationTime?: number;
   lastError?: string;
   uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {

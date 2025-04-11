@@ -13,7 +13,7 @@ const defaultOption: UnifiedAlertListOptions = {
   groupBy: [''],
   alertName: 'test',
   showInstances: false,
-  folder: { id: 1, title: 'test folder' },
+  folder: { uid: 'abc', title: 'test folder' },
   stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true, recovering: false },
   alertInstanceLabelFilter: '',
   datasource: 'Alertmanager',
