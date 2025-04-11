@@ -15,7 +15,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -408,6 +410,11 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		if err != nil {
 			return nil, created, err
 		}
+	}
+
+	// v1 should be saved as schema version 41. v0 allows for older versions
+	if schemaversion.GetSchemaVersion(dash.Spec.Object) < int(schemaversion.LATEST_VERSION) {
+		dash.APIVersion = dashboardv0.VERSION
 	}
 
 	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
