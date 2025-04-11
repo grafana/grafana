@@ -227,12 +227,13 @@ After running:
 
 {{< admonition type="note" >}}
 Live currently does not support Redis Sentinel. We recommend using a Redis Cluster for high-availability via a k8s helm chart such as the Bitnami Redis chart which has values to provision a Redis Cluster. Grafana Live can then be pointed to the `redis-headless` service.
+
+```
+ live:
+   ha_engine: redis
+   ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+   ha_engine_password: $__file{/your/redis/password/secret/mount}
+```
 {{< /admonition >}}
 
->
-> ```
-> live:
->   ha_engine: redis
->   ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
->   ha_engine_password: $__file{/your/redis/password/secret/mount}
-> ```
+
