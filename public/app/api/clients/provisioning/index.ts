@@ -13,6 +13,7 @@ import {
   JobList,
   Repository,
   RepositoryList,
+  ErrorDetails,
 } from './endpoints.gen';
 import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
@@ -100,9 +101,11 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
             dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
           } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
             if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
-              dispatch(
-                notifyApp(createErrorNotification('Error validating repository', e.error.data.errors.join('\n')))
-              );
+              e.error.data.errors.forEach((err: ErrorDetails) => {
+                if (!err.field) {
+                  dispatch(notifyApp(createErrorNotification('Error validating repository')));
+                }
+              });
             }
           }
         }

@@ -14,6 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
+import { getFormErrors } from '../utils/getFormErrors';
 
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
@@ -51,22 +52,6 @@ const getSteps = (): Array<Step<WizardStep>> => {
       submitOnNext: true,
     },
   ];
-};
-
-// TODO The field errors should come from the backend
-const getFormErrors = (
-  error: string
-): [`repository.${keyof WizardFormData['repository']}` | null, { message: string } | null] => {
-  switch (error) {
-    case 'branch does not exist':
-      return ['repository.branch', { message: error }];
-    case 'token is invalid or expired':
-      return ['repository.token', { message: error }];
-    case 'repository does not exist':
-      return ['repository.url', { message: error }];
-    default:
-      return [null, null];
-  }
 };
 
 export function ProvisioningWizard({ type }: { type: RepoType }) {
@@ -208,7 +193,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         }
       } catch (error) {
         if (isFetchError(error)) {
-          const [field, errorMessage] = getFormErrors(error.data.errors[0]);
+          const [field, errorMessage] = getFormErrors(error.data.errors);
           if (field && errorMessage) {
             setError(field, errorMessage);
           }
