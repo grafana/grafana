@@ -4,6 +4,8 @@
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-data.tsbuildinfo",
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],

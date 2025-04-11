@@ -38,7 +38,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       buildDependencies: {
         config: [__filename],
       },
-      cacheDirectory: path.resolve(__dirname, '../../node_modules/.cache/webpack', path.basename(process.cwd())),
+      cacheDirectory: path.resolve(__dirname, '../../.fecache/webpack', path.basename(process.cwd())),
     },
 
     context: process.cwd(),

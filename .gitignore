@@ -5,6 +5,7 @@ coverage/
 .aws-config.json
 awsconfig
 /.awcache
+/.fecache
 /dist
 /public/build
 /emails/dist

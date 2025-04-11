@@ -3,6 +3,8 @@
     "jsx": "react-jsx",
     "declarationDir": "./dist/esm",
     "emitDeclarationOnly": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-schema.tsbuildinfo",
     "isolatedModules": true,
     "rootDirs": ["."]
   },

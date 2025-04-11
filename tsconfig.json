@@ -11,7 +11,7 @@
     "incremental": true,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "tsBuildInfoFile": ".fecache/typescript/grafana.tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     }

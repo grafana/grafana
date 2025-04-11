@@ -95,6 +95,7 @@ module.exports = (env = {}) => {
     cache: {
       type: 'filesystem',
       name: 'grafana-default-development',
+      cacheDirectory: path.resolve(__dirname, '../../.fecache/webpack'),
       buildDependencies: {
         config: [__filename],
       },
