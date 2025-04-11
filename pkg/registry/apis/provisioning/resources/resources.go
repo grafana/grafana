@@ -177,10 +177,19 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// Update or Create resource
-	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
 	if apierrors.IsNotFound(err) {
-		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
 	}
 
 	return parsed.Obj.GetName(), parsed.GVK, err

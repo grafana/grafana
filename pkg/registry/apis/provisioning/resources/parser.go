@@ -227,6 +227,11 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		return err
 	}
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
@@ -234,13 +239,13 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
 			DryRun:          []string{"All"},
-			FieldValidation: "Ignore",
+			FieldValidation: fieldValidation,
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
-			FieldValidation: "Ignore",
+			FieldValidation: fieldValidation,
 		})
 	}
 	return err
@@ -264,16 +269,21 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	}
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// Run update or create
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
-			FieldValidation: "Ignore",
+			FieldValidation: fieldValidation,
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
 		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
-			FieldValidation: "Ignore",
+			FieldValidation: fieldValidation,
 		})
 	}
 
