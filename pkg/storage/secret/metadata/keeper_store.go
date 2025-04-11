@@ -215,7 +215,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// TODO LND We are converting the new row(before the update operation) , should we query the db again??
+	// TODO We are converting the new row(before the update operation) , should we query the db again??
 	keeper, err := newRow.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
@@ -352,7 +352,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
 
-	// TODO LND Only fetch the values we need
+	// TODO Only fetch the values we need
 	secureValueRows := make([]*secureValueDB, 0)
 	for rows.Next() {
 		row := secureValueDB{}
@@ -401,7 +401,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   keeper.Namespace,
 		KeeperNames: keeperNames,
-		// TODO LND add comment Why do we do this
+		// TODO add comment Why do we do this
 		ExcludeKeeperType: string(contracts.SQLKeeperType),
 	}
 
@@ -415,7 +415,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("execute list template %q: %w", qKeeper, err)
 	}
 
-	// TODO LND Only fetch the values we need?
+	// TODO Only fetch the values we need?
 	thirdPartyKeepers := make([]*keeperDB, 0)
 	for rows.Next() {
 		row := keeperDB{}

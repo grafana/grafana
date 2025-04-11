@@ -38,7 +38,7 @@ type createKeeper struct {
 	Row *keeperDB
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r createKeeper) Validate() error {
 	return nil // TODO
 }
@@ -50,7 +50,7 @@ type readKeeper struct {
 	Name      string
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readKeeper) Validate() error {
 	return nil // TODO
 }
@@ -61,7 +61,7 @@ type updateKeeper struct {
 	Row *keeperDB
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r updateKeeper) Validate() error {
 	return nil // TODO
 }
@@ -72,7 +72,7 @@ type listKeeper struct {
 	Namespace string
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listKeeper) Validate() error {
 	return nil // TODO
 }
@@ -84,7 +84,7 @@ type deleteKeeper struct {
 	Name      string
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteKeeper) Validate() error {
 	return nil // TODO
 }
@@ -96,7 +96,7 @@ type listByNameSecureValue struct {
 	UsedSecureValues []string
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameSecureValue) Validate() error {
 	return nil // TODO
 }
@@ -109,7 +109,7 @@ type listByNameKeeper struct {
 	ExcludeKeeperType string
 }
 
-// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
+// Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
