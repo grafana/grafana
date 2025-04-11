@@ -22,6 +22,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 		operation         admission.Operation
 		expectedID        int64
 		migrationExpected bool
+		expectedError     bool
 	}{
 		{
 			name: "should skip non-create/update operations",
@@ -62,7 +63,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			migrationExpected: true,
 		},
 		{
-			name: "v1 should not error mutation hook if migration fails",
+			name: "v1 should error mutation hook if migration fails",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
@@ -71,8 +72,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					},
 				},
 			},
-			operation:  admission.Create,
-			expectedID: 456,
+			operation:     admission.Create,
+			expectedError: true,
 		},
 	}
 
@@ -92,6 +93,11 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				false,
 				nil,
 			), nil)
+
+			if tt.expectedError {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 
 			if tt.operation == admission.Create || tt.operation == admission.Update {
