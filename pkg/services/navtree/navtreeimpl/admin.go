@@ -61,12 +61,14 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+		provisioningNode := &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
-		})
+		}
+
+		configNodes = append(configNodes, provisioningNode)
 	}
 
 	generalNode := &navtree.NavLink{
