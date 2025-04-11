@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"golang.org/x/exp/slices"
+
 	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -43,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"golang.org/x/exp/slices"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -96,7 +97,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
-				dto.Dashboard = dashboards.NewDashboardFolder("General")
+				dto.Dashboard = dashboards.NewDashboardFolder("General", "")
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardFolderNameExists)
 			})
