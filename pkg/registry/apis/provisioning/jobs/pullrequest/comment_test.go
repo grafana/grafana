@@ -17,7 +17,7 @@ import (
 )
 
 func TestGenerateComment(t *testing.T) {
-	builder := newCommentBuilder()
+	builder := NewCommenter()
 
 	for _, tc := range []struct {
 		Name  string
