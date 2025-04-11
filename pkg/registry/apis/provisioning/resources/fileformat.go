@@ -37,7 +37,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 	} else {
-		return nil, nil, "", fmt.Errorf("classic resource must be JSON")
+		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
 
 	// regular version headers exist
@@ -64,7 +64,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 		value["tags"] != nil {
 		gvk := &schema.GroupVersionKind{
 			Group:   dashboard.GROUP,
-			Version: dashboard.VERSION, // v1
+			Version: "v0alpha1", // no schema
 			Kind:    "Dashboard"}
 		return &unstructured.Unstructured{
 			Object: map[string]interface{}{

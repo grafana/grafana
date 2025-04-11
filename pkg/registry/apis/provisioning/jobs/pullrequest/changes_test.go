@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -45,6 +45,17 @@ func TestCalculateChanges(t *testing.T) {
 
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+	reader.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "x",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			GitHub: &v0alpha1.GitHubRepositoryConfig{
+				GenerateDashboardPreviews: true,
+			},
+		},
+	})
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info: finfo,
 		Repo: v0alpha1.ResourceRepositoryInfo{
@@ -76,18 +87,15 @@ func TestCalculateChanges(t *testing.T) {
 		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 		renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(getDummyRenderedURL("x"), nil)
+		changes := []repository.VersionedFileChange{createdFileChange}
 
-		options := changeOptions{
-			grafanaBaseURL: "http://host/",
-			pullRequest:    pullRequest,
-			changes:        []repository.VersionedFileChange{createdFileChange},
-			parser:         parser,
-			reader:         reader,
-			progress:       progress,
-			render:         renderer,
-		}
+		parserFactory := resources.NewMockParserFactory(t)
+		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+			return "http://host/"
+		})
 
-		info, err := processChangedFiles(context.Background(), options)
+		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
 		require.NoError(t, err)
 
 		require.False(t, info.MissingImageRenderer)
@@ -107,17 +115,14 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("without-screenshot", func(t *testing.T) {
 		renderer := NewMockScreenshotRenderer(t)
 		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
-		options := changeOptions{
-			grafanaBaseURL: "http://host/",
-			pullRequest:    pullRequest,
-			changes:        []repository.VersionedFileChange{createdFileChange},
-			parser:         parser,
-			reader:         reader,
-			progress:       progress,
-			render:         renderer,
-		}
+		changes := []repository.VersionedFileChange{createdFileChange}
+		parserFactory := resources.NewMockParserFactory(t)
+		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+			return "http://host/"
+		})
 
-		info, err := processChangedFiles(context.Background(), options)
+		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
 		require.NoError(t, err)
 
 		require.True(t, info.MissingImageRenderer)
@@ -138,19 +143,18 @@ func TestCalculateChanges(t *testing.T) {
 		renderer := NewMockScreenshotRenderer(t)
 		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 
-		options := changeOptions{
-			grafanaBaseURL: "http://host/",
-			pullRequest:    pullRequest,
-			parser:         parser,
-			reader:         reader,
-			progress:       progress,
-			render:         renderer, // not used
-		}
+		changes := []repository.VersionedFileChange{}
 		for range 15 {
-			options.changes = append(options.changes, createdFileChange)
+			changes = append(changes, createdFileChange)
 		}
 
-		info, err := processChangedFiles(context.Background(), options)
+		parserFactory := resources.NewMockParserFactory(t)
+		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+			return "http://host/"
+		})
+
+		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
 		require.NoError(t, err)
 
 		require.False(t, info.MissingImageRenderer)
