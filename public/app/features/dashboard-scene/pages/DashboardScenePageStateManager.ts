@@ -270,9 +270,6 @@ abstract class DashboardScenePageStateManagerBase<T>
     if (options.route === DashboardRoutes.Home) {
       return await this.loadHomeDashboard();
     }
-    // if (options.route === DashboardRoutes.Provisioning) {
-    //   return await this.loadProvisioningDashboard(options);
-    // }
 
     const rsp = await this.fetchDashboard(options);
 
