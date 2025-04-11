@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -46,13 +45,13 @@ func TestCalculateChanges(t *testing.T) {
 
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-	reader.On("Config").Return(&provisioning.Repository{
+	reader.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
 			Namespace: "x",
 		},
-		Spec: provisioning.RepositorySpec{
-			GitHub: &provisioning.GitHubRepositoryConfig{
+		Spec: v0alpha1.RepositorySpec{
+			GitHub: &v0alpha1.GitHubRepositoryConfig{
 				GenerateDashboardPreviews: true,
 			},
 		},
