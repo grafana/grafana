@@ -2,12 +2,6 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
-import {
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
-  QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -18,7 +12,7 @@ import { createDataSourceVariableAdapter } from '../../../variables/datasource/a
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporterV1, getDashboardExporter, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -100,7 +94,7 @@ describe('DashboardExporter', () => {
       const dashboardModel = new DashboardModel(dashboard, undefined, {
         getVariablesFromState: () => dashboard.templating.list,
       });
-      const exporter = getDashboardExporter('v1');
+      const exporter = new DashboardExporter();
       const exported: any = await exporter.makeExportable(dashboardModel);
       expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
     });
@@ -147,7 +141,7 @@ describe('DashboardExporter', () => {
       const dashboardModel = new DashboardModel(dashboard, undefined, {
         getVariablesFromState: () => dashboard.templating!.list! as TypedVariableModel[],
       });
-      const exporter = new DashboardExporterV1();
+      const exporter = new DashboardExporter();
       const exported = (await exporter.makeExportable(dashboardModel)) as DashboardJson;
       const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
       expect(value).toEqual({});
@@ -217,7 +211,7 @@ describe('DashboardExporter', () => {
 
       const dashboardModel = new DashboardModel(dashboard, {});
 
-      const exporter = new DashboardExporterV1();
+      const exporter = new DashboardExporter();
       const exported = await exporter.makeExportable(dashboardModel);
       if ('error' in exported) {
         throw new Error('error should not be returned when making exportable json');
@@ -243,7 +237,7 @@ describe('DashboardExporter', () => {
       const dashboardModel = new DashboardModel(dashboard, undefined, {
         getVariablesFromState: () => [],
       });
-      const exporter = new DashboardExporterV1();
+      const exporter = new DashboardExporter();
       const exported: any = await exporter.makeExportable(dashboardModel);
       expect(exported.panels[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
       expect(exported.panels[0].targets[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
@@ -386,7 +380,7 @@ describe('DashboardExporter', () => {
           },
         });
 
-        const exporter = new DashboardExporterV1();
+        const exporter = new DashboardExporter();
         exporter.makeExportable(dash).then((clean) => {
           exported = clean;
           done();
@@ -410,7 +404,7 @@ describe('DashboardExporter', () => {
           panels: [{ id: 1, datasource: { uid: 'other', type: 'other' }, type: 'graph' }],
         } as unknown as Dashboard;
         const testDash = new DashboardModel(testJson);
-        const exporter = new DashboardExporterV1();
+        const exporter = new DashboardExporter();
         const exportedJson: any = await exporter.makeExportable(testDash);
         expect(exportedJson.__inputs.some((ds: Record<string, string>) => ds.name === 'DS_GFDB')).toBeFalsy();
       });
@@ -526,45 +520,6 @@ describe('DashboardExporter', () => {
           },
         });
       });
-    });
-  });
-
-  describe('DashboardExporter V2', () => {
-    const setup = async () => {
-      const exporter = getDashboardExporter('v2');
-      // Making a deep copy here because original JSON is mutated by the exporter
-      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
-      const dashboard = (await exporter.makeExportable(schemaCopy)) as DashboardV2Spec;
-      return { dashboard, originalSchema: handyTestingSchema };
-    };
-
-    it('should replace datasource in a query variable', async () => {
-      const { dashboard } = await setup();
-      const variable = dashboard.variables[0] as QueryVariableKind;
-      expect(variable.spec.datasource?.uid).toBeUndefined();
-    });
-
-    it('do not expose datasource name and id in datasource variable', async () => {
-      const { dashboard } = await setup();
-      const variable = dashboard.variables[2] as DatasourceVariableKind;
-      expect(variable.kind).toBe('DatasourceVariable');
-      expect(variable.spec.current).toEqual({ text: '', value: '' });
-    });
-
-    it('should replace datasource in annotation query', async () => {
-      const { dashboard } = await setup();
-      const annotationQuery = dashboard.annotations[0];
-
-      expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
-    });
-
-    it('should remove library panels from layout', async () => {
-      const { dashboard, originalSchema } = await setup();
-      const elementRef = 'panel-2';
-      const libraryPanel = dashboard.elements[elementRef];
-      const origLibraryPanel = originalSchema.elements[elementRef];
-      expect(origLibraryPanel.kind).toBe('LibraryPanel');
-      expect(libraryPanel).toBeUndefined();
     });
   });
 });

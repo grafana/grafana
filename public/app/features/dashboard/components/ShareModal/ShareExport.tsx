@@ -4,12 +4,10 @@ import { PureComponent } from 'react';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
-import { DashboardExporterLike, DashboardExporterV1 } from 'app/features/dashboard/components/DashExportModal';
+import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+import { makeExportableV1 } from 'app/features/dashboard-scene/scene/export/exporters';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { ShowModalReactEvent } from 'app/types/events';
-
-import { DashboardModel } from '../../state/DashboardModel';
 
 import { ViewJsonModal } from './ViewJsonModal';
 import { ShareModalTabProps } from './types';
@@ -22,7 +20,7 @@ interface State {
 }
 
 export class ShareExport extends PureComponent<Props, State> {
-  private exporter: DashboardExporterLike<DashboardModel, DashboardJson>;
+  private exporter: DashboardExporter;
 
   constructor(props: Props) {
     super(props);
@@ -30,7 +28,7 @@ export class ShareExport extends PureComponent<Props, State> {
       shareExternally: false,
     };
 
-    this.exporter = new DashboardExporterV1();
+    this.exporter = new DashboardExporter();
   }
 
   onShareExternallyChange = () => {
@@ -49,7 +47,7 @@ export class ShareExport extends PureComponent<Props, State> {
     });
 
     if (shareExternally) {
-      this.exporter.makeExportable(dashboard).then((dashboardJson) => {
+      makeExportableV1(dashboard).then((dashboardJson) => {
         this.openSaveAsDialog(dashboardJson);
       });
     } else {

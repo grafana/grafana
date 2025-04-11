@@ -21,8 +21,6 @@ import { isConstant } from '../../../variables/guard';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
-import { removePanelRefFromLayout } from './utils';
-
 export interface InputUsage {
   libraryPanels?: LibraryPanel[];
 }
@@ -87,11 +85,7 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export interface DashboardExporterLike<T, J> {
-  makeExportable(dashboard: T): Promise<J | { error: unknown }>;
-}
-
-export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel, DashboardJson> {
+export class DashboardExporter {
   async makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
@@ -336,96 +330,5 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
         error: err,
       };
     }
-  }
-}
-
-export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Spec> {
-  async makeExportable(dashboard: DashboardV2Spec) {
-    const variableLookup: { [key: string]: any } = {};
-
-    for (const variable of dashboard.variables) {
-      variableLookup[variable.spec.name] = variable.spec;
-    }
-
-    const removeDataSourceRefs = (
-      obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
-    ) => {
-      obj.datasource = undefined;
-    };
-
-    const processPanel = (panel: PanelKind) => {
-      if (panel.spec.data.spec.queries) {
-        for (const query of panel.spec.data.spec.queries) {
-          removeDataSourceRefs(query.spec);
-        }
-      }
-    };
-
-    // TODO: Implement library panel processing
-    // Currently we just remove all library panels
-    // const processLibraryPanel = async (panel: LibraryPanelKind) => {
-    //   panel = undefined;
-
-    // const libPanel = await getLibraryPanel(uid, true);
-    // panel.spec.libraryPanel.model = libPanel.model;
-
-    // templateizeLibraryPanelDatasourceUsage(panel.spec.libraryPanel.model);
-    // };
-
-    try {
-      const elements = dashboard.elements;
-      const layout = dashboard.layout;
-
-      // process elements
-      for (const [key, element] of Object.entries(elements)) {
-        if (element.kind === 'Panel') {
-          processPanel(element);
-        } else if (element.kind === 'LibraryPanel') {
-          // just remove the library panel
-          delete elements[key];
-          // remove reference from layout
-          removePanelRefFromLayout(layout, key);
-        }
-      }
-
-      // process template variables
-      for (const variable of dashboard.variables) {
-        if (variable.kind === 'QueryVariable') {
-          removeDataSourceRefs(variable.spec);
-          variable.spec.options = [];
-          variable.spec.current = {
-            text: '',
-            value: '',
-          };
-        } else if (variable.kind === 'DatasourceVariable') {
-          variable.spec.current = {
-            text: '',
-            value: '',
-          };
-        }
-      }
-
-      // process annotations vars
-      for (const annotation of dashboard.annotations) {
-        removeDataSourceRefs(annotation.spec);
-      }
-
-      return dashboard;
-    } catch (err) {
-      console.error('Export failed:', err);
-      return {
-        error: err,
-      };
-    }
-  }
-}
-
-export function getDashboardExporter(
-  version: 'v1' | 'v2'
-): DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> {
-  if (version === 'v2') {
-    return new DashboardExporterV2();
-  } else {
-    return new DashboardExporterV1();
   }
 }

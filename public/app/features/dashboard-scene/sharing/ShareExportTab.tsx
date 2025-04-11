@@ -3,17 +3,13 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { getDashboardExporter, DashboardExporterLike } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
-import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -22,15 +18,11 @@ import { SceneShareTabState, ShareView } from './types';
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
-  hasLibraryPanels?: boolean;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
-
-  private _exporter: DashboardExporterLike<DashboardModel | DashboardV2Spec, DashboardJson | DashboardV2Spec> | null =
-    null;
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
@@ -38,13 +30,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       isViewingJSON: false,
       ...state,
     });
-  }
-
-  private getExporter() {
-    if (!this._exporter) {
-      this._exporter = getDashboardExporter(this.getExportVersion());
-    }
-    return this._exporter;
   }
 
   public getExportVersion = () => {
@@ -74,46 +59,33 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     return;
   }
 
-  public getExportableDashboardJson = async () => {
+  public getExportableDashboardJson = async (): Promise<{
+    json: Dashboard | DashboardJson | DashboardV2Spec | { error: unknown };
+    hasLibraryPanels?: boolean;
+  }> => {
     const { isSharingExternally } = this.state;
-    const isV2Dashboard = this.getExportVersion() === 'v2';
-    const exporter = this.getExporter();
 
-    if (isV2Dashboard) {
-      const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
+    const scene = getDashboardSceneFor(this);
+    const exportableDashboard = await scene.serializer.makeExportableExternally(scene);
+    const origDashboard = scene.serializer.getSaveModel(scene);
+    const exportable = isSharingExternally ? exportableDashboard : origDashboard;
 
-      this.setState({
-        hasLibraryPanels: Object.values(saveModelV2.elements).some((element) => element.kind === 'LibraryPanel'),
-      });
-
-      if (isSharingExternally) {
-        const dashboard = await exporter.makeExportable(saveModelV2);
-        if ('error' in dashboard) {
-          return { error: dashboard.error };
-        }
-        return dashboard;
-      }
-
-      return saveModelV2;
+    if ('elements' in origDashboard) {
+      return {
+        json: exportable,
+        hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
+      };
     }
 
-    const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));
-    const exportable = isSharingExternally
-      ? await exporter.makeExportable(
-          new DashboardModel(saveModelV1, undefined, {
-            getVariablesFromState: () => {
-              return getVariablesCompatibility(window.__grafanaSceneContext);
-            },
-          })
-        )
-      : saveModelV1;
-
-    return exportable;
+    return {
+      json: exportable,
+      hasLibraryPanels: undefined,
+    };
   };
 
   public onSaveAsFile = async () => {
-    const dashboardJson = await this.getExportableDashboardJson();
-    const dashboardJsonPretty = JSON.stringify(dashboardJson, null, 2);
+    const dashboard = await this.getExportableDashboardJson();
+    const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
     const { isSharingExternally } = this.state;
 
     const blob = new Blob([dashboardJsonPretty], {
@@ -122,8 +94,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     const time = new Date().getTime();
     let title = 'dashboard';
-    if ('title' in dashboardJson && dashboardJson.title) {
-      title = dashboardJson.title;
+    if ('title' in dashboard.json && dashboard.json.title) {
+      title = dashboard.json.title;
     }
     saveAs(blob, `${title}-${time}.json`);
     DashboardInteractions.exportDownloadJsonClicked({
@@ -133,14 +105,18 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef, hasLibraryPanels } = model.useState();
-  const isV2Dashboard = model.getExportVersion() === 'v2';
-  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
+  const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
-    return JSON.stringify(json, null, 2);
+    return json;
   }, [isViewingJSON, isSharingExternally]);
+
+  const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
+  const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
+
+  const isV2Dashboard = dashboardJson.value?.json && 'elements' in dashboardJson.value.json;
+  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
   const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
@@ -167,18 +143,16 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 )}
                 severity="warning"
               >
-                <p>
-                  <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-                    The dynamic dashboard functionality is experimental, and has not full feature parity with current
-                    dashboards behaviour. It is based on a new schema format, that does not support library panels. This
-                    means that when exporting the dashboard to use it in another instance, we will not include library
-                    panels. We intend to support them as we progress in the feature{' '}
-                    <TextLink external href="https://grafana.com/docs/release-life-cycle/">
-                      life cycle
-                    </TextLink>
-                    .
-                  </Trans>
-                </p>
+                <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+                  The dynamic dashboard functionality is experimental, and has not full feature parity with current
+                  dashboards behaviour. It is based on a new schema format, that does not support library panels. This
+                  means that when exporting the dashboard to use it in another instance, we will not include library
+                  panels. We intend to support them as we progress in the feature{' '}
+                  <TextLink external href="https://grafana.com/docs/release-life-cycle/">
+                    life cycle
+                  </TextLink>
+                  .
+                </Trans>
               </Alert>
             )}
           </Stack>
@@ -209,7 +183,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               if (dashboardJson.value) {
                 return (
                   <CodeEditor
-                    value={dashboardJson.value ?? ''}
+                    value={stringifiedDashboardJson}
                     showLineNumbers={true}
                     language="json"
                     showMiniMap={false}
@@ -240,7 +214,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               variant="secondary"
               icon="copy"
               disabled={dashboardJson.loading}
-              getText={() => dashboardJson.value ?? ''}
+              getText={() => stringifiedDashboardJson ?? ''}
             >
               <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
             </ClipboardButton>
