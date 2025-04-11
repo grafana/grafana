@@ -208,6 +208,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
    */
   language: string | undefined;
 
+  /**
+   * Locale used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
+   * This is the locale that is used for date formatting and other locale-specific features.
+   */
+  locale: string;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
@@ -243,6 +249,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+
+    this.locale = options.bootData.user.locale;
   }
   geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
   listDashboardScopesEndpoint?: string | undefined;
