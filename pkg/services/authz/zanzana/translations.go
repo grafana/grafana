@@ -1,8 +1,8 @@
 package zanzana
 
 import (
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 )
 
 const (
@@ -44,11 +44,11 @@ func newScopedMapping(relation, group, resource, subresource string) actionMappi
 }
 
 var (
-	folderGroup    = folderalpha1.FolderResourceInfo.GroupResource().Group
-	folderResource = folderalpha1.FolderResourceInfo.GroupResource().Resource
+	folderGroup    = folders.FolderResourceInfo.GroupResource().Group
+	folderResource = folders.FolderResourceInfo.GroupResource().Resource
 
-	dashboardGroup    = dashboardalpha1.DashboardResourceInfo.GroupResource().Group
-	dashboardResource = dashboardalpha1.DashboardResourceInfo.GroupResource().Resource
+	dashboardGroup    = dashboards.DashboardResourceInfo.GroupResource().Group
+	dashboardResource = dashboards.DashboardResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
