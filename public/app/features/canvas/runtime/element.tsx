@@ -320,8 +320,8 @@ export class ElementState implements LayerElement {
         placement.height = height;
         break;
       case VerticalConstraint.Scale:
-        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
-        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
+        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100 * transformScale;
+        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100 * transformScale;
         break;
     }
 
@@ -346,8 +346,8 @@ export class ElementState implements LayerElement {
         placement.width = width;
         break;
       case HorizontalConstraint.Scale:
-        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
-        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
+        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100 * transformScale;
+        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100 * transformScale;
         break;
     }
 
