@@ -954,4 +954,8 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagExpressPluginInstall
+	// Enables express plugin installation
+	FlagExpressPluginInstall = "expressPluginInstall"
 )

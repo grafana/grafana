@@ -63,7 +63,7 @@ export function mergeLocalsAndRemotes({
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
       // for managed instances, check if plugin is installed, but not yet present in the current instance
-      if (config.pluginAdminExternalManageEnabled) {
+      if (pluginRequiresRestartForInstall(catalogPlugin)) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
           : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
@@ -365,7 +365,7 @@ export const hasInstallControlWarning = (
   isRemotePluginsAvailable: boolean,
   latestCompatibleVersion?: Version
 ) => {
-  const isExternallyManaged = config.pluginAdminExternalManageEnabled;
+  const isExternallyManaged = pluginRequiresRestartForInstall(plugin);
   const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
@@ -485,4 +485,12 @@ export function isNonAngularVersion(version?: Version) {
 
 export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
   return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
+
+export function pluginRequiresRestartForInstall(plugin: CatalogPlugin) {
+  const { pluginAdminExternalManageEnabled, pluginCatalogExpressInstallPlugins } = config;
+
+  const expressInstallPlugin = pluginCatalogExpressInstallPlugins?.includes(plugin.id);
+  const featureEnalbed = config.featureToggles.expressPluginInstall;
+  return pluginAdminExternalManageEnabled && !(expressInstallPlugin && featureEnalbed);
 }
