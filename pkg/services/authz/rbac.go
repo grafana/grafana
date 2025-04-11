@@ -61,7 +61,7 @@ func ProvideAuthZClient(
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
-	// For G12 launch, we can disable caching for this and find a more scaleable solution soon
+	// For G12 launch, we can disable caching for this and find a more scalable solution soon
 	// most likely this would involve passing the RV (timestamp!) in each check method
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		authCfg.cacheTTL = 0
