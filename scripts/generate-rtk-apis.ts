@@ -71,7 +71,7 @@ const config: ConfigFile = {
       schemaFile: '../data/openapi/playlist.grafana.app-v0alpha1.json',
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
-    }
+    },
   },
 };
 
