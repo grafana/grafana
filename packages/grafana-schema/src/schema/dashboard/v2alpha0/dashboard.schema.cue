@@ -495,6 +495,11 @@ RowRepeatOptions: {
   value: string
 }
 
+TabRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
@@ -603,6 +608,7 @@ TabsLayoutTabKind: {
 TabsLayoutTabSpec: {
   title?: string
   layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  repeat?: TabRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
 }
 

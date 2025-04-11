@@ -1069,6 +1069,7 @@ type DashboardTabsLayoutTabSpec struct {
 	Title                *string                                                                     `json:"title,omitempty"`
 	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -1076,6 +1077,17 @@ func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 	return &DashboardTabsLayoutTabSpec{
 		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardTabRepeatOptions struct {
+	Mode  string `json:"mode"`
+	Value string `json:"value"`
+}
+
+// NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
+func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
+	return &DashboardTabRepeatOptions{}
 }
 
 // Links with references to other dashboards or external resources

@@ -8,6 +8,7 @@ import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafa
 import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useIsClone } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
@@ -28,6 +29,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
+  const isClone = useIsClone(model);
+
+  const isDraggable = !isClone && isEditing;
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -43,7 +47,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   }
 
   return (
-    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isEditing}>
+    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
           ref={(ref) => dragProvided.innerRef(ref)}
