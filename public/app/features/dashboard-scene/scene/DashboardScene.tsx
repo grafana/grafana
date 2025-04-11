@@ -29,6 +29,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -181,7 +182,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
-    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+    Dashboard | DashboardV2Spec,
+    DashboardJson | DashboardV2Spec
   >;
 
   private _layoutRestorer = new LayoutRestorer();
