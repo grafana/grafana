@@ -103,7 +103,24 @@ You can use the migration assistant to generate a migration token on your Grafan
 
 After connecting to the cloud stack, this is the empty state of the migration assistant. You need to create a snapshot of the self-managed Grafana instance to upload it to the cloud stack.
 
-- Click the checkbox next to the resources you want to migrate to your cloud stack. Some resrouces cannot be uploaded to your cloud stack alone because they rely on other resources.
+- Select the checkbox next to the resources you want to migrate to your cloud stack.
+
+  {{< admonition type="note" >}}
+  Some resources can't be uploaded to your cloud stack alone because they rely on other resources:
+  | Desired resource | Requires |
+  | :---- | :---- |
+  | Dashboards | <ul><li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li></ul> |
+  | Library Elements | Folders |
+  | Data Sources | Plugins |
+  | Plugins | Nothing else |
+  | Folders | Nothing else |
+  | All Alert rule groups | All other resources |
+  | Alert Rules | All other resources |
+  | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+  | Notification Templates | Nothing else |
+  | Contact Points | Notification Templates |
+  | Mute Timings | Nothing else |
+  {{< /admonition >}}
 
   ![TODO: Replace with new snapshot screen](/media/docs/grafana-cloud/account-management/screenshot-build-a-snapshot.png)
 
