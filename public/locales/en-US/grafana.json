@@ -4461,22 +4461,6 @@
       "title-scroll-to-top": "Scroll to top"
     }
   },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Clear filter",
-      "labelSelect": "Select",
-      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
-      "noMatchingValue": "No values found matching; {{filter}}",
-      "sortBy": "Sort by"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki Recording Rule",
-      "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
-      "warnExperimentalFeature": "Related logs is an experimental feature."
-    },
-    "viewBy": "View by"
-  },
   "export": {
     "json": {
       "cancel-button": "Cancel",
@@ -7781,105 +7765,6 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": "Add to filters"
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Or view bookmarks"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": "Search for value"
-    },
-    "build-normal-layout": {
-      "text-loading": "Loading..."
-    },
-    "card": {
-      "date-created": "Date created: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "You can view bookmarks under <1>Explore > Metrics</1>",
-      "view-bookmarks": "View bookmarks"
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": "Remove bookmark"
-    },
-    "data-trail-history": {
-      "history": "History"
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": "Settings"
-      }
-    },
-    "home": {
-      "learn-more": "Learn more",
-      "lets-start": "Let's start!",
-      "start-your-metrics-exploration": "Start your metrics exploration!",
-      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
-    },
-    "label-breakdown-scene": {
-      "label-search": "Search",
-      "label-view": "View",
-      "title-warning-there-missing-telemetry-resource-attributes": "Warning: There may be missing Open Telemetry resource attributes"
-    },
-    "metric-action-bar": {
-      "open": "Open",
-      "select-new-metric": "Select new metric",
-      "tooltip-bookmark": "Bookmark",
-      "tooltip-open-in-explore": "Open in explore",
-      "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
-    },
-    "metric-select": {
-      "filter-by": "Filter by",
-      "native-histogram": "Native Histogram",
-      "new-badge": "New",
-      "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "OTel experience",
-      "label-search-metrics": "Search metrics",
-      "placeholder-search-metrics": "Search metrics",
-      "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
-      "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",
-      "metrics": "Metrics"
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Classic Histogram displayed as heatmap:",
-      "ch-histogram": "Classic Histogram displayed as histogram:",
-      "click-histogram": "Click any of the native histograms below to explore them:",
-      "hide-examples": "Hide examples",
-      "learn-more": "Learn more",
-      "metric-examples": "",
-      "nh-heatmap": "Native Histogram displayed as heatmap:",
-      "nh-histogram": "Native Histogram displayed as histogram:",
-      "now": "Now:",
-      "previously": "Previously:",
-      "see-examples": "> See examples",
-      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana.",
-      "title-native-histogram-support": "Native histogram support"
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Or view a recent exploration"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": "Navigate to the Explore Logs app"
-    },
-    "search-input": {
-      "title-clear-search": "Clear search"
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
-      "show-previews-of-metric-graphs": "Show previews of metric graphs"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "Choose criteria",
-      "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
   "transformations": {

@@ -1115,7 +1115,8 @@
       "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-09T18:15:18Z"
+        "creationTimestamp": "2024-04-09T18:15:18Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z"
       },
       "spec": {
         "description": "Enables the new Grafana Metrics Drilldown core app",
@@ -1143,6 +1144,7 @@
         "name": "exploreMetricsUseExternalAppPlugin",
         "resourceVersion": "1744146547481",
         "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-08 21:09:07.481769 +0000 UTC"
         }

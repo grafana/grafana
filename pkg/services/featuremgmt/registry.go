@@ -770,14 +770,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreMetrics",
-			Description:  "Enables the new Grafana Metrics Drilldown core app",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1563,15 +1555,6 @@ var (
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaObservabilityMetricsSquad,
-			Expression:      "true",
-			FrontendOnly:    false,
-			RequiresRestart: true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
