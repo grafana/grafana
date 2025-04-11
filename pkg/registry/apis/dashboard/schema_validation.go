@@ -22,7 +22,8 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 	// This will be removed with the other PR
 	return nil, nil
 
-	//nolint:vet // Unreachable code is intentional until the code above is removed
+	// Unreachable code is intentional until the code above is removed
+	//nolint:govet
 	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, fmt.Errorf("error getting meta accessor: %w", err)
