@@ -186,11 +186,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       if (!query.spec.datasource?.uid) {
-        const defaultDatasource = config.bootData.settings.defaultDatasource;
-        const dsList = config.bootData.settings.datasources;
-        // this is look up by type
-        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
-        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+        datasource = getRuntimePanelDataSource(query);
       } else {
         datasource = query.spec.datasource;
       }
@@ -219,10 +215,25 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
   return datasource;
 }
 
+export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
+  let datasource: DataSourceRef | undefined = undefined;
+  // if we don't have a datasource set, we will try to infer it based on the query kind
+  if (!query.spec.datasource?.uid) {
+    const defaultDatasource = config.bootData.settings.defaultDatasource;
+    const dsList = config.bootData.settings.datasources;
+    // this is look up by type
+    const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+    datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+  } else {
+    datasource = query.spec.datasource;
+  }
+  return datasource;
+}
+
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: query.spec.datasource,
+    datasource: getRuntimePanelDataSource(query),
     hide: query.spec.hidden,
     ...query.spec.query.spec,
   };
