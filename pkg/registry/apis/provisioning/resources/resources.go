@@ -177,6 +177,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
+	// TODO: use parsed.Run() (but that has an extra GET now!!)
 	fieldValidation := "Strict"
 	if parsed.GVR == DashboardResource {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
