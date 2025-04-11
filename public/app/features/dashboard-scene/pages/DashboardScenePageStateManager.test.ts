@@ -1,6 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -25,6 +25,21 @@ import {
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
 } from './DashboardScenePageStateManager';
+
+// Mock the config module
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    config: {
+      ...original.config,
+      featureToggles: {
+        ...original.config.featureToggles,
+        dashboardNewLayouts: false, // Default value
+      },
+    },
+  };
+});
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
@@ -776,6 +791,7 @@ describe('DashboardScenePageStateManager v2', () => {
 describe('UnifiedDashboardScenePageStateManager', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
+    config.featureToggles.dashboardNewLayouts = false;
   });
 
   describe('when fetching/loading a dashboard', () => {
@@ -985,6 +1001,58 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(loader.state.dashboard).toBeDefined();
       expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(customHomeDashboardV1Spec);
+    });
+  });
+
+  describe('New dashboards', () => {
+    it('should use v1 manager for new dashboards when dashboardNewLayouts feature toggle is disabled', async () => {
+      config.featureToggles.dashboardNewLayouts = false;
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      manager.setActiveManager('v2');
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(manager.state.dashboard).toBeDefined();
+      expect(manager.state.dashboard?.state.title).toBe('New dashboard');
+    });
+
+    it('should use v2 manager for new dashboards when dashboardNewLayouts feature toggle is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      manager.setActiveManager('v1');
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.New });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(manager.state.dashboard).toBeDefined();
+      expect(manager.state.dashboard?.state.title).toBe('New dashboard');
+    });
+
+    it('should maintain manager version for subsequent loads based on feature toggle', async () => {
+      config.featureToggles.dashboardNewLayouts = false;
+      const manager1 = new UnifiedDashboardScenePageStateManager({});
+      manager1.setActiveManager('v2');
+      await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      manager1.setActiveManager('v2');
+      await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      config.featureToggles.dashboardNewLayouts = true;
+      const manager2 = new UnifiedDashboardScenePageStateManager({});
+      manager2.setActiveManager('v1');
+      await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager2['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+
+      manager2.setActiveManager('v1');
+      await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
+      expect(manager2['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
   });
 });
