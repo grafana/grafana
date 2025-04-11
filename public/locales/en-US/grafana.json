@@ -1963,7 +1963,6 @@
       "tooltip-delete": "delete"
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "Preview with the default payload",
       "label-template-content": "Template content"
     },
     "template-data-table": {
@@ -3107,9 +3106,20 @@
       "description": "Organize panels into horizontal tabs",
       "name": "Tabs",
       "tab": {
-        "new": "New tab"
+        "new": "New tab",
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this tab for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"
       },
@@ -6622,7 +6632,6 @@
       "title-legacy-storage-detected": "Legacy storage detected"
     },
     "job-status": {
-      "error-unknown": "An unknown error occurred",
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
@@ -6720,12 +6729,6 @@
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
-    "request-error": {
-      "failed-to-migrate": "Failed to migrate dashboards",
-      "failed-to-save": "Failed to save repository",
-      "failed-to-sync": "Failed to sync dashboards",
-      "operation-failed": "Operation failed"
-    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
@@ -6788,8 +6791,7 @@
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-submitting": "Submitting...",
-      "error-instance-repository-exists": "Instance repository already exists",
-      "title-repository-verification-failed": "Repository verification failed"
+      "error-instance-repository-exists": "Instance repository already exists"
     }
   },
   "public-dashboard": {

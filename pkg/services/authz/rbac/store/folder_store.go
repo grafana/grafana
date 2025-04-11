@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/tools/pager"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -158,5 +158,5 @@ func (s *APIFolderStore) client(ctx context.Context, namespace string) (dynamic.
 	if err != nil {
 		return nil, err
 	}
-	return client.Resource(folderv0alpha1.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
+	return client.Resource(folderv1.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
 }

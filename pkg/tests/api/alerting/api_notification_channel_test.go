@@ -131,10 +131,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -214,10 +219,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -315,10 +325,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -392,10 +407,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 			"alert": {
 				"annotations": {
 					"summary": "Notification test",
-					"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+					"__dashboardUid__": "dashboard_uid",
+					"__orgId__": "1",
+					"__panelId__": "1",
+					"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+					"__values__": "{\"B\":22,\"C\":1}"
 				},
 				"labels": {
 					"alertname": "TestAlert",
+					"grafana_folder": "Test Folder",
 					"instance": "Grafana"
 				}
 			},
@@ -480,10 +500,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -581,10 +606,15 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -687,10 +717,15 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 			"annotations": {
 				"annotation1": "value1",
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana",
 				"label1": "value1"
 			}
@@ -776,10 +811,15 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "This is a custom annotation",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "TestAlert",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},
@@ -863,10 +903,15 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 		"alert": {
 			"annotations": {
 				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				"__dashboardUid__": "dashboard_uid",
+				"__orgId__": "1",
+				"__panelId__": "1",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
 				"alertname": "This is a custom label",
+				"grafana_folder": "Test Folder",
 				"instance": "Grafana"
 			}
 		},

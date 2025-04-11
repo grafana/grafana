@@ -14,7 +14,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -92,7 +92,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	switch req.Options.Key.Resource {
 	case dashboard.DASHBOARD_RESOURCE:
 		queryType = searchstore.TypeDashboard
-	case folderv0alpha1.RESOURCE:
+	case folders.RESOURCE:
 		queryType = searchstore.TypeFolder
 	default:
 		return nil, fmt.Errorf("bad type request")
@@ -104,7 +104,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 	if len(req.Federated) == 1 &&
 		((req.Federated[0].Resource == dashboard.DASHBOARD_RESOURCE && queryType == searchstore.TypeFolder) ||
-			(req.Federated[0].Resource == folderv0alpha1.RESOURCE && queryType == searchstore.TypeDashboard)) {
+			(req.Federated[0].Resource == folders.RESOURCE && queryType == searchstore.TypeDashboard)) {
 		queryType = "" // makes the legacy store search across both
 	}
 
@@ -336,8 +336,8 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 	if item.IsFolder {
 		return &resource.ResourceKey{
 			Namespace: namespace,
-			Group:     folderv0alpha1.GROUP,
-			Resource:  folderv0alpha1.RESOURCE,
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
 			Name:      item.UID,
 		}
 	}
@@ -401,7 +401,7 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.Reso
 	switch parts[0] {
 	case dashboard.GROUP:
 		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, false)
-	case folderv0alpha1.GROUP:
+	case folders.GROUP:
 		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, true)
 	default:
 		return nil, fmt.Errorf("invalid group")
