@@ -1,9 +1,11 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/core';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
@@ -15,6 +17,11 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-aiassistant-app',
   'grafana-dash-app',
 ];
+
+export interface OpenExtensionSidebarPayload {
+  componentId: string;
+  props?: any;
+}
 
 type ExtensionSidebarContextType = {
   /**
@@ -45,6 +52,8 @@ type ExtensionSidebarContextType = {
    * Set the width of the extension sidebar.
    */
   setExtensionSidebarWidth: (width: number) => void;
+
+  props?: any;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
@@ -66,6 +75,7 @@ interface ExtensionSidebarContextProps {
 }
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
+  const propsRef = useRef<any>();
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -104,6 +114,36 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
 
+  // Enhanced function to set the docked component ID and optionally pass props
+  const setDockedComponentWithProps = useCallback(
+    (componentId: string | undefined, contextProps?: any) => {
+      propsRef.current = contextProps;
+      setDockedComponentId(componentId);
+    },
+    [setDockedComponentId]
+  );
+
+  // Listen for open extension sidebar events
+  useEffect(() => {
+    if (!isEnabled) {
+      return;
+    }
+
+    const openExtensionSidebarHandler = (event: OpenExtensionSidebarEvent) => {
+      if (event.payload.pluginId && event.payload.componentTitle) {
+        setDockedComponentWithProps(
+          JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
+          event.payload.props
+        );
+      }
+    };
+
+    const subscription = appEvents.subscribe(OpenExtensionSidebarEvent, openExtensionSidebarHandler);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isEnabled, setDockedComponentWithProps]);
+
   // update the stored docked component id when it changes
   useEffect(() => {
     if (dockedComponentId) {
@@ -119,10 +159,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         isEnabled,
         isOpen: isEnabled && dockedComponentId !== undefined,
         dockedComponentId,
-        setDockedComponentId,
+        setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
         extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
         setExtensionSidebarWidth,
+        props: propsRef.current,
       }}
     >
       {children}

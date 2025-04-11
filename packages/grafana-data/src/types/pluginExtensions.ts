@@ -167,6 +167,11 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  /**
+   * @alpha
+   * Opens the
+   */
+  openExtensionSidebar: (componentTitle: string, context: any) => void;
 };
 
 // Extension Points & Contexts
