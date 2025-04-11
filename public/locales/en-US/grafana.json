@@ -5994,6 +5994,9 @@
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
+    "extension-sidebar": {
+      "button-tooltip": "Open AI assistants and sidebar apps"
+    },
     "help": {
       "aria-label": "Help"
     },

@@ -269,6 +269,7 @@ export const availableIconsIndex = {
   'add-user': true,
   attach: true,
   'dollar-alt': true,
+  'ai-sparkle': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

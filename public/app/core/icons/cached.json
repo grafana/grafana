@@ -142,6 +142,7 @@
   "unicons/hourglass",
   "unicons/layer-group",
   "unicons/layers-alt",
+  "unicons/layers-slash",
   "unicons/line-alt",
   "unicons/list-ui-alt",
   "unicons/message",
@@ -173,5 +174,9 @@
   "mono/panel-add",
   "mono/library-panel",
   "unicons/record-audio",
-  "solid/bookmark"
+  "solid/bookmark",
+  "unicons/ai-sparkle",
+  "unicons/dollar-alt",
+  "unicons/window-grid",
+  "unicons/ban"
 ]
