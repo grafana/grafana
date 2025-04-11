@@ -238,7 +238,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 1. Set the time threshold for alerts firing.
 
-You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. Select "none" stop an alert from firing immediately after the breach threshold is cleared. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts.
+You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" stop an alert from firing immediately after the breach threshold is cleared.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
 
