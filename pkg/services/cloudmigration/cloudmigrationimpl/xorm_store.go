@@ -435,6 +435,7 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 		if errorsOnly {
 			sess.Where("status = ?", cloudmigration.ItemStatusError)
 		}
+		// TODO: It would be better if the query builder supported a case-insensitive flag for the .OrderBy() method
 		orderByClause := fmt.Sprintf("lower(%s) %s", col, dir)
 		if ss.db.GetDBType() == migrator.Postgres {
 			// Postgres does not support lower() in ORDER BY -- sorts by case-insensitive by default
