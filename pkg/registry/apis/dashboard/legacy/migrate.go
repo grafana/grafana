@@ -222,7 +222,9 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << eventually v0
+		if dash.APIVersion == "" {
+			dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP)
+		}
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 
