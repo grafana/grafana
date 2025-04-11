@@ -202,7 +202,7 @@ export type PluginExtensionPanelContext = {
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
-  query?: DataQuery;
+  query?: DataQuery & { expr?: string };
 };
 
 export type PluginExtensionDataSourceConfigContext<

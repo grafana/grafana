@@ -846,9 +846,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				cache)
 
 			if tt.fields.usGovURL {
-				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
+				s.Endpoint.AuthURL = usGovAuthURL
 			} else {
-				s.SocialBase.Endpoint.AuthURL = authURL
+				s.Endpoint.AuthURL = authURL
 			}
 
 			cl := jwt.Claims{
@@ -1023,7 +1023,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				cache)
 
-			s.SocialBase.Endpoint.AuthURL = authURL
+			s.Endpoint.AuthURL = authURL
 
 			cl := jwt.Claims{
 				Subject:   "subject",
