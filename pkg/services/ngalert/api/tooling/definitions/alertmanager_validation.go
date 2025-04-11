@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/prometheus/alertmanager/template"
+	"github.com/grafana/alerting/templates"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,7 +34,7 @@ func (t *NotificationTemplate) Validate() error {
 
 	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
 	// by the alertmanager as possible.
-	tmpl, err := template.New()
+	tmpl, err := templates.NewTemplate()
 	if err != nil {
 		return fmt.Errorf("failed to create template: %w", err)
 	}

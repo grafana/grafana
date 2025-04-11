@@ -184,3 +184,36 @@ describe('TemplatePreview component', () => {
     expect(within(previewContent).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
   });
 });
+
+it('Should render preview type , if response contains valid json ', async () => {
+  const response: TemplatePreviewResponse = {
+    results: [
+      { name: 'template_text', text: 'This is the template result bla bla bla' },
+      { name: 'template_valid', text: '{"test":"value","test2":"value2"}' },
+      { name: 'template_invalid', text: '{"test":"value","test2":"value2",}' },
+    ],
+  };
+  mockPreviewTemplateResponse(server, response);
+  render(
+    <TemplatePreview
+      payload={'[{"a":"b"}]'}
+      templateName="potato"
+      templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
+      payloadFormatError={null}
+      setPayloadFormatError={jest.fn()}
+    />,
+    { wrapper: getProviderWraper() }
+  );
+
+  const previews = ui.resultItems.getAll;
+  await waitFor(() => {
+    expect(previews()).toHaveLength(3);
+  });
+  const previewItems = previews();
+  expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('template_text');
+  expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('plaintext');
+  expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('template_valid');
+  expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('json');
+  expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('template_invalid');
+  expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('plaintext');
+});
