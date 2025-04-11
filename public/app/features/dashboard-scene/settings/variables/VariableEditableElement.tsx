@@ -3,7 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Combobox, Input, TextArea, Stack, Button, Field } from '@grafana/ui';
+import { Input, TextArea, Stack, Button, Field, Box } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -13,9 +13,9 @@ import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { VariableHideSelect } from '../../settings/variables/components/VariableHideSelect';
-import { getVariableTypeSelectOptions, validateVariableName } from '../../settings/variables/utils';
+import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 
-import { getVariableSelectionOptionsCategory } from './getVariableSelectionOptionsCategory';
+import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -24,10 +24,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public variable: SceneVariable) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    const option = getVariableTypeOption(this.variable);
+    const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
 
     return {
-      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: option.label }),
+      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'dollar-alt',
       instanceName: this.variable.state.name,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
@@ -37,8 +37,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
 
-    return useMemo(() => {
-      const mainCategory = new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
+    const basicOptions = useMemo(() => {
+      return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
@@ -66,15 +66,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
             render: () => <VariableHideInput variable={variable} />,
           })
         );
-
-      const categories = [mainCategory, getVariableTypeCategory(variable)];
-
-      if (variable instanceof MultiValueVariable) {
-        categories.push(getVariableSelectionOptionsCategory(variable));
-      }
-
-      return categories;
     }, [variable, isNewElement]);
+
+    const categories = [basicOptions];
+    const typeCategory = useVariableTypeCategory(variable);
+    categories.push(typeCategory);
+
+    if (variable instanceof MultiValueVariable) {
+      categories.push(useVariableSelectionOptionsCategory(variable));
+    }
+
+    return categories;
   }
 
   public onDelete() {
@@ -95,30 +97,6 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     return;
   }
-}
-
-function getVariableTypeOption(variable: SceneVariable) {
-  const option = getVariableTypeSelectOptions().find((o) => o.value === variable.state.type);
-
-  if (!option) {
-    throw new Error(`Variable type ${variable.state.type} not found`);
-  }
-
-  return option;
-}
-
-function getVariableTypeCategory(variable: SceneVariable) {
-  const option = getVariableTypeOption(variable);
-
-  return new OptionsPaneCategoryDescriptor({
-    renderTitle: () => (
-      <Stack direction="row" gap={1} alignItems="center">
-        <div>{option.label} options</div>
-      </Stack>
-    ),
-    title: 'Type',
-    id: 'variable-type',
-  });
 }
 
 interface VariableInputProps {
@@ -185,9 +163,35 @@ function VariableHideInput({ variable }: VariableInputProps) {
   return <VariableHideSelect hide={hide} type={variable.state.type} onChange={onChange} />;
 }
 
-function VariableTypeSelect({ variable }: VariableInputProps) {
-  const options = useMemo(() => getVariableTypeSelectOptions().map((o) => ({ value: o.value!, label: o.label })), []);
+function useVariableTypeCategory(variable: SceneVariable) {
+  return useMemo(() => {
+    const variableEditorDef = getEditableVariableDefinition(variable.state.type);
 
+    const category = new OptionsPaneCategoryDescriptor({
+      renderTitle: () => (
+        <Stack direction="row" gap={1} alignItems="center">
+          <div>{variableEditorDef.name} options</div>
+        </Stack>
+      ),
+      title: 'Type',
+      id: 'variable-type',
+    });
+
+    if (!variableEditorDef.useOptions) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          skipField: true,
+          render: () => <OpenOldVariableEditButton variable={variable} />,
+        })
+      );
+    }
+
+    return category;
+  }, [variable]);
+}
+
+function OpenOldVariableEditButton({ variable }: VariableInputProps) {
   const onOpenVariableEdior = () => {
     const set = variable.parent!;
     if (!(set instanceof SceneVariableSet)) {
@@ -199,18 +203,18 @@ function VariableTypeSelect({ variable }: VariableInputProps) {
   };
 
   return (
-    <Stack gap={2} direction={'column'}>
-      <Combobox value={variable.state.type} options={options} disabled={true} onChange={() => {}} />
+    <Box display={'flex'} direction={'column'} paddingBottom={1}>
       <Button
         tooltip={t(
           'dashboard.edit-pane.variable.open-editor-tooltip',
           'For more variable options open variable editor'
         )}
         onClick={onOpenVariableEdior}
+        size="sm"
         fullWidth
       >
         <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
       </Button>
-    </Stack>
+    </Box>
   );
 }
