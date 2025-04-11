@@ -42,7 +42,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 		obj := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"spec": map[string]any{
-					"title": "Test empty dashboard",
+					"title":         "Test empty dashboard",
+					"schemaVersion": 41,
 				},
 			},
 		}

@@ -883,7 +883,7 @@
       }
     ],
     "refresh": "",
-    "schemaVersion": 33,
+    "schemaVersion": 36,
     "tags": [
       "gdev",
       "panel-tests",

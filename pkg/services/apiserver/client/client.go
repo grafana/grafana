@@ -24,8 +24,8 @@ import (
 type K8sHandler interface {
 	GetNamespace(orgID int64) string
 	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)
-	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
-	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
+	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error)
+	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error)
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, orgID int64) error
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
@@ -71,22 +71,22 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options 
 	return client.Get(ctx, name, options, subresource...)
 }
 
-func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
+func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error) {
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Create(ctx, obj, v1.CreateOptions{})
+	return client.Create(ctx, obj, opts)
 }
 
-func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
+func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error) {
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Update(ctx, obj, v1.UpdateOptions{})
+	return client.Update(ctx, obj, opts)
 }
 
 func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error {
