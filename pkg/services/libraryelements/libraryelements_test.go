@@ -549,6 +549,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore:          sqlStore,
 			folderService:     folderSvc,
 			dashboardsService: dashService,
+			log:               log.NewNopLogger(),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
