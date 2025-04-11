@@ -129,7 +129,6 @@ func TestGenerateComment(t *testing.T) {
 			commenter := NewCommenter()
 			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
 			require.NoError(t, err)
-
 		})
 	}
 }
