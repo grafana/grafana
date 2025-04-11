@@ -833,9 +833,15 @@ describe('getElementDatasource', () => {
       pluginId: 'timeseries',
     });
 
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
     expect(() => {
       // @ts-expect-error - intentionally passing invalid type to test error handling
-      getAutoAssignedDSRef(vizPanel, 'invalid-type');
+      getAutoAssignedDSRef(vizPanel, 'invalid-type', dsReferencesMapping);
     }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
   });
 });
