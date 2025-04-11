@@ -33,14 +33,22 @@ export function useEditConfigurationDrawer() {
     }
 
     const isGrafanaAlertmanager = dataSourceName === GRAFANA_RULES_SOURCE_NAME;
-    const title = isGrafanaAlertmanager ? 'Internal Grafana Alertmanager' : dataSourceName;
+    const title = isGrafanaAlertmanager
+      ? t(
+          'alerting.use-edit-configuration-drawer.drawer.internal-grafana-alertmanager-title',
+          'Internal Grafana Alertmanager'
+        )
+      : dataSourceName;
 
     // @todo check copy
     return (
       <Drawer
         onClose={handleDismiss}
         title={title}
-        subtitle="Edit the Alertmanager configuration"
+        subtitle={t(
+          'alerting.use-edit-configuration-drawer.drawer.title-edit-the-alertmanager-configuration',
+          'Edit the Alertmanager configuration'
+        )}
         tabs={
           <TabsBar>
             <Tab
