@@ -18,11 +18,11 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
 	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -396,29 +396,11 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
-		cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
-		var receivers []*definitions.PostableApiReceiver
-		for _, apiReceiver := range cfg.AlertmanagerConfig.Receivers {
-			var recv []*definitions.PostableGrafanaReceiver
-			for _, r := range apiReceiver.GrafanaManagedReceivers {
-				recv = append(recv, &definitions.PostableGrafanaReceiver{
-					UID:                   r.UID,
-					Name:                  r.Name,
-					Type:                  r.Type,
-					DisableResolveMessage: r.DisableResolveMessage,
-					Settings:              r.Settings,
-				})
-			}
-			receivers = append(receivers, &definitions.PostableApiReceiver{
-				Receiver:                 config.Receiver{Name: apiReceiver.Name},
-				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{GrafanaManagedReceivers: recv},
-			})
-		}
-
 		routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, "", func(int64) string { return "default" })
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, v1.UpdateOptions{})
+		require.NoError(t, err)
 	}
 
 	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1_timeinterval.TimeInterval{

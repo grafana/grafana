@@ -669,7 +669,8 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
 	require.NoError(t, err)
-	routeClient.Update(ctx, v1route, v1.UpdateOptions{})
+	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
+	require.NoError(t, err)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)

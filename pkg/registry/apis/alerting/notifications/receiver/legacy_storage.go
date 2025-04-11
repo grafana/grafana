@@ -108,7 +108,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
 	}
 
-	return ConvertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
+	return convertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
