@@ -48,15 +48,15 @@ describe('userStorage', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
       const storage = usePluginUserStorage();
-      storage.getItem('key');
-      expect(localStorage.getItem).toHaveBeenCalled();
+      await storage.getItem('key');
+      expect(localStorage.getItem).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
     it('use localStorage if the user storage is not found', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
       const storage = usePluginUserStorage();
       await storage.getItem('key');
-      expect(localStorage.getItem).toHaveBeenCalled();
+      expect(localStorage.getItem).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
     it('returns the value from the user storage', async () => {
@@ -73,8 +73,8 @@ describe('userStorage', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
       const storage = usePluginUserStorage();
-      storage.setItem('key', 'value');
-      expect(localStorage.setItem).toHaveBeenCalled();
+      await storage.setItem('key', 'value');
+      expect(localStorage.setItem).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
 
     it('creates a new user storage if it does not exist', async () => {
