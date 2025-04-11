@@ -138,7 +138,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, err
+			return nil, apierrors.NewBadRequest("unable to read file as a resource")
 		}
 	}
 
