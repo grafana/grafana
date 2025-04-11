@@ -73,9 +73,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
   configure-prometheus-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure-prometheus-data-source/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure-prometheus-data-source/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
 ---
 
 # Prometheus data source

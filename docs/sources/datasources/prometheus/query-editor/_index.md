@@ -41,103 +41,33 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform
+  explore:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
 
-For options and functions common to all query editors, see [Query editors](ref:query-transform-data).
-
-## Choose a query editing mode
+<!-- ## Choose a query editing mode -->
 
 The Prometheus query editor has two modes:
 
 - [Builder mode](#builder-mode)
 - [Code mode](#code-mode)
 
-Each mode is explained in greater detail below.
-
 {{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
 
 Both modes are synchronized, so you can switch between them. However, if there is an issue with the query while switching modes, a warning message will appear.
 
-## Toolbar elements
-
-The query editor toolbar contains the following elements:
-
-- **Kick start your query** - Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
-
-  - Rate query starters
-  - Histogram query starters
-  - Binary query starters
-
-Click the arrow next to each to see available options to add to your query.
-
-- **Explain** - Toggle to display a step-by-step explanation of all query components and operations.
-
-{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
-
-- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
-
-## Configure common options
-
 You can configure Prometheus-specific options in the query editor by setting several options regardless of mode.
 
 {{< figure src="/static/img/docs/prometheus/options.png" max-width="500px" class="docs-image--no-shadow" caption="Options" >}}
-
-### Legend
-
-The **Legend** setting defines the time series's name. You can use a predefined or custom format.
-
-- **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
-- **Verbose** - Displays all label names.
-- **Custom** - Uses templating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside of it to select another mode.
-
-### Min step
-
-The **Min step** setting defines the lower bounds on the interval between data points.
-For example, set this to `1h` to hint that measurements are taken hourly.
-This setting supports the `$__interval` and `$__rate_interval` macros. Be aware that the query range dates are aligned to the step and this can change the start and end of the range.
-
-### Format
-
-Switch between the following format options:
-
-- **Time series** - The default time series format. See [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
-- **Table** - This works only in a [Table panel](ref:table).
-- **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
-
-### Type
-
-The **Type** setting sets the query type. These include:
-
-- **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
-- **Range** - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
-- **Instant** - Returns one data point per query and only the most recent point in the time range provided. The results can be shown in table format or as raw data. To depict instant query results in the time series panel, first add a field override, next add a property to the override named `Transform`, and finally select `Constant` from the **Transform** dropdown.
-
-For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
-
-{{% admonition type="note" %}}
-Grafana modifies the request dates for queries to align them with the dynamically calculated step.
-This ensures a consistent display of metrics data and Prometheus requires this for caching results. But, aligning the range with the step can result in a small gap of data at the right edge of a graph or change the start date of the range. For example, a 15s step aligns the range to Unix time divisible by 15s and a 1w minstep aligns the range to the start of the week on a Thursday.
-{{% /admonition %}}
-
-### Exemplars
-
-Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
-
-{{% admonition type="note" %}}
-There is no option to add exemplars with an **Instant** query type.
-{{% /admonition %}}
-
-### Inspector
-
-Click **Inspector** to get detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
-
-{{< figure src="/static/img/docs/prometheus/insepctor-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Inspector" >}}
 
 ## Builder mode
 
@@ -147,7 +77,76 @@ This video demonstrates how to use the visual Prometheus query builder:
 
 {{< vimeo 720004179 >}}
 
-</br>
+<!-- </br> -->
+
+Builder mode contains the following components:
+
+- **Kick start your query** - Click to view a list of predefined operation patterns that help you quickly build queries with multiple operations. These include:
+
+  - Rate query starters 
+  - Histogram query starters
+  - Binary query starters
+
+Click the arrow next to each to see available options to add to your query.
+
+- **Explain** - Toggle on to display a step-by-step explanation of all query components and operations.
+
+{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
+
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select an editor mode.
+
+If you select Builder mode you will see the following options:
+
+- **Metric** - Select a metric from the drop-down. Click the icon to open Metrics Explorer, where you can search for metrics by name and filter by type if your instance has a large number of metrics. Refer to [Metrics Explorer](#metrics-explorer) for more detail on using this feature.
+- **Label filters** - Select label filters from the drop-down. Select an operator and a value.
+Select desired labels and their values from the dropdown list.
+When a metric is selected, the data source requests available labels and their values from the server.
+Use the `+` button to add a label, and the `x` button to remove a label.
+
+
+Click **+ Operations** to select from a list of operations including Aggregations, Range functions, Functions, Binary operations, Trigonometric and Time functions. You can select multiple operations. Refer to [Operations](#operations) for more detail.
+
+
+
+
+**Options:**
+
+- **Legend**- Let's you customize the name for the time series. You can use a predefined or custom format.
+  - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
+  - **Verbose** - Displays all label names.
+  - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
+
+- **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
+<!-- 
+For example, set this to `1h` to hint that measurements are taken hourly.
+This setting supports the `$__interval` and `$__rate_interval` macros. Be aware that the query range dates are aligned to the step and this can change the start and end of the range. -->
+
+- **Format** - Determines how the data from your Prometheus query is interpreted and visualized  in a panel. Choose from the following format options:
+  - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
+  - **Table** - Displays data in table format. This format works only in a [Table panel](ref:table).
+  - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
+
+- **Type** - This setting sets the query type. These include:
+  - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
+  - **Range** - Returns a range vector - a set of time series 
+  a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
+  - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
+
+{{% admonition type="note" %}}
+Grafana adjusts the query time range to align with the dynamically calculated step interval. This alignment ensures consistent metric visualization and supports Prometheus's requirement for result caching. However, aligning the time range to the step can lead to minor visual differences—such as a slight gap at the end (right edge) of a graph or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` `minstep` aligns the range to the start of the week, which for Prometheus is Thursday at 00:00 UTC.
+{{% /admonition %}}
+
+- **Exemplars** - Toggle on to to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
+
+{{% admonition type="note" %}}
+There is no option to add exemplars with an **Instant** query type.
+{{% /admonition %}}
+
+<!-- ### Inspector
+
+Click **Inspector** to get detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+
+{{< figure src="/static/img/docs/prometheus/insepctor-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Inspector" >}} -->
 
 ### Metrics
 
@@ -157,9 +156,11 @@ When you are ready to create a query, you can choose the specific metric name fr
 The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
 
-#### Metrics explorer
+#### Metrics Explorer
 
 {{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+
+Click the **Open book icon** to open the Metrics Explorer, where you can search for and filter all the metrics in your instance.
 
 If you would like to explore your metrics in the query builder further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
 
@@ -174,12 +175,6 @@ There are also additional settings for the following items:
 - Include results with no metadata. Many Prometheus metrics have no metadata. This allows users to include metrics with undefined type and description.
 - Disable text wrap.
 - Enable regex search. This uses the Prometheus API to enable regex search for the metric name.
-
-### Label filters
-
-Select desired labels and their values from the dropdown list.
-When a metric is selected, the data source requests available labels and their values from the server.
-Use the `+` button to add a label, and the `x` button to remove a label.
 
 ### Operations
 
@@ -203,14 +198,14 @@ All operations have function parameters under the operation header. Click the `o
 Some operations make sense only when used in a specific order.
 If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
 
-#### Hints
+### Hints
 
-{{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
-
-The query editor can detect which operations are most appropriate for some selected metrics.
-If it does, it displays a hint next to the **+ Operations** button.
+The query editor can detect which operations are most appropriate for certain selected metrics.
+When it does, it displays a hint next to the **+ Operations** button.
 
 To add the operation to your query, click the **Hint**.
+
+{{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
 
 Once you are satisfied with your query, click **Run query**.
 
@@ -224,19 +219,21 @@ The user interface (UI) also lets you select metrics, labels, filters and operat
 
 You can write complex queries using the text editor with autocompletion features and syntax highlighting.
 It also contains a [Metrics browser](#metrics-browser) to further help you write queries.
-
-### Use autocomplete
+<!-- 
+### Use autocomplete -->
 
 Code mode's autocomplete feature works automatically while typing. The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-### Metrics browser
+### Metrics browser in Code mode
 
 The metrics browser locates metrics and selects relevant labels to help you build basic queries.
 When you click **Metrics browser** in `Code` mode, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
-{{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
+<!-- {{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}} -->
+
+{{< figure alt="Prometheus query editor metrics browser"  src="/media/docs/prometheus/Metrics-browser-V10-prom-query-editor.png" caption="Metrics browser" >}}
 
 When you select a metric under Step 1, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels shown in Step 2.
@@ -244,21 +241,26 @@ Select one or more values in Step 3 for each label to tighten your query scope.
 In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
 {{% admonition type="note" %}}
-If you do not remember a metric name, you can also select a few labels to narrow down the list, then find relevant label values.
+If you don't remember the exact metric name, you can start by selecting a few labels to filter the list. This helps you find relevant label values and narrow down your options.
 {{% /admonition %}}
 
-All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
-The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.
-
-For example, among your labels `app`, `job`, `job_name` only one might have the value you are looking for.
+All lists in the metrics browser include a search field to quickly filter metrics or labels by keyword.
+In the **Values** section, there's a single search field that filters across all selected labels, making it easier to find matching values. For example, if you have labels like `app`, `job`, and `job_name`, only one of them might contain the value you're looking for.
 
 Once you are satisfied with your query, click **Run query**.
 
 ## Incremental dashboard queries (beta)
 
-As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
+Starting with Grafana v10, the Prometheus data source supports incremental querying for live dashboards. Instead of re-querying the entire time range on each refresh, Grafana can fetch only new data since the last query.
+
+This feature can be enabled or disabled in the data source configuration or provisioning file using the `incrementalQuerying` field in `jsonData`.
+
+You can also control the overlap between consecutive incremental queries using the `incrementalQueryOverlapWindow` field in `jsonData`. By default, this is set to `10m` (10 minutes). Increasing the `incrementalQueryOverlapWindow` value increases the time range covered by each incremental query. This can help in environments where the most recent data may be delayed or incomplete.
+
+
+ <!-- instead of re-querying the entire duration on each dashboard refresh.
 
 This can be toggled on or off in the data source configuration or provisioning file (under `incrementalQuerying` in jsonData).
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is `10m` (10 minutes).
 
-Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
+Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data. -->
