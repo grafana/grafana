@@ -434,7 +434,7 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 		if errorsOnly {
 			sess.Where("status = ?", cloudmigration.ItemStatusError)
 		}
-		return sess.OrderBy(fmt.Sprintf("%s %s", col, dir)).Find(&resources, &cloudmigration.CloudMigrationResource{
+		return sess.OrderBy(fmt.Sprintf("lower(%s) %s", col, dir)).Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})
