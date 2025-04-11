@@ -437,6 +437,7 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 		}
 		orderByClause := fmt.Sprintf("lower(%s) %s", col, dir)
 		if ss.db.GetDBType() == migrator.Postgres {
+			// Postgres does not support lower() in ORDER BY -- sorts by case-insensitive by default
 			orderByClause = fmt.Sprintf("%s %s", col, dir)
 		}
 		return sess.OrderBy(orderByClause).Find(&resources, &cloudmigration.CloudMigrationResource{
