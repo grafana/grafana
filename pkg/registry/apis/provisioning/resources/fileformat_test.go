@@ -81,7 +81,7 @@ spec:
 		require.Equal(t, provisioning.ClassicDashboard, classic)
 		require.Equal(t, &schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
-			Version: "v1alpha1",
+			Version: "v0alpha1",
 			Kind:    "Dashboard",
 		}, gvk)
 		require.NotNil(t, obj)
@@ -110,7 +110,7 @@ spec:
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
 		require.Equal(t, schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
-			Version: "v1alpha1",
+			Version: "v0alpha1",
 			Kind:    "Dashboard",
 		}, parsed.GVK)
 	})

@@ -83,14 +83,14 @@ spec:
 
 	t.Run("dashboard classic format", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
-			Data: []byte(`{ "uid": "test", "schemaVersion": 41, "panels": [], "tags": [] }`),
+			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
 		})
 		require.NoError(t, err)
 		require.Equal(t, "test", dash.Obj.GetName())
 		require.Equal(t, provisioning.ClassicDashboard, dash.Classic)
 		require.Equal(t, "dashboard.grafana.app", dash.GVK.Group)
-		require.Equal(t, "v1alpha1", dash.GVK.Version)
+		require.Equal(t, "v0alpha1", dash.GVK.Version)
 		require.Equal(t, "dashboard.grafana.app", dash.GVR.Group)
-		require.Equal(t, "v1alpha1", dash.GVR.Version)
+		require.Equal(t, "v0alpha1", dash.GVR.Version)
 	})
 }

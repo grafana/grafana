@@ -14,12 +14,12 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 var (
+	ErrUnableToReadResourceBytes        = errors.New("unable to read bytes as a resource")
 	ErrUnableToReadPanelsMissing        = errors.New("panels property is required")
 	ErrUnableToReadSchemaVersionMissing = errors.New("schemaVersion property is required")
 	ErrUnableToReadTagsMissing          = errors.New("tags property is required")
@@ -81,25 +81,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 		}, gvk, provisioning.ClassicDashboard, nil
 	}
 
-	if value["schemaVersion"] == nil {
-		return nil, nil, "", ErrUnableToReadSchemaVersionMissing
-	}
-
-	if value["tags"] == nil {
-		return nil, nil, "", ErrUnableToReadTagsMissing
-	}
-
-	gvk := dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind()
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": gvk.GroupVersion().String(),
-			"kind":       gvk.Kind,
-			"metadata": map[string]any{
-				"name": value["uid"],
-			},
-			"spec": value,
-		},
-	}, &gvk, provisioning.ClassicDashboard, nil
+	return nil, nil, "", ErrUnableToReadResourceBytes
 }
 
 // DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.
