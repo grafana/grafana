@@ -283,8 +283,8 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, code)
 		require.True(t, apierrors.IsNotFound(result.Error()))
 
-		// Now try again with POST
-		result = helper.AdminREST.Post().
+		// Now try again with POST (as an editor)
+		result = helper.EditorREST.Post().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).

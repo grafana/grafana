@@ -48,6 +48,7 @@ type provisioningTestHelper struct {
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
+	EditorREST   *rest.RESTClient
 	ViewerREST   *rest.RESTClient
 }
 
@@ -256,13 +257,10 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
-	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
-
-	viewerClient := helper.Org1.Viewer.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+	adminClient := helper.Org1.Admin.RESTClient(t, gv)
+	editorClient := helper.Org1.Editor.RESTClient(t, gv)
+	viewerClient := helper.Org1.Viewer.RESTClient(t, gv)
 
 	deleteAll := func(client *apis.K8sResourceClient) error {
 		ctx := context.Background()
@@ -287,7 +285,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories: repositories,
-		AdminREST:    restClient,
+		AdminREST:    adminClient,
+		EditorREST:   editorClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
 		Folders:      folders,
