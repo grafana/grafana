@@ -5,7 +5,6 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../BarGauge/BarGauge';
-import { DataLinksContextMenuApi } from '../../DataLinks/DataLinksContextMenu';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellProps } from '../types';
 import {
@@ -63,9 +62,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
 
-  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu, targetClassName } = menuProps;
-
+  const renderComponent = () => {
     return (
       <BarGauge
         width={innerWidth}
@@ -77,8 +74,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
         alignmentFactors={alignmentFactors}
-        onClick={openMenu}
-        className={targetClassName}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
@@ -104,17 +99,17 @@ export const BarGaugeCell = (props: TableCellProps) => {
     >
       {shouldShowLink ? (
         <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
-          {renderComponent({})}
+          {renderComponent()}
         </a>
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
-          value={renderComponent({})}
+          value={renderComponent()}
           coords={tooltipCoords}
           onTooltipClose={() => setTooltipCoords(undefined)}
         />
       ) : (
-        renderComponent({})
+        renderComponent()
       )}
     </div>
   );
