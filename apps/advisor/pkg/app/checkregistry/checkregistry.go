@@ -53,6 +53,7 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginStore,
 			s.pluginContextProvider,
 			s.pluginClient,
+			s.pluginRepo,
 		),
 		plugincheck.New(
 			s.pluginStore,

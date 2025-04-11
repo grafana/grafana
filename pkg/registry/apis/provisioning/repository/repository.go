@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -29,7 +29,12 @@ type Repository interface {
 }
 
 // ErrFileNotFound indicates that a path could not be found in the repository.
-var ErrFileNotFound error = fs.ErrNotExist
+var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusNotFound,
+	Reason:  metav1.StatusReasonNotFound,
+	Message: "file not found",
+}}
 
 type FileInfo struct {
 	// Path to the file on disk.

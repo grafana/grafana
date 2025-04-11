@@ -2,6 +2,7 @@ import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import {
@@ -235,6 +236,12 @@ export class V2DashboardSerializer
   }
 
   initializeDSReferencesMapping(saveModel: DashboardV2Spec | undefined) {
+    // The saveModel could be undefined or not a DashboardV2Spec
+    // when dashboardsNewLayout is enabled, saveModel could be v1
+    // in those cases, only when saving we will convert to v2
+    if (saveModel === undefined || (saveModel && !isDashboardV2Spec(saveModel))) {
+      return;
+    }
     // initialize the object
     this.defaultDsReferencesMap = {
       panels: new Map<string, Set<string>>(),
@@ -271,6 +278,15 @@ export class V2DashboardSerializer
         // for query variables that dont have a ds defined add them to the list
         if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
           this.defaultDsReferencesMap.variables.add(variable.spec.name);
+        }
+      }
+    }
+
+    // initialize annotations ds references map
+    if (saveModel?.annotations) {
+      for (const annotation of saveModel.annotations) {
+        if (!annotation.spec.datasource) {
+          this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
         }
       }
     }

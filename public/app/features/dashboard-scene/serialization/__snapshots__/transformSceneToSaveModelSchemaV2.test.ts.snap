@@ -35,10 +35,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "loki",
-          "uid": "Loki",
-        },
         "enable": true,
         "hide": true,
         "iconColor": "green",

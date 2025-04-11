@@ -282,7 +282,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	// 
+	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -872,10 +872,21 @@ export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: TabRepeatOptions;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources
@@ -1402,4 +1413,3 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
-
