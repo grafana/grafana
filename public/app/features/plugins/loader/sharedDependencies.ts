@@ -10,6 +10,7 @@ import 'vendor/flot/jquery.flot.dashes';
 import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
+import * as grafanaI18n from '@grafana/i18n';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
@@ -123,4 +124,5 @@ export const sharedDependenciesMap = {
   slate: () => import('slate'),
   'slate-plain-serializer': () => import('slate-plain-serializer'),
   'slate-react': () => import('slate-react'),
+  '@grafana/i18n': grafanaI18n,
 };

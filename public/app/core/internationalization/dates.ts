@@ -2,7 +2,7 @@ import '@formatjs/intl-durationformat/polyfill';
 import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 
-import { getI18next } from './index';
+import { getLanguage } from '@grafana/i18n';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
@@ -20,17 +20,14 @@ export const formatDate = deepMemoize(
       return formatDate(new Date(value), format);
     }
 
-    const i18n = getI18next();
-    const dateFormatter = createDateTimeFormatter(i18n.language, format);
+    const dateFormatter = createDateTimeFormatter(getLanguage(), format);
     return dateFormatter.format(value);
   }
 );
 
 export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const i18n = getI18next();
-
-    const dateFormatter = createDurationFormatter(i18n.language, options);
+    const dateFormatter = createDurationFormatter(getLanguage(), options);
     return dateFormatter.format(duration);
   }
 );
