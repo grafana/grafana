@@ -111,7 +111,7 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueD
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
 
-	now := time.Now().UTC().Unix()
+	now := time.Now().UTC().UnixMilli()
 
 	row.GUID = uuid.New().String()
 	row.Created = now
