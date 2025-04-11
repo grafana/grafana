@@ -1,7 +1,7 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-import { LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/data/unstable';
+import { LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
 

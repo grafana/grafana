@@ -7,6 +7,7 @@ export declare global {
     public_cdn_path: string;
     nonce: string | undefined;
     System: typeof System;
+    __grafanaI18nContext: { t: typeof t; getFixedT: typeof getFixedT; Trans: TransType };
   }
 
   // Augment DOMParser to accept TrustedType sanitised content
