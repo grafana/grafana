@@ -35,6 +35,17 @@ func (db *PostgresDialect) LikeStr() string {
 	return "ILIKE"
 }
 
+func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := pattern
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("%s ILIKE ?", column), param
+}
+
 func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
 }

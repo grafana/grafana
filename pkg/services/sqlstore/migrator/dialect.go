@@ -27,7 +27,10 @@ type Dialect interface {
 	ShowCreateNull() bool
 	SQLType(col *Column) string
 	SupportEngine() bool
+	// Deprecated. This doesn't work correctly for all databases.
 	LikeStr() string
+	// LikeOperator returns SQL snippet and query parameter for case-insensitive LIKE operation, with optional wildcards (%) before/after the pattern.
+	LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string)
 	Default(col *Column) string
 	// BooleanValue can be used as an argument in SELECT or INSERT statements. For constructing
 	// raw SQL queries, please use BooleanStr instead.
@@ -151,6 +154,17 @@ func (b *BaseDialect) AndStr() string {
 
 func (b *BaseDialect) LikeStr() string {
 	return "LIKE"
+}
+
+func (b *BaseDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := pattern
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("%s LIKE ?", column), param
 }
 
 func (b *BaseDialect) OrStr() string {
