@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -162,6 +163,84 @@ func TestJaegerClient_Operations(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedResult, operations)
+			}
+		})
+	}
+}
+
+func TestJaegerClient_Search(t *testing.T) {
+	tests := []struct {
+		name           string
+		query          *JaegerQuery
+		mockResponse   string
+		mockStatusCode int
+		expectedURL    string
+		expectError    bool
+		expectedError  error
+	}{
+		{
+			name: "Successful search with all parameters",
+			query: &JaegerQuery{
+				Service:     "test-service",
+				Operation:   "test-operation",
+				Tags:        "error=true",
+				MinDuration: "1s",
+				MaxDuration: "5s",
+				Limit:       10,
+			},
+			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
+			mockStatusCode: http.StatusOK,
+			expectedURL:    "/api/traces?limit=10&maxDuration=5s&minDuration=1s&operation=test-operation&service=test-service&tags=error%3Dtrue",
+			expectError:    false,
+			expectedError:  nil,
+		},
+		{
+			name: "Successful search with minimal parameters",
+			query: &JaegerQuery{
+				Service: "test-service",
+			},
+			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
+			mockStatusCode: http.StatusOK,
+			expectedURL:    "/api/traces?service=test-service",
+			expectError:    false,
+			expectedError:  nil,
+		},
+		{
+			name: "Server error",
+			query: &JaegerQuery{
+				Service: "test-service",
+			},
+			mockResponse:   "",
+			mockStatusCode: http.StatusInternalServerError,
+			expectedURL:    "/api/traces?service=test-service",
+			expectError:    true,
+			expectedError:  backend.DownstreamError(fmt.Errorf("request failed: %s", http.StatusText(http.StatusInternalServerError))),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualURL string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				actualURL = r.URL.String()
+				w.WriteHeader(tt.mockStatusCode)
+				_, _ = w.Write([]byte(tt.mockResponse))
+			}))
+			defer server.Close()
+
+			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, false)
+			assert.NoError(t, err)
+			traces, err := client.Search(tt.query)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.expectedError != nil {
+					assert.IsType(t, tt.expectedError, err)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, traces)
+				assert.Equal(t, tt.expectedURL, actualURL)
 			}
 		})
 	}
