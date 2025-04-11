@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
+import { useState } from 'react';
 
-import { useStyles2 } from '../../../themes';
 import { getCellLinks } from '../../../utils';
-import { Button, clearLinkButtonStyles } from '../../Button';
-import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
 import { CellActions } from '../CellActions';
+import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellProps } from '../types';
+import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps, field, row } = props;
+  const { cell, tableStyles, cellProps, field, row, actions } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const txt = css({
     cursor: 'pointer',
@@ -28,26 +28,30 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
     displayValue = JSON.stringify(value, null, ' ');
   }
 
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const links = getCellLinks(field, row) || [];
+
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
-      <div className={cx(tableStyles.cellText, txt)}>
-        {hasLinks ? (
-          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
-            {(api) => {
-              if (api.openMenu) {
-                return (
-                  <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                    {displayValue}
-                  </Button>
-                );
-              } else {
-                return <>{displayValue}</>;
-              }
-            }}
-          </DataLinksContextMenu>
+      <div
+        className={cx(tableStyles.cellText, txt)}
+        onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
+      >
+        {shouldShowLink ? (
+          <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
+            {displayValue}
+          </a>
+        ) : shouldShowTooltip ? (
+          <DataLinksActionsTooltip
+            links={links}
+            actions={actions}
+            value={displayValue}
+            coords={tooltipCoords}
+            onTooltipClose={() => setTooltipCoords(undefined)}
+          />
         ) : (
           <div className={tableStyles.cellText}>{displayValue}</div>
         )}
