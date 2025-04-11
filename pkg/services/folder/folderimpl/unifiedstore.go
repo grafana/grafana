@@ -50,8 +50,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
-
-	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
+		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,9 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		meta.SetFolder(*cmd.NewParentUID)
 	}
 
-	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore,
+	})
 	if err != nil {
 		return nil, err
 	}
