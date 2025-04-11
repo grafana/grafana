@@ -193,6 +193,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     const newSelectedMetric = selectedMetric !== metricName ? metricName : '';
     const selector = buildSafeSelector(newSelectedMetric, selectedLabelValues);
     try {
+      const fetchedMetrics = await fetchMetrics(selector);
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
       const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
@@ -200,6 +201,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
         newSelectedMetric === '' ? undefined : selector
       );
 
+      setMetrics(fetchedMetrics);
       setSelectedMetric(newSelectedMetric);
       setLabelKeys(fetchedLabelKeys);
       setSelectedLabelKeys(newSelectedLabelKeys);
