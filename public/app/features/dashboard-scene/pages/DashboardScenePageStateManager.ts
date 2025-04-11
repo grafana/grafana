@@ -671,15 +671,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     return rsp;
   }
 
-  // processDashboardFromProvisioning(
-  //   _repo: string,
-  //   _path: string,
-  //   dryRun: any,
-  //   _provisioningPreview: ProvisioningPreview
-  // ): DashboardWithAccessInfo<DashboardV2Spec> {
-
-  // }
-
   public async reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
     const stateOptions = this.state.options;
 
