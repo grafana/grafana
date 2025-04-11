@@ -42,11 +42,20 @@ const StateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (loading && !error) {
-    return <LoadingPlaceholder text={'Loading history...'} />;
+    return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
   if (error && !loading) {
-    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.state-history.title-failed-to-fetch-alert-state-history',
+          'Failed to fetch alert state history'
+        )}
+      >
+        {error.message}
+      </Alert>
+    );
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [

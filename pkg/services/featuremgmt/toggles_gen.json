@@ -481,18 +481,6 @@
     },
     {
       "metadata": {
-        "name": "appSidecar",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
-      },
-      "spec": {
-        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-04-03T15:18:37Z"
@@ -1388,16 +1376,20 @@
     {
       "metadata": {
         "name": "grafanaconThemes",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744293476104",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-10 13:57:56.104154 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -2250,8 +2242,8 @@
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-        "stage": "preview",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
       }
@@ -2883,12 +2875,15 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1744213036999",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-09 15:37:16.999955611 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },

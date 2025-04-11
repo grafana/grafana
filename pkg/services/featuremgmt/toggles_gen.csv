@@ -110,14 +110,14 @@ cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
-onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
+onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
-sqlExpressions,experimental,@grafana/grafana-datasources-core-services,false,false,false
+sqlExpressions,privatePreview,@grafana/grafana-datasources-core-services,false,false,false
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
 newPDFRendering,GA,@grafana/sharing-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
@@ -161,7 +161,6 @@ exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,fals
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
 appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
-appSidecar,experimental,@grafana/grafana-frontend-platform,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,preview,@grafana/identity-access-team,false,false,false
@@ -208,7 +207,7 @@ exploreMetricsUseExternalAppPlugin,GA,@grafana/observability-metrics,false,true,
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
-grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
+grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true

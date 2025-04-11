@@ -87,9 +87,10 @@ func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 	reportInfo := &ReportInfo{}
 	if latestPluginCheck != nil {
 		for _, failure := range latestPluginCheck.CheckStatus.Report.Failures {
-			if failure.StepID == plugincheck.UpdateStepID {
+			switch failure.StepID {
+			case plugincheck.UpdateStepID:
 				reportInfo.PluginsOutdated++
-			} else if failure.StepID == plugincheck.DeprecationStepID {
+			case plugincheck.DeprecationStepID:
 				reportInfo.PluginsDeprecated++
 			}
 		}
