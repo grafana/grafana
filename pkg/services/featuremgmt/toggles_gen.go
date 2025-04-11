@@ -415,10 +415,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagExploreMetrics
-	// Enables the new Grafana Metrics Drilldown core app
-	FlagExploreMetrics = "exploreMetrics"
-
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
@@ -834,10 +830,6 @@ const (
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
-
-	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
 
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page

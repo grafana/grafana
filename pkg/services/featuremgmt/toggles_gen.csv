@@ -101,7 +101,6 @@ pdfTables,preview,@grafana/sharing-squad,false,false,false
 ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
-exploreMetrics,GA,@grafana/observability-metrics,false,false,true
 alertingSimplifiedRouting,GA,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -206,7 +205,6 @@ templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,fa
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
-exploreMetricsUseExternalAppPlugin,GA,@grafana/observability-metrics,false,true,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true

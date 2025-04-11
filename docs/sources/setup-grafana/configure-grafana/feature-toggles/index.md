@@ -57,7 +57,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardScene`                       | Enables dashboard rendering using scenes for all roles                                                                              | Yes                |
 | `ssoSettingsApi`                       | Enables the SSO settings API and the OAuth configuration UIs in Grafana                                                             | Yes                |
 | `logsInfiniteScrolling`                | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                             | Yes                |
-| `exploreMetrics`                       | Enables the new Grafana Metrics Drilldown core app                                                                                  | Yes                |
 | `alertingSimplifiedRouting`            | Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule | Yes                |
 | `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                 | Yes                |
 | `lokiQueryHints`                       | Enables query hints for Loki                                                                                                        | Yes                |
@@ -87,7 +86,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
-| `exploreMetricsUseExternalAppPlugin`   | Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin                                       | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                             |                    |
 
 ## Public preview feature toggles

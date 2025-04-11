@@ -461,11 +461,6 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enables the new Grafana Metrics Drilldown core app
-  * @default true
-  */
-  exploreMetrics?: boolean;
-  /**
   * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
   * @default true
   */
@@ -922,11 +917,6 @@ export interface FeatureToggles {
   * Enables less memory intensive Elasticsearch result parsing
   */
   elasticsearchImprovedParsing?: boolean;
-  /**
-  * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-  * @default true
-  */
-  exploreMetricsUseExternalAppPlugin?: boolean;
   /**
   * Shows defined connections for a data source in the plugins detail page
   */
