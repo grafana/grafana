@@ -43,7 +43,11 @@ func folderCacheKey(namespace string) string {
 	return namespace + ".folders"
 }
 
-type cacheWrap[T any] struct {
+type cacheWrap[T any] interface {
+	Get(ctx context.Context, key string) (T, bool)
+	Set(ctx context.Context, key string, value T)
+}
+type cacheWrapImpl[T any] struct {
 	cache  cache.Cache
 	logger log.Logger
 	ttl    time.Duration
@@ -51,11 +55,15 @@ type cacheWrap[T any] struct {
 
 // cacheWrap is a wrapper around the authlib Cache that provides typed Get and Set methods
 // it handles encoding/decoding for a specific type.
-func newCacheWrap[T any](cache cache.Cache, logger log.Logger, ttl time.Duration) *cacheWrap[T] {
-	return &cacheWrap[T]{cache: cache, logger: logger, ttl: ttl}
+func newCacheWrap[T any](cache cache.Cache, logger log.Logger, ttl time.Duration) cacheWrap[T] {
+	if ttl == 0 {
+		logger.Info("cache ttl is 0, using noop cache")
+		return &noopCache[T]{}
+	}
+	return &cacheWrapImpl[T]{cache: cache, logger: logger, ttl: ttl}
 }
 
-func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
+func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	logger := c.logger.FromContext(ctx)
 
 	var value T
@@ -76,7 +84,7 @@ func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
 	return value, true
 }
 
-func (c *cacheWrap[T]) Set(ctx context.Context, key string, value T) {
+func (c *cacheWrapImpl[T]) Set(ctx context.Context, key string, value T) {
 	logger := c.logger.FromContext(ctx)
 
 	data, err := json.Marshal(value)
@@ -89,4 +97,15 @@ func (c *cacheWrap[T]) Set(ctx context.Context, key string, value T) {
 	if err != nil {
 		logger.Warn("failed to set to cache", "key", key, "error", err)
 	}
+}
+
+type noopCache[T any] struct{}
+
+func (lc *noopCache[T]) Get(ctx context.Context, key string) (T, bool) {
+	var value T
+	return value, false
+}
+
+func (lc *noopCache[T]) Set(ctx context.Context, key string, value T) {
+	// no-op
 }
