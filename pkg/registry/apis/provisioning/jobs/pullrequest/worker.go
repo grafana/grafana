@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-//go:generate mockery --name=PullRequestRepo --output=./mocks --outpkg=pullrequest --filename=mock_pullrequest_repo.go --with-expecter
+//go:generate mockery --name=PullRequestRepo --structname=MockPullRequestRepo --inpackage --filename=mock_pullrequest_repo.go --with-expecter
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
@@ -24,12 +24,12 @@ type PullRequestRepo interface {
 	CommentPullRequest(ctx context.Context, pr int, comment string) error
 }
 
-//go:generate mockery --name=ScreenshotRenderer --output=./mocks --outpkg=pullrequest --filename=mock_screenshot_renderer.go --with-expecter
+//go:generate mockery --name=Evaluator --structname=MockEvaluator --inpackage --filename=mock_evaluator.go --with-expecter
 type Evaluator interface {
 	Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error)
 }
 
-//go:generate mockery --name=Commenter --output=./mocks --outpkg=pullrequest --filename=mock_commenter.go --with-expecter
+//go:generate mockery --name=Commenter --structname=MockCommenter --inpackage --filename=mock_commenter.go --with-expecter
 type Commenter interface {
 	Comment(ctx context.Context, repo PullRequestRepo, pr int, changeInfo changeInfo) error
 }
