@@ -7,8 +7,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/google/uuid"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -48,14 +46,14 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	// Authorize the parsed resource
-	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
-		return nil, err
-	}
-
 	// Fail as we use the dry run for this response and it's not about updating the resource
 	if err := parsed.DryRun(ctx); err != nil {
 		return nil, fmt.Errorf("run dry run: %w", err)
+	}
+
+	// Authorize based on the existing resource
+	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
+		return nil, err
 	}
 
 	return parsed, nil
@@ -195,21 +193,6 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
-	// Verify that we can create (or update) the referenced resource
-	verb := utils.VerbUpdate
-	if create {
-		verb = utils.VerbCreate
-	}
-	if err = r.authorize(ctx, parsed, verb); err != nil {
-		return nil, err
-	}
-
-	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
-	if err != nil {
-		return nil, fmt.Errorf("unable to use provisioning identity %w", err)
-	}
-
 	// Make sure the value is valid
 	if err := parsed.DryRun(ctx); err != nil {
 		logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
@@ -224,9 +207,24 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
 	}
 
+	// Verify that we can create (or update) the referenced resource
+	verb := utils.VerbUpdate
+	if parsed.Action == provisioning.ResourceActionCreate {
+		verb = utils.VerbCreate
+	}
+	if err = r.authorize(ctx, parsed, verb); err != nil {
+		return nil, err
+	}
+
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity %w", err)
 	}
 
 	// Create or update
@@ -255,49 +253,47 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 }
 
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     parsed.GVR.Group,
-		Resource:  parsed.GVR.Resource,
-		Namespace: parsed.Obj.GetNamespace(),
-		Name:      parsed.Obj.GetName(),
-		Folder:    parsed.Meta.GetFolder(),
-		Verb:      verb,
-	})
+	id, err := identity.GetRequester(ctx)
 	if err != nil {
-		return err
+		return apierrors.NewUnauthorized(err.Error())
 	}
-	if !rsp.Allowed {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to see embedded file"))
+
+	// Use configured permissions for get+delete
+	if parsed.Existing != nil && (verb == utils.VerbGet || verb == utils.VerbDelete) {
+		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+			Group:     parsed.GVR.Group,
+			Resource:  parsed.GVR.Resource,
+			Namespace: parsed.Existing.GetNamespace(),
+			Name:      parsed.Existing.GetName(),
+			Folder:    parsed.Meta.GetFolder(),
+			Verb:      utils.VerbGet,
+		})
+		if err != nil || !rsp.Allowed {
+			return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+				fmt.Errorf("no access to read the embedded file"))
+		}
 	}
-	return nil
+
+	// Simple role based access for now
+	if id.GetOrgRole().Includes(identity.RoleEditor) {
+		return nil
+	}
+
+	return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+		fmt.Errorf("must be admin or editor to access files from provisioning"))
 }
 
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     FolderResource.Group,
-		Resource:  FolderResource.Resource,
-		Namespace: r.repo.Config().GetNamespace(),
-		Verb:      utils.VerbCreate,
-
-		// TODO: Currently this checks if you can create a new folder in root
-		// Ideally we should check the path and use the explicit parent and new id
-		Name: "f" + uuid.NewString(),
-	})
+	id, err := identity.GetRequester(ctx)
 	if err != nil {
-		return err
+		return apierrors.NewUnauthorized(err.Error())
 	}
-	if !rsp.Allowed {
-		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-			fmt.Errorf("unable to create folder resource"))
+
+	// Simple role based access for now
+	if id.GetOrgRole().Includes(identity.RoleEditor) {
+		return nil
 	}
-	return nil
+
+	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+		fmt.Errorf("must be admin or editor to access folders with provisioning"))
 }
