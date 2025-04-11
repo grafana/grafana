@@ -138,7 +138,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     <div className={styles.container}>
       {isGrafanaManagedAlertmanager && (
         <Alert
-          severity="warning"
+          severity="info"
           title={t(
             'alerting.alertmanager-config.gma-manual-configuration-is-not-supported',
             'Manual configuration changes not supported'

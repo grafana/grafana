@@ -2083,10 +2083,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
-        "internal-grafana-alertmanager-title": "Internal Grafana Alertmanager",
+        "internal-grafana-alertmanager-title": "Grafana built-in Alertmanager",
         "label-json-model": "JSON Model",
         "label-versions": "Versions",
-        "title-edit-the-alertmanager-configuration": "Edit the Alertmanager configuration"
+        "title-edit-the-alertmanager-configuration": "Edit Alertmanager configuration",
+        "title-view-the-alertmanager-configuration": "View Alertmanager configuration"
       }
     },
     "use-edit-policy-modal": {
