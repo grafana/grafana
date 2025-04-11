@@ -223,6 +223,7 @@ export interface AutoCellProps {
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   cellOptions: TableCellOptions;
+  actions?: ActionModel[];
 }
 
 // Comparator for sorting table values

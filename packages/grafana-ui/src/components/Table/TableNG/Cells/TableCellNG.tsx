@@ -144,6 +144,7 @@ export function TableCellNG(props: TableCellNGProps) {
           justifyContent={justifyContent}
           rowIdx={rowIdx}
           cellOptions={cellOptions}
+          actions={actions}
         />
       );
   }
