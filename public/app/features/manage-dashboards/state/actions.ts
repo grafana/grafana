@@ -157,7 +157,7 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
     const elements = dashboard.elements;
     // get elements from dashboard
     // each element can only be a panel
-    const inputs: DataSourceInput[] = [];
+    const inputs: Record<string, DataSourceInput> = {};
     for (const element of Object.values(elements)) {
       if (element.kind !== 'Panel') {
         throw new Error('Only panels are currenlty supported in v2 dashboards');
@@ -180,7 +180,7 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
               pluginId: dsType,
             };
 
-            inputs.push(dataSourceInput);
+            inputs[dsType] = dataSourceInput;
           } else {
             dataSourceInput = {
               name: datasource.name,
@@ -191,12 +191,12 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
               pluginId: datasource.meta?.id,
             };
 
-            inputs.push(dataSourceInput);
+            inputs[datasource.meta?.id] = dataSourceInput;
           }
         }
       }
     }
-    dispatch(setInputs(inputs));
+    dispatch(setInputs(Object.values(inputs)));
   };
 }
 

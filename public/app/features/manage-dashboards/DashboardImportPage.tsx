@@ -5,7 +5,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   Button,
   Field,
@@ -33,11 +32,10 @@ import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
 import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';
-import { processImportedDashboard } from '../dashboard-scene/v2schema/ImportDashboardV2';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
-import { fetchGcomDashboard, importDashboardJson } from './state/actions';
-import { initialImportDashboardState, setLoadingState } from './state/reducers';
+import { fetchGcomDashboard, importDashboardJson, importDashboardV2Json } from './state/actions';
+import { initialImportDashboardState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
 type DashboardImportPageRouteSearchParams = {
@@ -57,6 +55,7 @@ const JSON_PLACEHOLDER = `{
 
 const mapStateToProps = (state: StoreState) => ({
   loadingState: state.importDashboard.state,
+  dashboard: state.importDashboard.dashboard,
 });
 
 const mapDispatchToProps = {
@@ -69,11 +68,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-interface State {
-  v2Dashboard?: DashboardV2Spec;
-}
-
-class UnthemedDashboardImport extends PureComponent<Props, State> {
+class UnthemedDashboardImport extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
     this.state = {};
@@ -114,11 +109,7 @@ class UnthemedDashboardImport extends PureComponent<Props, State> {
     const dashboard = JSON.parse(formData.dashboardJson);
 
     if (dashboard.elements) {
-      console.log('V2 dashboard detected');
-      processImportedDashboard(dashboard).then((processedDashboard) => {
-        this.setState({ v2Dashboard: processedDashboard });
-        dispatch(setLoadingState(LoadingState.Done));
-      });
+      dispatch(importDashboardV2Json(dashboard));
       return;
     }
 
@@ -250,13 +241,10 @@ class UnthemedDashboardImport extends PureComponent<Props, State> {
   };
 
   getDashboardOverview() {
-    const { loadingState } = this.props;
-    const { v2Dashboard } = this.state;
-
-    console.log('loadingState', loadingState);
+    const { loadingState, dashboard } = this.props;
 
     if (loadingState === LoadingState.Done) {
-      if (v2Dashboard) {
+      if (dashboard.elements) {
         return <ImportDashboardOverviewV2 />;
       }
       return <ImportDashboardOverview />;
