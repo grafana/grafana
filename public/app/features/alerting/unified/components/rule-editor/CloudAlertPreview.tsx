@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { labelsToTags } from '../../utils/labels';
 import { AlertStateTag } from '../rules/AlertStateTag';
@@ -19,14 +20,22 @@ export function CloudAlertPreview({ preview }: CloudAlertPreviewProps) {
   return (
     <table className={styles.table}>
       <caption>
-        <div>Alerts preview</div>
+        <div>
+          <Trans i18nKey="alerting.cloud-alert-preview.alerts-preview">Alerts preview</Trans>
+        </div>
         <span>Preview based on the result of running the query for this moment.</span>
       </caption>
       <thead>
         <tr>
-          <th>State</th>
-          <th>Labels</th>
-          <th>Info</th>
+          <th>
+            <Trans i18nKey="alerting.cloud-alert-preview.state">State</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="alerting.cloud-alert-preview.labels">Labels</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="alerting.cloud-alert-preview.info">Info</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>

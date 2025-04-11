@@ -116,7 +116,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
   return (
     <Stack direction="column" gap={0}>
-      <ul aria-label="filtered-rule-list">
+      <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
 

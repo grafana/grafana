@@ -37,8 +37,12 @@ export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) =
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Value</th>
+              <th>
+                <Trans i18nKey="alerting.key-value-map-input.name">Name</Trans>
+              </th>
+              <th>
+                <Trans i18nKey="alerting.key-value-map-input.value">Value</Trans>
+              </th>
               {!readOnly && <th />}
             </tr>
           </thead>

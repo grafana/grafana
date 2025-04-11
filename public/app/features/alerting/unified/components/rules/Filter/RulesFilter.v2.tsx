@@ -17,7 +17,7 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
@@ -48,19 +48,22 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
             <Tab
               active={activeTab === 'custom'}
               icon="filter"
-              label={'Custom filter'}
+              label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
               onChangeTab={() => setActiveTab('custom')}
             />
             <Tab
               active={activeTab === 'saved'}
               icon="bookmark"
-              label={'Saved searches'}
+              label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
               onChangeTab={() => setActiveTab('saved')}
             />
           </TabsBar>
         }
       >
-        <IconButton name="filter" aria-label="Show filters" />
+        <IconButton
+          name="filter"
+          aria-label={t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Show filters')}
+        />
       </PopupCard>
     );
   }, [activeTab, styles.content, styles.fixTabsMargin]);
@@ -110,6 +113,7 @@ const FilterOptions = () => {
             { label: 'All', value: '*' },
             { label: 'Normal', value: 'normal' },
             { label: 'Pending', value: 'pending' },
+            { label: 'Recovering', value: 'recovering' },
             { label: 'Firing', value: 'firing' },
           ]}
         />
@@ -170,7 +174,9 @@ const SavedSearches = () => {
             cell: ({ row }) => (
               <Stack alignItems="center">
                 {row.original.name}
-                {row.original.default ? <Badge text="Default" color="blue" /> : null}
+                {row.original.default ? (
+                  <Badge text={t('alerting.saved-searches.text-default', 'Default')} color="blue" />
+                ) : null}
               </Stack>
             ),
           },

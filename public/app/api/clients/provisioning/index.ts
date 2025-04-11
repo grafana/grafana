@@ -1,3 +1,4 @@
+import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
@@ -93,8 +94,16 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         try {
           await queryFulfilled;
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(notifyApp(createErrorNotification('Error testing repository', e)));
+          if (!e) {
+            dispatch(notifyApp(createErrorNotification('Error validating repository', new Error('Unknown error'))));
+          } else if (e instanceof Error) {
+            dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
+          } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
+            if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+              dispatch(
+                notifyApp(createErrorNotification('Error validating repository', e.error.data.errors.join('\n')))
+              );
+            }
           }
         }
       },

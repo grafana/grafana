@@ -76,7 +76,7 @@ func (s *LegacyTokenRest) Connect(ctx context.Context, name string, options runt
 			list.Items = append(list.Items, mapToToken(t))
 		}
 
-		list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+		list.Continue = common.OptionalFormatInt(res.Continue)
 
 		responder.Object(http.StatusOK, list)
 	}), nil
