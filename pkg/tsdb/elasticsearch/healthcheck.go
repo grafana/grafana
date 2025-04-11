@@ -160,6 +160,10 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		return fmt.Sprintf("Failed to get index pattern: %s", err), "error"
 	}
 
+	if len(indices) == 0 && ds.Interval != "" {
+		return "Unable to find pattern in index name. Either add an index pattern or specify 'No pattern", "error"
+	}
+
 	indexList := strings.Join(indices, ",")
 
 	validateUrl := fmt.Sprintf("%s/%s/_field_caps?fields=%s", ds.URL, indexList, ds.ConfiguredFields.TimeField)

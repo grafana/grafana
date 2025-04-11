@@ -127,7 +127,7 @@ Additional settings are optional settings that can be configured for more contro
 
 The following settings are specific to the Elasticsearch data source.
 
-- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
+- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
 
@@ -137,6 +137,8 @@ The following settings are specific to the Elasticsearch data source.
   - weekly
   - monthly
   - yearly
+
+Only select a pattern option if you have specified a time pattern in the Index name field.
 
 - **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
