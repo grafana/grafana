@@ -23,6 +23,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
+import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
@@ -36,7 +37,7 @@ interface EditableVariableConfig {
   name: string;
   description: string;
   editor: React.ComponentType<any>;
-  useOptions?: () => OptionsPaneItemDescriptor[];
+  getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
 //exclude system variable type and snapshot variable type
@@ -51,6 +52,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Custom',
     description: 'Define variable values manually',
     editor: CustomVariableEditor,
+    getOptions: getCustomVariableOptions,
   },
   query: {
     name: 'Query',

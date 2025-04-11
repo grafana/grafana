@@ -177,7 +177,10 @@ function useVariableTypeCategory(variable: SceneVariable) {
       id: 'variable-type',
     });
 
-    if (!variableEditorDef.useOptions) {
+    if (variableEditorDef.getOptions) {
+      const options = variableEditorDef.getOptions(variable);
+      options.forEach((option) => category.addItem(option));
+    } else {
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
