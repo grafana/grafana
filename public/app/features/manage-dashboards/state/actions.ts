@@ -146,7 +146,7 @@ function processInputs(): ThunkResult<void> {
 }
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
-  return async (dispatch) => {
+  return async function (dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
