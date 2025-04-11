@@ -18,7 +18,6 @@ import { dataToSpec } from '../utils/data';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
-import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
@@ -87,7 +86,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   } = methods;
 
   const repoName = watch('repositoryName');
-  const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
+  const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -207,6 +206,10 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   };
 
   const isNextButtonDisabled = () => {
+    // Do not disable the connect step button
+    if (activeStep === 'connection') {
+      return false;
+    }
     if (activeStep === 'synchronize') {
       return stepStatusInfo.status !== 'success';
     }
@@ -228,13 +231,9 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            <RequestErrorAlert
-              request={saveRequest}
-              title={t(
-                'provisioning.wizard-content.title-repository-verification-failed',
-                'Repository verification failed'
-              )}
-            />
+            {stepStatusInfo.status === 'error' && (
+              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
+            )}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
@@ -252,16 +251,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               {activeStep === 'finish' && <FinishStep />}
             </div>
 
-            {stepStatusInfo.status === 'error' && (
-              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
-            )}
-
             <Stack gap={2} justifyContent="flex-end">
-              <Button
-                variant={stepStatusInfo.status === 'error' ? 'primary' : 'secondary'}
-                onClick={handleCancel}
-                disabled={isSubmitting || isCancelling}
-              >
+              <Button variant={'secondary'} onClick={handleCancel} disabled={isSubmitting || isCancelling}>
                 {isCancelling
                   ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
                   : t('provisioning.wizard-content.button-cancel', 'Cancel')}
