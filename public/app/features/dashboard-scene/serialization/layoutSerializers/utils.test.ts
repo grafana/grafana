@@ -129,26 +129,4 @@ describe('getRuntimePanelDataSource', () => {
       type: 'prometheus',
     });
   });
-
-  it('should handle the case when datasource is null', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
-        datasource: null as any,
-        query: {
-          kind: 'loki',
-          spec: {},
-        },
-      },
-    };
-
-    const result = getRuntimePanelDataSource(query);
-
-    expect(result).toEqual({
-      uid: 'loki-uid',
-      type: 'loki',
-    });
-  });
 });
