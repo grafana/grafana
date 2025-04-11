@@ -119,7 +119,7 @@ export function TableCellNG(props: TableCellNGProps) {
     default:
       // Handle auto cell type detection
       if (field.type === FieldType.geo) {
-        cell = <JSONCell {...commonProps} />;
+        cell = <></>;
       } else if (field.type === FieldType.frame) {
         const firstValue = field.values[0];
         if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
@@ -134,8 +134,6 @@ export function TableCellNG(props: TableCellNGProps) {
       }
       break;
   }
-
-  const isJSONCell = cell instanceof JSONCell;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -191,7 +189,10 @@ export function TableCellNG(props: TableCellNGProps) {
               onClick={() => {
                 setContextMenuProps({
                   value: String(value ?? ''),
-                  mode: isJSONCell ? TableCellInspectorMode.code : TableCellInspectorMode.text,
+                  mode:
+                    cellType === TableCellDisplayMode.JSONView
+                      ? TableCellInspectorMode.code
+                      : TableCellInspectorMode.text,
                 });
                 setIsInspecting(true);
               }}
