@@ -135,7 +135,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.bootData.user.locale);
+      setLocale(config.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
