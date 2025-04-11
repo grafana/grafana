@@ -142,7 +142,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 
 	// Make sure the repo can read and validate the file
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "invalid-dashboard-schema.json")
-	status := utils.RequireApiErrorStatus(t, err, metav1.StatusReasonBadRequest, http.StatusBadRequest)
+	status := helper.RequireApiErrorStatus(err, metav1.StatusReasonBadRequest, http.StatusBadRequest)
 	require.Equal(t, status.Message, "Dry run failed: Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	const invalidSchemaUid = "invalid-schema-uid"

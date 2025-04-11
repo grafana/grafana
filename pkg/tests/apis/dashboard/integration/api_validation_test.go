@@ -296,7 +296,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					resourceClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, tc.resourceInfo.GroupVersionResource())
 					createdDashboard, err := resourceClient.Resource.Create(context.Background(), tc.testObject, v1.CreateOptions{})
 					if tc.expectSpecErr {
-						utils.RequireApiErrorStatus(t, err, v1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+						ctx.Helper.RequireApiErrorStatus(err, v1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 					} else {
 						require.NoError(t, err)
 						require.NotNil(t, createdDashboard)
