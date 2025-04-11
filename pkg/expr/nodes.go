@@ -103,7 +103,7 @@ func (gn *CMDNode) NeedsVars() []string {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, now, vars, s.tracer)
+	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
 func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, sqlExpressionCellLimit int64) (*CMDNode, error) {
@@ -320,7 +320,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
-				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
 			resp, err := s.dataService.QueryData(ctx, req)
@@ -395,7 +395,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
-		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
 	resp, err := s.dataService.QueryData(ctx, req)

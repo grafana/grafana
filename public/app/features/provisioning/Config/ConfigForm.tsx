@@ -39,13 +39,27 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       path: 'grafana/',
       sync: {
         enabled: false,
-        target: 'folder',
+        target: 'instance',
         intervalSeconds: 60,
       },
     };
   }
   return specToData(repository);
 }
+
+const getOptions = () => {
+  const typeOptions = [
+    { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
+    { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
+  ];
+
+  const targetOptions = [
+    { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
+    { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+  ];
+
+  return [typeOptions, targetOptions];
+};
 
 export interface ConfigFormProps {
   data?: Repository;
@@ -66,22 +80,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-
-  const typeOptions = useMemo(
-    () => [
-      { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
-      { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
-    ],
-    []
-  );
-
-  const targetOptions = useMemo(
-    () => [
-      { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
-      { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
-    ],
-    []
-  );
+  const [typeOptions, targetOptions] = useMemo(() => getOptions(), []);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -93,14 +93,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
-  const onSubmit = (form: RepositoryFormData) => {
+  const onSubmit = async (form: RepositoryFormData) => {
+    setIsLoading(true);
     const spec = dataToSpec(form);
     if (spec.github) {
       spec.github.token = form.token || data?.spec?.github?.token;
       // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
       spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
     }
-    submitData(spec);
+    await submitData(spec);
+    setIsLoading(false);
   };
 
   // NOTE: We do not want the lint option to be listed.
@@ -202,7 +204,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             label={t('provisioning.config-form.label-path', 'Path')}
             description={t('provisioning.config-form.description-path', 'Path to a subdirectory in the Git repository')}
           >
-            <Input {...register('path')} placeholder={t('provisioning.config-form.placeholder-path', 'grafana/')} />
+            <Input {...register('path')} />
           </Field>
         </>
       )}
@@ -303,8 +305,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </ControlledCollapse>
 
       <Stack gap={2}>
-        <Button type={'submit'} disabled={request.isLoading}>
-          {request.isLoading
+        <Button type={'submit'} disabled={isLoading}>
+          {isLoading
             ? t('provisioning.config-form.button-saving', 'Saving...')
             : t('provisioning.config-form.button-save', 'Save')}
         </Button>

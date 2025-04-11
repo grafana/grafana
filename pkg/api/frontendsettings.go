@@ -551,7 +551,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			dsDTO.Database = ds.Database
 		}
 
-		if ds.Type == datasources.DS_PROMETHEUS {
+		if ds.Type == datasources.DS_PROMETHEUS || ds.Type == datasources.DS_AMAZON_PROMETHEUS || ds.Type == datasources.DS_AZURE_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			ds.JsonData.Set("directUrl", ds.URL)
 		}

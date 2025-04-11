@@ -725,10 +725,6 @@ export interface FeatureToggles {
   */
   appPlatformGrpcClientAuth?: boolean;
   /**
-  * Enable the app sidecar feature that allows rendering 2 apps at the same time
-  */
-  appSidecar?: boolean;
-  /**
   * Enable the groupsync extension for managing Group Attribute Sync feature
   */
   groupAttributeSync?: boolean;
@@ -932,6 +928,7 @@ export interface FeatureToggles {
   newLogsPanel?: boolean;
   /**
   * Enables the temporary themes for GrafanaCon
+  * @default true
   */
   grafanaconThemes?: boolean;
   /**
