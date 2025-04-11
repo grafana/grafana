@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
+// import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import {
   CellColors,
@@ -78,52 +79,31 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Common props for all cells
+  const commonProps = {
+    value,
+    field,
+    rowIdx,
+    justifyContent,
+  };
+
   // Get the correct cell type
   let cell: ReactNode = null;
   switch (cellType) {
     case TableCellDisplayMode.Sparkline:
-      cell = (
-        <SparklineCell
-          value={value}
-          field={field}
-          theme={theme}
-          timeRange={timeRange}
-          width={divWidth}
-          rowIdx={rowIdx}
-          justifyContent={justifyContent}
-        />
-      );
+      cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
       break;
     case TableCellDisplayMode.Gauge:
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = (
-        <BarGaugeCell
-          value={value}
-          field={field}
-          theme={theme}
-          timeRange={timeRange}
-          height={height}
-          width={divWidth}
-          rowIdx={rowIdx}
-        />
-      );
+      cell = <BarGaugeCell {...commonProps} theme={theme} timeRange={timeRange} height={height} width={divWidth} />;
       break;
     case TableCellDisplayMode.Image:
-      cell = (
-        <ImageCell
-          cellOptions={cellOptions}
-          field={field}
-          height={height}
-          justifyContent={justifyContent}
-          value={value}
-          rowIdx={rowIdx}
-        />
-      );
+      cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} />;
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
+      cell = <JSONCell {...commonProps} />;
       break;
     case TableCellDisplayMode.DataLinks:
       cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
@@ -137,15 +117,23 @@ export function TableCellNG(props: TableCellNGProps) {
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = (
-        <AutoCell
-          value={value}
-          field={field}
-          justifyContent={justifyContent}
-          rowIdx={rowIdx}
-          cellOptions={cellOptions}
-        />
-      );
+      // Handle auto cell type detection
+      if (field.type === FieldType.geo) {
+        cell = <></>;
+        // cell = <GeoCell tableStyles={styles} cellProps={props} field={field} innerWidth={divWidth} rowIdx={rowIdx} />;
+      } else if (field.type === FieldType.frame) {
+        const firstValue = field.values[0];
+        if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+          cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+        } else {
+          cell = <JSONCell {...commonProps} />;
+        }
+      } else if (field.type === FieldType.other) {
+        cell = <JSONCell {...commonProps} />;
+      } else {
+        cell = <AutoCell {...commonProps} cellOptions={cellOptions} />;
+      }
+      break;
   }
 
   const handleMouseEnter = () => {
