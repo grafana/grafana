@@ -9,9 +9,7 @@ import (
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -251,12 +249,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					},
 				},
 				{
-					name:          "v1alpha1 dashboard with wrong spec should throw on v1",
-					resourceInfo:  dashboardv1alpha1.DashboardResourceInfo,
+					name:          "v1 dashboard with wrong spec should throw on v1",
+					resourceInfo:  dashboardv1.DashboardResourceInfo,
 					expectSpecErr: true,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardv1alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardv1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",
@@ -756,7 +754,7 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 
 // getDashboardGVR returns the dashboard GroupVersionResource
 func getDashboardGVR() schema.GroupVersionResource {
-	return dashboardv1alpha1.DashboardResourceInfo.GroupVersionResource()
+	return dashboardv1.DashboardResourceInfo.GroupVersionResource()
 }
 
 // getFolderGVR returns the folder GroupVersionResource
@@ -793,8 +791,8 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 
 	folderObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": folders.FolderResourceInfo.GroupVersion().String(),
-			"kind":       folders.FolderResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": folderv1.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folderv1.FolderResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
