@@ -182,7 +182,7 @@ func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataRespons
 }
 
 func isAllFrameVectors(datasourceType string, frames data.Frames) bool {
-	if datasourceType != datasources.DS_PROMETHEUS {
+	if datasourceType != datasources.DS_PROMETHEUS && datasourceType != datasources.DS_AMAZON_PROMETHEUS && datasourceType != datasources.DS_AZURE_PROMETHEUS {
 		return false
 	}
 	allVector := false

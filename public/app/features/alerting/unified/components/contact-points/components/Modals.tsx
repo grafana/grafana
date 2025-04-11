@@ -94,7 +94,7 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
     onDismiss={onDismiss}
     closeOnBackdropClick={true}
     closeOnEscape={true}
-    title={'Something went wrong'}
+    title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
   >
     <p>
       <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">

@@ -100,9 +100,10 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, gro
 	for _, fieldName := range fieldNames {
 		newFields = append(newFields, data.NewField(fieldName, nil, fieldValues[fieldName]))
 
-		if fieldName == "@timestamp" {
+		switch fieldName {
+		case "@timestamp":
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{DisplayName: "Time"})
-		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
+		case logStreamIdentifierInternal, logIdentifierInternal:
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]any{

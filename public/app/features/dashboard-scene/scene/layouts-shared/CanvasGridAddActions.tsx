@@ -12,6 +12,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { useClipboardState } from './useClipboardState';
 import { ungroupLayout } from './utils';
 
 export interface Props {
@@ -20,6 +21,7 @@ export interface Props {
 
 export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getStyles);
+  const { hasCopiedPanel } = useClipboardState();
 
   return (
     <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
@@ -55,8 +57,19 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>
-      {}
       {renderUngroupAction(layoutManager)}
+      {hasCopiedPanel && layoutManager.pastePanel && (
+        <Button
+          variant="primary"
+          fill="text"
+          icon="clipboard-alt"
+          onClick={() => {
+            layoutManager.pastePanel?.();
+          }}
+        >
+          <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
+        </Button>
+      )}
     </div>
   );
 }
