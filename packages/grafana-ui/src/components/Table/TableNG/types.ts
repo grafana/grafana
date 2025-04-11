@@ -186,17 +186,16 @@ export interface BarGaugeCellProps {
   timeRange: TimeRange;
 }
 
-export interface ImageCellProps {
+export interface ImageCellProps extends ActionCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
-  actions?: ActionModel[];
 }
 
-export interface JSONCellProps {
+export interface JSONCellProps extends ActionCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
@@ -218,13 +217,12 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps {
+export interface AutoCellProps extends ActionCellProps {
   value: TableCellValue;
   field: Field;
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   cellOptions: TableCellOptions;
-  actions?: ActionModel[];
 }
 
 // Comparator for sorting table values

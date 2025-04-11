@@ -124,7 +124,7 @@ export function TableCellNG(props: TableCellNGProps) {
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} actions={actions} />;
       break;
     case TableCellDisplayMode.DataLinks:
       cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
