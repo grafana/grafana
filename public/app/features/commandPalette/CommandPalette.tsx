@@ -2,28 +2,26 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import {
-  KBarAnimator,
-  KBarPortal,
-  KBarPositioner,
-  KBarSearch,
-  VisualState,
-  useRegisterActions,
-  useKBar,
-  ActionImpl,
-} from 'kbar';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, Icon, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { getModKey } from '../../core/utils/browser';
+
 import { KBarResults } from './KBarResults';
+import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import useActions from './actions/useActions';
+import {
+  useRegisterRecentDashboardsActions,
+  useRegisterScopesActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -31,13 +29,17 @@ export function CommandPalette() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery } = useKBar((state) => ({
+  const { query, showing, searchQuery, currentRootActionId, actions } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
+    currentRootActionId: state.currentRootActionId,
+    actions: state.actions,
   }));
 
-  const actions = useActions(searchQuery);
-  useRegisterActions(actions, [actions]);
+  useRegisterStaticActions();
+  useRegisterRecentDashboardsActions(searchQuery);
+  const { applyChanges } = useRegisterScopesActions(searchQuery, currentRootActionId);
+
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +55,24 @@ export function CommandPalette() {
     showing && reportInteraction('command_palette_opened');
   }, [showing]);
 
-  return actions.length > 0 ? (
+  const ancestorActions = currentRootActionId
+    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
+    : [];
+
+  useEffect(() => {
+    function handler(event: KeyboardEvent) {
+      if (applyChanges && event.key === 'Enter' && event.metaKey) {
+        event.preventDefault();
+        applyChanges();
+        query.toggle();
+      }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [applyChanges, query]);
+
+  // console.log('ancestorActions', ancestorActions);
+  return (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
@@ -61,10 +80,24 @@ export function CommandPalette() {
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
                 <Icon name="search" size="md" />
+                {ancestorActions.map((action) => {
+                  return <span className={styles.ancestorsPills}>{action.name}</span>;
+                })}
                 <KBarSearch
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
+                {applyChanges && (
+                  <Button
+                    onClick={() => {
+                      applyChanges();
+                      query.toggle();
+                    }}
+                  >
+                    Apply&nbsp;
+                    <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
+                  </Button>
+                )}
                 <div className={styles.loadingBarContainer}>
                   {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
                 </div>
@@ -77,7 +110,7 @@ export function CommandPalette() {
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>
-  ) : null;
+  );
 }
 
 interface RenderResultsProps {
@@ -234,6 +267,20 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       paddingBottom: theme.spacing(1),
       borderTop: 'none',
       marginTop: 0,
+    }),
+    ancestorsPills: css({
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      border: `1px solid ${theme.colors.background.secondary}`,
+      whiteSpace: 'nowrap',
     }),
   };
 };

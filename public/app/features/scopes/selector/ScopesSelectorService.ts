@@ -225,6 +225,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ opened: false });
     this.setNewScopes();
   };
+
+  public apply = () => {
+    this.setNewScopes();
+  };
 }
 
 /**
