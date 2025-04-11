@@ -2419,6 +2419,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "Link to Advisor",
+      "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
+      "go-to-advisor": "Go to Advisor"
+    },
     "connect-data": {
       "category-header-label": "Data sources",
       "empty-message": "No results matching your query were found",
@@ -2429,11 +2434,6 @@
       "aria-label-link-to-connections": "Link to Connections",
       "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the Connections page, accessible from the main menu.",
       "go-to-connections": "Go to connections"
-    },
-    "advisor-redirect-notice": {
-      "aria-label-link-to-advisor": "Link to Advisor",
-      "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
-      "go-to-advisor": "Go to Advisor"
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
