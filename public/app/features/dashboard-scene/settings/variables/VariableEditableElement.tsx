@@ -166,15 +166,14 @@ function VariableHideInput({ variable }: VariableInputProps) {
 function useVariableTypeCategory(variable: SceneVariable) {
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
+    const categoryName = t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
+      type: variableEditorDef.name,
+    });
 
     const category = new OptionsPaneCategoryDescriptor({
-      renderTitle: () => (
-        <Stack direction="row" gap={1} alignItems="center">
-          <div>{variableEditorDef.name} options</div>
-        </Stack>
-      ),
-      title: 'Type',
+      title: categoryName,
       id: 'variable-type',
+      isOpenDefault: true,
     });
 
     if (variableEditorDef.getOptions) {

@@ -2833,6 +2833,10 @@
         }
       },
       "variable": {
+        "custom-options": {
+          "values": "Values separated by comma",
+          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+        },
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "label": "Label",
@@ -2849,9 +2853,9 @@
           "include-all": "Include All option",
           "include-all-description": "Enables an option to include all values",
           "multi-value": "Multi-value",
-          "multi-value-description": "Enables multiple values to be selected at the same time"
+          "multi-value-description": "Multiple values can be selected at the same time"
         },
-        "type": "Type"
+        "type-category": "{{type}} options"
       },
       "variables": {
         "add-variable": "Add variable",

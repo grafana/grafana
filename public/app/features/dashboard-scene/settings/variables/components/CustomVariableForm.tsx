@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { TextArea } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { VariableLegend } from '../components/VariableLegend';
@@ -79,7 +79,7 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
 
   return [
     new OptionsPaneItemDescriptor({
-      title: 'Values separated by comma',
+      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
       render: () => <ValuesTextField variable={variable} />,
     }),
   ];
@@ -98,7 +98,10 @@ function ValuesTextField({ variable }: { variable: CustomVariable }) {
       rows={2}
       defaultValue={query}
       onBlur={onBlur}
-      placeholder={'1, 10, mykey : myvalue, myvalue, escaped\,value'}
+      placeholder={t(
+        'dashboard.edit-pane.variable.custom-options.values-placeholder',
+        '1, 10, mykey : myvalue, myvalue, escaped\,value'
+      )}
       required
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
     />
