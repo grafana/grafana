@@ -77,17 +77,18 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		GrafanaBaseURL: baseURL,
 	}
 
-	if e.render != nil {
-		if !e.render.IsAvailable(ctx) {
-			info.MissingImageRenderer = true
-		}
-
-		// TODO: Check the setting is enabled or not
+	var shouldRender bool
+	switch {
+	case e.render == nil:
+		shouldRender = false
+	case !e.render.IsAvailable(ctx):
+		info.MissingImageRenderer = true
+		shouldRender = false
+	case len(changes) > 1 || !cfg.Spec.GitHub.GenerateDashboardPreviews:
 		// Only render images when there is just one change
-		if len(changes) > 1 {
-			// TODO: do this one better
-			e.render = nil
-		}
+		shouldRender = false
+	default:
+		shouldRender = true
 	}
 
 	logger := logging.FromContext(ctx)
@@ -107,7 +108,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		}
 
 		// If everything applied OK, then render screenshots
-		if e.render != nil && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
+		if shouldRender && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
 			progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
 			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, e.render); err != nil {
 				info.MissingImageRenderer = true
