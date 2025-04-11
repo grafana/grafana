@@ -191,10 +191,6 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
-	// FlagTraceQLStreaming
-	// Enables response streaming of TraceQL queries of the Tempo data source
-	FlagTraceQLStreaming = "traceQLStreaming"
-
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
 	FlagDatasourceAPIServers = "datasourceAPIServers"
@@ -456,7 +452,7 @@ const (
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagSecretsManagementAppPlatform
@@ -658,10 +654,6 @@ const (
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
-
-	// FlagAppSidecar
-	// Enable the app sidecar feature that allows rendering 2 apps at the same time
-	FlagAppSidecar = "appSidecar"
 
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
@@ -939,7 +931,15 @@ const (
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
 
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
+
 	// FlagLogsPanelControls
 	// Enables a control component for the logs panel in Explore
 	FlagLogsPanelControls = "logsPanelControls"
+
+	// FlagMetricsFromProfiles
+	// Enables creating metrics from profiles and storing them as recording rules
+	FlagMetricsFromProfiles = "metricsFromProfiles"
 )

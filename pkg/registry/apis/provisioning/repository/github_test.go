@@ -1,6 +1,7 @@
 package repository
 
 import (
+	context "context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,10 +9,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
 func TestIsValidGitBranchName(t *testing.T) {
@@ -144,6 +147,104 @@ func TestParseWebhooks(t *testing.T) {
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
 			require.Equal(t, tt.expected.Job, rsp.Job)
+		})
+	}
+}
+
+func TestReadTree(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		tree     []pgh.RepositoryContent
+		expected []FileTreeEntry
+	}{
+		{name: "empty tree", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
+		{name: "single file", tree: func() []pgh.RepositoryContent {
+			content := pgh.NewMockRepositoryContent(t)
+			content.EXPECT().GetPath().Return("file.txt")
+			content.EXPECT().GetSize().Return(int64(100))
+			content.EXPECT().GetSHA().Return("abc123")
+			content.EXPECT().IsDirectory().Return(false)
+			return []pgh.RepositoryContent{content}
+		}(), expected: []FileTreeEntry{
+			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
+		}},
+		{name: "single directory", tree: func() []pgh.RepositoryContent {
+			content := pgh.NewMockRepositoryContent(t)
+			content.EXPECT().GetPath().Return("dir")
+			content.EXPECT().IsDirectory().Return(true)
+			content.EXPECT().GetSize().Return(int64(0))
+			content.EXPECT().GetSHA().Return("")
+
+			return []pgh.RepositoryContent{content}
+		}(), expected: []FileTreeEntry{
+			{Path: "dir/", Blob: false},
+		}},
+		{name: "mixed content", tree: func() []pgh.RepositoryContent {
+			file1 := pgh.NewMockRepositoryContent(t)
+			file1.EXPECT().GetPath().Return("file1.txt")
+			file1.EXPECT().GetSize().Return(int64(100))
+			file1.EXPECT().GetSHA().Return("abc123")
+			file1.EXPECT().IsDirectory().Return(false)
+
+			dir := pgh.NewMockRepositoryContent(t)
+			dir.EXPECT().GetPath().Return("dir")
+			dir.EXPECT().IsDirectory().Return(true)
+			dir.EXPECT().GetSize().Return(int64(0))
+			dir.EXPECT().GetSHA().Return("")
+
+			file2 := pgh.NewMockRepositoryContent(t)
+			file2.EXPECT().GetPath().Return("file2.txt")
+			file2.EXPECT().GetSize().Return(int64(200))
+			file2.EXPECT().GetSHA().Return("def456")
+			file2.EXPECT().IsDirectory().Return(false)
+
+			return []pgh.RepositoryContent{file1, dir, file2}
+		}(), expected: []FileTreeEntry{
+			{Path: "file1.txt", Size: 100, Hash: "abc123", Blob: true},
+			{Path: "dir/", Blob: false},
+			{Path: "file2.txt", Size: 200, Hash: "def456", Blob: true},
+		}},
+		{name: "with path prefix", path: "prefix", tree: func() []pgh.RepositoryContent {
+			file := pgh.NewMockRepositoryContent(t)
+			file.EXPECT().GetPath().Return("file.txt")
+			file.EXPECT().GetSize().Return(int64(100))
+			file.EXPECT().GetSHA().Return("abc123")
+			file.EXPECT().IsDirectory().Return(false)
+
+			dir := pgh.NewMockRepositoryContent(t)
+			dir.EXPECT().GetPath().Return("dir")
+			dir.EXPECT().GetSize().Return(int64(0))
+			dir.EXPECT().GetSHA().Return("")
+			dir.EXPECT().IsDirectory().Return(true)
+
+			return []pgh.RepositoryContent{file, dir}
+		}(), expected: []FileTreeEntry{
+			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
+			{Path: "dir/", Blob: false},
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ghMock := pgh.NewMockClient(t)
+			gh := &githubRepository{
+				owner: "owner",
+				repo:  "repo",
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Path: tt.path,
+						},
+					},
+				},
+				gh: ghMock,
+			}
+
+			ghMock.On("GetTree", mock.Anything, "owner", "repo", tt.path, "some-ref", true).Return(tt.tree, false, nil)
+			tree, err := gh.ReadTree(context.Background(), "some-ref")
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, tree)
 		})
 	}
 }

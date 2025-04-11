@@ -8,7 +8,13 @@ import { useStyles2 } from '../../../../themes';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { CellColors, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellNGProps } from '../types';
+import {
+  CellColors,
+  CustomCellRendererProps,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableCellNGProps,
+} from '../types';
 import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
@@ -125,6 +131,10 @@ export function TableCellNG(props: TableCellNGProps) {
     case TableCellDisplayMode.Actions:
       cell = <ActionsCell actions={actions} />;
       break;
+    case TableCellDisplayMode.Custom:
+      const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+      cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
+      break;
     case TableCellDisplayMode.Auto:
     default:
       cell = (
@@ -227,6 +237,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
+    '&:hover': { background: color.bgHoverColor },
   }),
   cellActions: css({
     display: 'flex',
