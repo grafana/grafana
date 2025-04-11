@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
@@ -119,8 +119,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			},
 		},
 	}
-	obj.SetAPIVersion(v0alpha1.APIVERSION)
-	obj.SetKind(v0alpha1.FolderResourceInfo.GroupVersionKind().Kind)
+	obj.SetAPIVersion(folders.APIVERSION)
+	obj.SetKind(folders.FolderResourceInfo.GroupVersionKind().Kind)
 	obj.SetNamespace(cfg.GetNamespace())
 	obj.SetName(folder.ID)
 

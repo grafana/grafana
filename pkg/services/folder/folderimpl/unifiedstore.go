@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -452,7 +452,7 @@ func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
+	ds, err := folderv1.UnstructuredToDescendantCounts(u)
 	if err != nil {
 		return nil, err
 	}
