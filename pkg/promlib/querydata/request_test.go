@@ -530,7 +530,11 @@ func (p *fakeHttpClientProvider) setResponse(rangeRes *http.Response, exemplarRe
 	// Create a proper clone manually ensuring we have a fresh response
 	if exemplarRes != nil {
 		bodyBytes, _ := io.ReadAll(exemplarRes.Body)
-		exemplarRes.Body.Close() // Close the original
+		err := exemplarRes.Body.Close() // Close the original
+		if err != nil {
+			fmt.Println(fmt.Errorf("exemplarRes body close error: %v", err))
+			return
+		}
 
 		// Create a new request if the original has one
 		var newRequest *http.Request
