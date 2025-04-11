@@ -8,10 +8,9 @@ import {
   PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
-import { DEFAULT_LANGUAGE } from '@grafana/data/unstable';
+import { addResourceBundle, DEFAULT_LANGUAGE, getResolvedLanguage } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getI18next } from 'app/core/internationalization';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -102,7 +101,7 @@ export async function importPluginModule({
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
   if (config.featureToggles.localizationForPlugins && translations) {
     await addTranslationsToI18n({
-      resolvedLanguage: getI18next().resolvedLanguage ?? DEFAULT_LANGUAGE,
+      resolvedLanguage: getResolvedLanguage(),
       fallbackLanguage: DEFAULT_LANGUAGE,
       pluginId,
       translations,
@@ -270,7 +269,7 @@ export async function addTranslationsToI18n({
     }
 
     const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
-    getI18next().addResourceBundle(language, pluginId, module.default, undefined, true);
+    addResourceBundle(language, pluginId, module.default);
   } catch (error) {
     console.warn(`Could not load translation for plugin ${pluginId}`, {
       resolvedLanguage,
