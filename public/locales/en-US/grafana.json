@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "Disable",
+      "edit-configuration": "Edit configuration",
       "enable": "Enable",
       "not-receiving-grafana-managed-alerts": "Not receiving Grafana managed alerts",
       "text-activation-in-progress": "Activation in progress",
       "text-failed-to-adopt-alertmanager": "Failed to adopt Alertmanager",
       "text-inconclusive": "Inconclusive",
       "text-receiving-grafanamanaged-alerts": "Receiving Grafana-managed alerts",
-      "title-alerting-settings": "Alerting settings"
+      "title-alerting-settings": "Alerting settings",
+      "view-configuration": "View configuration"
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
+      "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "reset": "Reset",
+      "reset-confirmation": "Are you sure you want to reset configuration for \"{{alertmanagerName}}\"? Contact points and notification policies will be reset to their defaults.",
       "resetting-configuration-might-while": "Resetting configuration, this might take a while.",
       "title-failed-to-load-alertmanager-configuration": "Failed to load Alertmanager configuration",
       "title-oops-something-went-wrong": "Oops, something went wrong",
@@ -435,6 +440,8 @@
         "restore": "Restore",
         "text-latest": "Latest"
       },
+      "loading": "Loading...",
+      "no-previous-configurations": "No previous configurations",
       "this-might-take-a-while": "This might take a while...",
       "title-failed-to-load-configuration-history": "Failed to load configuration history",
       "title-restore-version": "Restore version",
@@ -2075,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "Grafana built-in Alertmanager",
         "label-json-model": "JSON Model",
-        "label-versions": "Versions"
+        "label-versions": "Versions",
+        "title-edit-the-alertmanager-configuration": "Edit Alertmanager configuration",
+        "title-view-the-alertmanager-configuration": "View Alertmanager configuration"
       }
     },
     "use-edit-policy-modal": {
