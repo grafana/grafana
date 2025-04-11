@@ -22,6 +22,7 @@ import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
+import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
@@ -119,7 +120,7 @@ export function TableCellNG(props: TableCellNGProps) {
     default:
       // Handle auto cell type detection
       if (field.type === FieldType.geo) {
-        cell = <></>;
+        cell = <GeoCell {...commonProps} height={height} />;
       } else if (field.type === FieldType.frame) {
         const firstValue = field.values[0];
         if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
