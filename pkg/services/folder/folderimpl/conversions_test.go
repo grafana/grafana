@@ -18,7 +18,7 @@ func TestFolderConversions(t *testing.T) {
 	input := &unstructured.Unstructured{}
 	err := input.UnmarshalJSON([]byte(`{
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v0alpha1",
+      "apiVersion": "folder.grafana.app/v1",
       "metadata": {
         "name": "be79sztagf20wd",
         "namespace": "default",
@@ -86,10 +86,10 @@ func TestFolderConversions(t *testing.T) {
 func TestFolderListConversions(t *testing.T) {
 	input := &unstructured.UnstructuredList{}
 	err := input.UnmarshalJSON([]byte(`{
-	  "apiVersion": "folder.grafana.app/v0alpha1",
+	  "apiVersion": "folder.grafana.app/v1",
 	  "items": [
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -113,7 +113,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -135,7 +135,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -158,7 +158,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -180,7 +180,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -203,7 +203,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {},
