@@ -7,8 +7,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/google/uuid"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -286,26 +284,16 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 }
 
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
-	auth, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
-		Group:     FolderResource.Group,
-		Resource:  FolderResource.Resource,
-		Namespace: r.repo.Config().GetNamespace(),
-		Verb:      utils.VerbCreate,
-
-		// TODO: Currently this checks if you can create a new folder in root
-		// Ideally we should check the path and use the explicit parent and new id
-		Name: "f" + uuid.NewString(),
-	})
+	id, err := identity.GetRequester(ctx)
 	if err != nil {
-		return err
+		return apierrors.NewUnauthorized(err.Error())
 	}
-	if !rsp.Allowed {
-		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-			fmt.Errorf("unable to create folder resource"))
+
+	// Simple role based access for now
+	if id.GetOrgRole().Includes(identity.RoleEditor) {
+		return nil
 	}
-	return nil
+
+	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+		fmt.Errorf("must be admin or editor to access folders with provisioning"))
 }
