@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"slices"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -32,7 +31,7 @@ func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestRes
 		}
 		for i, err := range errors {
 			rsp.Errors[i] = provisioning.ErrorDetails{
-				Type:   v1.CauseType(err.Type),
+				Type:   metav1.CauseType(err.Type),
 				Field:  err.Field,
 				Detail: err.Detail,
 			}
@@ -97,24 +96,9 @@ func fromFieldError(err *field.Error) *provisioning.TestResults {
 		Code:    http.StatusBadRequest,
 		Success: false,
 		Errors: []provisioning.ErrorDetails{{
-			Type:   v1.CauseType(err.Type),
+			Type:   metav1.CauseType(err.Type),
 			Field:  err.Field,
 			Detail: err.Detail,
-		}},
-	}
-}
-
-func fromError(err error, code int) *provisioning.TestResults {
-	statusErr, ok := err.(apierrors.APIStatus)
-	if ok {
-		code = int(statusErr.Status().Code)
-	}
-	return &provisioning.TestResults{
-		Code:    code,
-		Success: false,
-		Errors: []provisioning.ErrorDetails{{
-			Type:   v1.CauseTypeInternal,
-			Detail: err.Error(),
 		}},
 	}
 }
