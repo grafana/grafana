@@ -195,11 +195,11 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 }
 
 func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
-	const GmsNotImplemented = "STDDEV" // not implemented in go-mysql-server as of 2025-03-18
+	const GmsNotImplemented = "TRUNCATE" // not implemented in go-mysql-server as of 2025-04-11
 
 	db := DB{}
 
-	query := `SELECT ` + GmsNotImplemented + `(1);`
+	query := `SELECT ` + GmsNotImplemented + `(123.456, 2);`
 
 	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
