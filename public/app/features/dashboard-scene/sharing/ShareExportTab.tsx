@@ -32,13 +32,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     });
   }
 
-  public getExportVersion = () => {
-    const dashboardScene = getDashboardSceneFor(this);
-    const initialSaveModel = dashboardScene.getInitialSaveModel();
-    const isV2Dashboard = initialSaveModel && 'elements' in initialSaveModel;
-    return isV2Dashboard ? 'v2' : 'v1';
-  };
-
   public getTabLabel() {
     return t('share-modal.tab-title.export', 'Export');
   }
