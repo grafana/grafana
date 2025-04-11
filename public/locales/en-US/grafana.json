@@ -6016,8 +6016,7 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-button": "Invite",
-      "invite-tooltip": "Invite new member"
+      "invite-button": "Invite new member"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
