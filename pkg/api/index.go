@@ -23,6 +23,25 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type URLPrefs struct {
+	Language string
+	Locale   string
+	Theme    string
+}
+
+// URL prefs take precedence over any saved user preferences
+func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
+	language := c.Query("lang")
+	theme := c.Query("theme")
+	locale := c.Query("locale")
+
+	return URLPrefs{
+		Language: language,
+		Locale:   locale,
+		Theme:    theme,
+	}
+}
+
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 	c, span := hs.injectSpan(c, "api.setIndexViewData")
 	defer span.End()
@@ -52,8 +71,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
 	locale := "en-US" // default to en-US formatting, but use the accept-lang header or user's preference
 	language := ""    // frontend will set the default language
+	urlPrefs := getURLPrefs(c)
 
-	if prefs.JSONData.Language != "" {
+	if urlPrefs.Language != "" {
+		language = urlPrefs.Language
+	} else if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
 
@@ -63,7 +85,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		if prefs.JSONData.Locale != "" {
+		if urlPrefs.Locale != "" {
+			locale = urlPrefs.Locale
+		} else if prefs.JSONData.Locale != "" {
 			locale = prefs.JSONData.Locale
 		}
 	}
@@ -88,7 +112,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
 	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
