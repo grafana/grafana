@@ -7,6 +7,7 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
@@ -63,7 +64,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const origDashboard = scene.serializer.getSaveModel(scene);
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
 
-    if ('elements' in origDashboard) {
+    if (isDashboardV2Spec(origDashboard)) {
       return {
         json: exportable,
         hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),

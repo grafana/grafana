@@ -203,16 +203,14 @@ export class V1DashboardSerializer
     return this.initialSaveModel?.snapshot?.originalUrl;
   }
 
-  makeExportableExternally(s: DashboardScene) {
+  async makeExportableExternally(s: DashboardScene) {
     const saveModel = this.getSaveModel(s);
     const oldModel = new DashboardModel(saveModel, undefined, {
       getVariablesFromState: () => {
         return getVariablesCompatibility(window.__grafanaSceneContext);
       },
     });
-    return makeExportableV1(oldModel).then((dashboard) => {
-      return dashboard;
-    });
+    return await makeExportableV1(oldModel);
   }
 }
 
@@ -410,8 +408,8 @@ export class V2DashboardSerializer
     return this.metadata?.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl];
   }
 
-  makeExportableExternally(s: DashboardScene) {
-    return makeExportableV2(this.getSaveModel(s));
+  async makeExportableExternally(s: DashboardScene) {
+    return await makeExportableV2(this.getSaveModel(s));
   }
 }
 
