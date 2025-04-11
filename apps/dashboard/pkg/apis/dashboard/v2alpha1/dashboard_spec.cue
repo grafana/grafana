@@ -5,12 +5,7 @@
 package v2alpha1
 
 DashboardSpec: {
-<<<<<<< HEAD
 	annotations: [...AnnotationQueryKind] | *[]
-=======
-	// Title of dashboard.
-	annotations: [...AnnotationQueryKind]
->>>>>>> main
 
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -24,20 +19,12 @@ DashboardSpec: {
 	// Whether a dashboard is editable or not.
 	editable?: bool | *true
 
-<<<<<<< HEAD
 	elements: [ElementReference.name]: Element | *{}
-=======
-	elements: [ElementReference.name]: Element
->>>>>>> main
 
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
-<<<<<<< HEAD
 	links: [...DashboardLink] | *[]
-=======
-	links: [...DashboardLink]
->>>>>>> main
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -45,22 +32,14 @@ DashboardSpec: {
 	liveNow?: bool
 
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
-<<<<<<< HEAD
 	preload: bool | *false
-=======
-	preload: bool
->>>>>>> main
 
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: uint16
 
 	// Tags associated with dashboard.
-<<<<<<< HEAD
 	tags: [...string] | *[]
-=======
-	tags: [...string]
->>>>>>> main
 
 	timeSettings: TimeSettingsSpec
 
@@ -68,11 +47,7 @@ DashboardSpec: {
 	title: string
 
 	// Configured template variables.
-<<<<<<< HEAD
 	variables: [...VariableKind] | *[]
-=======
-	variables: [...VariableKind]
->>>>>>> main
 }
 
 // Supported dashboard elements
@@ -113,11 +88,7 @@ AnnotationPanelFilter: {
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-<<<<<<< HEAD
 DashboardCursorSync: "Crosshair" | "Tooltip" | *"Off"
-=======
-DashboardCursorSync: "Off" | "Crosshair" | "Tooltip"
->>>>>>> main
 
 // Links with references to other dashboards or external resources
 DashboardLink: {
@@ -133,11 +104,7 @@ DashboardLink: {
 	// Link URL. Only required/valid if the type is link
 	url?: string
 	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-<<<<<<< HEAD
 	tags: [...string] | *[]
-=======
-	tags: [...string]
->>>>>>> main
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	asDropdown: bool | *false
 	// If true, the link will be opened in a new tab
@@ -502,29 +469,17 @@ TimeSettingsSpec: {
 	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
 	to: string | *"now"
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-<<<<<<< HEAD
 	autoRefresh: string | *"" // v1: refresh
-=======
-	autoRefresh: string // v1: refresh
->>>>>>> main
 	// Interval options available in the refresh picker dropdown.
 	autoRefreshIntervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"] // v1: timepicker.refresh_intervals
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 	quickRanges?: [...TimeRangeOption] // v1: timepicker.quick_ranges , not exposed in the UI
 	// Whether timepicker is visible or not.
-<<<<<<< HEAD
 	hideTimepicker: bool | *false // v1: timepicker.hidden
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	weekStart?: "saturday" | "monday" | "sunday"
 	// The month that the fiscal year starts on. 0 = January, 11 = December
 	fiscalYearStartMonth: int | *0
-=======
-	hideTimepicker: bool // v1: timepicker.hidden
-	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	weekStart?: "saturday" | "monday" | "sunday"
-	// The month that the fiscal year starts on. 0 = January, 11 = December
-	fiscalYearStartMonth: int
->>>>>>> main
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	nowDelay?: string // v1: timepicker.nowDelay
 }
