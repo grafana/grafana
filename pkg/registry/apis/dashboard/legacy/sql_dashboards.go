@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -64,6 +65,7 @@ type dashboardSqlAccess struct {
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
+	log         log.Logger
 }
 
 func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
@@ -79,6 +81,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
 		dashboardSearchClient: *dashboardSearchClient,
+		log:                   log.New("dashboard.legacysql"),
 	}
 }
 
@@ -415,6 +418,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	// v1 should be saved as schema version 41. v0 allows for older versions
 	if strings.HasSuffix(dash.APIVersion, "v1alpha1") && schemaversion.GetSchemaVersion(dash.Spec.Object) < int(schemaversion.LATEST_VERSION) {
 		dash.APIVersion = dashboardv0.VERSION
+
 	}
 
 	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
