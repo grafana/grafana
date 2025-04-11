@@ -16,8 +16,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 
 	"github.com/grafana/authlib/types"
 )
@@ -563,7 +563,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					return err
 				}
 			}
-			return err
+			return iter.Error()
 		})
 		return rv, err
 	})
@@ -683,14 +683,14 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 	case "folders", "folder":
 		return &ResourceKey{
 			Namespace: ns,
-			Group:     folderv0alpha1.GROUP,
-			Resource:  folderv0alpha1.RESOURCE,
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
 		}, nil
 	case "dashboards", "dashboard":
 		return &ResourceKey{
 			Namespace: ns,
-			Group:     dashboardv1alpha1.GROUP,
-			Resource:  dashboardv1alpha1.DASHBOARD_RESOURCE,
+			Group:     dashboardv1.GROUP,
+			Resource:  dashboardv1.DASHBOARD_RESOURCE,
 		}, nil
 
 	// NOT really supported in the dashboard search UI, but useful for manual testing

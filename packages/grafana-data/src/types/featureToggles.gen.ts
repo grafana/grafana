@@ -336,8 +336,21 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   /**
   * Route the folder and dashboard service requests to k8s
+  * @default true
   */
   kubernetesClientDashboardsFolders?: boolean;
+  /**
+  * Disable schema validation for dashboards/v1
+  */
+  dashboardDisableSchemaValidationV1?: boolean;
+  /**
+  * Disable schema validation for dashboards/v2
+  */
+  dashboardDisableSchemaValidationV2?: boolean;
+  /**
+  * Log schema validation errors so they can be analyzed later
+  */
+  dashboardSchemaValidationLogging?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -501,7 +514,7 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
   * @default true
   */
   onPremToCloudMigrations?: boolean;
@@ -725,10 +738,6 @@ export interface FeatureToggles {
   */
   appPlatformGrpcClientAuth?: boolean;
   /**
-  * Enable the app sidecar feature that allows rendering 2 apps at the same time
-  */
-  appSidecar?: boolean;
-  /**
   * Enable the groupsync extension for managing Group Attribute Sync feature
   */
   groupAttributeSync?: boolean;
@@ -932,6 +941,7 @@ export interface FeatureToggles {
   newLogsPanel?: boolean;
   /**
   * Enables the temporary themes for GrafanaCon
+  * @default true
   */
   grafanaconThemes?: boolean;
   /**

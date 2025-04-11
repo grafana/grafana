@@ -117,9 +117,6 @@ const promResponse: PromRulesResponse = {
         interval: 20,
       },
     ],
-    totals: {
-      alerting: 2,
-    },
   },
 };
 const rulerResponse = {
