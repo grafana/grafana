@@ -18,7 +18,7 @@ var (
 	ErrMismatchedHash        = errors.New("the update cannot be applied because the expected and actual hashes are unequal")
 	ErrNoSecret              = errors.New("new webhooks must have a secret")
 	//lint:ignore ST1005 this is not punctuation
-	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:stylecheck
+	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:staticcheck
 	ErrServiceUnavailable      = apierrors.NewServiceUnavailable("github is unavailable")
 	ErrFileTooLarge            = errors.New("file exceeds maximum allowed size")
 	ErrTooManyItems            = errors.New("maximum number of items exceeded")
@@ -29,6 +29,7 @@ const MaxFileSize = 10 * 1024 * 1024 // 10MB in bytes
 
 type ErrRateLimited = github.RateLimitError
 
+//go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
 	// IsAuthenticated checks if the client is authenticated.
 	IsAuthenticated(ctx context.Context) error
@@ -103,6 +104,7 @@ type Client interface {
 	ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error
 }
 
+//go:generate mockery --name RepositoryContent --structname MockRepositoryContent --inpackage --filename mock_repository_content.go --with-expecter
 type RepositoryContent interface {
 	// Returns true if this is a directory, false if it is a file.
 	IsDirectory() bool
@@ -142,6 +144,7 @@ type Commit struct {
 	CreatedAt time.Time
 }
 
+//go:generate mockery --name CommitFile --structname MockCommitFile --inpackage --filename mock_commit_file.go --with-expecter
 type CommitFile interface {
 	GetSHA() string
 	GetFilename() string

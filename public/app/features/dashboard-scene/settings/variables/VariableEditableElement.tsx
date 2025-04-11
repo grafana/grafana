@@ -1,18 +1,19 @@
-import { useMemo } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Combobox, Input, TextArea, Stack, Button } from '@grafana/ui';
+import { Combobox, Input, TextArea, Stack, Button, Field } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { VariableHideSelect } from '../../settings/variables/components/VariableHideSelect';
-import { getVariableTypeSelectOptions } from '../../settings/variables/utils';
+import { getVariableTypeSelectOptions, validateVariableName } from '../../settings/variables/utils';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -23,21 +24,22 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.edit-pane.elements.variable', 'Variable'),
-      icon: 'chart-line',
+      icon: 'dollar-alt',
       instanceName: this.variable.state.name,
+      isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
 
     const options = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard-scene.variable-editor-form.name', 'Name'),
-            popularRank: 1,
-            render: () => <VariableNameInput variable={variable} />,
+            title: '',
+            skipField: true,
+            render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -69,7 +71,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
             render: () => <VariableTypeSelect variable={variable} />,
           })
         );
-    }, [variable]);
+    }, [variable, isNewElement]);
 
     return [options];
   }
@@ -81,15 +83,53 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       set.setState({ variables: set.state.variables.filter((v) => v !== this.variable) });
     }
   }
+
+  public onChangeName(name: string) {
+    this.variable.setState({ name });
+
+    const result = validateVariableName(this.variable, name);
+    if (result.errorMessage) {
+      return result;
+    }
+
+    return;
+  }
 }
 
 interface VariableInputProps {
   variable: SceneVariable;
 }
 
-function VariableNameInput({ variable }: VariableInputProps) {
+function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
   const { name } = variable.useState();
-  return <Input value={name} onChange={(e) => variable.setState({ name: e.currentTarget.value })} />;
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const [nameError, setNameError] = useState<string>();
+  const [validName, setValidName] = useState<string>(variable.state.name);
+
+  const onChange = (e: FormEvent<HTMLInputElement>) => {
+    const result = validateVariableName(variable, e.currentTarget.value);
+    if (result.errorMessage !== nameError) {
+      setNameError(result.errorMessage);
+    } else {
+      setValidName(variable.state.name);
+    }
+
+    variable.setState({ name: e.currentTarget.value });
+  };
+
+  // Restore valid name if bluring while invalid
+  const onBlur = () => {
+    if (nameError) {
+      variable.setState({ name: validName });
+      setNameError(undefined);
+    }
+  };
+
+  return (
+    <Field label={t('dashboard-scene.variable-editor-form.name', 'Name')} invalid={!!nameError} error={nameError}>
+      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
+    </Field>
+  );
 }
 
 function VariableLabelInput({ variable }: VariableInputProps) {
