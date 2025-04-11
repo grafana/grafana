@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,46 +14,46 @@ import (
 func TestSubParent(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *v0alpha1.Folder
-		expected *v0alpha1.FolderInfoList
+		input    *folders.Folder
+		expected *folders.FolderInfoList
 		setuFn   func(*mock.Mock)
 	}{
 		{
 			name: "no parents",
-			input: &v0alpha1.Folder{
+			input: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "test",
 					Annotations: map[string]string{},
 				},
-				Spec: v0alpha1.Spec{
+				Spec: folders.Spec{
 					Title: "some tittle",
 				},
 			},
-			expected: &v0alpha1.FolderInfoList{Items: []v0alpha1.FolderInfo{{Name: "test", Title: "some tittle"}}},
+			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{{Name: "test", Title: "some tittle"}}},
 		},
 		{
 			name: "has a parent",
-			input: &v0alpha1.Folder{
+			input: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "test",
 					Annotations: map[string]string{"grafana.app/folder": "parent-test"},
 				},
-				Spec: v0alpha1.Spec{
+				Spec: folders.Spec{
 					Title: "some tittle",
 				},
 			},
 			setuFn: func(m *mock.Mock) {
-				m.On("Get", context.TODO(), "parent-test", &metav1.GetOptions{}).Return(&v0alpha1.Folder{
+				m.On("Get", context.TODO(), "parent-test", &metav1.GetOptions{}).Return(&folders.Folder{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:        "parent-test",
 						Annotations: map[string]string{},
 					},
-					Spec: v0alpha1.Spec{
+					Spec: folders.Spec{
 						Title: "some other tittle",
 					},
 				}, nil).Once()
 			},
-			expected: &v0alpha1.FolderInfoList{Items: []v0alpha1.FolderInfo{
+			expected: &folders.FolderInfoList{Items: []folders.FolderInfo{
 				{Name: "test", Title: "some tittle", Parent: "parent-test"},
 				{Name: "parent-test", Title: "some other tittle"}},
 			}},

@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -176,8 +176,8 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		Options: &resource.ListOptions{
 			Key: &resource.ResourceKey{
 				Namespace: s.k8sclient.GetNamespace(query.OrgID),
-				Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-				Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+				Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 			},
 			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
@@ -252,8 +252,8 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 
 	folderkey := &resource.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
-		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
 	request := &resource.ResourceSearchRequest{
@@ -308,8 +308,8 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	folderkey := &resource.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
-		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
 	request := &resource.ResourceSearchRequest{

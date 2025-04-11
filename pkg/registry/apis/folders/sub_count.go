@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -22,7 +22,7 @@ var (
 )
 
 func (r *subCountREST) New() runtime.Object {
-	return &v0alpha1.DescendantCounts{}
+	return &folders.DescendantCounts{}
 }
 
 func (r *subCountREST) Destroy() {
@@ -37,7 +37,7 @@ func (r *subCountREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subCountREST) ProducesObject(verb string) interface{} {
-	return &v0alpha1.DescendantCounts{}
+	return &folders.DescendantCounts{}
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -60,11 +60,11 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			responder.Error(err)
 			return
 		}
-		rsp := &v0alpha1.DescendantCounts{
-			Counts: make([]v0alpha1.ResourceStats, len(stats.Stats)),
+		rsp := &folders.DescendantCounts{
+			Counts: make([]folders.ResourceStats, len(stats.Stats)),
 		}
 		for i, v := range stats.Stats {
-			rsp.Counts[i] = v0alpha1.ResourceStats{
+			rsp.Counts[i] = folders.ResourceStats{
 				Group:    v.Group,
 				Resource: v.Resource,
 				Count:    v.Count,

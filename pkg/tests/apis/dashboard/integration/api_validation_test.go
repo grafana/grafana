@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -221,8 +221,8 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with invalid schema", func(t *testing.T) {
 			dashObj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-					"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+					"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+					"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 					"metadata": map[string]interface{}{
 						"generateName": "test-",
 					},
@@ -684,18 +684,18 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 // getDashboardGVR returns the dashboard GroupVersionResource
 func getDashboardGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
-		Group:    dashboardv1alpha1.DashboardResourceInfo.GroupVersion().Group,
-		Version:  dashboardv1alpha1.DashboardResourceInfo.GroupVersion().Version,
-		Resource: dashboardv1alpha1.DashboardResourceInfo.GetName(),
+		Group:    dashboardv1.DashboardResourceInfo.GroupVersion().Group,
+		Version:  dashboardv1.DashboardResourceInfo.GroupVersion().Version,
+		Resource: dashboardv1.DashboardResourceInfo.GetName(),
 	}
 }
 
 // getFolderGVR returns the folder GroupVersionResource
 func getFolderGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
-		Group:    folderv0alpha1.FolderResourceInfo.GroupVersion().Group,
-		Version:  folderv0alpha1.FolderResourceInfo.GroupVersion().Version,
-		Resource: folderv0alpha1.FolderResourceInfo.GetName(),
+		Group:    folders.FolderResourceInfo.GroupVersion().Group,
+		Version:  folders.FolderResourceInfo.GroupVersion().Version,
+		Resource: folders.FolderResourceInfo.GetName(),
 	}
 }
 
@@ -728,8 +728,8 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 
 	folderObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": folderv0alpha1.FolderResourceInfo.GroupVersion().String(),
-			"kind":       folderv0alpha1.FolderResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": folders.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folders.FolderResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
@@ -784,8 +784,8 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 
 	dashObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-",
 				"annotations": map[string]interface{}{

@@ -1,4 +1,4 @@
-apiVersion: folder.grafana.app/v0alpha1
+apiVersion: folder.grafana.app/v1
 kind: Folder
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!

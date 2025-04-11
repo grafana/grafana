@@ -18,9 +18,9 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -118,7 +118,7 @@ func ProvideService(
 		k8sHandler := client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			folderv1.FolderResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
@@ -136,7 +136,7 @@ func ProvideService(
 		dashHandler := client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
+			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,

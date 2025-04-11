@@ -56,7 +56,7 @@ spec:
 
 		// Now try again without a name
 		_, err = parser.Parse(context.Background(), &repository.FileInfo{
-			Data: []byte(`apiVersion: dashboard.grafana.app/v1alpha1
+			Data: []byte(`apiVersion: ` + dashboardV1.APIVERSION + `
 kind: Dashboard
 spec:
   title: Test dashboard

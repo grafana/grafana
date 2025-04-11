@@ -132,7 +132,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 	}
 	dash := &dashboard.Dashboard{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "dashboard.grafana.app/v1alpha1",
+			APIVersion: dashboard.APIVERSION,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-dash",
@@ -170,7 +170,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 		&dashboards.Dashboard{
 			ID:         1234,
 			Version:    2,
-			APIVersion: "dashboard.grafana.app/v1alpha1",
+			APIVersion: dashboard.APIVERSION,
 		}, nil).Once()
 	cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
 	require.NoError(t, err)

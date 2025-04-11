@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,7 +50,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 				store:                &fakeStorage{},
 				cfg:                  cfg,
 			}
-			obj := &v0alpha1.Folder{}
+			obj := &folders.Folder{}
 
 			ctx := request.WithNamespace(context.Background(), "org-2")
 			ctx = identity.WithRequester(ctx, &user.SignedInUser{

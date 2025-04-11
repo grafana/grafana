@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0aplha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -261,7 +261,7 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 			authz := newMultiTenantAuthorizer(tt.input.client)
 			authorized, _, err := authz.Authorize(
 				types.WithAuthInfo(context.Background(), tt.input.info),
-				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folderv0aplha1.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
+				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folders.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
 			)
 
 			if tt.expeted.err {

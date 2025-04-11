@@ -8,7 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -22,7 +22,7 @@ var _ = rest.Connecter(&subAccessREST{})
 var _ = rest.StorageMetadata(&subAccessREST{})
 
 func (r *subAccessREST) New() runtime.Object {
-	return &v0alpha1.FolderAccessInfo{}
+	return &folders.FolderAccessInfo{}
 }
 
 func (r *subAccessREST) Destroy() {
@@ -37,7 +37,7 @@ func (r *subAccessREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subAccessREST) ProducesObject(verb string) interface{} {
-	return &v0alpha1.FolderAccessInfo{}
+	return &folders.FolderAccessInfo{}
 }
 
 func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -69,7 +69,7 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		access := &v0alpha1.FolderAccessInfo{}
+		access := &folders.FolderAccessInfo{}
 		access.CanEdit, _ = guardian.CanEdit()
 		access.CanSave, _ = guardian.CanSave()
 		access.CanAdmin, _ = guardian.CanAdmin()

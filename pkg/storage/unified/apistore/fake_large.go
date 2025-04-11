@@ -3,7 +3,7 @@ package apistore
 import (
 	"context"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,7 +16,7 @@ type LargeObjectSupportFake struct {
 }
 
 func (s *LargeObjectSupportFake) GroupResource() schema.GroupResource {
-	return dashboardv1alpha1.DashboardResourceInfo.GroupResource()
+	return dashboardv1.DashboardResourceInfo.GroupResource()
 }
 
 func (s *LargeObjectSupportFake) Threshold() int {
