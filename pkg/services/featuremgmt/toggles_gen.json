@@ -2583,7 +2583,8 @@
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-12T12:31:39Z"
+        "creationTimestamp": "2024-08-12T12:31:39Z",
+        "deletionTimestamp": "2025-04-10T18:16:18Z"
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
