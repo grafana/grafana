@@ -138,7 +138,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, err
+			return nil, apierrors.NewBadRequest("unable to read file as a resource")
 		}
 	}
 
@@ -227,18 +227,25 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		return err
 	}
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
 		})
 	}
 	return err
@@ -262,13 +269,22 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	}
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// Run update or create
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{})
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
-		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{})
+		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+			FieldValidation: fieldValidation,
+		})
 	}
 
 	return err
