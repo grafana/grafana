@@ -34,10 +34,10 @@ func TestCalculateChanges(t *testing.T) {
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       dashboardKind, // will trigger creating a URL
 			"metadata": map[string]interface{}{
-				"name": "id",
+				"name": "the-uid",
 			},
 			"spec": map[string]interface{}{
-				"title": "hello",
+				"title": "hello world", // has spaces
 			},
 		},
 	}
@@ -92,7 +92,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		require.False(t, info.MissingImageRenderer)
 		require.Equal(t, map[string]string{
-			"Grafana":         "http://host/d/id/hello",
+			"Grafana":         "http://host/d/the-uid/hello-world",
 			"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
 			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 			"PreviewSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
@@ -122,7 +122,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		require.True(t, info.MissingImageRenderer)
 		require.Equal(t, map[string]string{
-			"Grafana":         "http://host/d/id/hello",
+			"Grafana":         "http://host/d/the-uid/hello-world",
 			"GrafanaSnapshot": "",
 			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 			"PreviewSnapshot": "",

@@ -11,6 +11,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -150,7 +151,8 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 	// Dashboards get special handling
 	if info.Parsed.GVK.Kind == dashboardKind {
 		if info.Parsed.Existing != nil {
-			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(), info.Title)
+			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(),
+				slugify.Slugify(info.Title))
 		}
 
 		// Load this file directly
