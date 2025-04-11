@@ -20,7 +20,7 @@ import {
   getDataSourceByUid,
   getDatasourceAPIUid,
   getExternalRulesSources,
-  isRulesDataSourceType,
+  isSupportedExternalRulesSourceType,
 } from '../../utils/datasource';
 
 import { groupFilter, ruleFilter } from './filters';
@@ -123,7 +123,7 @@ function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceId
       const uid = getDatasourceAPIUid(dataSourceName);
       const type = getDataSourceByUid(uid)?.type;
 
-      if (type === undefined || isRulesDataSourceType(type) === false) {
+      if (type === undefined || isSupportedExternalRulesSourceType(type) === false) {
         return acc;
       }
 

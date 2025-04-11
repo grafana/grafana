@@ -88,10 +88,6 @@ export function getAlertManagerDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function isRulesDataSourceType(dsType: string) {
-  return RulesDataSourceTypes.includes(dsType);
-}
-
 export function isAlertmanagerDataSourceInstance(
   dataSource: DataSourceInstanceSettings
 ): dataSource is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> {
