@@ -207,10 +207,6 @@ abstract class DashboardScenePageStateManagerBase<T>
           return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
         }
 
-        if (!this.processDashboardFromProvisioning) {
-          throw new Error('processDashboardFromProvisioning not implemented');
-        }
-
         return this.processDashboardFromProvisioning(repo, path, dryRun, {
           file: url,
           ref: ref,
