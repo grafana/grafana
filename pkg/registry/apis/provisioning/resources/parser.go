@@ -212,6 +212,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
+	if f.DryRunResponse != nil {
+		return nil // this already ran (and helpful for testing)
+	}
+
 	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
 		return fmt.Errorf("no client configured")
@@ -252,9 +256,13 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	// FIXME: shouldn't we check for the specific error?
+	// We may have already called DryRun that also calls get
+	if f.DryRunResponse != nil && f.Action != "" {
+		// FIXME: shouldn't we check for the specific error?
+		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	}
+
 	// Run update or create
-	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{})

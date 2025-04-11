@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,34 +17,45 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type screenshotRenderer struct {
-	render      rendering.Service
-	blobstore   resource.BlobStoreClient
-	urlProvider func(namespace string) string
-	isPublic    bool
+// ScreenshotRenderer is an interface for rendering a preview of a file
+//
+//go:generate mockery --name ScreenshotRenderer --structname MockScreenshotRenderer --inpackage --filename render_mock.go --with-expecter
+type ScreenshotRenderer interface {
+	IsAvailable(ctx context.Context) bool
+	RenderScreenshot(ctx context.Context, repo provisioning.ResourceRepositoryInfo, path string, values url.Values) (string, error)
 }
 
-func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient, isPublic bool, urlProvider func(namespace string) string) *screenshotRenderer {
+type screenshotRenderer struct {
+	render    rendering.Service
+	blobstore resource.BlobStoreClient
+}
+
+func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient) ScreenshotRenderer {
 	return &screenshotRenderer{
-		render:      render,
-		blobstore:   blobstore,
-		urlProvider: urlProvider,
-		isPublic:    isPublic,
+		render:    render,
+		blobstore: blobstore,
 	}
 }
 
 func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
-	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore != nil && r.isPublic
+	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore != nil
 }
 
-func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {
-	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", repoName, path, ref)
-
-	// TODO: why were we using a different context?
-	// renderContext := identity.WithRequester(context.Background(), r.id)
+func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisioning.ResourceRepositoryInfo, path string, values url.Values) (string, error) {
+	if strings.Contains(path, "://") {
+		return "", fmt.Errorf("path should be relative to the system root url")
+	}
+	if strings.HasPrefix(path, "/") {
+		return "", fmt.Errorf("path should not start with slash")
+	}
+	if len(values) > 0 {
+		path = path + "?" + values.Encode() + "&kiosk"
+	} else {
+		path = path + "?kiosk"
+	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
-			Path: url,
+			Path: path,
 			AuthOpts: rendering.AuthOpts{
 				OrgID:   1, // TODO!!!, use the worker identity
 				UserID:  1,
@@ -69,10 +81,10 @@ func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespa
 
 	rsp, err := r.blobstore.PutBlob(ctx, &resource.PutBlobRequest{
 		Resource: &resource.ResourceKey{
-			Namespace: namespace,
+			Namespace: repo.Namespace,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,
-			Name:      repoName,
+			Name:      repo.Name,
 		},
 		Method:      resource.PutBlobRequest_GRPC,
 		ContentType: mime.TypeByExtension(ext), // image/png
@@ -84,10 +96,6 @@ func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespa
 	if rsp.Url != "" {
 		return rsp.Url, nil
 	}
-	base := r.urlProvider(namespace)
-	if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
-	return fmt.Sprintf("%sapis/%s/namespaces/%s/repositories/%s/render/%s",
-		base, provisioning.APIVERSION, namespace, repoName, rsp.Uid), nil
+	return fmt.Sprintf("apis/%s/namespaces/%s/repositories/%s/render/%s",
+		provisioning.APIVERSION, repo.Namespace, repo.Name, rsp.Uid), nil
 }
