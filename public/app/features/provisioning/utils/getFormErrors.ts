@@ -13,19 +13,18 @@ export type FormErrorTuple = [RepositoryFormPath | null, { message: string } | n
  * @returns Tuple with form field path and error message
  */
 export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
+  const fieldsToValidate = ['local.path', 'github.branch', 'github.url', 'github.token'];
   const fieldMap: Record<string, RepositoryFormPath> = {
     path: 'repository.path',
     branch: 'repository.branch',
     url: 'repository.url',
     token: 'repository.token',
   };
-  const fieldsToValidate = Object.values<RepositoryFormPath>(fieldMap);
 
   for (const error of errors) {
     if (error.field) {
       const cleanField = error.field.replace('spec.', '');
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if (fieldsToValidate.includes(cleanField as RepositoryFormPath)) {
+      if (fieldsToValidate.includes(cleanField)) {
         const fieldParts = cleanField.split('.');
         const lastPart = fieldParts[fieldParts.length - 1];
 
