@@ -99,9 +99,7 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	if res == nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"missing health status",
-			},
+			Message: "missing health status",
 		}
 	}
 
@@ -109,7 +107,7 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	repo.Status.Health = provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
+		Message: []string{res.Message},
 	}
 
 	_, err := t.client.Repositories(repo.GetNamespace()).

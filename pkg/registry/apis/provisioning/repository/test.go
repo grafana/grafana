@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -26,10 +28,13 @@ func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestRes
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid
 			Success: false,
-			Errors:  make([]string, len(errors)),
+			Fields:  make(map[string]provisioning.FieldError),
 		}
-		for i, v := range errors {
-			rsp.Errors[i] = v.Error()
+		for _, err := range errors {
+			rsp.Fields[err.Field] = provisioning.FieldError{
+				Type:   v1.CauseType(err.Type),
+				Detail: err.Detail,
+			}
 		}
 		return rsp, nil
 	}
@@ -84,4 +89,35 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	}
 
 	return list
+}
+
+func fromFieldError(err *field.Error) *provisioning.TestResults {
+	return &provisioning.TestResults{
+		Code:    http.StatusBadRequest,
+		Success: false,
+		Message: err.Detail,
+		Fields: map[string]provisioning.FieldError{
+			err.Field: {
+				Type:   v1.CauseType(err.Type),
+				Detail: err.Detail,
+			},
+		},
+	}
+}
+
+func fromError(err error, code int) *provisioning.TestResults {
+	statusErr, ok := err.(apierrors.APIStatus)
+	if ok {
+		s := statusErr.Status()
+		return &provisioning.TestResults{
+			Code:    int(s.Code),
+			Success: false,
+			Message: s.Message,
+		}
+	}
+	return &provisioning.TestResults{
+		Code:    code,
+		Success: false,
+		Message: err.Error(),
+	}
 }

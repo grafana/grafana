@@ -2489,6 +2489,21 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FieldError": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileItem": {
         "type": "object",
         "required": [
@@ -3762,24 +3777,24 @@
             "format": "int32",
             "default": 0
           },
-          "details": {
-            "description": "Optional details",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "errors": {
-            "description": "Error descriptions",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
+          "fields": {
+            "description": "Field related errors",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FieldError"
+                }
+              ]
             }
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "description": "Possible message",
             "type": "string"
           },
           "success": {

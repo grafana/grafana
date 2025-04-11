@@ -394,11 +394,16 @@ type TestResults struct {
 	// Is the connection healthy
 	Success bool `json:"success"`
 
-	// Error descriptions
-	Errors []string `json:"errors,omitempty"`
+	// Possible message
+	Message string `json:"message,omitempty"`
 
-	// Optional details
-	Details *common.Unstructured `json:"details,omitempty"`
+	// Field related errors
+	Fields map[string]FieldError `json:"fields,omitempty"`
+}
+
+type FieldError struct {
+	Type   metav1.CauseType `json:"type"`
+	Detail string           `json:"detail,omitempty"`
 }
 
 // HistoryList is a list of versions of a resource

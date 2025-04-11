@@ -138,59 +138,41 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 	return parts[1], parts[2], nil
 }
 
-func fromError(err error, code int) *provisioning.TestResults {
-	statusErr, ok := err.(apierrors.APIStatus)
-	if ok {
-		s := statusErr.Status()
-		return &provisioning.TestResults{
-			Code:    int(s.Code),
-			Success: false,
-			Errors:  []string{s.Message},
-		}
-	}
-	return &provisioning.TestResults{
-		Code:    code,
-		Success: false,
-		Errors:  []string{err.Error()},
-	}
-}
-
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
 		return fromError(err, http.StatusUnauthorized), nil
 	}
 
-	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
+	url := r.config.Spec.GitHub.URL
+	owner, repo, err := parseOwnerRepo(url)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	// FIXME: check token permissions
 	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"repository does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "url"), url)), nil
 	}
 
-	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
+	branch := r.config.Spec.GitHub.Branch
+	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, branch)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "branch"), branch, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"branch does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "branch"), branch)), nil
 	}
 
 	return &provisioning.TestResults{
