@@ -146,36 +146,19 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	path := field.NewPath("spec", "localhost", "path")
 	if r.config.Spec.Local.Path == "" {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				"no path is configured",
-			},
-		}, nil
+		return fromFieldError(field.Required(path, "no path is configured")), nil
 	}
 
 	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				err.Error(),
-			},
-		}, nil
+		return fromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
 	}
 
 	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
-			},
-		}, nil
+		return fromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
 	}
 
 	return &provisioning.TestResults{

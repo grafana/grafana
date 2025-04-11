@@ -6633,7 +6633,6 @@
       "title-legacy-storage-detected": "Legacy storage detected"
     },
     "job-status": {
-      "error-unknown": "An unknown error occurred",
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
@@ -6731,12 +6730,6 @@
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
-    "request-error": {
-      "failed-to-migrate": "Failed to migrate dashboards",
-      "failed-to-save": "Failed to save repository",
-      "failed-to-sync": "Failed to sync dashboards",
-      "operation-failed": "Operation failed"
-    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
@@ -6799,8 +6792,7 @@
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-submitting": "Submitting...",
-      "error-instance-repository-exists": "Instance repository already exists",
-      "title-repository-verification-failed": "Repository verification failed"
+      "error-instance-repository-exists": "Instance repository already exists"
     }
   },
   "public-dashboard": {

@@ -2472,6 +2472,24 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
         "properties": {
@@ -3762,20 +3780,16 @@
             "format": "int32",
             "default": 0
           },
-          "details": {
-            "description": "Optional details",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
           "errors": {
-            "description": "Error descriptions",
+            "description": "Field related errors",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
             }
           },
           "kind": {

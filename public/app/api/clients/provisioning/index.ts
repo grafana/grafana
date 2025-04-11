@@ -13,6 +13,7 @@ import {
   JobList,
   Repository,
   RepositoryList,
+  ErrorDetails,
 } from './endpoints.gen';
 import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
@@ -100,9 +101,11 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
             dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
           } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
             if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
-              dispatch(
-                notifyApp(createErrorNotification('Error validating repository', e.error.data.errors.join('\n')))
-              );
+              const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
+              // Only show notification if there are errors that don't have a field, field errors are handled by the form
+              if (nonFieldErrors.length > 0) {
+                dispatch(notifyApp(createErrorNotification('Error validating repository')));
+              }
             }
           }
         }

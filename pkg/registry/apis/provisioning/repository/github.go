@@ -12,11 +12,10 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v70/github"
+	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -57,18 +56,14 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 	cloneFn CloneFn,
-) (*githubRepository, error) {
-	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
-	if err != nil {
-		return nil, err
-	}
+) *githubRepository {
+	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			token = string(decrypted)
 		}
-		token = string(decrypted)
 	}
 	return &githubRepository{
 		config:     config,
@@ -78,7 +73,7 @@ func NewGitHub(
 		owner:      owner,
 		repo:       repo,
 		cloneFn:    cloneFn,
-	}, nil
+	}
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -138,59 +133,48 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 	return parts[1], parts[2], nil
 }
 
-func fromError(err error, code int) *provisioning.TestResults {
-	statusErr, ok := err.(apierrors.APIStatus)
-	if ok {
-		s := statusErr.Status()
-		return &provisioning.TestResults{
-			Code:    int(s.Code),
-			Success: false,
-			Errors:  []string{s.Message},
-		}
-	}
-	return &provisioning.TestResults{
-		Code:    code,
-		Success: false,
-		Errors:  []string{err.Error()},
-	}
-}
-
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		return fromError(err, http.StatusUnauthorized), nil
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "token").String(),
+				Detail: err.Error(),
+			}}}, nil
 	}
 
-	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
+	url := r.config.Spec.GitHub.URL
+	owner, repo, err := parseOwnerRepo(url)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	// FIXME: check token permissions
 	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"repository does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "url"), url)), nil
 	}
 
-	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
+	branch := r.config.Spec.GitHub.Branch
+	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, branch)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "branch"), branch, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"branch does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "branch"), branch)), nil
 	}
 
 	return &provisioning.TestResults{

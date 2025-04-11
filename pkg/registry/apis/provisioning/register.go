@@ -1114,7 +1114,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}
