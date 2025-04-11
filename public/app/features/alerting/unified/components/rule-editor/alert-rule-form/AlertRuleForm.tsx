@@ -301,6 +301,17 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
             {/* actions */}
             <Stack direction="row" alignItems="center">
+              <Button
+                data-testid="save-rule"
+                variant="primary"
+                type="button"
+                onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+                disabled={isSubmitting}
+              >
+                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save</Trans>
+              </Button>
+
               <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
                 <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
@@ -310,17 +321,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                   <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
                 </Button>
               )}
-
-              <Button
-                data-testid="save-rule"
-                variant="primary"
-                type="button"
-                onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save rule</Trans>
-              </Button>
             </Stack>
           </Stack>
         </div>

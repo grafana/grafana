@@ -375,7 +375,7 @@
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
-        "save": "Save rule"
+        "save": "Save"
       }
     },
     "alert-rule-name-and-metric": {
@@ -802,7 +802,7 @@
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
     "editor": {
-      "alerting-rule-entity-name": "alerting rule",
+      "alerting-rule-entity-name": "alert rule",
       "edit-action": "Edit",
       "new-action": "New",
       "recording-rule-entity-name": "recording rule"

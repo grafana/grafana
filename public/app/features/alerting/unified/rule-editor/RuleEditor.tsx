@@ -82,7 +82,7 @@ function NewRuleEditor() {
 
   const entityName = RECORDING_TYPE.includes(type)
     ? t('alerting.editor.recording-rule-entity-name', 'recording rule')
-    : t('alerting.editor.alerting-rule-entity-name', 'alerting rule');
+    : t('alerting.editor.alerting-rule-entity-name', 'alert rule');
 
   const actionName = Boolean(identifier)
     ? t('alerting.editor.edit-action', 'Edit')
