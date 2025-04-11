@@ -107,6 +107,7 @@ export function TableCellNG(props: TableCellNGProps) {
           height={height}
           width={divWidth}
           rowIdx={rowIdx}
+          actions={actions}
         />
       );
       break;

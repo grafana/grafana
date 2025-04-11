@@ -176,7 +176,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps {
+export interface BarGaugeCellProps extends ActionCellProps {
   field: Field;
   height: number;
   rowIdx: number;
