@@ -481,18 +481,6 @@
     },
     {
       "metadata": {
-        "name": "appSidecar",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
-      },
-      "spec": {
-        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-04-03T15:18:37Z"
