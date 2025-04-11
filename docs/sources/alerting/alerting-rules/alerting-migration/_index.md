@@ -57,7 +57,7 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    If you import the rules into an existing folder, don't chose a folder with existing alert rules, as they could get overwritten.
 
-1. Select a destination Namespace and Group.
+1. (Optional) Select a Namespace and/or Group to determine which rules will be imported.
 
 1. (Optional) Turn on **Pause imported alerting rules**.
 
