@@ -11,7 +11,6 @@ const {
   canBeFixed,
   elementIsTrans,
   shouldBeFixed,
-  isStringLiteral,
   isStringNonAlphanumeric,
 } = require('./translation-utils.cjs');
 

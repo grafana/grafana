@@ -329,6 +329,5 @@ module.exports = {
   canBeFixed,
   shouldBeFixed,
   elementIsTrans,
-  isStringLiteral,
   isStringNonAlphanumeric,
 };
