@@ -87,6 +87,9 @@ export function ExtensionToolbarItem() {
 function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
+      // this is needed because with certain breakpoints the button will get `width: auto`
+      // and the icon will stretch
+      aspectRatio: '1 / 1 !important',
       width: '28px',
       height: '28px',
       padding: 0,
