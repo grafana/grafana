@@ -547,6 +547,10 @@ type Cfg struct {
 	IndexMaxBatchSize           int
 	IndexFileThreshold          int
 	IndexMinCount               int
+	IndexEnableSharding         bool
+	IndexRingDebugServerPort    string
+	IndexMemberlistBindAddr     string
+	IndexMemberlistJoinMember   string
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int
 	CACertPath                  string
