@@ -850,9 +850,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
-    return this.withVersionHandling((manager) => {
-      return manager.loadDashboard.call(this, options);
-    });
+    return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 
   processDashboardFromProvisioning(repo: string, path: string, dryRun: any, provisioningPreview: ProvisioningPreview) {
