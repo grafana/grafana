@@ -2827,6 +2827,27 @@
           "title": "Row header"
         }
       },
+      "variable": {
+        "description": "Description",
+        "description-placeholder": "Descriptive text",
+        "label": "Label",
+        "label-description": "Optional display name",
+        "name": "Name",
+        "open-editor": "Open variable editor",
+        "open-editor-tooltip": "For more variable options open variable editor",
+        "selection-options": {
+          "allow-custom-values": "All custom values",
+          "allow-custom-values-description": "Enables users to enter values",
+          "category": "Selection options",
+          "custom-all-value": "Custom all value",
+          "custom-all-value-description": "A wildcard regex or other value to represent All",
+          "include-all": "Include All option",
+          "include-all-description": "Enables an option to include all values",
+          "multi-value": "Multi-value",
+          "multi-value-description": "Enables multiple values to be selected at the same time"
+        },
+        "type": "Type"
+      },
       "variables": {
         "add-variable": "Add variable",
         "select-variable": "Select"
@@ -3642,7 +3663,7 @@
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
-      "description-enables-option-include-variables": "Enables an option to include all variables",
+      "description-enables-option-include-variables": "Enables an option to include all values",
       "description-enables-users-custom-values": "Enables users to add custom values to the list"
     },
     "share-button": {
@@ -3678,19 +3699,13 @@
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
       "delete": "Delete",
-      "description": "Description",
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
-      "label": "Label",
-      "name": "Name",
-      "open-editor": "Open variable editor",
-      "open-editor-tooltip": "For more variable options open variable editor",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
-      "text-running-query": "Running query...",
-      "type": "Type"
+      "text-running-query": "Running query..."
     },
     "variable-editor-list": {
       "definition": "Definition",

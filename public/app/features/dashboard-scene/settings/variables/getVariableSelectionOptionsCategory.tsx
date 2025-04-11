@@ -1,4 +1,4 @@
-import { FormEvent } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
@@ -8,15 +8,15 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 export function getVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
   return new OptionsPaneCategoryDescriptor({
-    title: t('dashboard.variable-editor.selection-options.category', 'Selection options'),
+    title: t('dashboard.edit-pane.variable.selection-options.category', 'Selection options'),
     id: 'selection-options-category',
     isOpenDefault: true,
   })
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.variable-editor.selection-options.multi-value', 'Multi-value'),
+        title: t('dashboard.edit-pane.variable.selection-options.multi-value', 'Multi-value'),
         description: t(
-          'dashboard.variable-editor.selection-options.multi-value-description',
+          'dashboard.edit-pane.variable.selection-options.multi-value-description',
           'Enables multiple values to be selected at the same time'
         ),
         render: () => <MultiValueSwitch variable={variable} />,
@@ -24,9 +24,9 @@ export function getVariableSelectionOptionsCategory(variable: MultiValueVariable
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.variable-editor.selection-options.include-all', 'Include All option'),
+        title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All option'),
         description: t(
-          'dashboard.variable-editor.selection-options.include-all-description',
+          'dashboard.edit-pane.variable.selection-options.include-all-description',
           'Enables an option to include all values'
         ),
         render: () => <IncludeAllSwitch variable={variable} />,
@@ -34,9 +34,9 @@ export function getVariableSelectionOptionsCategory(variable: MultiValueVariable
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.variable-editor.selection-options.custom-all-value', 'Custom all value'),
+        title: t('dashboard.edit-pane.variable.selection-options.custom-all-value', 'Custom all value'),
         description: t(
-          'dashboard.variable-editor.selection-options.custom-all-value-description',
+          'dashboard.edit-pane.variable.selection-options.custom-all-value-description',
           'A wildcard regex or other value to represent All'
         ),
         useShowIf: () => {
@@ -47,9 +47,9 @@ export function getVariableSelectionOptionsCategory(variable: MultiValueVariable
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.variable-editor.selection-options.allow-custom-values', 'All custom values'),
+        title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'All custom values'),
         description: t(
-          'dashboard.variable-editor.selection-options.allow-custom-values-description',
+          'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
           'Enables users to enter values'
         ),
         render: () => <AllowCustomSwitch variable={variable} />,
@@ -82,13 +82,22 @@ function AllowCustomSwitch({ variable }: { variable: MultiValueVariable }) {
 
 function CustomAllValueInput({ variable }: { variable: MultiValueVariable }) {
   const { allValue } = variable.useState();
+  const ref = useRef<HTMLInputElement>(null);
 
-  const onInputBlur = (e: FormEvent<HTMLInputElement>) => {
-    variable.setState({ allValue: e.currentTarget.value });
-    if (variable.hasAllValue()) {
-      variable.publishEvent(new SceneVariableValueChangedEvent(variable), true);
-    }
-  };
+  const onInputBlur = useCallback(
+    (evt: React.FocusEvent<HTMLInputElement>) => {
+      const newValue = evt.currentTarget.value;
+      if (newValue === variable.state.allValue) {
+        return;
+      }
 
-  return <Input defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
+      variable.setState({ allValue: newValue });
+      if (variable.hasAllValue()) {
+        variable.publishEvent(new SceneVariableValueChangedEvent(variable), true);
+      }
+    },
+    [variable]
+  );
+
+  return <Input ref={ref} defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
 }

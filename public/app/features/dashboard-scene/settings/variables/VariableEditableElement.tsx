@@ -46,17 +46,14 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard-scene.variable-editor-form.label', 'Label'),
-            description: t(
-              'dashboard-scene.variable-editor-form.description-optional-display-name',
-              'Optional display name'
-            ),
+            title: t('dashboard.edit-pane.variable.label', 'Label'),
+            description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
             render: () => <VariableLabelInput variable={variable} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard-scene.variable-editor-form.description', 'Description'),
+            title: t('dashboard.edit-pane.variable.description', 'Description'),
             render: () => <VariableDescriptionTextArea variable={variable} />,
           })
         )
@@ -69,7 +66,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard-scene.variable-editor-form.type', 'Type'),
+            title: t('dashboard.edit-pane.variable.type', 'Type'),
             render: () => <VariableTypeSelect variable={variable} />,
           })
         );
@@ -134,7 +131,7 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   };
 
   return (
-    <Field label={t('dashboard-scene.variable-editor-form.name', 'Name')} invalid={!!nameError} error={nameError}>
+    <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
       <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
     </Field>
   );
@@ -152,7 +149,7 @@ function VariableDescriptionTextArea({ variable }: VariableInputProps) {
     <TextArea
       id="description-text-area"
       value={description ?? ''}
-      placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
+      placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
       onChange={(e) => variable.setState({ description: e.currentTarget.value })}
     />
   );
@@ -186,13 +183,13 @@ function VariableTypeSelect({ variable }: VariableInputProps) {
       <Combobox value={variable.state.type} options={options} disabled={true} onChange={() => {}} />
       <Button
         tooltip={t(
-          'dashboard-scene.variable-editor-form.open-editor-tooltip',
+          'dashboard.edit-pane.variable.open-editor-tooltip',
           'For more variable options open variable editor'
         )}
         onClick={onOpenVariableEdior}
         fullWidth
       >
-        <Trans i18nKey="dashboard-scene.variable-editor-form.open-editor">Open variable editor</Trans>
+        <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
       </Button>
     </Stack>
   );
