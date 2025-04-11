@@ -111,10 +111,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagPrometheusRunQueriesInParallel
-	// Enables running Prometheus queries in parallel
-	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"

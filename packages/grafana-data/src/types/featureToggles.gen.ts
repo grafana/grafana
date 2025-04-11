@@ -132,11 +132,6 @@ export interface FeatureToggles {
   */
   influxdbRunQueriesInParallel?: boolean;
   /**
-  * Enables running Prometheus queries in parallel
-  * @default true
-  */
-  prometheusRunQueriesInParallel?: boolean;
-  /**
   * Changes logs responses from Loki to be compliant with the dataplane specification.
   */
   lokiLogsDataplane?: boolean;
