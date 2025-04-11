@@ -212,6 +212,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
         gridRowStart: 2,
         lineHeight: theme.typography.bodySmall.lineHeight,
         marginTop: 0 /* The margin effectively comes from the top: -2px on the label above it */,
+        zIndex: 1,
       })
     ),
   };
