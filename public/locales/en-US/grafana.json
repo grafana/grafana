@@ -6730,12 +6730,6 @@
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
-    "request-error": {
-      "failed-to-migrate": "Failed to migrate dashboards",
-      "failed-to-save": "Failed to save repository",
-      "failed-to-sync": "Failed to sync dashboards",
-      "operation-failed": "Operation failed"
-    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
