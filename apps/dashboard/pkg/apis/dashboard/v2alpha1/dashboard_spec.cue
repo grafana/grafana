@@ -1,3 +1,7 @@
+// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY
+// Source: apps/dashboard/kinds/v2alpha1/dashboard_spec.cue
+// To sync changes, run: make generate in apps/dashboard
+
 package v2alpha1
 
 DashboardSpec: {

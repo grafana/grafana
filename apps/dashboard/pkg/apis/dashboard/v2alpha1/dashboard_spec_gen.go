@@ -90,9 +90,9 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 type DashboardDashboardCursorSync string
 
 const (
-	DashboardDashboardCursorSyncOff       DashboardDashboardCursorSync = "Off"
 	DashboardDashboardCursorSyncCrosshair DashboardDashboardCursorSync = "Crosshair"
 	DashboardDashboardCursorSyncTooltip   DashboardDashboardCursorSync = "Tooltip"
+	DashboardDashboardCursorSyncOff       DashboardDashboardCursorSync = "Off"
 )
 
 // Supported dashboard elements
@@ -1162,7 +1162,10 @@ func NewDashboardTimeSettingsSpec() *DashboardTimeSettingsSpec {
 		Timezone:             (func(input string) *string { return &input })("browser"),
 		From:                 "now-6h",
 		To:                   "now",
+		AutoRefresh:          "",
 		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
+		HideTimepicker:       false,
+		FiscalYearStartMonth: 0,
 	}
 }
 
@@ -1682,7 +1685,6 @@ func NewDashboardMetricFindValue() *DashboardMetricFindValue {
 
 // +k8s:openapi-gen=true
 type DashboardSpec struct {
-	// Title of dashboard.
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -1718,8 +1720,10 @@ type DashboardSpec struct {
 // NewDashboardSpec creates a new DashboardSpec object.
 func NewDashboardSpec() *DashboardSpec {
 	return &DashboardSpec{
+		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
 		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
+		Preload:      false,
 		TimeSettings: *NewDashboardTimeSettingsSpec(),
 	}
 }

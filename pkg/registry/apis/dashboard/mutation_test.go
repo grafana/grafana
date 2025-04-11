@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -22,6 +23,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 		operation         admission.Operation
 		expectedID        int64
 		migrationExpected bool
+		expectedTitle     string
 	}{
 		{
 			name: "should skip non-create/update operations",
@@ -74,6 +76,16 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			operation:  admission.Create,
 			expectedID: 456,
 		},
+		{
+			name: "v2 should set layout if it is not set",
+			inputObj: &v2alpha1.Dashboard{
+				Spec: v2alpha1.DashboardSpec{
+					Title: "test123",
+				},
+			},
+			operation:     admission.Create,
+			expectedTitle: "test123",
+		},
 	}
 
 	for _, tt := range tests {
@@ -111,6 +123,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					if tt.migrationExpected {
 						require.Equal(t, schemaversion.LATEST_VERSION, schemaVersion, "dashboard should be migrated to the latest version")
 					}
+				case *v2alpha1.Dashboard:
+					require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should be set")
+					require.NotNil(t, v.Spec.Layout, "layout should be set")
+					require.NotNil(t, v.Spec.Layout.GridLayoutKind, "layout should be a GridLayout")
 				}
 			}
 		})

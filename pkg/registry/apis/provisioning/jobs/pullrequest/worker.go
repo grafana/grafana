@@ -111,8 +111,10 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	_, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
-		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-			progress.SetFinalMessage(ctx, "file changes is not valid resource")
+		if errors.Is(err, resources.ErrUnableToReadPanelsMissing) ||
+			errors.Is(err, resources.ErrUnableToReadSchemaVersionMissing) ||
+			errors.Is(err, resources.ErrUnableToReadTagsMissing) {
+			progress.SetFinalMessage(ctx, fmt.Sprintf("file changes is not valid resource: %s", err.Error()))
 			return nil
 		} else {
 			return fmt.Errorf("parse resource: %w", err)

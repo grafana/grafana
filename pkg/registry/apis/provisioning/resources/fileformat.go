@@ -13,14 +13,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 var (
-	ErrUnableToReadResourceBytes       = errors.New("unable to read bytes as a resource")
-	ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+	ErrUnableToReadPanelsMissing        = errors.New("panels property is required")
+	ErrUnableToReadSchemaVersionMissing = errors.New("schemaVersion property is required")
+	ErrUnableToReadTagsMissing          = errors.New("tags property is required")
+	ErrClassicResourceIsAlreadyK8sForm  = errors.New("classic resource is already structured with apiVersion and kind")
 )
 
 // This reads a "classic" file format and will convert it to an unstructured k8s resource
@@ -59,26 +61,29 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	}
 
 	// If this is a dashboard, convert it
-	if value["panels"] != nil &&
-		value["schemaVersion"] != nil &&
-		value["tags"] != nil {
-		gvk := &schema.GroupVersionKind{
-			Group:   dashboard.GROUP,
-			Version: dashboard.VERSION, // v1
-			Kind:    "Dashboard"}
-		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": gvk.GroupVersion().String(),
-				"kind":       gvk.Kind,
-				"metadata": map[string]any{
-					"name": value["uid"],
-				},
-				"spec": value,
-			},
-		}, gvk, provisioning.ClassicDashboard, nil
+	if value["panels"] == nil {
+		return nil, nil, "", ErrUnableToReadPanelsMissing
 	}
 
-	return nil, nil, "", ErrUnableToReadResourceBytes
+	if value["schemaVersion"] == nil {
+		return nil, nil, "", ErrUnableToReadSchemaVersionMissing
+	}
+
+	if value["tags"] == nil {
+		return nil, nil, "", ErrUnableToReadTagsMissing
+	}
+
+	gvk := dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind()
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": gvk.GroupVersion().String(),
+			"kind":       gvk.Kind,
+			"metadata": map[string]any{
+				"name": value["uid"],
+			},
+			"spec": value,
+		},
+	}, &gvk, provisioning.ClassicDashboard, nil
 }
 
 // DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.
