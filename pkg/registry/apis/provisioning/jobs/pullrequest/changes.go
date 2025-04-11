@@ -50,54 +50,67 @@ type fileChangeInfo struct {
 	PreviewScreenshotURL string
 }
 
-type changeOptions struct {
-	grafanaBaseURL string
-	pullRequest    provisioning.PullRequestJobOptions
-	changes        []repository.VersionedFileChange
-	parser         resources.Parser
-	reader         repository.Reader
-	progress       jobs.JobProgressRecorder
-	render         ScreenshotRenderer // from config
+type evaluator struct {
+	render      ScreenshotRenderer
+	parsers     resources.ParserFactory
+	urlProvider func(namespace string) string
+}
+
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(namespace string) string) Evaluator {
+	return &evaluator{
+		render:      render,
+		parsers:     parsers,
+		urlProvider: urlProvider,
+	}
 }
 
 // This will process the list of versioned file changes into changeInfo
-func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, error) {
-	info := changeInfo{
-		GrafanaBaseURL: opts.grafanaBaseURL,
+func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
+	cfg := repo.Config()
+	parser, err := e.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return changeInfo{}, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	if opts.render != nil {
-		if !opts.render.IsAvailable(ctx) {
-			info.MissingImageRenderer = true
-			opts.render = nil
-		}
+	baseURL := e.urlProvider(cfg.Namespace)
+	info := changeInfo{
+		GrafanaBaseURL: baseURL,
+	}
 
+	var shouldRender bool
+	switch {
+	case e.render == nil:
+		shouldRender = false
+	case !e.render.IsAvailable(ctx):
+		info.MissingImageRenderer = true
+		shouldRender = false
+	case len(changes) > 1 || !cfg.Spec.GitHub.GenerateDashboardPreviews:
 		// Only render images when there is just one change
-		if len(opts.changes) > 1 {
-			opts.render = nil
-		}
+		shouldRender = false
+	default:
+		shouldRender = true
 	}
 
 	logger := logging.FromContext(ctx)
-	for i, change := range opts.changes {
+	for i, change := range changes {
 		// process maximum 10 files
 		if i >= 10 {
-			info.SkippedFiles = len(opts.changes) - i
+			info.SkippedFiles = len(changes) - i
 			break
 		}
 
-		opts.progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
+		progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
 
-		v, err := calculateFileChangeInfo(ctx, info.GrafanaBaseURL, change, opts)
+		v, err := calculateFileChangeInfo(ctx, repo, info.GrafanaBaseURL, change, opts, parser)
 		if err != nil {
 			return info, fmt.Errorf("error calculating changes %w", err)
 		}
 
 		// If everything applied OK, then render screenshots
-		if opts.render != nil && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
-			opts.progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
-			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, opts.render); err != nil {
+		if shouldRender && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
+			progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
+			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, e.render); err != nil {
 				info.MissingImageRenderer = true
 				if v.Error == "" {
 					v.Error = "Error running image rendering"
@@ -116,13 +129,13 @@ func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, e
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func calculateFileChangeInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
+func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser) (fileChangeInfo, error) {
 	if change.Action == repository.FileActionDeleted {
-		return calculateFileDeleteInfo(ctx, baseURL, change, opts)
+		return calculateFileDeleteInfo(ctx, baseURL, change)
 	}
 
 	info := fileChangeInfo{Change: change}
-	fileInfo, err := opts.reader.Read(ctx, change.Path, change.Ref)
+	fileInfo, err := repo.Read(ctx, change.Path, change.Ref)
 	if err != nil {
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
@@ -130,7 +143,7 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 	}
 
 	// Read the file as a resource
-	info.Parsed, err = opts.parser.Parse(ctx, fileInfo)
+	info.Parsed, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
 		info.Error = err.Error()
 		return info, nil
@@ -161,8 +174,8 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if opts.pullRequest.URL != "" {
-			query.Set("pull_request_url", url.QueryEscape(opts.pullRequest.URL))
+		if opts.URL != "" {
+			query.Set("pull_request_url", url.QueryEscape(opts.URL))
 		}
 		info.PreviewURL += "?" + query.Encode()
 	}
@@ -170,7 +183,7 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 	return info, nil
 }
 
-func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
+func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange) (fileChangeInfo, error) {
 	// TODO -- read the old and verify
 	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
 }

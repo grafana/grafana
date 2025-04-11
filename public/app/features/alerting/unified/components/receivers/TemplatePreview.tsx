@@ -69,15 +69,30 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
   // If there is only one template, we don't need to show the name
   const singleTemplate = previews.length === 1;
 
+  const isValidJson = (text: string) => {
+    try {
+      JSON.parse(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <ul className={styles.viewer.container} data-testid="template-preview">
       {previews.map((preview) => {
+        const language = isValidJson(preview.text) ? 'json' : 'plaintext';
         return (
           <li className={styles.viewer.box} key={preview.name}>
-            {singleTemplate ? null : <header className={styles.viewer.header}>{preview.name}</header>}
+            {singleTemplate ? null : (
+              <header className={styles.viewer.header}>
+                {preview.name}
+                <div className={styles.viewer.language}>{language}</div>
+              </header>
+            )}
             <CodeEditor
               containerStyles={styles.editorContainer}
-              language={'plaintext'}
+              language={language}
               showLineNumbers={false}
               showMiniMap={false}
               value={preview.text}
@@ -133,10 +148,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: 'inherit',
     }),
     header: css({
+      display: 'flex',
+      justifyContent: 'space-between',
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(1, 2),
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       backgroundColor: theme.colors.background.secondary,
+    }),
+    language: css({
+      marginLeft: 'auto',
+      fontStyle: 'italic',
     }),
     errorText: css({
       color: theme.colors.error.text,
