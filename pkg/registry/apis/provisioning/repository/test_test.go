@@ -193,7 +193,7 @@ func TestTestRepository(t *testing.T) {
 		name          string
 		repository    *MockRepository
 		expectedCode  int
-		expectedErrs  map[string]provisioning.FieldError
+		expectedErrs  []provisioning.ErrorDetails
 		expectedError error
 	}{
 		{
@@ -209,12 +209,11 @@ func TestTestRepository(t *testing.T) {
 				return m
 			}(),
 			expectedCode: http.StatusUnprocessableEntity,
-			expectedErrs: map[string]provisioning.FieldError{
-				"spec.title": {
-					Type:   metav1.CauseTypeFieldValueRequired,
-					Detail: "a repository title must be given",
-				},
-			},
+			expectedErrs: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueRequired,
+				Field:  "spec.title",
+				Detail: "a repository title must be given",
+			}},
 		},
 		{
 			name: "test passes",
@@ -263,20 +262,18 @@ func TestTestRepository(t *testing.T) {
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusBadRequest,
 					Success: false,
-					Fields: map[string]provisioning.FieldError{
-						"spec.property": {
-							Type: metav1.CauseTypeFieldValueInvalid,
-						},
-					},
+					Errors: []provisioning.ErrorDetails{{
+						Type:  metav1.CauseTypeFieldValueInvalid,
+						Field: "spec.property",
+					}},
 				}, nil)
 				return m
 			}(),
 			expectedCode: http.StatusBadRequest,
-			expectedErrs: map[string]provisioning.FieldError{
-				"spec.property": {
-					Type: metav1.CauseTypeFieldValueInvalid,
-				},
-			},
+			expectedErrs: []provisioning.ErrorDetails{{
+				Type:  metav1.CauseTypeFieldValueInvalid,
+				Field: "spec.property",
+			}},
 		},
 	}
 
@@ -295,11 +292,11 @@ func TestTestRepository(t *testing.T) {
 			require.Equal(t, tt.expectedCode, results.Code)
 
 			if tt.expectedErrs != nil {
-				require.Equal(t, tt.expectedErrs, results.Fields)
+				require.Equal(t, tt.expectedErrs, results.Errors)
 				require.False(t, results.Success)
 			} else {
 				require.True(t, results.Success)
-				require.Empty(t, results.Fields)
+				require.Empty(t, results.Errors)
 			}
 		})
 	}

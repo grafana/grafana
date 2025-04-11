@@ -394,15 +394,13 @@ type TestResults struct {
 	// Is the connection healthy
 	Success bool `json:"success"`
 
-	// Possible message
-	Message string `json:"message,omitempty"`
-
 	// Field related errors
-	Fields map[string]FieldError `json:"fields,omitempty"`
+	Errors []ErrorDetails `json:"errors,omitempty"`
 }
 
-type FieldError struct {
+type ErrorDetails struct {
 	Type   metav1.CauseType `json:"type"`
+	Field  string           `json:"field,omitempty"`
 	Detail string           `json:"detail,omitempty"`
 }
 

@@ -28,11 +28,12 @@ func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestRes
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid
 			Success: false,
-			Fields:  make(map[string]provisioning.FieldError),
+			Errors:  make([]provisioning.ErrorDetails, len(errors)),
 		}
-		for _, err := range errors {
-			rsp.Fields[err.Field] = provisioning.FieldError{
+		for i, err := range errors {
+			rsp.Errors[i] = provisioning.ErrorDetails{
 				Type:   v1.CauseType(err.Type),
+				Field:  err.Field,
 				Detail: err.Detail,
 			}
 		}
@@ -95,29 +96,25 @@ func fromFieldError(err *field.Error) *provisioning.TestResults {
 	return &provisioning.TestResults{
 		Code:    http.StatusBadRequest,
 		Success: false,
-		Message: err.Detail,
-		Fields: map[string]provisioning.FieldError{
-			err.Field: {
-				Type:   v1.CauseType(err.Type),
-				Detail: err.Detail,
-			},
-		},
+		Errors: []provisioning.ErrorDetails{{
+			Type:   v1.CauseType(err.Type),
+			Field:  err.Field,
+			Detail: err.Detail,
+		}},
 	}
 }
 
 func fromError(err error, code int) *provisioning.TestResults {
 	statusErr, ok := err.(apierrors.APIStatus)
 	if ok {
-		s := statusErr.Status()
-		return &provisioning.TestResults{
-			Code:    int(s.Code),
-			Success: false,
-			Message: s.Message,
-		}
+		code = int(statusErr.Status().Code)
 	}
 	return &provisioning.TestResults{
 		Code:    code,
 		Success: false,
-		Message: err.Error(),
+		Errors: []provisioning.ErrorDetails{{
+			Type:   v1.CauseTypeInternal,
+			Detail: err.Error(),
+		}},
 	}
 }
