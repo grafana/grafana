@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -24,10 +24,11 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 		expectedID        int64
 		migrationExpected bool
 		expectedTitle     string
+		expectedError     bool
 	}{
 		{
 			name: "should skip non-create/update operations",
-			inputObj: &v1alpha1.Dashboard{
+			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
 						"id": float64(123),
@@ -39,7 +40,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 		},
 		{
 			name: "v0 should extract id and set as label",
-			inputObj: &v0alpha1.Dashboard{
+			inputObj: &dashv0.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
 						"id": float64(123),
@@ -51,7 +52,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 		},
 		{
 			name: "v1 should migrate dashboard to the latest version, if possible, and set as label",
-			inputObj: &v1alpha1.Dashboard{
+			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
 						"id":            float64(456),
@@ -64,8 +65,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			migrationExpected: true,
 		},
 		{
-			name: "v1 should not error mutation hook if migration fails",
-			inputObj: &v1alpha1.Dashboard{
+			name: "v1 should error mutation hook if migration fails",
+			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
 						"id":            float64(456),
@@ -73,8 +74,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					},
 				},
 			},
-			operation:  admission.Create,
-			expectedID: 456,
+			operation:     admission.Create,
+			expectedError: true,
 		},
 		{
 			name: "v2 should set layout if it is not set",
@@ -104,6 +105,11 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				false,
 				nil,
 			), nil)
+
+			if tt.expectedError {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 
 			if tt.operation == admission.Create || tt.operation == admission.Update {
@@ -112,10 +118,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				require.Equal(t, tt.expectedID, meta.GetDeprecatedInternalID()) //nolint:staticcheck
 
 				switch v := tt.inputObj.(type) {
-				case *v0alpha1.Dashboard:
+				case *dashv0.Dashboard:
 					_, exists := v.Spec.Object["id"]
 					require.False(t, exists, "id should be removed from spec")
-				case *v1alpha1.Dashboard:
+				case *dashv1.Dashboard:
 					_, exists := v.Spec.Object["id"]
 					require.False(t, exists, "id should be removed from spec")
 					schemaVersion, ok := v.Spec.Object["schemaVersion"].(int)

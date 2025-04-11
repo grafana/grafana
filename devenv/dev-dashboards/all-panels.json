@@ -882,7 +882,11 @@
       }
     ],
     "refresh": "",
+<<<<<<< HEAD
     "schemaVersion": 41,
+=======
+    "schemaVersion": 36,
+>>>>>>> main
     "tags": [
       "gdev",
       "panel-tests",

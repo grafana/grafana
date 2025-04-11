@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -39,7 +40,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 	} else {
-		return nil, nil, "", fmt.Errorf("classic resource must be JSON")
+		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
 
 	// regular version headers exist
@@ -61,8 +62,23 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	}
 
 	// If this is a dashboard, convert it
-	if value["panels"] == nil {
-		return nil, nil, "", ErrUnableToReadPanelsMissing
+	if value["panels"] != nil &&
+		value["schemaVersion"] != nil &&
+		value["tags"] != nil {
+		gvk := &schema.GroupVersionKind{
+			Group:   dashboard.GROUP,
+			Version: "v0alpha1", // no schema
+			Kind:    "Dashboard"}
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": gvk.GroupVersion().String(),
+				"kind":       gvk.Kind,
+				"metadata": map[string]any{
+					"name": value["uid"],
+				},
+				"spec": value,
+			},
+		}, gvk, provisioning.ClassicDashboard, nil
 	}
 
 	if value["schemaVersion"] == nil {

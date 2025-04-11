@@ -353,7 +353,21 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
 		code := 0
-		result := helper.AdminREST.Post().
+
+		// Check that we can not (yet) UPDATE the target path
+		result := helper.AdminREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, http.StatusNotFound, code)
+		require.True(t, apierrors.IsNotFound(result.Error()))
+
+		// Now try again with POST (as an editor)
+		result = helper.EditorREST.Post().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
