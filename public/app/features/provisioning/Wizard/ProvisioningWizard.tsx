@@ -10,7 +10,7 @@ import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/ap
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t } from 'app/core/internationalization';
 
-import { getDefaultValues } from '../Config/ConfigForm';
+import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
