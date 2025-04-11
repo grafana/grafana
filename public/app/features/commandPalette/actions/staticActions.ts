@@ -103,7 +103,7 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
   if (shouldRenderInviteUserButton) {
     navBarActions.push({
       id: 'invite-user',
-      name: t('navigation.invite-user.invite-button', 'Invite new member'),
+      name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
       section: t('command-palette.section.actions', 'Actions'),
       priority: ACTIONS_PRIORITY,
       perform: () => {
