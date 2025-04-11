@@ -640,10 +640,6 @@ export interface FeatureToggles {
   */
   pinNavItems?: boolean;
   /**
-  * Enables the gRPC server for authorization
-  */
-  authZGRPCServer?: boolean;
-  /**
   * Use the new SSO Settings API to configure LDAP
   */
   ssoSettingsLDAP?: boolean;
