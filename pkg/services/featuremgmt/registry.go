@@ -1612,7 +1612,7 @@ var (
 		},
 		{
 			Name:              "scopeSearchAllLevels",
-			Description:       "Enable scope search to include all levels",
+			Description:       "Enable scope search to include all levels of the scope node tree",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromDocs:      true,
