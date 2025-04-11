@@ -64,7 +64,6 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-
   libraryPanel: LibraryPanelRef
 }
 
