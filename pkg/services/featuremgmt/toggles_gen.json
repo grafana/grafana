@@ -733,6 +733,30 @@
     },
     {
       "metadata": {
+        "name": "dashboardDisableSchemaValidationV1",
+        "resourceVersion": "1744303023863",
+        "creationTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v1",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardDisableSchemaValidationV2",
+        "resourceVersion": "1744303023863",
+        "creationTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -784,6 +808,18 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaValidationLogging",
+        "resourceVersion": "1744303223631",
+        "creationTimestamp": "2025-04-10T16:40:23Z"
+      },
+      "spec": {
+        "description": "Log schema validation errors so they can be analyzed later",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
       }
     },
     {
@@ -1276,6 +1312,32 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "flagDashboardDisableSchemaValidationV1",
+        "resourceVersion": "1744302136118",
+        "creationTimestamp": "2025-04-10T16:22:16Z",
+        "deletionTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v1",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "flagDashboardDisableSchemaValidationV2",
+        "resourceVersion": "1744302136118",
+        "creationTimestamp": "2025-04-10T16:22:16Z",
+        "deletionTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
       }
     },
     {

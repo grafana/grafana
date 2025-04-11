@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -2536,6 +2537,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						SilenceURL:   "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3DUID_EmailAlert&orgId=1",
 						DashboardURL: "",
 						PanelURL:     "",
+						OrgID:        util.Pointer(int64(1)),
 						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} value=1 ]",
 					},
@@ -2699,7 +2701,8 @@ var expNonEmailNotifications = map[string][]string{
 			  "fingerprint": "15c59b0a380bd9f1",
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%%3DUID_WebhookAlert&orgId=1",
 			  "dashboardURL": "",
-			  "panelURL": ""
+			  "panelURL": "",
+			  "orgId": 1
 			}
 		  ],
 		  "groupLabels": {

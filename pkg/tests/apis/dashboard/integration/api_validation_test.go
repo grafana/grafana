@@ -793,7 +793,8 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 				},
 			},
 			"spec": map[string]interface{}{
-				"title": title,
+				"title":         title,
+				"schemaVersion": 41,
 			},
 		},
 	}
