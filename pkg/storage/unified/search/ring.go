@@ -17,10 +17,10 @@ import (
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -43,6 +43,11 @@ type RingConfig struct {
 	// Used for testing
 	SkipUnregister bool `yaml:"-"`
 }
+
+var RingOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+	// Only ACTIVE memora nodes get any work. If instance is not ACTIVE, we need to find another memora node.
+	return s != ring.ACTIVE
+})
 
 var ip = "127.0.0.2"
 
@@ -97,7 +102,7 @@ func (cfg *RingConfig) ToRingConfig() ring.Config {
 }
 
 func initRing(cfg *setting.Cfg, logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
-	if (cfg.IndexMemberlistJoinMember == "") {
+	if cfg.IndexMemberlistJoinMember == "" {
 		return nil, nil, fmt.Errorf("bad sharding configuration. Missing Join Member")
 	}
 
@@ -111,7 +116,7 @@ func initRing(cfg *setting.Cfg, logger log.Logger, registerer prometheus.Registe
 	}
 	memberlistKVcfg.AdvertiseAddr = cfg.IndexMemberlistBindAddr
 	memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.IndexMemberlistBindAddr}
-	memberlistKVcfg.NodeName = "node-2"
+	memberlistKVcfg.NodeName = cfg.IndexMemberlistBindAddr
 	memberlistKVcfg.JoinMembers = []string{cfg.IndexMemberlistJoinMember}
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
@@ -177,7 +182,7 @@ func initRing(cfg *setting.Cfg, logger log.Logger, registerer prometheus.Registe
 	return rulerRing, lifecycler, nil
 }
 
-func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus.Registerer) *client.Pool {
+func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus.Registerer, cfg *setting.Cfg) *client.Pool {
 	poolCfg := client.PoolConfig{
 		CheckInterval:      10 * time.Second,
 		HealthCheckEnabled: true,
@@ -203,35 +208,23 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 			return nil, err
 		}
 
-		conn, err := grpc.NewClient(inst.Addr, opts...)
+		// TODO without the 10000 we can't reach the right grpc server
+		// need to check if we can make ring use the same server as unistore, that way we can
+		// remove the :10000 hardcoded here
+		conn, err := grpc.NewClient(inst.Addr+":10000", opts...)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to dial memora %s %s", inst.Id, inst.Addr)
 		}
 
-		return &bleveRingClient{
-			KVClient:     etcdserverpb.NewKVClient(conn),
+		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled
+		indexClient := resource.NewLegacyResourceClient(conn)
+
+		return &resource.BleveRingClient{
+			IndexClient:  indexClient,
 			HealthClient: grpc_health_v1.NewHealthClient(conn),
-			conn:         conn,
+			Conn:         conn,
 		}, nil
 	})
 
 	return client.NewPool(ringName, poolCfg, nil, factory, clientsCount, nil /* TODO add logger here*/)
-}
-
-type bleveRingClient struct {
-	etcdserverpb.KVClient
-	grpc_health_v1.HealthClient
-	conn *grpc.ClientConn
-}
-
-func (c *bleveRingClient) Close() error {
-	return c.conn.Close()
-}
-
-func (c *bleveRingClient) String() string {
-	return c.RemoteAddress()
-}
-
-func (c *bleveRingClient) RemoteAddress() string {
-	return c.conn.Target()
 }

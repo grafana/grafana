@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
@@ -74,7 +75,9 @@ type bleveBackend struct {
 	indexMetrics *resource.BleveIndexMetrics
 
 	// sharding things
-	pool *ringclient.Pool
+	pool       *ringclient.Pool
+	ring       *ring.Ring
+	lifecycler *ring.BasicLifecycler
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -102,7 +105,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	go bleveBackend.updateIndexSizeMetric(opts.Root)
 
 	// TODO wrap in feature flag
-	if (opts.Cfg.IndexEnableSharding) {
+	if opts.Cfg.IndexEnableSharding {
 		err = bleveBackend.enableSharding(opts.Cfg)
 		if err != nil {
 			return nil, fmt.Errorf("error sharding", err)
@@ -114,7 +117,9 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 func (b *bleveBackend) enableSharding(cfg *setting.Cfg) error {
 	ctx := context.Background()
-	pool := newClientPool(grpcclient.Config{} /*TODO*/, b.log, nil)
+	grpcclientcfg := &grpcclient.Config{}
+	flagext.DefaultValues(grpcclientcfg)
+	pool := newClientPool(*grpcclientcfg /*TODO*/, b.log, nil, cfg)
 
 	ringsvc, lfcsvc, err := initRing(cfg, log.New("bleve-ring"), nil)
 
@@ -154,16 +159,20 @@ func (b *bleveBackend) enableSharding(cfg *setting.Cfg) error {
 	}
 
 	b.pool = pool
+	b.ring = ringsvc
+	b.lifecycler = lfcsvc
 
-	if (cfg.IndexRingDebugServerPort != "") {
-		listener, err := net.Listen("tcp", net.JoinHostPort(cfg.IndexMemberlistBindAddr, cfg.IndexRingDebugServerPort))
-		if err != nil {
-			panic(err)
-		}
-		mux := http.NewServeMux()
-		mux.Handle("/ring", lfcsvc)
-		http.Serve(listener, mux)
-		// mux.Handle("/kv", memberlistsvc)
+	if cfg.IndexRingDebugServerPort != "" {
+		go func() {
+			listener, err := net.Listen("tcp", net.JoinHostPort(cfg.IndexMemberlistBindAddr, cfg.IndexRingDebugServerPort))
+			if err != nil {
+				panic(err)
+			}
+			mux := http.NewServeMux()
+			mux.Handle("/ring", lfcsvc)
+			http.Serve(listener, mux)
+			// mux.Handle("/kv", memberlistsvc)
+		}()
 	}
 
 	return nil
@@ -172,6 +181,14 @@ func (b *bleveBackend) enableSharding(cfg *setting.Cfg) error {
 
 func (b *bleveBackend) GetClientPool() *ringclient.Pool {
 	return b.pool
+}
+
+func (b *bleveBackend) GetRing() *ring.Ring {
+	return b.ring
+}
+
+func (b *bleveBackend) GetLifecycler() *ring.BasicLifecycler {
+	return b.lifecycler
 }
 
 func (b *bleveBackend) IsShardingEnabled() bool {

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"slices"
 	"strings"
@@ -17,11 +18,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
+	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/dskit/user"
 
 	"github.com/grafana/authlib/types"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type NamespacedResource struct {
@@ -85,6 +91,8 @@ type SearchBackend interface {
 	IsShardingEnabled() bool
 
 	GetClientPool() *ringclient.Pool
+	GetRing() *ring.Ring
+	GetLifecycler() *ring.BasicLifecycler
 
 	// Gets the total number of documents across all indexes
 	TotalDocs() int64
@@ -242,6 +250,24 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *CountManag
 	return rsp, nil
 }
 
+type BleveRingClient struct {
+	IndexClient ResourceIndexClient // replace this with client that implements search. newresourceindexclient maybe?
+	grpc_health_v1.HealthClient
+	Conn *grpc.ClientConn
+}
+
+func (c BleveRingClient) Close() error {
+	return c.Conn.Close()
+}
+
+func (c *BleveRingClient) String() string {
+	return c.RemoteAddress()
+}
+
+func (c *BleveRingClient) RemoteAddress() string {
+	return c.Conn.Target()
+}
+
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
@@ -252,6 +278,36 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+
+	if s.search.IsShardingEnabled() {
+		ringHasher := fnv.New32a()
+		ringHasher.Write([]byte(nsr.Namespace))
+		indexRing := s.search.GetRing()
+		rs, err := indexRing.Get(ringHasher.Sum32(), ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+			return s != ring.ACTIVE
+		}), nil, nil, nil)
+
+		if err != nil {
+			return nil, err
+		}
+
+		lifecycler := s.search.GetLifecycler()
+		if rs.Instances[0].Id != lifecycler.GetInstanceID() {
+			fmt.Println("request for another instance. sending over to", rs.Instances[0].Id)
+
+			pool := s.search.GetClientPool()
+			ins, err := pool.GetClientFor("127.0.0.2")
+			if err != nil {
+				return nil, err
+			}
+			client := ins.(*BleveRingClient)
+			_ctx, _ := identity.WithServiceIdentity(user.InjectOrgID(ctx, "1"), 1)
+			res, err := client.IndexClient.Search(_ctx, req)
+			return res, err
+		}
+	}
+
+	fmt.Println("handling search request")
 	idx, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		return &ResourceSearchResponse{
