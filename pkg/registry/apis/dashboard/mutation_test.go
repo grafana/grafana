@@ -92,6 +92,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			operation:           admission.Create,
 			fieldValidationMode: metav1.FieldValidationIgnore,
 			expectedError:       false,
+			expectedID:          123,
 		},
 		{
 			name: "v1 should migrate dashboard to the latest version, if possible, and set as label",
