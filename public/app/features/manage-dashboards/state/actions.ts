@@ -170,7 +170,6 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
           const dsType = query.spec.query.kind;
           const datasource = await getDatasourceSrv().get({ type: dsType });
           if (!datasource) {
-            console.log('datasource', datasource);
             dataSourceInput = {
               name: dsType,
               label: dsType,

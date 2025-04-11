@@ -93,9 +93,6 @@ export class K8sDashboardV2API
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard;
 
-    console.log('options', options);
-    console.log('dashboard', dashboard);
-
     const obj: ResourceForCreate<DashboardV2Spec> = {
       // the metadata will have the name that's the uid
       metadata: {

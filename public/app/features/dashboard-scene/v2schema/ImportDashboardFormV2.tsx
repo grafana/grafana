@@ -78,7 +78,6 @@ export const ImportDashboardFormV2 = ({
             <FolderPicker
               {...field}
               onChange={(uid, title) => {
-                console.log({ uid, title });
                 onChange(uid, title);
               }}
               value={value}
@@ -133,7 +132,7 @@ export const ImportDashboardFormV2 = ({
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
             >
-              <Controller<any>
+              <Controller
                 name={dataSourceOption}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
