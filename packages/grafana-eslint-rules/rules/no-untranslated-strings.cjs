@@ -11,7 +11,7 @@ const {
   canBeFixed,
   elementIsTrans,
   shouldBeFixed,
-  isStringLiteral,
+  isStringNonAlphanumeric,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -32,10 +32,12 @@ const noUntranslatedStrings = createRule({
           return;
         }
 
-        const isUntranslatedProp =
-          (node.value.type === 'Literal' && node.value.value !== '') ||
-          (node.value.type === AST_NODE_TYPES.JSXExpressionContainer &&
-            ((isStringLiteral(node.value.expression) && node.value.expression.value !== '') || node.value.expression.type === 'TemplateLiteral'));
+        const nodeValue = getNodeValue(node);
+        const isAlphaNumeric = !isStringNonAlphanumeric(nodeValue);
+        const isTemplateLiteral =
+          node.value.type === AST_NODE_TYPES.JSXExpressionContainer && node.value.expression.type === 'TemplateLiteral';
+
+        const isUntranslatedProp = (nodeValue.trim() && isAlphaNumeric) || isTemplateLiteral;
 
         if (isUntranslatedProp) {
           const errorShouldBeFixed = shouldBeFixed(context);
@@ -63,8 +65,8 @@ const noUntranslatedStrings = createRule({
         const children = node.children;
         const untranslatedTextNodes = children.filter((child) => {
           if (child.type === AST_NODE_TYPES.JSXText) {
-            const hasValue = child.value.trim();
-            if (!hasValue) {
+            const nodeValue = child.value.trim();
+            if (!nodeValue || isStringNonAlphanumeric(nodeValue)) {
               return false;
             }
             const ancestors = context.sourceCode.getAncestors(node);
