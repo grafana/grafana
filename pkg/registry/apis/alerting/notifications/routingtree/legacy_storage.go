@@ -65,7 +65,7 @@ func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*model.R
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(orgId, res, version, s.namespacer)
+	return ConvertToK8sResource(orgId, res, version, s.namespacer)
 }
 
 func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
@@ -131,7 +131,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, err
 	}
 
-	obj, err = convertToK8sResource(info.OrgID, updated, updatedVersion, s.namespacer)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, updatedVersion, s.namespacer)
 	return obj, false, err
 }
 

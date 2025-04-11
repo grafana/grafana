@@ -11,9 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
@@ -27,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -47,7 +46,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	newTemplate := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
@@ -217,11 +216,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient := newClient(t, org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, org1.Admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := common.NewTemplateGroupClient(t, tc.user)
 
 			var expected = &v0alpha1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
@@ -377,7 +376,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewTemplateGroupClient(t, admin)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
@@ -427,7 +426,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
@@ -511,7 +510,7 @@ func TestIntegrationPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
@@ -571,7 +570,7 @@ func TestIntegrationListSelector(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template1 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
@@ -663,20 +662,4 @@ func TestIntegrationListSelector(t *testing.T) {
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[0].Name, "Expected non-default template but got %s", list.Items[0].Name)
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[1].Name, "Expected non-default template but got %s", list.Items[1].Name)
 	})
-}
-
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
-	t.Helper()
-
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
-
-	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
-	}
 }

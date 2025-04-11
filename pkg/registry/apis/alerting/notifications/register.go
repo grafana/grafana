@@ -44,7 +44,7 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
 ) *NotificationsAPIBuilder {
-	if ng.IsDisabled() || !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+	if ng.IsDisabled() {
 		return nil
 	}
 	builder := &NotificationsAPIBuilder{

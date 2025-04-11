@@ -22,7 +22,7 @@ const resourceDescriptionsMap: Record<string, Description> = {
  * */
 const resourceDetailsMap: Record<string, Record<string, ResourcePermission[]>> = {
   receivers: {
-    lotsaEmails: [
+    'lotsa-emails': [
       {
         id: 123,
         roleName: 'somerole:name',

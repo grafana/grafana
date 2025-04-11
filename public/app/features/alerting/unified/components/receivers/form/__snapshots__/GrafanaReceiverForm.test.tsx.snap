@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GrafanaReceiverForm alertingApiServer handles nested secure fields correctly 1`] = `
+exports[`GrafanaReceiverForm handles nested secure fields correctly 1`] = `
 {
   "metadata": {},
   "spec": {

@@ -254,3 +254,27 @@ export const makeAllK8sGetEndpointsFail = (
     })
   );
 };
+
+export const makeAllK8sEndpointsFail = (
+  uid: string,
+  message = 'could not find an Alertmanager configuration',
+  status = 500
+) => {
+  server.use(
+    http.all(ALERTING_API_SERVER_BASE_URL + '/*', () => {
+      const errorResponse: ApiMachineryError = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        metadata: {},
+        status: 'Failure',
+        details: {
+          uid,
+        },
+        message,
+        code: status,
+        reason: '',
+      };
+      return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+    })
+  );
+};
