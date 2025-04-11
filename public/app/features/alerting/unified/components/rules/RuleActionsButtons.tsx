@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { LinkButton, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -69,7 +69,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   if (showViewButton) {
     buttons.push(
       <LinkButton
-        title="View"
+        title={t('alerting.rule-actions-buttons.title-view', 'View')}
         size={buttonSize}
         key="view"
         variant="secondary"
@@ -87,7 +87,14 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
-      <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
+      <LinkButton
+        title={t('alerting.rule-actions-buttons.title-edit', 'Edit')}
+        size={buttonSize}
+        key="edit"
+        variant="secondary"
+        icon="pen"
+        href={editURL}
+      >
         <Trans i18nKey="common.edit">Edit</Trans>
       </LinkButton>
     );

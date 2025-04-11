@@ -427,12 +427,12 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				"tags":  []interface{}{},
 			}),
 			Overwrite: true,
-			FolderUID: "2",
+			FolderUID: savedFolder.UID,
 			UserID:    100,
 		}
 		dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
-		require.EqualValues(t, dash.FolderUID, "2")
+		require.EqualValues(t, dash.FolderUID, savedFolder.UID)
 
 		cmd = dashboards.SaveDashboardCommand{
 			OrgID: 1,

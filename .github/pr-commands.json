@@ -243,15 +243,23 @@
   {
     "type": "changedfiles",
     "matches": [
-      "/pkg/services/ngalert/**/*",
-      "/pkg/services/sqlstore/migrations/ualert/**/*",
-      "/pkg/services/alerting/**/*",
-      "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*",
-      "/pkg/tests/alertmanager/**/*"
+      "pkg/services/ngalert/**/*",
+      "pkg/services/sqlstore/migrations/ualert/**/*",
+      "pkg/services/alerting/**/*",
+      "public/app/features/alerting/**/*",
+      "pkg/tests/api/alerting/**/*",
+      "pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"
+  },
+  {
+    "type": "label",
+    "name": "area/alerting",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/52"
+    }
   },
   {
     "type": "author",

@@ -262,8 +262,15 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
+		isBlob := !entry.IsDirectory()
+		// FIXME: this we could potentially do somewhere else on in a different way
+		filePath := entry.GetPath()
+		if !isBlob && !safepath.IsDir(filePath) {
+			filePath = filePath + "/"
+		}
+
 		converted := FileTreeEntry{
-			Path: entry.GetPath(),
+			Path: filePath,
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
@@ -672,30 +679,75 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:   f.GetFilename(),
+				Path:   currentPath,
 				Ref:    ref,
 				Action: FileActionCreated,
 			})
 		case "modified", "changed":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:   f.GetFilename(),
+				Path:   currentPath,
 				Ref:    ref,
 				Action: FileActionUpdated,
 			})
 		case "renamed":
+			previousPath, previousErr := safepath.RelativeTo(f.GetPreviousFilename(), r.config.Spec.GitHub.Path)
+			currentPath, currentErr := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+
+			// Handle all possible combinations of path validation results:
+			// 1. Both paths outside configured path, do nothing
+			// 2. Both paths inside configured path, rename
+			// 3. Moving out of configured path, delete previous file
+			// 4. Moving into configured path, create new file
+			switch {
+			case previousErr != nil && currentErr != nil:
+				// do nothing as it's outside of configured path
+			case previousErr == nil && currentErr == nil:
+				changes = append(changes, VersionedFileChange{
+					Path:         currentPath,
+					PreviousPath: previousPath,
+					Ref:          ref,
+					PreviousRef:  base,
+					Action:       FileActionRenamed,
+				})
+			case previousErr == nil && currentErr != nil:
+				changes = append(changes, VersionedFileChange{
+					Path:   currentPath,
+					Ref:    ref,
+					Action: FileActionDeleted,
+				})
+			case previousErr != nil && currentErr == nil:
+				changes = append(changes, VersionedFileChange{
+					Path:   currentPath,
+					Ref:    ref,
+					Action: FileActionCreated,
+				})
+			}
+		case "removed":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:         f.GetFilename(),
-				PreviousPath: f.GetPreviousFilename(),
 				Ref:          ref,
 				PreviousRef:  base,
-				Action:       FileActionRenamed,
-			})
-		case "removed":
-			changes = append(changes, VersionedFileChange{
-				Ref:    base,
-				Path:   f.GetFilename(),
-				Action: FileActionDeleted,
+				Path:         currentPath,
+				PreviousPath: currentPath,
+				Action:       FileActionDeleted,
 			})
 		case "unchanged":
 			// do nothing
