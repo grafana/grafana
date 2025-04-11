@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync, DataFrame, Field, FieldType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -17,7 +17,13 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {}
+interface CustomAnnotation {
+  timestamp: number;
+  text: string;
+  color?: string;
+}
+
+interface TimeSeriesPanelProps extends PanelProps<Options> { }
 
 export const TimeSeriesPanel = ({
   data,
@@ -41,6 +47,59 @@ export const TimeSeriesPanel = ({
     dataLinkPostProcessor,
     eventBus,
   } = usePanelContext();
+
+  const [customAnnotations, setCustomAnnotations] = useState<DataFrame[]>([]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const annotationsParam = searchParams.get('customAnnotations');
+    if (annotationsParam) {
+      try {
+        const parsedAnnotations = JSON.parse(annotationsParam) as CustomAnnotation[];
+        // Convert custom annotations to DataFrame format
+        const annotationFrames = parsedAnnotations.map(annotation => {
+          const timeField: Field = {
+            name: 'time',
+            type: FieldType.time,
+            values: [annotation.timestamp],
+            config: {},
+          };
+
+          const textField: Field = {
+            name: 'text',
+            type: FieldType.string,
+            values: [annotation.text],
+            config: {},
+          };
+
+          const fields = [timeField, textField];
+          if (annotation.color) {
+            const colorField: Field = {
+              name: 'color',
+              type: FieldType.string,
+              values: [annotation.color ?? ''],
+              config: {},
+            };
+
+            fields.push(colorField);
+          }
+
+          return {
+            fields: fields,
+            length: 1,
+            meta: {
+              type: DataFrameType.TimeSeriesMulti,
+            },
+          };
+        });
+
+        setCustomAnnotations(annotationFrames);
+      } catch (e) {
+        console.error('Failed to parse annotations from URL:', e);
+      }
+    }
+  }, []);
+
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
@@ -74,6 +133,9 @@ export const TimeSeriesPanel = ({
       />
     );
   }
+
+  // Combine dashboard annotations with custom annotations from URL
+  const allAnnotations = [...(data.annotations ?? []), ...customAnnotations];
 
   return (
     <TimeSeries
@@ -141,18 +203,18 @@ export const TimeSeriesPanel = ({
             {!isVerticallyOriented && (
               <>
                 <AnnotationsPlugin2
-                  annotations={data.annotations ?? []}
+                  annotations={allAnnotations}
                   config={uplotConfig}
                   timeZone={timeZone}
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
+                {allAnnotations.length > 0 && (
                   <ExemplarsPlugin
                     visibleSeries={getVisibleLabels(uplotConfig, frames)}
                     config={uplotConfig}
-                    exemplars={data.annotations}
+                    exemplars={allAnnotations}
                     timeZone={timeZone}
                   />
                 )}
