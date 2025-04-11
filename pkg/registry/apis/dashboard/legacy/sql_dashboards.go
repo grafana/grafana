@@ -413,7 +413,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}
 
 	// v1 should be saved as schema version 41. v0 allows for older versions
-	if schemaversion.GetSchemaVersion(dash.Spec.Object) < int(schemaversion.LATEST_VERSION) {
+	if strings.HasSuffix(dash.APIVersion, "v1alpha1") && schemaversion.GetSchemaVersion(dash.Spec.Object) < int(schemaversion.LATEST_VERSION) {
 		dash.APIVersion = dashboardv0.VERSION
 	}
 
