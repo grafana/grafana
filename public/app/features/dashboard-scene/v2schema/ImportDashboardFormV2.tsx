@@ -132,7 +132,7 @@ export const ImportDashboardFormV2 = ({
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
             >
-              <Controller
+              <Controller<any>
                 name={dataSourceOption}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
