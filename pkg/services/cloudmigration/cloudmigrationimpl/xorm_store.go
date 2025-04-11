@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -434,7 +435,11 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 		if errorsOnly {
 			sess.Where("status = ?", cloudmigration.ItemStatusError)
 		}
-		return sess.OrderBy(fmt.Sprintf("lower(%s) %s", col, dir)).Find(&resources, &cloudmigration.CloudMigrationResource{
+		orderByClause := fmt.Sprintf("lower(%s) %s", col, dir)
+		if ss.db.GetDBType() == migrator.Postgres {
+			orderByClause = fmt.Sprintf("%s %s", col, dir)
+		}
+		return sess.OrderBy(orderByClause).Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})
