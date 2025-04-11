@@ -39,8 +39,6 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 
   abstract loadSnapshot(slug: string): Promise<T>;
 
-  protected abstract isVersionSupported(version: string): boolean;
-
   protected loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
@@ -115,12 +113,6 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 }
 
 export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
-  private SUPPORTED_VERSIONS = ['v1alpha1', 'v0alpha1'];
-
-  protected isVersionSupported(version: string): boolean {
-    return this.SUPPORTED_VERSIONS.includes(version);
-  }
-
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
@@ -189,12 +181,6 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 }
 
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
-  private SUPPORTED_VERSIONS = ['v2alpha1'];
-
-  protected isVersionSupported(version: string): boolean {
-    return this.SUPPORTED_VERSIONS.includes(version);
-  }
-
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
