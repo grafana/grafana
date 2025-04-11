@@ -48,7 +48,7 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 
 ## Import alert rules with Mimirtool or coretextool
 
-You can use either [Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import your alert rules. For more information about Mimirtool commands, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules). 
+You can use either [Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import your alert rules. For more information about Mimirtool commands, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules).
 
 To convert your alert rules, use the following command prompt substituting the your URL and your service account token as indicated, followed by your intended Mimirtool command.
 
