@@ -865,28 +865,26 @@ export function mapFrameToDataGrid({
     });
   });
 
-  // INFO: This loop calculates the width for each column in less than a millisecond.
+  // set columns that are at minimum width
   let sharedWidth = availableWidth / fieldCountWithoutWidth;
-
-  // First pass: Assign minimum widths to columns that need it
-  columns.forEach((column) => {
-    if (!column.width && column.minWidth! > sharedWidth) {
-      column.width = column.minWidth;
-      availableWidth -= column.width!;
-      fieldCountWithoutWidth -= 1;
+  for (let i = fieldCountWithoutWidth; i > 0; i--) {
+    for (const column of columns) {
+      if (!column.width && column.minWidth! > sharedWidth) {
+        column.width = column.minWidth;
+        availableWidth -= column.width!;
+        fieldCountWithoutWidth -= 1;
+        sharedWidth = availableWidth / fieldCountWithoutWidth;
+      }
     }
-  });
+  }
 
-  // Recalculate shared width after assigning minimum widths
-  sharedWidth = availableWidth / fieldCountWithoutWidth;
-
-  // Second pass: Assign shared width to remaining columns
-  columns.forEach((column) => {
+  // divide up the rest of the space
+  for (const column of columns) {
     if (!column.width) {
       column.width = sharedWidth;
     }
-    column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
-  });
+    column.minWidth = COLUMN.MIN_WIDTH;
+  }
 
   return columns;
 }
@@ -980,6 +978,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       '--rdg-summary-border-color': theme.colors.border.medium,
 
       '.rdg-cell': {
+        // Prevent collisions with custom cell components
+        zIndex: 2,
         borderRight: 'none',
       },
     },
