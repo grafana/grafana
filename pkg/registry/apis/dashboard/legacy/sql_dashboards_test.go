@@ -14,6 +14,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,6 +31,7 @@ func TestScanRow(t *testing.T) {
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
 		provisioning: provisioner,
+		log:          log.New("test"),
 	}
 
 	columns := []string{"orgId", "dashboard_id", "name", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -153,6 +155,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 			mockStore := &dashboards.FakeDashboardStore{}
 			access := &dashboardSqlAccess{
 				dashStore: mockStore,
+				log:       log.New("test"),
 			}
 
 			dashSpec := map[string]interface{}{
