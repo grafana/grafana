@@ -153,6 +153,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v1alpha1/dashboard_kind.cue
 	@echo "" >> apps/dashboard/pkg/apis/dashboard/v1alpha1/dashboard_kind.cue
 	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v1alpha1/dashboard_kind.cue
+	@cp apps/dashboard/pkg/apis/dashboard/v1alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
 
 
 .PHONY: gen-cuev2

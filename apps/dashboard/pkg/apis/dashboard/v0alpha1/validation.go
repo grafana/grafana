@@ -1,4 +1,4 @@
-package v1alpha1
+package v0alpha1
 
 import (
 	_ "embed"
@@ -7,13 +7,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/encoding/json"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorList, field.ErrorList) {

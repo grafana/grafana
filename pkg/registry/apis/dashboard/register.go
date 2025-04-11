@@ -242,10 +242,6 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	// Get the dashboard object
 	dashObj := a.GetObject()
 
-	if err := b.ValidateDashboardSpec(ctx, dashObj, a); err != nil {
-		return err
-	}
-
 	title, refresh, err := getDashboardProperties(dashObj)
 	if err != nil {
 		return fmt.Errorf("error extracting dashboard properties: %w", err)
@@ -304,10 +300,6 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	// Get the new and old dashboards
 	newDashObj := a.GetObject()
 	oldDashObj := a.GetOldObject()
-
-	if err := b.ValidateDashboardSpec(ctx, newDashObj, a); err != nil {
-		return err
-	}
 
 	title, refresh, err := getDashboardProperties(newDashObj)
 	if err != nil {
