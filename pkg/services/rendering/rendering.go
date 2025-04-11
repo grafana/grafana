@@ -318,7 +318,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}
 	}
 
-	logger.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
+	logger.Info("Rendering", "path", opts.Path, "userID", opts.UserID)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}

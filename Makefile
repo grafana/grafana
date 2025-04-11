@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.1
+GO_VERSION = 1.24.2
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -358,7 +358,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.toml
+		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck

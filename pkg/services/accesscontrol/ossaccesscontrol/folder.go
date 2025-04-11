@@ -126,8 +126,8 @@ func ProvideFolderPermissions(
 			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
 			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
 		},
-		ReaderRoleName: "Folder permission reader",
-		WriterRoleName: "Folder permission writer",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
 		RoleGroup:      "Folders",
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
