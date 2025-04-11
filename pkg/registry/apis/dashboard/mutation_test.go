@@ -131,6 +131,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				operationOptions = &metav1.CreateOptions{FieldValidation: tt.fieldValidationMode}
 			case admission.Update:
 				operationOptions = &metav1.UpdateOptions{FieldValidation: tt.fieldValidationMode}
+			default:
+				operationOptions = nil
 			}
 			err := b.Mutate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,

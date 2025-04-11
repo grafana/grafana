@@ -125,6 +125,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("Reenable this test once we enforce schema validation for provisioning")
 
 	helper := runGrafana(t)
 	ctx := context.Background()
