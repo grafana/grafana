@@ -379,6 +379,11 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
 		Headers: headers,
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+				"concurrent_query_count": "10",
+			}),
+		},
 	}
 
 	rangeRes, err := toAPIResponse(rqr)
@@ -399,7 +404,12 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr
 	}()
 	tctx.httpProvider.setResponse(rangeRes, exemplarRes)
 
-	res, err := tctx.queryData.Execute(context.Background(), &req)
+	// Create context with GrafanaConfig
+	ctx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+		"concurrent_query_count": "10",
+	}))
+
+	res, err := tctx.queryData.Execute(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

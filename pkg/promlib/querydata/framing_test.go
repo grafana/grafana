@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
-var update = true
+var update = false
 
 func TestRangeResponses(t *testing.T) {
 	tt := []struct {
@@ -150,5 +150,18 @@ func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataR
 		Body:       io.NopCloser(bytes.NewReader(response)),
 	}
 	tCtx.httpProvider.setResponse(res, res)
-	return tCtx.queryData.Execute(context.Background(), q)
+
+	// Add GrafanaConfig to the context to prevent nil pointer dereference
+	ctx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+		"concurrent_query_count": "10",
+	}))
+
+	// Add a PluginContext with GrafanaConfig to the request
+	q.PluginContext = backend.PluginContext{
+		GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			"concurrent_query_count": "10",
+		}),
+	}
+
+	return tCtx.queryData.Execute(ctx, q)
 }
