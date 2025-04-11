@@ -142,7 +142,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 	namespace := rw.Config().Namespace
 
-	progress.SetMessage(ctx, "loading legacy folders")
+	progress.SetMessage(ctx, "loading folders from SQL")
 	reader := NewLegacyFolderReader(w.legacyMigrator, rw.Config().Name, namespace)
 	if err = reader.Read(ctx, w.legacyMigrator, rw.Config().Name, namespace); err != nil {
 		return fmt.Errorf("error loading folder tree: %w", err)
@@ -154,7 +154,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
-	progress.SetMessage(ctx, "exporting legacy folders")
+	progress.SetMessage(ctx, "exporting folders from SQL")
 	err = folders.EnsureFolderTreeExists(ctx, "", "", reader.Tree(), func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
@@ -176,7 +176,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		return fmt.Errorf("error exporting legacy folders: %w", err)
 	}
 
-	progress.SetMessage(ctx, "exporting legacy resources")
+	progress.SetMessage(ctx, "exporting resources from SQL")
 	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, userInfo)
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
