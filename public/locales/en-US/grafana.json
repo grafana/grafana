@@ -3107,9 +3107,20 @@
       "description": "Organize panels into horizontal tabs",
       "name": "Tabs",
       "tab": {
-        "new": "New tab"
+        "new": "New tab",
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this tab for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"
       },
