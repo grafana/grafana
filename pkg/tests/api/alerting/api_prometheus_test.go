@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Declare respModel at the function level
@@ -194,6 +194,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 									}`),
 							},
 						},
+						IsPaused: util.Pointer(true),
 					},
 				},
 			},
