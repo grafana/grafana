@@ -67,12 +67,20 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
         </DragDropContext>
       </TabsBar>
 
-      <div className={conditionalRenderingClass}>
+      {isEditing && (
+        <div className={conditionalRenderingClass}>
+          <TabContent className={styles.tabContentContainer}>
+            {currentTab && <layout.Component model={layout} />}
+          </TabContent>
+          {conditionalRenderingOverlay}
+        </div>
+      )}
+
+      {!isEditing && (
         <TabContent className={styles.tabContentContainer}>
           {currentTab && <layout.Component model={layout} />}
         </TabContent>
-        {isEditing && conditionalRenderingOverlay}
-      </div>
+      )}
     </div>
   );
 }
