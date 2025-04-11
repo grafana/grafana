@@ -115,7 +115,7 @@ secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-s
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
-promQLScope,GA,@grafana/oss-big-tent,false,false,false
+promQLScope,experimental,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,privatePreview,@grafana/grafana-datasources-core-services,false,false,false
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
