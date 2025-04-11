@@ -564,8 +564,9 @@ var (
 		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "datasourceQueryTypes",

@@ -49,17 +49,16 @@ export function registerGoTemplateAutocomplete(monaco: Monaco): IDisposable {
 }
 
 function isInsideGoExpression(model: editor.ITextModel, position: Position) {
-  const searchRange = {
-    startLineNumber: position.lineNumber,
-    endLineNumber: position.lineNumber,
-    startColumn: model.getLineMinColumn(position.lineNumber),
-    endColumn: model.getLineMaxColumn(position.lineNumber),
-  };
+  // Need to trick findMatches into enabling multiline matches. One way to do this is to have \n in the regex.
+  const goSyntaxRegex = '\\{\\{(?:.|\\n)+?\\}\\}';
+  const matches = model.findMatches(goSyntaxRegex, model.getFullModelRange(), true, false, null, false);
 
-  const goSyntaxRegex = '\\{\\{[a-zA-Z0-9._() "]+\\}\\}';
-  const matches = model.findMatches(goSyntaxRegex, searchRange, true, false, null, true);
-
-  return matches.some((match) => match.range.containsPosition(position));
+  return matches.some((match) =>
+    match.range.containsPosition({
+      lineNumber: position.lineNumber,
+      column: position.column + 1, // Stricter check to avoid matching on the closing bracket.
+    })
+  );
 }
 
 export class CompletionProvider {

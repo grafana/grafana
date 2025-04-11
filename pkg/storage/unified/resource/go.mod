@@ -33,7 +33,7 @@ require (
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.4
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411123202-1291b60bbee0
+	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991
 )
 
 require (
