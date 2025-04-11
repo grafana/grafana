@@ -254,11 +254,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           }
         />
       </Field>
-      {type === 'github' && (
-        <ConfigFormGithubCollapse
-          previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
-        />
-      )}
+      {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 
       <ControlledCollapse
         label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}

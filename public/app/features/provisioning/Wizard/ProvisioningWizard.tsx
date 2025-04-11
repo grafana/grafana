@@ -41,7 +41,7 @@ const getSteps = (): Array<Step<WizardStep>> => {
     },
     {
       id: 'synchronize',
-      name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
+      name: t('provisioning.wizard.step-synchronize', 'Synchronize with external storage'),
       title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
       submitOnNext: false,
     },
