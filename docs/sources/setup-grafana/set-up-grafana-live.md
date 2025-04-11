@@ -207,8 +207,6 @@ To bypass these limitations, Grafana v8.1 has an experimental Live HA engine tha
 
 When the Redis engine is configured, Grafana Live keeps its state in Redis and uses Redis PUB/SUB functionality to deliver messages to all subscribers throughout all Grafana server nodes.
 
-
-
 Here is an example configuration:
 
 ```
@@ -234,6 +232,5 @@ Live currently does not support Redis Sentinel. We recommend using a Redis Clust
    ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
    ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
+
 {{< /admonition >}}
-
-
