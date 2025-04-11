@@ -159,6 +159,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.setProperty('min-height', `100%`);
       tableCellDiv?.style.setProperty('height', `fit-content`);
       tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
+      tableCellDiv?.style.setProperty('min-width', 'min-content');
     }
   };
 
@@ -173,6 +174,7 @@ export function TableCellNG(props: TableCellNGProps) {
       tableCellDiv?.style.removeProperty('min-height');
       tableCellDiv?.style.removeProperty('height');
       tableCellDiv?.style.removeProperty('background');
+      tableCellDiv?.style.removeProperty('min-width');
     }
   };
 

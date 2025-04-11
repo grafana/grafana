@@ -70,6 +70,11 @@ func ProvideAuthZClient(
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 
+		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		if cfg != nil {
+			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
+		}
+
 		// Register the server
 		server := rbac.NewService(
 			sql,
@@ -86,6 +91,7 @@ func ProvideAuthZClient(
 			tracer,
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
+			rbacSettings,
 		)
 
 		channel := &inprocgrpc.Channel{}
@@ -157,14 +163,16 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	client := authzlib.NewClient(
-		conn,
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
+	// Client side cache
+	var authzCache cache.Cache = &NoopCache{}
+	if clientCfg.cacheTTL != 0 {
+		authzCache = cache.NewLocalCache(cache.Config{
+			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
-		})),
-		authzlib.WithTracerClientOption(tracer),
-	)
+		})
+	}
+
+	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
 
 	return client, nil
 }
@@ -209,6 +217,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
+		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { ComponentProps } from 'react';
+import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
-import { Alert, CodeEditor, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -14,9 +15,9 @@ import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics'
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
-import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ImportFormValues } from './ImportFromDSRules';
+import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
@@ -58,14 +59,35 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'ruleGroup',
     'targetDatasourceUID',
   ]);
-  const { rulerRules } = useGetRulerRules(selectedDatasourceName || undefined);
+
+  const dataSourceToFetch = isOpen ? (selectedDatasourceName ?? '') : undefined;
+  const { rulesToBeImported, isloadingCloudRules } = useGetRulesToBeImported(!isOpen, dataSourceToFetch);
+  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
+    () => filterRulerRulesConfig(rulesToBeImported, namespace, ruleGroup),
+    [rulesToBeImported, namespace, ruleGroup]
+  );
+  const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
+
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
-  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = filterRulerRulesConfig(
-    rulerRules,
-    namespace,
-    ruleGroup
-  );
+
+  if (isloadingCloudRules) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        title={t('alerting.import-to-gma.confirm-modal.loading', 'Loading...')}
+        onDismiss={onDismiss}
+        onClickBackdrop={onDismiss}
+      >
+        <Text>
+          {t(
+            'alerting.import-to-gma.confirm-modal.loading-body',
+            'Preparing data to be imported.This can take a while...'
+          )}
+        </Text>
+      </Modal>
+    );
+  }
 
   async function onConvertConfirm() {
     try {
@@ -122,7 +144,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   // translations for texts in the modal
   const title = t('alerting.import-to-gma.confirm-modal.title', 'Confirm import');
-  const confirmText = t('alerting.import-to-gma.confirm-modal.confirm', 'Yes, import');
+  const confirmText = t('alerting.import-to-gma.confirm-modal.confirm', 'Import');
   return (
     <ConfirmModal
       isOpen={isOpen}
@@ -132,19 +154,12 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       modalClass={styles.modal}
       body={
         <Stack direction="column" gap={2}>
-          <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
-            <Text variant="body">
-              <Trans i18nKey="alerting.to-gma.confirm-modal.body">
-                If the target folder is not empty, some rules may be overwritten or removed. Are you sure you want to
-                import these alert rules to Grafana-managed rules?
-              </Trans>
-            </Text>
-          </Alert>
+          {!isEmpty(rulesThatMightBeOverwritten) && (
+            <TargetFolderNotEmptyWarning targetFolderRules={rulesThatMightBeOverwritten} />
+          )}
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
-            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">
-              These are the list of rules that will be imported:
-            </Trans>
+            <Trans i18nKey="alerting.to-gma.confirm-modal.summary">The following alert rules will be imported:</Trans>
           </Text>
           {rulerRulesToPayload && <RulesPreview rules={rulerRulesToPayload} />}
         </Stack>
@@ -227,3 +242,32 @@ const getStyles = () => ({
     width: '800px',
   }),
 });
+
+function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
+  const [showTargetRules, toggleShowTargetRules] = useToggle(false);
+  return (
+    <Stack direction="column" gap={2}>
+      <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">
+        <Text variant="body">
+          <Trans i18nKey="alerting.to-gma.confirm-modal.body">
+            The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import
+            these alert rules to Grafana-managed rules?
+          </Trans>
+        </Text>
+      </Alert>
+      {targetFolderRules && (
+        <Collapse
+          label={t(
+            'alerting.import-to-gma.confirm-modal.target-folder-rules',
+            'Target folder rules that might be overwritten'
+          )}
+          isOpen={showTargetRules}
+          onToggle={toggleShowTargetRules}
+          collapsible={true}
+        >
+          <RulesPreview rules={targetFolderRules} />
+        </Collapse>
+      )}
+    </Stack>
+  );
+}
