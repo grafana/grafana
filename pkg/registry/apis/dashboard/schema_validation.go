@@ -3,7 +3,6 @@ package dashboard
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,16 +13,12 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ValidateDashboardSpec validates the dashboard spec and throws a detailed error if there are validation errors.
 func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj runtime.Object, fieldValidationMode string) (field.ErrorList, error) {
-	// This will be removed with the other PR
-	return nil, nil
-
-	// Unreachable code is intentional until the code above is removed
-	//nolint:govet
 	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, fmt.Errorf("error getting meta accessor: %w", err)
@@ -40,11 +35,11 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		case *v2alpha1.Dashboard:
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
 		default:
-			return nil, fmt.Errorf("Invalid dashboard type: %T", obj)
+			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
 		}
 	}
 	if mode == metav1.FieldValidationWarn {
-		return nil, errors.New("FieldValidationWarn is not supported")
+		return nil, apierrors.NewBadRequest("Not supported: FieldValidationMode: Warn")
 	}
 
 	alwaysLogSchemaValidationErrors := b.features.IsEnabled(ctx, featuremgmt.FlagDashboardSchemaValidationLogging)
