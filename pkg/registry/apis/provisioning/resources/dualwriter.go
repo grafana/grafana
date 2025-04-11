@@ -2,27 +2,34 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/google/uuid"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DualReadWriter is a wrapper around a repository that can read and write resources
 // TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo    repository.ReaderWriter
-	parser  *Parser
+	parser  Parser
 	folders *FolderManager
+	access  authlib.AccessChecker
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser *Parser, folders *FolderManager) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -33,23 +40,22 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
-	parsed, err := r.parser.Parse(ctx, info, false)
+	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
+		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	// Authorize the parsed resource
+	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
 		return nil, err
 	}
 
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		if parsed.GVK != nil {
-			//nolint:govet
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: %s", parsed.GVK.Kind))
-		} else {
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
-		}
+	// Fail as we use the dry run for this response and it's not about updating the resource
+	if err := parsed.DryRun(ctx); err != nil {
+		return nil, fmt.Errorf("run dry run: %w", err)
 	}
 
 	return parsed, nil
@@ -67,14 +73,18 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	file, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err // unable to read value
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
 	// TODO: document in API specification
 	// We can only delete parsable things
-	parsed, err := r.parser.Parse(ctx, file, false)
+	parsed, err := r.parser.Parse(ctx, file)
 	if err != nil {
-		return nil, err // unable to read value
+		return nil, fmt.Errorf("parse file: %w", err)
+	}
+
+	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
+		return nil, err
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -85,6 +95,13 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 	// Delete the file in the grafana database
 	if ref == "" {
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+		if err != nil {
+			return parsed, err
+		}
+
+		// FIXME: empty folders with no repository files will remain in the system
+		// until the next reconciliation.
 		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
 		if apierrors.IsNotFound(err) {
 			err = nil // ignorable
@@ -107,6 +124,10 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 
 	if !safepath.IsDir(path) {
 		return nil, fmt.Errorf("not a folder path")
+	}
+
+	if err := r.authorizeCreateFolder(ctx, path); err != nil {
+		return nil, err
 	}
 
 	// Now actually create the folder
@@ -159,25 +180,13 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		Ref:  ref,
 	}
 
-	// TODO: improve parser to parse out of reader
-	parsed, err := r.parser.Parse(ctx, info, true)
+	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
-		}
+		return nil, fmt.Errorf("parse file: %w", err)
+	}
 
+	if err = r.authorize(ctx, parsed, utils.VerbCreate); err != nil {
 		return nil, err
-	}
-
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
-	}
-
-	// Do not write if any errors exist
-	if len(parsed.Errors) > 0 {
-		return parsed, err
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -185,30 +194,32 @@ func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	err = r.repo.Create(ctx, path, ref, data, message)
-	if err != nil {
+	if err := r.repo.Create(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("create resource in repository: %w", err)
 	}
 
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
+	// FIXME: to make sure if behaves in the same way as in sync, we should
+	// we should refactor the code to use the same function.
 	if ref == "" {
-		// FIXME: we are not creating the folder path
-		// TODO: will existing also be present here? for update?
-		if parsed.Existing == nil {
-			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
-		} else {
-			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
+		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
+	} else {
+		if err := parsed.DryRun(ctx); err != nil {
+			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
+			logger.Warn("failed to dry run resource on create", "error", err)
+			// Do not fail here as it's purely informational
+			parsed.Errors = append(parsed.Errors, err.Error())
 		}
 	}
 
-	return parsed, err
+	return parsed, nil
 }
 
 // UpdateResource updates a resource in the repository
@@ -224,24 +235,13 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 	}
 
 	// TODO: improve parser to parse out of reader
-	parsed, err := r.parser.Parse(ctx, info, true)
+	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
-		}
+		return nil, fmt.Errorf("parse file: %w", err)
+	}
 
+	if err = r.authorize(ctx, parsed, utils.VerbUpdate); err != nil {
 		return nil, err
-	}
-
-	// GVR will exist for anything we can actually save
-	// TODO: Add known error in parser for unsupported resource
-	if parsed.GVR == nil {
-		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
-	}
-
-	// Do not write if any errors exist
-	if len(parsed.Errors) > 0 {
-		return parsed, err
 	}
 
 	data, err = parsed.ToSaveBytes()
@@ -249,28 +249,78 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref st
 		return nil, err
 	}
 
-	err = r.repo.Update(ctx, path, ref, data, message)
-	if err != nil {
+	if err = r.repo.Update(ctx, path, ref, data, message); err != nil {
 		return nil, fmt.Errorf("update resource in repository: %w", err)
 	}
 
 	// Directly update the grafana database
 	// Behaves the same running sync after writing
+	// FIXME: to make sure if behaves in the same way as in sync, we should
+	// we should refactor the code to use the same function.
 	if ref == "" {
-		// FIXME: we are not creating the folder path
-		// FIXME: I don't like this parsed strategy here
-		if parsed.Existing == nil {
-			parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
-		} else {
-			parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				parsed.Errors = append(parsed.Errors, err)
-			}
+		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
+	} else {
+		if err := parsed.DryRun(ctx); err != nil {
+			// Do not fail here as it's purely informational
+			logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
+			logger.Warn("failed to dry run resource on update", "error", err)
+			parsed.Errors = append(parsed.Errors, err.Error())
 		}
 	}
 
-	return parsed, err
+	return parsed, nil
+}
+
+func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     parsed.GVR.Group,
+		Resource:  parsed.GVR.Resource,
+		Namespace: parsed.Obj.GetNamespace(),
+		Name:      parsed.Obj.GetName(),
+		Folder:    parsed.Meta.GetFolder(),
+		Verb:      verb,
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to see embedded file"))
+	}
+	return nil
+}
+
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
+	auth, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+	rsp, err := r.access.Check(ctx, auth, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: r.repo.Config().GetNamespace(),
+		Verb:      utils.VerbCreate,
+
+		// TODO: Currently this checks if you can create a new folder in root
+		// Ideally we should check the path and use the explicit parent and new id
+		Name: "f" + uuid.NewString(),
+	})
+	if err != nil {
+		return err
+	}
+	if !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+			fmt.Errorf("unable to create folder resource"))
+	}
+	return nil
 }

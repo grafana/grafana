@@ -24,18 +24,18 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers   *resources.ParserFactory
-	previewer *Previewer
+	parsers   resources.ParserFactory
+	previewer Previewer
 }
 
 func NewPullRequestWorker(
-	parsers *resources.ParserFactory,
-	previewer *Previewer,
-) (*PullRequestWorker, error) {
+	parsers resources.ParserFactory,
+	previewer Previewer,
+) *PullRequestWorker {
 	return &PullRequestWorker{
 		parsers:   parsers,
 		previewer: previewer,
-	}, nil
+	}
 }
 
 func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -109,7 +109,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("read file: %w", err)
 	}
 
-	_, err = parser.Parse(ctx, fileInfo, true)
+	_, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 			progress.SetFinalMessage(ctx, "file changes is not valid resource")
@@ -119,7 +119,13 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		}
 	}
 
-	preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
+	// Preview should be the branch name if provided, otherwise use the commit hash
+	previewRef := options.Ref
+	if previewRef == "" {
+		previewRef = ref
+	}
+
+	preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, previewRef, options.URL, cfg.GitHub.GenerateDashboardPreviews)
 	if err != nil {
 		return fmt.Errorf("generate preview: %w", err)
 	}

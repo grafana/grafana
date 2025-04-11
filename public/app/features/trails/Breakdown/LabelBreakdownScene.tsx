@@ -388,7 +388,10 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
           </div>
           {missingOtelTargets && !dismissOtelWarning && (
             <Alert
-              title={`Warning: There may be missing Open Telemetry resource attributes.`}
+              title={t(
+                'trails.label-breakdown-scene.title-warning-there-missing-telemetry-resource-attributes',
+                'Warning: There may be missing Open Telemetry resource attributes'
+              )}
               severity={'warning'}
               key={'warning'}
               onRemove={() => updateDismissOtelWarning(true)}

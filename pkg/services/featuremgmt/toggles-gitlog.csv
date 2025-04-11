@@ -319,7 +319,6 @@ tlsMemcached,2024-05-09T19:12:08Z,,b009536329d110afd807ef2f27f2b7dcc7d310ba,lean
 notificationBanner,2024-05-13T09:32:34Z,2025-01-10T10:18:43Z,f3953b4955c218cc4678e842faa3d3380fd0f8f7,Alex Khomenko
 dualWritePlaylistsMode2,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
 dualWritePlaylistsMode3,2024-05-14T12:11:56Z,2024-05-31T18:18:09Z,6836bfe1ea1bf62f4eb66dc1328a456183874f81,Arati R
-dashboardRestore,2024-05-16T17:36:26Z,,42d75ac737d7ac001a6d53376e25512408a01db5,Ezequiel Victorero
 datasourceProxyDisableRBAC,2024-05-21T13:05:16Z,,0072e4a92d896df343d9586522d6f7533773da78,Aaron Godin
 alertingDisableSendAlertsExternal,2024-05-23T12:29:19Z,,8421919cb552b9e8dbd4ebba20bcc67bbc5e6b4f,Steve Simpson
 datasourceQueryTypes,2024-05-23T16:46:28Z,,42b0f802de31f3d42ece68544c193a69ea381bc0,Ryan McKinley
@@ -356,7 +355,6 @@ exploreLogsLimitedTimeRange,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa976
 exploreLogsShardSplitting,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 newFiltersUI,2024-08-30T12:48:13Z,,00ae49a61adff11e5fbac3341941b35185d9e8d9,Sergej-Vlasov
 appPlatformAccessTokens,2024-09-05T16:18:44Z,2024-10-14T10:47:18Z,d5ebaa0ef92edecfb9511dc7c8080be25f8cc7e7,Claudiu Dragalina-Paraipan
-appSidecar,2024-09-09T12:45:05Z,,5e2ac24890906e5070323d87730dd78a4f885963,Andrej Ocenas
 vizActions,2024-09-09T14:11:55Z,,af48d3db1eb2d8681843f5997e50fea5e5ea3096,Adela Almasan
 groupAttributeSync,2024-09-09T15:29:43Z,,6ded6a8872204a818b3795dc733cc5fe5db066a0,Aaron Godin
 alertingFilterV2,2024-09-11T11:29:26Z,,90ee52e8d9c14237f8a57b622c0def7512e657cd,Gilles De Mey

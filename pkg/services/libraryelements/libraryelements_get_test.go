@@ -73,7 +73,7 @@ func TestGetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -99,8 +99,8 @@ func TestGetLibraryElement(t *testing.T) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
 			newFolder := createFolder(t, sc, "NewFolder", nil)
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
 			result, err := sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -203,7 +203,7 @@ func TestGetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -225,8 +225,8 @@ func TestGetLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.SignedInUser.OrgID = 2
-			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
+			sc.reqContext.OrgID = 2
+			sc.reqContext.OrgRole = org.RoleAdmin
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})

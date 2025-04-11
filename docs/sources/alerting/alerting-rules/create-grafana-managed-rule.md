@@ -138,7 +138,7 @@ Verify that the data sources you plan to query in the alert rule are [compatible
 
 ### Permissions
 
-Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules.
+Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules. Only admins can restore deleted Grafana-managed alert rules.
 
 {{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -279,3 +279,10 @@ Complete the following steps to set up notifications.
    1. Click **See details** to view alert routing details and an email preview.
 
 {{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Restore deleted alert rules
+
+Deleted alert rules are stored for 30 days. Admins can restore deleted Grafana-managed alert rules.
+
+1. Go to **Alerts & IRM > Alerting > Recently deleted**.
+1. Click the **Restore** button to restore the alert rule.

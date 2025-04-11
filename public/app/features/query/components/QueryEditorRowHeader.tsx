@@ -16,7 +16,6 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
   onChange: (query: TQuery) => void;
-  onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
   hideRefId?: boolean;
@@ -139,6 +138,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
+    // eslint-disable-next-line @grafana/no-untranslated-strings
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 

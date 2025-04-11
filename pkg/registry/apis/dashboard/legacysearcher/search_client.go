@@ -89,11 +89,12 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	var queryType string
-	if req.Options.Key.Resource == dashboard.DASHBOARD_RESOURCE {
+	switch req.Options.Key.Resource {
+	case dashboard.DASHBOARD_RESOURCE:
 		queryType = searchstore.TypeDashboard
-	} else if req.Options.Key.Resource == folderv0alpha1.RESOURCE {
+	case folderv0alpha1.RESOURCE:
 		queryType = searchstore.TypeFolder
-	} else {
+	default:
 		return nil, fmt.Errorf("bad type request")
 	}
 
@@ -233,11 +234,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		searchFields.Field(resource.SEARCH_FIELD_TITLE),
 		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 		searchFields.Field(resource.SEARCH_FIELD_TAGS),
-		{
-			Name:        unisearch.DASHBOARD_LEGACY_ID,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
-			Description: "Deprecated legacy id of the dashboard",
-		},
+		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 	}
 
 	if sortByField != "" {

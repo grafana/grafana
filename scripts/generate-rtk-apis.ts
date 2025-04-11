@@ -30,6 +30,8 @@ const config: ConfigFile = {
 
         'getDashboardByUid',
         'getLibraryElementByUid',
+
+        'getResourceDependencies',
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {
@@ -58,12 +60,18 @@ const config: ConfigFile = {
       filterEndpoints: ['getFolder'],
       tag: true,
     },
+    '../public/app/api/clients/advisor/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/advisor/baseAPI.ts',
+      schemaFile: '../data/openapi/advisor.grafana.app-v0alpha1.json',
+      filterEndpoints: ['createCheck', 'getCheck', 'listCheck', 'deleteCheck', 'updateCheck', 'listCheckType'],
+      tag: true,
+    },
     '../public/app/api/clients/playlist/endpoints.gen.ts': {
       apiFile: '../public/app/api/clients/playlist/baseAPI.ts',
       schemaFile: '../data/openapi/playlist.grafana.app-v0alpha1.json',
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
-    },
+    }
   },
 };
 

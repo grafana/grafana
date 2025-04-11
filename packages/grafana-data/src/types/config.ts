@@ -214,7 +214,6 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
-  angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
@@ -247,6 +246,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
+  locale: string;
 }
 
 export interface SqlConnectionLimits {

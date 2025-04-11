@@ -22,6 +22,7 @@ export interface Props {
   labelId?: string;
   headerDataTestId?: string;
   contentDataTestId?: string;
+  unmountContentWhenClosed?: boolean;
 }
 
 export const CollapsableSection = ({
@@ -35,6 +36,7 @@ export const CollapsableSection = ({
   loading = false,
   headerDataTestId,
   contentDataTestId,
+  unmountContentWhenClosed = true,
 }: Props) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
@@ -53,6 +55,18 @@ export const CollapsableSection = ({
   const { current: id } = useRef(uniqueId());
 
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
+  const content = (
+    <div
+      id={`collapse-content-${id}`}
+      className={cx(styles.content, contentClassName, {
+        [styles.contentHidden]: !open && !unmountContentWhenClosed,
+      })}
+      data-testid={contentDataTestId}
+    >
+      {children}
+    </div>
+  );
 
   return (
     <>
@@ -79,15 +93,7 @@ export const CollapsableSection = ({
           {label}
         </div>
       </div>
-      {open && (
-        <div
-          id={`collapse-content-${id}`}
-          className={cx(styles.content, contentClassName)}
-          data-testid={contentDataTestId}
-        >
-          {children}
-        </div>
-      )}
+      {unmountContentWhenClosed ? open && content : content}
     </>
   );
 };
@@ -118,6 +124,9 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   content: css({
     padding: `${theme.spacing(2)} 0`,
+  }),
+  contentHidden: css({
+    display: 'none',
   }),
   spinner: css({
     display: 'flex',

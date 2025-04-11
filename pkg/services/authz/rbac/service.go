@@ -42,6 +42,7 @@ type Service struct {
 	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
+	settings        Settings
 
 	mapper mapper
 
@@ -53,11 +54,19 @@ type Service struct {
 	sf *singleflight.Group
 
 	// Cache for user permissions, user team memberships and user basic roles
-	idCache        *cacheWrap[store.UserIdentifiers]
-	permCache      *cacheWrap[map[string]bool]
-	teamCache      *cacheWrap[[]int64]
-	basicRoleCache *cacheWrap[store.BasicRole]
-	folderCache    *cacheWrap[folderTree]
+	idCache         cacheWrap[store.UserIdentifiers]
+	permCache       cacheWrap[map[string]bool]
+	permDenialCache cacheWrap[bool]
+	teamCache       cacheWrap[[]int64]
+	basicRoleCache  cacheWrap[store.BasicRole]
+	folderCache     cacheWrap[folderTree]
+}
+
+type Settings struct {
+	AnonOrgRole string
+	// CacheTTL is the time to live for the permission cache entries.
+	// Set to 0 to disable caching.
+	CacheTTL time.Duration
 }
 
 func NewService(
@@ -69,21 +78,27 @@ func NewService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	settings Settings,
 ) *Service {
+	if settings.AnonOrgRole == "" {
+		settings.AnonOrgRole = "Viewer"
+	}
 	return &Service{
 		store:           store.NewStore(sql, tracer),
 		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
+		settings:        settings,
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -111,6 +126,29 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		attribute.String("folder", checkReq.ParentFolder),
 	)
 
+	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
+	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
+		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
+		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		return &authzv1.CheckResponse{Allowed: false}, nil
+	}
+
+	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
+	if err == nil {
+		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq)
+		if err != nil {
+			ctxLogger.Error("could not check permission", "error", err)
+			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			return deny, err
+		}
+		if allowed {
+			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
+			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			return &authzv1.CheckResponse{Allowed: allowed}, nil
+		}
+	}
+	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
+
 	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
@@ -123,6 +161,10 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		ctxLogger.Error("could not check permission", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return deny, err
+	}
+
+	if !allowed {
+		s.permDenialCache.Set(ctx, permDenialKey, true)
 	}
 
 	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -148,11 +190,18 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		attribute.String("action", listReq.Action),
 	)
 
-	permissions, err := s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
-	if err != nil {
-		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
-		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		return nil, err
+	permissions, err := s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+	if err == nil {
+		s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
+	} else {
+		s.metrics.permissionCacheUsage.WithLabelValues("false", listReq.Action).Inc()
+
+		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+		if err != nil {
+			ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
+			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+			return nil, err
+		}
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
@@ -303,6 +352,34 @@ func (s *Service) getIdentityPermissions(ctx context.Context, ns types.Namespace
 	}
 }
 
+func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string) (map[string]bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedIdentityPermissions")
+	defer span.End()
+
+	switch idType {
+	case types.TypeAnonymous:
+		anonPermKey := anonymousPermCacheKey(ns.Value, action)
+		if cached, ok := s.permCache.Get(ctx, anonPermKey); ok {
+			return cached, nil
+		}
+		return nil, cache.ErrNotFound
+	case types.TypeRenderService:
+		return nil, cache.ErrNotFound
+	case types.TypeUser, types.TypeServiceAccount:
+		userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
+		if err != nil {
+			return nil, err
+		}
+		userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
+		if cached, ok := s.permCache.Get(ctx, userPermKey); ok {
+			return cached, nil
+		}
+		return nil, cache.ErrNotFound
+	default:
+		return nil, fmt.Errorf("unsupported identity type: %s", idType)
+	}
+}
+
 func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
@@ -313,12 +390,6 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 	}
 
 	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
-	if cached, ok := s.permCache.Get(ctx, userPermKey); ok {
-		s.metrics.permissionCacheUsage.WithLabelValues("true", action).Inc()
-		return cached, nil
-	}
-	s.metrics.permissionCacheUsage.WithLabelValues("false", action).Inc()
-
 	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
 		basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
 		if err != nil {
@@ -363,11 +434,8 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 	defer span.End()
 
 	anonPermKey := anonymousPermCacheKey(ns.Value, action)
-	if cached, ok := s.permCache.Get(ctx, anonPermKey); ok {
-		return cached, nil
-	}
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: s.settings.AnonOrgRole})
 		if err != nil {
 			return nil, err
 		}
