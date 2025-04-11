@@ -58,7 +58,17 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			}
 		}
 	case *dashboardV2.Dashboard:
+		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
+		// until the generator is fixed.
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV2.DashboardGridLayoutSpec{},
+			}
+		}
+
 		resourceInfo = dashboardV2.DashboardResourceInfo
+
 		// Noop for V2
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)

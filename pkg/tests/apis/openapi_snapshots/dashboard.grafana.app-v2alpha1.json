@@ -3294,7 +3294,6 @@
         ],
         "properties": {
           "annotations": {
-            "description": "Title of dashboard.",
             "type": "array",
             "items": {
               "default": {},

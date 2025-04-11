@@ -3678,8 +3678,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"annotations": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Title of dashboard.",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{

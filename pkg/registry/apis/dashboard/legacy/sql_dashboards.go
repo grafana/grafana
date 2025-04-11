@@ -15,11 +15,14 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -62,6 +65,7 @@ type dashboardSqlAccess struct {
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
+	log         log.Logger
 }
 
 func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
@@ -77,6 +81,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
 		dashboardSearchClient: *dashboardSearchClient,
+		log:                   log.New("dashboard.legacysql"),
 	}
 }
 
@@ -407,6 +412,15 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
 			return nil, created, err
+		}
+	}
+
+	// v1 should be saved as schema version 41. v0 allows for older versions
+	if strings.HasSuffix(dash.APIVersion, "v1alpha1") {
+		schemaVersion := schemaversion.GetSchemaVersion(dash.Spec.Object)
+		if schemaVersion < int(schemaversion.LATEST_VERSION) {
+			dash.APIVersion = dashboardv0.VERSION
+			a.log.Info("Downgrading v1alpha1 dashboard to v0alpha1 due to schema version mismatch", "dashboard", dash.Name, "schema_version", schemaVersion)
 		}
 	}
 

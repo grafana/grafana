@@ -169,7 +169,7 @@
       "type": "text"
     }
   ],
-  "refresh": false,
+  "refresh": "",
   "schemaVersion": 37,
   "tags": [],
   "templating": {
