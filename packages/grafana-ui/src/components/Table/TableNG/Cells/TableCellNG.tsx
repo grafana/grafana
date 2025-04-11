@@ -135,6 +135,8 @@ export function TableCellNG(props: TableCellNGProps) {
       break;
   }
 
+  const isJSONCell = cell instanceof JSONCell;
+
   const handleMouseEnter = () => {
     setIsHovered(true);
     if (shouldTextOverflow()) {
@@ -189,10 +191,7 @@ export function TableCellNG(props: TableCellNGProps) {
               onClick={() => {
                 setContextMenuProps({
                   value: String(value ?? ''),
-                  mode:
-                    cellType === TableCellDisplayMode.JSONView
-                      ? TableCellInspectorMode.code
-                      : TableCellInspectorMode.text,
+                  mode: isJSONCell ? TableCellInspectorMode.code : TableCellInspectorMode.text,
                 });
                 setIsInspecting(true);
               }}
