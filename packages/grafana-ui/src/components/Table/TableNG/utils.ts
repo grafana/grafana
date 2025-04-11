@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
@@ -15,6 +14,8 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  fieldReducers,
+  FieldState,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -39,7 +40,6 @@ import {
   FrameToRowsConverter,
   TableNGProps,
   Comparator,
-  TableFooterCalc,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -50,12 +50,12 @@ export function getCellHeight(
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
-) {
+): number {
   const PADDING = padding * 2;
 
   if (typeof text === 'string') {
     const words = text.split(/\s/);
-    const lines = [];
+    const lines: Array<{ width: number; line: string }> = [];
     let currentLine = '';
 
     // Let's just wrap the lines and see how well the measurement works
@@ -184,13 +184,7 @@ export function isTextCell(key: string, columnTypes: Record<string, string>): bo
 
 export function shouldTextOverflow(
   key: string,
-  row: TableRow,
   columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding: number,
   textWrap: boolean,
   field: Field,
   cellType: TableCellDisplayMode
@@ -287,48 +281,93 @@ export function getAlignmentFactor(
   }
 }
 
-/* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
-  if (options === undefined) {
-    return '';
-  }
-
-  if (field.type !== FieldType.number) {
-    return '';
-  }
-
-  // Check if reducer array exists and has at least one element
-  if (!options.reducer || !options.reducer.length) {
-    return '';
-  }
-
-  // If fields array is specified, only show footer for fields included in that array
-  if (options.fields && options.fields.length > 0) {
-    if (!options.fields.includes(field.name)) {
-      return '';
-    }
-  }
-
-  const calc = options.reducer[0];
-  const value = reduceField({
-    field: {
-      ...field,
-      values: rows.map((row) => row[field.name]),
-    },
-    reducers: options.reducer,
-  })[calc];
-
-  const formattedValue = formattedValueToString(field.display!(value));
-
-  return formattedValue;
+export interface FooterItem {
+  [reducerId: string]: {
+    value: number | null;
+    formattedValue: string;
+    reducerName: string;
+  };
 }
 
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'space-between',
-  }),
-});
+interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
+}
+
+const nonMathReducers = new Set([
+  'allValues',
+  'changeCount',
+  'count',
+  'countAll',
+  'distinctCount',
+  'first',
+  'firstNotNull',
+  'last',
+  'lastNotNull',
+  'uniqueValues',
+]);
+
+const isNonMathReducer = (reducer: string) => nonMathReducers.has(reducer);
+
+/* ------------------------------ Footer calculations ------------------------------ */
+export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | null {
+  const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
+
+  if (reducers.length && (field.type === FieldType.number || reducers.some(isNonMathReducer))) {
+    // Create a new state object that matches the original behavior exactly
+    const newState: FooterFieldState = {
+      lastProcessedRowCount: 0,
+      ...(field.state || {}), // Preserve any existing state properties
+    };
+
+    // Assign back to field
+    field.state = newState;
+
+    const currentRowCount = rows.length;
+    const lastRowCount = newState.lastProcessedRowCount;
+
+    // Check if we need to invalidate the cache
+    if (lastRowCount !== currentRowCount) {
+      // Cache should be invalidated as row count has changed
+      if (newState.calcs) {
+        delete newState.calcs;
+      }
+      // Update the row count tracker
+      newState.lastProcessedRowCount = currentRowCount;
+    }
+
+    // Calculate all specified reducers
+    const results: Record<string, number | null> = reduceField({
+      field: {
+        ...field,
+        values: rows.map((row) => row[field.name]),
+      },
+      reducers,
+    });
+
+    // Create an object with reducer names as keys and their formatted values
+    const footerItem: FooterItem = {};
+
+    reducers.forEach((reducerId) => {
+      // For number fields, show all reducers
+      // For non-number fields, only show special count reducers
+      if (results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))) {
+        const value: number | null = results[reducerId];
+        const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+        const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+
+        footerItem[reducerId] = {
+          value,
+          formattedValue,
+          reducerName,
+        };
+      }
+    });
+
+    return Object.keys(footerItem).length > 0 ? footerItem : null;
+  }
+
+  return null;
+}
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
@@ -493,13 +532,10 @@ export interface MapFrameToGridOptions extends TableNGProps {
   columnWidth: number | string;
   crossFilterOrder: React.MutableRefObject<string[]>;
   crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
-  defaultLineHeight: number;
   defaultRowHeight: number;
   expandedRows: number[];
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
-  isCountRowsSet: boolean;
-  ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
   sortedRows: TableRow[];
@@ -592,3 +628,49 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 /** Returns true if the DataFrame contains nested frames */
 export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
   dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+// Get the maximum number of reducers across all fields
+const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']): number => {
+  // Filter to only numeric fields that can have reducers
+  const numericFields = dataFrame.fields.filter(({ type }) => type === FieldType.number);
+
+  // If there are no numeric fields, return 0
+  if (numericFields.length === 0) {
+    return 0;
+  }
+
+  // Map each field to its reducer count (direct config or override)
+  const reducerCounts = numericFields.map((field) => {
+    // Get the direct reducer count from the field config
+    const directReducers = field.config?.custom?.footer?.reducer ?? [];
+    let reducerCount = directReducers.length;
+
+    // Check for overrides if field config is available
+    if (fieldConfig?.overrides) {
+      // Find override that matches this field
+      const override = fieldConfig.overrides.find(
+        ({ matcher: { id, options } }) => id === 'byName' && options === field.name
+      );
+
+      // Check if there's a footer reducer property in the override
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducer');
+      if (footerProperty?.value && Array.isArray(footerProperty.value)) {
+        // If override exists, it takes precedence over direct config
+        reducerCount = footerProperty.value.length;
+      }
+    }
+
+    return reducerCount;
+  });
+
+  // Return the maximum count or 0 if no reducers found
+  return reducerCounts.length > 0 ? Math.max(...reducerCounts) : 0;
+};
+
+// Calculate the footer height based on the maximum reducer count
+export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']) => {
+  const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
+  // Base height (+ padding) + height per reducer
+  const dynamicHeight = 22 + maxReducerCount * 22;
+  return Math.max(dynamicHeight, 36); // Ensure minimum height of 36px
+};

@@ -4816,7 +4816,6 @@
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
-      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
