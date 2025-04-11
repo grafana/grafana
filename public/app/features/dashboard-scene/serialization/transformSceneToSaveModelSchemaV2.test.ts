@@ -58,6 +58,7 @@ import {
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
+  getAutoAssignedDSRef,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
