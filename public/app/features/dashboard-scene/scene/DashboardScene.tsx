@@ -39,7 +39,11 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
-import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
+import {
+  DashboardSceneSerializerLike,
+  getDashboardSceneSerializer,
+  V2DashboardSerializer,
+} from '../serialization/DashboardSceneSerializer';
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
@@ -767,8 +771,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
     const { meta } = this.state;
     const spec = this.getSaveAsModel(options);
+
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1alpha1'; // get from the dashboard?
     return {
-      apiVersion: 'dashboard.grafana.app/v1alpha1', // get from the dashboard?
+      apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
