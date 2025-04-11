@@ -19,7 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Conn, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
@@ -46,9 +46,7 @@ func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Conn, conf
 func (e *DataSourceHandler) DisposePGX(ctx context.Context) {
 	e.log.Debug("Disposing DB...")
 
-	if err := e.p.Conn().Close(ctx); err != nil {
-		e.log.Error("Failed to dispose db", "error", err)
-	}
+	e.p.Close()
 
 	e.log.Debug("DB disposed")
 }
@@ -155,11 +153,18 @@ func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.Wa
 		return
 	}
 
+	c, err := e.p.Acquire(queryContext)
+	if err != nil {
+		errAppendDebug("failed to acquire connection", err, interpolatedQuery, backend.ErrorSourcePlugin)
+		return
+	}
+	defer c.Release()
+
 	// We need to use Exec in here because we need to support multiple statements
-	mrr := e.p.Conn().PgConn().Exec(queryContext, interpolatedQuery)
+	mrr := c.Conn().PgConn().Exec(queryContext, interpolatedQuery)
 	defer func() {
 		if err := mrr.Close(); err != nil {
-			logger.Warn("Failed to close reader", "err", err)
+			errAppendDebug("failed to close reader", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		}
 	}()
 	results, err := mrr.ReadAll()

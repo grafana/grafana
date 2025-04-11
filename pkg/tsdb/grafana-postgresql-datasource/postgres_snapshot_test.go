@@ -149,7 +149,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			}
 
 			jsonData := sqleng.JsonData{
-				MaxOpenConns:        0,
+				MaxOpenConns:        10,
 				MaxIdleConns:        2,
 				ConnMaxLifetime:     14400,
 				Timescaledb:         false,
@@ -170,7 +170,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			t.Cleanup((func() {
 				_, err := p.Exec(context.Background(), "DROP TABLE tbl")
 				require.NoError(t, err)
-				p.Release()
+				p.Close()
 			}))
 
 			require.NoError(t, err)

@@ -116,7 +116,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	return db, handler, nil
 }
 
-func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Conn, *sqleng.DataSourceHandler, error) {
+func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Pool, *sqleng.DataSourceHandler, error) {
 	pgxConf, err := pgxpool.ParseConfig(cnnstr)
 	if err != nil {
 		logger.Error("postgres config creation failed", "error", err)
@@ -146,22 +146,16 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{}
-
 	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
-	// TODO: Figure out how to set MaxOpenConns and MaxIdleConns in pgxpool.NewWithConfig
+	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+	// TODO: Figure out how to set MaxIdleConns in pgxpool.NewWithConfig
 	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
 		return nil, nil, err
 	}
 
-	c, err := p.Acquire(ctx)
-	if err != nil {
-		logger.Error("Failed connecting to Postgres", "err", err)
-		return nil, nil, err
-	}
-
-	handler, err := sqleng.NewQueryDataHandlerPGX(userFacingDefaultError, c, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+	handler, err := sqleng.NewQueryDataHandlerPGX(userFacingDefaultError, p, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
@@ -169,7 +163,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	}
 
 	logger.Debug("Successfully connected to Postgres")
-	return c, handler, nil
+	return p, handler, nil
 }
 
 func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {

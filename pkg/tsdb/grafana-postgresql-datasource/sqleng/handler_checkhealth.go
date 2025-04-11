@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 )
 
@@ -24,7 +25,7 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
-			return ErrToHealthCheckResult(err)
+			return ErrToHealthCheckResult(ctx, err, features)
 		}
 		errResponse := &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -37,7 +38,7 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 
 // ErrToHealthCheckResult converts error into user friendly health check message
 // This should be called with non nil error. If the err parameter is empty, we will send Internal Server Error
-func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
+func ErrToHealthCheckResult(ctx context.Context, err error, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
 	if err == nil {
 		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "Internal Server Error"}, nil
 	}
@@ -69,22 +70,34 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 	}
-	if errors.Is(err, pq.ErrSSLNotSupported) {
-		res.Message = "SSL error: Failed to connect to the server"
-	}
-	if strings.HasPrefix(err.Error(), "pq") {
-		res.Message = "Database error: Failed to connect to the postgres server"
-		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
-			details["verboseMessage"] = unwrappedErr.Error()
-		}
-	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		if pqErr != nil {
-			if pqErr.Code != "" {
-				res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
+	if features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr != nil {
+				if pgErr.Code != "" {
+					res.Message += fmt.Sprintf(". Postgres error code: %s", pgErr.Code)
+				}
+				details["verboseMessage"] = pgErr.Message
 			}
-			details["verboseMessage"] = pqErr.Message
+		}
+	} else {
+		if errors.Is(err, pq.ErrSSLNotSupported) {
+			res.Message = "SSL error: Failed to connect to the server"
+		}
+		if strings.HasPrefix(err.Error(), "pq") {
+			res.Message = "Database error: Failed to connect to the postgres server"
+			if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
+				details["verboseMessage"] = unwrappedErr.Error()
+			}
+		}
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			if pqErr != nil {
+				if pqErr.Code != "" {
+					res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
+				}
+				details["verboseMessage"] = pqErr.Message
+			}
 		}
 	}
 	detailBytes, marshalErr := json.Marshal(details)

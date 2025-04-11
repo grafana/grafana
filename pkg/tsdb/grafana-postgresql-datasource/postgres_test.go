@@ -203,7 +203,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	}
 
 	jsonData := sqleng.JsonData{
-		MaxOpenConns:        0,
+		MaxOpenConns:        10,
 		MaxIdleConns:        2,
 		ConnMaxLifetime:     14400,
 		Timescaledb:         false,
@@ -1272,7 +1272,18 @@ func TestIntegrationPostgres(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			dsInfo := sqleng.DataSourceInfo{}
+			jsonData := sqleng.JsonData{
+				MaxOpenConns:        10,
+				MaxIdleConns:        2,
+				ConnMaxLifetime:     14400,
+				Timescaledb:         false,
+				ConfigurationMethod: "file-path",
+			}
+
+			dsInfo := sqleng.DataSourceInfo{
+				JsonData:                jsonData,
+				DecryptedSecureJSONData: map[string]string{},
+			}
 			_, handler, err := newPostgresPGX(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			require.NoError(t, err)
