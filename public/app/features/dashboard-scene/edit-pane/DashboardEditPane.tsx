@@ -130,7 +130,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
-    this.setState({
+    this.updateSelectionState({
       selection: new ElementSelection(selection),
       selectionContext: {
         ...this.state.selectionContext,
@@ -165,7 +165,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    this.setState({
+    this.updateSelectionState({
       selection: undefined,
       selectionContext: {
         ...this.state.selectionContext,
@@ -177,6 +177,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection!.markAsNewElement();
+  }
+
+  /**
+   * This updates the selection in 50ms timeout
+   * The reason for the timeout is for the current selected element options to have a chance to fire onBlur events
+   * If the user has focus on an input inside the edit pane and then clicks the canvas the selection change will cause an unmount before onBlur fires
+   */
+  private updateSelectionState(state: Partial<DashboardEditPaneState>) {
+    setTimeout(() => {
+      this.setState(state);
+    }, 50);
   }
 }
 

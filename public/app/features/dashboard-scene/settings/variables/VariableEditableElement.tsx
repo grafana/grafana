@@ -15,7 +15,7 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { VariableHideSelect } from '../../settings/variables/components/VariableHideSelect';
 import { getVariableTypeSelectOptions, validateVariableName } from '../../settings/variables/utils';
 
-import { getVariableSelectionOptionsCategory } from './useVariableSelectOptionCategory';
+import { getVariableSelectionOptionsCategory } from './getVariableSelectionOptionsCategory';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
