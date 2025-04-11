@@ -10,7 +10,7 @@ import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/ap
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t } from 'app/core/internationalization';
 
-import { getDefaultValues } from '../Config/ConfigForm';
+import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
@@ -41,7 +41,7 @@ const getSteps = (): Array<Step<WizardStep>> => {
     },
     {
       id: 'synchronize',
-      name: t('provisioning.wizard.step-synchronize', 'Synchronize'),
+      name: t('provisioning.wizard.step-synchronize', 'Synchronize with external storage'),
       title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
       submitOnNext: false,
     },

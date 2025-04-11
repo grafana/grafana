@@ -14,39 +14,19 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository, RepositorySpec } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { t, Trans } from 'app/core/internationalization';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
-import { dataToSpec, specToData } from '../utils/data';
+import { dataToSpec } from '../utils/data';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { getDefaultValues } from './defaults';
 
-export function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
-  if (!repository) {
-    return {
-      type: 'github',
-      title: 'Repository',
-      token: '',
-      url: '',
-      branch: 'main',
-      generateDashboardPreviews: false,
-      readOnly: false,
-      prWorkflow: true,
-      path: 'grafana/',
-      sync: {
-        enabled: false,
-        target: 'instance',
-        intervalSeconds: 60,
-      },
-    };
-  }
-  return specToData(repository);
-}
-
+// This needs to be a function for translations to work
 const getOptions = () => {
   const typeOptions = [
     { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
@@ -254,11 +234,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           }
         />
       </Field>
-      {type === 'github' && (
-        <ConfigFormGithubCollapse
-          previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
-        />
-      )}
+      {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 
       <ControlledCollapse
         label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}

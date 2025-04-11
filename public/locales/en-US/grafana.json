@@ -6476,18 +6476,9 @@
       "placeholder-select-repository-type": "Select repository type"
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "Render before/after images and link them to the pull request.<1></1>NOTE: This will render dashboards into an image that can be access by a public URL",
-      "instructions": "Instructions",
-      "label-attach-dashboard-previews": "Attach dashboard previews to pull requests",
+      "description-realtime-feedback": "<0>Configure webhooks</0> to get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
       "label-git-hub-features": "GitHub features",
-      "pull-request-image-previews": "Pull Request image previews",
-      "realtime-feedback": "Realtime feedback",
-      "text-changes-in-git-eventually-pulled": "Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not be processed",
-      "text-changes-in-git-quick-pull": "Changes in git will be quickly pulled into grafana. Pull requests can be processed.",
-      "text-when-image-renderer-configured": "When the image renderer is configured, pull requests can see preview images",
-      "title-image-renderer-not-configured": "Image renderer not configured",
-      "title-public-url-not-configured": "Public URL not configured",
-      "title-webhook-will-be-created": "Webhook will be created"
+      "label-realtime-feedback": "Realtime feedback"
     },
     "connect-repository-button": {
       "configure": "Configure",
@@ -6777,7 +6768,7 @@
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
-      "step-synchronize": "Synchronize",
+      "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
       "sync-option-history": "History",
       "title-bootstrap": "Choose what to synchronize",

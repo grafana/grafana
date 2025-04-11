@@ -1,96 +1,66 @@
-import { ReactElement } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { UseFormRegister } from 'react-hook-form';
 
-import { config } from '@grafana/runtime';
-import { Alert, ControlledCollapse, Field } from '@grafana/ui';
+import { Checkbox, ControlledCollapse, Field, Text, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { checkPublicAccess } from '../GettingStarted/features';
+import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
+import { RepositoryFormData } from '../types';
 
 export interface ConfigFormGithubCollapseProps {
-  previews: ReactElement;
+  register: UseFormRegister<RepositoryFormData>;
 }
-export function ConfigFormGithubCollapse({ previews }: ConfigFormGithubCollapseProps) {
-  const navigate = useNavigate();
+
+export function ConfigFormGithubCollapse({ register }: ConfigFormGithubCollapseProps) {
+  const isPublic = checkPublicAccess();
+  const hasImageRenderer = checkImageRenderer();
 
   return (
     <ControlledCollapse
       label={t('provisioning.config-form-github-collapse.label-git-hub-features', 'GitHub features')}
       isOpen={true}
     >
-      <h3>
-        <Trans i18nKey="provisioning.config-form-github-collapse.realtime-feedback">Realtime feedback</Trans>
-      </h3>
-      {checkPublicAccess() ? (
-        <div>
-          <Alert
-            title={t(
-              'provisioning.config-form-github-collapse.title-webhook-will-be-created',
-              'Webhook will be created'
-            )}
-            severity={'info'}
-          >
-            <Trans i18nKey="provisioning.config-form-github-collapse.text-changes-in-git-quick-pull">
-              Changes in git will be quickly pulled into grafana. Pull requests can be processed.
-            </Trans>
-          </Alert>
-        </div>
-      ) : (
-        <Alert
-          title={t(
-            'provisioning.config-form-github-collapse.title-public-url-not-configured',
-            'Public URL not configured'
-          )}
-          severity={'warning'}
-          buttonContent={<Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>}
-          onRemove={() => navigate(GETTING_STARTED_URL)}
-        >
-          <Trans i18nKey="provisioning.config-form-github-collapse.text-changes-in-git-eventually-pulled">
-            Changes in git will eventually be pulled depending on the synchronization interval. Pull requests will not
-            be processed
-          </Trans>
-        </Alert>
-      )}
-
-      <h3>
-        <Trans i18nKey="provisioning.config-form-github-collapse.pull-request-image-previews">
-          Pull Request image previews
-        </Trans>
-      </h3>
-      {!config.rendererAvailable && (
-        <Alert
-          title={t(
-            'provisioning.config-form-github-collapse.title-image-renderer-not-configured',
-            'Image renderer not configured'
-          )}
-          severity={'warning'}
-          buttonContent={<Trans i18nKey="provisioning.config-form-github-collapse.instructions">Instructions</Trans>}
-          onRemove={() => window.open('https://grafana.com/grafana/plugins/grafana-image-renderer/', '_blank')}
-        >
-          <Trans i18nKey="provisioning.config-form-github-collapse.text-when-image-renderer-configured">
-            When the image renderer is configured, pull requests can see preview images
-          </Trans>
-        </Alert>
-      )}
-
-      <Field
-        label={t(
-          'provisioning.config-form-github-collapse.label-attach-dashboard-previews',
-          'Attach dashboard previews to pull requests'
-        )}
-        description={
-          <span>
-            <Trans i18nKey="provisioning.config-form-github-collapse.description-attach-dashboard-previews">
-              Render before/after images and link them to the pull request.
-              <br />
-              NOTE: This will render dashboards into an image that can be access by a public URL
-            </Trans>
-          </span>
-        }
-      >
-        {previews}
+      <Field>
+        <Checkbox
+          disabled={!hasImageRenderer || !isPublic}
+          label={t('provisioning.finish-step.label-enable-previews', 'Enable dashboard previews in pull requests')}
+          description={
+            <>
+              <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be
+                shared in your Git repository and visible to anyone with repository access.
+              </Trans>{' '}
+              <Text italic>
+                <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                  Requires image rendering.{' '}
+                  <TextLink
+                    variant="bodySmall"
+                    external
+                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                  >
+                    Set up image rendering
+                  </TextLink>
+                </Trans>
+              </Text>
+            </>
+          }
+          {...register('generateDashboardPreviews')}
+        />
       </Field>
+
+      {!isPublic && (
+        <Field label={t('provisioning.config-form-github-collapse.label-realtime-feedback', 'Realtime feedback')}>
+          <Text variant="bodySmall" color={'secondary'}>
+            <Trans i18nKey={'provisioning.config-form-github-collapse.description-realtime-feedback'}>
+              <TextLink variant={'bodySmall'} href={GETTING_STARTED_URL}>
+                Configure webhooks
+              </TextLink>{' '}
+              to get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull
+              requests before they go live.
+            </Trans>
+          </Text>
+        </Field>
+      )}
     </ControlledCollapse>
   );
 }
