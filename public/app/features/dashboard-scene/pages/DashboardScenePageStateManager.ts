@@ -110,12 +110,6 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
-  abstract processDashboardFromProvisioning(
-    repo: string,
-    path: string,
-    dryRun: any,
-    provisioningPreview: ProvisioningPreview
-  ): T;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -189,7 +183,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
   }
 
-  public async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
+  protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref') ?? undefined; // commit hash or branch
 
@@ -213,6 +207,58 @@ abstract class DashboardScenePageStateManagerBase<T>
           repo: repo,
         });
       });
+  }
+
+  private processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: any,
+    provisioningPreview: ProvisioningPreview
+  ) {
+    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+      return {
+        ...dryRun,
+        kind: 'DashboardWithAccessInfo',
+        access: {
+          canStar: false,
+          isSnapshot: false,
+          canShare: false,
+
+          // Should come from the repo settings
+          canDelete: true,
+          canSave: true,
+          canEdit: true,
+        },
+      };
+    }
+
+    let anno = dryRun.metadata.annotations;
+    if (!anno) {
+      dryRun.metadata.annotations = {};
+    }
+    anno[AnnoKeyManagerKind] = 'repo';
+    anno[AnnoKeyManagerIdentity] = repo;
+    anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
+
+    return {
+      meta: {
+        canStar: false,
+        isSnapshot: false,
+        canShare: false,
+
+        // Should come from the repo settings
+        canDelete: true,
+        canSave: true,
+        canEdit: true,
+
+        // Includes additional k8s metadata
+        k8s: dryRun.metadata,
+
+        // lookup info
+        provisioning: provisioningPreview,
+      },
+      dashboard: dryRun.spec,
+    };
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -512,42 +558,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
     }
   }
-
-  processDashboardFromProvisioning(
-    repo: string,
-    path: string,
-    dryRun: any,
-    provisioningPreview: ProvisioningPreview
-  ): DashboardDTO {
-    // Make sure the annotation key exists
-    let anno = dryRun.metadata.annotations;
-    if (!anno) {
-      dryRun.metadata.annotations = {};
-    }
-    anno[AnnoKeyManagerKind] = 'repo';
-    anno[AnnoKeyManagerIdentity] = repo;
-    anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
-
-    return {
-      meta: {
-        canStar: false,
-        isSnapshot: false,
-        canShare: false,
-
-        // Should come from the repo settings
-        canDelete: true,
-        canSave: true,
-        canEdit: true,
-
-        // Includes additional k8s metadata
-        k8s: dryRun.metadata,
-
-        // lookup info
-        provisioning: provisioningPreview,
-      },
-      dashboard: dryRun.spec,
-    };
-  }
 }
 
 export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
@@ -661,27 +671,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     return rsp;
   }
 
-  processDashboardFromProvisioning(
-    _repo: string,
-    _path: string,
-    dryRun: any,
-    _provisioningPreview: ProvisioningPreview
-  ): DashboardWithAccessInfo<DashboardV2Spec> {
-    return {
-      ...dryRun,
-      kind: 'DashboardWithAccessInfo',
-      access: {
-        canStar: false,
-        isSnapshot: false,
-        canShare: false,
+  // processDashboardFromProvisioning(
+  //   _repo: string,
+  //   _path: string,
+  //   dryRun: any,
+  //   _provisioningPreview: ProvisioningPreview
+  // ): DashboardWithAccessInfo<DashboardV2Spec> {
 
-        // Should come from the repo settings
-        canDelete: true,
-        canSave: true,
-        canEdit: true,
-      },
-    };
-  }
+  // }
 
   public async reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
     const stateOptions = this.state.options;
@@ -851,10 +848,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
-  }
-
-  processDashboardFromProvisioning(repo: string, path: string, dryRun: any, provisioningPreview: ProvisioningPreview) {
-    return this.activeManager.processDashboardFromProvisioning(repo, path, dryRun, provisioningPreview);
   }
 }
 

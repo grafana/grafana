@@ -1004,7 +1004,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
     it('should load a provisioned v2 dashboard', async () => {
       const loader = new UnifiedDashboardScenePageStateManager({});
-      loader['activeManager'] = loader['v2Manager'];
       setBackendSrv({
         get: () => Promise.resolve(v2ProvisionedDashboardResource),
       } as unknown as BackendSrv);
