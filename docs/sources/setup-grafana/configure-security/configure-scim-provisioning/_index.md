@@ -56,7 +56,7 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
    - By default, users who are not provisioned through SCIM cannot access Grafana
    - You can allow non-SCIM users by setting `allow_non_provisioned_users = true`
 
-3. **Exceptions**: Users with Basic Auth credentials and those using their grafana.com accounts can still log in regardless of these restrictions.
+3. **Exceptions**: Users with Basic Auth credentials and those using their Grafana Cloud accounts can still log in regardless of these restrictions.
 
 ## Configure SCIM in Grafana
 
