@@ -222,15 +222,21 @@ export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef 
     const defaultDatasource = config.bootData.settings.defaultDatasource;
     const dsList = config.bootData.settings.datasources;
     // this is look up by type
-    const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
-    datasource = bestGuess
-      ? { uid: bestGuess.uid, type: bestGuess.meta.id }
-      : // in the datasource list from bootData "id" is the type and the uid could be uid or the name in cases like
-        // grafana, dashboard or mixed datasource
-        {
-          uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
-          type: dsList[defaultDatasource].meta.id,
-        };
+    const bestGuess = dsList && Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
+
+    if (bestGuess) {
+      return { uid: bestGuess.uid, type: bestGuess.meta.id };
+    } else if (dsList && dsList[defaultDatasource]) {
+      // in the datasource list from bootData "id" is the type and the uid could be uid or the name in cases like
+      // grafana, dashboard or mixed datasource
+      return {
+        uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+        type: dsList[defaultDatasource].meta.id,
+      };
+    } else {
+      // if we don't find a default datasource, we return undefined
+      return undefined;
+    }
   } else {
     datasource = query.spec.datasource;
   }
