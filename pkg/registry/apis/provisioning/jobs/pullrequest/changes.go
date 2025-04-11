@@ -51,7 +51,7 @@ type fileChangeInfo struct {
 }
 
 type evaluator struct {
-	render      ScreenshotRenderer // from config
+	render      ScreenshotRenderer
 	parsers     resources.ParserFactory
 	urlProvider func(namespace string) string
 }
@@ -69,7 +69,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	cfg := repo.Config()
 	parser, err := e.parsers.GetParser(ctx, repo)
 	if err != nil {
-		return changeInfo{}, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+		return changeInfo{}, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
 	baseURL := e.urlProvider(cfg.Namespace)
