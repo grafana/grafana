@@ -44,6 +44,9 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	}
 
 	s := &authzClientSettings{}
+	// Cache duration applies to the server cache in proc, so it's relevant for both modes.
+	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
+
 	s.mode = mode
 	if s.mode == clientModeInproc {
 		return s, nil
@@ -51,7 +54,6 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 
 	s.remoteAddress = authzSection.Key("remote_address").MustString("")
 	s.certFile = authzSection.Key("cert_file").MustString("")
-	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
 
 	s.token = grpcClientAuthSection.Key("token").MustString("")
 	s.tokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
