@@ -133,4 +133,25 @@ describe('useFeatureToggle', () => {
       'alertingListViewV2=true,alertingPrometheusRulesPrimary=false,alertingCentralAlertHistory=true'
     );
   });
+
+  it('should not rewrite other feature toggles when updating one', () => {
+    storage.set(
+      featureTogglesKey,
+      'alertingListViewV2=true,alertingPrometheusRulesPrimary=1,alertingCentralAlertHistory=false'
+    );
+
+    const { result } = renderHook(() => useFeatureToggle('alertingListViewV2'));
+
+    const [, setFeatureToggle] = result.current;
+
+    act(() => {
+      setFeatureToggle(false);
+    });
+
+    const [featureToggle] = result.current;
+    expect(featureToggle).toBe(false);
+    expect(storage.get(featureTogglesKey)).toBe(
+      'alertingListViewV2=false,alertingPrometheusRulesPrimary=1,alertingCentralAlertHistory=false'
+    );
+  });
 });
