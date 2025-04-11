@@ -577,16 +577,6 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 }
 
-func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserConfig {
-	t.Helper()
-
-	request := apimodels.PostableUserConfig{}
-	err := request.UnmarshalJSON([]byte(config))
-	require.NoError(t, err)
-
-	return request
-}
-
 func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
