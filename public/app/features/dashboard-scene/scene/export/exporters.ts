@@ -8,6 +8,7 @@ import {
   PanelQueryKind,
   AnnotationQueryKind,
   QueryVariableKind,
+  LibraryPanelRef,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -23,13 +24,9 @@ import { isConstant } from '../../../variables/guard';
 import { removePanelRefFromLayout } from './utils';
 
 export interface InputUsage {
-  libraryPanels?: LibraryPanel[];
+  libraryPanels?: LibraryPanelRef[];
 }
 
-export interface LibraryPanel {
-  name: string;
-  uid: string;
-}
 export interface Input {
   name: string;
   type: string;
@@ -58,7 +55,7 @@ export interface ExternalDashboard {
 interface PanelWithExportableLibraryPanel {
   gridPos: GridPos;
   id: number;
-  libraryPanel: LibraryPanel;
+  libraryPanel: LibraryPanelRef;
 }
 
 function isExportableLibraryPanel(
@@ -335,6 +332,9 @@ export async function makeExportableV1(dashboard: DashboardModel) {
 export async function makeExportableV2(dashboard: DashboardV2Spec) {
   const variableLookup: { [key: string]: any } = {};
 
+  // get all datasource variables
+  const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
+
   for (const variable of dashboard.variables) {
     variableLookup[variable.spec.name] = variable.spec;
   }
@@ -342,6 +342,16 @@ export async function makeExportableV2(dashboard: DashboardV2Spec) {
   const removeDataSourceRefs = (
     obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
   ) => {
+    const datasourceUid = obj.datasource?.uid;
+    if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
+      const varName = datasourceUid.slice(2, -1);
+      // if there's a match we don't want to remove the datasource ref
+      const match = datasourceVariables.find((v) => v.spec.name === varName);
+      if (match) {
+        return;
+      }
+    }
+
     obj.datasource = undefined;
   };
 

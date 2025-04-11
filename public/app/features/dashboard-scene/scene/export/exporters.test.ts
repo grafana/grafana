@@ -526,6 +526,42 @@ describe('dashboard exporter v2', () => {
   const setup = async () => {
     // Making a deep copy here because original JSON is mutated by the exporter
     const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+
+    // add a panel that uses a datasource variable
+    schemaCopy.elements['panel-using-datasource-var'] = {
+      kind: 'Panel',
+      spec: {
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  datasource: {
+                    type: 'prometheus',
+                    uid: '${datasourceVar}',
+                  },
+                  hidden: false,
+                  query: {
+                    kind: 'prometheus',
+                    spec: {
+                      editorMode: 'builder',
+                      expr: 'go_goroutines{job="prometheus"}',
+                      includeNullMetadata: true,
+                      legendFormat: '__auto',
+                      range: true,
+                    },
+                  },
+                  refId: 'A',
+                },
+              },
+            ],
+          },
+        },
+      },
+    };
+
     const dashboard = await makeExportableV2(schemaCopy);
     if (typeof dashboard === 'object' && 'error' in dashboard) {
       throw dashboard.error;
@@ -560,6 +596,20 @@ describe('dashboard exporter v2', () => {
     const origLibraryPanel = originalSchema.elements[elementRef];
     expect(origLibraryPanel.kind).toBe('LibraryPanel');
     expect(libraryPanel).toBeUndefined();
+  });
+
+  it('should not remove datasource ref from panel that uses a datasource variable', async () => {
+    const { dashboard } = await setup();
+    const panel = dashboard.elements['panel-using-datasource-var'];
+
+    if (panel.kind !== 'Panel') {
+      throw new Error('Panel should be a Panel');
+    }
+
+    expect(panel.spec.data.spec.queries[0].spec.datasource).toEqual({
+      type: 'prometheus',
+      uid: '${datasourceVar}',
+    });
   });
 });
 
