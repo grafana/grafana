@@ -14,15 +14,11 @@ export function RepositoryLink({ name }: RepositoryLinkProps) {
   const repoQuery = useGetRepositoryQuery(name ? { name } : skipToken);
   const repo = repoQuery.data;
 
-  if (!repo || repoQuery.isLoading || repo.spec?.type !== 'github' || !repo.spec?.github?.url) {
+  if (!repo || repoQuery.isLoading) {
     return null;
   }
 
   const repoHref = getRepoHref(repo.spec?.github);
-
-  if (!repoHref) {
-    return null;
-  }
 
   return (
     <Stack direction="column" gap={1}>
@@ -32,11 +28,13 @@ export function RepositoryLink({ name }: RepositoryLinkProps) {
           and the external storage will be synchronized.
         </Trans>
       </Text>
-      <Stack direction="row" gap={2}>
-        <TextLink href={repoHref} external>
-          <Trans i18nKey="provisioning.repository-link.view-repository">View repository</Trans>
-        </TextLink>
-      </Stack>
+      {repoHref && (
+        <Stack direction="row" gap={2}>
+          <TextLink href={repoHref} external>
+            <Trans i18nKey="provisioning.repository-link.view-repository">View repository</Trans>
+          </TextLink>
+        </Stack>
+      )}
     </Stack>
   );
 }
