@@ -522,10 +522,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     provisioningPreview: ProvisioningPreview
   ): DashboardDTO {
     // Make sure the annotation key exists
-    let anno = dryRun.metadata?.annotations;
-    if (!anno) {
-      anno = {};
-    }
+    let anno = dryRun.metadata?.annotations || {};
     anno[AnnoKeyManagerKind] = ManagerKind.Repo;
     anno[AnnoKeyManagerIdentity] = repo;
     anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
@@ -674,7 +671,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       kind: 'DashboardWithAccessInfo',
       access: {
         canStar: false,
-        isSnapshot: false,
         canShare: false,
 
         // Should come from the repo settings
