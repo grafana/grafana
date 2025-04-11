@@ -58,7 +58,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 
@@ -70,7 +70,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "yaml")
+		rc.Req.Form.Set("format", "yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -81,7 +81,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "foo")
+		rc.Req.Form.Set("format", "foo")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -92,7 +92,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -103,7 +103,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+		rc.Req.Header.Add("Accept", "application/json, application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -114,7 +114,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "true")
+		rc.Req.Form.Set("download", "true")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -125,7 +125,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -149,7 +149,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -164,7 +164,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -177,8 +177,8 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "hcl")
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -189,8 +189,8 @@ func TestExportFromPayload(t *testing.T) {
 
 		t.Run("and add specific headers if download=true", func(t *testing.T) {
 			rc := createRequest()
-			rc.Context.Req.Form.Set("format", "hcl")
-			rc.Context.Req.Form.Set("download", "true")
+			rc.Req.Form.Set("format", "hcl")
+			rc.Req.Form.Set("download", "true")
 
 			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
