@@ -115,9 +115,6 @@ function getTestContext() {
           file: 'my-namespace',
         },
       ],
-      totals: {
-        alerting: 2,
-      },
     },
   };
 

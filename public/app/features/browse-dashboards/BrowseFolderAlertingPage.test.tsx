@@ -34,7 +34,7 @@ const mockFolderUid = '12345';
 const random = Chance(1);
 const rule_uid = random.guid();
 const mockRulerRulesResponse = getRulerRulesResponse(mockFolderName, mockFolderUid, rule_uid);
-const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName, rule_uid);
+const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName, mockFolderUid, rule_uid);
 
 describe('browse-dashboards BrowseFolderAlertingPage', () => {
   (useParams as jest.Mock).mockReturnValue({ uid: mockFolderUid });

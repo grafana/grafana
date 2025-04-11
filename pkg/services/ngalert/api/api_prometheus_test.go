@@ -368,6 +368,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -433,6 +434,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{
@@ -499,6 +501,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"queriedDatasourceUIDs": ["AUID", "BUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{

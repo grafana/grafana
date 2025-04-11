@@ -18,6 +18,7 @@ import {
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
+import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -39,6 +40,13 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'No Data', value: RuleHealth.NoData },
   { label: 'Error', value: RuleHealth.Error },
 ];
+
+// Contact point selector is not supported in Alerting ListView V2 yet
+const canRenderContactPointSelector =
+  (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
+    config.featureToggles.alertingSimplifiedRouting &&
+    shouldUseAlertingListViewV2() === false) ??
+  false;
 
 interface RulesFilerProps {
   onClear?: () => void;
@@ -122,10 +130,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const canRenderContactPointSelector =
-    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-      config.featureToggles.alertingSimplifiedRouting) ??
-    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (

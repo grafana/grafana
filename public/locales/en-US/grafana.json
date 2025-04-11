@@ -1729,6 +1729,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "Cannot find rule details for {{uid}}",
+      "cannot-load-rule-details-for": "Cannot load rule details for {{name}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error-boundary": {
@@ -1736,8 +1738,11 @@
         "title": "Unable to load rules from this data source"
       },
       "filter-view": {
-        "no-more-results": "No more results – showing {{numberOfRules}} rules",
-        "no-rules-found": "No alert or recording rules matched your current set of filters."
+        "cancel-search": "Cancel search",
+        "no-more-results": "No more results – found {{numberOfRules}} rules",
+        "no-rules-found": "No alert or recording rules matched your current set of filters.",
+        "results-loading": "Searching – found {{numberOfRules}} rules",
+        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
       },
       "import-to-gma": {
         "new-badge": "New!",
