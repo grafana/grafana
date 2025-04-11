@@ -96,15 +96,26 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		// Test fields
 		require.Len(t, res, 2)
-		require.Equal(t, res[0].Name, "exemplar")
-		require.Equal(t, res[0].Fields[0].Name, "Time")
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Len(t, res[0].Fields, 6)
+		// Find the exemplar frame
+		var exemplarFrame *data.Frame
+		var rangeFrame *data.Frame
+		for _, frame := range res {
+			if frame.Name == "exemplar" {
+				exemplarFrame = frame
+			} else {
+				rangeFrame = frame
+			}
+		}
+		require.NotNil(t, exemplarFrame)
+		require.NotNil(t, rangeFrame)
+		require.Equal(t, "Time", exemplarFrame.Fields[0].Name)
+		require.Equal(t, "Value", exemplarFrame.Fields[1].Name)
+		require.Len(t, exemplarFrame.Fields, 6)
 
 		// Test correct values (sampled to 2)
-		require.Equal(t, res[0].Fields[1].Len(), 4)
-		require.Equal(t, res[0].Fields[1].At(0), 0.009545445)
-		require.Equal(t, res[0].Fields[1].At(3), 0.003535405)
+		require.Equal(t, 4, exemplarFrame.Fields[1].Len())
+		require.Equal(t, 0.009545445, exemplarFrame.Fields[1].At(0))
+		require.Equal(t, 0.003535405, exemplarFrame.Fields[1].At(3))
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
