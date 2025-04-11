@@ -233,12 +233,14 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: "Ignore",
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: "Ignore",
 		})
 	}
 	return err
@@ -265,10 +267,14 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// Run update or create
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{})
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: "Ignore",
+		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
-		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{})
+		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+			FieldValidation: "Ignore",
+		})
 	}
 
 	return err
