@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { WKT } from 'ol/format';
+import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
@@ -188,12 +190,22 @@ export function TableCellNG(props: TableCellNGProps) {
               name="eye"
               tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
               onClick={() => {
+                let inspectValue = value;
+                let mode = TableCellInspectorMode.text;
+
+                if (field.type === FieldType.geo && value instanceof Geometry) {
+                  inspectValue = new WKT().writeGeometry(value, {
+                    featureProjection: 'EPSG:3857',
+                    dataProjection: 'EPSG:4326',
+                  });
+                  mode = TableCellInspectorMode.code;
+                } else if (cellType === TableCellDisplayMode.JSONView) {
+                  mode = TableCellInspectorMode.code;
+                }
+
                 setContextMenuProps({
-                  value: String(value ?? ''),
-                  mode:
-                    cellType === TableCellDisplayMode.JSONView
-                      ? TableCellInspectorMode.code
-                      : TableCellInspectorMode.text,
+                  value: String(inspectValue ?? ''),
+                  mode,
                 });
                 setIsInspecting(true);
               }}
