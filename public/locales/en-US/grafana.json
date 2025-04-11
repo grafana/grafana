@@ -424,8 +424,8 @@
       "view-configuration": "View configuration"
     },
     "alertmanager-config": {
-      "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually configured. In order to change this configuration, please edit the individual resources via the UI.",
-      "gma-manual-configuration-is-not-supported": "Manual configuration is not supported",
+      "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
+      "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "reset": "Reset",
       "reset-confirmation": "Are you sure you want to reset configuration for \"{{alertmanagerName}}\"? Contact points and notification policies will be reset to their defaults.",
       "resetting-configuration-might-while": "Resetting configuration, this might take a while.",

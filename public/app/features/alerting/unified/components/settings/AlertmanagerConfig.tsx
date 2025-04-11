@@ -141,12 +141,12 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           severity="warning"
           title={t(
             'alerting.alertmanager-config.gma-manual-configuration-is-not-supported',
-            'Manual configuration is not supported'
+            'Manual configuration changes not supported'
           )}
         >
           <Trans i18nKey="alerting.alertmanager-config.gma-manual-configuration-description">
-            The internal Grafana Alertmanager configuration cannot be manually configured. In order to change this
-            configuration, please edit the individual resources via the UI.
+            The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration,
+            edit the individual resources through the UI.
           </Trans>
         </Alert>
       )}
