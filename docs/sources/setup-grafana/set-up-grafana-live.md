@@ -225,7 +225,10 @@ After running:
 - Streaming from Telegraf delivers messages to all subscribers.
 - A separate unidirectional stream between Grafana and backend data source opens on different Grafana servers. Publishing data to a channel delivers messages to instance subscribers, as a result, publications from different instances on different machines do not produce duplicate data on panels.
 
-> **Note:** Live currently does not support Redis Sentinel.  We recommend using a Redis Cluster for high-availability via a k8s helm chart such as the Bitnami Redis chart which has values to provision a Redis Cluster.  Grafana Live can then be pointed to the `redis-headless` service
+{{< admonition type="note" >}}
+Live currently does not support Redis Sentinel. We recommend using a Redis Cluster for high-availability via a k8s helm chart such as the Bitnami Redis chart which has values to provision a Redis Cluster. Grafana Live can then be pointed to the `redis-headless` service.
+{{< /admonition >}}
+
 >
 > ```
 > live:
