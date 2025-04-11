@@ -1,4 +1,5 @@
 import { LinkButton, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { HOME_ROUTE } from '../shared';
@@ -9,10 +10,12 @@ export function createBookmarkSavedNotification() {
   notification.component = (
     <Stack gap={2} direction={'row'}>
       <div>
-        You can view bookmarks under <i>Explore &gt; Metrics</i>
+        <Trans i18nKey="trails.create-bookmark-saved-notification.description">
+          You can view bookmarks under <i>Explore &gt; Metrics</i>
+        </Trans>
       </div>
       <LinkButton fill={'solid'} variant={'secondary'} href={HOME_ROUTE}>
-        View bookmarks
+        <Trans i18nKey="trails.create-bookmark-saved-notification.view-bookmarks">View bookmarks</Trans>
       </LinkButton>
     </Stack>
   );

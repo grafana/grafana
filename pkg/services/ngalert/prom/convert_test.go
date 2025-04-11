@@ -41,9 +41,10 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				QueryOffset: util.Pointer(prommodel.Duration(1 * time.Minute)),
 				Rules: []PrometheusRule{
 					{
-						Alert: "alert-1",
-						Expr:  "cpu_usage > 80",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Alert:         "alert-1",
+						Expr:          "cpu_usage > 80",
+						For:           util.Pointer(prommodel.Duration(5 * time.Minute)),
+						KeepFiringFor: util.Pointer(prommodel.Duration(60 * time.Second)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -56,22 +57,76 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:      "rules with keep_firing_for are not supported",
+			// If the rule group has no recording rules, the target datasource
+			// can be anything and should not be validated.
+			name:      "alert rules with non-prometheus target datasource",
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
 				Name:     "test-group-1",
-				Interval: prommodel.Duration(1 * time.Minute),
+				Interval: prommodel.Duration(10 * time.Second),
 				Rules: []PrometheusRule{
 					{
-						Alert:         "alert-1",
-						Expr:          "up == 0",
-						KeepFiringFor: util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Alert: "alert-1",
+						Expr:  "up == 0",
 					},
 				},
 			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: false,
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "recording rules with non-prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
 			expectError: true,
-			errorMsg:    "keep_firing_for is not supported",
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "mixed group with both alert and recording rules requires prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "mixed-rules-group",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: true,
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -258,6 +313,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				}
 				require.Equal(t, expectedFor, grafanaRule.For, tc.name)
 
+				var expectedKeepFiringFor time.Duration
+				if promRule.KeepFiringFor != nil {
+					expectedKeepFiringFor = time.Duration(*promRule.KeepFiringFor)
+				}
+				require.Equal(t, expectedKeepFiringFor, grafanaRule.KeepFiringFor, tc.name)
+
 				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
 				maps.Copy(expectedLabels, tc.promGroup.Labels)
 				maps.Copy(expectedLabels, promRule.Labels)
@@ -281,6 +342,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
 				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
+
+				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
+				require.Equal(t, models.OK, grafanaRule.NoDataState)
 
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
@@ -744,5 +808,42 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 				require.Nil(t, grafanaGroup.Rules[0].Metadata.PrometheusStyleRule)
 			}
 		})
+	}
+}
+
+func TestQueryModelContainsRequiredParameters(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 1 * time.Minute,
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	promRule := PrometheusRule{
+		Alert: "test-alert",
+		Expr:  "up == 0",
+	}
+
+	queries, err := converter.createQuery(promRule.Expr, false, PrometheusRuleGroup{})
+	require.NoError(t, err)
+	require.Len(t, queries, 3)
+
+	for _, query := range queries {
+		var model map[string]any
+		err = json.Unmarshal(query.Model, &model)
+		require.NoError(t, err)
+
+		// Check intervalMs
+		intervalMs, exists := model["intervalMs"]
+		require.True(t, exists)
+		_, isNumber := intervalMs.(float64)
+		require.True(t, isNumber, "intervalMs should be a number")
+
+		// Check maxDataPoints
+		maxDataPoints, exists := model["maxDataPoints"]
+		require.True(t, exists)
+		_, isNumber = maxDataPoints.(float64)
+		require.True(t, isNumber, "maxDataPoints should be a number")
 	}
 }

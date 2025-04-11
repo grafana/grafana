@@ -1,30 +1,20 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useFormContext } from 'react-hook-form';
 
-import { Alert, Field, FieldSet, Input, MultiCombobox, Stack, Switch, Text } from '@grafana/ui';
+import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { getWorkflowOptions } from '../Config/ConfigForm';
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
-import { GETTING_STARTED_URL } from '../constants';
 
 import { WizardFormData } from './types';
 
 export function FinishStep() {
-  const {
-    register,
-    watch,
-    control,
-    formState: { errors },
-  } = useFormContext<WizardFormData>();
+  const { register, watch, setValue } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
+  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
-  // Enable sync by default
-  const { setValue } = useFormContext<WizardFormData>();
-  const navigate = useNavigate();
 
   // Set sync enabled by default
   useEffect(() => {
@@ -33,107 +23,101 @@ export function FinishStep() {
 
   return (
     <Stack direction="column">
-      <FieldSet label="Automatic pulling">
-        {isGithub && isPublic && (
-          <Stack>
-            <Alert severity="info" title="Instantenous provisioning available">
-              Automatically provision and update your dashboards as soon as changes are pushed to your GitHub
-              repository.
-            </Alert>
-          </Stack>
-        )}
-        {isGithub && !isPublic && (
-          <Alert
-            title={'Public URL not configured'}
-            severity="info"
-            buttonContent={<span>Instructions</span>}
-            onRemove={() => navigate(GETTING_STARTED_URL)}
-          >
-            Changes in git will eventually be pulled depending on the synchronization interval.
-          </Alert>
-        )}
-        <Field label={'Interval (seconds)'}>
+      {isGithub && (
+        <Field
+          label={t(
+            'provisioning.finish-step.label-update-instance-interval-seconds',
+            'Update instance interval (seconds)'
+          )}
+          description={t(
+            'provisioning.finish-step.description-often-shall-instance-updates-git-hub',
+            'How often shall the instance pull updates from GitHub?'
+          )}
+          required
+        >
           <Input
             {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
-            type={'number'}
-            placeholder={'60'}
+            type="number"
+            placeholder={t('provisioning.finish-step.placeholder', '60')}
           />
         </Field>
-      </FieldSet>
-      <FieldSet label="Collaboration">
-        <Field
-          label={'Workflows'}
-          required
-          error={errors.repository?.workflows?.message}
-          invalid={!!errors.repository?.workflows}
-        >
-          <Controller
-            name={'repository.workflows'}
-            control={control}
-            rules={{ required: 'This field is required.' }}
-            render={({ field: { ref, onChange, ...field } }) => {
-              return (
-                <MultiCombobox
-                  options={getWorkflowOptions(type)}
-                  placeholder={'Readonly repository'}
-                  onChange={(val) => {
-                    onChange(val.map((v) => v.value));
-                  }}
-                  {...field}
-                />
-              );
-            }}
-          />
-        </Field>
-        {isGithub && (
-          <>
-            {isPublic ? (
-              <Alert severity="info" title="Preview links available">
-                Preview links will be automatically added to pull requests when changes are made.
-              </Alert>
-            ) : (
-              <Alert
-                severity="info"
-                title="Public URL not configured"
-                onRemove={() => navigate(GETTING_STARTED_URL)}
-                buttonContent={<span>Instructions</span>}
-              >
-                Preview links in pull requests will not be available until a public URL is configured.
-              </Alert>
-            )}
+      )}
 
-            {!hasImageRenderer && (
-              <Alert
-                severity="info"
-                title="Image renderer not configured"
-                onRemove={() => navigate(GETTING_STARTED_URL)}
-                buttonContent={<span>Instructions</span>}
-              >
-                The image renderer is not configured. Preview images will not be available.
-              </Alert>
-            )}
+      <Field>
+        <Checkbox
+          {...register('repository.readOnly', {
+            onChange: (e) => {
+              if (e.target.checked) {
+                setValue('repository.prWorkflow', false);
+              }
+            },
+          })}
+          label={t('provisioning.finish-step.label-read-only', 'Read only')}
+          description={t(
+            'provisioning.finish-step.description-read-only',
+            "Resources can't be modified through Grafana."
+          )}
+        />
+      </Field>
 
-            {hasImageRenderer && isPublic && (
-              <>
-                <Field
-                  label={'Attach dashboard previews to pull requests'}
-                  description={
-                    <Text element="span">Render before/after images and link them to the pull request.</Text>
-                  }
-                >
-                  <Switch
-                    {...register('repository.generateDashboardPreviews')}
-                    id={'repository.generateDashboardPreviews'}
-                  />
-                </Field>
-                <Alert severity="info" title="Note">
-                  This will render dashboards into an image that can be access by a public URL
-                </Alert>
-              </>
-            )}
-          </>
-        )}
-      </FieldSet>
+      {isGithub && (
+        <>
+          <Field>
+            <Checkbox
+              {...register('repository.prWorkflow')}
+              disabled={readOnly}
+              label={t('provisioning.finish-step.label-pr-workflow', 'Enable pull request option when saving')}
+              description={
+                <Trans i18nKey="provisioning.finish-step.description-pr-enable-description">
+                  Allows users to choose whether to open a pull request when saving changes. If the repository does not
+                  allow direct changes to the main branch, a pull request may still be required.
+                </Trans>
+              }
+            />
+          </Field>
+
+          <Stack direction="column" gap={2}>
+            <Stack direction="column" gap={0}>
+              <Text element="h4">
+                <Trans i18nKey="provisioning.finish-step.title-enhance-github">Enhance your GitHub experience</Trans>
+              </Text>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="provisioning.finish-step.text-setup-later">You can always set this up later</Trans>
+              </Text>
+            </Stack>
+            <Field>
+              <Checkbox
+                disabled={!hasImageRenderer || !isPublic}
+                label={t(
+                  'provisioning.finish-step.label-enable-previews',
+                  'Enable dashboard previews in pull requests'
+                )}
+                description={
+                  <>
+                    <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                      Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
+                      will be shared in your Git repository and visible to anyone with repository access.
+                    </Trans>{' '}
+                    <Text italic>
+                      <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                        Requires image rendering.{' '}
+                        <TextLink
+                          variant="bodySmall"
+                          external
+                          href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                        >
+                          Set up image rendering
+                        </TextLink>
+                      </Trans>
+                    </Text>
+                  </>
+                }
+                {...register('repository.generateDashboardPreviews')}
+              />
+            </Field>
+          </Stack>
+        </>
+      )}
     </Stack>
   );
 }

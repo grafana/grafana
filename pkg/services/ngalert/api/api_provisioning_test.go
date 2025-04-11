@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -112,7 +113,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("GET returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgID = 2
+				rc.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -122,7 +123,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("POST returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgID = 2
+				rc.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -408,6 +409,42 @@ func TestProvisioningApi(t *testing.T) {
 				updated := deserializeRule(t, response.Body())
 				require.Equal(t, rule.UID, updated.UID)
 			})
+
+			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
+				oldValue := util.Pointer(5)
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.MissingSeriesEvalsToResolve = oldValue
+				insertRule(t, sut, rule)
+				rule.MissingSeriesEvalsToResolve = nil
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+				require.Equal(t, 200, response.Status(), string(response.Body()))
+				require.NotEmpty(t, response.Body())
+				updated := deserializeRule(t, response.Body())
+				require.Equal(t, rule.UID, updated.UID)
+				require.Nil(t, updated.MissingSeriesEvalsToResolve)
+			})
+
+			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
+				oldValue := util.Pointer(5)
+				newValue := util.Pointer(10)
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.MissingSeriesEvalsToResolve = oldValue
+				insertRule(t, sut, rule)
+				rule.MissingSeriesEvalsToResolve = newValue
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+				require.Equal(t, 200, response.Status(), string(response.Body()))
+				require.NotEmpty(t, response.Body())
+				updated := deserializeRule(t, response.Body())
+				require.Equal(t, rule.UID, updated.UID)
+				require.NotNil(t, updated.MissingSeriesEvalsToResolve)
+				require.Equal(t, *newValue, *updated.MissingSeriesEvalsToResolve)
+			})
 		})
 
 		t.Run("exist in non-default orgs", func(t *testing.T) {
@@ -535,7 +572,7 @@ func TestProvisioningApi(t *testing.T) {
 				}
 
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgID = 3
+				rc.OrgID = 3
 
 				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
 
@@ -579,7 +616,7 @@ func TestProvisioningApi(t *testing.T) {
 				}
 
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgID = 3
+				rc.OrgID = 3
 
 				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
 
@@ -657,6 +694,47 @@ func TestProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
 		})
+
+		t.Run("are valid", func(t *testing.T) {
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := createTestAlertRuleGroup(1)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 200, response.Status())
+				require.NotEmpty(t, response.Body())
+
+				updated := deserializeRuleGroup(t, response.Body())
+				require.Equal(t, group.Title, updated.Title)
+			})
+
+			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := createTestAlertRuleGroup(1)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				updated := deserializeRuleGroup(t, response.Body())
+				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+
+				// Put the same group with a new value
+				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer(5)
+				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				require.Equal(t, 200, response.Status())
+				updated = deserializeRuleGroup(t, response.Body())
+				require.NotNil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+				require.Equal(t, 5, *updated.Rules[0].MissingSeriesEvalsToResolve)
+
+				// Reset the value again
+				group.Rules[0].MissingSeriesEvalsToResolve = nil
+				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+				require.Equal(t, 200, response.Status())
+				updated = deserializeRuleGroup(t, response.Body())
+				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
+			})
+		})
 	})
 
 	t.Run("exports", func(t *testing.T) {
@@ -686,7 +764,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
 
@@ -699,7 +777,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("format", "yaml")
+				rc.Req.Form.Set("format", "yaml")
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
@@ -713,7 +791,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("format", "foo")
+				rc.Req.Form.Set("format", "foo")
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
@@ -727,7 +805,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
 
@@ -740,7 +818,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				rc.Req.Header.Add("Accept", "application/json, application/yaml")
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
 
@@ -753,7 +831,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("download", "true")
+				rc.Req.Form.Set("download", "true")
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
 
@@ -766,7 +844,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("download", "false")
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
 
@@ -809,7 +887,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule1)
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false},{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
@@ -823,7 +901,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				expectedResponse := "apiVersion: 1\ngroups:\n    - orgId: 1\n      name: my-cool-group\n      folder: Folder Title\n      interval: 1m\n      rules:\n        - uid: rule1\n          title: rule1\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Test-Receiver\n            group_by:\n                - alertname\n                - grafana_folder\n                - test\n            group_wait: 1s\n            group_interval: 5s\n            repeat_interval: 5m\n            mute_time_intervals:\n                - test-mute\n        - uid: rule2\n          title: rule2\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Test-Receiver\n            group_by:\n                - alertname\n                - grafana_folder\n                - test\n            group_wait: 1s\n            group_interval: 5s\n            repeat_interval: 5m\n            mute_time_intervals:\n                - test-mute\n"
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
@@ -913,8 +991,8 @@ func TestProvisioningApi(t *testing.T) {
 }
 `
 				rc := createTestRequestCtx()
-				rc.Context.Req.Form.Set("format", "hcl")
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("format", "hcl")
+				rc.Req.Form.Set("download", "false")
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 				response.WriteTo(&rc)
@@ -925,8 +1003,8 @@ func TestProvisioningApi(t *testing.T) {
 
 				t.Run("and add specific headers if download=true", func(t *testing.T) {
 					rc := createTestRequestCtx()
-					rc.Context.Req.Form.Set("format", "hcl")
-					rc.Context.Req.Form.Set("download", "true")
+					rc.Req.Form.Set("format", "hcl")
+					rc.Req.Form.Set("download", "true")
 
 					response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
 					response.WriteTo(&rc)
@@ -965,7 +1043,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 				response.WriteTo(&rc)
 
@@ -978,7 +1056,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 				response.WriteTo(&rc)
 
@@ -991,7 +1069,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				rc.Req.Header.Add("Accept", "application/json, application/yaml")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 				response.WriteTo(&rc)
 
@@ -1004,7 +1082,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Form.Set("download", "true")
+				rc.Req.Form.Set("download", "true")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 				response.WriteTo(&rc)
 
@@ -1017,7 +1095,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("download", "false")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 				response.WriteTo(&rc)
 
@@ -1044,7 +1122,7 @@ func TestProvisioningApi(t *testing.T) {
 
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 
 				require.Equal(t, 200, response.Status())
@@ -1056,7 +1134,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				expectedResponse := "apiVersion: 1\ngroups:\n    - orgId: 1\n      name: my-cool-group\n      folder: Folder Title\n      interval: 1m\n      rules:\n        - uid: rule1\n          title: rule1\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Test-Receiver\n            group_by:\n                - alertname\n                - grafana_folder\n                - test\n            group_wait: 1s\n            group_interval: 5s\n            repeat_interval: 5m\n            mute_time_intervals:\n                - test-mute\n"
 
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
@@ -1082,7 +1160,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				response := sut.RouteGetAlertRulesExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1095,7 +1173,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetAlertRulesExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1108,7 +1186,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				rc.Req.Header.Add("Accept", "application/json, application/yaml")
 				response := sut.RouteGetAlertRulesExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1121,7 +1199,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("download", "true")
+				rc.Req.Form.Set("download", "true")
 				response := sut.RouteGetAlertRulesExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1134,7 +1212,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
 
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("download", "false")
 				response := sut.RouteGetAlertRulesExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1166,7 +1244,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule2)
 				insertRule(t, sut, rule3)
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Email"}}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]},{"orgId":1,"name":"groupb","folder":"Folder Title2","interval":"1m","rules":[{"uid":"rule3","title":"rule3","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
 				response := sut.RouteGetAlertRulesExport(&rc)
@@ -1186,7 +1264,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule2)
 				insertRule(t, sut, rule3)
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				expectedResponse := "apiVersion: 1\ngroups:\n    - orgId: 1\n      name: groupa\n      folder: Folder Title\n      interval: 1m\n      rules:\n        - uid: rule1\n          title: rule1\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Email\n    - orgId: 1\n      name: groupb\n      folder: Folder Title\n      interval: 1m\n      rules:\n        - uid: rule2\n          title: rule2\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Test-Receiver\n            group_by:\n                - alertname\n                - grafana_folder\n                - test\n            group_wait: 1s\n            group_interval: 5s\n            repeat_interval: 5m\n            mute_time_intervals:\n                - test-mute\n    - orgId: 1\n      name: groupb\n      folder: Folder Title2\n      interval: 1m\n      rules:\n        - uid: rule3\n          title: rule3\n          condition: A\n          data:\n            - refId: A\n              relativeTimeRange:\n                from: 60\n                to: 0\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n          notification_settings:\n            receiver: Test-Receiver\n            group_by:\n                - alertname\n                - grafana_folder\n                - test\n            group_wait: 1s\n            group_interval: 5s\n            repeat_interval: 5m\n            mute_time_intervals:\n                - test-mute\n"
 
 				response := sut.RouteGetAlertRulesExport(&rc)
@@ -1201,8 +1279,8 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("folderUid", "folder-uid")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
 				response := sut.RouteGetAlertRulesExport(&rc)
@@ -1217,9 +1295,9 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("folder_uid", "folder-uid")
-				rc.Context.Req.Form.Add("folder_uid", "folder-uid2")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("folder_uid", "folder-uid")
+				rc.Req.Form.Add("folder_uid", "folder-uid2")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]},{"orgId":1,"name":"groupb","folder":"Folder Title2","interval":"1m","rules":[{"uid":"rule3","title":"rule3","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
 				response := sut.RouteGetAlertRulesExport(&rc)
@@ -1234,9 +1312,9 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
 
 				rc := createTestRequestCtx()
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("folderUid", "folder-uid")
-				rc.Context.Req.Form.Set("group", "groupa")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("folderUid", "folder-uid")
+				rc.Req.Form.Set("group", "groupa")
 
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
@@ -1246,9 +1324,9 @@ func TestProvisioningApi(t *testing.T) {
 
 				t.Run("and fails if folderUID is empty", func(t *testing.T) {
 					rc := createTestRequestCtx()
-					rc.Context.Req.Header.Add("Accept", "application/json")
-					rc.Context.Req.Form.Set("group", "groupa")
-					rc.Context.Req.Form.Set("folderUid", "")
+					rc.Req.Header.Add("Accept", "application/json")
+					rc.Req.Form.Set("group", "groupa")
+					rc.Req.Form.Set("folderUid", "")
 					response := sut.RouteGetAlertRulesExport(&rc)
 
 					require.Equal(t, 400, response.Status())
@@ -1256,10 +1334,10 @@ func TestProvisioningApi(t *testing.T) {
 
 				t.Run("and fails if multiple folder UIDs are specified", func(t *testing.T) {
 					rc := createTestRequestCtx()
-					rc.Context.Req.Header.Add("Accept", "application/json")
-					rc.Context.Req.Form.Set("group", "groupa")
-					rc.Context.Req.Form.Set("folderUid", "folder-uid")
-					rc.Context.Req.Form.Add("folderUid", "folder-uid2")
+					rc.Req.Header.Add("Accept", "application/json")
+					rc.Req.Form.Set("group", "groupa")
+					rc.Req.Form.Set("folderUid", "folder-uid")
+					rc.Req.Form.Add("folderUid", "folder-uid2")
 					response := sut.RouteGetAlertRulesExport(&rc)
 
 					require.Equal(t, 400, response.Status())
@@ -1273,8 +1351,8 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
 
 				rc := createTestRequestCtx()
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("ruleUid", "rule1")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("ruleUid", "rule1")
 
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":60,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false,"notification_settings":{"receiver":"Test-Receiver","group_by":["alertname","grafana_folder","test"],"group_wait":"1s","group_interval":"5s","repeat_interval":"5m","mute_time_intervals":["test-mute"]}}]}]}`
 
@@ -1285,10 +1363,10 @@ func TestProvisioningApi(t *testing.T) {
 
 				t.Run("and fails if folderUID and group are specified", func(t *testing.T) {
 					rc := createTestRequestCtx()
-					rc.Context.Req.Header.Add("Accept", "application/json")
-					rc.Context.Req.Form.Set("group", "groupa")
-					rc.Context.Req.Form.Set("folderUid", "folder-uid")
-					rc.Context.Req.Form.Set("ruleUid", "rule1")
+					rc.Req.Header.Add("Accept", "application/json")
+					rc.Req.Form.Set("group", "groupa")
+					rc.Req.Form.Set("folderUid", "folder-uid")
+					rc.Req.Form.Set("ruleUid", "rule1")
 					response := sut.RouteGetAlertRulesExport(&rc)
 
 					require.Equal(t, 400, response.Status())
@@ -1296,9 +1374,9 @@ func TestProvisioningApi(t *testing.T) {
 
 				t.Run("and fails if only folderUID is specified", func(t *testing.T) {
 					rc := createTestRequestCtx()
-					rc.Context.Req.Header.Add("Accept", "application/json")
-					rc.Context.Req.Form.Set("folderUid", "folder-uid")
-					rc.Context.Req.Form.Set("ruleUid", "rule2")
+					rc.Req.Header.Add("Accept", "application/json")
+					rc.Req.Form.Set("folderUid", "folder-uid")
+					rc.Req.Form.Set("ruleUid", "rule2")
 					response := sut.RouteGetAlertRulesExport(&rc)
 
 					require.Equal(t, 400, response.Status())
@@ -1320,7 +1398,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				response := sut.RouteGetPolicyTreeExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1332,7 +1410,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetPolicyTreeExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1344,7 +1422,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				rc.Req.Header.Add("Accept", "application/json, application/yaml")
 				response := sut.RouteGetPolicyTreeExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1356,7 +1434,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Set("download", "true")
+				rc.Req.Form.Set("download", "true")
 				response := sut.RouteGetPolicyTreeExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1368,7 +1446,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("download", "false")
 				response := sut.RouteGetPolicyTreeExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1392,7 +1470,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}]}`
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
@@ -1406,7 +1484,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				expectedResponse := "apiVersion: 1\npolicies:\n    - orgId: 1\n      receiver: default-receiver\n      group_by:\n        - g1\n        - g2\n      routes:\n        - receiver: nested-receiver\n          group_by:\n            - g3\n            - g4\n          matchers:\n            - a=\"b\"\n          object_matchers:\n            - - foo\n              - =\n              - bar\n          mute_time_intervals:\n            - interval\n          continue: true\n          group_wait: 5m\n          group_interval: 5m\n          repeat_interval: 5m\n      group_wait: 30s\n      group_interval: 5m\n      repeat_interval: 1h\n"
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
@@ -1420,7 +1498,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Add("format", "hcl")
+				rc.Req.Form.Add("format", "hcl")
 				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n  contact_point = \"default-receiver\"\n  group_by      = [\"g1\", \"g2\"]\n\n  policy {\n    contact_point = \"nested-receiver\"\n    group_by      = [\"g3\", \"g4\"]\n\n    matcher {\n      label = \"foo\"\n      match = \"=\"\n      value = \"bar\"\n    }\n\n    mute_timings    = [\"interval\"]\n    continue        = true\n    group_wait      = \"5m\"\n    group_interval  = \"5m\"\n    repeat_interval = \"5m\"\n  }\n\n  group_wait      = \"30s\"\n  group_interval  = \"5m\"\n  repeat_interval = \"1h\"\n}\n"
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
@@ -1434,7 +1512,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Add("format", "hcl")
+				rc.Req.Form.Add("format", "hcl")
 				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n" +
 					"  contact_point = \"some-receiver\"\n" +
 					"  group_by      = []\n" +
@@ -1462,7 +1540,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1474,7 +1552,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1486,7 +1564,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				rc.Req.Header.Add("Accept", "application/json, application/yaml")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1498,7 +1576,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Set("download", "true")
+				rc.Req.Form.Set("download", "true")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1510,7 +1588,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Set("download", "false")
+				rc.Req.Form.Set("download", "false")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				response.WriteTo(&rc)
 
@@ -1536,7 +1614,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetMuteTimingsExport(&rc)
 
 				require.Equal(t, 200, response.Status())
@@ -1550,7 +1628,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 
 				response := sut.RouteGetMuteTimingsExport(&rc)
 
@@ -1565,7 +1643,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut.policies = createFakeNotificationPolicyService()
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Form.Add("format", "hcl")
+				rc.Req.Form.Add("format", "hcl")
 
 				response := sut.RouteGetMuteTimingsExport(&rc)
 				t.Log(string(response.Body()))
@@ -1609,7 +1687,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Header.Add("Accept", "application/yaml")
+			rc.Req.Header.Add("Accept", "application/yaml")
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
@@ -1622,7 +1700,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Header.Add("Accept", "application/json")
+			rc.Req.Header.Add("Accept", "application/json")
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
@@ -1635,7 +1713,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+			rc.Req.Header.Add("Accept", "application/json, application/yaml")
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
@@ -1648,7 +1726,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Form.Set("download", "true")
+			rc.Req.Form.Set("download", "true")
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
@@ -1661,7 +1739,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Form.Set("download", "false")
+			rc.Req.Form.Set("download", "false")
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
@@ -1699,7 +1777,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Form.Set("decrypt", "true")
+			rc.Req.Form.Set("decrypt", "true")
 
 			response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1722,7 +1800,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.Context.Req.Form.Set("decrypt", "true")
+			rc.Req.Form.Set("decrypt", "true")
 
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
@@ -1738,8 +1816,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("decrypt", "false")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("decrypt", "false")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1751,7 +1829,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Req.Header.Add("Accept", "application/json")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1766,8 +1844,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("decrypt", "true")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("decrypt", "true")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1780,8 +1858,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/json")
-				rc.Context.Req.Form.Set("name", "multiple integrations")
+				rc.Req.Header.Add("Accept", "application/json")
+				rc.Req.Form.Set("name", "multiple integrations")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1798,8 +1876,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
-				rc.Context.Req.Form.Set("decrypt", "false")
+				rc.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Form.Set("decrypt", "false")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1811,7 +1889,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Header.Add("Accept", "application/yaml")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1826,8 +1904,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
-				rc.Context.Req.Form.Set("decrypt", "true")
+				rc.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Form.Set("decrypt", "true")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1840,8 +1918,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.Context.Req.Header.Add("Accept", "application/yaml")
-				rc.Context.Req.Form.Set("name", "multiple integrations")
+				rc.Req.Header.Add("Accept", "application/yaml")
+				rc.Req.Form.Set("name", "multiple integrations")
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
@@ -1923,7 +2001,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
@@ -2178,6 +2256,18 @@ func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
 	}
 }
 
+func createTestAlertRuleGroup(orgID int64) definitions.AlertRuleGroup {
+	return definitions.AlertRuleGroup{
+		Title:    "test rule group",
+		Interval: 60,
+		Rules: []definitions.ProvisionedAlertRule{
+			createTestAlertRule("test-alert-rule", orgID),
+			createTestAlertRule("test-alert-rule-2", orgID),
+			createTestRecordingRule("test-recording-rule", orgID),
+		},
+	}
+}
+
 func createTestAlertRuleWithFolderAndGroup(title string, orgID int64, folderUid string, group string) definitions.ProvisionedAlertRule {
 	rule := createTestAlertRule(title, orgID)
 	rule.FolderUID = folderUid
@@ -2254,6 +2344,15 @@ func insertRuleInOrg(t *testing.T, srv ProvisioningSrv, rule definitions.Provisi
 	rc.OrgID = orgID
 	resp := srv.RoutePostAlertRule(&rc, rule)
 	require.Equal(t, 201, resp.Status())
+}
+
+func deserializeRuleGroup(t *testing.T, data []byte) definitions.AlertRuleGroup {
+	t.Helper()
+
+	var rule definitions.AlertRuleGroup
+	err := json.Unmarshal(data, &rule)
+	require.NoError(t, err)
+	return rule
 }
 
 func deserializeRule(t *testing.T, data []byte) definitions.ProvisionedAlertRule {

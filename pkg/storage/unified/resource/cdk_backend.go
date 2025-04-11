@@ -116,6 +116,17 @@ func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, min
 }
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
+	if event.Type == WatchEvent_ADDED {
+		// ReadResource deals with deleted values (i.e. a file exists but has generation -999).
+		resp := s.ReadResource(ctx, &ReadRequest{Key: event.Key})
+		if resp.Error != nil && resp.Error.Code != http.StatusNotFound {
+			return 0, GetError(resp.Error)
+		}
+		if resp.Value != nil {
+			return 0, ErrResourceAlreadyExists
+		}
+	}
+
 	// Scope the lock
 	{
 		s.mutex.Lock()

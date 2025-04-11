@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -43,7 +45,7 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	wrap, err := Clone(ctx, &v0alpha1.Repository{
+	wrap, err := Clone(ctx, "testdata/clone", &v0alpha1.Repository{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "ns",
 			Name:      "unit-tester",
@@ -55,14 +57,13 @@ func TestGoGitWrapper(t *testing.T) {
 			},
 		},
 	},
-		GoGitCloneOptions{
-			Root: "testdata/clone", // where things are cloned,
-			// one commit (not 11)
-			SingleCommitBeforePush: true,
-			CreateIfNotExists:      true,
+		repository.CloneOptions{
+			PushOnWrites:      false,
+			CreateIfNotExists: true,
+			Progress:          os.Stdout,
 		},
 		&dummySecret{},
-		os.Stdout)
+	)
 	require.NoError(t, err)
 
 	tree, err := wrap.ReadTree(ctx, "")
@@ -87,8 +88,61 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	fmt.Printf("push...\n")
-	err = wrap.Push(ctx, GoGitPushOptions{
-		Timeout: 10,
-	}, os.Stdout)
+	err = wrap.Push(ctx, repository.PushOptions{
+		Timeout:  10,
+		Progress: os.Stdout,
+	})
 	require.NoError(t, err)
+}
+
+func TestReadTree(t *testing.T) {
+	dir := t.TempDir()
+	gitRepo, err := git.PlainInit(dir, false)
+	require.NoError(t, err, "failed to init a new git repository")
+	worktree, err := gitRepo.Worktree()
+	require.NoError(t, err, "failed to get worktree")
+
+	repo := &GoGitRepo{
+		config: &v0alpha1.Repository{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "test",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.RepositorySpec{
+				Title:     "test",
+				Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+				Type:      v0alpha1.GitHubRepositoryType,
+				GitHub: &v0alpha1.GitHubRepositoryConfig{
+					URL:    "https://github.com/grafana/__unit-test",
+					Path:   "grafana/",
+					Branch: "main",
+				},
+			},
+			Status: v0alpha1.RepositoryStatus{},
+		},
+		decryptedPassword: "password",
+
+		repo: gitRepo,
+		tree: worktree,
+		dir:  dir,
+	}
+
+	err = os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
+	require.NoError(t, err, "failed to write test file")
+
+	err = os.Mkdir(filepath.Join(dir, "grafana"), 0750)
+	require.NoError(t, err, "failed to mkdir grafana")
+
+	err = os.WriteFile(filepath.Join(dir, "grafana", "test2.txt"), []byte("test"), 0644)
+	require.NoError(t, err, "failed to write grafana/test2 file")
+
+	ctx := context.Background()
+	entries, err := repo.ReadTree(ctx, "HEAD")
+	require.NoError(t, err, "failed to read tree")
+
+	// Here is the meat of why this test exists: the ReadTree call should only read the config.Spec.GitHub.Path files.
+	// All prefixes are removed (i.e. a file is just its name, not ${Path}/${Name}).
+	// And it does not include the directory in the listing, as it pretends to be the root.
+	require.Len(t, entries, 1, "entries from ReadTree")
+	require.Equal(t, entries[0].Path, "test2.txt", "entry path")
 }

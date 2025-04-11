@@ -153,6 +153,13 @@ export const UsersTable = ({
         ),
       },
       {
+        id: 'isProvisioned',
+        header: 'Provisioned',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => (
+          <>{value && <Tag colorIndex={14} name={'Provisioned'} />}</>
+        ),
+      },
+      {
         id: 'isDisabled',
         header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
@@ -167,8 +174,8 @@ export const UsersTable = ({
               size="sm"
               icon="pen"
               href={`admin/users/edit/${original.uid}`}
-              aria-label={`Edit user ${original.name}`}
-              tooltip={'Edit user'}
+              aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
+              tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
             />
           );
         },

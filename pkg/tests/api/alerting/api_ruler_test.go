@@ -1714,43 +1714,131 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 	})
 
 	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		keepFiringFor := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
+		group.Rules[0].KeepFiringFor = &keepFiringFor
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].KeepFiringFor)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		newKeepFiringFor := model.Duration(0)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
+		group.Rules[0].KeepFiringFor = &newKeepFiringFor
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].KeepFiringFor)
+	})
+
+	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			initialValue   *int
+			updatedValue   *int
+			expectedValue  *int
+			expectedStatus int
+		}{
+			{
+				name:           "should be able to set missing_series_evals_to_resolve to 5",
+				initialValue:   nil,
+				updatedValue:   util.Pointer(5),
+				expectedValue:  util.Pointer(5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should be able to update missing_series_evals_to_resolve",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(2),
+				expectedValue:  util.Pointer(2),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
+				initialValue:   util.Pointer(5),
+				updatedValue:   nil,
+				expectedValue:  util.Pointer(5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should reject missing_series_evals_to_resolve < 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(-1),
+				expectedStatus: http.StatusBadRequest,
+			},
+			{
+				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(0),
+				expectedValue:  nil,
+				expectedStatus: http.StatusAccepted,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Create a new rule
+				group := generateAlertRuleGroup(1, alertRuleGen())
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.initialValue
+
+				// Post the rule group with our alert rule
+				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+				// and the value of the missing_series_evals_to_resolve
+				getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+				if tc.initialValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.initialValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+
+				// Now let's update the initial value with the updated value
+				group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.updatedValue
+				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, tc.expectedStatus, status, "failed to post rule group. Response: %s", body)
+				// Check the response status
+				require.Equal(t, tc.expectedStatus, status)
+				if tc.expectedStatus != http.StatusAccepted {
+					// If the status is not accepted, we don't need to check the response body
+					return
+				}
+
+				// Get the group again and check that the value is updated to updatedValue
+				getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+
+				if tc.expectedValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.expectedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+			})
+		}
 	})
 
 	t.Run("when data source missing", func(t *testing.T) {
@@ -1843,7 +1931,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should set updated_by", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
@@ -3362,16 +3450,17 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 											}`),
 							},
 						},
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						MissingSeriesEvalsToResolve: util.Pointer(2), // If UID is specified, this field is required
 					},
 				},
 			},
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
-		assert.Equal(t, http.StatusAccepted, status)
+		response, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
+		assert.Equal(t, http.StatusAccepted, status, body)
 
 		require.Len(t, response.Created, 1)
 		require.Len(t, response.Updated, 2)

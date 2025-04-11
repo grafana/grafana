@@ -28,8 +28,68 @@ func TestAllowQuery(t *testing.T) {
 			err:  nil,
 		},
 		{
-			name: "all allowed functions",
-			q:    example_all_allowed_functions,
+			name: "many allowed functions",
+			q:    example_many_allowed_functions,
+			err:  nil,
+		},
+		{
+			name: "many more allowed functions",
+			q:    example_many_more_allowed_functions,
+			err:  nil,
+		},
+		{
+			name: "paren select allowed",
+			q:    `(SELECT * FROM a_table) UNION ALL (SELECT * FROM a_table2)`,
+			err:  nil,
+		},
+		{
+			name: "allows keywords 'is', 'not', 'null'",
+			q:    `SELECT * FROM a_table WHERE a_column IS NOT NULL`,
+			err:  nil,
+		},
+		{
+			name: "null literal",
+			q:    `SELECT 1 as id, NULL as null_col`,
+			err:  nil,
+		},
+		{
+			name: "val tuple in read query",
+			q:    `SELECT 1 WHERE 1 IN (1, 2, 3)`,
+			err:  nil,
+		},
+		{
+			name: "group concat in read query",
+			q:    `SELECT 1 as id, GROUP_CONCAT('will_', 'concatenate') as concat_val`,
+			err:  nil,
+		},
+		{
+			name: "collate in read query",
+			q:    `SELECT 'some text' COLLATE utf8mb4_bin`,
+			err:  nil,
+		},
+		{
+			name: "allow substring_index",
+			q:    `SELECT __value__, SUBSTRING_INDEX(name, '.', -1) AS code FROM A`,
+			err:  nil,
+		},
+		{
+			name: "json functions",
+			q:    example_json_functions,
+			err:  nil,
+		},
+		{
+			name: "range condition (between)",
+			q:    `SELECT '2024-04-01 15:30:00' BETWEEN '2024-04-01 15:29:00' AND '2024-04-01 15:31:00'`,
+			err:  nil,
+		},
+		{
+			name: "window functions",
+			q:    example_window_functions,
+			err:  nil,
+		},
+		{
+			name: "json table",
+			q:    "SELECT * FROM mockGitHubIssuesDSResponse, JSON_TABLE(labels, '$[*]' COLUMNS(val VARCHAR(255) PATH '$')) AS jt WHERE CAST(jt.val AS CHAR) LIKE 'type%'",
 			err:  nil,
 		},
 	}
@@ -129,15 +189,15 @@ var example_case_statement = `SELECT
   END AS category
 FROM metrics`
 
-var example_all_allowed_functions = `WITH sample_data AS (
+var example_many_allowed_functions = `WITH sample_data AS (
   SELECT 
     100 AS value,
     'example' AS name,
-    NOW() AS created_at
+   '2025-01-01 00:00:00' AS created_at
   UNION ALL SELECT 
     50 AS value,
     'test' AS name,
-    DATE_SUB(NOW(), INTERVAL 1 DAY) AS created_at
+    DATE_SUB('2025-01-01 00:00:00', INTERVAL 1 DAY) AS created_at
 )
 SELECT
   -- Conditional functions
@@ -184,17 +244,15 @@ SELECT
   
   -- Date functions
   STR_TO_DATE('2023-01-01', '%Y-%m-%d') AS date_str_to_date,
-  DATE_FORMAT(NOW(), '%Y-%m-%d') AS date_format,
-  NOW() AS date_now,
-  CURDATE() AS date_curdate,
-  CURTIME() AS date_curtime,
+  DATE_FORMAT('2025-01-01 00:00:00', '%Y-%m-%d') AS date_format,
+  '2025-01-01 00:00:00' AS date_now,
   DATE_ADD(created_at, INTERVAL 1 DAY) AS date_add,
   DATE_SUB(created_at, INTERVAL 1 DAY) AS date_sub,
   YEAR(created_at) AS date_year,
   MONTH(created_at) AS date_month,
   DAY(created_at) AS date_day,
   WEEKDAY(created_at) AS date_weekday,
-  DATEDIFF(NOW(), created_at) AS date_datediff,
+  DATEDIFF('2025-01-01 00:00:00', created_at) AS date_datediff,
   UNIX_TIMESTAMP(created_at) AS date_unix_timestamp,
   FROM_UNIXTIME(1634567890) AS date_from_unixtime,
   
@@ -204,3 +262,96 @@ SELECT
 FROM sample_data
 GROUP BY name, value, created_at
 LIMIT 10`
+
+var example_json_functions = `SELECT 
+  JSON_OBJECT('key1', 'value1', 'key2', 10) AS json_obj,
+  JSON_ARRAY(1, 'abc', NULL, TRUE) AS json_arr,
+  JSON_EXTRACT('{"id": 123, "name": "test"}', '$.id') AS json_ext,
+  JSON_UNQUOTE(JSON_EXTRACT('{"name": "test"}', '$.name')) AS json_unq,
+  JSON_CONTAINS('{"a": 1, "b": 2}', '{"a": 1}') AS json_contains,
+  JSON_SET('{"a": 1}', '$.b', 2) AS json_set,
+  JSON_REMOVE('{"a": 1, "b": 2}', '$.b') AS json_remove,
+  JSON_LENGTH('{"a": 1, "b": {"c": 3}}') AS json_len,
+  JSON_SEARCH('{"a": "xyz", "b": "abc"}', 'one', 'abc') AS json_search,
+  JSON_TYPE('{"a": 1}') AS json_type`
+
+var example_many_more_allowed_functions = `
+SELECT
+  -- Math functions
+  LN(10) as ln_val,
+  TRUNCATE(12.345, 2) as truncate_val,
+  SIN(0.5) as sin_val,
+  COS(0.5) as cos_val,
+  TAN(0.5) as tan_val,
+  ASIN(0.5) as asin_val,
+  ACOS(0.5) as acos_val,
+  ATAN(0.5) as atan_val,
+  ATAN2(1, 2) as atan2_val,
+  RAND() as rand_val,
+  PI() as pi_val,
+  
+  -- String functions
+  LEFT('hello', 2) as left_val,
+  RIGHT('hello', 2) as right_val,
+  LTRIM(' hello') as ltrim_val,
+  RTRIM('hello ') as rtrim_val,
+  REPLACE('hello', 'l', 'x') as replace_val,
+  REVERSE('hello') as reverse_val,
+  LCASE('HELLO') as lcase_val,
+  UCASE('hello') as ucase_val,
+  MID('hello', 2, 2) as mid_val,
+  REPEAT('a', 3) as repeat_val,
+  POSITION('l' IN 'hello') as position_val,
+  INSTR('hello', 'l') as instr_val,
+  LOCATE('l', 'hello') as locate_val,
+  ASCII('A') as ascii_val,
+  ORD('A') as ord_val,
+  CHAR(65) as char_val,
+  REGEXP_SUBSTR('hello world', 'world') as regexp_substr_val,
+  
+  -- Date functions
+  EXTRACT(YEAR FROM '2023-01-01') as extract_val,
+  HOUR('12:34:56') as hour_val,
+  MINUTE('12:34:56') as minute_val,
+  SECOND('12:34:56') as second_val,
+  DAYNAME('2023-01-01') as dayname_val,
+  MONTHNAME('2023-01-01') as monthname_val,
+  DAYOFWEEK('2023-01-01') as dayofweek_val,
+  DAYOFMONTH('2023-01-01') as dayofmonth_val,
+  DAYOFYEAR('2023-01-01') as dayofyear_val,
+  WEEK('2023-01-01') as week_val,
+  QUARTER('2023-01-01') as quarter_val,
+  TIME_TO_SEC('12:34:56') as time_to_sec_val,
+  SEC_TO_TIME(45296) as sec_to_time_val,
+  TIMESTAMPDIFF(HOUR, '2023-01-01', '2023-01-02') as timestampdiff_val,
+  TIMESTAMPADD(HOUR, 1, '2023-01-01') as timestampadd_val,
+  
+  -- Type conversion
+  CONVERT(12.34, CHAR) as convert_val,
+  
+  -- JSON functions
+  JSON_MERGE_PATCH('{"a": 1}', '{"b": 2}') as json_merge_patch_val,
+  JSON_VALID('{"a": 1}') as json_valid_val,
+  JSON_KEYS('{"a": 1, "b": 2}') as json_keys_val,
+  JSON_QUOTE('hello') as json_quote_val,
+  JSON_INSERT('{"a": 1}', '$.b', 2) as json_insert_val,
+  JSON_REPLACE('{"a": 1, "b": 2}', '$.b', 3) as json_replace_val
+FROM dual;`
+
+var example_window_functions = `
+WITH dummy_data AS (
+  SELECT 1 as val, 'apple' as txt
+  UNION ALL SELECT 2, 'banana'
+  UNION ALL SELECT 3, 'cherry'
+)
+SELECT 
+  val,
+  txt,
+  ROW_NUMBER() OVER (ORDER BY val) as row_num,
+  RANK() OVER (ORDER BY val) as rank_val,
+  DENSE_RANK() OVER (ORDER BY val) as dense_rank_val,
+  LEAD(val) OVER (ORDER BY val) as lead_val,
+  LAG(val) OVER (ORDER BY val) as lag_val,
+  FIRST_VALUE(val) OVER (ORDER BY val) as first_val,
+  LAST_VALUE(val) OVER (ORDER BY val ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_val
+FROM dummy_data;`

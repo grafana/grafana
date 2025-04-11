@@ -45,30 +45,10 @@ func init() {
 
 var _ repository.Repository = (*GoGitRepo)(nil)
 
-type GoGitCloneOptions struct {
-	Root string // tempdir (when empty, memory??)
-
-	// If the branch does not exist, create it
-	CreateIfNotExists bool
-
-	// Skip intermediate commits and commit all before push
-	SingleCommitBeforePush bool
-
-	// Maximum allowed size for repository clone in bytes (0 means no limit)
-	MaxSize int64
-
-	// Maximum time allowed for clone operation in seconds (0 means no limit)
-	Timeout time.Duration
-}
-
-type GoGitPushOptions struct {
-	Timeout time.Duration
-}
-
 type GoGitRepo struct {
 	config            *provisioning.Repository
-	opts              GoGitCloneOptions
 	decryptedPassword string
+	opts              repository.CloneOptions
 
 	repo *git.Repository
 	tree *git.Worktree
@@ -79,13 +59,19 @@ type GoGitRepo struct {
 // As structured, it is valid for one context and should not be shared across multiple requests
 func Clone(
 	ctx context.Context,
+	root string,
 	config *provisioning.Repository,
-	opts GoGitCloneOptions,
+	opts repository.CloneOptions,
 	secrets secrets.Service,
-	progress io.Writer, // os.Stdout
-) (*GoGitRepo, error) {
-	if opts.Root == "" {
+) (repository.ClonedRepository, error) {
+	if root == "" {
 		return nil, fmt.Errorf("missing root config")
+	}
+
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return nil, err
+		}
 	}
 
 	// add a timeout to the operation
@@ -101,13 +87,18 @@ func Clone(
 		return nil, fmt.Errorf("error decrypting token: %w", err)
 	}
 
-	if err := os.MkdirAll(opts.Root, 0700); err != nil {
+	if err := os.MkdirAll(root, 0700); err != nil {
 		return nil, fmt.Errorf("create root dir: %w", err)
 	}
 
-	dir, err := mkdirTempClone(opts.Root, config)
+	dir, err := mkdirTempClone(root, config)
 	if err != nil {
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
+	}
+
+	progress := opts.Progress
+	if progress == nil {
+		progress = io.Discard
 	}
 
 	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progress)
@@ -121,15 +112,15 @@ func Clone(
 
 	return &GoGitRepo{
 		config:            config,
-		opts:              opts,
 		tree:              worktree,
+		opts:              opts,
 		decryptedPassword: string(decrypted),
 		repo:              repo,
 		dir:               dir,
 	}, nil
 }
 
-func clone(ctx context.Context, config *provisioning.Repository, opts GoGitCloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
+func clone(ctx context.Context, config *provisioning.Repository, opts repository.CloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
 	gitcfg := config.Spec.GitHub
 	url := fmt.Sprintf("%s.git", gitcfg.URL)
 
@@ -198,17 +189,28 @@ func mkdirTempClone(root string, config *provisioning.Repository) (string, error
 	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
-// Affer making changes to the worktree, push changes
-func (g *GoGitRepo) Push(ctx context.Context, opts GoGitPushOptions, progress io.Writer) error {
+// After making changes to the worktree, push changes
+func (g *GoGitRepo) Push(ctx context.Context, opts repository.PushOptions) error {
 	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
 		timeout = opts.Timeout
 	}
 
+	progress := opts.Progress
+	if progress == nil {
+		progress = io.Discard
+	}
+
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return err
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	if g.opts.SingleCommitBeforePush {
+	if !g.opts.PushOnWrites {
 		_, err := g.tree.Commit("exported from grafana", &git.CommitOptions{
 			All: true, // Add everything that changed
 		})
@@ -249,16 +251,20 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 	if g.config.Spec.GitHub.Path != "" {
 		treePath = g.config.Spec.GitHub.Path
 	}
-
-	// TODO: do we really need this?
-	if !strings.HasPrefix(treePath, "/") {
-		treePath = "/" + treePath
-	}
+	treePath = safepath.Clean(treePath)
 
 	entries := make([]repository.FileTreeEntry, 0, 100)
 	err := util.Walk(g.tree.Filesystem, treePath, func(path string, info fs.FileInfo, err error) error {
-		if err != nil || path == "/" {
+		// We already have an error, just pass it onwards.
+		if err != nil ||
+			// This is the root of the repository (or should pretend to be)
+			safepath.Clean(path) == "" || path == treePath ||
+			// This is the Git data
+			(treePath == "" && strings.HasPrefix(path, ".git/")) {
 			return err
+		}
+		if treePath != "" {
+			path = strings.TrimPrefix(path, treePath)
 		}
 		entry := repository.FileTreeEntry{
 			Path: strings.TrimLeft(path, "/"),
@@ -332,7 +338,7 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	}
 
 	// Skip commit for each file
-	if g.opts.SingleCommitBeforePush {
+	if !g.opts.PushOnWrites {
 		return nil
 	}
 

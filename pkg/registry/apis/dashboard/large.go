@@ -14,15 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLargeObjectSupport {
+func NewDashboardLargeObjectSupport(scheme *runtime.Scheme, threshold int) *apistore.BasicLargeObjectSupport {
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboardV0.DashboardResourceInfo.GroupResource(),
 
-		// byte size, while testing lets do almost everything (10bytes)
-		ThresholdSize: 10,
+		// Byte size above which an object is considered large.
+		ThresholdBytes: threshold,
 
 		// 10mb -- we should check what the largest ones are... might be bigger
-		MaxByteSize: 10 * 1024 * 1024,
+		MaxBytes: 10 * 1024 * 1024,
 
 		ReduceSpec: func(obj runtime.Object) error {
 			meta, err := utils.MetaAccessor(obj)

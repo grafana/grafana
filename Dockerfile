@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.1-alpine
+ARG GO_IMAGE=golang:1.24.2-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -66,10 +66,11 @@ COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
 COPY .citools/jb .citools/jb
 COPY .citools/golangci-lint .citools/golangci-lint
-COPY .citools/swagger ./citools/swagger
+COPY .citools/swagger .citools/swagger
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/folder pkg/apis/folder
 COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery

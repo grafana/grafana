@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -241,10 +242,10 @@ func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKe
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
 func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
-		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
-			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		if g[i].FolderUID == g[j].FolderUID {
+			return g[i].Title < g[j].Title
 		}
-		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+		return g[i].FolderUID < g[j].FolderUID
 	})
 }
 
@@ -320,7 +321,7 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.Folder
+type Namespace folder.FolderReference
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
@@ -974,6 +975,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasEditorSettings {
 		ruleToPatch.Metadata.EditorSettings = existingRule.Metadata.EditorSettings
 	}
+	if ruleToPatch.MissingSeriesEvalsToResolve != nil && *ruleToPatch.MissingSeriesEvalsToResolve == -1 {
+		ruleToPatch.MissingSeriesEvalsToResolve = existingRule.MissingSeriesEvalsToResolve
+	}
 
 	if ruleToPatch.GUID == "" {
 		ruleToPatch.GUID = existingRule.GUID
@@ -990,13 +994,22 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 
 type RulesGroup []*AlertRule
 
+func RulesGroupComparer(a, b *AlertRule) int {
+	if a.RuleGroupIndex < b.RuleGroupIndex {
+		return -1
+	} else if a.RuleGroupIndex > b.RuleGroupIndex {
+		return 1
+	}
+	if a.ID < b.ID {
+		return -1
+	} else if a.ID > b.ID {
+		return 1
+	}
+	return 0
+}
+
 func (g RulesGroup) SortByGroupIndex() {
-	sort.Slice(g, func(i, j int) bool {
-		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
-			return g[i].ID < g[j].ID
-		}
-		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
-	})
+	slices.SortFunc(g, RulesGroupComparer)
 }
 
 func SortAlertRulesByGroupIndex(rules []AlertRule) {

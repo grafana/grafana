@@ -9,7 +9,7 @@ import {
   GrafanaTheme2,
   getDisplayProcessor,
 } from '@grafana/data';
-import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { fieldIndexComparer } from '@grafana/data/internal';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 
@@ -120,16 +120,28 @@ export function logRecordsToDataFrame(
           custom: { fillOpacity: 100 },
           mappings: [
             {
+              type: MappingType.RegexToText,
+              options: {
+                //  Map as a regex so we capture `Normal`, and `Normal (Updated)`
+                pattern: '/^normal/i',
+                result: { color: theme.colors.success.main },
+              },
+            },
+            {
+              type: MappingType.RegexToText,
+              options: {
+                pattern: '/Alerting/',
+                result: { color: theme.colors.error.main },
+              },
+            },
+            {
               type: MappingType.ValueToText,
               options: {
-                Alerting: {
-                  color: theme.colors.error.main,
-                },
                 Pending: {
                   color: theme.colors.warning.main,
                 },
-                Normal: {
-                  color: theme.colors.success.main,
+                Recovering: {
+                  color: theme.colors.warning.main,
                 },
                 NoData: {
                   color: theme.colors.info.main,

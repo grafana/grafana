@@ -24,25 +24,29 @@ type PullRequestRepo interface {
 }
 
 type PullRequestWorker struct {
-	parsers   *resources.ParserFactory
-	previewer *Previewer
+	parsers     resources.ParserFactory
+	renderer    ScreenshotRenderer
+	urlProvider func(namespace string) string
+	commenter   *commentBuilder
 }
 
 func NewPullRequestWorker(
-	parsers *resources.ParserFactory,
-	previewer *Previewer,
-) (*PullRequestWorker, error) {
+	parsers resources.ParserFactory,
+	renderer ScreenshotRenderer,
+	urlProvider func(namespace string) string,
+) *PullRequestWorker {
 	return &PullRequestWorker{
-		parsers:   parsers,
-		previewer: previewer,
-	}, nil
+		parsers:     parsers,
+		renderer:    renderer,
+		urlProvider: urlProvider,
+		commenter:   newCommentBuilder(),
+	}
 }
 
 func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionPullRequest
 }
 
-//nolint:gocyclo
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
@@ -52,6 +56,14 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	options := job.Spec.PullRequest
 	if options == nil {
 		return apierrors.NewBadRequest("missing spec.pr")
+	}
+
+	if options.Ref == "" {
+		return apierrors.NewBadRequest("missing spec.ref")
+	}
+
+	if cfg.GitHub == nil {
+		return apierrors.NewBadRequest("expecting github configuration")
 	}
 
 	prRepo, ok := repo.(PullRequestRepo)
@@ -64,95 +76,71 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
 	}
 
-	parser, err := c.parsers.GetParser(ctx, reader)
-	if err != nil {
-		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
-	}
-
 	logger := logging.FromContext(ctx).With("pr", options.PR)
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
 	base := cfg.GitHub.Branch
-	ref := options.Hash
-	files, err := prRepo.CompareFiles(ctx, base, ref)
+	files, err := prRepo.CompareFiles(ctx, base, options.Ref)
 	if err != nil {
 		return fmt.Errorf("failed to list pull request files: %s", err.Error())
 	}
 
-	progress.SetMessage(ctx, "clearing pull request comments")
-	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
-		return fmt.Errorf("failed to clear pull request comments: %+v", err)
-	}
+	files = onlySupportedFiles(files)
 
 	if len(files) == 0 {
 		progress.SetFinalMessage(ctx, "no files to process")
 		return nil
 	}
 
-	progress.SetMessage(ctx, "processing pull request files")
-	previews := make([]resourcePreview, 0, len(files))
-	for _, f := range files {
-		result := jobs.JobResourceResult{
-			Path: f.Path,
-		}
-
-		if err := resources.IsPathSupported(f.Path); err != nil {
-			result.Action = repository.FileActionIgnored
-			progress.Record(ctx, result)
-			continue
-		}
-		result.Action = f.Action
-
-		fileInfo, err := prRepo.Read(ctx, f.Path, ref)
-		if err != nil {
-			return fmt.Errorf("read file: %w", err)
-		}
-
-		parsed, err := parser.Parse(ctx, fileInfo, true)
-		if err != nil {
-			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				logger.Debug("file is not a resource", "path", f.Path)
-				result.Action = repository.FileActionIgnored
-				progress.Record(ctx, result)
-			} else {
-				result.Error = fmt.Errorf("failed to parse resource: %w", err)
-				progress.Record(ctx, result)
-			}
-			continue
-		}
-
-		result.Resource = parsed.GVR.Resource
-		result.Group = parsed.GVR.Group
-		result.Name = parsed.Obj.GetName()
-
-		preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
-		if err != nil {
-			result.Error = fmt.Errorf("create preview: %w", err)
-			progress.Record(ctx, result)
-			continue
-		}
-
-		previews = append(previews, *preview)
-		progress.Record(ctx, result)
-	}
-
-	if len(previews) == 0 {
-		progress.SetFinalMessage(ctx, "no previews to add")
-		return nil
-	}
-
-	progress.SetMessage(ctx, "generating previews comment")
-	comment, err := c.previewer.GenerateComment(previews)
+	parser, err := c.parsers.GetParser(ctx, reader)
 	if err != nil {
-		return fmt.Errorf("generate comment: %w", err)
+		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	if err := prRepo.CommentPullRequest(ctx, options.PR, comment); err != nil {
+	var render ScreenshotRenderer
+	if cfg.GitHub.GenerateDashboardPreviews {
+		render = c.renderer
+	}
+
+	changeInfo, err := processChangedFiles(ctx, changeOptions{
+		grafanaBaseURL: c.urlProvider(repo.Config().Namespace),
+		pullRequest:    *options,
+		changes:        files,
+		parser:         parser,
+		reader:         reader,
+		progress:       progress,
+		render:         render,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to calculate changes: %w", err)
+	}
+
+	if err := c.commenter.Comment(ctx, prRepo, options.PR, changeInfo); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
-	logger.Info("previews comment added", "number", len(previews))
-
+	logger.Info("preview comment added")
 	return nil
+}
+
+// Remove files we should not try to process
+func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
+	for _, file := range files {
+		if file.Action == repository.FileActionIgnored {
+			continue
+		}
+
+		if err := resources.IsPathSupported(file.Path); err == nil {
+			ret = append(ret, file)
+			continue
+		}
+		if file.PreviousPath != "" {
+			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
+				ret = append(ret, file)
+				continue
+			}
+		}
+	}
+	return
 }

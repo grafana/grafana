@@ -20,7 +20,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
-	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
 	if err != nil {
 		return err
 	}
@@ -199,6 +199,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		if len(navConfig.Icon) > 0 {
 			appLink.Icon = navConfig.Icon
 		}
+		if len(navConfig.SubTitle) > 0 {
+			appLink.SubTitle = navConfig.SubTitle
+		}
+		if navConfig.IsNew {
+			appLink.IsNew = true
+		}
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -333,7 +339,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
-		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg, Text: "Advisor"}
+		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
+			SectionID: navtree.NavIDCfg,
+			Text:      "Advisor",
+			SubTitle:  "Keep Grafana running smoothly and securely",
+			IsNew:     true,
+		}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
