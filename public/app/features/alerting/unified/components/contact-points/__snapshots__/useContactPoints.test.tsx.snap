@@ -29,7 +29,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "grafanaDefaultEmail",
+      "id": "grafana-default-email",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -39,7 +39,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "grafana.com/inUse/rules": "1",
           "grafana.com/provenance": "none",
         },
-        "uid": "grafanaDefaultEmail",
+        "uid": "grafana-default-email",
       },
       "name": "grafana-default-email",
       "policies": [
@@ -79,7 +79,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "lotsaEmails",
+      "id": "lotsa-emails",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -89,7 +89,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "lotsaEmails",
+        "uid": "lotsa-emails",
       },
       "name": "lotsa-emails",
       "policies": [],
@@ -115,7 +115,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
-      "id": "onCallConctactPoint",
+      "id": "OnCall Conctact point",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -125,7 +125,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "onCallConctactPoint",
+        "uid": "OnCall Conctact point",
       },
       "name": "OnCall Conctact point",
       "policies": [],
@@ -157,7 +157,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "provisionedContactPoint",
+      "id": "provisioned-contact-point",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -167,7 +167,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "api",
         },
-        "uid": "provisionedContactPoint",
+        "uid": "provisioned-contact-point",
       },
       "name": "provisioned-contact-point",
       "policies": [
@@ -229,7 +229,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "slackWithMultipleChannels",
+      "id": "Slack with multiple channels",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -239,7 +239,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "slackWithMultipleChannels",
+        "uid": "Slack with multiple channels",
       },
       "name": "Slack with multiple channels",
       "policies": [],
@@ -280,7 +280,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "grafanaDefaultEmail",
+      "id": "grafana-default-email",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -290,7 +290,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "grafana.com/inUse/rules": "1",
           "grafana.com/provenance": "none",
         },
-        "uid": "grafanaDefaultEmail",
+        "uid": "grafana-default-email",
       },
       "name": "grafana-default-email",
       "policies": [
@@ -330,7 +330,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "lotsaEmails",
+      "id": "lotsa-emails",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -340,7 +340,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "lotsaEmails",
+        "uid": "lotsa-emails",
       },
       "name": "lotsa-emails",
       "policies": [],
@@ -369,7 +369,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
-      "id": "onCallConctactPoint",
+      "id": "OnCall Conctact point",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -379,7 +379,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "onCallConctactPoint",
+        "uid": "OnCall Conctact point",
       },
       "name": "OnCall Conctact point",
       "policies": [],
@@ -411,7 +411,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "provisionedContactPoint",
+      "id": "provisioned-contact-point",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -421,7 +421,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "api",
         },
-        "uid": "provisionedContactPoint",
+        "uid": "provisioned-contact-point",
       },
       "name": "provisioned-contact-point",
       "policies": [
@@ -483,7 +483,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
-      "id": "slackWithMultipleChannels",
+      "id": "Slack with multiple channels",
       "metadata": {
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -493,7 +493,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none",
         },
-        "uid": "slackWithMultipleChannels",
+        "uid": "Slack with multiple channels",
       },
       "name": "Slack with multiple channels",
       "policies": [],
