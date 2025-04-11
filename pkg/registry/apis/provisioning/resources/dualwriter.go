@@ -195,15 +195,6 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
-	// Verify that we can create (or update) the referenced resource
-	verb := utils.VerbUpdate
-	if create {
-		verb = utils.VerbCreate
-	}
-	if err = r.authorize(ctx, parsed, verb); err != nil {
-		return nil, err
-	}
-
 	// Always use the provisioning identity when writing
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
 	if err != nil {
@@ -222,6 +213,15 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 	if len(parsed.Errors) > 0 {
 		// TODO: return this as a 400 rather than 500
 		return nil, fmt.Errorf("errors while parsing file [%v]", parsed.Errors)
+	}
+
+	// Verify that we can create (or update) the referenced resource
+	verb := utils.VerbUpdate
+	if parsed.Action == provisioning.ResourceActionCreate {
+		verb = utils.VerbCreate
+	}
+	if err = r.authorize(ctx, parsed, verb); err != nil {
+		return nil, err
 	}
 
 	data, err = parsed.ToSaveBytes()
