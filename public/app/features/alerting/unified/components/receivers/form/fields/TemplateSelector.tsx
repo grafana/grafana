@@ -220,9 +220,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
               />
               <IconButton
                 tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
-                onClick={() =>
-                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
-                }
+                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />
             </Stack>

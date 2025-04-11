@@ -1,38 +1,34 @@
 import { css, cx } from '@emotion/css';
 import { compact, uniqueId } from 'lodash';
 import * as React from 'react';
-import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Box, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
 import { stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
-import type { TemplateFormValues } from './TemplateForm';
 import { usePreviewTemplate } from './usePreviewTemplate';
 
 export function TemplatePreview({
   payload,
   templateName,
+  templateContent,
   payloadFormatError,
   setPayloadFormatError,
   className,
 }: {
   payload: string;
   templateName: string;
+  templateContent: string;
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
 }) {
   const styles = useStyles2(getStyles);
-
-  const { watch } = useFormContext<TemplateFormValues>();
-
-  const templateContent = watch('content');
 
   const {
     data,
@@ -74,13 +70,25 @@ function PreviewResultViewer({ previews }: { previews: TemplatePreviewResult[] }
   const singleTemplate = previews.length === 1;
 
   return (
-    <ul className={styles.viewer.container}>
-      {previews.map((preview) => (
-        <li className={styles.viewer.box} key={preview.name}>
-          {singleTemplate ? null : <header className={styles.viewer.header}>{preview.name}</header>}
-          <pre className={styles.viewer.pre}>{preview.text ?? '<Empty>'}</pre>
-        </li>
-      ))}
+    <ul className={styles.viewer.container} data-testid="template-preview">
+      {previews.map((preview) => {
+        return (
+          <li className={styles.viewer.box} key={preview.name}>
+            {singleTemplate ? null : <header className={styles.viewer.header}>{preview.name}</header>}
+            <CodeEditor
+              containerStyles={styles.editorContainer}
+              language={'plaintext'}
+              showLineNumbers={false}
+              showMiniMap={false}
+              value={preview.text}
+              readOnly={true}
+              monacoOptions={{
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -100,6 +108,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.medium}`,
+  }),
+  editorContainer: css({
+    width: '100%',
+    height: '100%',
+    border: 'none',
   }),
   viewerContainer: ({ height }: { height: number }) =>
     css({
@@ -127,12 +140,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }),
     errorText: css({
       color: theme.colors.error.text,
-    }),
-    pre: css({
-      backgroundColor: 'transparent',
-      margin: 0,
-      border: 'none',
-      padding: theme.spacing(2),
     }),
   },
 });
