@@ -83,8 +83,8 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	// value used by the image renderer to make requests to Grafana
 	rendererCallbackURL := cfg.RendererCallbackUrl
-	if cfg.RendererUrl != "" {
-		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
+	if cfg.RendererServerUrl != "" {
+		sanitizeURL = getSanitizerURL(cfg.RendererServerUrl)
 
 		// Default value for callback URL using a remote renderer should be AppURL
 		if rendererCallbackURL == "" {
@@ -228,7 +228,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
-	return rs.Cfg.RendererUrl != ""
+	return rs.Cfg.RendererServerUrl != ""
 }
 
 func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
@@ -437,10 +437,11 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 
 // getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
 func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
-	if rs.Cfg.RendererUrl != "" || rs.rendererCallbackURL != "" {
-		// The backend rendering service can potentially be remote.
-		// So we need to use the root_url to ensure the rendering service
-		// can reach this Grafana instance.
+	if rs.rendererCallbackURL != "" {
+		// rendererCallbackURL should be set if:
+		// - the backend rendering service is remote (default value is cfg.AppURL
+		// and set when initializing the service)
+		// - the service is a plugin and Grafana is running behind a proxy changing its domain
 
 		// &render=1 signals to the legacy redirect layer to
 		return fmt.Sprintf("%s%s&render=1", rs.rendererCallbackURL, path)

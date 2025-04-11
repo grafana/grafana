@@ -26,7 +26,7 @@ func TestGetUrl(t *testing.T) {
 	}
 
 	t.Run("When renderer and callback url configured should return callback url plus path", func(t *testing.T) {
-		rs.Cfg.RendererUrl = "http://localhost:8081/render"
+		rs.Cfg.RendererServerUrl = "http://localhost:8081/render"
 		rs.rendererCallbackURL = "http://public-grafana.com/"
 		url := rs.getGrafanaCallbackURL(path)
 		require.Equal(t, rs.rendererCallbackURL+path+"&render=1", url)
@@ -39,7 +39,7 @@ func TestGetUrl(t *testing.T) {
 	})
 
 	t.Run("When renderer url not configured", func(t *testing.T) {
-		rs.Cfg.RendererUrl = ""
+		rs.Cfg.RendererServerUrl = ""
 		rs.rendererCallbackURL = ""
 		rs.domain = "localhost"
 		rs.Cfg.HTTPPort = "3000"
@@ -129,8 +129,8 @@ func TestRenderLimitImage(t *testing.T) {
 
 	rs := RenderingService{
 		Cfg: &setting.Cfg{
-			HomePath:    path,
-			RendererUrl: "http://localhost:8081/render",
+			HomePath:          path,
+			RendererServerUrl: "http://localhost:8081/render",
 		},
 		inProgressCount: 2,
 		log:             log.New("test"),
@@ -171,7 +171,7 @@ func TestRenderLimitImage(t *testing.T) {
 func TestRenderLimitImageError(t *testing.T) {
 	rs := RenderingService{
 		Cfg: &setting.Cfg{
-			RendererUrl: "http://localhost:8081/render",
+			RendererServerUrl: "http://localhost:8081/render",
 		},
 		inProgressCount: 2,
 		log:             log.New("test"),
@@ -202,7 +202,7 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		}))
 		defer server.Close()
 
-		rs.Cfg.RendererUrl = server.URL + "/render"
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
 		version, err := rs.getRemotePluginVersion()
 
 		require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		}))
 		defer server.Close()
 
-		rs.Cfg.RendererUrl = server.URL + "/render"
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
 		version, err := rs.getRemotePluginVersion()
 
 		require.NoError(t, err)
@@ -240,7 +240,7 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		}))
 		defer server.Close()
 
-		rs.Cfg.RendererUrl = server.URL + "/render"
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
 		remoteVersionFetchInterval = time.Millisecond
 		remoteVersionFetchRetries = 5
 		go func() {
@@ -262,56 +262,64 @@ func TestProvideService(t *testing.T) {
 		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.NoError(t, err)
 
-		require.Equal(t, "", rs.Cfg.RendererUrl)
+		require.Equal(t, "", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "", rs.rendererCallbackURL)
 		require.Equal(t, "", rs.domain)
 	})
 
 	t.Run("RendererURL is set but not RendererCallbackUrl", func(t *testing.T) {
-		cfg.RendererUrl = "http://custom-renderer:8081"
+		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = ""
 
 		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.NoError(t, err)
 
-		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererUrl)
+		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "http://app-url/", rs.rendererCallbackURL)
 		require.Equal(t, "app-url", rs.domain)
 	})
 
 	t.Run("RendererURL and RendererCallbackUrl are set", func(t *testing.T) {
-		cfg.RendererUrl = "http://custom-renderer:8081"
+		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = "http://public-grafana.com/"
 
 		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.NoError(t, err)
 
-		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererUrl)
+		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "http://public-grafana.com/", rs.rendererCallbackURL)
 		require.Equal(t, "public-grafana.com", rs.domain)
 	})
 
 	t.Run("RendererURL is not set but RendererCallbackUrl is set", func(t *testing.T) {
-		cfg.RendererUrl = ""
+		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com/"
 
 		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.NoError(t, err)
 
-		require.Equal(t, "", rs.Cfg.RendererUrl)
+		require.Equal(t, "", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "https://public-grafana.com/", rs.rendererCallbackURL)
 		require.Equal(t, "public-grafana.com", rs.domain)
 	})
 
 	t.Run("RendererCallbackURL is missing trailing slash", func(t *testing.T) {
-		cfg.RendererUrl = ""
+		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com"
 
 		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.NoError(t, err)
 
-		require.Equal(t, "", rs.Cfg.RendererUrl)
+		require.Equal(t, "", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "https://public-grafana.com/", rs.rendererCallbackURL)
 		require.Equal(t, "public-grafana.com", rs.domain)
+	})
+
+	t.Run("RendererCallbackURL is invalid", func(t *testing.T) {
+		cfg.RendererServerUrl = ""
+		cfg.RendererCallbackUrl = "http://public{grafana"
+
+		_, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+		require.Error(t, err)
 	})
 }
