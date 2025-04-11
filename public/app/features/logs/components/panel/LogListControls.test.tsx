@@ -41,6 +41,10 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
     expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
@@ -241,5 +245,20 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText('Download logs'));
     await userEvent.click(await screen.findByText('txt'));
     expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined);
+  });
+
+  test('Controls new lines', async () => {
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} hasUnescapedContent>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
+    rerender(
+      <LogListContextProvider {...contextProps} hasUnescapedContent>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Remove escaping'));
   });
 });
