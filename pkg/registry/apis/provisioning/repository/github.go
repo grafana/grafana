@@ -12,11 +12,10 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v70/github"
+	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -57,18 +56,14 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 	cloneFn CloneFn,
-) (*githubRepository, error) {
-	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
-	if err != nil {
-		return nil, err
-	}
+) *githubRepository {
+	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			token = string(decrypted)
 		}
-		token = string(decrypted)
 	}
 	return &githubRepository{
 		config:     config,
@@ -78,7 +73,7 @@ func NewGitHub(
 		owner:      owner,
 		repo:       repo,
 		cloneFn:    cloneFn,
-	}, nil
+	}
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -141,7 +136,14 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		return fromError(err, http.StatusUnauthorized), nil
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "token").String(),
+				Detail: err.Error(),
+			}}}, nil
 	}
 
 	url := r.config.Spec.GitHub.URL
