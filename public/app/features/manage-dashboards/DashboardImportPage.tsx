@@ -91,7 +91,13 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     });
 
     try {
-      this.props.importDashboardJson(JSON.parse(String(result)));
+      const json = JSON.parse(String(result));
+
+      if (json.elements) {
+        dispatch(importDashboardV2Json(json));
+        return;
+      }
+      this.props.importDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
         appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
