@@ -76,7 +76,7 @@ export const TimeRangeContent = (props: Props) => {
     const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
     setFrom(fromValue);
     setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone]);
+  }, [value.raw.from, value.raw.to, timeZone], fiscalYearStartMonth);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -137,8 +137,12 @@ export const TimeRangeContent = (props: Props) => {
   const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
   
   const fiscalYear = useMemo(() => {
-    return rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
-  }, [fiscalYearStartMonth, timeZone]);
+    return rangeUtil.convertRawToRange(
+      { from: value.raw.from, to: value.raw.to },
+      timeZone,
+       fiscalYearStartMonth
+      );
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]);
 
   const fyTooltip = (
     <div className={style.tooltip}>
