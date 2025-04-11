@@ -31,7 +31,10 @@ require (
 	k8s.io/apimachinery v0.32.3
 )
 
-require github.com/go-jose/go-jose/v3 v3.0.4
+require (
+	github.com/go-jose/go-jose/v3 v3.0.4
+	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411123202-1291b60bbee0
+)
 
 require (
 	cel.dev/expr v0.19.1 // indirect
