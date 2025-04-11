@@ -133,10 +133,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
-			Text:       "Drilldown",
-			Id:         navtree.NavIDDrilldown,
-			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
-			Icon:       "drilldown",
+			Text:     "Drilldown",
+			Id:       navtree.NavIDDrilldown,
+			SubTitle: "Drill down into your data using Grafana's powerful queryless apps",
+			Icon:     "drilldown",
 			// @PERCONA - hide "New" badge
 			IsNew:      false,
 			SortWeight: navtree.WeightDrilldown,
