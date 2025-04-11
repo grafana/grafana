@@ -10,7 +10,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInputs, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
-import { validateTitle, validateUid } from 'app/features/manage-dashboards/utils/validation';
+import { validateTitle } from 'app/features/manage-dashboards/utils/validation';
 interface Props
   extends Pick<
     UseFormReturn<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>,
@@ -87,37 +87,8 @@ export const ImportDashboardFormV2 = ({
           control={control}
         />
       </Field>
-      <Field
-        label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
-        description="The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any
-                bookmarked links to that dashboard."
-        invalid={!!errors.k8s?.name}
-        error={errors.k8s?.name && errors.k8s?.name.message}
-      >
-        <>
-          {!uidReset ? (
-            <Input
-              disabled
-              {...(register as any)('k8s.name', { validate: async (v: string) => await validateUid(v) })}
-              addonAfter={
-                !uidReset && (
-                  <Button onClick={onUidReset}>
-                    <Trans i18nKey="manage-dashboards.import-dashboard-form.change-uid">Change uid</Trans>
-                  </Button>
-                )
-              }
-            />
-          ) : (
-            <Input
-              {...(register as any)('uid', { required: true, validate: async (v: string) => await validateUid(v) })}
-            />
-          )}
-        </>
-      </Field>
-
       {inputs.dataSources &&
-        inputs.dataSources.map((input: DataSourceInput, index: number) => {
+        inputs.dataSources.map((input: DataSourceInput) => {
           if (input.pluginId === ExpressionDatasourceRef.type) {
             return null;
           }
