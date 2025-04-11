@@ -564,8 +564,9 @@ var (
 		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardDisableSchemaValidationV1",
@@ -870,8 +871,8 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-			Stage:       FeatureStagePublicPreview,
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
 		},
@@ -925,7 +926,7 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
@@ -1263,12 +1264,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:        "appSidecar",
-			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
 			Stage:        FeatureStagePrivatePreview,
@@ -1604,11 +1599,12 @@ var (
 		{
 			Name:              "grafanaconThemes",
 			Description:       "Enables the temporary themes for GrafanaCon",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+			Expression:        "true",
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",

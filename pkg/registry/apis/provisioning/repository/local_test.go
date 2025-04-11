@@ -2,11 +2,11 @@ package repository
 
 import (
 	"context"
-	"io/fs"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -46,6 +46,9 @@ func TestLocalResolver(t *testing.T) {
 		"client.go",
 		"factory.go",
 		"impl.go",
+		"mock_client.go",
+		"mock_commit_file.go",
+		"mock_repository_content.go",
 		"testdata",
 		"testdata/webhook-issue_comment-created.json",
 		"testdata/webhook-ping-check.json",
@@ -66,7 +69,7 @@ func TestLocalResolver(t *testing.T) {
 
 	// read unknown file
 	_, err = r.Read(context.Background(), "testdata/missing", "")
-	require.ErrorIs(t, err, fs.ErrNotExist)
+	require.True(t, apierrors.IsNotFound(err)) // 404 error
 
 	_, err = r.Read(context.Background(), "testdata/webhook-push-nested.json/", "")
 	require.Error(t, err) // not a directory
