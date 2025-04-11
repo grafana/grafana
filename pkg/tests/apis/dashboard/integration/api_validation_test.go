@@ -212,7 +212,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
 			nonExistentFolderUID := "non-existent-folder-uid"
 			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
-			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folder not found")
+			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
 	})
 
