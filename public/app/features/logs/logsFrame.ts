@@ -103,9 +103,15 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
 }
 
 export function parseLogsFrame(frame: DataFrame): LogsFrame | null {
-  if (frame.meta?.type === DataFrameType.LogLines) {
-    return parseDataplaneLogsFrame(frame);
-  } else {
-    return parseLegacyLogsFrame(frame);
+  frame.meta = frame.meta ?? {};
+  frame.meta.custom = frame.meta.custom ?? {};
+  if (frame.meta.custom.logsFrame == null) {
+    if (frame.meta?.type === DataFrameType.LogLines) {
+      frame.meta.custom.logsFrame = parseDataplaneLogsFrame(frame);
+    } else {
+      frame.meta.custom.logsFrame = parseLegacyLogsFrame(frame);
+    }
   }
+
+  return frame.meta.custom.logsFrame;
 }
