@@ -66,11 +66,15 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
+    jest.useFakeTimers();
+
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
 
     observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
