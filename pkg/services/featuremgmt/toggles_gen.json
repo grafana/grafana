@@ -2902,6 +2902,23 @@
     },
     {
       "metadata": {
+        "name": "scopeSearchAllLevels",
+        "resourceVersion": "1744370973814",
+        "creationTimestamp": "2025-04-10T12:49:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-11 11:29:33.814419 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable scope search to include all levels of the scope node tree",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsManagementAppPlatform",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-04-03T15:18:37Z"
@@ -3272,14 +3289,18 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744289349951",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-10 12:49:09.951013 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
