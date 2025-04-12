@@ -1,21 +1,26 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import * as React from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
+import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { ImageCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
-export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
+export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx, actions }: ImageCellProps) => {
   const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
   const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const links = getCellLinks(field, rowIdx) || [];
+
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   const { text } = field.display!(value);
   const { alt, title } =
@@ -23,33 +28,26 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
 
   const img = <img alt={alt} src={text} className={styles.image} title={title} />;
 
-  // TODO: Implement actions
   return (
-    <div className={styles.imageContainer}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <div
-                  onClick={api.openMenu}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter' && api.openMenu) {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-                      api.openMenu(e as any);
-                    }
-                  }}
-                >
-                  {img}
-                </div>
-              );
-            } else {
-              return img;
-            }
-          }}
-        </DataLinksContextMenu>
+    <div
+      className={styles.imageContainer}
+      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      onClick={({ clientX, clientY }) => {
+        setTooltipCoords({ clientX, clientY });
+      }}
+    >
+      {shouldShowLink ? (
+        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
+          {img}
+        </a>
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          actions={actions}
+          value={img}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
         img
       )}

@@ -5,6 +5,7 @@ import { HeaderGroup, Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
+  ActionModel,
   DataFrame,
   DisplayValue,
   DisplayValueAlignmentFactors,
@@ -19,6 +20,7 @@ import {
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
+  LinkModel,
   reduceField,
   SelectableValue,
 } from '@grafana/data';
@@ -762,3 +764,15 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
 
   return longestField;
 }
+
+export type DataLinksActionsTooltipCoords = {
+  clientX: number;
+  clientY: number;
+};
+
+export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
+  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
+
+  return { shouldShowLink, hasMultipleLinksOrActions };
+};
