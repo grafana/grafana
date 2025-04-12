@@ -33,6 +33,17 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   }
 
   const onPointerDown = (evt: React.PointerEvent) => {
+    if (!isSelectable) {
+      return;
+    }
+
+    // Ignore click if it's inside the value control
+    if (evt.target instanceof Element && !evt.target.closest(`label`)) {
+      // Prevent clearing selection when clicking inside value
+      evt.stopPropagation();
+      return;
+    }
+
     if (isSelectable && onSelect) {
       evt.stopPropagation();
       onSelect(evt);
