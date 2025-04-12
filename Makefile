@@ -3,6 +3,7 @@
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
 WIRE_TAGS = "oss"
+NEXT_MAJOR_RELEASE_FEATURE_TOGGLES = kubernetesClientDashboardsFolders,kubernetesDashboards
 
 -include local/Makefile
 include .bingo/Variables.mk
@@ -337,6 +338,26 @@ test-go-integration-spanner: ## Run integration tests for Spanner backend with f
 	@echo "test backend integration spanner tests"
 	GRAFANA_TEST_DB=spanner \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -v -run "^TestIntegration" -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+
+.PHONY: test-go-integration-next-major-release
+test-go-integration-next-major-release: ## Run integration tests with Next Major Release config (kubernetesClientDashboardsFolders and kubernetesDashboards).
+	@echo "test backend integration tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m $(GO_INTEGRATION_TESTS) $(GO_TEST_OUTPUT)
+
+.PHONY: test-go-integration-next-major-release-mysql
+test-go-integration-next-major-release-mysql: devenv-mysql ## Run MySQL integration tests with Next Major Release config.
+	@echo "test backend integration mysql tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
+	GRAFANA_TEST_DB=mysql \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
+
+.PHONY: test-go-integration-next-major-release-postgres
+test-go-integration-next-major-release-postgres: devenv-postgres ## Run Postgres integration tests with Next Major Release config.
+	@echo "test backend integration postgres tests with Next Major Release config"
+	GF_FEATURE_TOGGLES_ENABLE=$(NEXT_MAJOR_RELEASE_FEATURE_TOGGLES) \
+	GRAFANA_TEST_DB=postgres \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.
