@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
 
 export type { Options } from './panelcfg.gen';
 
@@ -12,6 +12,13 @@ type isFilterLabelActiveType = (key: string, value: string, refId?: string) => P
 type isOnClickShowFieldType = (value: string) => void;
 type isOnClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
+
+export type GetFieldLinksFn = (
+  field: Field,
+  rowIndex: number,
+  dataFrame: DataFrame,
+  vars: ScopedVars
+) => Array<LinkModel<Field>>;
 
 export function isOnClickFilterLabel(callback: unknown): callback is onClickFilterLabelType {
   return typeof callback === 'function';
