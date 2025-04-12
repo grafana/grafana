@@ -3,7 +3,7 @@
 
 The open-source platform for monitoring and observability
 
-[![Github Release](https://img.shields.io/github/v/release/grafana/grafana.svg?sort=semver)](https://img.shields.io/github/v/tag/grafana/grafana.svg?sort=semver)
+[![Github Release](https://img.shields.io/github/v/release/grafana/grafana.svg?sort=semver)](https://github.com/grafana/grafana/releases)
 [![License](https://img.shields.io/github/license/grafana/grafana)](LICENSE)
 [![Drone](https://drone.grafana.net/api/badges/grafana/grafana/status.svg)](https://drone.grafana.net/grafana/grafana)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
