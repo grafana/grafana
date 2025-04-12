@@ -9,10 +9,10 @@ import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { t, Trans } from 'app/core/internationalization';
 
-import { PlaylistItem } from './types';
+import { PlaylistItemUI } from './types';
 
 interface Props {
-  items: PlaylistItem[];
+  items: PlaylistItemUI[];
   onDelete: (idx: number) => void;
 }
 
@@ -28,7 +28,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
     );
   }
 
-  const renderItem = (item: PlaylistItem) => {
+  const renderItem = (item: PlaylistItemUI) => {
     let icon: IconName = item.type === 'dashboard_by_tag' ? 'apps' : 'tag-alt';
     const info: ReactNode[] = [];
 
