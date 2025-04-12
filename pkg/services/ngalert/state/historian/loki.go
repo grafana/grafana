@@ -34,9 +34,10 @@ const (
 	GroupLabel     = "group"
 	FolderUIDLabel = "folderUID"
 	// Name of the columns used in the dataframe.
-	dfTime   = "time"
-	dfLine   = "line"
-	dfLabels = "labels"
+	dfTime     = "time"
+	dfLine     = "line"
+	dfLabels   = "labels"
+	dfMetadata = "metadata"
 )
 
 const (
@@ -199,9 +200,11 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	//   1. `time` - timestamp - when the transition happened
 	//   2. `line` - JSON - the full data of the transition
 	//   3. `labels` - JSON - the labels associated with that state transition
+	//   4. `structuredMetadata` - JSON - the structured metadata associated with that state transition
 	times := make([]time.Time, 0, totalLen)
 	lines := make([]json.RawMessage, 0, totalLen)
 	labels := make([]json.RawMessage, 0, totalLen)
+	metadata := make([]json.RawMessage, 0, totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res))
@@ -255,17 +258,22 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}
+		meta, err := json.Marshal(minEl.M)
+		if err != nil {
+			return nil, fmt.Errorf("failed to serialize structured metadata: %w", err)
+		}
 
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
 		lines = append(lines, line)
+		metadata = append(metadata, meta)
 		pointers[minElStreamIdx]++
 	}
 
 	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
 	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
 	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
-
+	frame.Fields = append(frame.Fields, data.NewField(dfMetadata, lbls, metadata))
 	return frame, nil
 }
 
@@ -284,6 +292,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
+
 		entry := LokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
@@ -312,6 +321,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		samples = append(samples, Sample{
 			T: state.LastEvaluationTime,
 			V: line,
+			M: removePrivateLabels(state.Annotations),
 		})
 	}
 
