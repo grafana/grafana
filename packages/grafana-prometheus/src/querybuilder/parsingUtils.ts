@@ -174,10 +174,10 @@ const replacementToVariable = BUILT_IN_VARIABLES.reduce(
 );
 
 // Pre-compiled regular expressions for efficient search/replace
-const builtInVariablePattern = BUILT_IN_VARIABLES.map(({variable}) => variable.replace(/\$/g, '\\$')).join('|');
+const builtInVariablePattern = BUILT_IN_VARIABLES.map(({ variable }) => variable.replace(/\$/g, '\\$')).join('|');
 const builtInVariableRegex = new RegExp(builtInVariablePattern, 'g');
 
-const builtInReplacementPattern = BUILT_IN_VARIABLES.map(({replacement}) => replacement).join('|');
+const builtInReplacementPattern = BUILT_IN_VARIABLES.map(({ replacement }) => replacement).join('|');
 const builtInReplacementRegex = new RegExp(builtInReplacementPattern, 'g');
 
 /**

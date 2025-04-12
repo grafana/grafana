@@ -41,7 +41,6 @@ import {
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
-
 /**
  * Parses a PromQL query into a visual query model.
  *
