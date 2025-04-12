@@ -52,7 +52,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			return errors.New("plugin not found")
 		}
 		if p.AutoEnabled && !app.Enabled {
-			return errors.New("plugin is auto enabled and cannot be disabled")
+			ap.log.Warn("auto enabled plugin will be disabled by provisioning", "pluginID", app.PluginID)
 		}
 
 		ps, err := ap.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{

@@ -26,15 +26,12 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	isPluginEnabled := func(plugin pluginstore.Plugin) bool {
-		if plugin.AutoEnabled {
-			return true
-		}
 		for _, ps := range pss {
 			if ps.PluginID == plugin.ID {
 				return ps.Enabled
 			}
 		}
-		return false
+		return plugin.AutoEnabled
 	}
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {

@@ -80,7 +80,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 	})
 
-	t.Run("Should return error trying to disable an auto-enabled plugin", func(t *testing.T) {
+	t.Run("Should return not error trying to disable an auto-enabled plugin", func(t *testing.T) {
 		cfg := []*pluginsAsConfig{
 			{
 				Apps: []*appFromConfig{
@@ -100,8 +100,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 
 		err := ap.applyChanges(context.Background(), "")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "plugin is auto enabled and cannot be disabled")
+		require.NoError(t, err)
 	})
 }
 
