@@ -39,13 +39,12 @@ import {
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
+
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
- * during the traversal and sent to each handler as context.
- *
- * @param expr
+ * It traverses the tree and uses sort of state machine to update the query model.
+ * The query model is modified during the traversal and sent to each handler as context.
  */
 export function buildVisualQueryFromString(expr: string): Context {
   const replacedExpr = replaceVariables(expr);

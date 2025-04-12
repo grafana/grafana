@@ -32,9 +32,8 @@ export function makeError(expr: string, node: SyntaxNode) {
 const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
- * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
- * the same time we can get the variable and its format back from it.
- * @param expr
+ * As variables with $ are creating parsing errors, we first replace them with magic string that is
+ * parsable and at the same time we can get the variable and its format back from it.
  */
 export function replaceVariables(expr: string) {
   return expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
@@ -138,3 +137,21 @@ export const regexifyLabelValuesQueryString = (query: string) => {
   const queryArray = query.split(' ');
   return queryArray.map((query) => `${query}.*`).join('');
 };
+
+const builtInVariables = ['$__interval', '$__interval_ms', '$__rate_interval', '$__range_ms', '$__range_s', '$__range'];
+
+export function replaceBuiltInVariables(expr: string): string {
+  builtInVariables.forEach((variable, idx) => {
+    expr = expr.replace(new RegExp(`\\${variable}`, 'g'), `${idx + 1}_999_999y`);
+  });
+
+  return expr;
+}
+
+export function returnBuiltInVariables(expr: string): string {
+  builtInVariables.forEach((variable, idx) => {
+    expr = expr.replace(new RegExp(`${idx + 1}_999_999y`, 'g'), variable);
+  });
+
+  return expr;
+}

@@ -1,7 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.test.ts
 import { parser } from '@prometheus-io/lezer-promql';
 
-import { getLeftMostChild, getString, replaceVariables } from './parsingUtils';
+import {
+  getLeftMostChild,
+  getString,
+  replaceBuiltInVariables,
+  replaceVariables,
+  returnBuiltInVariables,
+} from './parsingUtils';
 
 describe('getLeftMostChild', () => {
   it('return left most child', () => {
@@ -39,5 +45,37 @@ describe('getString', () => {
     const replaced = replaceVariables(expr);
     const tree = parser.parse(replaced);
     expect(getString(replaced, tree.topNode)).toBe(expr);
+  });
+});
+
+describe('replaceBuiltInVariables', () => {
+  const testCases = [
+    {
+      expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[1_999_999y])',
+    },
+    {
+      expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__rate_interval])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[3_999_999y])',
+    },
+    {
+      expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__range_ms])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[4_999_999y])',
+    },
+    {
+      expr: 'histogram_quantile(0.95, sum(rate(process_max_fds[$__rate_interval])) by (le)) + rate(process_max_fds[$__interval])',
+      expected:
+        'histogram_quantile(0.95, sum(rate(process_max_fds[3_999_999y])) by (le)) + rate(process_max_fds[1_999_999y])',
+    },
+  ];
+
+  testCases.forEach((testCase) => {
+    it(testCase.expr, () => {
+      const actual1 = replaceBuiltInVariables(testCase.expr);
+      expect(actual1).toBe(testCase.expected);
+
+      const actual2 = returnBuiltInVariables(actual1);
+      expect(actual2).toBe(testCase.expr);
+    });
   });
 });
