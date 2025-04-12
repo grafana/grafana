@@ -72,10 +72,15 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     // No query type means that the query is a trace ID query
     // If all targets are trace ID queries, we can use the backend querying
     const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
+    const allTargetsDependencyGraph = options.targets.every((target) => target.queryType === 'dependencyGraph');
     // We have not migrated the node graph to the backend
     // If the node graph is disabled, we can use the backend migration
     const nodeGraphDisabled = !this.nodeGraph?.enabled;
-    if (config.featureToggles.jaegerBackendMigration && allTargetsTraceIdQuery && nodeGraphDisabled) {
+    if (
+      config.featureToggles.jaegerBackendMigration &&
+      (allTargetsTraceIdQuery || allTargetsDependencyGraph) &&
+      nodeGraphDisabled
+    ) {
       return super.query(options);
     }
 
