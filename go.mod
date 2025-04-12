@@ -94,7 +94,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.2.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
@@ -141,7 +141,7 @@ require (
 	github.com/prometheus/alertmanager v0.27.0 // @grafana/alerting-backend
 	github.com/prometheus/client_golang v1.21.1 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.1 // @grafana/grafana-backend-group
-	github.com/prometheus/common v0.62.0 // @grafana/alerting-backend
+	github.com/prometheus/common v0.63.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.301.0 // @grafana/alerting-backend
 	github.com/redis/go-redis/v9 v9.7.3 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
@@ -161,9 +161,9 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/collector/pdata v1.22.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0 // @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.60.0 // @grafana/grafana-operator-experience-squad
-	go.opentelemetry.io/contrib/propagators/jaeger v1.34.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/propagators/jaeger v1.35.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.29.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.35.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
@@ -179,14 +179,14 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
 	golang.org/x/mod v0.24.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.37.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.12.0 // @grafana/alerting-backend
+	golang.org/x/oauth2 v0.29.0 // @grafana/identity-access-team
+	golang.org/x/sync v0.13.0 // @grafana/alerting-backend
 	golang.org/x/text v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.10.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.31.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.71.0 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.71.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
