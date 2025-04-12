@@ -154,6 +154,7 @@ export function getRowHeight(
 ): number {
   let maxLines = 1;
   let maxLinesCol = '';
+  let maxLinesText = '';
 
   for (const key in row) {
     if (
@@ -161,21 +162,24 @@ export function getRowHeight(
       fieldsData.textWraps[key] &&
       fieldsData.fieldDisplayType[key] !== TableCellDisplayMode.Image
     ) {
-      const cellText = row[key] as string;
+      const cellValue = row[key];
 
-      if (cellText != null) {
+      if (cellValue != null) {
+        const cellText = String(cellValue);
+
         const charsPerLine = fieldsData.columnWidths[key] / avgCharWidth;
         const approxLines = cellText.length / charsPerLine;
 
         if (approxLines > maxLines) {
           maxLines = approxLines;
           maxLinesCol = key;
+          maxLinesText = cellText;
         }
       }
     }
   }
 
-  return maxLinesCol === '' ? defaultRowHeight : calc(row[maxLinesCol] as string, fieldsData.columnWidths[maxLinesCol]);
+  return maxLinesCol === '' ? defaultRowHeight : calc(maxLinesText, fieldsData.columnWidths[maxLinesCol]);
 }
 
 export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
