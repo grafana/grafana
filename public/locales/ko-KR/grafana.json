@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1724,6 +1731,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "구성",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1731,8 +1740,11 @@
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
       "filter-view": {
-        "no-more-results": "더 이상 결과 없음 - {{numberOfRules}}개의 규칙 표시 중",
-        "no-rules-found": "현재 필터 조건과 일치하는 경고 또는 기록 규칙이 없습니다."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "현재 필터 조건과 일치하는 경고 또는 기록 규칙이 없습니다.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1952,7 +1964,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2065,8 +2076,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3091,9 +3105,20 @@
       "description": "패널을 가로 탭으로 구성",
       "name": "탭",
       "tab": {
-        "new": "새 탭"
+        "new": "새 탭",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "제목"
       },
@@ -3582,6 +3607,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4422,22 +4449,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "필터 초기화",
-      "labelSelect": "선택",
-      "missing-otel-labels": "이 메트릭은 작업 및 인스턴스 라벨 값이 너무 많아 match[] 파라미터를 사용하여 Prometheus label_values 엔드포인트를 호출할 수 없습니다. 이러한 라벨 값은 리소스 속성을 포함하는 target_info와 메트릭을 연결하는 데 사용됩니다. 더 많은 리소스 속성 필터를 포함하세요.",
-      "noMatchingValue": "{{filter}}에 일치하는 값을 찾을 수 없습니다.",
-      "sortBy": "정렬 기준"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki 기록 규칙",
-      "openExploreLogs": "탐색 로그 열기",
-      "relatedLogsUnavailable": "관련 로그를 찾을 수 없습니다. 관련 로그를 보려면 <1><0>라벨 필터를 조정하여 현재 선택된 메트릭과 동일한 라벨을 가진 로그를 찾거나</0><1> <2><0>Loki 기록 규칙</0></2>에 의해 생성된 메트릭을 선택하세요.</1></1>",
-      "warnExperimentalFeature": "관련 로그는 실험 단계에 있는 기능입니다."
-    },
-    "viewBy": "보기 기준"
   },
   "export": {
     "json": {
@@ -5982,12 +5993,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "초대",
-      "invite-tooltip": "새 멤버 초대"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "북마크에 추가",
@@ -6463,18 +6476,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6610,7 +6614,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6708,12 +6711,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6776,8 +6773,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7751,105 +7747,6 @@
     "zone": {
       "select-aria-label": "시간대 선택기",
       "select-search-input": "입력하여 검색(국가, 도시, 약어)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "또는 북마크 보기"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "생성 날짜: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "자세히 알아보기",
-      "lets-start": "시작해 볼까요!",
-      "start-your-metrics-exploration": "Metrics 탐색을 시작하세요!",
-      "subtitle": "쿼리를 작성할 필요 없이 Prometheus와 호환되는 Metrics를 탐색하세요."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "필터링 기준",
-      "native-histogram": "기본 히스토그램",
-      "new-badge": "신규",
-      "otel-switch": "이 스위치를 사용하면 OTel 기본 데이터 소스에 대한 OTel 리소스별로 필터링할 수 있습니다."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "히트맵으로 표시된 일반 히스토그램:",
-      "ch-histogram": "히스토그램으로 표시된 일반 히스토그램:",
-      "click-histogram": "탐색하려면 아래의 기본 히스토그램 중 하나를 클릭하세요.",
-      "hide-examples": "예시 숨기기",
-      "learn-more": "자세히 알아보기",
-      "metric-examples": "",
-      "nh-heatmap": "히트맵으로 표시된 기본 히스토그램:",
-      "nh-histogram": "히스토그램으로 표시된 기본 히스토그램:",
-      "now": "현재:",
-      "previously": "이전: ",
-      "see-examples": "> 예시 보기",
-      "sentence": "Prometheus 기본 히스토그램은 고해상도, 고정밀도, 간단한 계측 사용법을 제공하며, 쿼리 및 Grafana에서 히스토그램을 결합하고 조작하는 방법을 제공합니다.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "또는 최근 탐색 보기"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "선택한 메트릭 그래프가 항상 화면에 보이도록 표시",
-      "show-previews-of-metric-graphs": "메트릭 그래프 미리 보기 표시"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {
