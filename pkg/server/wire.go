@@ -82,6 +82,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/frontendnotification"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -425,6 +426,7 @@ var wireBasicSet = wire.NewSet(
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 	appregistry.WireSet,
+	frontendnotification.ProvideService,
 )
 
 var wireSet = wire.NewSet(

@@ -23,6 +23,7 @@ import {
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
+import { useNotificationService } from './NotificationListener';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
@@ -39,6 +40,7 @@ export function AppChrome({ children }: Props) {
   } = useExtensionSidebarContext();
   const state = chrome.useState();
   const scopes = useScopes();
+  useNotificationService();
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
