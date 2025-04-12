@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1729,6 +1736,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Configura",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1736,8 +1745,11 @@
         "title": "Impossibile caricare le regole da questa origine dati"
       },
       "filter-view": {
-        "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole visualizzate",
-        "no-rules-found": "Nessuna regola di avviso o registrazione corrisponde al tuo attuale set di filtri."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Nessuna regola di avviso o registrazione corrisponde al tuo attuale set di filtri.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1958,7 +1970,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2071,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3102,9 +3116,20 @@
       "description": "Organizza i pannelli in schede orizzontali",
       "name": "Schede",
       "tab": {
-        "new": "Nuova scheda"
+        "new": "Nuova scheda",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Titolo"
       },
@@ -3593,6 +3618,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4433,22 +4460,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Cancella filtro",
-      "labelSelect": "Seleziona",
-      "missing-otel-labels": "Questa metrica ha troppi valori di etichetta di lavoro e istanza per chiamare l'endpoint label_values di Prometheus con il parametro match[]. Questi valori di etichetta vengono utilizzati per unire la metrica con target_info, che contiene gli attributi della risorsa. Includi più filtri per gli attributi delle risorse.",
-      "noMatchingValue": "Nessun valore ha trovato una corrispondenza; {{filter}}",
-      "sortBy": "Ordina per"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Regola di registrazione Loki",
-      "openExploreLogs": "Apri Esplora registri",
-      "relatedLogsUnavailable": "Nessun registro correlato trovato. Per visualizzare i registri correlati, puoi:<1><0>regolare il filtro dell'etichetta per trovare i registri con le stesse etichette della metrica attualmente selezionata</0><1>selezionare una metrica creata da una <2><0>regola di registrazione Loki</0></2></1></1>",
-      "warnExperimentalFeature": "I registri correlati sono una funzionalità sperimentale."
-    },
-    "viewBy": "Visualizza per"
   },
   "export": {
     "json": {
@@ -5994,12 +6005,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Invito",
-      "invite-tooltip": "Invita un nuovo membro"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Aggiungi a Segnalibri",
@@ -6476,18 +6489,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6623,7 +6627,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6721,12 +6724,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6789,8 +6786,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7768,105 +7764,6 @@
     "zone": {
       "select-aria-label": "Selettore del fuso orario",
       "select-search-input": "Digita per cercare (paese, città, abbreviazione)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Oppure visualizza i segnalibri"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Data creazione: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "Scopri di più",
-      "lets-start": "Cominciamo!",
-      "start-your-metrics-exploration": "Inizia a scoprire le tue metriche!",
-      "subtitle": "Esplora le tue metriche compatibili con Prometheus senza scrivere una query."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Filtra per",
-      "native-histogram": "Istogramma nativo",
-      "new-badge": "Nuovo",
-      "otel-switch": "Questo interruttore abilita il filtro per risorse OTel per le origini di dati nativi OTel."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Istogramma classico visualizzato come mappa di calore:",
-      "ch-histogram": "Istogramma classico visualizzato come istogramma:",
-      "click-histogram": "Fai clic su uno degli istogrammi nativi riportati di seguito per esplorarli:",
-      "hide-examples": "Nascondi esempi",
-      "learn-more": "Scopri di più",
-      "metric-examples": "",
-      "nh-heatmap": "Istogramma nativo visualizzato come mappa di calore:",
-      "nh-histogram": "Istogramma nativo visualizzato come istogramma:",
-      "now": "Ora:",
-      "previously": "In precedenza:",
-      "see-examples": "> Vedi esempi",
-      "sentence": "Gli istogrammi nativi di Prometheus offrono alta risoluzione, alta precisione, semplice utilizzo nella strumentazione e un modo per combinare e manipolare gli istogrammi nelle query e in Grafana.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Oppure visualizza un'esplorazione recente"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Mantieni sempre in vista il grafico della metrica selezionata",
-      "show-previews-of-metric-graphs": "Mostra anteprime dei grafici delle metriche"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

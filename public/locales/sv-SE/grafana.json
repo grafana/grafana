@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1729,6 +1736,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurera",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1736,8 +1745,11 @@
         "title": "Det gick inte att ladda reglerna från den här datakällan"
       },
       "filter-view": {
-        "no-more-results": "Inga fler resultat – visar {{numberOfRules}} regler",
-        "no-rules-found": "Inga varnings- eller registreringsregler matchade din nuvarande uppsättning filter."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Inga varnings- eller registreringsregler matchade din nuvarande uppsättning filter.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1958,7 +1970,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2071,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3102,9 +3116,20 @@
       "description": "Organisera paneler i horisontella flikar",
       "name": "Flikar",
       "tab": {
-        "new": "Ny flik"
+        "new": "Ny flik",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Titel"
       },
@@ -3593,6 +3618,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4433,22 +4460,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Rensa filter",
-      "labelSelect": "Välj",
-      "missing-otel-labels": "Detta mått har för många jobb- och instansetikettvärden för att anropa Prometheus label_values-slutpunkten med parametern match[]. Dessa etikettvärden används för att ansluta mätvärdet till target_info, som innehåller resursattributen. Inkludera fler resursattributfilter.",
-      "noMatchingValue": "Inga värden hittades som matchade; {{filter}}",
-      "sortBy": "Sortera efter"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki-inspelningsregel",
-      "openExploreLogs": "Öppna utforskningsloggar",
-      "relatedLogsUnavailable": "Inga relaterade loggar hittades. För att se relaterade loggar kan du antingen:<1><0>justera etikettfiltret för att hitta loggar med samma etiketter som den för närvarande valda statistiken</0><1>välja en statistik skapad av en <2><0>Loki-inspelningsregel</0></2></1></1>",
-      "warnExperimentalFeature": "Relaterade loggar är en experimentell funktion."
-    },
-    "viewBy": "Visa av"
   },
   "export": {
     "json": {
@@ -5994,12 +6005,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Bjud in",
-      "invite-tooltip": "Bjud in ny medlem"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Lägg till bokmärken",
@@ -6476,18 +6489,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6623,7 +6627,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6721,12 +6724,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6789,8 +6786,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7768,105 +7764,6 @@
     "zone": {
       "select-aria-label": "Väljare av tidszon",
       "select-search-input": "Skriv för att söka (land, stad, förkortning)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Eller visa bokmärken"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Datum skapat: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "Läs mer",
-      "lets-start": "Låt oss börja!",
-      "start-your-metrics-exploration": "Starta din utforskning av mätvärden!",
-      "subtitle": "Utforska dina Prometheus-kompatibla mätvärden utan att skriva en fråga."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Filtrera efter",
-      "native-histogram": "Inbyggt histogram",
-      "new-badge": "Nyhet",
-      "otel-switch": "Denna knapp aktiverar filtrering utifrån OTel-resurser för OTel-baserade datakällor."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Klassiskt histogram visat som värmekarta:",
-      "ch-histogram": "Klassiskt histogram visat som histogram:",
-      "click-histogram": "Klicka på något av de inbyggda histogrammen nedan för att utforska dem:",
-      "hide-examples": "Dölj exempel",
-      "learn-more": "Läs mer",
-      "metric-examples": "",
-      "nh-heatmap": "Inbyggt histogram visat som värmekarta:",
-      "nh-histogram": "Inbyggt histogram visat som histogram:",
-      "now": "Nu:",
-      "previously": "Tidigare:",
-      "see-examples": "> Se exempel",
-      "sentence": "Prometheus inbyggda histogram erbjuder hög upplösning, hög precision, enkel användning i instrumentering och ett sätt att kombinera och manipulera histogram i frågor och i Grafana.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Eller visa en nyligen genomförd utforskning"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Behåll alltid det valda diagrammet synligt",
-      "show-previews-of-metric-graphs": "Visa förhandsgranskningar av statistiska grafer"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1724,6 +1731,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "設定",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1731,8 +1740,11 @@
         "title": "無法從此資料來源載入規則"
       },
       "filter-view": {
-        "no-more-results": "沒有更多結果 – 顯示 {{numberOfRules}} 個規則",
-        "no-rules-found": "沒有符合您目前篩選條件的警報或記錄規則。"
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "沒有符合您目前篩選條件的警報或記錄規則。",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1952,7 +1964,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2065,8 +2076,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3091,9 +3105,20 @@
       "description": "將面板組織成橫向分頁",
       "name": "分頁",
       "tab": {
-        "new": "新分頁"
+        "new": "新分頁",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "標題"
       },
@@ -3582,6 +3607,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4422,22 +4449,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "清除篩選條件",
-      "labelSelect": "選取",
-      "missing-otel-labels": "此指標具有太多的作業和執行個體標籤值，無法使用 match[] 參數調用 Prometheus label_values 端點。這些標籤值用於將指標與 target_info 結合在一起，其中包含資源屬性。請包含更多資源屬性篩選條件。",
-      "noMatchingValue": "未找到匹配的數值；{{filter}}",
-      "sortBy": "排序方式"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki 錄製規則",
-      "openExploreLogs": "開啟「探索」日誌",
-      "relatedLogsUnavailable": "未找到相關日誌。若要查看相關日誌，您可以選擇以下其中一種方式：<1><0>調整標籤篩選條件，以找出與目前選取的指標具有相同標籤的日誌</0><1>選擇由 <2><0>Loki 錄製規則</0></2></1></1>建立的指標",
-      "warnExperimentalFeature": "相關日誌是一項實驗功能。"
-    },
-    "viewBy": "檢視方式"
   },
   "export": {
     "json": {
@@ -5982,12 +5993,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "邀請",
-      "invite-tooltip": "邀請新成員"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "新增至書籤",
@@ -6463,18 +6476,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6610,7 +6614,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6708,12 +6711,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6776,8 +6773,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7751,105 +7747,6 @@
     "zone": {
       "select-aria-label": "時區選擇器",
       "select-search-input": "輸入以搜尋（國家、城市、縮寫）"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "或檢視書籤"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "建立日期："
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "了解更多資訊",
-      "lets-start": "讓我們開始吧！",
-      "start-your-metrics-exploration": "開始探索指標！",
-      "subtitle": "無需編寫查詢，即可探索與 Prometheus 相容的指標。"
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "篩選條件",
-      "native-histogram": "原生直方圖",
-      "new-badge": "新",
-      "otel-switch": "此開關可以透過 OTel 資源篩選 OTel 原生資料來源。"
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "顯示為熱點圖的經典直方圖：",
-      "ch-histogram": "顯示為直方圖的經典直方圖：",
-      "click-histogram": "點選下方的任何原生直方圖以進行探索：",
-      "hide-examples": "隱藏範例",
-      "learn-more": "了解更多資訊",
-      "metric-examples": "",
-      "nh-heatmap": "顯示為熱點圖的原生直方圖：",
-      "nh-histogram": "顯示為直方圖的原生直方圖：",
-      "now": "現在：",
-      "previously": "之前：",
-      "see-examples": "> 查看範例",
-      "sentence": "Prometheus 原生直方圖提供高解析度、高精度、儀器中的簡單使用方法，以及在查詢和 Grafana 中組合和操縱直方圖的方法。",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "或檢視最近的探索"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "隨時在檢視中保留所選的指標圖表",
-      "show-previews-of-metric-graphs": "顯示指標圖表的預覽"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1724,6 +1731,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "構成",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1731,8 +1740,11 @@
         "title": "このデータソースからルールを読み込めません"
       },
       "filter-view": {
-        "no-more-results": "これ以上の結果はありません – {{numberOfRules}}件のルールを表示しています",
-        "no-rules-found": "現在のフィルタセットに一致するアラートルールまたは記録ルールはありません。"
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "現在のフィルタセットに一致するアラートルールまたは記録ルールはありません。",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1952,7 +1964,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2065,8 +2076,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3091,9 +3105,20 @@
       "description": "パネルを水平タブに整理する",
       "name": "タブ",
       "tab": {
-        "new": "新しいタブ"
+        "new": "新しいタブ",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "タイトル"
       },
@@ -3582,6 +3607,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4422,22 +4449,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "フィルタを解除",
-      "labelSelect": "選択",
-      "missing-otel-labels": "このメトリックには、Prometheusのlabel_valuesエンドポイントをmatch[]パラメータで呼び出すには多すぎるジョブとインスタンスのラベル値があります。これらのラベル値は、リソース属性を含むtarget_infoとメトリックを結合するために使用されます。より多くのリソース属性フィルタを含めてください。",
-      "noMatchingValue": "{{filter}}に一致する値が見つかりませんでした。",
-      "sortBy": "並べ替え"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki記録ルール",
-      "openExploreLogs": "ログの探索を開く",
-      "relatedLogsUnavailable": "関連するログが見つかりません。関連するログを表示するには、次のいずれかを実行します。<1><0>ラベルフィルタを調整して、現在選択されているメトリックと同じラベルを持つログを検索します</0><1><2><0>Loki記録ルール</0></2>によって作成されたメトリックを選択します</1></1>",
-      "warnExperimentalFeature": "関連ログは実験的な機能です。"
-    },
-    "viewBy": "表示形式"
   },
   "export": {
     "json": {
@@ -5982,12 +5993,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "招待",
-      "invite-tooltip": "新しいメンバーの招待"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "ブックマークに追加",
@@ -6463,18 +6476,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6610,7 +6614,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6708,12 +6711,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6776,8 +6773,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7751,105 +7747,6 @@
     "zone": {
       "select-aria-label": "タイムゾーンピッカー",
       "select-search-input": "検索するために入力してください（国、都市、略語）"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "またはブックマークを表示"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "作成日："
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "もっと詳しく",
-      "lets-start": "さあ、はじめましょう！",
-      "start-your-metrics-exploration": "メトリックの探索を開始しましょう！",
-      "subtitle": "クエリを書くことなく、Prometheus互換のメトリックを探索します。"
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "絞り込むフィルタ",
-      "native-histogram": "ネイティブヒストグラム",
-      "new-badge": "新規",
-      "otel-switch": "このスイッチを使用すると、OTelネイティブデータソースのOTelリソースによるフィルタリングが可能になります。"
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "ヒートマップとして表示されるクラシックヒストグラム：",
-      "ch-histogram": "ヒストグラムとして表示されるクラシックヒストグラム：",
-      "click-histogram": "以下のネイティブヒストグラムのいずれかをクリックしてください：",
-      "hide-examples": "例を非表示にする",
-      "learn-more": "もっと詳しく",
-      "metric-examples": "",
-      "nh-heatmap": "ヒートマップとして表示されるネイティブヒストグラム：",
-      "nh-histogram": "ヒストグラムとして表示されるネイティブヒストグラム：",
-      "now": "今：",
-      "previously": "以前：",
-      "see-examples": "> 例を見る",
-      "sentence": "Prometheusのネイティブヒストグラムは、高分解能、高精度、計測におけるシンプルな使い方、クエリとGrafanaでのヒストグラムの組み合わせと操作の方法を提供します。",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "または最近の探索を表示"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "選択したメトリックグラフを常にビューに表示する",
-      "show-previews-of-metric-graphs": "メトリックグラフのプレビューを表示"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

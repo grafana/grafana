@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1729,6 +1736,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurálás",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1736,8 +1745,11 @@
         "title": "Nem lehet betölteni a szabályokat ebből az adatforrásból"
       },
       "filter-view": {
-        "no-more-results": "Nincs több találat – {{numberOfRules}} szabály megjelenítése",
-        "no-rules-found": "Egyetlen riasztási vagy felvételi szabály sem felelt meg az aktuális szűrőkészletének."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Egyetlen riasztási vagy felvételi szabály sem felelt meg az aktuális szűrőkészletének.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1958,7 +1970,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2071,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3102,9 +3116,20 @@
       "description": "A paneleket vízszintes lapokba rendezheti",
       "name": "Lapok",
       "tab": {
-        "new": "Új lap"
+        "new": "Új lap",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Cím"
       },
@@ -3593,6 +3618,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4433,22 +4460,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Szűrő törlése",
-      "labelSelect": "Kijelölés",
-      "missing-otel-labels": "Ez a metrika túl sok feladat- és példánycímke-értékkel rendelkezik ahhoz, hogy a Prometheus label_values végpontot meghívja a match[] paraméterrel. Ezek a címkeértékek a metrika és az erőforrás attribútumait tartalmazó target_info összekapcsolására szolgálnak. Adjon meg több erőforrás-attribútumszűrőt.",
-      "noMatchingValue": "Nem található egyező érték; {{filter}}",
-      "sortBy": "Rendezés alapja"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki-felvételkészítési szabály",
-      "openExploreLogs": "Explore-naplók megnyitása",
-      "relatedLogsUnavailable": "Nem található kapcsolódó napló. A kapcsolódó naplók megtekintéséhez:<1><0>állítsa be a címkeszűrőt úgy, hogy megtalálja az aktuálisan kijelölt metrikával megegyező címkékkel rendelkező naplókat</0><1>válasszon ki egy <2><0>Loki-felvételkészítési szabály</0></2 > által létrehozott metrikát</1 ></1>",
-      "warnExperimentalFeature": "A Kapcsolódó naplók egy kísérleti funkció."
-    },
-    "viewBy": "Megjelenítés alapja"
   },
   "export": {
     "json": {
@@ -5994,12 +6005,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Meghívás",
-      "invite-tooltip": "Új tag meghívása"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Hozzáadás könyvjelzőkhöz",
@@ -6476,18 +6489,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6623,7 +6627,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6721,12 +6724,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6789,8 +6786,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7768,105 +7764,6 @@
     "zone": {
       "select-aria-label": "Időzóna-választó",
       "select-search-input": "Írja be a keresendő szöveget (ország, város, rövidítés)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Vagy tekintse meg a könyvjelzőket"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Létrehozás dátuma: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "További információk",
-      "lets-start": "Kezdjük el!",
-      "start-your-metrics-exploration": "Kezdje el a metrikák felfedezését!",
-      "subtitle": "Fedezze fel Prometheus-kompatibilis metrikáit lekérdezés írása nélkül."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Szűrés alapja",
-      "native-histogram": "Natív hisztogram",
-      "new-badge": "Új",
-      "otel-switch": "Ez a kapcsoló lehetővé teszi az OTel-erőforrások szerinti szűrést az OTel-natív adatforrásoknál."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Klasszikus hisztogram hőtérképként megjelenítve:",
-      "ch-histogram": "Klasszikus hisztogram hisztogramként megjelenítve:",
-      "click-histogram": "Kattintson az alábbi natív hisztogramok bármelyikére a felfedezésükhöz:",
-      "hide-examples": "Példák elrejtése",
-      "learn-more": "További információk",
-      "metric-examples": "",
-      "nh-heatmap": "Natív hisztogram megjelenítve hőtérképként:",
-      "nh-histogram": "Natív hisztogram megjelenítve hisztogramként:",
-      "now": "Most:",
-      "previously": "Korábban:",
-      "see-examples": "> Példák megtekintése",
-      "sentence": "A Prometheus-natív hisztogramok nagy felbontást, nagy pontosságot, egyszerű használatot kínálnak az adatok megjelenítésénél, valamint lehetővé teszik a hisztogramok kombinálását és manipulálását a lekérdezésekben és a Grafanában.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Vagy tekintsen meg egy közelmúltbeli felfedezést"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "A kijelölt metrika grafikonja mindig legyen látható",
-      "show-previews-of-metric-graphs": "Metrikagrafikonok előnézetének megjelenítése"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {
