@@ -5,6 +5,7 @@ import { useSelector } from 'app/types';
 import { CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
+import { getRecentScopesActions } from './recentScopesActions';
 import getStaticActions from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
@@ -32,5 +33,7 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions];
+  const recentScopesActions = getRecentScopesActions();
+
+  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions, ...recentScopesActions];
 }

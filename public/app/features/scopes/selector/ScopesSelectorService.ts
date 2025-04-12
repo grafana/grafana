@@ -1,11 +1,16 @@
 import { isEqual, last } from 'lodash';
 
+import { Scope } from '@grafana/data';
+import { thirdArgAfterSearchQuery } from 'app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data';
+
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { getEmptyScopeObject } from '../utils';
 
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
+
+const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
 export interface ScopesSelectorServiceState {
   loading: boolean;
@@ -193,6 +198,26 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public removeAllScopes = () => this.setNewScopes([]);
 
+  private addRecentScopes = (scopes: SelectedScope[]) => {
+    if (scopes.length === 0) {
+      return;
+    }
+
+    console.log(scopes);
+
+    const RECENT_SCOPES_MAX_LENGTH = 5;
+
+    const recentScopes = this.getRecentScopes();
+    recentScopes.unshift(scopes);
+    localStorage.setItem(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
+  };
+
+  public getRecentScopes = (): SelectedScope[][] => {
+    const recentScopes = JSON.parse(localStorage.getItem(RECENT_SCOPES_KEY) || '[]');
+    // TODO: Make type safe
+    return recentScopes.map((scopes: Scope[]) => scopes);
+  };
+
   /**
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
@@ -223,7 +248,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public closeAndApply = () => {
     this.updateState({ opened: false });
-    this.setNewScopes();
+    this.setNewScopes().then(() => {
+      this.addRecentScopes(this.state.selectedScopes);
+    });
   };
 }
 
