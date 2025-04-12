@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -358,4 +360,89 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		Path: "/api/dashboards/uid/test-v2",
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 406, rsp.Response.StatusCode) // not acceptable
+}
+
+func TestIntegrationDashboardsAppV1Alpha1LargeObjects(t *testing.T) {
+	gvr := schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v1alpha1",
+		Resource: "dashboards",
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("v1alpha1 with dual writer mode 4", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorageBigObjectsSupport,
+				featuremgmt.FlagKubernetesClientDashboardsFolders,
+				featuremgmt.FlagUnifiedStorageSearch,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 4,
+				},
+			},
+		})
+
+		ctx := context.Background()
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"spec": map[string]any{
+					"title": "Test empty dashboard",
+					"panels": []map[string]any{
+						{
+							"id": 1,
+							"gridPos": map[string]any{
+								"h": 8,
+								"w": 12,
+								"x": 0,
+								"y": 0,
+							},
+							"title": "Test Panel",
+							"type":  "graph",
+							"targets": []map[string]any{
+								{
+									"refId": "A",
+									"expr":  "up",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		obj.SetGenerateName("aa")
+		obj, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		created := obj.GetName()
+
+		resp := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   "/api/dashboards/uid/" + created,
+		}, &dtos.DashboardFullWithMeta{})
+
+		r := resp.Result
+
+		uid := r.Dashboard.Get("uid").MustString()
+		require.Equal(t, created, uid)
+
+		dashboardObject := r.Dashboard.Interface()
+		dashboardMap, ok := dashboardObject.(map[string]interface{})
+		require.True(t, ok)
+		panels, ok := dashboardMap["panels"].([]interface{})
+		require.True(t, ok)
+
+		tt, ok := panels[0].(map[string]interface{})["title"]
+		require.True(t, ok)
+		require.Equal(t, "Test Panel", tt)
+	})
 }

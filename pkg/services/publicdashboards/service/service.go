@@ -141,7 +141,7 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 
 	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
 	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
-		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId, IncludeDTO: true})
 	})
 	if err != nil {
 		var dashboardErr dashboardaccess.DashboardErr

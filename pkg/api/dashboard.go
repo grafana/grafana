@@ -328,12 +328,14 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
 	defer span.End()
 
-	var query dashboards.GetDashboardQuery
+	query := dashboards.GetDashboardQuery{
+		ID:         id,
+		OrgID:      orgID,
+		IncludeDTO: true,
+	}
 
 	if len(uid) > 0 {
-		query = dashboards.GetDashboardQuery{UID: uid, ID: id, OrgID: orgID}
-	} else {
-		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
+		query.UID = uid
 	}
 
 	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
