@@ -1,8 +1,5 @@
 import { isEqual, last } from 'lodash';
 
-import { Scope } from '@grafana/data';
-import { thirdArgAfterSearchQuery } from 'app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data';
-
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';

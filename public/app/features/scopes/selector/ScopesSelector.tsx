@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, IconButton, Spinner, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -34,7 +34,10 @@ export const ScopesSelector = () => {
   const { nodes, loadingNodeName, selectedScopes, opened, treeScopes } = selectorServiceState;
   const { scopesService, scopesSelectorService, scopesDashboardsService } = services;
   const { readOnly, drawerOpened, loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } = scopesSelectorService;
+  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect, getRecentScopes } =
+    scopesSelectorService;
+
+  const recentScopes = getRecentScopes();
 
   const dashboardsIconLabel = readOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
@@ -74,14 +77,35 @@ export const ScopesSelector = () => {
               {loading ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
-                <ScopesTree
-                  nodes={nodes}
-                  nodePath={['']}
-                  loadingNodeName={loadingNodeName}
-                  scopes={treeScopes}
-                  onNodeUpdate={updateNode}
-                  onNodeSelectToggle={toggleNodeSelect}
-                />
+                <>
+                  <fieldset>
+                    <legend>
+                      <Text variant="h6">Recent scopes</Text>
+                    </legend>
+                    <Stack direction="column" gap={1}>
+                      {recentScopes.map((recentScopeSet) => (
+                        <button
+                          className={styles.recentScopeButton}
+                          key={recentScopeSet.map((s) => s.scope.metadata.name).join(',')}
+                          onClick={() => {
+                            scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
+                            scopesSelectorService.closeAndApply();
+                          }}
+                        >
+                          <Text>{recentScopeSet.map((s) => s.scope.spec.title).join(',')}</Text>
+                        </button>
+                      ))}
+                    </Stack>
+                  </fieldset>
+                  <ScopesTree
+                    nodes={nodes}
+                    nodePath={['']}
+                    loadingNodeName={loadingNodeName}
+                    scopes={treeScopes}
+                    onNodeUpdate={updateNode}
+                    onNodeSelectToggle={toggleNodeSelect}
+                  />
+                </>
               )}
             </div>
 
@@ -132,6 +156,16 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
       display: 'flex',
       gap: theme.spacing(1),
       marginTop: theme.spacing(8),
+    }),
+    recentScopeButton: css({
+      textAlign: 'left',
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
     }),
   };
 };
