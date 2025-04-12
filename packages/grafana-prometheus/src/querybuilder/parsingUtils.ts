@@ -157,21 +157,15 @@ const BUILT_IN_VARIABLES = [
 ];
 
 // Derived maps for efficient lookups
-const variableToReplacement = BUILT_IN_VARIABLES.reduce(
-  (map, { variable, replacement }) => {
-    map[variable] = replacement;
-    return map;
-  },
-  {} as Record<string, string>
-);
+const variableToReplacement = BUILT_IN_VARIABLES.reduce<Record<string, string>>((map, { variable, replacement }) => {
+  map[variable] = replacement;
+  return map;
+}, {});
 
-const replacementToVariable = BUILT_IN_VARIABLES.reduce(
-  (map, { variable, replacement }) => {
-    map[replacement] = variable;
-    return map;
-  },
-  {} as Record<string, string>
-);
+const replacementToVariable = BUILT_IN_VARIABLES.reduce<Record<string, string>>((map, { variable, replacement }) => {
+  map[replacement] = variable;
+  return map;
+}, {});
 
 // Pre-compiled regular expressions for efficient search/replace
 const builtInVariablePattern = BUILT_IN_VARIABLES.map(({ variable }) => variable.replace(/\$/g, '\\$')).join('|');
