@@ -2845,15 +2845,14 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "selection-options": {
-          "allow-custom-values": "All custom values",
+          "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
           "category": "Selection options",
           "custom-all-value": "Custom all value",
           "custom-all-value-description": "A wildcard regex or other value to represent All",
           "include-all": "Include All option",
           "include-all-description": "Enables an option to include all values",
-          "multi-value": "Multi-value",
-          "multi-value-description": "Multiple values can be selected at the same time"
+          "multi-value": "Multi-value"
         },
         "type-category": "{{type}} options"
       },

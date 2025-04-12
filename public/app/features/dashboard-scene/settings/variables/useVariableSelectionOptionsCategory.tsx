@@ -16,10 +16,6 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.multi-value', 'Multi-value'),
-          description: t(
-            'dashboard.edit-pane.variable.selection-options.multi-value-description',
-            'Multiple values can be selected at the same time'
-          ),
           render: () => <MultiValueSwitch variable={variable} />,
         })
       )
@@ -48,7 +44,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'All custom values'),
+          title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values'),
           description: t(
             'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
