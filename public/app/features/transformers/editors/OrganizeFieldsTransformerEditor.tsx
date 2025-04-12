@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { differenceWith } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import {
@@ -10,7 +11,13 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { createOrderFieldsComparer, OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
+import {
+  createOrderFieldsComparer,
+  AutoSortOption,
+  Order,
+  FieldOrdering,
+  OrganizeFieldsTransformerOptions,
+} from '@grafana/data/internal';
 import {
   Input,
   IconButton,
@@ -21,19 +28,49 @@ import {
   InlineLabel,
   Text,
   Box,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
+
+type AutoSortOptions = Array<{ order: Order; index: number; labelName?: string }>;
+
+// draggable component needs an identifier, this is something that shouldn't be a label key
+const FIELD_NAME_DRAGGABLE_ID = '!{{fieldName}}';
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName, includeByName } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
+  const distinctLabels = Array.from(getDistinctLabels(input));
+
+  // find labels that exist for the data but do not have an existing sort and append them to the list of possible options
+  const unSortedLabels: AutoSortOption[] = differenceWith(
+    distinctLabels,
+    options.autoSortOptions ?? [],
+    (distLabl, sortLabel) => distLabl === sortLabel.labelName
+  ).map((label, i) => ({ labelName: label, order: Order.Off, index: (options.autoSortOptions?.length ?? 0) + i }));
+
+  const allAutoSortOptions = useMemo(
+    (): AutoSortOptions => [...(options.autoSortOptions ?? []), ...unSortedLabels].sort((a, b) => a.index - b.index),
+    [options.autoSortOptions, unSortedLabels]
+  );
+
+  // if the field name sort was not already set, add it to the end
+  if ((options.autoSortOptions ?? []).findIndex((aso) => aso.labelName === undefined) === -1) {
+    allAutoSortOptions.push({
+      index: allAutoSortOptions.length,
+      order: Order.Off,
+    });
+  }
+
   const filterType = includeByName && Object.keys(includeByName).length > 0 ? 'include' : 'exclude';
 
   const onToggleVisibility = useCallback(
@@ -63,7 +100,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options, includeByName]
   );
 
-  const onDragEnd = useCallback(
+  const onDragEndFields = useCallback(
     (result: DropResult) => {
       if (!result || !result.destination) {
         return;
@@ -97,6 +134,56 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options]
   );
 
+  // when any option in auto mode is changed, even if the sort is off, we save what we have at that time so the indexes are preserved and fields don't jump around
+  const onChangeSort = useCallback(
+    (sortOptionString: string, sortOrder: Order) => {
+      const allOptions = [...allAutoSortOptions];
+      const changedIdx = allOptions.findIndex(
+        (label) =>
+          (sortOptionString === FIELD_NAME_DRAGGABLE_ID && label.labelName === undefined) ||
+          label.labelName === sortOptionString
+      );
+      allOptions[changedIdx].order = sortOrder;
+      onChange({ ...options, autoSortOptions: allOptions });
+    },
+    [allAutoSortOptions, onChange, options]
+  );
+
+  const onDragEndLabels = useCallback(
+    (result: DropResult) => {
+      if (!result || !result.destination) {
+        return;
+      }
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) {
+        return;
+      }
+
+      let delta = startIndex - endIndex;
+      const isForward = delta < 0;
+      delta = Math.abs(delta);
+
+      const allOptions = [...allAutoSortOptions];
+      const changedSort = allOptions.splice(startIndex, 1)[0];
+      changedSort.index = endIndex;
+
+      for (let i = 0; i < delta; i++) {
+        const changeIndex = allOptions.findIndex((opt) => opt.index === (isForward ? startIndex + 1 : endIndex) + i);
+        allOptions[changeIndex].index = allOptions[changeIndex].index + (isForward ? -1 : 1);
+      }
+
+      allOptions.push(changedSort);
+
+      onChange({
+        ...options,
+        autoSortOptions: allOptions.sort((a, b) => a.index - b.index),
+      });
+    },
+    [allAutoSortOptions, onChange, options]
+  );
+
   // Show warning that we only apply the first frame
   if (input.length > 1) {
     return (
@@ -109,35 +196,84 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     );
   }
 
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="sortable-fields-transformer" direction="vertical">
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            {orderedFieldNames.map((fieldName, index) => {
-              const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
-              const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
-              const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
+  const styles = useStyles2(getDraggableStyles);
 
+  return (
+    <>
+      <InlineFieldRow>
+        <InlineField label={'Field Order'}>
+          <RadioButtonGroup
+            options={[
+              { label: 'Manual', value: FieldOrdering.Manual },
+              { label: 'Auto', value: FieldOrdering.Auto },
+            ]}
+            value={options.fieldOrder ?? FieldOrdering.Manual}
+            onChange={(v) => onChange({ ...options, fieldOrder: v })}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <DragDropContext onDragEnd={onDragEndLabels}>
+        {options.fieldOrder === FieldOrdering.Auto && (
+          <Droppable droppableId="sortable-labels-transformer" direction="vertical">
+            {(provided) => {
               return (
-                <DraggableFieldName
-                  fieldName={fieldName}
-                  renamedFieldName={renameByName[fieldName]}
-                  index={index}
-                  onToggleVisibility={onToggleFunction}
-                  onRenameField={onRenameField}
-                  visible={isVisible}
-                  key={fieldName}
-                />
+                <>
+                  <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
+                    {allAutoSortOptions.map((label, idx) => (
+                      <DraggableLabel
+                        key={label.labelName ?? FIELD_NAME_DRAGGABLE_ID}
+                        labelKeyName={label.labelName ?? 'Field Name'}
+                        index={idx}
+                        isFieldName={label.labelName === undefined}
+                        onChangeSort={onChangeSort}
+                        order={label.order}
+                      />
+                    ))}
+                  </div>
+                  {provided.placeholder}
+                </>
               );
-            })}
-            {provided.placeholder}
-          </div>
+            }}
+          </Droppable>
         )}
-      </Droppable>
-    </DragDropContext>
+      </DragDropContext>
+
+      <DragDropContext onDragEnd={onDragEndFields}>
+        <Droppable droppableId="sortable-fields-transformer" direction="vertical">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {orderedFieldNames.map((fieldName, index) => {
+                const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
+                const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
+                const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
+
+                return (
+                  <DraggableFieldName
+                    fieldName={fieldName}
+                    renamedFieldName={renameByName[fieldName]}
+                    index={index}
+                    onToggleVisibility={onToggleFunction}
+                    onRenameField={onRenameField}
+                    visible={isVisible}
+                    key={fieldName}
+                    isDragDisabled={options.fieldOrder === FieldOrdering.Auto}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </>
   );
 };
+
+const getDraggableStyles = (theme: GrafanaTheme2) => ({
+  labelsDraggable: css({
+    marginBottom: theme.spacing(3),
+  }),
+});
 
 OrganizeFieldsTransformerEditor.displayName = 'OrganizeFieldsTransformerEditor';
 
@@ -148,6 +284,7 @@ interface DraggableFieldProps {
   visible: boolean;
   onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
   onRenameField: (from: string, to: string) => void;
+  isDragDisabled: boolean;
 }
 
 const DraggableFieldName = ({
@@ -157,26 +294,29 @@ const DraggableFieldName = ({
   visible,
   onToggleVisibility,
   onRenameField,
+  isDragDisabled,
 }: DraggableFieldProps) => {
   const styles = useStyles2(getFieldNameStyles);
 
   return (
-    <Draggable draggableId={fieldName} index={index}>
+    <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
-        <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
+        <Box display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
-              <span {...provided.dragHandleProps}>
-                <Icon
-                  name="draggabledots"
-                  title={t(
-                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
-                    'Drag and drop to reorder'
-                  )}
-                  size="lg"
-                  className={styles.draggable}
-                />
-              </span>
+              {!isDragDisabled && (
+                <span {...provided.dragHandleProps}>
+                  <Icon
+                    name="draggabledots"
+                    title={t(
+                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                      'Drag and drop to reorder'
+                    )}
+                    size="lg"
+                    className={styles.draggable}
+                  />
+                </span>
+              )}
               <IconButton
                 className={styles.toggle}
                 size="md"
@@ -203,6 +343,51 @@ const DraggableFieldName = ({
 };
 
 DraggableFieldName.displayName = 'DraggableFieldName';
+
+interface DraggableLabelProps {
+  labelKeyName: string;
+  index: number;
+  order?: Order;
+  isFieldName: boolean;
+  onChangeSort: (sortOptionString: string, order: Order) => void;
+}
+
+const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort }: DraggableLabelProps) => {
+  const styles = useStyles2(getFieldNameStyles);
+
+  return (
+    <Draggable draggableId={isFieldName ? FIELD_NAME_DRAGGABLE_ID : `${labelKeyName}`} index={index}>
+      {(provided) => (
+        <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
+          <InlineLabel width={60} as="div">
+            <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
+              <span {...provided.dragHandleProps}>
+                <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+              </span>
+
+              <Text truncate={true} element="p" variant="bodySmall" weight="bold">
+                {!isFieldName && 'Label:'} {labelKeyName}
+              </Text>
+            </Stack>
+          </InlineLabel>
+          <RadioButtonGroup
+            options={[
+              { label: 'Off', value: Order.Off },
+              { label: 'ASC', value: Order.Asc },
+              { label: 'DESC', value: Order.Desc },
+            ]}
+            value={order ?? Order.Off}
+            onChange={(order) => {
+              onChangeSort(isFieldName ? FIELD_NAME_DRAGGABLE_ID : labelKeyName, order);
+            }}
+          />
+        </Box>
+      )}
+    </Draggable>
+  );
+};
+
+DraggableLabel.displayName = 'DraggableLabel';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   toggle: css({
