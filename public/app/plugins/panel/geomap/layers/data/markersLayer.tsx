@@ -82,6 +82,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const source = new FrameVectorSource<Point>(location);
     const symbolLayer = new WebGLPointsLayer({ source, style: webGLStyle });
     const textLayer = new VectorImage({ source, declutter: true });
+    // TODO need to check if the source contains line strings and stack the layers appropriately
     const layers = new LayerGroup({
       // If text and no symbol, only show text - fall back on default symbol
       layers: hasText && symbol ? [symbolLayer, textLayer] : hasText && !symbol ? [textLayer] : [symbolLayer],
@@ -117,6 +118,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           source.update(frame);
           source.forEachFeature((feature) => {
+            const isLineString = feature.getGeometry()?.getType() === 'LineString';
             const idx: number = feature.get('rowIndex');
             const dims = style.dims;
             const values = { ...style.base };
@@ -133,26 +135,35 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
-            const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
-            const colorValues = getRGBValues(colorString);
 
-            const radius = values.size ?? DEFAULT_SIZE;
-            const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
+            if (!isLineString) {
+              const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
+              const colorValues = getRGBValues(colorString);
 
-            // WebGLPointsLayer uses style expressions instead of style functions
-            feature.setProperties({ red: colorValues?.r ?? 255 });
-            feature.setProperties({ green: colorValues?.g ?? 255 });
-            feature.setProperties({ blue: colorValues?.b ?? 255 });
-            feature.setProperties({ size: (values.size ?? 1) * 2 }); // TODO unify sizing across all source types
-            feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
-            feature.setProperties({ opacity: (values.opacity ?? 1) * (colorValues?.a ?? 1) });
-            feature.setProperties({ offsetX: displacement[0] });
-            feature.setProperties({ offsetY: displacement[1] });
+              const radius = values.size ?? DEFAULT_SIZE;
+              const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
+
+              // WebGLPointsLayer uses style expressions instead of style functions
+              feature.setProperties({ red: colorValues?.r ?? 255 });
+              feature.setProperties({ green: colorValues?.g ?? 255 });
+              feature.setProperties({ blue: colorValues?.b ?? 255 });
+              feature.setProperties({ size: (values.size ?? 1) * 2 }); // TODO unify sizing across all source types
+              feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
+              feature.setProperties({ opacity: (values.opacity ?? 1) * (colorValues?.a ?? 1) });
+              feature.setProperties({ offsetX: displacement[0] });
+              feature.setProperties({ offsetY: displacement[1] });
+            }
 
             // Set style to be used by VectorLayer (text only)
             if (hasText) {
               const textStyle = textMarker(values);
               feature.setStyle(textStyle);
+            }
+
+            // Set style to be used by LineString
+            if (isLineString) {
+              const lineStringStyle = style.maker(values);
+              feature.setStyle(lineStringStyle);
             }
           });
           break; // Only the first frame for now!
