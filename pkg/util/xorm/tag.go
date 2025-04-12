@@ -10,16 +10,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"xorm.io/core"
 )
 
 type tagContext struct {
 	tagName         string
 	params          []string
 	preTag, nextTag string
-	table           *core.Table
-	col             *core.Column
+	table           *coreTable
+	col             *coreColumn
 	fieldValue      reflect.Value
 	isIndex         bool
 	isUnique        bool
@@ -34,8 +32,6 @@ type tagHandler func(ctx *tagContext) error
 var (
 	// defaultTagHandlers enumerates all the default tag handler
 	defaultTagHandlers = map[string]tagHandler{
-		"<-":       OnlyFromDBTagHandler,
-		"->":       OnlyToDBTagHandler,
 		"PK":       PKTagHandler,
 		"NULL":     NULLTagHandler,
 		"NOT":      IgnoreTagHandler,
@@ -55,25 +51,13 @@ var (
 )
 
 func init() {
-	for k := range core.SqlTypes {
+	for k := range SqlTypes {
 		defaultTagHandlers[k] = SQLTypeTagHandler
 	}
 }
 
 // IgnoreTagHandler describes ignored tag handler
 func IgnoreTagHandler(ctx *tagContext) error {
-	return nil
-}
-
-// OnlyFromDBTagHandler describes mapping direction tag handler
-func OnlyFromDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYFROMDB
-	return nil
-}
-
-// OnlyToDBTagHandler describes mapping direction tag handler
-func OnlyToDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYTODB
 	return nil
 }
 
@@ -162,7 +146,7 @@ func DeletedTagHandler(ctx *tagContext) error {
 // IndexTagHandler describes index tag handler
 func IndexTagHandler(ctx *tagContext) error {
 	if len(ctx.params) > 0 {
-		ctx.indexNames[ctx.params[0]] = core.IndexType
+		ctx.indexNames[ctx.params[0]] = IndexType
 	} else {
 		ctx.isIndex = true
 	}
@@ -172,7 +156,7 @@ func IndexTagHandler(ctx *tagContext) error {
 // UniqueTagHandler describes unique tag handler
 func UniqueTagHandler(ctx *tagContext) error {
 	if len(ctx.params) > 0 {
-		ctx.indexNames[ctx.params[0]] = core.UniqueType
+		ctx.indexNames[ctx.params[0]] = UniqueType
 	} else {
 		ctx.isUnique = true
 	}
@@ -189,16 +173,16 @@ func CommentTagHandler(ctx *tagContext) error {
 
 // SQLTypeTagHandler describes SQL Type tag handler
 func SQLTypeTagHandler(ctx *tagContext) error {
-	ctx.col.SQLType = core.SQLType{Name: ctx.tagName}
+	ctx.col.SQLType = coreSQLType{Name: ctx.tagName}
 	if len(ctx.params) > 0 {
-		if ctx.tagName == core.Enum {
+		if ctx.tagName == Enum {
 			ctx.col.EnumOptions = make(map[string]int)
 			for k, v := range ctx.params {
 				v = strings.TrimSpace(v)
 				v = strings.Trim(v, "'")
 				ctx.col.EnumOptions[v] = k
 			}
-		} else if ctx.tagName == core.Set {
+		} else if ctx.tagName == Set {
 			ctx.col.SetOptions = make(map[string]int)
 			for k, v := range ctx.params {
 				v = strings.TrimSpace(v)

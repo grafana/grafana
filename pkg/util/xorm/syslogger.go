@@ -10,11 +10,9 @@ package xorm
 import (
 	"fmt"
 	"log/syslog"
-
-	"xorm.io/core"
 )
 
-var _ core.ILogger = &SyslogLogger{}
+var _ coreILogger = &SyslogLogger{}
 
 // SyslogLogger will be depricated
 type SyslogLogger struct {
@@ -22,7 +20,7 @@ type SyslogLogger struct {
 	showSQL bool
 }
 
-// NewSyslogLogger implements core.ILogger
+// NewSyslogLogger implements coreILogger
 func NewSyslogLogger(w *syslog.Writer) *SyslogLogger {
 	return &SyslogLogger{w: w}
 }
@@ -68,12 +66,12 @@ func (s *SyslogLogger) Warnf(format string, v ...any) {
 }
 
 // Level shows log level
-func (s *SyslogLogger) Level() core.LogLevel {
-	return core.LOG_UNKNOWN
+func (s *SyslogLogger) Level() coreLogLevel {
+	return LOG_UNKNOWN
 }
 
 // SetLevel always return error, as current log/syslog package doesn't allow to set priority level after syslog.Writer created
-func (s *SyslogLogger) SetLevel(l core.LogLevel) {}
+func (s *SyslogLogger) SetLevel(l coreLogLevel) {}
 
 // ShowSQL set if logging SQL
 func (s *SyslogLogger) ShowSQL(show ...bool) {

@@ -16,27 +16,25 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // Engine is the major struct of xorm, it means a database manager.
 // Commonly, an application only need one engine
 type Engine struct {
-	db      *core.DB
-	dialect core.Dialect
+	db      *coreDB
+	dialect coreDialect
 
-	ColumnMapper  core.IMapper
-	TableMapper   core.IMapper
+	ColumnMapper  coreIMapper
+	TableMapper   coreIMapper
 	TagIdentifier string
-	Tables        map[reflect.Type]*core.Table
+	Tables        map[reflect.Type]*coreTable
 
-	mutex  *sync.RWMutex
-	Cacher core.Cacher
+	mutex *sync.RWMutex
 
 	showSQL      bool
 	showExecTime bool
 
-	logger          core.ILogger
+	logger          coreILogger
 	TZLocation      *time.Location // The timezone of the application
 	DatabaseTZ      *time.Location // The timezone of the database
 	timestampFormat string         // Format applied to time.Time before passing it to database in Timestamp and DateTime columns.
@@ -48,7 +46,7 @@ type Engine struct {
 }
 
 // CondDeleted returns the conditions whether a record is soft deleted.
-func (engine *Engine) CondDeleted(col *core.Column) builder.Cond {
+func (engine *Engine) CondDeleted(col *coreColumn) builder.Cond {
 	var cond = builder.NewCond()
 	if col.SQLType.IsNumeric() {
 		cond = builder.Eq{col.Name: 0}
@@ -81,7 +79,7 @@ func (engine *Engine) ShowExecTime(show ...bool) {
 }
 
 // SetLogger set the new logger
-func (engine *Engine) SetLogger(logger core.ILogger) {
+func (engine *Engine) SetLogger(logger coreILogger) {
 	engine.logger = logger
 	engine.showSQL = logger.IsShowSQL()
 	engine.dialect.SetLogger(logger)
@@ -98,18 +96,18 @@ func (engine *Engine) DataSourceName() string {
 }
 
 // SetMapper set the name mapping rules
-func (engine *Engine) SetMapper(mapper core.IMapper) {
+func (engine *Engine) SetMapper(mapper coreIMapper) {
 	engine.SetTableMapper(mapper)
 	engine.SetColumnMapper(mapper)
 }
 
 // SetTableMapper set the table name mapping rule
-func (engine *Engine) SetTableMapper(mapper core.IMapper) {
+func (engine *Engine) SetTableMapper(mapper coreIMapper) {
 	engine.TableMapper = mapper
 }
 
 // SetColumnMapper set the column name mapping rule
-func (engine *Engine) SetColumnMapper(mapper core.IMapper) {
+func (engine *Engine) SetColumnMapper(mapper coreIMapper) {
 	engine.ColumnMapper = mapper
 }
 
@@ -216,17 +214,17 @@ func (engine *Engine) SetMaxIdleConns(conns int) {
 }
 
 // NewDB provides an interface to operate database directly
-func (engine *Engine) NewDB() (*core.DB, error) {
-	return core.OpenDialect(engine.dialect)
+func (engine *Engine) NewDB() (*coreDB, error) {
+	return OpenDialect(engine.dialect)
 }
 
 // DB return the wrapper of sql.DB
-func (engine *Engine) DB() *core.DB {
+func (engine *Engine) DB() *coreDB {
 	return engine.db
 }
 
 // Dialect return database dialect
-func (engine *Engine) Dialect() core.Dialect {
+func (engine *Engine) Dialect() coreDialect {
 	return engine.dialect
 }
 
@@ -270,7 +268,7 @@ func (engine *Engine) NoAutoTime() *Session {
 	return session.NoAutoTime()
 }
 
-func (engine *Engine) loadTableInfo(table *core.Table) error {
+func (engine *Engine) loadTableInfo(table *coreTable) error {
 	colSeq, cols, err := engine.dialect.GetColumns(table.Name)
 	if err != nil {
 		return err
@@ -295,7 +293,7 @@ func (engine *Engine) loadTableInfo(table *core.Table) error {
 }
 
 // DBMetas Retrieve all tables, columns, indexes' informations from database.
-func (engine *Engine) DBMetas() ([]*core.Table, error) {
+func (engine *Engine) DBMetas() ([]*coreTable, error) {
 	tables, err := engine.dialect.GetTables()
 	if err != nil {
 		return nil, err
@@ -358,7 +356,7 @@ func (engine *Engine) Table(tableNameOrBean any) *Session {
 	return session.Table(tableNameOrBean)
 }
 
-func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
+func (engine *Engine) autoMapType(v reflect.Value) (*coreTable, error) {
 	t := v.Type()
 	engine.mutex.Lock()
 	defer engine.mutex.Unlock()
@@ -371,13 +369,6 @@ func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
 		}
 
 		engine.Tables[t] = table
-		if engine.Cacher != nil {
-			if v.CanAddr() {
-				engine.GobRegister(v.Addr().Interface())
-			} else {
-				engine.GobRegister(v.Interface())
-			}
-		}
 	}
 	return table, nil
 }
@@ -390,16 +381,16 @@ func (engine *Engine) GobRegister(v any) *Engine {
 
 // Table table struct
 type Table struct {
-	*core.Table
+	*coreTable
 	Name string
 }
 
-func addIndex(indexName string, table *core.Table, col *core.Column, indexType int) {
+func addIndex(indexName string, table *coreTable, col *coreColumn, indexType int) {
 	if index, ok := table.Indexes[indexName]; ok {
 		index.AddColumn(col.Name)
 		col.Indexes[index.Name] = indexType
 	} else {
-		index := core.NewIndex(indexName, indexType)
+		index := NewIndex(indexName, indexType)
 		index.AddColumn(col.Name)
 		table.AddIndex(index)
 		col.Indexes[index.Name] = indexType
@@ -415,9 +406,9 @@ var (
 	tpTableName = reflect.TypeOf((*TableName)(nil)).Elem()
 )
 
-func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
+func (engine *Engine) mapType(v reflect.Value) (*coreTable, error) {
 	t := v.Type()
-	table := core.NewEmptyTable()
+	table := NewEmptyTable()
 	table.Type = t
 	table.Name = getTableName(engine.TableMapper, v)
 
@@ -427,17 +418,16 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 		tag := t.Field(i).Tag
 
 		ormTagStr := tag.Get(engine.TagIdentifier)
-		var col *core.Column
+		var col *coreColumn
 		fieldValue := v.Field(i)
 		fieldType := fieldValue.Type()
 
 		if ormTagStr != "" {
-			col = &core.Column{
+			col = &coreColumn{
 				FieldName:       t.Field(i).Name,
 				Nullable:        true,
 				IsPrimaryKey:    false,
 				IsAutoIncrement: false,
-				MapType:         core.TWOSIDES,
 				Indexes:         make(map[string]int),
 				DefaultIsEmpty:  true,
 			}
@@ -518,7 +508,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 
 				if col.SQLType.Name == "" {
-					col.SQLType = core.Type2SQLType(fieldType)
+					col.SQLType = Type2SQLType(fieldType)
 				}
 				engine.dialect.SqlType(col)
 				if col.Length == 0 {
@@ -532,9 +522,9 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 
 				if ctx.isUnique {
-					ctx.indexNames[col.Name] = core.UniqueType
+					ctx.indexNames[col.Name] = UniqueType
 				} else if ctx.isIndex {
-					ctx.indexNames[col.Name] = core.IndexType
+					ctx.indexNames[col.Name] = IndexType
 				}
 
 				for indexName, indexType := range ctx.indexNames {
@@ -542,18 +532,18 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 			}
 		} else {
-			var sqlType core.SQLType
+			var sqlType coreSQLType
 			if fieldValue.CanAddr() {
-				if _, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
-					sqlType = core.SQLType{Name: core.Text}
+				if _, ok := fieldValue.Addr().Interface().(coreConversion); ok {
+					sqlType = coreSQLType{Name: Text}
 				}
 			}
-			if _, ok := fieldValue.Interface().(core.Conversion); ok {
-				sqlType = core.SQLType{Name: core.Text}
+			if _, ok := fieldValue.Interface().(coreConversion); ok {
+				sqlType = coreSQLType{Name: Text}
 			} else {
-				sqlType = core.Type2SQLType(fieldType)
+				sqlType = Type2SQLType(fieldType)
 			}
-			col = core.NewColumn(engine.ColumnMapper.Obj2Table(t.Field(i).Name),
+			col = NewColumn(engine.ColumnMapper.Obj2Table(t.Field(i).Name),
 				t.Field(i).Name, sqlType, sqlType.DefaultLength,
 				sqlType.DefaultLength2, true)
 
@@ -645,7 +635,7 @@ func (engine *Engine) Sync(beans ...any) error {
 				if err := session.statement.setRefBean(bean); err != nil {
 					return err
 				}
-				if index.Type == core.UniqueType {
+				if index.Type == UniqueType {
 					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, true)
 					if err != nil {
 						return err
@@ -660,7 +650,7 @@ func (engine *Engine) Sync(beans ...any) error {
 							return err
 						}
 					}
-				} else if index.Type == core.IndexType {
+				} else if index.Type == IndexType {
 					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, false)
 					if err != nil {
 						return err
@@ -715,7 +705,7 @@ func (engine *Engine) Find(beans any, condiBeans ...any) error {
 }
 
 // nowTime return current time
-func (engine *Engine) nowTime(col *core.Column) (any, time.Time) {
+func (engine *Engine) nowTime(col *coreColumn) (any, time.Time) {
 	t := time.Now()
 	var tz = engine.DatabaseTZ
 	if !col.DisableTimeZone && col.TimeZone != nil {
@@ -724,7 +714,7 @@ func (engine *Engine) nowTime(col *core.Column) (any, time.Time) {
 	return engine.formatTime(col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
 }
 
-func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
+func (engine *Engine) formatColTime(col *coreColumn, t time.Time) (v any) {
 	if t.IsZero() {
 		if col.Nullable {
 			return nil
@@ -741,18 +731,18 @@ func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
 // formatTime format time as column type
 func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v any) {
 	switch sqlTypeName {
-	case core.Time:
+	case Time:
 		s := t.Format("2006-01-02 15:04:05") // time.RFC3339
 		v = s[11:19]
-	case core.Date:
+	case Date:
 		v = t.Format("2006-01-02")
-	case core.DateTime, core.TimeStamp:
+	case DateTime, TimeStamp:
 		v = t.Format(engine.timestampFormat)
-	case core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
+	case Varchar: // !DarthPestilane! format time when sqlTypeName is Varchar.
 		v = t.Format("2006-01-02 15:04:05")
-	case core.TimeStampz:
+	case TimeStampz:
 		v = t.Format(time.RFC3339Nano)
-	case core.BigInt, core.Int:
+	case BigInt, Int:
 		v = t.Unix()
 	default:
 		v = t

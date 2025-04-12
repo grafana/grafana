@@ -8,14 +8,12 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
-
-	"xorm.io/core"
 )
 
 // Rows rows wrapper a rows to
 type Rows struct {
 	session   *Session
-	rows      *core.Rows
+	rows      *coreRows
 	beanType  reflect.Type
 	lastError error
 }

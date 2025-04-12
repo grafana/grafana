@@ -10,7 +10,6 @@ import (
 	"reflect"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // Exist returns true if the record exist otherwise return false
@@ -45,14 +44,14 @@ func (session *Session) Exist(bean ...any) (bool, error) {
 					return false, err
 				}
 
-				if session.engine.dialect.DBType() == core.ORACLE {
+				if session.engine.dialect.DBType() == ORACLE {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s WHERE (%s) %s AND ROWNUM=1", tableName, joinStr, condSQL)
 				} else {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s %s WHERE %s LIMIT 1", tableName, joinStr, condSQL)
 				}
 				args = condArgs
 			} else {
-				if session.engine.dialect.DBType() == core.ORACLE {
+				if session.engine.dialect.DBType() == ORACLE {
 					sqlStr = fmt.Sprintf("SELECT * FROM  %s %s WHERE ROWNUM=1", tableName, joinStr)
 				} else {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s %s LIMIT 1", tableName, joinStr)

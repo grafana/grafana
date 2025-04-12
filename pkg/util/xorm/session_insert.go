@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -124,7 +123,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	firstValue := reflect.Indirect(firstElement)
 
 	var colNames []string
-	var cols []*core.Column
+	var cols []*coreColumn
 
 	// Find columns that will be in the INSERT statement.
 	for _, col := range table.Columns() {
@@ -134,9 +133,6 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 		}
 		fieldValue := *ptrFieldValue
 		if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-			continue
-		}
-		if col.MapType == core.ONLYFROMDB {
 			continue
 		}
 		if col.IsDeleted {
@@ -210,7 +206,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	cleanupProcessorsClosures(&session.beforeClosures)
 
 	var sql string
-	if session.engine.dialect.DBType() == core.ORACLE {
+	if session.engine.dialect.DBType() == ORACLE {
 		temp := fmt.Sprintf(") INTO %s (%v) VALUES (",
 			session.engine.Quote(tableName),
 			quoteColumns(colNames, session.engine.Quote, ","))
@@ -342,7 +338,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 	}
 
 	if len(colPlaces) <= 0 {
-		if session.engine.dialect.DBType() == core.MYSQL {
+		if session.engine.dialect.DBType() == MYSQL {
 			if _, err := buf.WriteString(" VALUES ()"); err != nil {
 				return 0, err
 			}
@@ -404,7 +400,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 	}
 
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
+	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == POSTGRES {
 		buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement))
 	}
 
@@ -446,7 +442,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
 	var insertID, rowsAffected int64
-	if session.engine.dialect.DBType() == core.ORACLE && len(table.AutoIncrement) > 0 {
+	if session.engine.dialect.DBType() == ORACLE && len(table.AutoIncrement) > 0 {
 		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
 		if err != nil {
 			return 0, err
@@ -473,7 +469,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			return 1, err
 		}
 		rowsAffected = 1
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
+	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {
@@ -564,10 +560,6 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 	args := make([]any, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if col.IsDeleted {
 			continue
 		}

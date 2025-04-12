@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 const (
@@ -183,7 +182,7 @@ func (session *Session) find(rowsSlicePtr any, condiBean ...any) error {
 	return session.noCacheFind(table, sliceValue, sqlStr, args...)
 }
 
-func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Value, sqlStr string, args ...any) error {
+func (session *Session) noCacheFind(table *coreTable, containerValue reflect.Value, sqlStr string, args ...any) error {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return err
@@ -222,10 +221,10 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 		return reflect.New(elemType)
 	}
 
-	var containerValueSetFunc func(*reflect.Value, core.PK) error
+	var containerValueSetFunc func(*reflect.Value, corePK) error
 
 	if containerValue.Kind() == reflect.Slice {
-		containerValueSetFunc = func(newValue *reflect.Value, pk core.PK) error {
+		containerValueSetFunc = func(newValue *reflect.Value, pk corePK) error {
 			if isPointer {
 				containerValue.Set(reflect.Append(containerValue, newValue.Elem().Addr()))
 			} else {
@@ -242,7 +241,7 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 			return errors.New("don't support multiple primary key's map has non-slice key type")
 		}
 
-		containerValueSetFunc = func(newValue *reflect.Value, pk core.PK) error {
+		containerValueSetFunc = func(newValue *reflect.Value, pk corePK) error {
 			keyValue := reflect.New(keyType)
 			err := convertPKToValue(table, keyValue.Interface(), pk)
 			if err != nil {
@@ -279,8 +278,8 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 		switch elemType.Kind() {
 		case reflect.Slice:
 			err = rows.ScanSlice(bean)
-		case reflect.Map:
-			err = rows.ScanMap(bean)
+		// case reflect.Map:
+		// 	err = rows.ScanMap(bean)
 		default:
 			err = rows.Scan(bean)
 		}
@@ -296,7 +295,7 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 	return rows.Err()
 }
 
-func convertPKToValue(table *core.Table, dst any, pk core.PK) error {
+func convertPKToValue(table *coreTable, dst any, pk corePK) error {
 	cols := table.PKColumns()
 	if len(cols) == 1 {
 		return convertAssign(dst, pk[0])
