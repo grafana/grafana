@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch, FormEvent } from 'react';
+import { Dispatch } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
@@ -20,7 +20,7 @@ import { updateExpression } from './reducer';
 export interface SimpleCondition {
   whenField?: string;
   evaluator: {
-    params: number[];
+    params: Array<number | '-' | undefined>;
     type: EvalFunction;
   };
 }
@@ -57,7 +57,9 @@ export const SimpleConditionEditor = ({
 
   const isRange =
     simpleCondition.evaluator.type === EvalFunction.IsWithinRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange;
+    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange ||
+    simpleCondition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    simpleCondition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === simpleCondition.evaluator?.type);
 
@@ -71,24 +73,34 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index?: number) => {
-    if (isRange) {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = parseFloat(event.currentTarget.value);
+  const onEvaluateValueChange = (value: string, index = 0) => {
+    // Allow empty value
+    if (value === '') {
+      const newCondition = produce(simpleCondition, (draft) => {
+        draft.evaluator.params[index] = undefined;
       });
-      // update the condition kept in the parent
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), index ?? 0, expressionQueriesList, dispatch);
-    } else {
-      // update the condition kept in the parent
-      onChange({
-        ...simpleCondition,
-        evaluator: { ...simpleCondition.evaluator, params: [parseFloat(event.currentTarget.value)] },
-      });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), 0, expressionQueriesList, dispatch);
+      onChange(newCondition);
+      return;
     }
+    // Allow '-' for negative numbers
+    if (value === '-') {
+      const newCondition = produce(simpleCondition, (draft) => {
+        draft.evaluator.params[index] = '-';
+      });
+      onChange(newCondition);
+      return;
+    }
+
+    // Handle numeric values
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) {
+      return;
+    }
+    const newCondition = produce(simpleCondition, (draft) => {
+      draft.evaluator.params[index] = numericValue;
+    });
+    onChange(newCondition);
+    updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
   const styles = useStyles2(getStyles);
@@ -120,23 +132,26 @@ export const SimpleConditionEditor = ({
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[0]}
-                    onChange={(event) => onEvaluateValueChange(event, 0)}
+                    value={simpleCondition.evaluator.params[0] ?? ''}
+                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 0)}
+                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
                   />
                   <ToLabel />
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[1]}
-                    onChange={(event) => onEvaluateValueChange(event, 1)}
+                    value={simpleCondition.evaluator.params[1] ?? ''}
+                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 1)}
+                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 1)}
                   />
                 </>
               ) : (
                 <Input
                   type="number"
                   width={10}
-                  onChange={onEvaluateValueChange}
-                  value={simpleCondition.evaluator.params[0]}
+                  value={simpleCondition.evaluator.params[0] ?? ''}
+                  onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
+                  onChange={(e) => onEvaluateValueChange(e.currentTarget.value, 0)}
                 />
               )}
             </Stack>
