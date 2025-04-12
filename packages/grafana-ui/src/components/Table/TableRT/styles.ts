@@ -192,6 +192,14 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         color: theme.colors.text.link,
       },
     }),
+    cellLinkEmpty: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      userSelect: 'text',
+      whiteSpace: 'nowrap',
+      fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1.5),
+    }),
     cellLinkForColoredCell: css({
       cursor: 'pointer',
       overflow: 'hidden',
