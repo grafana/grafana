@@ -4,9 +4,9 @@ import { parser } from '@prometheus-io/lezer-promql';
 import {
   getLeftMostChild,
   getString,
-  replaceBuiltInVariables,
+  replaceBuiltInVariable,
   replaceVariables,
-  returnBuiltInVariables,
+  returnBuiltInVariable,
 } from './parsingUtils';
 
 describe('getLeftMostChild', () => {
@@ -52,29 +52,29 @@ describe('replaceBuiltInVariables', () => {
   const testCases = [
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[1_999_999y])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[1_999_999])',
     },
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__rate_interval])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[3_999_999y])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[3_999_999])',
     },
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__range_ms])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[4_999_999y])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[4_999_999])',
     },
     {
       expr: 'histogram_quantile(0.95, sum(rate(process_max_fds[$__rate_interval])) by (le)) + rate(process_max_fds[$__interval])',
       expected:
-        'histogram_quantile(0.95, sum(rate(process_max_fds[3_999_999y])) by (le)) + rate(process_max_fds[1_999_999y])',
+        'histogram_quantile(0.95, sum(rate(process_max_fds[3_999_999])) by (le)) + rate(process_max_fds[1_999_999])',
     },
   ];
 
   testCases.forEach((testCase) => {
     it(testCase.expr, () => {
-      const actual1 = replaceBuiltInVariables(testCase.expr);
+      const actual1 = replaceBuiltInVariable(testCase.expr);
       expect(actual1).toBe(testCase.expected);
 
-      const actual2 = returnBuiltInVariables(actual1);
+      const actual2 = returnBuiltInVariable(actual1);
       expect(actual2).toBe(testCase.expr);
     });
   });

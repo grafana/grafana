@@ -138,20 +138,46 @@ export const regexifyLabelValuesQueryString = (query: string) => {
   return queryArray.map((query) => `${query}.*`).join('');
 };
 
+/**
+ * Built-in Grafana variables used for time ranges and intervals in Prometheus queries
+ */
 const builtInVariables = ['$__interval', '$__interval_ms', '$__rate_interval', '$__range_ms', '$__range_s', '$__range'];
 
-export function replaceBuiltInVariables(expr: string): string {
-  builtInVariables.forEach((variable, idx) => {
-    expr = expr.replace(new RegExp(`\\${variable}`, 'g'), `${idx + 1}_999_999y`);
-  });
+// Create a single RegExp that matches any of the built-in variables
+// Need to escape $ as it's a special character in RegExp
+const variablePattern = builtInVariables.map((v) => v.replace(/\$/g, '\\$')).join('|');
+const builtInVariableRegex = new RegExp(variablePattern, 'g');
 
-  return expr;
+/**
+ * Pre-computed mapping of replacement strings back to their original variables
+ * This avoids recreating this mapping on each function call
+ */
+const builtInVariableReplacements = builtInVariables.reduce<Record<string, string>>((map, variable, idx) => {
+  map[`${idx + 1}_999_999`] = variable;
+  return map;
+}, {});
+
+// Create a pattern that matches any of the replacement strings
+const replacementPattern = Object.keys(builtInVariableReplacements).join('|');
+const replacementRegex = new RegExp(replacementPattern, 'g');
+
+/**
+ * Replaces Grafana built-in variables with special format strings
+ * This helps prevent these variables from causing parsing errors
+ */
+export function replaceBuiltInVariable(expr: string): string {
+  // Replace all occurrences at once, using a callback to determine the replacement
+  return expr.replace(builtInVariableRegex, (match) => {
+    const idx = builtInVariables.indexOf(match);
+    return `${idx + 1}_999_999`;
+  });
 }
 
-export function returnBuiltInVariables(expr: string): string {
-  builtInVariables.forEach((variable, idx) => {
-    expr = expr.replace(new RegExp(`${idx + 1}_999_999y`, 'g'), variable);
-  });
-
-  return expr;
+/**
+ * Restores the original built-in variables from their replacement format
+ * Reverses the transformation done by replaceBuiltInVariables
+ */
+export function returnBuiltInVariable(expr: string): string {
+  // Replace all occurrences at once using the mapping
+  return expr.replace(replacementRegex, (match) => builtInVariableReplacements[match]);
 }
