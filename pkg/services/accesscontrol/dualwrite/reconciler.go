@@ -83,21 +83,9 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 				client,
 			),
 			newResourceReconciler(
-				"team role bindings",
-				teamRoleBindingsCollector(store),
+				"role bindings",
+				roleBindingsCollector(store),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
-				client,
-			),
-			newResourceReconciler(
-				"user role bindings",
-				userRoleBindingsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
-				client,
-			),
-			newResourceReconciler(
-				"fixed role pemissions",
-				fixedRolePermissionsCollector(store),
-				zanzanaCollector(zanzana.RelationsFolder),
 				client,
 			),
 		},
