@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestPatchLibraryElement(t *testing.T) {
+func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
