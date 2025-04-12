@@ -27,7 +27,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3",
+    "typescript": "5.8.3",
     "webpack": "5.97.1"
   },
   "peerDependencies": {
