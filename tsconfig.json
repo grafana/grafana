@@ -30,7 +30,8 @@
     "public/test/**/*.ts*",
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
-    "packages/grafana-ui/src/types"
+    "packages/grafana-ui/src/types",
+    "packages/grafana-alerting/src/types"
   ],
   "exclude": ["public/app/**/webpack.config.ts"]
 }
