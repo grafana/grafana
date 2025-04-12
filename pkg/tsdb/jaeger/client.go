@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -15,6 +16,7 @@ type JaegerClient struct {
 	logger             log.Logger
 	url                string
 	httpClient         *http.Client
+	settings           backend.DataSourceInstanceSettings
 	traceIdTimeEnabled bool
 }
 
@@ -26,11 +28,12 @@ type ServicesResponse struct {
 	Total  int         `json:"total"`
 }
 
-func New(url string, hc *http.Client, logger log.Logger, traceIdTimeEnabled bool) (JaegerClient, error) {
+func New(url string, hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings, traceIdTimeEnabled bool) (JaegerClient, error) {
 	client := JaegerClient{
 		logger:             logger,
 		url:                url,
 		httpClient:         hc,
+		settings:           settings,
 		traceIdTimeEnabled: traceIdTimeEnabled,
 	}
 	return client, nil
@@ -90,6 +93,82 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 
 	operations = response.Data
 	return operations, err
+}
+
+func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
+	jaegerURL, err := url.Parse(j.url)
+	if err != nil {
+		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
+	}
+	jaegerURL.Path = "/api/traces"
+
+	if query.Tags != "" {
+		tagMap := make(map[string]string)
+		pairs := strings.Split(query.Tags, " ")
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				continue
+			}
+			tagMap[kv[0]] = kv[1]
+		}
+
+		marshaledTags, err := json.Marshal(tagMap)
+		if err != nil {
+			return []TraceResponse{}, fmt.Errorf("failed to convert tags to JSON: %w", err)
+		}
+
+		query.Tags = string(marshaledTags)
+	}
+
+	queryParams := map[string]string{
+		"service":     query.Service,
+		"operation":   query.Operation,
+		"tags":        query.Tags,
+		"minDuration": query.MinDuration,
+		"maxDuration": query.MaxDuration,
+	}
+
+	urlQuery := jaegerURL.Query()
+	if query.Limit > 0 {
+		urlQuery.Set("limit", fmt.Sprintf("%d", query.Limit))
+	}
+
+	for key, value := range queryParams {
+		if value != "" {
+			urlQuery.Set(key, value)
+		}
+	}
+
+	jaegerURL.RawQuery = urlQuery.Encode()
+	resp, err := j.httpClient.Get(jaegerURL.String())
+	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return []TraceResponse{}, backend.DownstreamError(err)
+		}
+		return []TraceResponse{}, err
+	}
+
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			j.logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return []TraceResponse{}, backend.DownstreamError(err)
+		}
+		return []TraceResponse{}, err
+	}
+
+	var result TracesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return []TraceResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
+	}
+
+	return result.Data, nil
 }
 
 func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {

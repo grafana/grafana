@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type jaegerQuery struct {
+type JaegerQuery struct {
 	QueryType   string `json:"queryType"`
 	Service     string `json:"service"`
 	Operation   string `json:"operation"`
@@ -22,15 +23,39 @@ type jaegerQuery struct {
 
 func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
+	logger := dsInfo.JaegerClient.logger.FromContext(ctx)
 
 	for _, q := range req.Queries {
-		var query jaegerQuery
+		var query JaegerQuery
 
 		err := json.Unmarshal(q.JSON, &query)
 		if err != nil {
 			err = backend.DownstreamError(fmt.Errorf("error while parsing the query json. %w", err))
 			response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
+		}
+
+		// Handle "Upload" query type
+		if query.QueryType == "upload" {
+			logger.Debug("upload query type is not supported in backend mode")
+			response.Responses[q.RefID] = backend.DataResponse{
+				Error:       fmt.Errorf("unsupported query type %s. only available in frontend mode", query.QueryType),
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
+			continue
+		}
+
+		// Handle "Search" query type
+		if query.QueryType == "search" {
+			traces, err := dsInfo.JaegerClient.Search(&query)
+			if err != nil {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+			frames := transformSearchResponse(traces, dsInfo)
+			response.Responses[q.RefID] = backend.DataResponse{
+				Frames: data.Frames{frames},
+			}
 		}
 
 		// No query type means traceID query
@@ -50,7 +75,66 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	return response, nil
 }
 
-// transformTraceResponse converts Jaeger trace data to a Data frame
+func transformSearchResponse(response []TraceResponse, dsInfo *datasourceInfo) *data.Frame {
+	frame := data.NewFrame("traces",
+		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace ID",
+			Links: []data.DataLink{
+				{
+					Title: "Trace: ${__value.raw}",
+					URL:   "",
+					Internal: &data.InternalDataLink{
+						DatasourceUID:  dsInfo.JaegerClient.settings.UID,
+						DatasourceName: dsInfo.JaegerClient.settings.Name,
+						Query: map[string]interface{}{
+							"query": "${__value.raw}",
+						},
+					},
+				},
+			},
+		}),
+		data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace name",
+		}),
+		data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Start time",
+		}),
+		data.NewField("duration", nil, []int64{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Duration",
+			Unit:        "µs",
+		}),
+	)
+
+	frame.Meta = &data.FrameMeta{
+		PreferredVisualization: "table",
+	}
+
+	for _, trace := range response {
+		if len(trace.Spans) == 0 {
+			continue
+		}
+
+		rootSpan := trace.Spans[0]
+
+		serviceName := ""
+		if process, ok := trace.Processes[rootSpan.ProcessID]; ok {
+			serviceName = process.ServiceName
+		}
+
+		traceName := fmt.Sprintf("%s: %s", serviceName, rootSpan.OperationName)
+		startTime := time.Unix(0, rootSpan.StartTime*1000)
+
+		frame.AppendRow(
+			trace.TraceID,
+			traceName,
+			startTime,
+			rootSpan.Duration,
+		)
+	}
+
+	return frame
+}
+
 func transformTraceResponse(trace TraceResponse, refID string) *data.Frame {
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),

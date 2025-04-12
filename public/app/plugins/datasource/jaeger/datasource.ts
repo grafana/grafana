@@ -68,13 +68,22 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     return !!query.service;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // No query type means that the query is a trace ID query
     // If all targets are trace ID queries, we can use the backend querying
     const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
+    const allTargetsSearchQuery = options.targets.every((target) => target.queryType === 'search');
     // We have not migrated the node graph to the backend
     // If the node graph is disabled, we can use the backend migration
     const nodeGraphDisabled = !this.nodeGraph?.enabled;
+
+    if (config.featureToggles.jaegerBackendMigration && allTargetsSearchQuery && nodeGraphDisabled) {
+      return super.query(options);
+    }
+
     if (config.featureToggles.jaegerBackendMigration && allTargetsTraceIdQuery && nodeGraphDisabled) {
       return super.query(options);
     }
