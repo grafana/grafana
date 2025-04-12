@@ -259,6 +259,21 @@ Log queries don't keep a single request open, and instead periodically poll for 
 Therefore, they don't recognize the standard Grafana query timeout.
 Because of limits on concurrently running queries in CloudWatch, they can also take longer to finish.
 
+
+### Find logs and troubleshoot errors in Grafana
+
+To locate CloudWatch logs and troubleshoot issues in the Grafana UI:
+
+1. Access CloudWatch Logs in Grafana:
+   - Open the Explore view or create a new dashboard panel
+   - Select your CloudWatch data source
+   - Choose "CloudWatch Logs" from the query type dropdown
+   - Use the "Select Log Groups" button to select your log groups (based on the prefix when selecting)
+
+2. Common Grafana CloudWatch plugin errors and solutions:
+   if you are getting `CloudWatch metrics query failed: AccessDenied: User: arn:aws:sts::<AWS_ACCOUNT_ID>:assumed-role/<ROLE_NAME>/<SESSION_ID> is not authorized to perform: cloudwatch:ListMetrics because no identity-based policy allows the cloudwatch:ListMetrics action status code: 403, request id: <REQUEST_ID> 2. Successfully queried the CloudWatch logs API.`
+   this might be due to grafana UI checking if cloudwatch metrics are passed alongside the log permissions (maybe a bug)
+
 #### X-Ray trace links
 
 To automatically add links in your logs when the log contains the `@xrayTraceId` field, link an X-Ray data source in the "X-Ray trace link" section of the data source configuration.
