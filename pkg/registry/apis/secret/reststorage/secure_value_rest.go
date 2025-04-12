@@ -34,14 +34,22 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	storage        contracts.SecureValueMetadataStorage
-	resource       utils.ResourceInfo
-	tableConverter rest.TableConvertor
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	outboxQueue                contracts.OutboxQueue
+	database                   contracts.Database
+	resource                   utils.ResourceInfo
+	tableConverter             rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{storage, resource, resource.TableConverter()}
+func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, database contracts.Database, outboxQueue contracts.OutboxQueue, resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{
+		secureValueMetadataStorage: storage,
+		resource:                   resource,
+		tableConverter:             resource.TableConverter(),
+		database:                   database,
+		outboxQueue:                outboxQueue,
+	}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
@@ -79,7 +87,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.storage.List(ctx, xkube.Namespace(namespace), options)
+	secureValueList, err := s.secureValueMetadataStorage.List(ctx, xkube.Namespace(namespace), options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
@@ -94,7 +102,7 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.storage.Read(ctx, xkube.Namespace(namespace), name)
+	sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -122,12 +130,34 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValue, err := s.storage.Create(ctx, sv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create secure value: %w", err)
+	// Assigned inside the transaction callback
+	var object runtime.Object
+
+	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		// TODO: return err when secret already exists
+		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
+		if err != nil {
+			return fmt.Errorf("failed to create securevalue: %w", err)
+		}
+		object = createdSecureValue
+
+		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			Type:      contracts.CreateSecretOutboxMessage,
+			Name:      sv.Name,
+			Namespace: sv.Namespace,
+			// TODO: encrypt
+			EncryptedSecret: sv.Spec.Value,
+			KeeperName:      sv.Spec.Keeper,
+		}); err != nil {
+			return fmt.Errorf("failed to append to outbox queue: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return object, err
 	}
 
-	return createdSecureValue, nil
+	return object, nil
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
@@ -166,7 +196,7 @@ func (s *SecureValueRest) Update(
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue)
+	updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
 	}
@@ -182,7 +212,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	if err := s.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
 		return nil, false, fmt.Errorf("delete secure value: %w", err)
 	}
 

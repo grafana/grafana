@@ -2,20 +2,28 @@ package sqlkeeper
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
-	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-// Make this a `TestIntegration<name>` once we have the real storage implementation
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func Test_SQLKeeperSetup(t *testing.T) {
 	ctx := context.Background()
 	namespace1 := "namespace1"
@@ -24,7 +32,17 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	plaintext2 := "very secret string in namespace 2"
 	nonExistentID := contracts.ExternalID("non existent")
 
-	cfg := setting.NewCfg()
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          "sdDkslslld",
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCacheTTL:        5 * time.Minute,
+				DataKeysCleanupInterval: 1 * time.Nanosecond,
+				Algorithm:               cipher.AesGcm,
+			},
+		},
+	}
 
 	sqlKeeper, err := setupTestService(t, cfg)
 	require.NoError(t, err)
@@ -136,102 +154,31 @@ func Test_SQLKeeperSetup(t *testing.T) {
 }
 
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
-	// Initialize the encryption manager with in-memory implementation
-	encMgr := &inMemoryEncryptionManager{}
+	testDB := db.InitTestDB(t)
 
-	// Initialize encrypted value storage with in-memory implementation
-	encValueStore := newInMemoryEncryptedValueStorage()
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+
+	// Initialize the encryption manager
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	require.NoError(t, err)
+
+	usageStats := &usagestats.UsageStatsMock{T: t}
+
+	encMgr, err := encryptionmanager.ProvideEncryptionManager(
+		tracing.InitializeTracerForTest(),
+		dataKeyStore,
+		cfg,
+		usageStats,
+		nil,
+	)
+	require.NoError(t, err)
+
+	// Initialize encrypted value storage with a fake db
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	require.NoError(t, err)
 
 	// Initialize the SQLKeeper
 	sqlKeeper, err := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
 
 	return sqlKeeper, err
-}
-
-// While we don't have the real implementation, use an in-memory one
-type inMemoryEncryptionManager struct{}
-
-func (m *inMemoryEncryptionManager) Encrypt(_ context.Context, _ string, value []byte, _ contracts.EncryptionOptions) ([]byte, error) {
-	return []byte(base64.StdEncoding.EncodeToString(value)), nil
-}
-
-func (m *inMemoryEncryptionManager) Decrypt(_ context.Context, _ string, value []byte) ([]byte, error) {
-	return base64.StdEncoding.DecodeString(string(value))
-}
-
-func (m *inMemoryEncryptionManager) ReEncryptDataKeys(_ context.Context, _ string) error {
-	return nil
-}
-
-func (m *inMemoryEncryptionManager) RotateDataKeys(_ context.Context, _ string) error {
-	return nil
-}
-
-// While we don't have the real implementation, use an in-memory one
-type inMemoryEncryptedValueStorage struct {
-	mu    sync.RWMutex
-	store map[string]*contracts.EncryptedValue
-}
-
-func newInMemoryEncryptedValueStorage() *inMemoryEncryptedValueStorage {
-	return &inMemoryEncryptedValueStorage{
-		store: make(map[string]*contracts.EncryptedValue),
-	}
-}
-
-func (m *inMemoryEncryptedValueStorage) Create(_ context.Context, namespace string, encryptedData []byte) (*contracts.EncryptedValue, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	uid := fmt.Sprintf("%d", len(m.store)+1) // Generate simple incremental IDs
-	encValue := &contracts.EncryptedValue{
-		UID:           uid,
-		Namespace:     namespace,
-		EncryptedData: encryptedData,
-		Created:       1, // Dummy timestamp
-		Updated:       1, // Dummy timestamp
-	}
-
-	compositeKey := namespace + ":" + uid
-	m.store[compositeKey] = encValue
-
-	return encValue, nil
-}
-
-func (m *inMemoryEncryptedValueStorage) Get(_ context.Context, namespace string, uid string) (*contracts.EncryptedValue, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	compositeKey := namespace + ":" + uid
-	encValue, exists := m.store[compositeKey]
-	if !exists {
-		return nil, fmt.Errorf("value not found for namespace %s and uid %s", namespace, uid)
-	}
-
-	return encValue, nil
-}
-
-func (m *inMemoryEncryptedValueStorage) Delete(_ context.Context, namespace string, uid string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	compositeKey := namespace + ":" + uid
-	delete(m.store, compositeKey)
-
-	return nil
-}
-
-func (m *inMemoryEncryptedValueStorage) Update(_ context.Context, namespace string, uid string, encryptedData []byte) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	compositeKey := namespace + ":" + uid
-	encValue, exists := m.store[compositeKey]
-	if !exists {
-		return fmt.Errorf("value not found for namespace %s and uid %s", namespace, uid)
-	}
-
-	encValue.EncryptedData = encryptedData
-	encValue.Updated = 2 // Update timestamp
-	return nil
 }
