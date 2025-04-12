@@ -46,10 +46,6 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
         borderColor: borderColorHover,
       },
 
-      '&:focus': {
-        outline: 'none',
-      },
-
       '&:disabled': {
         backgroundColor: theme.colors.action.disabledBackground,
         color: theme.colors.action.disabledText,
