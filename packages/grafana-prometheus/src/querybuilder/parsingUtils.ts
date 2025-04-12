@@ -140,25 +140,39 @@ export const regexifyLabelValuesQueryString = (query: string) => {
 
 /**
  * Built-in Grafana variables used for time ranges and intervals in Prometheus queries
+ * Numeric replacements for Grafana built-in variables, carefully crafted to:
+ * 1. Have exactly the same string length as their corresponding variables
+ * 2. Be valid in Prometheus syntax to avoid parsing errors
+ * 3. Preserve error position information for accurate error reporting
+ * 4. Use readable number formatting with digit grouping via underscores
  */
-const builtInVariables = ['$__interval', '$__interval_ms', '$__rate_interval', '$__range_ms', '$__range_s', '$__range'];
+const builtInVariables: Record<string, string> = {
+  $__interval: '711_999_999',
+  $__interval_ms: '79_999_999_999',
+  $__rate_interval: '7999799979997999',
+  $__range_ms: '722_999_999',
+  $__range_s: '79_299_999',
+  $__range: '799_999',
+};
+const replacementsForBuiltInVariables: Record<string, string> = {
+  '711_999_999': '$__interval',
+  '79_999_999_999': '$__interval_ms',
+  '7999799979997999': '$__rate_interval',
+  '722_999_999': '$__range_ms',
+  '79_299_999': '$__range_s',
+  '799_999': '$__range',
+};
 
 // Create a single RegExp that matches any of the built-in variables
 // Need to escape $ as it's a special character in RegExp
-const variablePattern = builtInVariables.map((v) => v.replace(/\$/g, '\\$')).join('|');
+const variablePattern = Object.keys(builtInVariables)
+  .map((v) => v.replace(/\$/g, '\\$'))
+  .join('|');
 const builtInVariableRegex = new RegExp(variablePattern, 'g');
 
-/**
- * Pre-computed mapping of replacement strings back to their original variables
- * This avoids recreating this mapping on each function call
- */
-const builtInVariableReplacements = builtInVariables.reduce<Record<string, string>>((map, variable, idx) => {
-  map[`${idx + 1}_999_999`] = variable;
-  return map;
-}, {});
 
 // Create a pattern that matches any of the replacement strings
-const replacementPattern = Object.keys(builtInVariableReplacements).join('|');
+const replacementPattern = Object.keys(replacementsForBuiltInVariables).join('|');
 const replacementRegex = new RegExp(replacementPattern, 'g');
 
 /**
@@ -168,8 +182,7 @@ const replacementRegex = new RegExp(replacementPattern, 'g');
 export function replaceBuiltInVariable(expr: string): string {
   // Replace all occurrences at once, using a callback to determine the replacement
   return expr.replace(builtInVariableRegex, (match) => {
-    const idx = builtInVariables.indexOf(match);
-    return `${idx + 1}_999_999`;
+    return builtInVariables[match];
   });
 }
 
@@ -178,6 +191,7 @@ export function replaceBuiltInVariable(expr: string): string {
  * Reverses the transformation done by replaceBuiltInVariables
  */
 export function returnBuiltInVariable(expr: string): string {
-  // Replace all occurrences at once using the mapping
-  return expr.replace(replacementRegex, (match) => builtInVariableReplacements[match]);
+  return expr.replace(replacementRegex, (match) => {
+    return replacementsForBuiltInVariables[match];
+  });
 }

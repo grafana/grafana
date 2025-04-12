@@ -52,20 +52,20 @@ describe('replaceBuiltInVariables', () => {
   const testCases = [
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[1_999_999])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[711_999_999])',
     },
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__rate_interval])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[3_999_999])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[7999799979997999])',
     },
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__range_ms])',
-      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[4_999_999])',
+      expected: 'sum_over_time([[metric_var]]{bar="${app}"}[722_999_999])',
     },
     {
       expr: 'histogram_quantile(0.95, sum(rate(process_max_fds[$__rate_interval])) by (le)) + rate(process_max_fds[$__interval])',
       expected:
-        'histogram_quantile(0.95, sum(rate(process_max_fds[3_999_999])) by (le)) + rate(process_max_fds[1_999_999])',
+        'histogram_quantile(0.95, sum(rate(process_max_fds[7999799979997999])) by (le)) + rate(process_max_fds[711_999_999])',
     },
   ];
 
