@@ -6705,7 +6705,7 @@
         "tags": [
           "orgs"
         ],
-        "summary": "Get Organization by ID.",
+        "summary": "Get Organization by Name.",
         "operationId": "getOrgByName",
         "parameters": [
           {
@@ -6724,6 +6724,46 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Delete Organization by Name.",
+        "operationId": "deleteOrgByName",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "org_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"

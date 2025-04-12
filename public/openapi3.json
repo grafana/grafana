@@ -20772,6 +20772,48 @@
       }
     },
     "/orgs/name/{org_name}": {
+      "delete": {
+        "operationId": "deleteOrgByName",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "summary": "Delete Organization by Name.",
+        "tags": [
+          "orgs"
+        ]
+      },
       "get": {
         "operationId": "getOrgByName",
         "parameters": [
@@ -20803,7 +20845,7 @@
             "basic": []
           }
         ],
-        "summary": "Get Organization by ID.",
+        "summary": "Get Organization by Name.",
         "tags": [
           "orgs"
         ]
