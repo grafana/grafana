@@ -4,6 +4,8 @@
     "baseUrl": "./",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-o11y-ds-frontend.tsbuildinfo",
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."]
