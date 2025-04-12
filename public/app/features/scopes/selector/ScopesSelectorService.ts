@@ -203,8 +203,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return;
     }
 
-    console.log(scopes);
-
     const RECENT_SCOPES_MAX_LENGTH = 5;
 
     const recentScopes = this.getRecentScopes();
@@ -215,7 +213,16 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   public getRecentScopes = (): SelectedScope[][] => {
     const recentScopes = JSON.parse(localStorage.getItem(RECENT_SCOPES_KEY) || '[]');
     // TODO: Make type safe
-    return recentScopes.map((scopes: Scope[]) => scopes);
+    // Filter out the current selection from recent scopes to avoid duplicates
+    const filteredScopes = recentScopes.filter((scopes: SelectedScope[]) => {
+      if (scopes.length !== this.state.selectedScopes.length) {
+        return true;
+      }
+      const scopeSet = new Set(scopes.map((s) => s.scope.metadata.name));
+      return !this.state.selectedScopes.every((s) => scopeSet.has(s.scope.metadata.name));
+    });
+
+    return filteredScopes.map((scopes: SelectedScope[]) => scopes);
   };
 
   /**
