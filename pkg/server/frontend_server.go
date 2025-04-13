@@ -78,6 +78,12 @@ func (s *frontendServer) newFrontendServer(ctx context.Context) *http.Server {
 }
 
 func (s *frontendServer) handleRequest(writer http.ResponseWriter, request *http.Request) {
+	// This should:
+	// - call http://slug/api/bootdata
+	// - render index.html with the bootdata
+	// - something-something-something frontend assets
+	// - return it to the user!
+
 	s.log.Info("handling request", "method", request.Method, "url", request.URL.String())
 	htmlContent := `<!DOCTYPE html>
 <html>
