@@ -9,20 +9,24 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type frontendServer struct {
 	*services.BasicService
-	cfg      *setting.Cfg
-	httpServ *http.Server
-	log      log.Logger
-	errChan  chan error
+	cfg          *setting.Cfg
+	httpServ     *http.Server
+	log          log.Logger
+	errChan      chan error
+	promGatherer prometheus.Gatherer
 }
 
-func NewFrontendServer(cfg *setting.Cfg) (*frontendServer, error) {
+func NewFrontendServer(cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*frontendServer, error) {
 	s := &frontendServer{
-		cfg: cfg,
-		log: log.New("frontend-server"),
+		cfg:          cfg,
+		log:          log.New("frontend-server"),
+		promGatherer: promGatherer,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -59,6 +63,7 @@ func (s *frontendServer) newFrontendServer(ctx context.Context) *http.Server {
 	s.log.Info("starting frontend server", "addr", ":"+s.cfg.HTTPPort)
 
 	router := http.NewServeMux()
+	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
 	router.HandleFunc("/", s.handleRequest)
 
 	server := &http.Server{
