@@ -8,6 +8,8 @@ import (
 	jobs "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	mock "github.com/stretchr/testify/mock"
 
+	resource "github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	resources "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -22,6 +24,108 @@ type MockLegacyFoldersMigrator_Expecter struct {
 
 func (_m *MockLegacyFoldersMigrator) EXPECT() *MockLegacyFoldersMigrator_Expecter {
 	return &MockLegacyFoldersMigrator_Expecter{mock: &_m.Mock}
+}
+
+// Close provides a mock function with no fields
+func (_m *MockLegacyFoldersMigrator) Close() error {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Close")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockLegacyFoldersMigrator_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
+type MockLegacyFoldersMigrator_Close_Call struct {
+	*mock.Call
+}
+
+// Close is a helper method to define mock.On call
+func (_e *MockLegacyFoldersMigrator_Expecter) Close() *MockLegacyFoldersMigrator_Close_Call {
+	return &MockLegacyFoldersMigrator_Close_Call{Call: _e.mock.On("Close")}
+}
+
+func (_c *MockLegacyFoldersMigrator_Close_Call) Run(run func()) *MockLegacyFoldersMigrator_Close_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_Close_Call) Return(_a0 error) *MockLegacyFoldersMigrator_Close_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_Close_Call) RunAndReturn(run func() error) *MockLegacyFoldersMigrator_Close_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CloseWithResults provides a mock function with no fields
+func (_m *MockLegacyFoldersMigrator) CloseWithResults() (*resource.BulkResponse, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CloseWithResults")
+	}
+
+	var r0 *resource.BulkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*resource.BulkResponse, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *resource.BulkResponse); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resource.BulkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockLegacyFoldersMigrator_CloseWithResults_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CloseWithResults'
+type MockLegacyFoldersMigrator_CloseWithResults_Call struct {
+	*mock.Call
+}
+
+// CloseWithResults is a helper method to define mock.On call
+func (_e *MockLegacyFoldersMigrator_Expecter) CloseWithResults() *MockLegacyFoldersMigrator_CloseWithResults_Call {
+	return &MockLegacyFoldersMigrator_CloseWithResults_Call{Call: _e.mock.On("CloseWithResults")}
+}
+
+func (_c *MockLegacyFoldersMigrator_CloseWithResults_Call) Run(run func()) *MockLegacyFoldersMigrator_CloseWithResults_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_CloseWithResults_Call) Return(_a0 *resource.BulkResponse, _a1 error) *MockLegacyFoldersMigrator_CloseWithResults_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_CloseWithResults_Call) RunAndReturn(run func() (*resource.BulkResponse, error)) *MockLegacyFoldersMigrator_CloseWithResults_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Migrate provides a mock function with given fields: ctx, namespace, repositoryResources, progress
@@ -69,6 +173,54 @@ func (_c *MockLegacyFoldersMigrator_Migrate_Call) Return(_a0 error) *MockLegacyF
 }
 
 func (_c *MockLegacyFoldersMigrator_Migrate_Call) RunAndReturn(run func(context.Context, string, resources.RepositoryResources, jobs.JobProgressRecorder) error) *MockLegacyFoldersMigrator_Migrate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Write provides a mock function with given fields: ctx, key, value
+func (_m *MockLegacyFoldersMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+	ret := _m.Called(ctx, key, value)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Write")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *resource.ResourceKey, []byte) error); ok {
+		r0 = rf(ctx, key, value)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockLegacyFoldersMigrator_Write_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Write'
+type MockLegacyFoldersMigrator_Write_Call struct {
+	*mock.Call
+}
+
+// Write is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key *resource.ResourceKey
+//   - value []byte
+func (_e *MockLegacyFoldersMigrator_Expecter) Write(ctx interface{}, key interface{}, value interface{}) *MockLegacyFoldersMigrator_Write_Call {
+	return &MockLegacyFoldersMigrator_Write_Call{Call: _e.mock.On("Write", ctx, key, value)}
+}
+
+func (_c *MockLegacyFoldersMigrator_Write_Call) Run(run func(ctx context.Context, key *resource.ResourceKey, value []byte)) *MockLegacyFoldersMigrator_Write_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*resource.ResourceKey), args[2].([]byte))
+	})
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_Write_Call) Return(_a0 error) *MockLegacyFoldersMigrator_Write_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockLegacyFoldersMigrator_Write_Call) RunAndReturn(run func(context.Context, *resource.ResourceKey, []byte) error) *MockLegacyFoldersMigrator_Write_Call {
 	_c.Call.Return(run)
 	return _c
 }

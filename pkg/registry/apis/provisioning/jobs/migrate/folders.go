@@ -20,10 +20,9 @@ const maxFolders = 10000
 
 //go:generate mockery --name LegacyFoldersMigrator --structname MockLegacyFoldersMigrator --inpackage --filename mock_legacy_folders_migrator.go --with-expecter
 type LegacyFoldersMigrator interface {
+	resource.BulkResourceWriter
 	Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
 }
-
-var _ resource.BulkResourceWriter = (*legacyFoldersMigrator)(nil)
 
 type legacyFoldersMigrator struct {
 	tree           resources.FolderTree
