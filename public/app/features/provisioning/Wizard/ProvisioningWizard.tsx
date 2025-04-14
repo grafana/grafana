@@ -85,6 +85,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     trigger,
     setError,
     formState: { isDirty },
+    handleSubmit,
   } = methods;
 
   const repoName = watch('repositoryName');
@@ -231,7 +232,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       <Stack gap={6} direction="row" alignItems="flex-start">
         <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
         <div className={styles.divider} />
-        <form className={styles.form}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
           <Stack direction="column">
             <Box marginBottom={2}>
@@ -267,7 +268,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
                   ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
                   : t('provisioning.wizard-content.button-cancel', 'Cancel')}
               </Button>
-              <Button onClick={onSubmit} disabled={isNextButtonDisabled()}>
+              <Button type={'submit'} disabled={isNextButtonDisabled()}>
                 {isSubmitting
                   ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
                   : getNextButtonText(activeStep)}
