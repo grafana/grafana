@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 type subParentsREST struct {
@@ -67,10 +67,14 @@ func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *f
 	}
 	for folder != nil {
 		parent := getParent(folder)
+		descr := ""
+		if folder.Spec.Description != nil {
+			descr = *folder.Spec.Description
+		}
 		info.Items = append(info.Items, folders.FolderInfo{
 			Name:        folder.Name,
 			Title:       folder.Spec.Title,
-			Description: folder.Spec.Description,
+			Description: descr,
 			Parent:      parent,
 		})
 		if parent == "" {

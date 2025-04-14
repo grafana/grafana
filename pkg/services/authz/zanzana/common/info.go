@@ -1,10 +1,10 @@
 package common
 
 import (
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )

@@ -1273,10 +1273,10 @@ github.com/grafana/grafana-plugin-sdk-go v0.275.0 h1:icGmZG91lVqIo79w/pSki6N44d3
 github.com/grafana/grafana-plugin-sdk-go v0.275.0/go.mod h1:mO9LJqdXDh5JpO/xIdPAeg5LdThgQ06Y/SLpXDWKw2c=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 h1:wdJy5x6M7auWDjUIubqhfZuZvphUMyjD7hxB3RqV4aE=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043/go.mod h1:jwYig4wlnLLq4HQKDpS95nDeZi4+DmcD17KYYS1gMJg=
+github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b h1:n571OboxBgEnhAFnnc/soawXRsTsQYOaFC6Mn+iWPyI=
+github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b/go.mod h1:l7SqBgPw4c9iLCq/tVDAbrbsBdAHPIDF8xk0CdGHD/s=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:9qOLpC21AmXZqZ6rUhrBWl2mVqS3CzV53pzw0BCuHt0=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
-github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991 h1:3gcAHB3K1tSJ3jPY7EYm4G/TBimwcETyZVFQDsx18iA=
-github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991/go.mod h1:Lmze5IWgV2qTGY0l1JQGRXpWoNGfeGX/HXdc8ByMfE4=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 h1:wSqgLKFwI7fyeqf3djRXGClBLb/UPjZ4XPm/UsKFDB0=

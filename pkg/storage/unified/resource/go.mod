@@ -3,12 +3,14 @@ module github.com/grafana/grafana/pkg/storage/unified/resource
 go 1.24.2
 
 replace (
+	github.com/grafana/grafana/apps/folder => ../../../../apps/folder
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 )
 
 require (
 	github.com/fullstorydev/grpchan v1.1.1
+	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
@@ -16,7 +18,8 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.35.1
 	github.com/grafana/grafana-plugin-sdk-go v0.275.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0
+	github.com/grafana/grafana/apps/folder v0.0.0-20250402082028-6781612335d9
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250414114055-2b279efe15bf
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -29,11 +32,6 @@ require (
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
 	k8s.io/apimachinery v0.32.3
-)
-
-require (
-	github.com/go-jose/go-jose/v3 v3.0.4
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991
 )
 
 require (
