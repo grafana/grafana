@@ -165,7 +165,7 @@ gen-cuev2: ## Do all CUE code generation
 # For now, we want to use an explicit list of apps to generate code for.
 #
 # APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
-APPS_DIRS := ./apps/dashboard
+APPS_DIRS := ./apps/dashboard ./apps/folder
 
 .PHONY: gen-apps
 gen-apps: ## Generate code for Grafana App SDK apps
