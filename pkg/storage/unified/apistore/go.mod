@@ -210,7 +210,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.276.1-0.20250414065433-b1fc73806300 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.276.1-0.20250414091719-8edaf69b826d // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
 	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
