@@ -22,7 +22,7 @@ require (
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // @grafana/identity-access-team
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // @grafana/grafana-search-and-storage
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
+	github.com/Masterminds/semver/v3 v3.3.1 // @grafana/grafana-developer-enablement-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
 	github.com/ProtonMail/go-crypto v1.1.6 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
@@ -182,10 +182,10 @@ require (
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.12.0 // @grafana/alerting-backend
 	golang.org/x/text v0.23.0 // @grafana/grafana-backend-group
-	golang.org/x/time v0.9.0 // @grafana/grafana-backend-group
+	golang.org/x/time v0.10.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.31.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
-	google.golang.org/api v0.220.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.71.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
@@ -231,7 +231,7 @@ require (
 require (
 	cel.dev/expr v0.19.1 // indirect
 	cloud.google.com/go v0.118.2 // indirect
-	cloud.google.com/go/auth v0.14.1 // indirect
+	cloud.google.com/go/auth v0.15.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.3.1 // indirect
@@ -576,6 +576,8 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+require github.com/grafana/grafana/pkg/build v0.0.0-20250411101732-9b6021c49049
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
