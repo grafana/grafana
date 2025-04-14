@@ -67,7 +67,10 @@ export function StoredNotifications() {
     <div className={styles.wrapper}>
       <Alert
         severity="info"
-        title="This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
+        title={t(
+          'notifications.stored-notifications.title-alert',
+          'This page displays past errors and warnings. Once dismissed, they cannot be retrieved.'
+        )}
       />
       <div className={styles.topRow}>
         <Checkbox

@@ -217,7 +217,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         </Field>
         <Field
           label={t('dashboard.annotation-settings-edit.label-hidden', 'Hidden')}
-          description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
+          description={t(
+            'dashboard.annotation-settings-edit.description-hidden',
+            'Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.'
+          )}
         >
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>

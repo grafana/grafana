@@ -61,7 +61,13 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (error) {
     return (
       <RuleViewerLayout title={pageTitle}>
-        <Alert title={`Failed to load rules from ${sourceName}`}>
+        <Alert
+          title={t(
+            'alerting.redirect-to-rule-viewer.title-failed-to-load',
+            'Failed to load rules from {{sourceName}}',
+            { sourceName }
+          )}
+        >
           {isFetchError(error) && (
             <details className={styles.errorMessage}>
               {error.message}

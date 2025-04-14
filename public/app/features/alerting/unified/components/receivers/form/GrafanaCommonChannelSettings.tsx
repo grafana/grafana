@@ -20,7 +20,10 @@ export const GrafanaCommonChannelSettings = ({
             'alerting.grafana-common-channel-settings.label-disable-resolved-message',
             'Disable resolved message'
           )}
-          description="Disable the resolve message [OK] that is sent when alerting state returns to false"
+          description={t(
+            'alerting.grafana-common-channel-settings.description-disable-resolved-message',
+            'Disable the resolve message [OK] that is sent when alerting state returns to false'
+          )}
           disabled={readOnly}
         />
       </Field>
