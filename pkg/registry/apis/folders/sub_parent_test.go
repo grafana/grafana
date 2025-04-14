@@ -26,7 +26,7 @@ func TestSubParent(t *testing.T) {
 					Name:        "test",
 					Annotations: map[string]string{},
 				},
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "some tittle",
 				},
 			},
@@ -39,7 +39,7 @@ func TestSubParent(t *testing.T) {
 					Name:        "test",
 					Annotations: map[string]string{"grafana.app/folder": "parent-test"},
 				},
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "some tittle",
 				},
 			},
@@ -49,7 +49,7 @@ func TestSubParent(t *testing.T) {
 						Name:        "parent-test",
 						Annotations: map[string]string{},
 					},
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "some other tittle",
 					},
 				}, nil).Once()
