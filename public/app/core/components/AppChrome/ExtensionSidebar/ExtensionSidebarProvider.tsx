@@ -124,8 +124,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       return;
     }
 
-    // handler to open the extension sidebar from plugins. this is done with the `helpers.openExtensionSidebar` function
-    const openExtensionSidebarHandler = (event: OpenExtensionSidebarEvent) => {
+    // handler to open the extension sidebar from plugins. this is done with the `helpers.openSidebar` function
+    const openSidebarHandler = (event: OpenExtensionSidebarEvent) => {
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
@@ -138,7 +138,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
-    const subscription = appEvents.subscribe(OpenExtensionSidebarEvent, openExtensionSidebarHandler);
+    const subscription = appEvents.subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
     return () => {
       subscription.unsubscribe();
     };

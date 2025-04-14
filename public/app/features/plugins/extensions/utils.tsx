@@ -375,7 +375,7 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
-        openExtensionSidebar: (componentTitle, context) => {
+        openSidebar: (componentTitle, context) => {
           appEvents.publish(
             new OpenExtensionSidebarEvent({
               props: context,
