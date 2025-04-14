@@ -15,28 +15,28 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions":         schema_pkg_apis_dashboard_v1alpha1_AnnotationActions(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission":      schema_pkg_apis_dashboard_v1alpha1_AnnotationPermission(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard":                 schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":           schema_pkg_apis_dashboard_v1alpha1_DashboardAccess(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus": schema_pkg_apis_dashboard_v1alpha1_DashboardConversionStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v1alpha1_DashboardJSONCodec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardList":             schema_pkg_apis_dashboard_v1alpha1_DashboardList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":         schema_pkg_apis_dashboard_v1alpha1_DashboardMetadata(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus":           schema_pkg_apis_dashboard_v1alpha1_DashboardStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo":      schema_pkg_apis_dashboard_v1alpha1_DashboardVersionInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList":      schema_pkg_apis_dashboard_v1alpha1_DashboardVersionList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardWithAccessInfo":   schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":              schema_pkg_apis_dashboard_v1alpha1_LibraryPanel(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":          schema_pkg_apis_dashboard_v1alpha1_LibraryPanelList(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":          schema_pkg_apis_dashboard_v1alpha1_LibraryPanelSpec(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":        schema_pkg_apis_dashboard_v1alpha1_LibraryPanelStatus(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions":      schema_pkg_apis_dashboard_v1alpha1_VersionsQueryOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationActions":         schema_pkg_apis_dashboard_v1beta1_AnnotationActions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission":      schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard":                 schema_pkg_apis_dashboard_v1beta1_Dashboard(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":           schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus": schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardList":             schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardMetadata":         schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardStatus":           schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionInfo":      schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardVersionList":      schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardWithAccessInfo":   schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanel":              schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelList":          schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelSpec":          schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.LibraryPanelStatus":        schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.VersionsQueryOptions":      schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":                  v0alpha1.Unstructured{}.OpenAPIDefinition(),
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_AnnotationActions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_AnnotationActions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -70,7 +70,7 @@ func schema_pkg_apis_dashboard_v1alpha1_AnnotationActions(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_AnnotationPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -97,7 +97,7 @@ func schema_pkg_apis_dashboard_v1alpha1_AnnotationPermission(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_Dashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -144,7 +144,7 @@ func schema_pkg_apis_dashboard_v1alpha1_Dashboard(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardAccess(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -214,7 +214,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardAccess(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -252,7 +252,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardConversionStatus(ref common.Ref
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -263,7 +263,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardJSONCodec(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -311,7 +311,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardList(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -407,7 +407,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardMetadata(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -427,7 +427,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardStatus(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardVersionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardVersionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -477,7 +477,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardVersionInfo(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardVersionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -524,7 +524,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardVersionList(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_DashboardWithAccessInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -578,7 +578,7 @@ func schema_pkg_apis_dashboard_v1alpha1_DashboardWithAccessInfo(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_LibraryPanel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_LibraryPanel(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -627,7 +627,7 @@ func schema_pkg_apis_dashboard_v1alpha1_LibraryPanel(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -674,7 +674,7 @@ func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelList(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_LibraryPanelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -754,7 +754,7 @@ func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelSpec(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_LibraryPanelStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -789,7 +789,7 @@ func schema_pkg_apis_dashboard_v1alpha1_LibraryPanelStatus(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_dashboard_v1alpha1_VersionsQueryOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v1beta1_VersionsQueryOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
