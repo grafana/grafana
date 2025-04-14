@@ -105,10 +105,6 @@ export async function initCoreTranslations({
   };
 }
 
-export function getLanguage() {
-  return i18nInstance?.language || DEFAULT_LANGUAGE;
-}
-
 export function getResolvedLanguage() {
   return i18nInstance?.resolvedLanguage || DEFAULT_LANGUAGE;
 }

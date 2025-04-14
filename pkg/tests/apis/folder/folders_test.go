@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 
 var gvr = schema.GroupVersionResource{
 	Group:    "folder.grafana.app",
-	Version:  "v0alpha1",
+	Version:  "v1",
 	Resource: "folders",
 }
 
@@ -55,7 +55,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v0alpha1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -64,7 +64,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v0alpha1",
+			"groupVersion": "folder.grafana.app/v1",
 			"resources": [
 			  {
 				"name": "folders",
@@ -118,7 +118,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
 				},
 			},
@@ -134,7 +134,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
 			},
@@ -150,7 +150,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
 			},
@@ -167,7 +167,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
 			},
@@ -184,7 +184,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
 			},
@@ -201,7 +201,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
+				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
 			},
@@ -238,7 +238,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v0alpha1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
@@ -571,7 +571,7 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: grafanarest.Mode1,
 					},
 				},
@@ -673,7 +673,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: grafanarest.Mode1,
 					},
 				},
@@ -850,7 +850,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: grafanarest.Mode1,
 					},
 				},
@@ -1020,7 +1020,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					DisableAnonymous:     true,
 					APIServerStorageType: "unified",
 					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folderv0alpha1.RESOURCEGROUP: {
+						folders.RESOURCEGROUP: {
 							DualWriterMode: modeDw,
 						},
 					},

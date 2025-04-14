@@ -100,6 +100,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardStatus":                                                                                                                                                              schema_pkg_apis_dashboard_v2alpha1_DashboardStatus(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardStringOrArrayOfString":                                                                                                                                               schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrArrayOfString(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardStringOrFloat64":                                                                                                                                                     schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrFloat64(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabRepeatOptions":                                                                                                                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardTabRepeatOptions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutKind":                                                                                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutSpec":                                                                                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabsLayoutTabKind":                                                                                                                                                   schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabKind(ref),
@@ -3677,8 +3678,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"annotations": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Title of dashboard.",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -3921,6 +3921,33 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardStringOrFloat64(ref common.Refe
 	}
 }
 
+func schema_pkg_apis_dashboard_v2alpha1_DashboardTabRepeatOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"mode", "value"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4027,12 +4054,17 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardTabsLayoutTabSpec(ref common.Re
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind"),
 						},
 					},
+					"repeat": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabRepeatOptions"),
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardTabRepeatOptions"},
 	}
 }
 

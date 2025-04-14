@@ -9,18 +9,18 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestConversionMatrixExist(t *testing.T) {
 	versions := []v1.Object{
-		&v0alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
-		&v1alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
-		&v2alpha1.Dashboard{Spec: v2alpha1.DashboardSpec{Title: "dashboardV2"}},
+		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
+		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
+		&dashv2.Dashboard{Spec: dashv2.DashboardSpec{Title: "dashboardV2"}},
 	}
 
 	scheme := runtime.NewScheme()
@@ -47,7 +47,7 @@ func TestConversionMatrixExist(t *testing.T) {
 }
 
 func TestDeepCopyValid(t *testing.T) {
-	dash1 := &v0alpha1.Dashboard{}
+	dash1 := &dashv0.Dashboard{}
 	meta1, err := utils.MetaAccessor(dash1)
 	require.NoError(t, err)
 	meta1.SetFolder("f1")

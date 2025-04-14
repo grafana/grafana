@@ -207,14 +207,6 @@ var (
 			Owner:        grafanaPartnerPluginsSquad,
 		},
 		{
-			Name:         "prometheusRunQueriesInParallel",
-			Description:  "Enables running Prometheus queries in parallel",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaOSSBigTent,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
@@ -564,6 +556,25 @@ var (
 		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV1",
+			Description: "Disable schema validation for dashboards/v1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV2",
+			Description: "Disable schema validation for dashboards/v2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardSchemaValidationLogging",
+			Description: "Log schema validation errors so they can be analyzed later",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
@@ -749,14 +760,6 @@ var (
 			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "exploreMetrics",
-			Description:  "Enables the new Grafana Metrics Drilldown core app",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1544,15 +1547,6 @@ var (
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaObservabilityMetricsSquad,
-			Expression:      "true",
-			FrontendOnly:    false,
-			RequiresRestart: true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",

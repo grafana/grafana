@@ -19,10 +19,12 @@ type CDKBucket interface {
 	ListPage(context.Context, []byte, int, *blob.ListOptions) ([]*blob.ListObject, []byte, error)
 	WriteAll(context.Context, string, []byte, *blob.WriterOptions) error
 	ReadAll(context.Context, string) ([]byte, error)
+	Delete(context.Context, string) error
 	SignedURL(context.Context, string, *blob.SignedURLOptions) (string, error)
 }
 
 var _ CDKBucket = (*blob.Bucket)(nil)
+var _ CDKBucket = (*InstrumentedBucket)(nil)
 
 const (
 	cdkBucketOperationLabel = "operation"
@@ -157,6 +159,29 @@ func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte,
 	b.requests.With(labels).Inc()
 	b.latency.With(labels).Observe(end)
 	return err
+}
+
+func (b *InstrumentedBucket) Delete(ctx context.Context, key string) error {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Delete")
+	defer span.End()
+	start := time.Now()
+	err := b.bucket.Delete(ctx, key)
+	end := time.Since(start).Seconds()
+	labels := prometheus.Labels{
+		cdkBucketOperationLabel: "Delete",
+	}
+	if err != nil {
+		labels[cdkBucketStatusLabel] = cdkBucketStatusError
+		b.requests.With(labels).Inc()
+		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
+	b.requests.With(labels).Inc()
+	b.latency.With(labels).Observe(end)
+	return nil
 }
 
 func (b *InstrumentedBucket) SignedURL(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {

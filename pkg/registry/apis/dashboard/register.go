@@ -20,9 +20,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -48,7 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -113,7 +113,7 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folderv0alpha1.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter)
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 
@@ -146,28 +146,28 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2alpha1 as the default API version.
 		return []schema.GroupVersion{
-			v2alpha1.DashboardResourceInfo.GroupVersion(),
-			v0alpha1.DashboardResourceInfo.GroupVersion(),
-			v1alpha1.DashboardResourceInfo.GroupVersion(),
+			dashv2.DashboardResourceInfo.GroupVersion(),
+			dashv0.DashboardResourceInfo.GroupVersion(),
+			dashv1.DashboardResourceInfo.GroupVersion(),
 		}
 	}
 
 	return []schema.GroupVersion{
-		v1alpha1.DashboardResourceInfo.GroupVersion(),
-		v0alpha1.DashboardResourceInfo.GroupVersion(),
-		v2alpha1.DashboardResourceInfo.GroupVersion(),
+		dashv1.DashboardResourceInfo.GroupVersion(),
+		dashv0.DashboardResourceInfo.GroupVersion(),
+		dashv2.DashboardResourceInfo.GroupVersion(),
 	}
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	b.scheme = scheme
-	if err := v0alpha1.AddToScheme(scheme); err != nil {
+	if err := dashv0.AddToScheme(scheme); err != nil {
 		return err
 	}
-	if err := v1alpha1.AddToScheme(scheme); err != nil {
+	if err := dashv1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	if err := v2alpha1.AddToScheme(scheme); err != nil {
+	if err := dashv2.AddToScheme(scheme); err != nil {
 		return err
 	}
 
@@ -254,12 +254,12 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, accessor.GetName(), accessor.GetMessage()); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	id, err := identity.GetRequester(ctx)
@@ -270,7 +270,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
 		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return err
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), accessor.GetFolder())
 		}
 	}
 
@@ -288,7 +288,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 			return err
 		}
 		if quotaReached {
-			return dashboards.ErrQuotaReached
+			return apierrors.NewForbidden(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(), dashboards.ErrQuotaReached)
 		}
 	}
 
@@ -324,19 +324,19 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	// Validate folder existence if specified and changed
 	if !a.IsDryRun() && newAccessor.GetFolder() != "" && newAccessor.GetFolder() != oldAccessor.GetFolder() {
 		if err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
-			return err
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
 		}
 	}
 
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	allowOverwrite := false // TODO: Add support for overwrite flag
@@ -345,7 +345,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		if allowOverwrite {
 			newAccessor.SetGeneration(oldAccessor.GetGeneration())
 		} else {
-			return dashboards.ErrDashboardVersionMismatch
+			return apierrors.NewBadRequest(dashboards.ErrDashboardVersionMismatch.Error())
 		}
 	}
 
@@ -370,13 +370,13 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 
 	// Extract properties based on the object's type
 	switch d := obj.(type) {
-	case *v0alpha1.Dashboard:
+	case *dashv0.Dashboard:
 		title = d.Spec.GetNestedString(dashboardSpecTitle)
 		refresh = d.Spec.GetNestedString(dashboardSpecRefreshInterval)
-	case *v1alpha1.Dashboard:
+	case *dashv1.Dashboard:
 		title = d.Spec.GetNestedString(dashboardSpecTitle)
 		refresh = d.Spec.GetNestedString(dashboardSpecRefreshInterval)
-	case *v2alpha1.Dashboard:
+	case *dashv2.Dashboard:
 		title = d.Spec.Title
 		refresh = d.Spec.TimeSettings.AutoRefresh
 	default:
@@ -401,15 +401,15 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
 	}
-	opts.StorageOptsRegister(v0alpha1.DashboardResourceInfo.GroupResource(), storageOpts)
+	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		v0alpha1.DashboardResourceInfo,
-		&v0alpha1.LibraryPanelResourceInfo,
+		dashv0.DashboardResourceInfo,
+		&dashv0.LibraryPanelResourceInfo,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
-			dto := &v0alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*v0alpha1.Dashboard)
+			dto := &dashv0.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv0.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -423,11 +423,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// v1alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		v1alpha1.DashboardResourceInfo,
+		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
-			dto := &v1alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*v1alpha1.Dashboard)
+			dto := &dashv1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -441,11 +441,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// v2alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
-		v2alpha1.DashboardResourceInfo,
+		dashv2.DashboardResourceInfo,
 		nil, // do not register library panel
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
-			dto := &v2alpha1.DashboardWithAccessInfo{}
-			dash, ok := obj.(*v2alpha1.Dashboard)
+			dto := &dashv2.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv2.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
 			}
@@ -515,9 +515,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := v0alpha1.GetOpenAPIDefinitions(ref)
-		maps.Copy(defs, v1alpha1.GetOpenAPIDefinitions(ref))
-		maps.Copy(defs, v2alpha1.GetOpenAPIDefinitions(ref))
+		defs := dashv0.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, dashv2.GetOpenAPIDefinitions(ref))
 		return defs
 	}
 }
@@ -528,7 +528,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	if gv.Version != v0alpha1.VERSION {
+	if gv.Version != dashv0.VERSION {
 		return nil // Only show the custom routes for v0
 	}
 

@@ -132,11 +132,6 @@ export interface FeatureToggles {
   */
   influxdbRunQueriesInParallel?: boolean;
   /**
-  * Enables running Prometheus queries in parallel
-  * @default true
-  */
-  prometheusRunQueriesInParallel?: boolean;
-  /**
   * Changes logs responses from Loki to be compliant with the dataplane specification.
   */
   lokiLogsDataplane?: boolean;
@@ -336,8 +331,21 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   /**
   * Route the folder and dashboard service requests to k8s
+  * @default true
   */
   kubernetesClientDashboardsFolders?: boolean;
+  /**
+  * Disable schema validation for dashboards/v1
+  */
+  dashboardDisableSchemaValidationV1?: boolean;
+  /**
+  * Disable schema validation for dashboards/v2
+  */
+  dashboardDisableSchemaValidationV2?: boolean;
+  /**
+  * Log schema validation errors so they can be analyzed later
+  */
+  dashboardSchemaValidationLogging?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -447,11 +455,6 @@ export interface FeatureToggles {
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables the new Grafana Metrics Drilldown core app
-  * @default true
-  */
-  exploreMetrics?: boolean;
   /**
   * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
   * @default true
@@ -909,11 +912,6 @@ export interface FeatureToggles {
   * Enables less memory intensive Elasticsearch result parsing
   */
   elasticsearchImprovedParsing?: boolean;
-  /**
-  * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-  * @default true
-  */
-  exploreMetricsUseExternalAppPlugin?: boolean;
   /**
   * Shows defined connections for a data source in the plugins detail page
   */
