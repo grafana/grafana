@@ -278,7 +278,11 @@ func buildState(database contracts.Database) *state {
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	secrets := make([]secret, 0)
 
