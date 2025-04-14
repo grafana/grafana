@@ -129,6 +129,8 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
    ![An updates list of resources with snapshots built after attempting to upload them to Grafana Cloud](/media/docs/grafana/screenshot-grafana-12-updated-snapshot-page.png)
 
+   You can also sort resources at this stage. Click **Name** to sort resources alphabetically, click **Type** to group and sort by resource type, and click **Status** to group and sort by resources uploaded to cloud successfully or that experienced errors.
+
 1. Review error details for any issues that need manual resolution.
 
 ## Snapshots created by the migration assistant
