@@ -119,7 +119,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	var k *keeperDB
+	var keeper *keeperDB
 
 	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
@@ -140,16 +140,16 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan keeper row: %w", err)
 		}
-		k = row
+		keeper = row
 	}
 
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
-	if k == nil {
+	if keeper == nil {
 		return nil, contracts.ErrKeeperNotFound
 	}
-	return k, nil
+	return keeper, nil
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
