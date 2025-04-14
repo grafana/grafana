@@ -121,34 +121,30 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 
 	var k *keeperDB
 
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		res, err := sess.Query(ctx, q, req.GetArgs()...)
-		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
-		}
-
-		defer func() { _ = res.Close() }()
-
-		if res.Next() {
-			row := &keeperDB{}
-			err := res.Scan(&row.GUID,
-				&row.Name, &row.Namespace, &row.Annotations,
-				&row.Labels,
-				&row.Created, &row.CreatedBy,
-				&row.Updated, &row.UpdatedBy,
-				&row.Title, &row.Type, &row.Payload,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to scan keeper row: %w", err)
-			}
-			k = row
-
-			return nil
-		}
-		return nil
-	})
+	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return nil, fmt.Errorf("failed to get row: %w", err)
+	}
+
+	defer func() { _ = res.Close() }()
+
+	if res.Next() {
+		row := &keeperDB{}
+		err := res.Scan(&row.GUID,
+			&row.Name, &row.Namespace, &row.Annotations,
+			&row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Title, &row.Type, &row.Payload,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan keeper row: %w", err)
+		}
+		k = row
+	}
+
+	if res.Err() != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 	if k == nil {
 		return nil, contracts.ErrKeeperNotFound
