@@ -194,7 +194,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = c.ExecuteMultisearch(&MultiSearchRequest{Requests: []*SearchRequest{{}}})
-		assert.Equal(t, "failed to get indices from index pattern. invalid index pattern index-with-no-pattern. Specify an index with a pattern or select 'No pattern'", err.Error())
+		assert.Equal(t, "failed to get indices from index pattern. invalid index pattern index-with-no-pattern. Specify an index with a time pattern or select 'No pattern'", err.Error())
 		require.True(t, backend.IsDownstreamError(err))
 	})
 

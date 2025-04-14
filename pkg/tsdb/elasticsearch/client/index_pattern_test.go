@@ -121,7 +121,7 @@ func TestIndexPattern(t *testing.T) {
 		indices, err := ip.GetIndices(timeRange)
 		assert.Equal(t, indices, []string{})
 		require.Error(t, err)
-		assert.Equal(t, err.Error(), "invalid index pattern kibana-sample-data-logs. Specify an index with a pattern or select 'No pattern'")
+		assert.Equal(t, err.Error(), "invalid index pattern kibana-sample-data-logs. Specify an index with a time pattern or select 'No pattern'")
 	})
 
 	t.Run("Hourly interval", func(t *testing.T) {
