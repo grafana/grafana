@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -277,9 +277,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 type="button"
                 onClick={handleSubmit((values) => submit(values), onInvalid)}
                 disabled={isSubmitting}
+                icon={isSubmitting ? 'spinner' : undefined}
               >
-                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save</Trans>
+                <Trans i18nKey="alerting.alert-rule-form.action-buttons.save-alert-rule">Save alert rule</Trans>
               </Button>
 
               <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation}>
@@ -385,9 +385,6 @@ function storeInLocalStorageValues(values: RuleFormValues) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSpinner: css({
-    marginRight: theme.spacing(1),
-  }),
   form: css({
     width: '100%',
     height: '100%',

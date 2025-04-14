@@ -376,7 +376,7 @@
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
-        "save": "Save"
+        "save-alert-rule": "Save alert rule"
       }
     },
     "alert-rule-name-and-metric": {
