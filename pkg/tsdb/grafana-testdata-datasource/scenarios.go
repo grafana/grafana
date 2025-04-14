@@ -758,6 +758,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			"customStat": 10,
 		},
 	})
+	frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 	return frame
 }
