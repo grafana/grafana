@@ -122,7 +122,7 @@ const ServiceInfo = () => {
           title={t('admin.service-info.title-unlimited-expert-support', 'Unlimited Expert Support')}
           image="public/img/licensing/customer_support.svg"
         >
-          <Trans i18nKey="admin.service-info.year-round-support">24 x 7 x 365 support via</Trans>
+          <Trans i18nKey="admin.service-info.year-round-support">24 × 7 × 365 support via</Trans>
           <List nested={true}>
             <Item title={t('admin.service-info.title-email', 'Email')} />
             <Item title={t('admin.service-info.title-private-slack-channel', 'Private Slack channel')} />

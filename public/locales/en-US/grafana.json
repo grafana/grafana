@@ -200,7 +200,7 @@
       "title-phone": "Phone",
       "title-private-slack-channel": "Private Slack channel",
       "title-unlimited-expert-support": "Unlimited Expert Support",
-      "year-round-support": "24 x 7 x 365 support via"
+      "year-round-support": "24 × 7 × 365 support via"
     },
     "settings": {
       "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
