@@ -1,0 +1,127 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "nodeGraph"
+//  }
+//  Name: test_edges
+//  Dimensions: 4 Fields by 9 Rows
+//  +----------------------------------+-------------------+-------------------+----------------+
+//  | Name: id                         | Name: source      | Name: target      | Name: mainstat |
+//  | Labels:                          | Labels:           | Labels:           | Labels:        |
+//  | Type: []string                   | Type: []string    | Type: []string    | Type: []int64  |
+//  +----------------------------------+-------------------+-------------------+----------------+
+//  | frontend--auth-service           | frontend          | auth-service      | 150            |
+//  | frontend--api-gateway            | frontend          | api-gateway       | 300            |
+//  | api-gateway--user-service        | api-gateway       | user-service      | 200            |
+//  | api-gateway--order-service       | api-gateway       | order-service     | 100            |
+//  | order-service--payment-service   | order-service     | payment-service   | 80             |
+//  | order-service--inventory-service | order-service     | inventory-service | 90             |
+//  | user-service--database           | user-service      | database          | 500            |
+//  | payment-service--database        | payment-service   | database          | 200            |
+//  | inventory-service--database      | inventory-service | database          | 300            |
+//  +----------------------------------+-------------------+-------------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test_edges",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "nodeGraph"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "source",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "target",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "mainstat",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64"
+            },
+            "config": {
+              "displayName": "Call count"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "frontend--auth-service",
+            "frontend--api-gateway",
+            "api-gateway--user-service",
+            "api-gateway--order-service",
+            "order-service--payment-service",
+            "order-service--inventory-service",
+            "user-service--database",
+            "payment-service--database",
+            "inventory-service--database"
+          ],
+          [
+            "frontend",
+            "frontend",
+            "api-gateway",
+            "api-gateway",
+            "order-service",
+            "order-service",
+            "user-service",
+            "payment-service",
+            "inventory-service"
+          ],
+          [
+            "auth-service",
+            "api-gateway",
+            "user-service",
+            "order-service",
+            "payment-service",
+            "inventory-service",
+            "database",
+            "database",
+            "database"
+          ],
+          [
+            150,
+            300,
+            200,
+            100,
+            80,
+            90,
+            500,
+            200,
+            300
+          ]
+        ]
+      }
+    }
+  ]
+}
