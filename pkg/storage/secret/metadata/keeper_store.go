@@ -409,7 +409,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("list template %q: %w", qKeeper, err)
 	}
 
-	rows2, err := s.db.GetSqlxSession().Query(ctx, qKeeper, reqKeeper.GetArgs()...)
+	rows2, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("execute list template %q: %w", qKeeper, err)
 	}
