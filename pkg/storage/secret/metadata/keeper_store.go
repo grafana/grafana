@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
@@ -26,7 +25,7 @@ type keeperMetadataStorage struct {
 	accessClient claims.AccessClient
 }
 
-var _ secret.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
+var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
 func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
