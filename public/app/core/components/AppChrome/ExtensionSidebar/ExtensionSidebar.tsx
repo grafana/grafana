@@ -14,10 +14,16 @@ export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
 export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
 export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
 
+type ExtensionSidebarComponentProps = {
+  props?: Record<string, unknown>;
+};
+
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled } = useExtensionSidebarContext();
-  const { components, isLoading } = usePluginComponents({ extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID });
+  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
+  const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
+    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+  });
 
   if (isLoading || !dockedComponentId || !isEnabled) {
     return null;
@@ -39,7 +45,7 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
-        <ExtensionComponent />
+        <ExtensionComponent {...props} />
       </div>
     </div>
   );
