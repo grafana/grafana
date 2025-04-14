@@ -406,8 +406,6 @@ func convertResultsToFrame(results []*pgconn.Result, query string, rowLimit int6
 		frame = *data.NewFrame("", fields...)
 	}
 
-	//TODO: Add rowLimit
-
 	// Add rows to the frame
 	for _, result := range results {
 		// Skip non-select statements
@@ -504,7 +502,6 @@ func convertResultsToFrame(results []*pgconn.Result, query string, rowLimit int6
 					scanPlan := m.PlanScan(dataTypeOID, format, &d)
 					err := scanPlan.Scan(rawValue, &d)
 					if err != nil {
-						fmt.Println("error", err, "rawValue", rawValue, "dataTypeOID", dataTypeOID, "format", format)
 						return nil, err
 					}
 					row[colIdx] = d
