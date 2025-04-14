@@ -527,15 +527,9 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
           if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
-            if (i === data.length - 1) {
-              // reset on last
-              calcs.delta += currentValue;
-            }
           } else {
             if (calcs.previousDeltaUp) {
               calcs.delta += step; // normal increment
-            } else {
-              calcs.delta += currentValue; // account for counter reset
             }
             calcs.previousDeltaUp = true;
           }
