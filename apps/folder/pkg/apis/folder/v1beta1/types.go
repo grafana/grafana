@@ -1,34 +1,10 @@
-package v1
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Folder struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec Spec `json:"spec,omitempty"`
-}
-
-type Spec struct {
-	// Describe the feature toggle
-	Title string `json:"title"`
-
-	// Describe the feature toggle
-	Description string `json:"description,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FolderList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Folder `json:"items,omitempty"`
-}
 
 // FolderInfoList returns a list of folder references (parents or children)
 // Unlike FolderList, each item is not a full k8s object
