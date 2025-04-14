@@ -781,8 +781,6 @@ export function mapFrameToDataGrid({
       fieldCountWithoutWidth++;
     }
 
-    console.log({ field });
-
     // Add a column for each field
     columns.push({
       key,
