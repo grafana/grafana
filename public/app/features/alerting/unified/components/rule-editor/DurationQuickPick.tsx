@@ -1,4 +1,5 @@
 import { Button, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
@@ -50,5 +51,5 @@ export function DurationQuickPick({ selectedDuration, groupEvaluationInterval, o
 }
 
 export function stringifyPendingPeriod(duration: string): string {
-  return duration === '0s' ? 'None' : duration;
+  return duration === '0s' ? t('alerting.rule-editor.duration-quick-pick.none', 'None') : duration;
 }

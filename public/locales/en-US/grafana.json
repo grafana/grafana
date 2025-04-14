@@ -1618,6 +1618,9 @@
       "label-tenant-sources": "Tenant sources"
     },
     "rule-editor": {
+      "duration-quick-pick": {
+        "none": "None"
+      },
       "get-content": {
         "sorry-allowed-create-rules": "Sorry! You are not allowed to create rules.",
         "sorry-allowed-rules": "Sorry! You are not allowed to edit rules.",
