@@ -1,5 +1,5 @@
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
+import { Box, Button } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -10,8 +10,7 @@ import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 export function InviteUserButton() {
   return config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
-    <Stack gap={2} alignItems="center">
-      <NavToolbarSeparator />
+    <Box paddingLeft={1} gap={2} alignItems="center" display="flex">
       <Button
         icon="add-user"
         size="sm"
@@ -30,6 +29,6 @@ export function InviteUserButton() {
         {t('navigation.invite-user.invite-button', 'Invite')}
       </Button>
       <NavToolbarSeparator />
-    </Stack>
+    </Box>
   ) : null;
 }

@@ -4,11 +4,14 @@ import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
 
-import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
+import {
+  GRAFANA_DATASOURCE_NAME,
+  SUPPORTED_RULE_SOURCE_TYPES,
+} from '../../../features/alerting/unified/utils/datasource';
 
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { UnifiedAlertListOptions, ViewMode, GroupMode, SortOrder } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel).setPanelOptions((builder) => {
   builder
@@ -112,7 +115,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
           <Stack gap={1}>
             <DataSourcePicker
               {...props}
-              type={['prometheus', 'loki', 'grafana']}
+              type={SUPPORTED_RULE_SOURCE_TYPES}
               noDefault
               current={props.value}
               onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
@@ -165,6 +168,12 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addBooleanSwitch({
       path: 'stateFilter.pending',
       name: 'Pending',
+      defaultValue: true,
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.recovering',
+      name: 'Recovering',
       defaultValue: true,
       category: ['Alert state filter'],
     })

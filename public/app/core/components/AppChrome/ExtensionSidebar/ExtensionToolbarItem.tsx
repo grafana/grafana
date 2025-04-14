@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { css, cx } from '@emotion/css';
 
-import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const styles = getStyles(useTheme2());
   const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
     useExtensionSidebarContext();
 
@@ -24,19 +28,22 @@ export function ExtensionToolbarItem() {
 
   if (components.length === 1) {
     return (
-      <ToolbarButton
-        icon="web-section"
-        data-testid="extension-toolbar-button"
-        variant={isOpen ? 'active' : 'default'}
-        tooltip={components[0].description}
-        onClick={() => {
-          if (isOpen) {
-            setDockedComponentId(undefined);
-          } else {
-            setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
-          }
-        }}
-      />
+      <>
+        <ToolbarButton
+          icon="ai-sparkle"
+          data-testid="extension-toolbar-button"
+          className={cx(styles.button, isOpen && styles.buttonActive)}
+          tooltip={components[0].description}
+          onClick={() => {
+            if (isOpen) {
+              setDockedComponentId(undefined);
+            } else {
+              setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
+            }
+          }}
+        />
+        <NavToolbarSeparator />
+      </>
     );
   }
 
@@ -62,13 +69,36 @@ export function ExtensionToolbarItem() {
     </Menu>
   );
   return (
-    <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
-      <ToolbarButton
-        data-testid="extension-toolbar-button"
-        icon="web-section"
-        isOpen={isMenuOpen}
-        variant={isOpen ? 'active' : 'default'}
-      />
-    </Dropdown>
+    <>
+      <Dropdown overlay={MenuItems} placement="bottom-end">
+        <ToolbarButton
+          className={cx(styles.button, isOpen && styles.buttonActive)}
+          icon="ai-sparkle"
+          data-testid="extension-toolbar-button"
+          variant="default"
+          tooltip={t('navigation.extension-sidebar.button-tooltip', 'Open AI assistants and sidebar apps')}
+        />
+      </Dropdown>
+      <NavToolbarSeparator />
+    </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    button: css({
+      width: '28px',
+      height: '28px',
+      padding: 0,
+      justifyContent: 'center',
+      borderRadius: theme.shape.radius.circle,
+      margin: theme.spacing(0, 0.25),
+    }),
+    buttonActive: css({
+      borderRadius: theme.shape.radius.circle,
+      backgroundColor: theme.colors.primary.transparent,
+      border: `1px solid ${theme.colors.primary.borderTransparent}`,
+      color: theme.colors.text.primary,
+    }),
+  };
 }

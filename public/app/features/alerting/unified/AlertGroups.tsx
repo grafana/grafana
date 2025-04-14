@@ -60,7 +60,10 @@ const AlertGroups = () => {
         <LoadingPlaceholder text={t('alerting.alert-groups.text-loading-notifications', 'Loading notifications')} />
       )}
       {error && !loading && (
-        <Alert title={'Error loading notifications'} severity={'error'}>
+        <Alert
+          title={t('alerting.alert-groups.title-error-loading-notifications', 'Error loading notifications')}
+          severity={'error'}
+        >
           {error.message || 'Unknown error'}
         </Alert>
       )}

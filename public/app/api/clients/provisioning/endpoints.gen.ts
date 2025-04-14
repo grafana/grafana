@@ -729,6 +729,7 @@ export type MigrateJobOptions = {
   history?: boolean;
 };
 export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;

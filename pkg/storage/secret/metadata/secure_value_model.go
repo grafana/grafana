@@ -108,7 +108,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueDB, error) {
 	row, err := toRow(sv, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert SecureValue to : %w", err)
+		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
 
 	now := time.Now().UTC().Unix()
