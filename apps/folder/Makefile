@@ -19,10 +19,7 @@ update-app-sdk: ## Update the Grafana App SDK dependency in go.mod
 	go mod tidy
 
 .PHONY: generate
-generate: do-generate post-generate-cleanup ## Run Grafana App SDK code generation
-
-.PHONY: do-generate
-do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
+generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 	@$(APP_SDK_BIN) generate \
 		--source=./kinds/ \
 		--gogenpath=./pkg/apis \
