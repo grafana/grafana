@@ -59,9 +59,9 @@ func (f *LegacyFoldersMigrator) Write(ctx context.Context, key *resource.Resourc
 	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "read folders from SQL")
-	if _, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+	if _, err := f.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
 		Store:     parquet.NewBulkResourceWriterClient(f),

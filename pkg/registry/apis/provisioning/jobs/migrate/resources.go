@@ -18,6 +18,62 @@ import (
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
+type LegacyResourcesMigrator struct {
+	repositoryResources resources.RepositoryResourcesFactory
+	parsers             resources.ParserFactory
+	legacyMigrator      legacy.LegacyMigrator
+	folderMigrator      *LegacyFoldersMigrator
+}
+
+func NewLegacyResourcesMigrator(
+	repositoryResources resources.RepositoryResourcesFactory,
+	parsers resources.ParserFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	folderMigrator *LegacyFoldersMigrator,
+) *LegacyResourcesMigrator {
+	return &LegacyResourcesMigrator{
+		repositoryResources: repositoryResources,
+		parsers:             parsers,
+		legacyMigrator:      legacyMigrator,
+		folderMigrator:      folderMigrator,
+	}
+}
+
+func (m *LegacyResourcesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+	parser, err := m.parsers.GetParser(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("error getting parser: %w", err)
+	}
+
+	repoOpts := resources.RepositoryResourcesOptions{
+		CommitWithOriginalAuthors: opts.History,
+	}
+
+	repositoryResources, err := m.repositoryResources.Client(ctx, rw, repoOpts)
+	if err != nil {
+		return fmt.Errorf("get repository resources: %w", err)
+	}
+
+	progress.SetMessage(ctx, "migrate folders from SQL")
+	if err := m.folderMigrator.Migrate(ctx, namespace, repositoryResources, progress); err != nil {
+		return fmt.Errorf("migrate folders from SQL: %w", err)
+	}
+
+	progress.SetMessage(ctx, "exporting resources from SQL")
+	for _, kind := range resources.SupportedProvisioningResources {
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		reader := NewLegacyResourceMigrator(m.legacyMigrator, parser, repositoryResources, progress, opts, namespace, kind.GroupResource())
+		if err := reader.Migrate(ctx); err != nil {
+			return fmt.Errorf("migrate resource %s: %w", kind, err)
+		}
+	}
+
+	return nil
+}
+
 // TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator

@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -23,17 +22,10 @@ import (
 type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
 
 type MigrationWorker struct {
-	// temporary... while we still do an import
-	parsers resources.ParserFactory
-
 	clients resources.ClientFactory
 
-	repositoryResources resources.RepositoryResourcesFactory
-
 	storageSwapper *StorageSwapper
-
-	// Support reading from history
-	legacyMigrator legacy.LegacyMigrator
+	legacyMigrator *LegacyResourcesMigrator
 
 	// Delegate the export to the export worker
 	exportWorker jobs.Worker
@@ -45,24 +37,20 @@ type MigrationWorker struct {
 }
 
 func NewMigrationWorker(
-	legacyMigrator legacy.LegacyMigrator,
-	parsers resources.ParserFactory, // should not be necessary!
+	legacyMigrator *LegacyResourcesMigrator,
 	clients resources.ClientFactory,
-	repositoryResources resources.RepositoryResourcesFactory,
 	storageSwapper *StorageSwapper,
 	exportWorker jobs.Worker,
 	syncWorker jobs.Worker,
 	wrapWithCloneFn WrapWithCloneFn,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		parsers:             parsers,
-		clients:             clients,
-		repositoryResources: repositoryResources,
-		storageSwapper:      storageSwapper,
-		legacyMigrator:      legacyMigrator,
-		exportWorker:        exportWorker,
-		syncWorker:          syncWorker,
-		wrapWithCloneFn:     wrapWithCloneFn,
+		clients:         clients,
+		legacyMigrator:  legacyMigrator,
+		storageSwapper:  storageSwapper,
+		exportWorker:    exportWorker,
+		syncWorker:      syncWorker,
+		wrapWithCloneFn: wrapWithCloneFn,
 	}
 }
 
@@ -82,10 +70,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if !ok {
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
-	parser, err := w.parsers.GetParser(ctx, rw)
-	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
-	}
 
 	clients, err := w.clients.Clients(ctx, rw.Config().Namespace)
 	if err != nil {
@@ -96,11 +80,11 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return w.migrateFromAPIServer(ctx, rw, clients, *options, progress)
 	}
 
-	return w.migrateFromLegacy(ctx, rw, parser, clients, *options, progress)
+	return w.migrateFromLegacy(ctx, rw, clients, *options, progress)
 }
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
-func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser resources.Parser, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
 
 	reader, writer := io.Pipe()
@@ -137,33 +121,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 		}
 
-		opts := resources.RepositoryResourcesOptions{
-			CommitWithOriginalAuthors: options.History,
-		}
-
-		repositoryResources, err := w.repositoryResources.Client(ctx, rw, opts)
-		if err != nil {
-			return fmt.Errorf("get repository resources: %w", err)
-		}
-
-		progress.SetMessage(ctx, "migrate folders from SQL")
-		folderMigrator := NewLegacyFolderMigrator(w.legacyMigrator)
-		if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, repositoryResources, progress); err != nil {
-			return fmt.Errorf("migrate folders from SQL: %w", err)
-		}
-
-		progress.SetMessage(ctx, "exporting resources from SQL")
-		for _, kind := range resources.SupportedProvisioningResources {
-			if kind == resources.FolderResource {
-				continue
-			}
-
-			reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, repositoryResources, progress, options, namespace, kind.GroupResource())
-			if err := reader.Migrate(ctx); err != nil {
-				return fmt.Errorf("migrate resource %s: %w", kind, err)
-			}
-		}
-		return nil
+		return w.legacyMigrator.Migrate(ctx, rw, namespace, options, progress)
 	}); err != nil {
 		return fmt.Errorf("migrate from SQL: %w", err)
 	}
