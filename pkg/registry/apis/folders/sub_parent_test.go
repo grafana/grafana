@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 func TestSubParent(t *testing.T) {
