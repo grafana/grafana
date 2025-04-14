@@ -143,7 +143,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 		k = row
 	}
 
-	if res.Err() != nil {
+	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 	if k == nil {
