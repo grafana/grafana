@@ -10,16 +10,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+type RepositoryResourcesOptions struct {
+	CommitWithOriginalAuthors bool
+}
+
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
 type RepositoryResourcesFactory interface {
-	Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error)
+	Client(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions) (RepositoryResources, error)
 }
 
 //go:generate mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
 type RepositoryResources interface {
-	// Commits
-	EnableCommitWithOriginalAuthors(ctx context.Context) error
-
 	// Folders
 	SetTree(tree FolderTree)
 	EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error)
@@ -44,7 +45,6 @@ type repositoryResourcesFactor struct {
 type repositoryResources struct {
 	*FolderManager
 	*ResourcesManager
-	clients   ResourceClients
 	lister    ResourceLister
 	namespace string
 	repoName  string
@@ -62,7 +62,7 @@ func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory,
 	return &repositoryResourcesFactor{parsers, clients, lister}
 }
 
-func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions) (RepositoryResources, error) {
 	clients, err := r.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients: %w", err)
@@ -77,27 +77,22 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 		return nil, fmt.Errorf("create parser: %w", err)
 	}
 
+	signatures := map[string]repository.CommitSignature{}
+	if opts.CommitWithOriginalAuthors {
+		signatures, err = loadUsers(ctx, clients)
+		if err != nil {
+			return nil, fmt.Errorf("load users: %w", err)
+		}
+	}
+
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
-	resources := NewResourcesManager(repo, folders, parser, clients, map[string]repository.CommitSignature{})
+	resources := NewResourcesManager(repo, folders, parser, clients, signatures)
 
 	return &repositoryResources{
 		FolderManager:    folders,
 		ResourcesManager: resources,
 		lister:           r.lister,
-		clients:          clients,
 		namespace:        repo.Config().Namespace,
 		repoName:         repo.Config().Name,
 	}, nil
-}
-
-func (r *repositoryResources) EnableCommitWithOriginalAuthors(ctx context.Context) error {
-	signatures, err := loadUsers(ctx, r.clients)
-	if err != nil {
-		return fmt.Errorf("load users: %w", err)
-	}
-
-	// HACK: we set it directly into the resources
-	r.ResourcesManager.userInfo = signatures
-
-	return nil
 }

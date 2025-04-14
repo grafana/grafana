@@ -137,17 +137,13 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 		}
 
-		repositoryResources, err := w.repositoryResources.Client(ctx, rw)
-		if err != nil {
-			return fmt.Errorf("get repository resources: %w", err)
+		opts := resources.RepositoryResourcesOptions{
+			CommitWithOriginalAuthors: options.History,
 		}
 
-		if options.History {
-			progress.SetMessage(ctx, "loading users")
-			// TODO: have this as Client create option
-			if err := repositoryResources.EnableCommitWithOriginalAuthors(ctx); err != nil {
-				return fmt.Errorf("error loading users: %w", err)
-			}
+		repositoryResources, err := w.repositoryResources.Client(ctx, rw, opts)
+		if err != nil {
+			return fmt.Errorf("get repository resources: %w", err)
 		}
 
 		progress.SetMessage(ctx, "migrate folders from SQL")
