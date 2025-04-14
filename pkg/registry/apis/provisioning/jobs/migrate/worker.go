@@ -21,6 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
+type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+
 type MigrationWorker struct {
 	// temporary... while we still do an import
 	parsers resources.ParserFactory
@@ -41,6 +44,8 @@ type MigrationWorker struct {
 
 	// Delegate the import to sync worker
 	syncWorker jobs.Worker
+
+	wrapWithCloneFn WrapWithCloneFn
 }
 
 func NewMigrationWorker(
@@ -51,15 +56,17 @@ func NewMigrationWorker(
 	batch resource.BulkStoreClient,
 	exportWorker jobs.Worker,
 	syncWorker jobs.Worker,
+	wrapWithCloneFn WrapWithCloneFn,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		parsers:        parsers,
-		clients:        clients,
-		storageStatus:  storageStatus,
-		legacyMigrator: legacyMigrator,
-		bulk:           batch,
-		exportWorker:   exportWorker,
-		syncWorker:     syncWorker,
+		parsers:         parsers,
+		clients:         clients,
+		storageStatus:   storageStatus,
+		legacyMigrator:  legacyMigrator,
+		bulk:            batch,
+		exportWorker:    exportWorker,
+		syncWorker:      syncWorker,
+		wrapWithCloneFn: wrapWithCloneFn,
 	}
 }
 
@@ -98,97 +105,84 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
 func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser resources.Parser, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	var (
-		err   error
-		clone repository.ClonedRepository
-	)
-
-	clonable, ok := rw.(repository.ClonableRepository)
-	if ok {
-		progress.SetMessage(ctx, "clone "+rw.Config().Spec.GitHub.URL)
-		reader, writer := io.Pipe()
-		go func() {
-			scanner := bufio.NewScanner(reader)
-			for scanner.Scan() {
-				progress.SetMessage(ctx, scanner.Text())
-			}
-		}()
-
-		clone, err = clonable.Clone(ctx, repository.CloneOptions{
-			PushOnWrites: options.History,
-			// TODO: make this configurable
-			Timeout:  10 * time.Minute,
-			Progress: writer,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to clone target: %w", err)
-		}
-
-		rw = clone // send all writes to the buffered repo
-		defer func() {
-			if err := clone.Remove(ctx); err != nil {
-				logging.FromContext(ctx).Error("failed to remove cloned repository after migrate", "err", err)
-			}
-		}()
-	}
+	namespace := rw.Config().Namespace
 
 	var userInfo map[string]repository.CommitSignature
 	if options.History {
 		progress.SetMessage(ctx, "loading users")
+		var err error
 		userInfo, err = loadUsers(ctx, clients)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
 		}
 	}
-	namespace := rw.Config().Namespace
 
-	progress.SetMessage(ctx, "migrate folders from SQL")
-	// TODO: use resources.RepositoryResources
-	folderClient, err := clients.Folder()
-	if err != nil {
-		return fmt.Errorf("error getting folder client: %w", err)
+	reader, writer := io.Pipe()
+	go func() {
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			progress.SetMessage(ctx, scanner.Text())
+		}
+	}()
+
+	cloneOptions := repository.CloneOptions{
+		PushOnWrites: options.History,
+		// TODO: make this configurable
+		Timeout:  10 * time.Minute,
+		Progress: writer,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "clone repository")
+			return nil
+		},
+	}
+	pushOptions := repository.PushOptions{
+		// TODO: make this configurable
+		Timeout:  10 * time.Minute,
+		Progress: writer,
+		BeforeFn: func() error {
+			progress.SetMessage(ctx, "push changes")
+			return nil
+		},
 	}
 
-	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
-	folderMigrator := NewLegacyFolderMigrator(w.legacyMigrator)
-	if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, folders, progress); err != nil {
-		return fmt.Errorf("migrate folders from SQL: %w", err)
-	}
-
-	progress.SetMessage(ctx, "exporting resources from SQL")
-	resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, userInfo)
-	for _, kind := range resources.SupportedProvisioningResources {
-		if kind == resources.FolderResource {
-			continue
+	if err := w.wrapWithCloneFn(ctx, rw, cloneOptions, pushOptions, func(repo repository.Repository, cloned bool) error {
+		rw, ok := repo.(repository.ReaderWriter)
+		if !ok {
+			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 		}
 
-		reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, resourceManager, progress, options, namespace, kind.GroupResource())
-		if err := reader.Migrate(ctx); err != nil {
-			return fmt.Errorf("error migrating resource %s: %w", kind, err)
+		progress.SetMessage(ctx, "migrate folders from SQL")
+		// TODO: use resources.RepositoryResources
+		folderClient, err := clients.Folder()
+		if err != nil {
+			return fmt.Errorf("error getting folder client: %w", err)
 		}
-	}
 
-	if clone != nil {
-		progress.SetMessage(ctx, "pushing changes")
-		reader, writer := io.Pipe()
-		go func() {
-			scanner := bufio.NewScanner(reader)
-			for scanner.Scan() {
-				progress.SetMessage(ctx, scanner.Text())
+		folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
+		folderMigrator := NewLegacyFolderMigrator(w.legacyMigrator)
+		if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, folders, progress); err != nil {
+			return fmt.Errorf("migrate folders from SQL: %w", err)
+		}
+
+		progress.SetMessage(ctx, "exporting resources from SQL")
+		resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, userInfo)
+		for _, kind := range resources.SupportedProvisioningResources {
+			if kind == resources.FolderResource {
+				continue
 			}
-		}()
 
-		if err := clone.Push(ctx, repository.PushOptions{
-			// TODO: make this configurable
-			Timeout:  10 * time.Minute,
-			Progress: writer,
-		}); err != nil {
-			return fmt.Errorf("error pushing changes: %w", err)
+			reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, resourceManager, progress, options, namespace, kind.GroupResource())
+			if err := reader.Migrate(ctx); err != nil {
+				return fmt.Errorf("migrate resource %s: %w", kind, err)
+			}
 		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("migrate from SQL: %w", err)
 	}
 
 	progress.SetMessage(ctx, "resetting unified storage")
-	if err = wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus, namespace, w.bulk); err != nil {
+	if err := wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus, namespace, w.bulk); err != nil {
 		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
@@ -197,22 +191,22 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
 	progress.SetMessage(ctx, "pulling resources")
-	err = w.syncWorker.Process(ctx, rw, provisioning.Job{
+	if err := w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
 				Incremental: false,
 			},
 		},
-	}, progress)
-	if err != nil { // this will have an error when too many errors exist
+	}, progress); err != nil { // this will have an error when too many errors exist
 		progress.SetMessage(ctx, "error importing resources, reverting")
 		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
+		return err
 	}
 
-	return err
+	return nil
 }
 
 // migrateFromAPIServer will export the resources from unified storage and import them into the target repository

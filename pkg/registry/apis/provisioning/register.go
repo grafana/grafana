@@ -555,6 +555,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.unified,
 				exportWorker,
 				syncWorker,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
 
 			// Pull request worker
