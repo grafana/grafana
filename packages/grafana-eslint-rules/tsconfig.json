@@ -4,6 +4,8 @@
     "moduleResolution": "Node16",
     "declaration": false,
     "allowJs": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-eslint-rules.tsbuildinfo",
     "outDir": "./dist"
   },
   "extends": "@grafana/tsconfig"

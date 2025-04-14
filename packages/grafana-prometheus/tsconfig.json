@@ -4,6 +4,8 @@
     "alwaysStrict": true,
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-prometheus.tsbuildinfo",
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."],

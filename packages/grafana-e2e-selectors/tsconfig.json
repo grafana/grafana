@@ -2,6 +2,8 @@
   "compilerOptions": {
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../.fecache/typescript/grafana-e2e-selectors.tsbuildinfo",
     "isolatedModules": true,
     "rootDirs": ["."]
   },
