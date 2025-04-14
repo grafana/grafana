@@ -1,4 +1,5 @@
-UPDATE {{ .Ident "secret_keeper" }}
+UPDATE
+  {{ .Ident "secret_keeper" }}
 SET
   {{ .Ident "guid" }} = {{ .Arg .Row.GUID }},
   {{ .Ident "name" }} = {{ .Arg .Row.Name }},
@@ -13,6 +14,6 @@ SET
   {{ .Ident "type" }} = {{ .Arg .Row.Type }},
   {{ .Ident "payload" }} = {{ .Arg .Row.Payload }}
 WHERE 1 = 1 AND
-  {{ .Ident "name" }} = {{ .Arg .Row.Name }} AND
-  {{ .Ident "namespace" }}= {{ .Arg .Row.Namespace }}
+  {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
+  {{ .Ident "name" }} = {{ .Arg .Row.Name }}
 ;

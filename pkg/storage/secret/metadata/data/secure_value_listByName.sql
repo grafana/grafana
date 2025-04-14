@@ -1,6 +1,7 @@
 {{/* this query is used to validate the keeper update or creation */}}
 
-SELECT {{ .Ident "guid" }},
+SELECT
+  {{ .Ident "guid" }},
   {{ .Ident "name" }},
   {{ .Ident "namespace" }},
   {{ .Ident "annotations" }},
@@ -19,7 +20,7 @@ SELECT {{ .Ident "guid" }},
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 1 = 1 AND
+  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }}) AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-{{ .SelectFor "UPDATE" }}
+  {{ .SelectFor "UPDATE" }}
 ;
