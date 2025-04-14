@@ -122,6 +122,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.disable, label: 'disable' },
     { value: MSSQLEncryptOptions.false, label: 'false' },
     { value: MSSQLEncryptOptions.true, label: 'true' },
+    { value: MSSQLEncryptOptions.strict, label: 'strict' },
   ];
 
   return (
@@ -180,6 +181,13 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 </li>
                 <li>
                   <i>true</i> - Data sent between client and server is encrypted.
+                </li>
+                <li>
+                  <i>strict</i> - Data sent between client and server is encrypted using{' '}
+                  <a href="https://learn.microsoft.com/en-us/sql/relational-databases/security/networking/tds-8">
+                    TDS8
+                  </a>
+                  .
                 </li>
               </ul>
               If you&apos;re using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable
