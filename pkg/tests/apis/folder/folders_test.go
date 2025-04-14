@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-
 	"testing"
 
 	"github.com/stretchr/testify/require"
