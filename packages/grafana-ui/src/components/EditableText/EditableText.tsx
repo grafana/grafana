@@ -10,7 +10,7 @@ interface BaseProps {
   text: string;
   textChangeHandler?: (text: string) => void;
 }
-// This combines the interface of this component with that of the Text and Input components
+
 export type EditableTextProps = BaseProps & Partial<TextProps> & Partial<InputProps>;
 
 export const EditableText = forwardRef<HTMLDivElement, EditableTextProps>(
