@@ -114,23 +114,26 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
 
-  // Enhanced function to set the docked component ID and optionally pass props
   const setDockedComponentWithProps = useCallback(
-    (componentId: string | undefined, contextProps?: any) => {
-      propsRef.current = contextProps;
+    (componentId: string | undefined, props?: any) => {
+      propsRef.current = props;
       setDockedComponentId(componentId);
     },
     [setDockedComponentId]
   );
 
-  // Listen for open extension sidebar events
   useEffect(() => {
     if (!isEnabled) {
       return;
     }
 
+    // handler to open the extension sidebar from plugins. this is done with the `helpers.openExtensionSidebar` function
     const openExtensionSidebarHandler = (event: OpenExtensionSidebarEvent) => {
-      if (event.payload.pluginId && event.payload.componentTitle) {
+      if (
+        event.payload.pluginId &&
+        event.payload.componentTitle &&
+        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId)
+      ) {
         setDockedComponentWithProps(
           JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
           event.payload.props

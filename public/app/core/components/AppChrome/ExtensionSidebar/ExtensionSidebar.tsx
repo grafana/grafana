@@ -15,7 +15,7 @@ export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
 export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
 
 type ExtensionSidebarComponentProps = {
-  context?: any;
+  props?: any;
 };
 
 export function ExtensionSidebar() {
@@ -45,7 +45,7 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
-        <ExtensionComponent context={props} />
+        <ExtensionComponent props={props} />
       </div>
     </div>
   );

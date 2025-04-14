@@ -33,6 +33,7 @@ export interface OpenExtensionSidebarPayload {
   pluginId: string;
   componentTitle: string;
 }
+
 export interface ShowConfirmModalPayload {
   title?: string;
   text?: string;
