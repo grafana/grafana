@@ -89,7 +89,7 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	k, err := read(ctx, namespace.String(), name, s)
+	k, err := s.read(ctx, namespace.String(), name)
 	if err != nil {
 		return nil, err
 	}
@@ -350,11 +350,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("executing query: %w", err)
 	}
-	
+
 	defer func() {
 		_ = rows.Close()
 	}()
-	
+
 	// TODO Only fetch the values we need
 	secureValueRows := make([]*secureValueDB, 0)
 	for rows.Next() {
@@ -373,11 +373,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		}
 		secureValueRows = append(secureValueRows, &row)
 	}
-	
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("rows error: %w", err)
 	}
-	
+
 	// If not all secure values being referenced exist, return an error with the missing ones.
 	if len(secureValueRows) != len(usedSecureValues) {
 		// We are guaranteed that the returned `secureValueRows` are a subset of `usedSecureValues`,
@@ -462,7 +462,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := read(ctx, namespace, name, s)
+	kp, err := s.read(ctx, namespace, name)
 	if err != nil {
 		return "", nil, err
 	}
