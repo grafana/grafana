@@ -53,13 +53,13 @@ func NewMigrationWorker(
 	syncWorker jobs.Worker,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		parsers,
-		clients,
-		storageStatus,
-		legacyMigrator,
-		batch,
-		exportWorker,
-		syncWorker,
+		parsers:        parsers,
+		clients:        clients,
+		storageStatus:  storageStatus,
+		legacyMigrator: legacyMigrator,
+		bulk:           batch,
+		exportWorker:   exportWorker,
+		syncWorker:     syncWorker,
 	}
 }
 
@@ -142,38 +142,17 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 	namespace := rw.Config().Namespace
 
-	progress.SetMessage(ctx, "loading folders from SQL")
-	reader := NewLegacyFolderMigrator(w.legacyMigrator)
-	if err = reader.Read(ctx, w.legacyMigrator, namespace); err != nil {
-		return fmt.Errorf("error loading folder tree: %w", err)
-	}
-
+	progress.SetMessage(ctx, "migrate folders from SQL")
+	// TODO: use resources.RepositoryResources
 	folderClient, err := clients.Folder()
 	if err != nil {
 		return fmt.Errorf("error getting folder client: %w", err)
 	}
 
 	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
-	progress.SetMessage(ctx, "exporting folders from SQL")
-	err = folders.EnsureFolderTreeExists(ctx, "", "", reader.Tree(), func(folder resources.Folder, created bool, err error) error {
-		result := jobs.JobResourceResult{
-			Action:   repository.FileActionCreated,
-			Name:     folder.ID,
-			Resource: resources.FolderResource.Resource,
-			Group:    resources.FolderResource.Group,
-			Path:     folder.Path,
-			Error:    err,
-		}
-
-		if !created {
-			result.Action = repository.FileActionIgnored
-		}
-
-		progress.Record(ctx, result)
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("error exporting legacy folders: %w", err)
+	folderMigrator := NewLegacyFolderMigrator(w.legacyMigrator)
+	if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, folders, progress); err != nil {
+		return fmt.Errorf("migrate folders from SQL: %w", err)
 	}
 
 	progress.SetMessage(ctx, "exporting resources from SQL")

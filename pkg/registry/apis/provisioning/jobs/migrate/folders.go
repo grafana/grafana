@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -52,17 +54,43 @@ func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.Resource
 		return errors.New("too many folders")
 	}
 
+	// TODO: should we check if managed already and abort migration?
+
 	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFolderMigrator) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string) error {
-	_, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, folders *resources.FolderManager, progress jobs.JobProgressRecorder) error {
+	progress.SetMessage(ctx, "read folders from SQL")
+	if _, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
 		Store:     parquet.NewBulkResourceWriterClient(f),
-	})
+	}); err != nil {
+		return fmt.Errorf("read folders from SQL: %w", err)
+	}
 
-	return err
+	progress.SetMessage(ctx, "export folders from SQL")
+	if err := folders.EnsureFolderTreeExists(ctx, "", "", f.Tree(), func(folder resources.Folder, created bool, err error) error {
+		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
+			Name:     folder.ID,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
+		}
+
+		if !created {
+			result.Action = repository.FileActionIgnored
+		}
+
+		progress.Record(ctx, result)
+		return nil
+	}); err != nil {
+		return fmt.Errorf("export folders from SQL: %w", err)
+	}
+
+	return nil
 }
 
 func (f *LegacyFolderMigrator) Tree() resources.FolderTree {
