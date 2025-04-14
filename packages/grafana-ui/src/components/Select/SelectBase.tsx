@@ -282,7 +282,13 @@ export function SelectBase<T, Rest = {}>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue?.[0],
+    // When the selectedValue is undefined, set it to null instead
+    // This forces react-select to show the placeholder
+    value: isMulti
+      ? selectedValue
+      : selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)
+        ? null
+        : selectedValue?.[0],
     noMultiValueWrap,
   };
 
@@ -346,6 +352,10 @@ export function SelectBase<T, Rest = {}>({
           Option: SelectMenuOptions,
           ClearIndicator(props: ClearIndicatorProps) {
             const { clearValue } = props;
+            // Don't render clear indicator if selectedValue is undefined/empty
+            if (selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)) {
+              return null;
+            }
             return (
               <Icon
                 name="times"
@@ -378,6 +388,12 @@ export function SelectBase<T, Rest = {}>({
           },
           DropdownIndicator: DropdownIndicator,
           SingleValue(props: Props<T>) {
+            // Only render SingleValue if we actually have a value
+            // This fixes the issue when clearing programmatically but react-select
+            // component still has stale cached value data
+            if (selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)) {
+              return null;
+            }
             return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
