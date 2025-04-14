@@ -264,6 +264,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
     expect(screen.getByTestId('props')).toHaveTextContent('undefined');
 
+    expect(subscribeSpy).toHaveBeenCalledWith(OpenExtensionSidebarEvent, expect.any(Function));
     act(() => {
       // Get the event subscriber function
       const [[, subscriberFn]] = subscribeSpy.mock.calls;
