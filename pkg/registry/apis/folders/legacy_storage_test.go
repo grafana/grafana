@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -57,9 +57,9 @@ func TestLegacyStorageList(t *testing.T) {
 
 	uidsReturnedByList := []string{}
 	for _, obj := range list {
-		f, ok := obj.(*v0alpha1.Folder)
+		f, ok := obj.(*folderv1.Folder)
 		require.Equal(t, true, ok)
-		uidsReturnedByList = append(uidsReturnedByList, f.ObjectMeta.Name)
+		uidsReturnedByList = append(uidsReturnedByList, f.Name)
 	}
 	require.ElementsMatch(t, uidsFromServiceFolder, uidsReturnedByList)
 }
@@ -89,7 +89,7 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		result, err := storage.List(ctx, options)
 		require.NoError(t, err)
 
-		list, ok := result.(*v0alpha1.FolderList)
+		list, ok := result.(*folderv1.FolderList)
 		require.True(t, ok)
 		token, err := base64.StdEncoding.DecodeString(list.Continue)
 		require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 
 		result, err := storage.List(ctx, options)
 		require.NoError(t, err)
-		list, ok := result.(*v0alpha1.FolderList)
+		list, ok := result.(*folderv1.FolderList)
 		require.True(t, ok)
 		token, err := base64.StdEncoding.DecodeString(list.Continue)
 		require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestLegacyStorage_List_LabelSelector(t *testing.T) {
 		require.False(t, folderService.LastQuery.WithFullpath)
 		require.False(t, folderService.LastQuery.WithFullpathUIDs)
 
-		list, ok := result.(*v0alpha1.FolderList)
+		list, ok := result.(*folderv1.FolderList)
 		require.True(t, ok)
 		require.Len(t, list.Items, 1)
 	})
@@ -181,7 +181,7 @@ func TestLegacyStorage_List_LabelSelector(t *testing.T) {
 		require.True(t, folderService.LastQuery.WithFullpath)
 		require.True(t, folderService.LastQuery.WithFullpathUIDs)
 
-		list, ok := result.(*v0alpha1.FolderList)
+		list, ok := result.(*folderv1.FolderList)
 		require.True(t, ok)
 		require.Len(t, list.Items, 1)
 

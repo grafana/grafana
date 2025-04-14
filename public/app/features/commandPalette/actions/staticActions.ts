@@ -1,5 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -98,6 +99,18 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
   ];
 
   const navBarActions = navTreeToActions(navBarTree);
+
+  if (shouldRenderInviteUserButton) {
+    navBarActions.push({
+      id: 'invite-user',
+      name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+      section: t('command-palette.section.actions', 'Actions'),
+      priority: ACTIONS_PRIORITY,
+      perform: () => {
+        performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
+      },
+    });
+  }
 
   return [...globalActions, ...extensionActions, ...navBarActions];
 };

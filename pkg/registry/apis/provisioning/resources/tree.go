@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
@@ -69,6 +69,7 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
+		// FIXME: missing slash here
 		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}

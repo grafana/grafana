@@ -175,13 +175,6 @@ func (f *AlertmanagerApiHandler) handleRouteGetGrafanaSilences(ctx *contextmodel
 	return f.GrafanaSvc.RouteGetSilences(ctx)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlertingConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableUserConfig) response.Response {
-	if !conf.AlertmanagerConfig.ReceiverType().Can(apimodels.GrafanaReceiverType) {
-		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, conf.AlertmanagerConfig.ReceiverType().String()))
-	}
-	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)
-}
-
 func (f *AlertmanagerApiHandler) handleRouteGetGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
 	return f.GrafanaSvc.RouteGetReceivers(ctx)
 }

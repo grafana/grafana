@@ -136,18 +136,14 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     expect(serializedRequests).toMatchSnapshot();
   });
 
-  describe('alertingApiServer enabled', () => {
-    testWithFeatureToggles(['alertingApiServer']);
+  it('allows selecting a contact point', async () => {
+    const { user } = renderRuleEditor();
 
-    it('allows selecting a contact point when using alerting API server', async () => {
-      const { user } = renderRuleEditor();
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
-      await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+    await selectContactPoint(user, 'Email');
 
-      await selectContactPoint(user, 'Email');
-
-      expect(await screen.findByText('Email')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Email')).toBeInTheDocument();
   });
 
   describe('switch modes enabled', () => {

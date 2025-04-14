@@ -13,7 +13,8 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+import { InviteUserButton } from '../../InviteUserButton/InviteUserButton';
+import { shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
 
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -127,6 +128,11 @@ export const MegaMenu = memo(
               ))}
             </ul>
           </ScrollContainer>
+          {shouldRenderInviteUserButton && (
+            <div className={styles.inviteNewMemberButton}>
+              <InviteUserButton />
+            </div>
+          )}
         </nav>
       </div>
     );
@@ -140,8 +146,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       minHeight: 0,
+      flexGrow: 1,
       position: 'relative',
     }),
     mobileHeader: css({
@@ -163,6 +169,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
+    }),
+    inviteNewMemberButton: css({
+      display: 'flex',
+      padding: theme.spacing(1.5, 1, 1.5, 1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     dockMenuButton: css({
       display: 'none',

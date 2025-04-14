@@ -207,14 +207,6 @@ var (
 			Owner:        grafanaPartnerPluginsSquad,
 		},
 		{
-			Name:         "prometheusRunQueriesInParallel",
-			Description:  "Enables running Prometheus queries in parallel",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaOSSBigTent,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
@@ -234,24 +226,6 @@ var (
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiSecondary",
-			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiPrimary",
-			Description: "Enable a remote Loki instance as the primary source for state history reads.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiOnly",
-			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -329,7 +303,7 @@ var (
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaDatavizSquad,
+			Owner:             grafanaOSSBigTent,
 			HideFromAdminPage: true,
 		},
 		{
@@ -369,14 +343,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-		},
-		{
-			Name:         "traceQLStreaming",
-			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Expression:   "false",
 		},
 		{
 			Name:            "datasourceAPIServers",
@@ -590,6 +556,25 @@ var (
 		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV1",
+			Description: "Disable schema validation for dashboards/v1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV2",
+			Description: "Disable schema validation for dashboards/v2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardSchemaValidationLogging",
+			Description: "Log schema validation errors so they can be analyzed later",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
@@ -777,14 +762,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreMetrics",
-			Description:  "Enables the new Grafana Metrics Drilldown core app",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "alertingSimplifiedRouting",
 			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
 			Stage:        FeatureStageGeneralAvailability,
@@ -878,8 +855,8 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-			Stage:       FeatureStagePublicPreview,
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
 		},
@@ -933,16 +910,9 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-		},
-		{
-			Name:         "nodeGraphDotLayout",
-			Description:  "Changed the layout algorithm for the node graph",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "groupToNestedTableTransformation",
@@ -1278,12 +1248,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:        "appSidecar",
-			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
 			Stage:        FeatureStagePrivatePreview,
@@ -1585,14 +1549,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStagePublicPreview,
-			Owner:           grafanaObservabilityMetricsSquad,
-			FrontendOnly:    false,
-			RequiresRestart: true,
-		},
-		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStagePrivatePreview,
@@ -1618,11 +1574,12 @@ var (
 		{
 			Name:              "grafanaconThemes",
 			Description:       "Enables the temporary themes for GrafanaCon",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+			Expression:        "true",
 		},
 		{
 			Name:        "pluginsCDNSyncLoader",
@@ -1639,12 +1596,21 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-			HideFromDocs: true,
+			Name:              "useScopesNavigationEndpoint",
+			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "scopeSearchAllLevels",
+			Description:       "Enable scope search to include all levels of the scope node tree",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "alertingRuleVersionHistoryRestore",
@@ -1708,15 +1674,6 @@ var (
 			Description:       "Renders invite user button along the app",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSharingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
-			Name:              "noBackdropBlur",
-			Description:       "Disables backdrop blur",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -1810,12 +1767,27 @@ var (
 			FrontendOnly: false,
 		},
 		{
+			Name:         "unifiedNavbars",
+			Description:  "Enables unified navbars",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false", // enabled by default
+		},
+		{
 			Name:         "logsPanelControls",
 			Description:  "Enables a control component for the logs panel in Explore",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "false",
+			Expression:   "true",
+		},
+		{
+			Name:         "metricsFromProfiles",
+			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )

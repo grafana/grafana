@@ -111,10 +111,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagPrometheusRunQueriesInParallel
-	// Enables running Prometheus queries in parallel
-	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
@@ -126,18 +122,6 @@ const (
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
-
-	// FlagAlertStateHistoryLokiSecondary
-	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
-
-	// FlagAlertStateHistoryLokiPrimary
-	// Enable a remote Loki instance as the primary source for state history reads.
-	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
-
-	// FlagAlertStateHistoryLokiOnly
-	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -202,10 +186,6 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
-
-	// FlagTraceQLStreaming
-	// Enables response streaming of TraceQL queries of the Tempo data source
-	FlagTraceQLStreaming = "traceQLStreaming"
 
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
@@ -319,6 +299,18 @@ const (
 	// Route the folder and dashboard service requests to k8s
 	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
+	// FlagDashboardDisableSchemaValidationV1
+	// Disable schema validation for dashboards/v1
+	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
+
+	// FlagDashboardDisableSchemaValidationV2
+	// Disable schema validation for dashboards/v2
+	FlagDashboardDisableSchemaValidationV2 = "dashboardDisableSchemaValidationV2"
+
+	// FlagDashboardSchemaValidationLogging
+	// Log schema validation errors so they can be analyzed later
+	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -419,10 +411,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagExploreMetrics
-	// Enables the new Grafana Metrics Drilldown core app
-	FlagExploreMetrics = "exploreMetrics"
-
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
@@ -468,7 +456,7 @@ const (
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagSecretsManagementAppPlatform
@@ -498,10 +486,6 @@ const (
 	// FlagSqlExpressions
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
-
-	// FlagNodeGraphDotLayout
-	// Changed the layout algorithm for the node graph
-	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
@@ -675,10 +659,6 @@ const (
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
-	// FlagAppSidecar
-	// Enable the app sidecar feature that allows rendering 2 apps at the same time
-	FlagAppSidecar = "appSidecar"
-
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
@@ -847,10 +827,6 @@ const (
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
-	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
-
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
@@ -878,6 +854,10 @@ const (
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
+	// FlagScopeSearchAllLevels
+	// Enable scope search to include all levels of the scope node tree
+	FlagScopeSearchAllLevels = "scopeSearchAllLevels"
 
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
@@ -910,10 +890,6 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
-
-	// FlagNoBackdropBlur
-	// Disables backdrop blur
-	FlagNoBackdropBlur = "noBackdropBlur"
 
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
@@ -959,7 +935,15 @@ const (
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
 
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
+
 	// FlagLogsPanelControls
 	// Enables a control component for the logs panel in Explore
 	FlagLogsPanelControls = "logsPanelControls"
+
+	// FlagMetricsFromProfiles
+	// Enables creating metrics from profiles and storing them as recording rules
+	FlagMetricsFromProfiles = "metricsFromProfiles"
 )

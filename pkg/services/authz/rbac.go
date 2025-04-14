@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,6 +48,7 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -58,11 +60,27 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
+	// Provisioning uses mode 4 (read+write only to unified storage)
+	// For G12 launch, we can disable caching for this and find a more scalable solution soon
+	// most likely this would involve passing the RV (timestamp!) in each check method
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authCfg.cacheTTL = 0
+	}
+
 	switch authCfg.mode {
 	case clientModeCloud:
-		return newRemoteRBACClient(authCfg, tracer)
+		rbacClient, err := newRemoteRBACClient(authCfg, tracer)
+		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		}
+		return rbacClient, err
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
+
+		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		if cfg != nil {
+			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
+		}
 
 		// Register the server
 		server := rbac.NewService(
@@ -80,6 +98,7 @@ func ProvideAuthZClient(
 			tracer,
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
+			rbacSettings,
 		)
 
 		channel := &inprocgrpc.Channel{}
@@ -92,7 +111,17 @@ func ProvideAuthZClient(
 			return ctx, nil
 		}))
 		authzv1.RegisterAuthzServiceServer(channel, server)
-		return newRBACClient(channel, tracer), nil
+		rbacClient := authzlib.NewClient(
+			channel,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		)
+
+		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		}
+
+		return rbacClient, nil
 	}
 }
 
@@ -141,18 +170,18 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	return newRBACClient(conn, tracer), nil
-}
-
-func newRBACClient(conn grpc.ClientConnInterface, tracer trace.Tracer) authlib.AccessClient {
-	return authzlib.NewClient(
-		conn,
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
+	// Client side cache
+	var authzCache cache.Cache = &NoopCache{}
+	if clientCfg.cacheTTL != 0 {
+		authzCache = cache.NewLocalCache(cache.Config{
+			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
-		})),
-		authzlib.WithTracerClientOption(tracer),
-	)
+		})
+	}
+
+	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
+
+	return client, nil
 }
 
 func RegisterRBACAuthZService(
@@ -195,6 +224,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
+		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()
@@ -220,4 +250,18 @@ func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, er
 
 	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
 	return t.rt.RoundTrip(r)
+}
+
+type NoopCache struct{}
+
+func (lc *NoopCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return nil, cache.ErrNotFound
+}
+
+func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.Duration) error {
+	return nil
+}
+
+func (lc *NoopCache) Delete(ctx context.Context, key string) error {
+	return nil
 }

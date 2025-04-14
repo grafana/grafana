@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -26,13 +27,14 @@ import (
 
 // Test names for the storage backend test suite
 const (
-	TestHappyPath         = "happy path"
-	TestWatchWriteEvents  = "watch write events from latest"
-	TestList              = "list"
-	TestBlobSupport       = "blob support"
-	TestGetResourceStats  = "get resource stats"
-	TestListHistory       = "list history"
-	TestCreateNewResource = "create new resource"
+	TestHappyPath                 = "happy path"
+	TestWatchWriteEvents          = "watch write events from latest"
+	TestList                      = "list"
+	TestBlobSupport               = "blob support"
+	TestGetResourceStats          = "get resource stats"
+	TestListHistory               = "list history"
+	TestListHistoryErrorReporting = "list history error reporting"
+	TestCreateNewResource         = "create new resource"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -75,6 +77,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
 		{TestListHistory, runTestIntegrationBackendListHistory},
+		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 	}
 
@@ -476,7 +479,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	server := newServer(t, backend)
 	ns := nsPrefix + "-ns1"
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED, WithNamespace(ns))
@@ -837,6 +840,58 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.Equal(t, "deleted-item ADDED", string(res.Items[1].Value))
 		require.Equal(t, rv1, res.Items[1].ResourceVersion)
 	})
+}
+
+func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	server := newServer(t, backend)
+
+	ns := nsPrefix + "-short"
+	const (
+		name         = "it1"
+		group        = "group"
+		resourceName = "resource"
+	)
+
+	start := time.Now()
+	origRv, _ := writeEvent(ctx, backend, name, resource.WatchEvent_ADDED, WithNamespace(ns), WithGroup(group), WithResource(resourceName))
+	require.Greater(t, origRv, int64(0))
+
+	const events = 500
+	prevRv := origRv
+	for i := 0; i < events; i++ {
+		rv, err := writeEvent(ctx, backend, name, resource.WatchEvent_MODIFIED, WithNamespace(ns), WithGroup(group), WithResource(resourceName))
+		require.NoError(t, err)
+		require.Greater(t, rv, prevRv)
+		prevRv = rv
+	}
+	t.Log("added events in ", time.Since(start))
+
+	req := &resource.ListRequest{
+		Limit:           2 * events,
+		Source:          resource.ListRequest_HISTORY,
+		ResourceVersion: origRv,
+		VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
+		Options: &resource.ListOptions{
+			Key: &resource.ResourceKey{
+				Namespace: ns,
+				Group:     group,
+				Resource:  resourceName,
+				Name:      name,
+			},
+		},
+	}
+
+	shortContext, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	defer cancel()
+
+	res, err := server.List(shortContext, req)
+	// We expect context deadline error, but it may be reported as a res.Error object.
+	t.Log("list error:", err)
+	if res != nil {
+		t.Log("iterator error:", res.Error)
+	}
+	require.True(t, err != nil || (res != nil && res.Error != nil))
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {

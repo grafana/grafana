@@ -2536,7 +2536,8 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ```ini
 [live]
 ha_engine = redis
-ha_engine_address = 127.0.0.1:6379
+ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
 
 <hr>
