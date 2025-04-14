@@ -167,6 +167,13 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  /**
+   * @internal
+   * Opens the extension sidebar with the registered component.
+   * @param componentTitle The title of the component to be opened in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
@@ -202,7 +209,7 @@ export type PluginExtensionPanelContext = {
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
-  query?: DataQuery;
+  query?: DataQuery & { expr?: string };
 };
 
 export type PluginExtensionDataSourceConfigContext<

@@ -68,7 +68,7 @@ export const SilencePeriod = () => {
         onChangeTimeZone={(newValue) => onChangeTimeZone(newValue)}
         hideTimeZone={false}
         hideQuickRanges={true}
-        placeholder={'Select time range'}
+        placeholder={t('alerting.silence-period.placeholder-select-time-range', 'Select time range')}
       />
     </Field>
   );

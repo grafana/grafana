@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,9 +32,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		DisableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -63,8 +60,9 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		expBody   string
 	}
 
-	t.Run("when creating alertmanager configuration", func(t *testing.T) {
-		body := `
+	// Create alertmanager config
+	cfg := apimodels.PostableUserConfig{}
+	amConfig := `
 		{
 			"alertmanager_config": {
 				"route": {
@@ -85,51 +83,10 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			}
 		}
 		`
-
-		testCases := []testCase{
-			{
-				desc:      "un-authenticated request should fail",
-				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusUnauthorized,
-				expBody:   `"message":"Unauthorized"`,
-			},
-			{
-				desc:      "viewer request should fail",
-				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusForbidden,
-				expBody:   `"title":"Access denied"`,
-			},
-			{
-				desc:      "editor request should succeed",
-				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusAccepted,
-				expBody:   `{"message":"configuration created"}`,
-			},
-			{
-				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusAccepted,
-				expBody:   `{"message":"configuration created"}`,
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.desc, func(t *testing.T) {
-				url := fmt.Sprintf(tc.url, grafanaListedAddr)
-				buf := bytes.NewReader([]byte(body))
-				// nolint:gosec
-				resp, err := http.Post(url, "application/json", buf)
-				t.Cleanup(func() {
-					require.NoError(t, resp.Body.Close())
-				})
-				require.NoError(t, err)
-				require.Equal(t, tc.expStatus, resp.StatusCode)
-				b, err := io.ReadAll(resp.Body)
-				require.NoError(t, err)
-				require.Contains(t, string(b), tc.expBody)
-			})
-		}
-	})
+	err := json.Unmarshal([]byte(amConfig), &cfg)
+	require.NoError(t, err)
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+	require.NoError(t, err)
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
 		cfgTemplate := `
@@ -329,7 +286,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 	})
 
 	var silences apimodels.GettableSilences
-	err := json.Unmarshal(blob, &silences)
+	err = json.Unmarshal(blob, &silences)
 	require.NoError(t, err)
 	assert.Len(t, silences, 2)
 	silenceIDs := make([]string, 0, len(silences))

@@ -12,6 +12,9 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -28,6 +31,8 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return err
 	}
 
+	var migrationErr error
+	var resourceInfo utils.ResourceInfo
 	switch v := obj.(type) {
 	case *dashboardV0.Dashboard:
 		delete(v.Spec.Object, "uid")
@@ -36,6 +41,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		resourceInfo = dashboardV0.DashboardResourceInfo
 	case *dashboardV1.Dashboard:
 		delete(v.Spec.Object, "uid")
 		delete(v.Spec.Object, "version")
@@ -43,15 +49,26 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
-		// do not error here if the migrations fail
-		err = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
-		if err != nil {
+		resourceInfo = dashboardV1.DashboardResourceInfo
+		migrationErr = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,
-				Error:  err.Error(),
+				Error:  migrationErr.Error(),
 			}
 		}
 	case *dashboardV2.Dashboard:
+		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
+		// until the generator is fixed.
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV2.DashboardGridLayoutSpec{},
+			}
+		}
+
+		resourceInfo = dashboardV2.DashboardResourceInfo
+
 		// Noop for V2
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
@@ -61,5 +78,46 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
 	}
 
+	fieldValidationMode := getFieldValidationMode(a)
+
+	var validationErrorList field.ErrorList
+	var validationProcessingError error
+	if migrationErr == nil {
+		// Migration check passed, validate the spec now - this will respect the field validation mode!
+		validationErrorList, validationProcessingError = b.ValidateDashboardSpec(ctx, obj, fieldValidationMode)
+	}
+
+	// Only fail if the field validation mode is strict
+	if fieldValidationMode == metav1.FieldValidationStrict {
+		if migrationErr != nil {
+			return apierrors.NewInvalid(resourceInfo.GroupVersionKind().GroupKind(), meta.GetName(), field.ErrorList{
+				field.Invalid(field.NewPath("spec"), meta.GetName(), migrationErr.Error())})
+		}
+		if validationProcessingError != nil {
+			return validationProcessingError
+		}
+		if len(validationErrorList) > 0 {
+			return apierrors.NewInvalid(resourceInfo.GroupVersionKind().GroupKind(), meta.GetName(), validationErrorList)
+		}
+	}
+
 	return nil
+}
+
+func getFieldValidationMode(a admission.Attributes) string {
+	var validation string
+	switch opts := a.GetOperationOptions().(type) {
+	case *metav1.CreateOptions:
+		validation = opts.FieldValidation
+	case *metav1.UpdateOptions:
+		validation = opts.FieldValidation
+	default:
+		validation = metav1.FieldValidationStrict
+	}
+
+	if validation == "" {
+		validation = metav1.FieldValidationStrict
+	}
+
+	return validation
 }

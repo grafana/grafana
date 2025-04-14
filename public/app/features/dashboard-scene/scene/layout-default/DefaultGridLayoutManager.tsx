@@ -229,22 +229,35 @@ export class DefaultGridLayoutManager
   }
 
   public duplicate(): DashboardLayoutManager {
+    const children = this.state.grid.state.children;
+    const hasGridItem = children.find((child) => child instanceof DashboardGridItem);
+    const clonedChildren: SceneGridItemLike[] = [];
+
+    if (children.length) {
+      let panelId = hasGridItem ? dashboardSceneGraph.getNextPanelId(hasGridItem.state.body) : 1;
+
+      children.forEach((child) => {
+        if (child instanceof DashboardGridItem) {
+          const clone = child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(panelId),
+            }),
+          });
+
+          clonedChildren.push(clone);
+          panelId++;
+        } else {
+          clonedChildren.push(child.clone({ key: undefined }));
+        }
+      });
+    }
+
     const clone = this.clone({
       key: undefined,
       grid: this.state.grid.clone({
         key: undefined,
-        children: this.state.grid.state.children.map((child) => {
-          if (child instanceof DashboardGridItem) {
-            return child.clone({
-              key: undefined,
-              body: child.state.body.clone({
-                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
-              }),
-            });
-          }
-
-          return child.clone({ key: undefined });
-        }),
+        children: clonedChildren,
       }),
     });
 
