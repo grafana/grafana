@@ -55,7 +55,7 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count, ReducerID.diffperc],
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count, ReducerID.diffperc, ReducerID.delta],
     });
 
     expect(stats.first).toEqual(10);
@@ -63,6 +63,7 @@ describe('Stats Calculators', () => {
     expect(stats.mean).toEqual(15);
     expect(stats.count).toEqual(2);
     expect(stats.diffperc).toEqual(100);
+    expect(stats.delta).toEqual(10);
   });
 
   it('should handle undefined field data without crashing', () => {
@@ -201,7 +202,14 @@ describe('Stats Calculators', () => {
 
     const stats = reduceField({
       field: createField('x', info[0].data),
-      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull, ReducerID.diffperc],
+      reducers: [
+        ReducerID.first,
+        ReducerID.last,
+        ReducerID.firstNotNull,
+        ReducerID.lastNotNull,
+        ReducerID.diffperc,
+        ReducerID.delta,
+      ],
     });
 
     expect(stats[ReducerID.first]).toEqual(NaN);
@@ -209,6 +217,7 @@ describe('Stats Calculators', () => {
     expect(stats[ReducerID.firstNotNull]).toEqual(200);
     expect(stats[ReducerID.lastNotNull]).toEqual(200);
     expect(stats[ReducerID.diffperc]).toEqual(0);
+    expect(stats[ReducerID.delta]).toEqual(0);
 
     const reducers = [ReducerID.lastNotNull, ReducerID.firstNotNull];
     for (const input of info) {
@@ -275,6 +284,12 @@ describe('Stats Calculators', () => {
     const someNulls = createField('y', [3, null, 2, 1, 4]);
     someNulls.config.nullValueMode = NullValueMode.AsZero;
     expect(reduce(someNulls, ReducerID.median)).toEqual(2);
+  });
+
+  it('delta should not baseline at initial value', () => {
+    const someNulls = createField('y', [67, 71, 66]);
+    someNulls.config.nullValueMode = NullValueMode.AsZero;
+    expect(reduce(someNulls, ReducerID.delta)).toEqual(4);
   });
 
   it('can reduce to percentiles', () => {
