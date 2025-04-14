@@ -15,6 +15,7 @@ export type { MatcherConfig };
  */
 export interface DataTransformContext {
   interpolate: InterpolateFunction;
+  originalTransformations?: Array<DataTransformerConfig<any>>;
 }
 
 /**
