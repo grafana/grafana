@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
@@ -10,8 +9,7 @@ import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/u
  * and the `alertingApiServer` feature toggle being enabled
  */
 export const shouldUseK8sApi = (alertmanager?: string) => {
-  const featureToggleEnabled = config.featureToggles.alertingApiServer;
-  return featureToggleEnabled && alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  return alertmanager === GRAFANA_RULES_SOURCE_NAME;
 };
 
 type EntityToCheck = {

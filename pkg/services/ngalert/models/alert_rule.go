@@ -242,10 +242,10 @@ func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKe
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
 func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
-		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
-			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		if g[i].FolderUID == g[j].FolderUID {
+			return g[i].Title < g[j].Title
 		}
-		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+		return g[i].FolderUID < g[j].FolderUID
 	})
 }
 

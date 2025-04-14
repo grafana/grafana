@@ -12,7 +12,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -91,7 +91,7 @@ func (s *folderStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*v0alpha1.Folder)
+	p, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, fmt.Errorf("expected folder?")
 	}
@@ -103,7 +103,7 @@ func (s *folderStorage) Create(ctx context.Context,
 
 	parentUid := accessor.GetFolder()
 
-	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.ObjectMeta.Name, parentUid)
+	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
 	}

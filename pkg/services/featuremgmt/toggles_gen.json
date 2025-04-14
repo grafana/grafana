@@ -481,18 +481,6 @@
     },
     {
       "metadata": {
-        "name": "appSidecar",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
-      },
-      "spec": {
-        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-04-03T15:18:37Z"
@@ -745,6 +733,30 @@
     },
     {
       "metadata": {
+        "name": "dashboardDisableSchemaValidationV1",
+        "resourceVersion": "1744303023863",
+        "creationTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v1",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardDisableSchemaValidationV2",
+        "resourceVersion": "1744303023863",
+        "creationTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -796,6 +808,18 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaValidationLogging",
+        "resourceVersion": "1744303223631",
+        "creationTimestamp": "2025-04-10T16:40:23Z"
+      },
+      "spec": {
+        "description": "Log schema validation errors so they can be analyzed later",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
       }
     },
     {
@@ -1091,7 +1115,8 @@
       "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-09T18:15:18Z"
+        "creationTimestamp": "2024-04-09T18:15:18Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z"
       },
       "spec": {
         "description": "Enables the new Grafana Metrics Drilldown core app",
@@ -1117,14 +1142,19 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744146547481",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-08 21:09:07.481769 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
@@ -1288,6 +1318,32 @@
     },
     {
       "metadata": {
+        "name": "flagDashboardDisableSchemaValidationV1",
+        "resourceVersion": "1744302136118",
+        "creationTimestamp": "2025-04-10T16:22:16Z",
+        "deletionTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v1",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "flagDashboardDisableSchemaValidationV2",
+        "resourceVersion": "1744302136118",
+        "creationTimestamp": "2025-04-10T16:22:16Z",
+        "deletionTimestamp": "2025-04-10T16:37:03Z"
+      },
+      "spec": {
+        "description": "Disable schema validation for dashboards/v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "formatString",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-10-13T18:17:12Z"
@@ -1384,16 +1440,20 @@
     {
       "metadata": {
         "name": "grafanaconThemes",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744293476104",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-10 13:57:56.104154 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
         "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -1648,13 +1708,17 @@
     {
       "metadata": {
         "name": "kubernetesClientDashboardsFolders",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-18T21:15:35Z"
+        "resourceVersion": "1744337414536",
+        "creationTimestamp": "2025-02-18T21:15:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-11 02:10:14.536012 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Route the folder and dashboard service requests to k8s",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "true"
       }
     },
     {
@@ -1863,18 +1927,18 @@
     {
       "metadata": {
         "name": "logsPanelControls",
-        "resourceVersion": "1743772342343",
+        "resourceVersion": "1744209818391",
         "creationTimestamp": "2025-04-04T13:11:29Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-04-04 13:12:22.343052 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-04-09 14:43:38.391331 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2246,8 +2310,8 @@
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
-        "stage": "preview",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
       }
@@ -2519,7 +2583,8 @@
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-12T12:31:39Z"
+        "creationTimestamp": "2024-08-12T12:31:39Z",
+        "deletionTimestamp": "2025-04-10T18:16:18Z"
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
@@ -2862,13 +2927,16 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-06-06T16:28:52Z"
+        "resourceVersion": "1744189713698",
+        "creationTimestamp": "2023-06-06T16:28:52Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-09 09:08:33.698779 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true,
         "hideFromAdminPage": true
       }
@@ -2876,12 +2944,15 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1744213036999",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-09 15:37:16.999955611 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },

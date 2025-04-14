@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -38,7 +38,7 @@ func setupTest(t *testing.T) *testSetup {
 			if version == "v2alpha1" {
 				return mockClientV2Alpha1
 			}
-			if version == dashboardv1alpha1.VERSION {
+			if version == dashboardv1.VERSION {
 				return mockClientV1Alpha1
 			}
 			t.Fatalf("Unexpected call to newClientFunc with version %s", version)

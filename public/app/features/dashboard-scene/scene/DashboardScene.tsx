@@ -29,6 +29,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -39,9 +40,13 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
-import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
+import {
+  DashboardSceneSerializerLike,
+  getDashboardSceneSerializer,
+  V2DashboardSerializer,
+} from '../serialization/DashboardSceneSerializer';
+import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
-import { serializeAutoGridItem } from '../serialization/layoutSerializers/ResponsiveGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
@@ -71,9 +76,9 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { AutoGridItem } from './layout-responsive-grid/ResponsiveGridItem';
 import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
@@ -177,7 +182,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
-    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+    Dashboard | DashboardV2Spec,
+    DashboardJson | DashboardV2Spec
   >;
 
   private _layoutRestorer = new LayoutRestorer();
@@ -767,8 +774,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
     const { meta } = this.state;
     const spec = this.getSaveAsModel(options);
+
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1alpha1'; // get from the dashboard?
     return {
-      apiVersion: 'dashboard.grafana.app/v1alpha1', // get from the dashboard?
+      apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
