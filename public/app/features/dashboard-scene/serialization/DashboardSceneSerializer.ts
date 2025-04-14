@@ -5,16 +5,20 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getPanelPluginCounts,
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -25,7 +29,7 @@ import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSc
  * M is the type of the metadata
  * I is the type of the initial save model. By default it's the same as T.
  */
-export interface DashboardSceneSerializerLike<T, M, I = T> {
+export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unknown }> {
   /**
    * The save model which the dashboard scene was originally created from
    */
@@ -50,6 +54,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
   getElementIdForPanel: (panelId: number) => string | undefined;
   getElementPanelMapping: () => Map<string, number>;
   getDSReferencesMapping: () => DSReferencesMapping;
+  makeExportableExternally: (s: DashboardScene) => Promise<E | { error: unknown }>;
 }
 
 interface DashboardTrackingInfo {
@@ -67,7 +72,9 @@ export interface DSReferencesMapping {
   annotations: Set<string>;
 }
 
-export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
+export class V1DashboardSerializer
+  implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
+{
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
@@ -194,6 +201,16 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   getSnapshotUrl() {
     return this.initialSaveModel?.snapshot?.originalUrl;
+  }
+
+  async makeExportableExternally(s: DashboardScene) {
+    const saveModel = this.getSaveModel(s);
+    const oldModel = new DashboardModel(saveModel, undefined, {
+      getVariablesFromState: () => {
+        return getVariablesCompatibility(window.__grafanaSceneContext);
+      },
+    });
+    return await makeExportableV1(oldModel);
   }
 }
 
@@ -390,18 +407,36 @@ export class V2DashboardSerializer
   getSnapshotUrl() {
     return this.metadata?.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl];
   }
+
+  async makeExportableExternally(s: DashboardScene) {
+    return await makeExportableV2(this.getSaveModel(s));
+  }
 }
 
-export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
-export function getDashboardSceneSerializer(version: 'v1'): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+  Dashboard,
+  DashboardMeta,
+  Dashboard,
+  DashboardJson
+>;
+export function getDashboardSceneSerializer(
+  version: 'v1'
+): DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>;
 export function getDashboardSceneSerializer(
   version: 'v2'
-): DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>;
+): DashboardSceneSerializerLike<
+  DashboardV2Spec,
+  DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+  DashboardV2Spec,
+  DashboardV2Spec
+>;
 export function getDashboardSceneSerializer(
   version?: 'v1' | 'v2'
 ): DashboardSceneSerializerLike<
   Dashboard | DashboardV2Spec,
-  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+  Dashboard | DashboardV2Spec,
+  DashboardJson | DashboardV2Spec
 > {
   if (version === 'v2') {
     return new V2DashboardSerializer();

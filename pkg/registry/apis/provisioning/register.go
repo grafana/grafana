@@ -559,7 +559,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Pull request worker
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
+			commenter := pullrequest.NewCommenter()
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
 			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
@@ -1114,7 +1116,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

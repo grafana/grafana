@@ -3,7 +3,6 @@
       "list": [
         {
           "builtIn": 1,
-          "datasource": "-- Grafana --",
           "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
@@ -883,7 +882,7 @@
       }
     ],
     "refresh": "",
-    "schemaVersion": 33,
+    "schemaVersion": 36,
     "tags": [
       "gdev",
       "panel-tests",

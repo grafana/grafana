@@ -21,7 +21,6 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
@@ -140,13 +139,7 @@ const getRootRoute = async () => {
   return ui.rootRouteContainer.find();
 };
 
-describe.each([
-  // k8s API enabled
-  true,
-  // k8s API disabled
-  false,
-])('NotificationPolicies with alertingApiServer=%p', (apiServerEnabled) => {
-  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+describe('NotificationPolicies', () => {
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
@@ -369,22 +362,6 @@ describe.each([
   });
 });
 
-describe('Grafana alertmanager - config API', () => {
-  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
-    const { user } = renderNotificationPolicies();
-
-    const policyIndex = 0;
-    await openEditModal(policyIndex);
-
-    // Save policy to test that format is converted to object_matchers
-    await user.click(await ui.saveButton.find());
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
-
-    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
-  });
-});
 describe('Non-Grafana alertmanagers', () => {
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
