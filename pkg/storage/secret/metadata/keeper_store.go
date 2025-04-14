@@ -409,7 +409,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		Namespace:   keeper.Namespace,
 		KeeperNames: keeperNames,
 		// TODO add comment Why do we do this
-		ExcludeKeeperType: string(contracts.SQLKeeperType),
+		ExcludeSQLKeeper: string(contracts.SQLKeeperType),
 	}
 
 	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
