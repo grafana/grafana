@@ -74,7 +74,6 @@ func (m *LegacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	return nil
 }
 
-// TODO: can we use the same migrator for folders?
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator
 	parser    resources.Parser
