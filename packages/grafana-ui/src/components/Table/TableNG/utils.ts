@@ -523,11 +523,8 @@ export function getComparator(sortColumnType: FieldType): Comparator {
     // Handle sorting for frame type fields (sparklines)
     case FieldType.frame:
       return (a, b) => {
-        // For DataFrameWithValue type objects
-        const aValue = typeof a === 'object' && 'value' in a ? a.value : a;
-        const bValue = typeof b === 'object' && 'value' in b ? b.value : b;
-
-        return Number(aValue) - Number(bValue);
+        // @ts-ignore The values are DataFrameWithValue
+        return (a?.value ?? 0) - (b?.value ?? 0);
       };
     case FieldType.time:
     case FieldType.number:
