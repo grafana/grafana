@@ -168,10 +168,10 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
-   * @alpha
-   * Opens the
+   * @alpha @internal
+   * Opens the extension sidebar with the registered component.
    */
-  openExtensionSidebar: (componentTitle: string, context: any) => void;
+  openExtensionSidebar: (componentTitle: string, context: Context) => void;
 };
 
 // Extension Points & Contexts
