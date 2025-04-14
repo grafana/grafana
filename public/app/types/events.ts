@@ -29,7 +29,7 @@ export interface ShowModalReactPayload {
 }
 
 export interface OpenExtensionSidebarPayload {
-  props?: any;
+  props?: Record<string, unknown>;
   pluginId: string;
   componentTitle: string;
 }
