@@ -3486,7 +3486,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.7.0, @grafana/scenes@npm:^6.7.0":
+"@grafana/scenes@link:/Users/kristinadurivage/development/scenes/packages/scenes::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/scenes@link:/Users/kristinadurivage/development/scenes/packages/scenes::locator=grafana%40workspace%3A."
+  languageName: node
+  linkType: soft
+
+"@grafana/scenes@npm:6.7.0":
   version: 6.7.0
   resolution: "@grafana/scenes@npm:6.7.0"
   dependencies:
@@ -17642,7 +17648,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^6.7.0"
+    "@grafana/scenes": "link:/Users/kristinadurivage/development/scenes/packages/scenes"
     "@grafana/scenes-react": "npm:^6.7.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"

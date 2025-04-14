@@ -228,6 +228,7 @@ export class PanelQueryRunner {
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
+      originalTransformations: transformations,
     };
 
     let seriesTransformations = transformations.filter((t) => t.topic == null || t.topic === DataTopic.Series);

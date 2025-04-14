@@ -99,17 +99,24 @@ export function transformDataFrame(
 
   const operators: Array<MonoTypeOperatorFunction<DataFrame[]>> = [];
   const context = ctx ?? { interpolate: (str) => str };
+  // we mutate the context in the loop, keep this for referencing
+  const originalTransformations = ctx?.originalTransformations;
 
   for (let index = 0; index < options.length; index++) {
     const config = options[index];
+    const originalTransformation: DataTransformerConfig | undefined = originalTransformations?.[index];
+
+    // only send the relevant original transformation through the context
+    const transformContext = { ...context };
+    transformContext.originalTransformations = originalTransformation !== undefined ? [originalTransformation] : [];
 
     if (isCustomTransformation(config)) {
-      operators.push(config(context));
+      operators.push(config(transformContext));
     } else {
       if (config.disabled) {
         continue;
       }
-      operators.push(getOperator(config, context));
+      operators.push(getOperator(config, transformContext));
     }
   }
 
