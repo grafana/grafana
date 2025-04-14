@@ -15,6 +15,7 @@ import (
 )
 
 //go:generate mockery --name BulkStoreClient --structname MockBulkStoreClient --inpackage --filename mock_bulk_store_client.go --with-expecter
+//go:generate mockery --name=BulkStore_BulkProcessClient --srcpkg=github.com/grafana/grafana/pkg/storage/unified/resource --output=. --outpkg=migrate --filename=mock_bulk_process_client.go --with-expecter
 type BulkStoreClient interface {
 	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error)
 }
