@@ -68,8 +68,6 @@ type DistortionMap = Map<
 >;
 const generalDistortionMap: DistortionMap = new Map();
 
-const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
-
 const SANDBOX_LIVE_API_PATCHED = Symbol.for('@SANDBOX_LIVE_API_PATCHED');
 
 export function getGeneralSandboxDistortionMap() {
@@ -97,9 +95,6 @@ function failToSet(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
     attrOrMethod: String(originalAttrOrMethod),
     entity: 'window',
   });
-  if (monitorOnly) {
-    return originalAttrOrMethod;
-  }
   return () => {
     throw new Error('Plugins are not allowed to set sandboxed properties');
   };
@@ -119,10 +114,6 @@ function distortIframeAttributes(distortions: DistortionMap) {
           attrOrMethod: property,
           entity: 'iframe',
         });
-
-        if (monitorOnly) {
-          return originalAttrOrMethod;
-        }
 
         return () => {
           throw new Error('iframe.' + property + ' is not allowed in sandboxed plugins');
@@ -148,10 +139,6 @@ function distortConsole(distortions: DistortionMap) {
   if (descriptor?.value) {
     function getSandboxConsole(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
       const pluginId = meta.id;
-      // we don't monitor the console because we expect a high volume of calls
-      if (monitorOnly) {
-        return originalAttrOrMethod;
-      }
 
       function sandboxLog(...args: unknown[]) {
         console.log(`[plugin ${pluginId}]`, ...args);
@@ -182,10 +169,6 @@ function distortAlert(distortions: DistortionMap) {
       attrOrMethod: 'alert',
       entity: 'window',
     });
-
-    if (monitorOnly) {
-      return originalAttrOrMethod;
-    }
 
     return function (...args: unknown[]) {
       console.log(`[plugin ${pluginId}]`, ...args);
@@ -219,9 +202,6 @@ function distortInnerHTML(distortions: DistortionMap) {
               entity: 'HTMLElement',
             });
 
-            if (monitorOnly) {
-              continue;
-            }
             throw new Error('<' + forbiddenElement + '> is not allowed in sandboxed plugins');
           }
         }
@@ -270,9 +250,7 @@ function distortCreateElement(distortions: DistortionMap) {
           param: arg,
           entity: 'document',
         });
-        if (!monitorOnly) {
-          return document.createDocumentFragment();
-        }
+        return document.createDocumentFragment();
       }
       if (isFunction(originalMethod)) {
         return originalMethod.apply(this, [arg, options]);
@@ -298,9 +276,7 @@ function distortInsert(distortions: DistortionMap) {
           param: nodeType,
           entity: 'HTMLElement',
         });
-        if (!monitorOnly) {
-          return document.createDocumentFragment();
-        }
+        return document.createDocumentFragment();
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, node, ref);
@@ -320,9 +296,7 @@ function distortInsert(distortions: DistortionMap) {
           entity: 'HTMLElement',
         });
 
-        if (!monitorOnly) {
-          return document.createDocumentFragment();
-        }
+        return document.createDocumentFragment();
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, position, node);
@@ -355,9 +329,7 @@ function distortAppend(distortions: DistortionMap) {
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
       let acceptedNodes = args;
       const filteredAcceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
-      if (!monitorOnly) {
-        acceptedNodes = filteredAcceptedNodes;
-      }
+      acceptedNodes = filteredAcceptedNodes;
 
       if (acceptedNodes.length !== filteredAcceptedNodes.length) {
         logWarning(`Plugin ${pluginId} tried to append fobiddenElements`, {
@@ -389,9 +361,7 @@ function distortAppend(distortions: DistortionMap) {
           entity: 'HTMLElement',
         });
 
-        if (!monitorOnly) {
-          return document.createDocumentFragment();
-        }
+        return document.createDocumentFragment();
       }
       // if the node is a script, load it into the sandbox
       // this allows webpack chunks to be loaded into the sandbox
