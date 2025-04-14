@@ -22,7 +22,9 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
   return (
     <div className={styles.cell}>
       {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+        <DataLinksContextMenu
+          links={() => getCellLinks(field, rowIdx)?.filter((link) => link.href || link.onClick != null) || []}
+        >
           {(api) => {
             if (api.openMenu) {
               return (
