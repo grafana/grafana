@@ -108,7 +108,7 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return nil, contracts.ErrKeeperNotFound
 }
 
-func read(ctx context.Context, namespace string, name string, s *keeperMetadataStorage) (*keeperDB, error) {
+func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name string) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
