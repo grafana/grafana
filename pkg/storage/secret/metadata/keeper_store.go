@@ -413,20 +413,20 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
 	}
 
-	rows2, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
+	keepersRows, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}
 
 	defer func() {
-		_ = rows2.Close()
+		_ = keepersRows.Close()
 	}()
 
 	// TODO Only fetch the values we need?
 	thirdPartyKeepers := make([]*keeperDB, 0)
 	for rows.Next() {
 		row := keeperDB{}
-		err = rows2.Scan(&row.GUID,
+		err = keepersRows.Scan(&row.GUID,
 			&row.Name, &row.Namespace, &row.Annotations,
 			&row.Labels,
 			&row.Created, &row.CreatedBy,
