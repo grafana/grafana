@@ -31,8 +31,7 @@ func NewUnifiedStorageMigrator(
 }
 
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	cfg := repo.Config()
-	namespace := cfg.GetNamespace()
+	namespace := repo.Config().GetNamespace()
 	progress.SetMessage(ctx, "export resources")
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
