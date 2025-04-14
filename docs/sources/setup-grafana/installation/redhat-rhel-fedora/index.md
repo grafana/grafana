@@ -168,7 +168,7 @@ Complete the following steps to install Grafana using the standalone binaries:
    sudo chown -R grafana:users /usr/local/grafana
    ```
 
-1. [Configure the Grafana server to start at boot time using systemd]({{< relref "../../start-restart-grafana#configure-the-grafana-server-to-start-at-boot-using-systemd" >}}).
+1. [Configure the Grafana server to start at boot time using systemd](../../start-restart-grafana/#configure-the-grafana-server-to-start-at-boot-using-systemd).
 
 ## Uninstall on RHEL or Fedora
 
