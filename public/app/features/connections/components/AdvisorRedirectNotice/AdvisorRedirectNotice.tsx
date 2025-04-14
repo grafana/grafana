@@ -7,7 +7,6 @@ import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertContent: css({
