@@ -348,7 +348,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 
 	rows, err := sess.Query(ctx, qSecValue, reqSecValue.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", qSecValue, err)
+		return fmt.Errorf("executing query: %w", err)
 	}
 	
 	defer func() {
