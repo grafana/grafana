@@ -16,17 +16,17 @@ import (
 
 const maxFolders = 10000
 
-var _ resource.BulkResourceWriter = (*legacyFolderReader)(nil)
+var _ resource.BulkResourceWriter = (*LegacyFolderMigrator)(nil)
 
-type legacyFolderReader struct {
+type LegacyFolderMigrator struct {
 	tree           resources.FolderTree
 	repoName       string
 	legacyMigrator legacy.LegacyMigrator
 	namespace      string
 }
 
-func NewLegacyFolderReader(legacyMigrator legacy.LegacyMigrator, repoName, namespace string) *legacyFolderReader {
-	return &legacyFolderReader{
+func NewLegacyFolderReader(legacyMigrator legacy.LegacyMigrator, repoName, namespace string) *LegacyFolderMigrator {
+	return &LegacyFolderMigrator{
 		legacyMigrator: legacyMigrator,
 		repoName:       repoName,
 		namespace:      namespace,
@@ -35,17 +35,17 @@ func NewLegacyFolderReader(legacyMigrator legacy.LegacyMigrator, repoName, names
 }
 
 // Close implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) Close() error {
+func (f *LegacyFolderMigrator) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) CloseWithResults() (*resource.BulkResponse, error) {
+func (f *LegacyFolderMigrator) CloseWithResults() (*resource.BulkResponse, error) {
 	return &resource.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
@@ -59,7 +59,7 @@ func (f *legacyFolderReader) Write(ctx context.Context, key *resource.ResourceKe
 	return f.tree.AddUnstructured(item, f.repoName)
 }
 
-func (f *legacyFolderReader) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
+func (f *LegacyFolderMigrator) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
 	_, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
@@ -68,6 +68,6 @@ func (f *legacyFolderReader) Read(ctx context.Context, legacyMigrator legacy.Leg
 	return err
 }
 
-func (f *legacyFolderReader) Tree() resources.FolderTree {
+func (f *LegacyFolderMigrator) Tree() resources.FolderTree {
 	return f.tree
 }
