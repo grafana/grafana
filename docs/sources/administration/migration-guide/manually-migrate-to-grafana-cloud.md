@@ -17,6 +17,10 @@ This migration guide is designed to assist Grafana OSS/Enterprise users in seaml
 There isn't yet a standard method for importing existing data into Grafana Cloud from self-managed databases.
 {{< /admonition >}}
 
+{{< admonition type="tip" >}}
+You can use the [Grafana Cloud Migration Assistant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/), generally available in Grafana v12, to automatically migrate your resources to Grafana Cloud.
+{{< /admonition >}}
+
 ## Plan and perform a manual migration
 
 If you need to migrate resources beyond what is supported by the Grafana Cloud Migration Assistant, you can migrate them manually with this guide. Moving your team from Grafana OSS/Enterprise to Grafana Cloud manually involves some coordination and communication in addition to the technical migration in the following documentation.
