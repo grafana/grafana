@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch } from 'react';
+import { Dispatch, FormEvent } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
@@ -73,33 +73,16 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (value: string, index = 0) => {
-    // Allow empty value
-    if (value === '') {
-      const newCondition = produce(simpleCondition, (draft) => {
-        draft.evaluator.params[index] = undefined;
-      });
-      onChange(newCondition);
-      return;
-    }
-    // Allow '-' for negative numbers
-    if (value === '-') {
-      const newCondition = produce(simpleCondition, (draft) => {
-        draft.evaluator.params[index] = '-';
-      });
-      onChange(newCondition);
-      return;
-    }
+  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index = 0) => {
+    const value = event.currentTarget.value;
+    const numericValue = parseFloat(value) || 0; // try to convert input to a number that isn't NaN
 
-    // Handle numeric values
-    const numericValue = parseFloat(value);
-    if (isNaN(numericValue)) {
-      return;
-    }
-    const newCondition = produce(simpleCondition, (draft) => {
-      draft.evaluator.params[index] = numericValue;
-    });
-    onChange(newCondition);
+    onChange(
+      produce(simpleCondition, (draftCondition) => {
+        draftCondition.evaluator.params[index] = numericValue;
+      })
+    );
+
     updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
@@ -132,26 +115,35 @@ export const SimpleConditionEditor = ({
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[0] ?? ''}
-                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 0)}
-                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
+                    // by using the key prop we can force the input to re-render whenever the defaultValue updates
+                    // this is because we have a useEffect() that updates the data structure but "defaultValue" will memoize the
+                    // first value before the useEffect() runs
+                    key={simpleCondition.evaluator.params[0]}
+                    defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 0);
+                    }}
                   />
                   <ToLabel />
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[1] ?? ''}
-                    onChange={(event) => onEvaluateValueChange(event.currentTarget.value, 1)}
-                    onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 1)}
+                    key={simpleCondition.evaluator.params[1]}
+                    defaultValue={simpleCondition.evaluator.params[1] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 1);
+                    }}
                   />
                 </>
               ) : (
                 <Input
                   type="number"
                   width={10}
-                  value={simpleCondition.evaluator.params[0] ?? ''}
-                  onBlur={(e) => e.currentTarget.value === '' && onEvaluateValueChange('0', 0)}
-                  onChange={(e) => onEvaluateValueChange(e.currentTarget.value, 0)}
+                  key={simpleCondition.evaluator.params[0]}
+                  defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                  onBlur={(event) => {
+                    onEvaluateValueChange(event, 0);
+                  }}
                 />
               )}
             </Stack>
