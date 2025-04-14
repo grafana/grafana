@@ -21,7 +21,7 @@ weight: 200
 You can extend the access provided by a role to alert rules and rule-specific silences by assigning permissions to individual folders or data sources.
 
 {{< admonition type="note" >}}
-Data source query permissions are required to create or modify an alert rule using that data source.
+Data source query permissions are required to create an alert rule or modify an alert rule's query using that data source.
 {{< /admonition >}}
 
 This allows different users, teams, or service accounts to have customized access to modify or silence alert rules in specific folders or using specific data sources.
