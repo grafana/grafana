@@ -15,15 +15,15 @@ import (
 )
 
 type LegacyMigrator struct {
-	legacyMigrator  *LegacyResourcesMigrator
-	storageSwapper  *StorageSwapper
+	legacyMigrator  LegacyResourcesMigrator
+	storageSwapper  StorageSwapper
 	syncWorker      jobs.Worker
 	wrapWithCloneFn WrapWithCloneFn
 }
 
 func NewLegacyMigrator(
-	legacyMigrator *LegacyResourcesMigrator,
-	storageSwapper *StorageSwapper,
+	legacyMigrator LegacyResourcesMigrator,
+	storageSwapper StorageSwapper,
 	syncWorker jobs.Worker,
 	wrapWithCloneFn WrapWithCloneFn,
 ) *LegacyMigrator {

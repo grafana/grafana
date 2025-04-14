@@ -20,20 +20,26 @@ type BulkStoreClient interface {
 	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error)
 }
 
-type StorageSwapper struct {
+//go:generate mockery --name StorageSwapper --structname MockStorageSwapper --inpackage --filename mock_storage_swapper.go --with-expecter
+type StorageSwapper interface {
+	StopReadingUnifiedStorage(ctx context.Context) error
+	WipeUnifiedAndSetMigratedFlag(ctx context.Context, namespace string) error
+}
+
+type storageSwapper struct {
 	// Direct access to unified storage... use carefully!
 	bulk BulkStoreClient
 	dual dualwrite.Service
 }
 
-func NewStorageSwapper(bulk BulkStoreClient, dual dualwrite.Service) *StorageSwapper {
-	return &StorageSwapper{
+func NewStorageSwapper(bulk BulkStoreClient, dual dualwrite.Service) StorageSwapper {
+	return &storageSwapper{
 		bulk: bulk,
 		dual: dual,
 	}
 }
 
-func (s *StorageSwapper) StopReadingUnifiedStorage(ctx context.Context) error {
+func (s *storageSwapper) StopReadingUnifiedStorage(ctx context.Context) error {
 	// FIXME: dual writer is not namespaced which means that we would consider all namespaces migrated
 	// after one migrates
 	for _, gr := range resources.SupportedProvisioningResources {
@@ -50,7 +56,7 @@ func (s *StorageSwapper) StopReadingUnifiedStorage(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageSwapper) WipeUnifiedAndSetMigratedFlag(ctx context.Context, namespace string) error {
+func (s *storageSwapper) WipeUnifiedAndSetMigratedFlag(ctx context.Context, namespace string) error {
 	for _, gr := range resources.SupportedProvisioningResources {
 		status, _ := s.dual.Status(ctx, gr.GroupResource())
 		if status.ReadUnified {

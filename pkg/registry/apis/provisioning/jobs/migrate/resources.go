@@ -18,20 +18,25 @@ import (
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
-type LegacyResourcesMigrator struct {
+//go:generate mockery --name LegacyResourcesMigrator --structname MockLegacyResourcesMigrator --inpackage --filename mock_legacy_resources_migrator.go --with-expecter
+type LegacyResourcesMigrator interface {
+	Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
+}
+
+type legacyResorucesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
-	folderMigrator      *LegacyFoldersMigrator
+	folderMigrator      *legacyFoldersMigrator
 }
 
 func NewLegacyResourcesMigrator(
 	repositoryResources resources.RepositoryResourcesFactory,
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
-	folderMigrator *LegacyFoldersMigrator,
-) *LegacyResourcesMigrator {
-	return &LegacyResourcesMigrator{
+	folderMigrator *legacyFoldersMigrator,
+) *legacyResorucesMigrator {
+	return &legacyResorucesMigrator{
 		repositoryResources: repositoryResources,
 		parsers:             parsers,
 		legacyMigrator:      legacyMigrator,
@@ -39,7 +44,7 @@ func NewLegacyResourcesMigrator(
 	}
 }
 
-func (m *LegacyResourcesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (m *legacyResorucesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	parser, err := m.parsers.GetParser(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("error getting parser: %w", err)

@@ -18,32 +18,37 @@ import (
 
 const maxFolders = 10000
 
-var _ resource.BulkResourceWriter = (*LegacyFoldersMigrator)(nil)
+//go:generate mockery --name LegacyFoldersMigrator --structname MockLegacyFoldersMigrator --inpackage --filename mock_legacy_folders_migrator.go --with-expecter
+type LegacyFoldersMigrator interface {
+	Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+}
 
-type LegacyFoldersMigrator struct {
+var _ resource.BulkResourceWriter = (*legacyFoldersMigrator)(nil)
+
+type legacyFoldersMigrator struct {
 	tree           resources.FolderTree
 	legacyMigrator legacy.LegacyMigrator
 }
 
-func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) *LegacyFoldersMigrator {
-	return &LegacyFoldersMigrator{
+func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) LegacyFoldersMigrator {
+	return &legacyFoldersMigrator{
 		legacyMigrator: legacyMigrator,
 		tree:           resources.NewEmptyFolderTree(),
 	}
 }
 
 // Close implements resource.BulkResourceWrite.
-func (f *LegacyFoldersMigrator) Close() error {
+func (f *legacyFoldersMigrator) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BulkResourceWrite.
-func (f *LegacyFoldersMigrator) CloseWithResults() (*resource.BulkResponse, error) {
+func (f *legacyFoldersMigrator) CloseWithResults() (*resource.BulkResponse, error) {
 	return &resource.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWrite.
-func (f *LegacyFoldersMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (f *legacyFoldersMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
@@ -59,7 +64,7 @@ func (f *LegacyFoldersMigrator) Write(ctx context.Context, key *resource.Resourc
 	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "read folders from SQL")
 	if _, err := f.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
@@ -70,7 +75,7 @@ func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 	}
 
 	progress.SetMessage(ctx, "export folders from SQL")
-	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.Tree(), func(folder resources.Folder, created bool, err error) error {
+	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
 			Name:     folder.ID,
@@ -91,8 +96,4 @@ func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 	}
 
 	return nil
-}
-
-func (f *LegacyFoldersMigrator) Tree() resources.FolderTree {
-	return f.tree
 }
