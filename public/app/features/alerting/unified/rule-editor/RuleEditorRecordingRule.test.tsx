@@ -39,8 +39,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
   // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,

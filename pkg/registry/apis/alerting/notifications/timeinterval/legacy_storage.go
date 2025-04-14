@@ -67,7 +67,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -83,7 +83,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 
 	for _, mt := range timings {
 		if mt.UID == uid {
-			return convertToK8sResource(info.OrgID, mt, s.namespacer)
+			return ConvertToK8sResource(info.OrgID, mt, s.namespacer)
 		}
 	}
 	return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
@@ -107,7 +107,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected time-interval but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
+	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
 	model, err := convertToDomainModel(p)
@@ -118,7 +118,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, out, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -156,7 +156,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.ObjectMeta.Name != interval.UID {
+	if p.Name != interval.UID {
 		return nil, false, errors.NewBadRequest("title of cannot be changed. Consider creating a new resource.")
 	}
 
@@ -165,7 +165,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, s.namespacer)
+	r, err := ConvertToK8sResource(info.OrgID, updated, s.namespacer)
 	return r, false, err
 }
 
@@ -193,8 +193,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteMuteTiming(ctx, p.ObjectMeta.Name, info.OrgID, definitions.Provenance(ngmodels.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                                         // false - will be deleted async
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(ngmodels.ProvenanceNone), version) // TODO add support for dry-run option
+	return old, false, err                                                                                              // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {

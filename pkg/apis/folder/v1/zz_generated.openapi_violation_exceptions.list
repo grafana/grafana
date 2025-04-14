@@ -1,0 +1,2 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/folder/v1,DescendantCounts,Counts
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/folder/v1,FolderInfoList,Items

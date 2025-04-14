@@ -201,7 +201,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	}
 	ts := obj.GetCreationTimestamp()
 	if !ts.Time.IsZero() {
-		doc.Created = ts.Time.UnixMilli()
+		doc.Created = ts.UnixMilli()
 	}
 	tt, err := obj.GetUpdatedTimestamp()
 	if err != nil && tt != nil {

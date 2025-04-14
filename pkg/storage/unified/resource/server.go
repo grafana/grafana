@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -32,15 +33,18 @@ type ResourceServer interface {
 }
 
 type ListIterator interface {
+	// Next advances iterator and returns true if there is next value is available from the iterator.
+	// Error() should be checked after every call of Next(), even when Next() returns true.
 	Next() bool // sql.Rows
 
-	// Iterator error (if exts)
+	// Error returns iterator error, if any. This should be checked after any Next() call.
+	// (Some iterator implementations return true from Next, but also set the error at the same time).
 	Error() error
 
-	// The token that can be used to start iterating *after* this item
+	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// The token that can be used to start iterating *before* this item
+	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
 	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
@@ -654,6 +658,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return &ReadResponse{Error: rsp.Error}, nil
+	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
@@ -760,11 +767,10 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
-
-				break
+				return iter.Error()
 			}
 		}
-		return nil
+		return iter.Error()
 	})
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -868,7 +874,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 			}
-			return nil
+			return iter.Error()
 		})
 		if err != nil {
 			return err

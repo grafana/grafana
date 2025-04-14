@@ -148,8 +148,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Name),
 		attribute.String("datasource_type", proxy.ds.Type),
-		attribute.String("user", proxy.ctx.SignedInUser.Login),
-		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+		attribute.String("user", proxy.ctx.Login),
+		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -313,7 +313,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}

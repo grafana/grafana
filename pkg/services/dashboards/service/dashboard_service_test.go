@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -542,8 +542,8 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -648,8 +648,8 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -742,8 +742,8 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -975,8 +975,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -1120,7 +1120,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		}}
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v1alpha1",
+			"apiVersion": dashboardv1.APIVERSION,
 			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":        "uid",
@@ -1133,7 +1133,9 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 		}}
 		// should update it to be without annotations
-		k8sCliMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything).Return(dashWithoutAnnotations, nil)
+		k8sCliMock.On("Update", mock.Anything, dashWithoutAnnotations, mock.Anything, metav1.UpdateOptions{
+			FieldValidation: metav1.FieldValidationIgnore,
+		}).Return(dashWithoutAnnotations, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
@@ -1357,7 +1359,9 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, metav1.UpdateOptions{
+			FieldValidation: metav1.FieldValidationIgnore,
+		}).Return(&dashboardUnstructured, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 
 		dashboard, err := service.SaveProvisionedDashboard(ctx, query, &dashboards.DashboardProvisioning{})
@@ -1419,7 +1423,9 @@ func TestSaveDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
-		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, metav1.UpdateOptions{
+			FieldValidation: metav1.FieldValidationIgnore,
+		}).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
 		require.NoError(t, err)
@@ -1430,7 +1436,9 @@ func TestSaveDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
-		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, metav1.UpdateOptions{
+			FieldValidation: metav1.FieldValidationIgnore,
+		}).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
 		require.NoError(t, err)
@@ -1440,7 +1448,9 @@ func TestSaveDashboard(t *testing.T) {
 	t.Run("Should return an error if uid is invalid", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
-		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sCliMock.On("Update", mock.Anything, mock.Anything, mock.Anything, metav1.UpdateOptions{
+			FieldValidation: metav1.FieldValidationIgnore,
+		}).Return(&dashboardUnstructured, nil)
 
 		query.Dashboard.UID = "invalid/uid"
 		_, err := service.SaveDashboard(ctx, query, false)
@@ -2007,9 +2017,9 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		assert.Equal(t, false, result.HasACL)
 		assert.Equal(t, false, result.IsFolder)
 		assert.Equal(t, int64(1), result.ID)
-		assert.Equal(t, now.Time.Format(time.RFC3339), result.Created.Format(time.RFC3339))
+		assert.Equal(t, now.Format(time.RFC3339), result.Created.Format(time.RFC3339))
 		assert.Equal(t, int64(10), result.CreatedBy)
-		assert.Equal(t, now.Time.Format(time.RFC3339), result.Updated.Format(time.RFC3339)) // updated should default to created
+		assert.Equal(t, now.Format(time.RFC3339), result.Updated.Format(time.RFC3339)) // updated should default to created
 		assert.Equal(t, int64(10), result.UpdatedBy)
 	})
 
@@ -2491,7 +2501,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 				// Create test object
 				key := &resource.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
-				obj := &dashboardv1alpha1.Dashboard{
+				obj := &dashboardv1.Dashboard{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: "dashboard.grafana.app/v0alpha1",
 					},
@@ -2834,8 +2844,8 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 func createTestUnstructuredDashboard(uid, title string, resourceVersion string) unstructured.Unstructured {
 	return unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name":              uid,
 				"deletionTimestamp": "2023-01-01T00:00:00Z",

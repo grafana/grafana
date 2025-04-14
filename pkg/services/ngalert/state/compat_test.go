@@ -63,25 +63,25 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 					u := *appURL
 					u.Path = u.Path + "/alerting/grafana/" + alertState.AlertRuleUID + "/view"
-					require.Equal(t, u.String(), result.Alert.GeneratorURL.String())
+					require.Equal(t, u.String(), result.GeneratorURL.String())
 				})
 
 				t.Run("app URL as is if rule UID is not specified", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = ""
 					result := StateToPostableAlert(alertState, appURL)
-					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
+					require.Equal(t, appURL.String(), result.GeneratorURL.String())
 
 					delete(alertState.Labels, alertingModels.RuleUIDLabel)
 					result = StateToPostableAlert(alertState, appURL)
-					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
+					require.Equal(t, appURL.String(), result.GeneratorURL.String())
 				})
 
 				t.Run("empty string if app URL is not provided", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := StateToPostableAlert(alertState, nil)
-					require.Equal(t, "", result.Alert.GeneratorURL.String())
+					require.Equal(t, "", result.GeneratorURL.String())
 				})
 			})
 
@@ -303,7 +303,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
-		if !(s.PreviousState == eval.Alerting || s.PreviousState == eval.Error || s.PreviousState == eval.NoData) {
+		if s.PreviousState != eval.Alerting && s.PreviousState != eval.Error && s.PreviousState != eval.NoData {
 			continue
 		}
 		alert := StateToPostableAlert(s, appURL)

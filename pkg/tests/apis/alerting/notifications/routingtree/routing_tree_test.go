@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -16,10 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
+	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
+
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,7 +54,7 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	route := &v0alpha1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
@@ -156,11 +158,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	admin := org1.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewRoutingTreeClient(t, admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := common.NewRoutingTreeClient(t, tc.user)
 
 			if tc.canRead {
 				t.Run("should be able to list routing trees", func(t *testing.T) {
@@ -291,7 +293,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewRoutingTreeClient(t, admin)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
@@ -342,7 +344,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 	require.NoError(t, err)
@@ -388,45 +390,29 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	receiver := "grafana-default-email"
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
-		cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
-		var receivers []*definitions.PostableApiReceiver
-		for _, apiReceiver := range cfg.AlertmanagerConfig.Receivers {
-			var recv []*definitions.PostableGrafanaReceiver
-			for _, r := range apiReceiver.GettableGrafanaReceivers.GrafanaManagedReceivers {
-				recv = append(recv, &definitions.PostableGrafanaReceiver{
-					UID:                   r.UID,
-					Name:                  r.Name,
-					Type:                  r.Type,
-					DisableResolveMessage: r.DisableResolveMessage,
-					Settings:              r.Settings,
-				})
-			}
-			receivers = append(receivers, &definitions.PostableApiReceiver{
-				Receiver:                 config.Receiver{Name: apiReceiver.Name},
-				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{GrafanaManagedReceivers: recv},
-			})
-		}
-		_, err := legacyCli.PostConfiguration(t, definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definition.Config{
-					Route: &route,
-					TimeIntervals: []config.TimeInterval{
-						{
-							Name: timeInterval,
-						},
-					},
-				},
-				Receivers: receivers,
-			},
-		})
+		routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, "", func(int64) string { return "default" })
+		require.NoError(t, err)
+		_, err = routeClient.Update(ctx, v1Route, v1.UpdateOptions{})
 		require.NoError(t, err)
 	}
+
+	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1_timeinterval.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1_timeinterval.Spec{
+			Name:          timeInterval,
+			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
+		},
+	}, v1.CreateOptions{})
+	require.NoError(t, err)
 
 	var regex config.Regexp
 	require.NoError(t, json.Unmarshal([]byte(`".*"`), &regex))
@@ -461,7 +447,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			createRoute(t, route)
 			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
-			assert.Equal(t, []v0alpha1.Matcher{
+			expected := []v0alpha1.Matcher{
 				{
 					Label: "label_match",
 					Type:  v0alpha1.MatcherTypeEqual,
@@ -482,7 +468,8 @@ func TestIntegrationDataConsistency(t *testing.T) {
 					Type:  v0alpha1.MatcherTypeNotEqualRegex,
 					Value: "test-456",
 				},
-			}, tree.Spec.Routes[0].Matchers)
+			}
+			assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 		})
 		t.Run("should save into ObjectMatchers", func(t *testing.T) {
 			route := definitions.Route{
@@ -623,20 +610,55 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.Equalf(t, http.StatusOK, status, body)
 		require.Equal(t, before, after)
 	})
-}
 
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList] {
-	t.Helper()
+	t.Run("unicode support in groupBy and matchers", func(t *testing.T) {
+		route := definitions.Route{
+			Receiver: receiver,
+			Routes: []*definitions.Route{
+				{
+					GroupByStr: []string{"foo🙂"},
+					Matchers: config.Matchers{{
+						Type:  labels.MatchEqual,
+						Name:  "foo🙂",
+						Value: "bar",
+					}, {
+						Type:  labels.MatchNotEqual,
+						Name:  "_bar1",
+						Value: "baz🙂",
+					}, {
+						Type:  labels.MatchRegexp,
+						Name:  "0baz",
+						Value: "[a-zA-Z0-9]+,?",
+					}, {
+						Type:  labels.MatchNotRegexp,
+						Name:  "corge",
+						Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
+					}},
+					ObjectMatchers: definitions.ObjectMatchers{{
+						Type:  labels.MatchEqual,
+						Name:  "Προμηθέας", // Prometheus in Greek
+						Value: "Prom",
+					}, {
+						Type:  labels.MatchNotEqual,
+						Name:  "犬", // Dog in Japanese (inu)
+						Value: "Shiba Inu",
+					}},
+				},
+			},
+		}
 
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
-
-	return &apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
-	}
+		createRoute(t, route)
+		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, "foo🙂", tree.Spec.Routes[0].GroupBy[0])
+		expected := []v0alpha1.Matcher{
+			{Label: "foo🙂", Type: v0alpha1.MatcherTypeEqual, Value: "bar"},
+			{Label: "_bar1", Type: v0alpha1.MatcherTypeNotEqual, Value: "baz🙂"},
+			{Label: "0baz", Type: v0alpha1.MatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
+			{Label: "corge", Type: v0alpha1.MatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
+			{Label: "Προμηθέας", Type: v0alpha1.MatcherTypeEqual, Value: "Prom"},
+			{Label: "犬", Type: v0alpha1.MatcherTypeNotEqual, Value: "Shiba Inu"},
+		}
+		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
+	})
 }

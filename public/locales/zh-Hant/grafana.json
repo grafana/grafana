@@ -329,6 +329,7 @@
     "alert-groups": {
       "no-results": "",
       "text-loading-notifications": "",
+      "title-error-loading-notifications": "",
       "title-grafana-alerts-delivered-alertmanager": ""
     },
     "alert-instance-details": {
@@ -412,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -434,8 +440,11 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
+      "title-restore-version": "",
       "title-restoring-alertmanager-configuration": ""
     },
     "alerts-folder-view": {
@@ -510,6 +519,7 @@
       "label-continue-matching-subsequent-sibling-nodes": "",
       "label-group-by": "",
       "label-label": "",
+      "label-operator": "",
       "label-override-general-timings": "",
       "label-override-grouping": "",
       "label-value": "",
@@ -801,7 +811,8 @@
       "title-failed-to-fetch-notification-template": ""
     },
     "error-modal": {
-      "failed-to-update-your-configuration": ""
+      "failed-to-update-your-configuration": "",
+      "title-something-went-wrong": ""
     },
     "error-summary-button": {
       "error": ""
@@ -822,7 +833,8 @@
     },
     "evaluation-group-creation-modal": {
       "description-often-rules-group-evaluated": "",
-      "placeholder-enter-a-name": ""
+      "placeholder-enter-a-name": "",
+      "title-new-evaluation-group": ""
     },
     "evaluation-group-loader": {
       "title-something-wrong-trying-fetch-group-details": ""
@@ -894,7 +906,8 @@
     "generate-alert-data-modal": {
       "add-alert-data": "",
       "add-alert-data-to-payload": "",
-      "review-alert-payload": ""
+      "review-alert-payload": "",
+      "title-add-custom-alerts": ""
     },
     "get-preview-results": {
       "title-error": ""
@@ -925,6 +938,7 @@
     "grafana-evaluation-behavior-step": {
       "missing-series-resolve-placeholder": "",
       "or": "",
+      "placeholder-select-an-evaluation-group": "",
       "text-configure-no-data-and-error-handling": "",
       "title-set-evaluation-behavior": ""
     },
@@ -955,6 +969,9 @@
     },
     "grafana-rule-design-export-preview": {
       "text-loading": ""
+    },
+    "grafana-rule-design-exporter": {
+      "title-export-group": ""
     },
     "grafana-rule-export-preview": {
       "text-loading": ""
@@ -988,6 +1005,7 @@
       "namespace-picker-label-namespace": ""
     },
     "group-by": {
+      "aria-label-group-by-label-keys": "",
       "placeholder-group-by": ""
     },
     "group-details": {
@@ -1046,12 +1064,15 @@
       "alert-rules": "",
       "confirm-modal": {
         "confirm": "",
+        "loading": "",
+        "loading-body": "",
         "no-rules-body": "",
         "no-rules-title": "",
         "plugin-rules-warning": {
           "text": "",
           "title": ""
         },
+        "target-folder-rules": "",
         "title": ""
       },
       "datasource": {
@@ -1097,7 +1118,7 @@
     },
     "irm-integration": {
       "connection-method": "如何連接到 IRM",
-      "disabled-description": "啟用 Grafana IRM 以使用此整合",
+      "disabled-description": "",
       "enabled-description": "處理警報與管理事件的順暢方式",
       "existing-integration": "現有的 IRM 整合",
       "existing-integration-description": "使用現有的 IRM 整合",
@@ -1312,6 +1333,10 @@
       "title-error-loading-alertmanager-config": "",
       "title-notification-policies-have-changed": ""
     },
+    "notification-policies-tabs": {
+      "label-mute-timings": "",
+      "label-notification-policies": ""
+    },
     "notification-policy-matchers": {
       "default-policy": "",
       "no-matchers": ""
@@ -1524,7 +1549,8 @@
       "label-target-data-source": "目標資料來源"
     },
     "recording-rules-name-space-and-group-step": {
-      "description-select-namespace-group-recording": ""
+      "description-select-namespace-group-recording": "",
+      "title-add-namespace-and-group": ""
     },
     "redirect-to-clone-rule": {
       "title-copy-provisioned-alert-rule": ""
@@ -1705,6 +1731,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "設定",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1712,8 +1740,11 @@
         "title": "無法從此資料來源載入規則"
       },
       "filter-view": {
-        "no-more-results": "沒有更多結果 – 顯示 {{numberOfRules}} 個規則",
-        "no-rules-found": "沒有符合您目前篩選條件的警報或記錄規則。"
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "沒有符合您目前篩選條件的警報或記錄規則。",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1799,7 +1830,9 @@
       "dashboard": "",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "",
       "filter-options": {
-        "aria-label-show-filters": ""
+        "aria-label-show-filters": "",
+        "label-custom-filter": "",
+        "label-saved-searches": ""
       },
       "health": "",
       "placeholder-all-data-sources": "",
@@ -1868,7 +1901,8 @@
       "title-silence-alert-rule": ""
     },
     "silence-period": {
-      "label-silence-start-and-end": ""
+      "label-silence-start-and-end": "",
+      "placeholder-select-time-range": ""
     },
     "silenced-instances-preview": {
       "no-firing-alert-instances-found": "",
@@ -1913,7 +1947,9 @@
     },
     "state-history": {
       "filter-group": "",
-      "placeholder-search": ""
+      "placeholder-search": "",
+      "text-loading-history": "",
+      "title-failed-to-fetch-alert-state-history": ""
     },
     "string-array-input": {
       "add": "",
@@ -1928,7 +1964,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -1938,6 +1973,7 @@
     },
     "template-form": {
       "aria-label-template-form": "",
+      "label-examples-documentation": "",
       "label-template-group": "",
       "label-template-group-name": "",
       "new-template-name-placeholder-give-your-template-group-a-name": "",
@@ -1982,7 +2018,8 @@
     },
     "test-contact-point-modal": {
       "notification-message": "",
-      "send-test-notification": ""
+      "send-test-notification": "",
+      "title-test-contact-point": ""
     },
     "threshold": {
       "to": "至"
@@ -2002,6 +2039,9 @@
         "summary": "",
         "title-warning": ""
       }
+    },
+    "unknown-rule-list-item": {
+      "title-unknown-rule-type": ""
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "",
@@ -2036,8 +2076,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -2074,7 +2117,9 @@
       "title": "尚未新增自訂注釋查詢"
     },
     "standard-annotation-query-editor": {
+      "events-found": "",
       "no-events-found": "",
+      "no-query-editor": "",
       "test-annotation-query": "",
       "title-query-result": ""
     }
@@ -2098,6 +2143,8 @@
       "message": "沒有找到 API 金鑰。"
     },
     "migrate-to-service-accounts-card": {
+      "body-no-api-keys-found": "",
+      "body-switch-service-accounts": "",
       "docs-link": {
         "about-migration": ""
       },
@@ -2105,13 +2152,20 @@
       "migration-box-desc": {
         "migrating": ""
       },
+      "modal-title": "",
       "title-no-api-keys-found": "",
       "title-switch-service-accounts": ""
     },
     "migration-summary": {
       "close": "",
+      "failed": "",
+      "failed-details": "",
+      "failed-ids": "",
+      "migrated": "",
+      "migration-complete": "",
       "migration-successful": "",
-      "title-migration-summary": ""
+      "title-migration-summary": "",
+      "total": ""
     }
   },
   "app-chrome": {
@@ -2129,10 +2183,15 @@
     "auth-config-page-unconnected": {
       "auth-settings": ""
     },
+    "auth-drawer-unconneced": {
+      "subtitle": ""
+    },
     "auth-drawer-unconnected": {
       "advanced-auth": "",
       "enable-insecure-email-lookup": "",
+      "enable-insecure-email-lookup-description": "",
       "reset": "",
+      "reset-tooltip": "",
       "title-auth-settings": ""
     },
     "configure-auth-cta": {
@@ -2145,8 +2204,10 @@
         "label-reset-to-default-values": ""
       },
       "discard": "",
+      "enabled-label-enabled": "",
       "label-enabled": "",
       "reset-configuration": "",
+      "reset-configuration-description": "",
       "title-more-actions": "",
       "title-reset": "",
       "tooltip-more-actions": ""
@@ -2155,6 +2216,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "",
       "title-open-id-connect-discovery-url": ""
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": ""
   },
   "bookmarks-page": {
     "empty": {
@@ -2277,6 +2341,11 @@
     },
     "text-this-repository-is-read-only": ""
   },
+  "canvas": {
+    "not-found-display": {
+      "not-found": ""
+    }
+  },
   "carousel": {
     "close": "",
     "error": "",
@@ -2356,11 +2425,16 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "",
+      "body": "",
       "go-to-connections": ""
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "",
+      "editor-warning": "",
       "okay": ""
+    },
+    "not-found-datasource": {
+      "body": ""
     },
     "search": {
       "aria-label-search-all": "",
@@ -2497,6 +2571,11 @@
       "type-tooltip": "將套用至來源資料的轉換類型。"
     }
   },
+  "dashbaord-scene": {
+    "interval-variable-form": {
+      "description-auto-option": ""
+    }
+  },
   "dashboard": {
     "actions": {
       "open-settings": "設定"
@@ -2575,6 +2654,7 @@
       "group-panels": "",
       "new-row": "",
       "new-tab": "",
+      "paste-panel": "",
       "paste-row": "",
       "paste-tab": "",
       "un-group-panels": ""
@@ -2650,7 +2730,8 @@
     },
     "dash-nav": {
       "render-left-actions": {
-        "text-public": ""
+        "text-public": "",
+        "tooltip-view-as-scene": ""
       }
     },
     "dashboard-loading": {
@@ -2728,13 +2809,19 @@
     "edit-pane": {
       "elements": {
         "dashboard": "儀表板",
+        "multiple-elements": "",
+        "multiple-elements-delete-text": "",
+        "multiple-panels": "",
+        "multiple-panels-delete-text": "",
         "objects": "對象",
         "panel": "面板",
         "panels": "面板",
         "row": "列",
         "rows": "列",
         "tab": "分頁",
-        "tabs": "分頁"
+        "tabs": "分頁",
+        "variable": "",
+        "variable-set": ""
       },
       "open": "開啟選項窗格",
       "row": {
@@ -2742,6 +2829,10 @@
           "hide": "隱藏",
           "title": "行標題"
         }
+      },
+      "variables": {
+        "add-variable": "",
+        "select-variable": ""
       }
     },
     "empty": {
@@ -2860,13 +2951,13 @@
       "title-option": "標題"
     },
     "options-pane-options": {
+      "placeholder-search-options": "",
       "Recent options-title-recent-options": ""
     },
     "outline": {
-      "tree": {
-        "item": {
-          "empty": "（空）"
-        }
+      "tree-item": {
+        "empty": "",
+        "no-title": ""
       }
     },
     "override-category-title": {
@@ -2925,6 +3016,9 @@
       "title-row-options": ""
     },
     "rows-layout": {
+      "delete-row-text": "",
+      "delete-row-title": "",
+      "delete-row-yes": "",
       "description": "帶標題的可收闔面板群組",
       "header-hidden-tooltip": "",
       "name": "列",
@@ -2975,7 +3069,13 @@
     },
     "save-dashboard-diff": {
       "full-json-diff": "",
-      "no-changes-in-the-dashboard-json": ""
+      "no-changes-in-the-dashboard-json": "",
+      "title-because-dashboard-migrated-grafana-format": "",
+      "title-folder": ""
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "",
+      "label-details": ""
     },
     "save-dashboard-error-proxy": {
       "title-conflict": ""
@@ -2999,12 +3099,26 @@
       "aria-label-template-variables": ""
     },
     "tabs-layout": {
+      "delete-tab-text": "",
+      "delete-tab-title": "",
+      "delete-tab-yes": "",
       "description": "將面板組織成橫向分頁",
       "name": "分頁",
       "tab": {
-        "new": "新分頁"
+        "new": "新分頁",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "標題"
       },
@@ -3209,6 +3323,9 @@
       "title-close": ""
     },
     "viz-panel": {
+      "delete-panel-text": "",
+      "delete-panel-title": "",
+      "delete-panel-yes": "",
       "options": {
         "configure-button-tooltip": "",
         "description": "說明",
@@ -3267,6 +3384,7 @@
       "delete": "",
       "description-color-annotation-event-markers": "",
       "description-enabled-annotation-query-issued-every-dashboard": "",
+      "description-hidden": "",
       "label-color": "",
       "label-data-source": "",
       "label-enabled": "",
@@ -3279,6 +3397,7 @@
     },
     "annotation-settings-list": {
       "data-source": "",
+      "delete-aria-label": "",
       "new-query": "",
       "query-name": "",
       "tooltip-move-down": "",
@@ -3318,6 +3437,7 @@
       "placeholder-open-dashboard": ""
     },
     "dashboard-link-list": {
+      "delete-aria-label": "",
       "info": "",
       "new-link": "",
       "tooltip-copy-link": "",
@@ -3358,6 +3478,10 @@
     },
     "help-wizard": {
       "copy-to-clipboard": "",
+      "description-randomize-data": "",
+      "description-support-snapshot": "",
+      "download-dashboard": "",
+      "download-snapshot": "",
       "label-randomize-data": "",
       "label-support-snapshot": "",
       "label-template": "",
@@ -3365,7 +3489,9 @@
       "randomize-labels-label-labels": "",
       "randomize-string-values-label-string-values": "",
       "title-complete-git-hub-comment-clipboard": "",
-      "title-get-help-with-this-panel": ""
+      "title-get-help-with-this-panel": "",
+      "troubleshooting-docs": "",
+      "troubleshooting-request-help": ""
     },
     "inspect-data-tab": {
       "no-data-found": ""
@@ -3375,6 +3501,7 @@
     },
     "interval-variable-form": {
       "description-calculated-value-below-threshold": "",
+      "description-step-count": "",
       "interval-options": ""
     },
     "json-model-edit-view": {
@@ -3382,6 +3509,7 @@
         "cancel": ""
       },
       "render-save-button-and-error": {
+        "body-plugin-dashboard": "",
         "title-failed-to-save-dashboard": "",
         "title-plugin-dashboard": "",
         "title-someone-else-has-updated-this-dashboard": "",
@@ -3389,6 +3517,7 @@
       }
     },
     "name-already-exists-error": {
+      "body-name-already-exists": "",
       "title-name-already-exists": ""
     },
     "panel-data-alerting-tab-rendered": {
@@ -3399,7 +3528,8 @@
       "title-dashboard-not-saved": ""
     },
     "panel-data-queries-tab-rendered": {
-      "add-query": ""
+      "add-query": "",
+      "expression": ""
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "",
@@ -3410,7 +3540,12 @@
       "table-view-aria-label-toggletableview": "",
       "table-view-label-table-view": ""
     },
+    "panel-editor-renderer": {
+      "aria-label-open-options-pane": "",
+      "tooltip-open-options-pane": ""
+    },
     "panel-inspect-renderer": {
+      "body-panel-plugin-not-loaded": "",
       "title-panel-plugin-not-loaded": ""
     },
     "panel-viz-type-picker": {
@@ -3423,7 +3558,7 @@
     },
     "provisioned-resource-delete-modal": {
       "file-path": "檔案路徑：",
-      "managed-by-version-control": "此 {type} 由版本控制管理，無法刪除。若要移除，請從存放庫中刪除，並同步以套用變更。",
+      "managed-by-version-control": "",
       "ok": "確定",
       "title-cannot-delete-provisioned-resource": "無法刪除已佈建的資源"
     },
@@ -3450,25 +3585,36 @@
         "title-failed-to-save-dashboard": ""
       }
     },
+    "save-dashboard-drawer": {
+      "tabs": {
+        "label-changes": "",
+        "label-details": ""
+      }
+    },
     "save-dashboard-form": {
       "aria-label-message": "",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": ""
       },
       "label-message": "",
       "placeholder-describe-changes-optional": "",
       "render-footer": {
+        "body-plugin-dashboard": "",
         "no-changes-to-save": "",
         "title-failed-to-save-dashboard": "",
         "title-plugin-dashboard": "",
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "",
       "save-refresh-label-update-default-refresh-value": "",
+      "save-timerange-description-current-range-default": "",
       "save-timerange-label-update-default-time-range": "",
       "save-variables-description-current-values-default": "",
       "save-variables-label-update-default-variable-values": ""
@@ -3506,6 +3652,7 @@
       "title-validation-failed": "儀表板標題驗證失敗。"
     },
     "scenes-new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "",
       "new-alert-rule": "",
       "title-no-alerting-capable-query-found": ""
     },
@@ -3547,13 +3694,19 @@
       "aria-label-variable-editor-form": "",
       "back-to-list": "",
       "delete": "",
+      "description": "",
       "description-optional-display-name": "",
       "description-template-variable-characters": "",
       "general": "",
+      "label": "",
+      "name": "",
+      "open-editor": "",
+      "open-editor-tooltip": "",
       "placeholder-descriptive-text": "",
       "placeholder-label-name": "",
       "placeholder-variable-name": "",
-      "text-running-query": ""
+      "text-running-query": "",
+      "type": ""
     },
     "variable-editor-list": {
       "definition": "",
@@ -3566,9 +3719,10 @@
       "tooltip-remove-variable": ""
     },
     "variable-hide-select": {
-      "label-show-on-dashboard": ""
+      "label": ""
     },
     "variable-usages-button": {
+      "title-show-usages": "",
       "tooltip-show-usages": ""
     },
     "variable-values-preview": {
@@ -3583,6 +3737,7 @@
       "tooltip-reset-version": ""
     },
     "version-history-table": {
+      "aria-label-toggle-selection": "",
       "date": "",
       "notes": "",
       "restore": "",
@@ -3597,9 +3752,16 @@
       "aria-label-change-visualization": "",
       "tooltip-click-to-change-visualization": ""
     },
+    "viz-and-data-pane": {
+      "aria-label-open-query-pane": "",
+      "tooltip-open-query-pane": ""
+    },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": ""
     }
+  },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": ""
   },
   "dashboard-settings": {
     "annotations": {
@@ -3794,6 +3956,7 @@
     },
     "resource-dimension-editor": {
       "label-field": "",
+      "label-mappings": "",
       "label-source": ""
     },
     "resource-picker": {
@@ -3819,7 +3982,8 @@
     "text-dimension-editor": {
       "label-field": "",
       "label-source": "",
-      "label-template": ""
+      "label-template": "",
+      "label-value": ""
     },
     "thresholds-editor": {
       "add-threshold": "",
@@ -3933,6 +4097,10 @@
       "description": "正在尋找 Grafana Explore 應用程式嗎？現在稱之為 Grafana Drilldown 應用程式，可在<1>功能表 > 詳細資料</1>下方找到",
       "title": "Explore 指標、日誌、追蹤和設定檔已移動！"
     },
+    "drop-down-menu": {
+      "aria-label-links": "",
+      "links": ""
+    },
     "explore": {
       "title-flame-graph": "",
       "title-graph": "",
@@ -3981,6 +4149,9 @@
       "scan-for-older-logs": "掃描舊的日誌",
       "stop-scan": "停止掃描"
     },
+    "logs-column-search": {
+      "placeholder-search-fields-by-name": ""
+    },
     "logs-container": {
       "label-logs": ""
     },
@@ -4007,6 +4178,7 @@
       "title-drag-and-drop-to-reorder": ""
     },
     "logs-table-wrap": {
+      "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
     },
@@ -4037,6 +4209,9 @@
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": ""
+    },
+    "references": {
+      "label-attributes": ""
     },
     "rich-history": {
       "close-tooltip": "關閉查詢歷史記錄",
@@ -4165,6 +4340,7 @@
       "title-span-bar": ""
     },
     "span-bar-settings": {
+      "aria-label-selectlabelname": "",
       "label-label": "",
       "label-tag-key": "",
       "placeholder-duration": "",
@@ -4244,7 +4420,11 @@
     },
     "trace-page-actions": {
       "give-feedback": "",
+      "label-export": "",
       "title-share-thoughts-about-tracing-grafana": ""
+    },
+    "trace-page-header": {
+      "text-partial-trace": ""
     },
     "trace-view": {
       "no-data": ""
@@ -4260,6 +4440,7 @@
       "label-unique-labels": "",
       "label-wrap-lines": "",
       "title-feedback": "",
+      "title-logs": "",
       "title-logs-volume": ""
     },
     "unthemed-viewing-layer": {
@@ -4268,22 +4449,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "清除篩選條件",
-      "labelSelect": "選取",
-      "missing-otel-labels": "此指標具有太多的作業和執行個體標籤值，無法使用 match[] 參數調用 Prometheus label_values 端點。這些標籤值用於將指標與 target_info 結合在一起，其中包含資源屬性。請包含更多資源屬性篩選條件。",
-      "noMatchingValue": "未找到匹配的數值；{{filter}}",
-      "sortBy": "排序方式"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki 錄製規則",
-      "openExploreLogs": "開啟「探索」日誌",
-      "relatedLogsUnavailable": "未找到相關日誌。若要查看相關日誌，您可以選擇以下其中一種方式：<1><0>調整標籤篩選條件，以找出與目前選取的指標具有相同標籤的日誌</0><1>選擇由 <2><0>Loki 錄製規則</0></2></1></1>建立的指標",
-      "warnExperimentalFeature": "相關日誌是一項實驗功能。"
-    },
-    "viewBy": "檢視方式"
   },
   "export": {
     "json": {
@@ -5103,6 +5268,10 @@
         "tooltip-show-log-line": ""
       }
     },
+    "log-labels": {
+      "collapse": "",
+      "expand": ""
+    },
     "log-line-menu": {
       "copy-link": "將連結複製到日誌行",
       "copy-log": "複製日誌行",
@@ -5155,11 +5324,13 @@
         "txt": ""
       },
       "enable-highlighting": "",
+      "escape-newlines": "",
       "hide-timestamps": "",
       "hide-unique-labels": "",
       "newest-first": "",
       "oldest-first": "",
       "prettify-json": "",
+      "remove-escaping": "",
       "scroll-bottom": "",
       "scroll-top": "",
       "show-timestamps": "",
@@ -5226,14 +5397,20 @@
       "when-complete": "快照完成後，您就能夠將其上傳到您的雲端堆疊。"
     },
     "building-snapshot": {
-      "description": "我們正在建立此安裝目前狀態的點時快照。快照完成後，您就可以將其上傳至 Grafana Cloud。",
+      "description": "",
       "description-eta": "建立快照通常只需不到兩分鐘。",
-      "title": "正在建立安裝快照集"
+      "title": ""
     },
     "can-i-move": {
-      "body": "將此安裝連接到雲端堆疊後，您就能夠上傳資料來源和儀表板。",
-      "link-title": "了解移轉其他設定",
-      "title": "我可以將此安裝移動至 Grafana Cloud 嗎？"
+      "body": "",
+      "link-title": "",
+      "title": ""
+    },
+    "configure-snapshot": {
+      "description": "",
+      "description-sub-line": "",
+      "resource-include-all": "",
+      "title": ""
     },
     "connect-modal": {
       "body-cloud-stack": "您還需要一個雲端堆疊。若您剛剛註冊，我們會自動建立您的第一個堆疊。若您已有帳戶，則需要選擇或建立一個堆疊。",
@@ -5242,7 +5419,7 @@
       "body-token": "您的自我管理 Grafana 安裝需要特殊存取權限，才能安全地移轉內容。您需要在所選的雲端堆疊上建立一個移轉權杖。",
       "body-token-field": "移轉權杖",
       "body-token-field-placeholder": "在此處貼上權杖",
-      "body-token-instructions": "登入您的雲端堆疊，並瀏覽至「管理」、「一般」、「移轉至 Grafana Cloud」。在該畫面上建立一個移轉權杖，並將該權杖貼到此處。",
+      "body-token-instructions": "",
       "body-view-stacks": "檢視我的雲端堆疊",
       "cancel": "取消",
       "connect": "連接到此堆疊",
@@ -5286,11 +5463,12 @@
       "body": "遷移程序必須從您自行管理的 Grafana 執行個體中啟動。",
       "configure-pdc-link": "為此堆疊設定 PDC",
       "link-title": "進一步了解 Private Data Source Connect",
-      "step-1": "登入您的自我管理執行個體，並前往「管理」、「一般」、「移轉至 Grafana Cloud」。",
+      "step-1": "",
       "step-2": "選擇「將此執行個體移轉至雲端」。",
-      "step-3": "系統會提示您輸入移轉權杖。從此畫面產生一個。",
-      "step-4": "在您的自我管理執行個體中，選擇「上傳所有內容」，將資料來源和儀表板上傳至此雲端堆疊。",
-      "step-5": "若您的某些資料來源無法透過公用網際網路使用，則需要在自我管理環境中安裝 Private Data Source Connect。",
+      "step-3": "",
+      "step-4": "",
+      "step-5": "",
+      "step-6": "",
       "title": "執行移轉"
     },
     "is-it-secure": {
@@ -5299,7 +5477,7 @@
       "title": "這安全嗎？"
     },
     "migrate-to-this-stack": {
-      "body": "您可以將某些資源從自我管理的 Grafana 安裝移轉至此雲端堆疊。為了安全地執行此動作，您需要產生一個移轉權杖。您的自我管理執行個體將使用權杖驗證此雲端堆疊。",
+      "body": "",
       "link-title": "檢視完整的移轉指南",
       "title": "讓我們協助您移轉至此堆疊"
     },
@@ -5317,7 +5495,7 @@
       "modal-close": "關閉",
       "modal-copy-and-close": "複製至剪貼簿並關閉",
       "modal-copy-button": "複製至剪貼簿",
-      "modal-field-description": "請立即複製權杖，因為您將無法再次看到它。若您遺失權杖，則需要建立新的權杖。",
+      "modal-field-description": "",
       "modal-field-label": "權杖",
       "modal-title": "已建立移轉權杖",
       "status": "目前狀態：<2></2>"
@@ -5334,7 +5512,7 @@
       "get-session-error-title": "載入移轉設定時發生錯誤",
       "get-snapshot-error-title": "載入快照集時發生錯誤",
       "migration-finished-with-caveat-title": "資源移轉完成",
-      "migration-finished-with-errors-body": "移轉已完成，但某些項目無法移轉至雲端堆疊。檢查失敗的資源以了解更多詳細資訊",
+      "migration-finished-with-errors-body": "",
       "migration-finished-with-warnings-body": "移轉已完成，但有一些警告。檢查個別資源以了解更多詳細資訊",
       "snapshot-error-status-body": "建立快照或開始移轉流程時發生錯誤。請參閱 Grafana 伺服器日誌，以了解更多詳細資訊",
       "snapshot-error-status-title": "移轉資源時發生錯誤",
@@ -5346,7 +5524,7 @@
     "pdc": {
       "body": "將您的資料來源公開到網際網路可能會引起安全性問題。私人資料來源連接 (PDC) 允許 Grafana Cloud 透過安全的網路通道存取您現有的資料來源。",
       "link-title": "了解 PDC",
-      "title": "並非我所有的資料來源都在公用網際網路上"
+      "title": ""
     },
     "pricing": {
       "body": "Grafana Cloud 有好康的免費方案和 14 天無限制使用試用。試用期過後，我們會根據免費方案限制的使用情況向您收取費用。",
@@ -5424,7 +5602,7 @@
       "disconnect": "取消連線",
       "errored-resource-count": "錯誤",
       "page-loading": "正在載入…",
-      "rebuild-snapshot": "重新建立快照集",
+      "rebuild-snapshot": "",
       "show-errors": "",
       "snapshot-date": "快照時間戳記",
       "snapshot-not-created": "尚未建立",
@@ -5681,7 +5859,7 @@
       "subtitle": "管理資料夾儀表板及權限"
     },
     "migrate-to-cloud": {
-      "subtitle": "將設定從自我管理安裝複製到雲端堆疊",
+      "subtitle": "",
       "title": "移轉至 Grafana Cloud"
     },
     "monitoring": {
@@ -5745,7 +5923,7 @@
       "title": "場景"
     },
     "search": {
-      "placeholderCommandPalette": "搜尋或跳至…"
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "搜尋儀表板"
@@ -5815,12 +5993,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "邀請",
-      "invite-tooltip": "邀請新成員"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "新增至書籤",
@@ -6045,7 +6225,8 @@
       "aria-label-plugin-type-filter": "",
       "label-search": "",
       "label-state": "",
-      "label-type": ""
+      "label-type": "",
+      "subtitle": ""
     },
     "catalog": {
       "no-updates-available": "沒有可用的更新",
@@ -6229,6 +6410,7 @@
       "text-loading-organizations": ""
     },
     "user-sessions": {
+      "browser-details": "",
       "now": "",
       "sessions": ""
     },
@@ -6243,21 +6425,14 @@
   },
   "provisioning": {
     "bootstrap-step": {
-      "dashboards-unavailable-while-running-process": "",
       "description-clear-repository-connection": "",
       "empty": "",
       "error-field-required": "",
+      "ext-storage": "",
       "grafana": "",
-      "include-history": "",
       "label-display-name": "",
-      "label-migrate-options": "",
       "placeholder-my-repository-connection": "",
-      "repository": "",
-      "resources-will-be-added": "",
       "text-loading-resource-information": "",
-      "title-files-exist-in-the-target": "",
-      "title-note": "",
-      "tooltip-include-history": "",
       "files-count_other": ""
     },
     "check-repository": {
@@ -6268,13 +6443,11 @@
       "alert-repository-settings-updated": "",
       "button-save": "",
       "button-saving": "",
-      "description-branch": "",
       "description-enabled": "",
       "description-path": "",
+      "description-read-only": "",
       "description-repository-url": "",
       "description-title": "",
-      "description-workflows-makes-repository": "",
-      "description-write": "",
       "error-required": "",
       "error-save-repository": "",
       "error-valid-github-url": "",
@@ -6285,48 +6458,36 @@
       "label-interval-seconds": "",
       "label-local-path": "",
       "label-path": "",
+      "label-pr-workflow": "",
       "label-repository-type": "",
       "label-repository-url": "",
       "label-target": "",
       "label-title": "",
-      "label-workflows": "",
-      "option-branch": "",
       "option-entire-instance": "",
       "option-github": "",
       "option-local": "",
       "option-managed-folder": "",
-      "option-write": "",
       "placeholder-branch": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
       "placeholder-interval-seconds": "",
       "placeholder-local-path": "",
       "placeholder-my-config": "",
-      "placeholder-path": "",
-      "placeholder-readonly-repository": "",
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
+      "configure": "",
       "configure-file": "",
       "configure-git-sync": "",
       "repository-limit-info-alert": ""
     },
     "connect-step": {
-      "description-choose-storage-resources": "",
+      "description-branch": "",
       "description-github-path": "",
       "description-paste-your-git-hub-personal-access-token": "",
       "description-repository-url": "",
@@ -6337,14 +6498,10 @@
       "label-local-path": "",
       "label-path": "",
       "label-repository-url": "",
-      "label-storage-type": "",
       "placeholder-branch": "",
-      "placeholder-github-path": "",
       "placeholder-github-token": "",
       "placeholder-github-url": "",
-      "placeholder-local-path": "",
-      "storage-type-github": "",
-      "storage-type-local": ""
+      "placeholder-local-path": ""
     },
     "delete-repository-button": {
       "button-delete": "",
@@ -6382,7 +6539,6 @@
       },
       "manage-dashboards-provision-updates-automatically": "",
       "manage-your-dashboards-with-remote-provisioning": "",
-      "migrate-existing-dashboards-storage-provisioning": "",
       "store-dashboards-in-version-controlled-storage": ""
     },
     "file-history-page": {
@@ -6400,19 +6556,19 @@
       "placeholder-search": ""
     },
     "finish-step": {
-      "description-dashboard-previews": "",
-      "description-enable-webhooks": "",
+      "description-enable-previews": "",
+      "description-image-rendering": "",
       "description-often-shall-instance-updates-git-hub": "",
-      "description-select-workflows-allowed-within-repository": "",
-      "error-field-required": "",
-      "label-enable-dashboard-previews": "",
-      "label-enable-webhooks": "",
+      "description-pr-enable-description": "",
+      "description-read-only": "",
+      "description-webhooks-enable": "",
+      "label-enable-previews": "",
+      "label-pr-workflow": "",
+      "label-read-only": "",
       "label-update-instance-interval-seconds": "",
-      "label-workflows": "",
-      "link-setup-image-rendering": "",
       "placeholder": "",
-      "placeholder-readonly-repository": "",
-      "text-requires-image-rendering": ""
+      "text-setup-later": "",
+      "title-enhance-github": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "",
@@ -6458,7 +6614,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6470,16 +6625,17 @@
       },
       "summary": ""
     },
-    "job-step": {
-      "error-failed-to-start": "",
-      "error-invalid-response": "",
-      "error-job-failed": ""
-    },
-    "migrate-step": {
-      "description-migrating-dashboards": ""
-    },
-    "pull-step": {
-      "description-pulling-content": ""
+    "mode-options": {
+      "folder": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      },
+      "instance": {
+        "description": "",
+        "label": "",
+        "subtitle": ""
+      }
     },
     "recent-jobs": {
       "active-jobs": "",
@@ -6509,8 +6665,7 @@
       "title-repository-is-unhealthy": ""
     },
     "repository-link": {
-      "grafana-repository": "",
-      "view-folder": "",
+      "grafana-repository-synced": "",
       "view-repository": ""
     },
     "repository-overview": {
@@ -6556,12 +6711,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6589,37 +6738,42 @@
       "title-pull-not-enabled": "",
       "tooltip-unhealthy-repository": ""
     },
+    "synchronize-step": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": "",
+      "synchronization-description": "",
+      "synchronization-options": ""
+    },
     "token-permissions-info": {
-      "access": "",
-      "contents": "",
-      "github-instructions": "",
-      "metadata": "",
-      "permission": "",
-      "pull-requests": "",
-      "read-and-write": "",
-      "readonly": "",
-      "webhooks": ""
+      "and-click": "",
+      "go-to": "",
+      "make-sure": ""
     },
     "wizard": {
-      "button-finish": "",
+      "alert-point-1": "",
+      "alert-point-2": "",
+      "alert-point-3": "",
+      "alert-point-4": "",
+      "alert-title": "",
       "button-next": "",
       "button-start": "",
       "step-bootstrap": "",
       "step-connect": "",
       "step-finish": "",
-      "step-resources": "",
+      "step-synchronize": "",
+      "sync-description": "",
+      "sync-option-history": "",
       "title-bootstrap": "",
       "title-connect": "",
       "title-finish": "",
-      "title-migrate": "",
-      "title-pull": ""
+      "title-synchronize": ""
     },
     "wizard-content": {
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -6639,6 +6793,7 @@
       "email-share-type-option-label": "僅限特定人員",
       "pause-sharing-dashboard-label": "暫停分享儀表板",
       "public-share-type-option-label": "任何擁有連結的人",
+      "revoke-body": "",
       "revoke-public-URL-button": "撤銷公共網址",
       "revoke-public-URL-button-title": "撤銷公共網址",
       "settings-title": "設定"
@@ -6815,6 +6970,7 @@
     },
     "query-group": {
       "add-query": "",
+      "expression": "",
       "title-data-source-help": ""
     },
     "query-group-options-editor": {
@@ -7089,6 +7245,7 @@
       "copy-clipboard": "",
       "copy-to-clipboard-and-close": "",
       "description-name-to-easily-identify-the-token": "",
+      "description-token": "",
       "generate-token": "",
       "label-display-name": "",
       "label-expiration": "",
@@ -7097,8 +7254,10 @@
     },
     "get-actions-cell": {
       "add-token": "",
+      "aria-label-delete-button": "",
       "disable": "",
-      "enable": ""
+      "enable": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "get-role-cell": {
       "aria-label-role": ""
@@ -7108,7 +7267,9 @@
       "aria-label-role": "",
       "disable": "",
       "enable": "",
-      "title-tokens": ""
+      "title-tokens": "",
+      "tooltip-delete-button": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "",
@@ -7117,7 +7278,8 @@
       "enable-service-account": "",
       "title-delete-service-account": "",
       "title-disable-service-account": "",
-      "tokens": ""
+      "tokens": "",
+      "tooltip-managed-service-account-cannot-modified": ""
     },
     "service-account-permissions": {
       "title-permissions": ""
@@ -7143,6 +7305,7 @@
     "service-accounts-list-page-unconnected": {
       "add-service-account": "",
       "placeholder-search-service-account-by-name": "",
+      "sub-title": "",
       "title-delete-service-account": "",
       "title-disable-service-account": ""
     },
@@ -7329,8 +7492,11 @@
     "fields": {
       "home-dashboard-label": "首頁儀表板",
       "home-dashboard-placeholder": "預設儀表板",
-      "locale-label": "語言",
-      "locale-placeholder": "選擇語言",
+      "language-preference-label": "",
+      "language-preference-placeholder": "",
+      "locale-preference-description": "",
+      "locale-preference-label": "",
+      "locale-preference-placeholder": "",
       "theme-description": "喜歡實驗性主題嗎？請在<2>此處</2>告訴我們您想要看到什麼。</2>",
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"
@@ -7422,15 +7588,20 @@
     },
     "support-bundles-create-unconnected": {
       "cancel": "",
-      "create": ""
+      "create": "",
+      "sub-title": ""
     },
     "support-bundles-unconnected": {
       "created-on": "",
       "download": "",
       "expires": "",
       "requested-by": "",
+      "sub-title": "",
       "tooltip-remove-bundle": ""
     }
+  },
+  "swagger": {
+    "login": ""
   },
   "table": {
     "container": {
@@ -7454,6 +7625,8 @@
   "teams": {
     "create-team": {
       "create": "",
+      "description-email": "",
+      "label-email": "",
       "label-name": "",
       "label-role": ""
     },
@@ -7465,24 +7638,36 @@
     },
     "team-group-sync": {
       "add-group": "",
+      "add-group-button": "",
+      "aria-label-remove": "",
       "external-group-id": "",
       "external-group-sync": "",
-      "title-there-external-groups": ""
+      "label-add-external-group": "",
+      "team-sync-upgrade": "",
+      "title-there-external-groups": "",
+      "tooltip-add-external-group": ""
     },
     "team-list": {
       "columns": {
-        "title-edit-team": ""
+        "aria-label-delete-button": "",
+        "aria-label-edit-team": "",
+        "title-edit-team": "",
+        "tooltip-edit-team": ""
       },
       "new-team": "",
       "placeholder-search-teams": ""
     },
     "team-settings": {
+      "description-email": "",
       "label-email": "",
       "label-name": "",
       "label-numerical-identifier": "",
       "label-role": "",
       "label-team-details": "",
       "save": ""
+    },
+    "team-sync-upgrade-content": {
+      "description": ""
     }
   },
   "theme-preview": {
@@ -7564,96 +7749,6 @@
       "select-search-input": "輸入以搜尋（國家、城市、縮寫）"
     }
   },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "或檢視書籤"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "建立日期："
-    },
-    "create-bookmark-saved-notification": {
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "了解更多資訊",
-      "lets-start": "讓我們開始吧！",
-      "start-your-metrics-exploration": "開始探索指標！",
-      "subtitle": "無需編寫查詢，即可探索與 Prometheus 相容的指標。"
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "篩選條件",
-      "native-histogram": "原生直方圖",
-      "new-badge": "新",
-      "otel-switch": "此開關可以透過 OTel 資源篩選 OTel 原生資料來源。"
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "顯示為熱點圖的經典直方圖：",
-      "ch-histogram": "顯示為直方圖的經典直方圖：",
-      "click-histogram": "點選下方的任何原生直方圖以進行探索：",
-      "hide-examples": "隱藏範例",
-      "learn-more": "了解更多資訊",
-      "metric-examples": "",
-      "nh-heatmap": "顯示為熱點圖的原生直方圖：",
-      "nh-histogram": "顯示為直方圖的原生直方圖：",
-      "now": "現在：",
-      "previously": "之前：",
-      "see-examples": "> 查看範例",
-      "sentence": "Prometheus 原生直方圖提供高解析度、高精度、儀器中的簡單使用方法，以及在查詢和 Grafana 中組合和操縱直方圖的方法。"
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "或檢視最近的探索"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "隨時在檢視中保留所選的指標圖表",
-      "show-previews-of-metric-graphs": "顯示指標圖表的預覽"
-    },
-    "sort-by-scene": {
-      "tooltip-sorts-values-using-standard-smart-series": ""
-    }
-  },
   "transformations": {
     "empty": {
       "add-transformation-body": "轉換功能可在顯示可視化之前，以各種方式變更資料。<1></1>這包括連接資料、重新命名欄位、進行計算、格式化資料以便顯示等。",
@@ -7688,11 +7783,17 @@
       "label-config-query": ""
     },
     "convert-field-type-transformer-editor": {
+      "aria-label-add-a-convert-field-type-transformer": "",
+      "aria-label-remove-convert-field-type-transformer": "",
+      "label-as": "",
       "label-date-format": "",
+      "label-field": "",
       "label-input-format": "",
       "label-join-with": "",
       "label-set-timezone": "",
+      "placeholder-type": "",
       "tooltip-explicit-separator-joining-array-values": "",
+      "tooltip-input-format": "",
       "tooltip-specify-the-output-format": "",
       "tooltip-timezone-manually": ""
     },
@@ -7702,6 +7803,7 @@
       "placeholder-field": ""
     },
     "draggable-field-name": {
+      "rename-placeholder": "",
       "title-drag-and-drop-to-reorder": ""
     },
     "enum-mapping-editor": {
@@ -7714,7 +7816,19 @@
     },
     "extract-fields-transformer-editor": {
       "label-delimiter": "",
+      "label-format": "",
+      "label-keep-time": "",
+      "label-replace-all-fields": "",
+      "label-source": "",
+      "placeholder-auto": "",
       "placeholder-select-delimiter": ""
+    },
+    "field-config-mapping-handler-arguments-editor": {
+      "aria-label-threshold-color": ""
+    },
+    "field-lookup-transformer-editor": {
+      "label-field": "",
+      "label-lookup": ""
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "",
@@ -7742,6 +7856,7 @@
       "label-filter-type": ""
     },
     "format-string-transfomer-editor": {
+      "label-field": "",
       "label-format": "",
       "label-substring-range": ""
     },
@@ -7758,8 +7873,13 @@
       "placeholder-ignored": "",
       "placeholder-select-stats": ""
     },
+    "group-by-transformer-editor": {
+      "title-calc-alert": ""
+    },
     "group-to-nested-table-transformer-editor": {
-      "label-show-field-names-in-nested-tables": ""
+      "description-show-field-names": "",
+      "label-show-field-names-in-nested-tables": "",
+      "title-calc-alert": ""
     },
     "grouping-to-matrix-transformer-editor": {
       "label-cell-value": "",
@@ -7768,7 +7888,9 @@
       "label-row": ""
     },
     "histogram-transformer-editor": {
-      "placeholder-default": ""
+      "placeholder-auto": "",
+      "placeholder-default": "",
+      "placeholder-none": ""
     },
     "index-options-editor": {
       "label-as-percentile": "",
@@ -7781,6 +7903,8 @@
         "title-no-input-found": "",
         "title-no-labels-found": ""
       },
+      "label-join": "",
+      "label-value": "",
       "tooltip-select-label-indicating-values": ""
     },
     "jsonpath-editor": {
@@ -7791,6 +7915,9 @@
       "tooltip-remove-path": ""
     },
     "labels-as-fields-transformer-editor": {
+      "label-labels": "",
+      "label-mode": "",
+      "label-value-field-name": "",
       "placeholder-optional-select-label": "",
       "tooltip-replace-value-field-label": ""
     },
@@ -7801,21 +7928,32 @@
       "ascending-order-duplicates": "",
       "multiple-value-fields-may-exist": "",
       "single-frame": "",
-      "st-field-is-time": ""
+      "st-field-is-time": "",
+      "string-values-separate": ""
     },
     "merge-transformer-editor": {
       "merge-effect-applied-single-frame": ""
     },
     "multi-info": {
       "all-values-are-numeric": "",
+      "frame-fields-value": "",
       "multiple-frames": "",
       "string-values-are-represented-as-labels": "",
       "time-in-ascending-order": ""
     },
+    "organize-fields-transformer-editor": {
+      "first-frame-warning": ""
+    },
+    "partion-by-values-editor": {
+      "tooltip-naming": ""
+    },
     "partition-by-values-editor": {
       "label-field": "",
+      "label-keep-fields": "",
+      "label-naming": "",
       "label-select-field": "",
-      "partition-values-works-single-frame": ""
+      "partition-values-works-single-frame": "",
+      "tooltip-keeps-partition-fields-frames": ""
     },
     "prepare-time-series-editor": {
       "label-format": "",
@@ -7845,7 +7983,8 @@
       "label-model-type": "",
       "label-predicted-points": "",
       "label-x-field": "",
-      "label-y-field": ""
+      "label-y-field": "",
+      "tooltip-number-of-xy-points-to-predict": ""
     },
     "rename-by-regex-transformer-editor": {
       "label-match": "",
@@ -7865,11 +8004,15 @@
     "time-series-table-transform-editor": {
       "label-stat": "",
       "label-time-field": "",
-      "tooltip-statistic-should-calculated-series": ""
+      "tooltip-statistic-should-calculated-series": "",
+      "tooltip-time-field": ""
     },
     "transpose-transfomer-editor": {
+      "label-first-field-name": "",
+      "label-remaining-fields-name": "",
       "placeholder-field": "",
-      "placeholder-value": ""
+      "placeholder-value": "",
+      "tooltip-name-for-value-fields": ""
     },
     "unary-operation-editor": {
       "label-operation": "",
@@ -7937,6 +8080,7 @@
       "message": "沒有找到使用者"
     },
     "token-revoked-modal": {
+      "resume-message": "",
       "sign-in": "",
       "title-you-have-been-automatically-signed-out": ""
     },
@@ -7951,6 +8095,11 @@
       "shared-dashboard-users-tab-title": "共用儀表板使用者"
     }
   },
+  "variabels": {
+    "variable-usages-button": {
+      "usage-title": ""
+    }
+  },
   "variable": {
     "adhoc": {
       "placeholder": "選擇值"
@@ -7961,7 +8110,7 @@
     "picker": {
       "link-all": "全部",
       "option-all": "全部",
-      "option-selected-values": "已選取",
+      "option-selected-values": "",
       "option-tooltip": "清除選取項目"
     },
     "textbox": {
@@ -7986,6 +8135,9 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": ""
+    },
+    "picker-renderer": {
+      "couldnt-load-variable": ""
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "",
@@ -8039,9 +8191,12 @@
       "title-dependencies": ""
     },
     "variables-unknown-button": {
+      "usage-title": "",
       "VariablesUnknownButton-tooltip-show-usages": ""
     },
     "variables-unknown-table": {
+      "collapse-label": "",
+      "collapse-tooltip": "",
       "loading": ""
     }
   },
