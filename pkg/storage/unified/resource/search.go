@@ -296,7 +296,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 			fmt.Println("request for another instance. sending over to", rs.Instances[0].Id)
 
 			pool := s.search.GetClientPool()
-			ins, err := pool.GetClientFor("127.0.0.2")
+			ins, err := pool.GetClientForInstance(rs.Instances[0])
 			if err != nil {
 				return nil, err
 			}

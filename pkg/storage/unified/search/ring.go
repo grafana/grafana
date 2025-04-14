@@ -58,8 +58,9 @@ var cfg_replaceme = RingConfig{
 	HeartbeatTimeout:       time.Minute,
 	InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, log.NewNopLogger()),
 	InstanceAddr:           ip,
-	InstancePort:           9378,
-	InstanceID:             ip,
+	// TODO configure this to match grpc server port
+	ListenPort:             10000,
+	InstancePort:           10000,
 	NumTokens:              128,
 }
 
@@ -208,10 +209,7 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 			return nil, err
 		}
 
-		// TODO without the 10000 we can't reach the right grpc server
-		// need to check if we can make ring use the same server as unistore, that way we can
-		// remove the :10000 hardcoded here
-		conn, err := grpc.NewClient(inst.Addr+":10000", opts...)
+		conn, err := grpc.NewClient(inst.Addr, opts...)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to dial memora %s %s", inst.Id, inst.Addr)
 		}
