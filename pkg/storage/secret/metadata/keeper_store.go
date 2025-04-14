@@ -350,7 +350,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("list template %q: %w", qSecValue, err)
 	}
-
+	
+	defer func() {
+		_ = rows.Close()
+	}()
+	
 	// TODO Only fetch the values we need
 	secureValueRows := make([]*secureValueDB, 0)
 	for rows.Next() {
