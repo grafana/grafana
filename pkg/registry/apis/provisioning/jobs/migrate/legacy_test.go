@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -431,6 +432,12 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		err := legacyMigrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{}, progress)
 		require.EqualError(t, err, "migrate from SQL: abort test here")
 
-		progress.AssertExpectations(t)
+		require.Eventually(t, func() bool {
+			if len(progress.Calls) != 2 {
+				return false
+			}
+
+			return progress.AssertExpectations(t)
+		}, time.Second, 10*time.Millisecond)
 	})
 }
