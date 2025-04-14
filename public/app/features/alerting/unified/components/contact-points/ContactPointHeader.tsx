@@ -67,7 +67,6 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * Used to determine whether to show the "Unused" badge
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
-
   /** Does the current user have permissions to edit the contact point? */
   const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
   /** Can the contact point actually be edited via the UI? */

@@ -3294,7 +3294,6 @@
         ],
         "properties": {
           "annotations": {
-            "description": "Title of dashboard.",
             "type": "array",
             "items": {
               "default": {},
@@ -3445,6 +3444,23 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabRepeatOptions": {
+        "type": "object",
+        "required": [
+          "mode",
+          "value"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind": {
         "type": "object",
         "required": [
@@ -3517,6 +3533,9 @@
           },
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "repeat": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabRepeatOptions"
           },
           "title": {
             "type": "string"

@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -32,15 +33,18 @@ type ResourceServer interface {
 }
 
 type ListIterator interface {
+	// Next advances iterator and returns true if there is next value is available from the iterator.
+	// Error() should be checked after every call of Next(), even when Next() returns true.
 	Next() bool // sql.Rows
 
-	// Iterator error (if exts)
+	// Error returns iterator error, if any. This should be checked after any Next() call.
+	// (Some iterator implementations return true from Next, but also set the error at the same time).
 	Error() error
 
-	// The token that can be used to start iterating *after* this item
+	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// The token that can be used to start iterating *before* this item
+	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
 	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
@@ -380,23 +384,16 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	check := claims.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
 		Object: obj,
 	}
+
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
 		event.Type = WatchEvent_MODIFIED
-		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -440,19 +437,34 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
-	// We only set name for update checks
-	if check.Verb == utils.VerbUpdate {
-		check.Name = key.Name
-	}
+	// For folder moves, we need to check permissions on both folders
+	if s.isFolderMove(event) {
+		if err := s.checkFolderMovePermissions(ctx, user, key, event.ObjectOld.GetFolder(), obj.GetFolder()); err != nil {
+			return nil, err
+		}
+	} else {
+		// Regular permission check for create/update
+		check := claims.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+		}
 
-	check.Folder = obj.GetFolder()
-	a, err := s.access.Check(ctx, user, check)
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if !a.Allowed {
-		return nil, &ErrorResult{
-			Code: http.StatusForbidden,
+		if event.Type == WatchEvent_MODIFIED {
+			check.Verb = utils.VerbUpdate
+			check.Name = key.Name
+		}
+
+		check.Folder = obj.GetFolder()
+		a, err := s.access.Check(ctx, user, check)
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+		if !a.Allowed {
+			return nil, &ErrorResult{
+				Code: http.StatusForbidden,
+			}
 		}
 	}
 
@@ -464,6 +476,59 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 	return event, nil
+}
+
+// isFolderMove determines if an event represents a resource being moved between folders
+func (s *server) isFolderMove(event *WriteEvent) bool {
+	return event.Type == WatchEvent_MODIFIED &&
+		event.ObjectOld != nil &&
+		event.ObjectOld.GetFolder() != event.Object.GetFolder()
+}
+
+// checkFolderMovePermissions handles permission checks when a resource is being moved between folders
+func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.AuthInfo, key *ResourceKey, oldFolder, newFolder string) *ErrorResult {
+	// First check if user can update the resource in the original folder
+	updateCheck := claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+		Folder:    oldFolder,
+	}
+
+	a, err := s.access.Check(ctx, user, updateCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to update resource in the source folder",
+		}
+	}
+
+	// Then check if user can create the resource in the destination folder
+	createCheck := claims.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Folder:    newFolder,
+	}
+
+	a, err = s.access.Check(ctx, user, createCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to create resource in the destination folder",
+		}
+	}
+
+	return nil
 }
 
 func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
@@ -654,6 +719,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return &ReadResponse{Error: rsp.Error}, nil
+	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
@@ -760,11 +828,10 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
-
-				break
+				return iter.Error()
 			}
 		}
-		return nil
+		return iter.Error()
 	})
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -868,7 +935,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 			}
-			return nil
+			return iter.Error()
 		})
 		if err != nil {
 			return err

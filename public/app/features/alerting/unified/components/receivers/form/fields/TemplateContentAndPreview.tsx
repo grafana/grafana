@@ -10,8 +10,9 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 
 import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';
-import { getPreviewResults } from '../../TemplatePreview';
-import { usePreviewTemplate } from '../../usePreviewTemplate';
+import { TemplatePreview } from '../../TemplatePreview';
+
+import { getUseTemplateText } from './utils';
 
 export function TemplateContentAndPreview({
   payload,
@@ -32,11 +33,6 @@ export function TemplateContentAndPreview({
 
   const { selectedAlertmanager } = useAlertmanager();
   const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-
-  const { data, error } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
-  const previewToRender = getPreviewResults(error, payloadFormatError, data);
-
-  const templatePreviewId = 'template-preview';
 
   return (
     <div className={cx(className, styles.mainContainer)}>
@@ -62,24 +58,15 @@ export function TemplateContentAndPreview({
       </div>
 
       {isGrafanaAlertManager && (
-        <div className={styles.container}>
-          <EditorColumnHeader
-            id={templatePreviewId}
-            label={t(
-              'alerting.template-content-and-preview.label-preview-with-the-default-payload',
-              'Preview with the default payload'
-            )}
-          />
-          <Box flex={1}>
-            <div
-              role="presentation"
-              aria-describedby={templatePreviewId}
-              className={styles.viewerContainer({ height: 'minHeight' })}
-            >
-              {previewToRender}
-            </div>
-          </Box>
-        </div>
+        <TemplatePreview
+          payload={payload}
+          // This should be an empty template name so that the test API treats it as a new unnamed template.
+          templateName={''}
+          templateContent={getUseTemplateText(templateName)}
+          setPayloadFormatError={setPayloadFormatError}
+          payloadFormatError={payloadFormatError}
+          className={cx(styles.templatePreview, styles.minEditorSize)}
+        />
       )}
     </div>
   );
@@ -97,6 +84,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.medium}`,
+  }),
+  templatePreview: css({
+    flex: 1,
+    display: 'flex',
+  }),
+  minEditorSize: css({
+    minHeight: 300,
+    minWidth: 300,
   }),
   viewerContainer: ({ height }: { height: number | string }) =>
     css({

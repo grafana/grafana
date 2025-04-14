@@ -20,7 +20,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
-	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
 	if err != nil {
 		return err
 	}
@@ -294,6 +294,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDInfrastructure, SortWeight: 2, Text: "Databases"},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
+		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
@@ -315,10 +316,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
-	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		s.navigationAppConfig["grafana-metricsdrilldown-app"] = NavigationAppConfig{SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"}
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {

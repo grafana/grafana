@@ -19,6 +19,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -145,36 +146,19 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	path := field.NewPath("spec", "localhost", "path")
 	if r.config.Spec.Local.Path == "" {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				"no path is configured",
-			},
-		}, nil
+		return fromFieldError(field.Required(path, "no path is configured")), nil
 	}
 
 	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				err.Error(),
-			},
-		}, nil
+		return fromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
 	}
 
 	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
-			},
-		}, nil
+		return fromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
 	}
 
 	return &provisioning.TestResults{
@@ -312,18 +296,18 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, fpath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath = safepath.Join(r.path, fpath)
+	fpath := safepath.Join(r.path, filepath)
 	_, err := os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
 		}
-		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), fpath)
+		return apierrors.NewAlreadyExists(schema.GroupResource{}, filepath)
 	}
 
 	if safepath.IsDir(fpath) {
@@ -356,7 +340,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	}
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("file does not exist")
+		return ErrFileNotFound
 	}
 	return os.WriteFile(path, data, 0600)
 }

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
@@ -103,7 +105,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
 			Method: http.MethodGet,
 			Path:   "/api/admin/usage-report-preview",
-			User:   helper.K8sTestHelper.Org1.Admin,
+			User:   helper.Org1.Admin,
 		}, &usagestats.Report{})
 
 		stats := map[string]any{}
@@ -117,6 +119,88 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			"stats.repository.local.count":  1.0,
 		}, stats)
 	})
+}
+
+func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	t.Skip("Reenable this test once we enforce schema validation for provisioning")
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "invalid-schema-tmp"
+	// Set up the repository and the file to import.
+	helper.CopyToProvisioningPath(t, "testdata/invalid-dashboard-schema.json", "invalid-dashboard-schema.json")
+
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Make sure the repo can read and validate the file
+	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "invalid-dashboard-schema.json")
+	status := helper.RequireApiErrorStatus(err, metav1.StatusReasonBadRequest, http.StatusBadRequest)
+	require.Equal(t, status.Message, "Dry run failed: Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
+
+	const invalidSchemaUid = "invalid-schema-uid"
+	_, err = helper.Dashboards.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	require.Error(t, err, "invalid dashboard shouldn't exist")
+	require.True(t, apierrors.IsNotFound(err))
+
+	var jobObj *unstructured.Unstructured
+	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionPull,
+				Pull:   &provisioning.SyncJobOptions{},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+		require.NoError(collect, result.Error())
+		job, err := result.Get()
+		require.NoError(collect, err)
+		var ok bool
+		jobObj, ok = job.(*unstructured.Unstructured)
+		require.True(collect, ok, "expecting unstructured object, but got %T", job)
+	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
+
+	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		//helper.TriggerJobProcessing(t)
+		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
+			"jobs", string(jobObj.GetUID()))
+
+		if apierrors.IsNotFound(err) {
+			assert.Fail(collect, "job '%s' not found yet yet", jobObj.GetName())
+			return // continue trying
+		}
+
+		// Can fail fast here -- the jobs are immutable
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		job := &provisioning.Job{}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job)
+		require.NoError(t, err, "should convert to Job object")
+
+		require.Equal(t, provisioning.JobStateError, job.Status.State)
+		require.Equal(t, job.Status.Message, "completed with errors")
+		require.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
+	}, time.Second*10, time.Millisecond*10, "Expected provisioning job to conclude with the status failed")
+
+	_, err = helper.Dashboards.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	require.Error(t, err, "invalid dashboard shouldn't have been created")
+	require.True(t, apierrors.IsNotFound(err))
+
+	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "invalid-dashboard-schema.json")
+	require.NoError(t, err, "should delete the resource file")
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
@@ -270,7 +354,21 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
 		code := 0
-		result := helper.AdminREST.Post().
+
+		// Check that we can not (yet) UPDATE the target path
+		result := helper.AdminREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&code)
+		require.Equal(t, http.StatusNotFound, code)
+		require.True(t, apierrors.IsNotFound(result.Error()))
+
+		// Now try again with POST (as an editor)
+		result = helper.EditorREST.Post().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
