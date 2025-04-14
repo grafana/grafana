@@ -42,6 +42,14 @@ function toKebabCase(str) {
 }
 
 /**
+ * Checks if a string is non-alphanumeric
+ * @param {string} str The string to check
+ * @returns {boolean}
+ */
+function isStringNonAlphanumeric(str) {
+  return !/[a-zA-Z0-9]/.test(str);
+}
+/**
  * Checks if we _should_ fix an error automatically
  * @param {RuleContextWithOptions} context
  * @returns {boolean} Whether the node should be fixed
@@ -321,5 +329,5 @@ module.exports = {
   canBeFixed,
   shouldBeFixed,
   elementIsTrans,
-  isStringLiteral,
+  isStringNonAlphanumeric,
 };
