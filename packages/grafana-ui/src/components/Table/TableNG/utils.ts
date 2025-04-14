@@ -520,6 +520,15 @@ export interface MapFrameToGridOptions extends TableNGProps {
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
+    // Handle sorting for frame type fields (sparklines)
+    case FieldType.frame:
+      return (a, b) => {
+        // For DataFrameWithValue type objects
+        const aValue = typeof a === 'object' && 'value' in a ? a.value : a;
+        const bValue = typeof b === 'object' && 'value' in b ? b.value : b;
+
+        return Number(aValue) - Number(bValue);
+      };
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
