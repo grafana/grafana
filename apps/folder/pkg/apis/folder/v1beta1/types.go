@@ -66,3 +66,6 @@ func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*Descendant
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &res)
 	return &res, err
 }
+
+// Empty stub
+type FolderStatus struct{}
