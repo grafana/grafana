@@ -25,14 +25,17 @@ const userStorage = new UserStorage('advisor-redirect-notice');
 
 export function AdvisorRedirectNotice() {
   const styles = useStyles2(getStyles);
-  const canUseAdvisor = contextSrv.isGrafanaAdmin && config.featureToggles.grafanaAdvisor;
+  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor;
   const [showNotice, setShowNotice] = useState(false);
   useEffect(() => {
-    userStorage.getItem('showNotice').then((showNotice) => {
-      if (showNotice !== 'false' && canUseAdvisor) {
-        setShowNotice(true);
-      }
-    });
+    if (canUseAdvisor) {
+      userStorage.getItem('showNotice').then((showNotice) => {
+        if (showNotice !== 'false') {
+          setShowNotice(true);
+        }
+      });
+    }
   }, [canUseAdvisor]);
 
   return showNotice ? (
