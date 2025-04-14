@@ -1,0 +1,26 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { EditableText } from './EditableText';
+
+<Meta title="MDX|EditableText" component={EditableText} />
+
+# EditableText
+
+asdfasdfasdf
+
+### Usage
+
+```jsx
+import { EditableText } from '@grafana/ui';
+
+<EditableText
+  text="something"
+  editable={false}
+  textChangeHandler={(text) => {
+    console.log('change:', text);
+  }}
+/>;
+```
+
+### Props
+
+<ArgTypes of={EditableText} />

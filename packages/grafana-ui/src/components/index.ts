@@ -280,6 +280,7 @@ export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { UsersIndicator, type UsersIndicatorProps } from './UsersIndicator/UsersIndicator';
 export { type UserView } from './UsersIndicator/types';
 export { Avatar } from './UsersIndicator/Avatar';
+export { EditableText } from './EditableText/EditableText';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
