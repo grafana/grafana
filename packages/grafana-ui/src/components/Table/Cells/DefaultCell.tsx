@@ -2,6 +2,7 @@ import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getCellLinks } from '../../../utils';
@@ -99,6 +100,7 @@ export const DefaultCell = (props: TableCellProps) => {
           title={links[0].title}
           style={{ overflow: 'hidden', display: 'flex' }}
           className={getLinkStyle(tableStyles, cellOptions)}
+          data-testid={selectors.components.DataLinksContextMenu.singleLink}
         >
           {value}
         </a>

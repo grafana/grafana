@@ -2,6 +2,7 @@ import { isFunction } from 'lodash';
 import { useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../BarGauge/BarGauge';
@@ -98,7 +99,13 @@ export const BarGaugeCell = (props: TableCellProps) => {
       }}
     >
       {shouldShowLink ? (
-        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
+        <a
+          href={links[0].href}
+          onClick={links[0].onClick}
+          target={links[0].target}
+          title={links[0].title}
+          data-testid={selectors.components.DataLinksContextMenu.singleLink}
+        >
           {renderComponent()}
         </a>
       ) : shouldShowTooltip ? (
