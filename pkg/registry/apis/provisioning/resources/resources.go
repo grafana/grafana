@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -161,18 +163,35 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	r.resourcesLookup[id] = path
 
-	// Make sure the parent folders exist
-	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
-	if err != nil {
-		return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+	// For resources that exist in folders, set the header annotation
+	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
+		// Make sure the parent folders exist
+		folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+		if err != nil {
+			return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+		}
+		parsed.Meta.SetFolder(folder)
 	}
 
-	parsed.Meta.SetFolder(folder)
-	parsed.Meta.SetUID("")             // clear identifiers
-	parsed.Meta.SetResourceVersion("") // clear identifiers
+	// Clear any saved identifiers
+	parsed.Meta.SetUID("")
+	parsed.Meta.SetResourceVersion("")
 
-	// Update will also create (for resources we care about)
-	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	// TODO: use parsed.Run() (but that has an extra GET now!!)
+	fieldValidation := "Strict"
+	if parsed.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// Update or Create resource
+	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
+	if apierrors.IsNotFound(err) {
+		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+	}
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }

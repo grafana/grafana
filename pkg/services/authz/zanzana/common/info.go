@@ -4,7 +4,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -16,8 +16,8 @@ type typeInfo struct {
 
 var typedResources = map[string]typeInfo{
 	FormatGroupResource(
-		folderalpha1.FolderResourceInfo.GroupResource().Group,
-		folderalpha1.FolderResourceInfo.GroupResource().Resource,
+		folders.FolderResourceInfo.GroupResource().Group,
+		folders.FolderResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "folder", Relations: RelationsTyped},
 	FormatGroupResource(

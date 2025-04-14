@@ -66,7 +66,13 @@ export const GroupByTransformerEditor = ({
   return (
     <Stack direction="column">
       {showCalcAlert && (
-        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        <Alert
+          title={t(
+            'transformers.group-by-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on'
+          )}
+          severity="warning"
+        />
       )}
       {fieldNames.map((key) => (
         <GroupByFieldConfiguration

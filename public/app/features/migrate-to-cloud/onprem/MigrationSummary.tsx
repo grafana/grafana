@@ -1,4 +1,4 @@
-import { Box, Button, Space, Stack, Text } from '@grafana/ui';
+import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -14,15 +14,16 @@ interface MigrationSummaryProps {
   disconnectIsLoading: boolean;
   onDisconnect: () => void;
 
-  showBuildSnapshot: boolean;
-  buildSnapshotIsLoading: boolean;
-  onBuildSnapshot: () => void;
-
   showUploadSnapshot: boolean;
   uploadSnapshotIsLoading: boolean;
   onUploadSnapshot: () => void;
 
   showRebuildSnapshot: boolean;
+  onRebuildSnapshot: () => void;
+
+  onHighlightErrors: () => void;
+  isHighlightErrors: boolean;
+  showOnlyErrorsSwitch: boolean;
 }
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -38,21 +39,24 @@ export function MigrationSummary(props: MigrationSummaryProps) {
     disconnectIsLoading,
     onDisconnect,
 
-    showBuildSnapshot,
-    buildSnapshotIsLoading,
-    onBuildSnapshot,
-
     showUploadSnapshot,
     uploadSnapshotIsLoading,
     onUploadSnapshot,
 
     showRebuildSnapshot,
+    onRebuildSnapshot,
+
+    isHighlightErrors,
+    onHighlightErrors,
+    showOnlyErrorsSwitch,
   } = props;
 
   const totalCount = snapshot?.stats?.total ?? 0;
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
   const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
   const warningCount = snapshot?.stats?.statuses?.['WARNING'] ?? 0;
+
+  const switchLabel = t('migrate-to-cloud.summary.show-errors', 'Only view errors');
 
   return (
     <Box
@@ -79,12 +83,23 @@ export function MigrationSummary(props: MigrationSummaryProps) {
           {totalCount}
         </MigrationInfo>
 
-        <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
-          {errorCount}
-        </MigrationInfo>
-
         <MigrationInfo title={t('migrate-to-cloud.summary.successful-resource-count', 'Successfully migrated')}>
           {successCount + warningCount}
+        </MigrationInfo>
+
+        <MigrationInfo title={t('migrate-to-cloud.summary.errored-resource-count', 'Errors')}>
+          <Stack direction="row" alignItems="center">
+            {errorCount}
+            <Space h={1} layout="inline" />
+            {showOnlyErrorsSwitch && (
+              <Stack>
+                <Switch label={switchLabel} value={isHighlightErrors} onChange={onHighlightErrors} />
+                <Text variant="bodySmall" color="secondary">
+                  {switchLabel}
+                </Text>
+              </Stack>
+            )}
+          </Stack>
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}>
@@ -104,21 +119,14 @@ export function MigrationSummary(props: MigrationSummaryProps) {
       </Stack>
 
       <Stack gap={2} wrap justifyContent="flex-end">
-        {showBuildSnapshot && (
-          <Button disabled={isBusy} onClick={onBuildSnapshot} icon={buildSnapshotIsLoading ? 'spinner' : undefined}>
-            <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
-          </Button>
-        )}
-
         {showRebuildSnapshot && (
           <Button
-            disabled={isBusy}
-            onClick={onBuildSnapshot}
-            icon={buildSnapshotIsLoading ? 'spinner' : undefined}
+            disabled={isBusy || uploadSnapshotIsLoading}
+            onClick={onRebuildSnapshot}
             variant="secondary"
-            data-testid="migrate-to-cloud-summary-rebuild-snapshot-button"
+            data-testid="migrate-to-cloud-summary-reconfigure-snapshot-button"
           >
-            <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
+            <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Reconfigure snapshot</Trans>
           </Button>
         )}
 

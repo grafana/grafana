@@ -252,6 +252,9 @@ export const availableIconsIndex = {
   unlock: true,
   upload: true,
   user: true,
+  ban: true,
+  window: true,
+  'window-grid': true,
   'users-alt': true,
   'user-arrows': true,
   'vertical-align-bottom': true,
@@ -265,6 +268,8 @@ export const availableIconsIndex = {
   x: true,
   'add-user': true,
   attach: true,
+  'dollar-alt': true,
+  'ai-sparkle': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
