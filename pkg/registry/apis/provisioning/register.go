@@ -562,8 +562,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-				b.clients,
+				cleaner,
 				exportWorker,
 				syncWorker,
 			)
