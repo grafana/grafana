@@ -127,13 +127,13 @@ describe('CloneRuleEditor', function () {
       expect(
         byRole('listitem', {
           name: 'severity: critical',
-        }).getAll()
-      ).toHaveLength(2); // once in the form, once in the header
+        }).get()
+      ).toBeInTheDocument();
       expect(
         byRole('listitem', {
           name: 'region: nasa',
-        }).getAll()
-      ).toHaveLength(2); // once in the form, once in the header
+        }).get()
+      ).toBeInTheDocument();
       expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
     });
   });
@@ -187,13 +187,13 @@ describe('CloneRuleEditor', function () {
       expect(
         byRole('listitem', {
           name: 'severity: critical',
-        }).getAll()
-      ).toHaveLength(2); // once in the form, once in the header
+        }).get()
+      ).toBeInTheDocument();
       expect(
         byRole('listitem', {
           name: 'region: nasa',
-        }).getAll()
-      ).toHaveLength(2); // once in the form, once in the header
+        }).get()
+      ).toBeInTheDocument();
       expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
     });
   });
