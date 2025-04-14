@@ -71,7 +71,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 }
 
 func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts Opts, renderKey string) (*url.URL, error) {
-	rendererUrl := rs.Cfg.RendererUrl
+	rendererUrl := rs.Cfg.RendererServerUrl
 	if renderType == RenderCSV {
 		rendererUrl += "/csv"
 	}
@@ -242,7 +242,7 @@ func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string
 }
 
 func (rs *RenderingService) getRemotePluginVersion() (string, error) {
-	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/version")
+	rendererURL, err := url.Parse(rs.Cfg.RendererServerUrl + "/version")
 	if err != nil {
 		return "", err
 	}
