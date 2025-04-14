@@ -571,7 +571,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			migrationWorker := migrate.NewMigrationWorker(
 				legacyMigrator,
 				unifiedStorageMigrator,
-				storageSwapper,
+				b.storageStatus,
 			)
 
 			// Pull request worker

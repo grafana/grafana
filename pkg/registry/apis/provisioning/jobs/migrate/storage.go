@@ -26,10 +26,6 @@ func NewStorageSwapper(batch resource.BulkStoreClient, dual dualwrite.Service) *
 	}
 }
 
-func (s *StorageSwapper) IsReadingFromUnifiedStorage(ctx context.Context) bool {
-	return !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, s.dual)
-}
-
 func (s *StorageSwapper) StopReadingUnifiedStorage(ctx context.Context) error {
 	// FIXME: dual writer is not namespaced which means that we would consider all namespaces migrated
 	// after one migrates
