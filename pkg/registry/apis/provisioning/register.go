@@ -554,14 +554,24 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.legacyMigrator,
 				legacyFolders,
 			)
-
-			migrationWorker := migrate.NewMigrationWorker(
+			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+			legacyMigrator := migrate.NewLegacyMigrator(
 				legacyResources,
-				b.clients,
-				migrate.NewStorageSwapper(b.unified, b.storageStatus),
-				exportWorker,
+				storageSwapper,
 				syncWorker,
 				repository.WrapWithCloneAndPushIfPossible,
+			)
+
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				b.clients,
+				exportWorker,
+				syncWorker,
+			)
+
+			migrationWorker := migrate.NewMigrationWorker(
+				legacyMigrator,
+				unifiedStorageMigrator,
+				storageSwapper,
 			)
 
 			// Pull request worker

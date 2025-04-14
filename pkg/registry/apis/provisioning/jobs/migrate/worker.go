@@ -1,56 +1,33 @@
 package migrate
 
 import (
-	"bufio"
 	"context"
 	"errors"
-	"fmt"
-	"io"
-	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
-type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+type Migrator interface {
+	Migrate(ctx context.Context, rw repository.ReaderWriter, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
+}
 
 type MigrationWorker struct {
-	clients resources.ClientFactory
-
-	storageSwapper *StorageSwapper
-	legacyMigrator *LegacyResourcesMigrator
-
-	// Delegate the export to the export worker
-	exportWorker jobs.Worker
-
-	// Delegate the import to sync worker
-	syncWorker jobs.Worker
-
-	wrapWithCloneFn WrapWithCloneFn
+	storageSwapper  *StorageSwapper
+	legacyMigrator  Migrator
+	unifiedMigrator Migrator
 }
 
 func NewMigrationWorker(
-	legacyMigrator *LegacyResourcesMigrator,
-	clients resources.ClientFactory,
+	legacyMigrator Migrator,
+	unifiedMigrator Migrator,
 	storageSwapper *StorageSwapper,
-	exportWorker jobs.Worker,
-	syncWorker jobs.Worker,
-	wrapWithCloneFn WrapWithCloneFn,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		clients:         clients,
+		unifiedMigrator: unifiedMigrator,
 		legacyMigrator:  legacyMigrator,
 		storageSwapper:  storageSwapper,
-		exportWorker:    exportWorker,
-		syncWorker:      syncWorker,
-		wrapWithCloneFn: wrapWithCloneFn,
 	}
 }
 
@@ -71,142 +48,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	clients, err := w.clients.Clients(ctx, rw.Config().Namespace)
-	if err != nil {
-		return fmt.Errorf("error getting clients: %w", err)
-	}
-
 	if w.storageSwapper.IsReadingFromUnifiedStorage(ctx) {
-		return w.migrateFromAPIServer(ctx, rw, clients, *options, progress)
+		return w.unifiedMigrator.Migrate(ctx, rw, *options, progress)
 	}
 
-	return w.migrateFromLegacy(ctx, rw, clients, *options, progress)
-}
-
-// migrateFromLegacy will export the resources from legacy storage and import them into the target repository
-func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	namespace := rw.Config().Namespace
-
-	reader, writer := io.Pipe()
-	go func() {
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			progress.SetMessage(ctx, scanner.Text())
-		}
-	}()
-
-	cloneOptions := repository.CloneOptions{
-		PushOnWrites: options.History,
-		// TODO: make this configurable
-		Timeout:  10 * time.Minute,
-		Progress: writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "clone repository")
-			return nil
-		},
-	}
-	pushOptions := repository.PushOptions{
-		// TODO: make this configurable
-		Timeout:  10 * time.Minute,
-		Progress: writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "push changes")
-			return nil
-		},
-	}
-
-	if err := w.wrapWithCloneFn(ctx, rw, cloneOptions, pushOptions, func(repo repository.Repository, cloned bool) error {
-		rw, ok := repo.(repository.ReaderWriter)
-		if !ok {
-			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
-		}
-
-		return w.legacyMigrator.Migrate(ctx, rw, namespace, options, progress)
-	}); err != nil {
-		return fmt.Errorf("migrate from SQL: %w", err)
-	}
-
-	progress.SetMessage(ctx, "resetting unified storage")
-	if err := w.storageSwapper.WipeUnifiedAndSetMigratedFlag(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to reset unified storage %w", err)
-	}
-
-	// Reset the results after the export as pull will operate on the same resources
-	progress.ResetResults()
-
-	// Delegate the import to a sync (from the already checked out go-git repository!)
-	progress.SetMessage(ctx, "pulling resources")
-	if err := w.syncWorker.Process(ctx, rw, provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Pull: &provisioning.SyncJobOptions{
-				Incremental: false,
-			},
-		},
-	}, progress); err != nil { // this will have an error when too many errors exist
-		progress.SetMessage(ctx, "error importing resources, reverting")
-		if e2 := w.storageSwapper.StopReadingUnifiedStorage(ctx); e2 != nil {
-			logger := logging.FromContext(ctx)
-			logger.Warn("error trying to revert dual write settings after an error", "err", err)
-		}
-		return err
-	}
-
-	return nil
-}
-
-// migrateFromAPIServer will export the resources from unified storage and import them into the target repository
-func (w *MigrationWorker) migrateFromAPIServer(ctx context.Context, repo repository.ReaderWriter, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
-	progress.SetMessage(ctx, "exporting unified storage resources")
-	exportJob := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{},
-		},
-	}
-	if err := w.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {
-		return fmt.Errorf("export resources: %w", err)
-	}
-
-	// Reset the results after the export as pull will operate on the same resources
-	progress.ResetResults()
-
-	progress.SetMessage(ctx, "pulling resources")
-	syncJob := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Pull: &provisioning.SyncJobOptions{
-				Incremental: false,
-			},
-		},
-	}
-
-	if err := w.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
-		return fmt.Errorf("pull resources: %w", err)
-	}
-
-	for _, kind := range resources.SupportedProvisioningResources {
-		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s", kind.Resource))
-		client, _, err := clients.ForResource(kind)
-		if err != nil {
-			return err
-		}
-		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-			result := jobs.JobResourceResult{
-				Name:     item.GetName(),
-				Resource: item.GetKind(),
-				Group:    item.GroupVersionKind().Group,
-				Action:   repository.FileActionDeleted,
-			}
-
-			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("failed to delete folder: %w", err)
-				progress.Record(ctx, result)
-				return result.Error
-			}
-
-			progress.Record(ctx, result)
-			return nil
-		}); err != nil {
-			return err
-		}
-	}
-	return nil
+	return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
 }
