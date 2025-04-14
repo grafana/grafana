@@ -62,7 +62,6 @@ lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
 alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
-pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,true
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
