@@ -170,6 +170,8 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   /**
    * @internal
    * Opens the extension sidebar with the registered component.
+   * @param componentTitle The title of the component to be opened in the sidebar.
+   * @param props The props to be passed to the component.
    */
   openExtensionSidebar?: (componentTitle: string, props?: any) => void;
 };
