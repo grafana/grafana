@@ -1,9 +1,7 @@
-import { render, screen, act, waitFor } from '@testing-library/react';
-// import { render } from 'test/test-utils';
+import { render, screen, act } from '@testing-library/react';
 
 import { store, EventBusSrv, EventBus } from '@grafana/data';
 import { config, getAppEvents, setAppEvents } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
