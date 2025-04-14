@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
+	github.com/grafana/grafana-plugin-sdk-go v0.275.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.21.1
 	github.com/prometheus/common v0.63.0
@@ -112,7 +112,6 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/oauth2 v0.29.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect

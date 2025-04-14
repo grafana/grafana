@@ -14,7 +14,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana-app-sdk/logging v0.35.1
-	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0
+	github.com/grafana/grafana-plugin-sdk-go v0.275.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
