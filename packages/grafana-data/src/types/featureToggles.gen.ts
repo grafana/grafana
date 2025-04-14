@@ -291,10 +291,6 @@ export interface FeatureToggles {
   */
   externalCorePlugins?: boolean;
   /**
-  * Sends metrics of public grafana packages usage by plugins
-  */
-  pluginsAPIMetrics?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;

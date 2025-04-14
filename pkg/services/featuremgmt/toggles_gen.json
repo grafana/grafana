@@ -2438,7 +2438,8 @@
       "metadata": {
         "name": "pluginsAPIMetrics",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-09-21T11:36:32Z"
+        "creationTimestamp": "2023-09-21T11:36:32Z",
+        "deletionTimestamp": "2025-04-14T09:21:29Z"
       },
       "spec": {
         "description": "Sends metrics of public grafana packages usage by plugins",

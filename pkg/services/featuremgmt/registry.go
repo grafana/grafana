@@ -482,13 +482,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "pluginsAPIMetrics",
-			Description:  "Sends metrics of public grafana packages usage by plugins",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
