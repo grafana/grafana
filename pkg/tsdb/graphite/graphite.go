@@ -201,7 +201,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
 // and the model if the target is invalid
 func (s *Service) processQuery(logger log.Logger, query backend.DataQuery) (string, *simplejson.Json, error) {
-
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return "", nil, err
