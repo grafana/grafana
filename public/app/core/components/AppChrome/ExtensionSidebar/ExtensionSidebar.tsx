@@ -15,7 +15,7 @@ export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
 export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
 
 type ExtensionSidebarComponentProps = {
-  props?: any;
+  props?: Record<string, unknown>;
 };
 
 export function ExtensionSidebar() {

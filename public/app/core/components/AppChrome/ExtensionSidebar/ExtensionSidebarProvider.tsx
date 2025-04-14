@@ -18,8 +18,6 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-dash-app',
 ];
 
-type Props = any;
-
 type ExtensionSidebarContextType = {
   /**
    * Whether the extension sidebar is enabled.
@@ -50,7 +48,7 @@ type ExtensionSidebarContextType = {
    */
   setExtensionSidebarWidth: (width: number) => void;
 
-  props?: Props;
+  props?: Record<string, unknown>;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
@@ -72,7 +70,7 @@ interface ExtensionSidebarContextProps {
 }
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
-  const [props, setProps] = useState<Props | undefined>(undefined);
+  const [props, setProps] = useState<Record<string, unknown> | undefined>(undefined);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -112,7 +110,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
 
   const setDockedComponentWithProps = useCallback(
-    (componentId: string | undefined, props?: Props) => {
+    (componentId: string | undefined, props?: Record<string, unknown>) => {
       setProps(props);
       setDockedComponentId(componentId);
     },
