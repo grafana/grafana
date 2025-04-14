@@ -143,8 +143,8 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	namespace := rw.Config().Namespace
 
 	progress.SetMessage(ctx, "loading folders from SQL")
-	reader := NewLegacyFolderReader(w.legacyMigrator, rw.Config().Name, namespace)
-	if err = reader.Read(ctx, w.legacyMigrator, rw.Config().Name, namespace); err != nil {
+	reader := NewLegacyFolderMigrator(w.legacyMigrator)
+	if err = reader.Read(ctx, w.legacyMigrator, namespace); err != nil {
 		return fmt.Errorf("error loading folder tree: %w", err)
 	}
 

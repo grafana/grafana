@@ -20,16 +20,12 @@ var _ resource.BulkResourceWriter = (*LegacyFolderMigrator)(nil)
 
 type LegacyFolderMigrator struct {
 	tree           resources.FolderTree
-	repoName       string
 	legacyMigrator legacy.LegacyMigrator
-	namespace      string
 }
 
-func NewLegacyFolderReader(legacyMigrator legacy.LegacyMigrator, repoName, namespace string) *LegacyFolderMigrator {
+func NewLegacyFolderMigrator(legacyMigrator legacy.LegacyMigrator) *LegacyFolderMigrator {
 	return &LegacyFolderMigrator{
 		legacyMigrator: legacyMigrator,
-		repoName:       repoName,
-		namespace:      namespace,
 		tree:           resources.NewEmptyFolderTree(),
 	}
 }
@@ -56,15 +52,16 @@ func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.Resource
 		return errors.New("too many folders")
 	}
 
-	return f.tree.AddUnstructured(item, f.repoName)
+	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFolderMigrator) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
+func (f *LegacyFolderMigrator) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string) error {
 	_, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
 		Store:     parquet.NewBulkResourceWriterClient(f),
 	})
+
 	return err
 }
 
