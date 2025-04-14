@@ -13,6 +13,9 @@ labels:
     - oss
 title: What's new in Grafana v12.0
 posts:
+  - title: Cloud Migration Assistant
+    items:
+      - docs/grafana-cloud/whats-new/2025-04-11-grafana-cloud-migration-assistant-now-generally-available.md
   - title: Dashboards and visualizations
     items:
       - docs/grafana-cloud/whats-new/2025-04-11-blazing-fast-table-panel.md
