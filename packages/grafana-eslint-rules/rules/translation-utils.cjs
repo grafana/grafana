@@ -26,11 +26,8 @@ const elementIsTrans = (node) => {
  * @param {Node} node
  */
 const isStringLiteral = (node) => {
-  return (
-    node.type === AST_NODE_TYPES.Literal &&
-    typeof node.value === 'string'
-  );
-}
+  return node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string';
+};
 
 /**
  * Converts a string to kebab case
@@ -309,10 +306,7 @@ function getNodeValue(node) {
   if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
     // this condition is basically `isStringLiteral`, but we can't use the function
     // else it doesn't narrow the type correctly :(
-    if (
-      node.value.expression.type === AST_NODE_TYPES.Literal &&
-      typeof node.value.expression.value === 'string'
-    ) {
+    if (node.value.expression.type === AST_NODE_TYPES.Literal && typeof node.value.expression.value === 'string') {
       return node.value.expression.value;
     }
   }

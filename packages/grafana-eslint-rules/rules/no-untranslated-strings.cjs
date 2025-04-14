@@ -35,7 +35,8 @@ const noUntranslatedStrings = createRule({
         const isUntranslatedProp =
           (node.value.type === 'Literal' && node.value.value !== '') ||
           (node.value.type === AST_NODE_TYPES.JSXExpressionContainer &&
-            ((isStringLiteral(node.value.expression) && node.value.expression.value !== '') || node.value.expression.type === 'TemplateLiteral'));
+            ((isStringLiteral(node.value.expression) && node.value.expression.value !== '') ||
+              node.value.expression.type === 'TemplateLiteral'));
 
         if (isUntranslatedProp) {
           const errorShouldBeFixed = shouldBeFixed(context);
