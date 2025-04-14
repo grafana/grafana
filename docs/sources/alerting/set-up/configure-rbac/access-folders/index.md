@@ -65,7 +65,7 @@ To manage folder permissions, complete the following steps.
 
 By default, users with the basic roles Admin, Editor, and Viewer roles have query access to data sources for Grafana Alerting.
 
-If you used fixed roles or custom roles, you need to update data source permissions.
+If you used fixed roles or custom roles, you need to update data source permissions in order to create rules or update rule queries.
 
 Alternatively, an administrator can assign the role **Datasource Reader**, which grants the user access to all data sources.
 
