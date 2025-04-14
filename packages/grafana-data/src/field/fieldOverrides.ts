@@ -486,7 +486,7 @@ export const getLinksSupplier =
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
         href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
 
-        if (href.length > 0) {
+        if (href?.length > 0) {
           href = locationUtil.processUrl(href);
         }
       }
