@@ -134,7 +134,29 @@ func TestStorageSwapper_WipeUnifiedAndSetMigratedFlag(t *testing.T) {
 					mockStream.On("CloseAndRecv").Return(&resource.BulkResponse{}, nil)
 					bulk.On("BulkProcess", mock.MatchedBy(func(ctx context.Context) bool {
 						md, ok := metadata.FromOutgoingContext(ctx)
-						return ok && len(md.Get("x-grafana-bulk-rebuild")) > 0
+						if !ok {
+							return false
+						}
+
+						//nolint:errcheck // hits the err != nil gotcha
+						settings, _ := resource.NewBulkSettings(md)
+						if !settings.RebuildCollection {
+							return false
+						}
+						if len(settings.Collection) != 1 {
+							return false
+						}
+						if settings.Collection[0].Namespace != "test-namespace" {
+							return false
+						}
+						if settings.Collection[0].Group != gr.Group {
+							return false
+						}
+						if settings.Collection[0].Resource != gr.Resource {
+							return false
+						}
+
+						return true
 					}), mock.Anything).Return(mockStream, nil)
 
 					dual.On("Update", mock.Anything, mock.MatchedBy(func(status dualwrite.StorageStatus) bool {
