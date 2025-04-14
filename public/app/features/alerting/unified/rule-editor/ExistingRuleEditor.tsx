@@ -1,15 +1,10 @@
-import { isEmpty } from 'lodash';
-
 import { NavModelItem } from '@grafana/data';
-import { Alert, Stack, Text } from '@grafana/ui';
-import { PageInfoItem } from 'app/core/components/Page/types';
+import { Alert, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
-import { AlertLabels } from '../components/AlertLabels';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { stringifyPendingPeriod } from '../components/rule-editor/DurationQuickPick';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
 import { Title } from '../components/rule-viewer/RuleViewer';
@@ -20,14 +15,7 @@ import { Annotation } from '../utils/constants';
 import { createViewLinkFromRuleWithLocation, stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import * as ruleId from '../utils/rule-id';
-import {
-  getPendingPeriodFromRulerRule,
-  getRuleName,
-  getRulePluginOrigin,
-  isFederatedRuleGroup,
-  isPausedRule,
-  rulerRuleType,
-} from '../utils/rules';
+import { getRuleName, getRulePluginOrigin, isFederatedRuleGroup, isPausedRule, rulerRuleType } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
 import { cloneRuleDefinition } from './clone.utils';
@@ -133,7 +121,6 @@ export function ExistingRuleEditor({
         </Stack>
       }
       pageNav={getPageNav({ text: ruleWithLocation.rule ? getRuleName(ruleWithLocation.rule) : '' })}
-      info={createMetadata(ruleWithLocation)}
     >
       {clone ? (
         <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
@@ -146,53 +133,4 @@ export function ExistingRuleEditor({
 
 const getPageNav = (pageNavOptions?: Partial<NavModelItem>): NavModelItem => {
   return { ...defaultPageNav, id: 'alert-rule-edit', text: '', ...pageNavOptions };
-};
-
-const createMetadata = (ruleWithLocation: RuleWithLocation): PageInfoItem[] => {
-  const { rule: rulerRule, group } = ruleWithLocation;
-  const { labels } = rulerRule;
-
-  const metadata: PageInfoItem[] = [];
-  const hasLabels = !isEmpty(labels);
-
-  const interval = group.interval;
-  const pendingPeriod = getPendingPeriodFromRulerRule(rulerRule);
-
-  if (rulerRuleType.grafana.recordingRule(rulerRule)) {
-    const metric = rulerRule.grafana_alert.record?.metric ?? '';
-    metadata.push({
-      label: 'Metric name',
-      value: <Text color="primary">{metric}</Text>,
-    });
-  }
-
-  if (interval) {
-    metadata.push({
-      label: 'Evaluation interval',
-      value: (
-        <Text color="primary">
-          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ interval }}>
-            Every {{ interval }}
-          </Trans>
-        </Text>
-      ),
-    });
-  }
-
-  if (pendingPeriod) {
-    metadata.push({
-      label: 'Pending period',
-      value: <Text color="primary">{stringifyPendingPeriod(pendingPeriod)}</Text>,
-    });
-  }
-
-  if (hasLabels) {
-    metadata.push({
-      label: 'Labels',
-      /* TODO truncate number of labels, maybe build in to component? */
-      value: <AlertLabels labels={labels} size="sm" />,
-    });
-  }
-
-  return metadata;
 };

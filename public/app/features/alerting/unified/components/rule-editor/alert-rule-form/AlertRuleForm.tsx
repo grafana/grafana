@@ -21,7 +21,7 @@ import {
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -40,9 +40,7 @@ import {
   RulerGroupUpdatedResponse,
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
-import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
-import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
   defaultFormValuesForRuleType,
   formValuesFromExistingRule,
@@ -61,9 +59,7 @@ import {
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
-import * as ruleId from '../../../utils/rule-id';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
-import { createRelativeUrl } from '../../../utils/url';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -81,23 +77,20 @@ type Props = {
   isManualRestore?: boolean;
 };
 
-const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-const alertingListViewV2 = shouldUseAlertingListViewV2();
-
 export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
-  const { redirectToDetailsPage } = useRedirectToDetailsPage();
+
+  const routeParams = useParams<{ type: string; id: string }>();
+  const uidFromParams = routeParams.id;
+
+  const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
-  const { returnTo } = useReturnTo();
-  const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
-
-  const uidFromParams = routeParams.id || '';
 
   const defaultValues: RuleFormValues = useMemo(() => {
     // If we have an existing AND a prefill, then we're coming from the restore dialog
@@ -152,7 +145,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   };
 
   // @todo why is error not propagated to form?
-  const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
+  const submit = async (values: RuleFormValues): Promise<void> => {
     const { type, evaluateEvery } = values;
 
     if (conditionErrorMsg !== '') {
@@ -203,31 +196,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       );
     }
 
-    const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
-
-    // V2 list is based on eventually consistent Prometheus API.
-    // When a new rule group is created it takes a while for the new rule group to be reflected in the V2 list.
-    // To avoid user confusion we redirect to the details page which is driven by a strongly consistent Ruler API..
-    if (alertingListViewV2) {
-      redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
-      return;
-    }
-
-    if (exitOnSave) {
-      const returnToUrl = returnTo || getReturnToUrl(targetRuleGroupIdentifier, ruleDefinition);
-
-      locationService.push(returnToUrl);
-      return;
-    } else {
-      // we stay in the same page
-
-      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
-      // After successful update we need to update the URL to avoid displaying 404 errors
-      if (rulerRuleType.dataSource.rule(ruleDefinition)) {
-        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
-      }
-    }
+    redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+    return;
   };
 
   const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
@@ -305,7 +275,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 data-testid="save-rule"
                 variant="primary"
                 type="button"
-                onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+                onClick={handleSubmit((values) => submit(values), onInvalid)}
                 disabled={isSubmitting}
               >
                 {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
@@ -327,7 +297,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       </form>
 
       {showEditYaml ? (
-        isGrafanaManagedRuleByType(type) ? (
+        isGrafanaManagedRuleByType(type) && uidFromParams ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
@@ -337,12 +307,13 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   );
 };
 
-function useRedirectToDetailsPage() {
+function useRedirectToDetailsPage(existingUid?: string) {
   const notifyApp = useAppNotification();
 
   const redirectGrafanaRule = useCallback(
     (saveResult: GrafanaGroupUpdatedResponse) => {
-      const newOrUpdatedRuleUid = saveResult.created?.at(0) || saveResult.updated?.at(0);
+      // if the response contains no created or updated rules, we'll use the existing UID.
+      const newOrUpdatedRuleUid = (saveResult.created?.at(0) || saveResult.updated?.at(0)) ?? existingUid;
       if (newOrUpdatedRuleUid) {
         locationService.replace(
           rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
@@ -355,7 +326,7 @@ function useRedirectToDetailsPage() {
         logWarning('Cannot navigate to the new rule details page. The rule was created but the UID is missing.');
       }
     },
-    [notifyApp]
+    [existingUid, notifyApp]
   );
 
   const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
@@ -387,27 +358,6 @@ function useRedirectToDetailsPage() {
   );
 
   return { redirectToDetailsPage };
-}
-
-function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO) {
-  const { dataSourceName, namespaceName, groupName } = groupId;
-
-  if (prometheusRulesPrimary && rulerRuleType.dataSource.rule(rule)) {
-    const ruleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
-    return createViewLinkFromIdentifier(ruleIdentifier);
-  }
-
-  // TODO We could add namespace and group filters but for GMA the namespace = uid which doesn't work with the filters
-  return '/alerting/list';
-}
-
-// The result of this function is passed to locationService.push()
-// Hence it cannot contain the subpath prefix, so we cannot use createRelativeUrl for it
-function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(identifier.ruleSourceName);
-
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
