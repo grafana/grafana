@@ -942,6 +942,10 @@ export interface FeatureToggles {
   */
   useScopesNavigationEndpoint?: boolean;
   /**
+  * Enable scope search to include all levels of the scope node tree
+  */
+  scopeSearchAllLevels?: boolean;
+  /**
   * Enables the alert rule version history restore feature
   * @default true
   */
