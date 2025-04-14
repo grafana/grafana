@@ -9,7 +9,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
-import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
+import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
@@ -20,7 +20,7 @@ import { updateExpression } from './reducer';
 export interface SimpleCondition {
   whenField?: string;
   evaluator: {
-    params: Array<number | '-' | undefined>;
+    params: number[];
     type: EvalFunction;
   };
 }
@@ -55,11 +55,7 @@ export const SimpleConditionEditor = ({
     updateReduceExpression(value.value ?? ReducerID.last, expressionQueriesList, dispatch);
   };
 
-  const isRange =
-    simpleCondition.evaluator.type === EvalFunction.IsWithinRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
-    simpleCondition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
+  const isRange = isRangeEvaluator(simpleCondition.evaluator.type);
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === simpleCondition.evaluator?.type);
 
