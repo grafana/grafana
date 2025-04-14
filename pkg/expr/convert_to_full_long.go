@@ -145,8 +145,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		labels  data.Labels
 	}
 
-	// Calculate total row count to pre-allocate
-	var totalRows int
+	// First validate all frames have time fields
 	for _, frame := range frames {
 		var timeField *data.Field
 		for _, f := range frame.Fields {
@@ -156,8 +155,14 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 			}
 		}
 		if timeField == nil {
-			continue
+			return nil, fmt.Errorf("missing time field")
 		}
+	}
+
+	// Calculate total row count to pre-allocate
+	var totalRows int
+	for _, frame := range frames {
+		// Directly count numeric fields since we already validated time fields
 		for _, f := range frame.Fields {
 			if f.Type().Numeric() {
 				totalRows += f.Len()
@@ -169,6 +174,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	labelKeysSet := map[string]struct{}{}
 	hasDisplayCol := false
 
+	// Process all frames to build rows
 	for _, frame := range frames {
 		var timeField *data.Field
 		for _, f := range frame.Fields {
@@ -176,9 +182,6 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 				timeField = f
 				break
 			}
-		}
-		if timeField == nil {
-			return nil, fmt.Errorf("missing time field")
 		}
 		for _, f := range frame.Fields {
 			if !f.Type().Numeric() {
@@ -272,6 +275,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 	frame := frames[0]
 
+	// Find time field first
 	var timeField *data.Field
 	for _, f := range frame.Fields {
 		if f.Type() == data.FieldTypeTime {
@@ -282,6 +286,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	if timeField == nil {
 		return nil, fmt.Errorf("time field not found in TimeSeriesWide frame")
 	}
+	timeLen := timeField.Len()
 
 	type row struct {
 		t       time.Time
@@ -298,12 +303,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 
 	// Count numeric fields to calculate row capacity
 	var numericFieldCount int
-	var timeLen int
 	for _, f := range frame.Fields {
-		if f.Type() == data.FieldTypeTime {
-			timeLen = f.Len()
-			continue
-		}
 		if f.Type().Numeric() {
 			numericFieldCount++
 		}
@@ -328,7 +328,6 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 	sort.Strings(labelKeys)
 
-	timeLen = timeField.Len()
 	for _, f := range frame.Fields {
 		if !f.Type().Numeric() {
 			continue
