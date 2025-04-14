@@ -111,7 +111,7 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID, externalID string) (*
 		return nil, fmt.Errorf("failed to create: %w", err)
 	}
 
-	now := time.Now().UTC().UnixMilli()
+	now := time.Now().UTC().Unix()
 
 	row.GUID = uuid.New().String()
 	row.Created = now
