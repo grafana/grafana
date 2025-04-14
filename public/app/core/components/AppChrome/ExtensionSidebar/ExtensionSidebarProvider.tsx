@@ -2,8 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { config, getAppEvents } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
@@ -136,7 +135,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
-    const subscription = appEvents.subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
+    const subscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
     return () => {
       subscription.unsubscribe();
     };
