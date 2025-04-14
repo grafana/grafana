@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
@@ -78,7 +79,7 @@ func TestProcessMessage(t *testing.T) {
 					Encryption: setting.EncryptionSettings{
 						DataKeysCacheTTL:        5 * time.Minute,
 						DataKeysCleanupInterval: 1 * time.Nanosecond,
-						Algorithm:               "aes-cfb",
+						Algorithm:               cipher.AesGcm,
 					},
 				},
 			},
@@ -98,7 +99,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService, keeperMetadataStorageWrapper)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorageWrapper, keeperService)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
@@ -122,7 +123,7 @@ func TestProcessMessage(t *testing.T) {
 			keepers,
 		)
 
-		for i := range 100 {
+		for i := range 1000 {
 			state := buildState(database)
 			action := nextAction(rng, state)
 
@@ -143,7 +144,7 @@ func TestProcessMessage(t *testing.T) {
 						Phase: secretv0alpha1.SecureValuePhasePending,
 					},
 				}
-				validationFunc := func(ctx context.Context, obj runtime.Object) error { return nil }
+				validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
 				_, err := secureValueRest.Create(ctx, sv, validationFunc, &metav1.CreateOptions{})
 				require.NoError(t, err)
 
@@ -184,6 +185,8 @@ func TestProcessMessage(t *testing.T) {
 			}
 		}
 	}
+
+	// TODO: more assertions
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
@@ -234,9 +237,7 @@ func enabledActions(state *state) []action {
 	} {
 		switch action {
 		case actionAppendCreateSecretMessage:
-			// if metrics.numCreateSecretMessage < 5 {
 			enabled = append(enabled, action)
-			// }
 
 		case actionAppendUpdateSecretMessage, actionAppendDeleteSecretMessage:
 			if len(state.secrets) > 0 {
@@ -261,7 +262,7 @@ func nextAction(rng *rand.Rand, state *state) action {
 }
 
 func buildState(database contracts.Database) *state {
-	const query = `
+	const secureValuesNotInOutboxQueueQuery = `
 	SELECT 
 		secret_secure_value.namespace,
 		secret_secure_value.name,
@@ -273,11 +274,15 @@ func buildState(database contracts.Database) *state {
 					AND secret_secure_value_outbox.name = secret_secure_value.name
 		)
 	`
-	rows, err := database.QueryContext(context.Background(), query)
+	rows, err := database.QueryContext(context.Background(), secureValuesNotInOutboxQueueQuery)
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	secrets := make([]secret, 0)
 
@@ -497,22 +502,22 @@ func newKeeperMetadataStorageWrapper(rng *rand.Rand, impl contracts.KeeperMetada
 	return &keeperMetadataStorageWrapper{rng: rng, impl: impl}
 }
 
-func (wrapper *keeperMetadataStorageWrapper) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Create(_ context.Context, _ *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Read(_ context.Context, _ xkube.Namespace, _ string) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) Update(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Update(_ context.Context, _ *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.Namespace, _ string) error {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace, _ *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return "", nil, context.DeadlineExceeded
