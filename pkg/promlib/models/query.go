@@ -37,8 +37,10 @@ const (
 	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
-// DD splits time range into ~300
-const numDDTargetParts = 300
+// NumDDTargetParts - number of parts to splits time range into ~300 since
+// DD does something similar.
+const NumDDTargetParts = 300
+const NumLargeIntervalParts = 100
 
 // PrometheusQueryProperties defines the specific properties used for prometheus
 type PrometheusQueryProperties struct {
@@ -122,6 +124,7 @@ const (
 	varRateInterval   = "$__rate_interval"
 	varRateIntervalMs = "$__rate_interval_ms"
 	varDDInterval     = "$__dd_interval"
+	varLargeInterval  = "$__large_interval"
 )
 
 // Internal interval and range variables with {} syntax
@@ -343,9 +346,12 @@ func calculatePrometheusInterval(
 		resInterval := calculateRateInterval(adjustedInterval, dsScrapeInterval)
 		return resInterval, nil
 	} else if originalQueryInterval == varDDInterval {
-		resInterval := CalculateDDInterval(timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval))
+		resInterval := CalculateInterval(NumDDTargetParts, timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval), true)
 		// The below fix is only applied to DD interval to avoid changing behavior of default grafana.
 		*queryIntervalIn = resInterval.String()
+		return resInterval, nil
+	} else if originalQueryInterval == varLargeInterval {
+		resInterval := CalculateInterval(NumLargeIntervalParts, timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval), false)
 		return resInterval, nil
 	} else {
 		queryIntervalFactor := intervalFactor
@@ -428,35 +434,46 @@ func roundDownPromInterval(
 	return roundIntervalNearest(interval, time.Hour)
 }
 
-func CalculateDDInterval(
+func CalculateInterval(
+	numParts int64,
 	timeRange time.Duration,
 	promRateInterval time.Duration,
+	roundUp bool,
 ) time.Duration {
 	// Round up to number of minutes.
-	ddInterval := (timeRange / numDDTargetParts / time.Minute) * time.Minute
-	if ddInterval < promRateInterval {
+	newInterval := (timeRange / time.Duration(numParts))
+	if roundUp {
+		newInterval = (newInterval / time.Minute) * time.Minute
+	}
+
+	if newInterval < promRateInterval {
 		roundedPromInterval := roundDownPromInterval(promRateInterval)
-		if ddInterval < roundedPromInterval {
+		if newInterval < roundedPromInterval {
 			return roundedPromInterval
 		}
 	}
 
-	if ddInterval < 5*time.Minute {
+	if !roundUp {
+		// At least round up to nearest minute.
+		return roundIntervalUp(newInterval, time.Minute)
+	}
+
+	if newInterval < 5*time.Minute {
 		// Already rounded to the nearest minute.
-		return ddInterval
+		return newInterval
 	}
 
-	if ddInterval < 30*time.Minute {
+	if newInterval < 30*time.Minute {
 		// Round up to the nearest 5 minutes.
-		return roundIntervalUp(ddInterval, 5*time.Minute)
+		return roundIntervalUp(newInterval, 5*time.Minute)
 	}
 
-	if ddInterval < 2*time.Hour {
+	if newInterval < 2*time.Hour {
 		// Round up to the nearest 10 minutes.
-		return roundIntervalUp(ddInterval, 30*time.Minute)
+		return roundIntervalUp(newInterval, 30*time.Minute)
 	}
 
-	return roundIntervalUp(ddInterval, time.Hour)
+	return roundIntervalUp(newInterval, time.Hour)
 }
 
 // InterpolateVariables interpolates built-in variables
@@ -497,7 +514,8 @@ func InterpolateVariables(
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
 	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
-	expr = strings.ReplaceAll(expr, varDDInterval, CalculateDDInterval(timeRange, rateInterval).String())
+	expr = strings.ReplaceAll(expr, varDDInterval, CalculateInterval(NumDDTargetParts, timeRange, rateInterval, true).String())
+	expr = strings.ReplaceAll(expr, varLargeInterval, CalculateInterval(NumLargeIntervalParts, timeRange, rateInterval, false).String())
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
@@ -515,7 +533,8 @@ func isVariableInterval(interval string) bool {
 		interval == varIntervalMs ||
 		interval == varRateInterval ||
 		interval == varRateIntervalMs ||
-		interval == varDDInterval {
+		interval == varDDInterval ||
+		interval == varLargeInterval {
 		return true
 	}
 	// Repetitive code, we should have functionality to unify these
