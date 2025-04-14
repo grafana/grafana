@@ -25,7 +25,7 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Name: "v1alpha1",
+					Name: "v1beta1",
 				},
 
 				{

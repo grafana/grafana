@@ -2,9 +2,9 @@ package migration
 
 import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 
-func Migrate(dash map[string]interface{}, targetVersion int) error {
+func Migrate(dash map[string]any, targetVersion int) error {
 	if dash == nil {
-		dash = map[string]interface{}{}
+		dash = map[string]any{}
 	}
 	inputVersion := schemaversion.GetSchemaVersion(dash)
 	dash["schemaVersion"] = inputVersion
