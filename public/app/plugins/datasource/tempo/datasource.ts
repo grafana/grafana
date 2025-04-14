@@ -1549,7 +1549,12 @@ export function buildExpr(
       query = serviceMapQueryMatch[1];
     }
     // map serviceGraph metric tags to serviceGraphView metric tags
-    query = query.replace('client', 'service').replace('server', 'service');
+    query = query
+      // client_deployment_environment="prod" -> deployment_environment="prod"
+      .replaceAll('client_', '')
+      .replaceAll('server_', '')
+      .replace('client', 'service') // client="fooservice" -> service="fooservice"
+      .replace('server', 'service');
     return query.includes('span_name')
       ? metric.params.concat(query)
       : metric.params
