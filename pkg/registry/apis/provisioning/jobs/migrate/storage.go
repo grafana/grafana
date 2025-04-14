@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -13,15 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+//go:generate mockery --name BulkStoreClient --structname MockBulkStoreClient --inpackage --filename mock_bulk_store_client.go --with-expecter
+type BulkStoreClient interface {
+	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error)
+}
+
 type StorageSwapper struct {
 	// Direct access to unified storage... use carefully!
-	bulk resource.BulkStoreClient
+	bulk BulkStoreClient
 	dual dualwrite.Service
 }
 
-func NewStorageSwapper(batch resource.BulkStoreClient, dual dualwrite.Service) *StorageSwapper {
+func NewStorageSwapper(bulk BulkStoreClient, dual dualwrite.Service) *StorageSwapper {
 	return &StorageSwapper{
-		bulk: batch,
+		bulk: bulk,
 		dual: dual,
 	}
 }
