@@ -57,7 +57,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	}
 	q, err := sqltemplate.Execute(sqlKeeperCreate, req)
 	if err != nil {
-		return nil, fmt.Errorf("read template %q: %w", q, err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperCreate.Name(), err)
 	}
 
 	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
@@ -67,7 +67,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		}
 
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
-			return fmt.Errorf("failed to insert row: %w", err)
+			return fmt.Errorf("inserting row: %w", err)
 		}
 		return nil
 	})
@@ -116,14 +116,14 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 	}
 	q, err := sqltemplate.Execute(sqlKeeperRead, req)
 	if err != nil {
-		return nil, fmt.Errorf("read template %q: %w", q, err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
 	var k *keeperDB
 
 	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get row: %w", err)
+		return nil, fmt.Errorf("getting row: %w", err)
 	}
 
 	defer func() { _ = res.Close() }()
@@ -197,12 +197,12 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	}
 	q, err := sqltemplate.Execute(sqlKeeperUpdate, req)
 	if err != nil {
-		return nil, fmt.Errorf("update template %q: %w", q, err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
 	}
 
 	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
-			return fmt.Errorf("failed to update row: %w", err)
+			return fmt.Errorf("updating row: %w", err)
 		}
 		return nil
 	})
@@ -232,13 +232,13 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 
 	q, err := sqltemplate.Execute(sqlKeeperDelete, req)
 	if err != nil {
-		return fmt.Errorf("delete template %q: %w", q, err)
+		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
 	}
 
 	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// should we check the result?
 		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
-			return fmt.Errorf("failed to delete row: %w", err)
+			return fmt.Errorf("deleting row: %w", err)
 		}
 
 		return nil
@@ -278,12 +278,12 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 
 	q, err := sqltemplate.Execute(sqlKeeperList, req)
 	if err != nil {
-		return nil, fmt.Errorf("list template %q: %w", q, err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperList.Name(), err)
 	}
 
 	rows, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("list template %q: %w", q, err)
+		return nil, fmt.Errorf("listing keepers %q: %w", q, err)
 	}
 
 	keepers := make([]secretv0alpha1.Keeper, 0)
@@ -339,7 +339,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 
 	qSecValue, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecValue)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", qSecValue, err)
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
 	}
 
 	rows, err := sess.Query(ctx, qSecValue, reqSecValue.GetArgs()...)
@@ -410,12 +410,12 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 
 	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
 	if err != nil {
-		return fmt.Errorf("list template %q: %w", qKeeper, err)
+		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
 	}
 
 	rows2, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("execute list by name template %q: %w", qKeeper, err)
+		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}
 
 	defer func() {
