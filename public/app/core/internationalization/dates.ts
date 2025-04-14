@@ -26,7 +26,7 @@ export const formatDate = deepMemoize(
 
     const i18n = getI18next();
     const currentLocale = isLocaleEnabled ? config.locale : i18n.language;
-    
+
     const dateFormatter = createDateTimeFormatter(currentLocale, format);
     return dateFormatter.format(value);
   }
