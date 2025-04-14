@@ -117,7 +117,7 @@ Some resources can't be uploaded to your cloud stack alone because they rely on 
 
 1. Click **Build snapshot**
 
-![A list of resoruces selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
+![A list of resources selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
 
 ### Upload resources to the cloud
 
