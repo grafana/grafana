@@ -21,6 +21,6 @@ FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 1 = 1 AND
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
-  {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }}) AND
-  {{ .SelectFor "UPDATE" }}
+  {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }})
+{{ .SelectFor "UPDATE" }}
 ;
