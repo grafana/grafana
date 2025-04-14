@@ -2628,7 +2628,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t3,
 									LastEvaluationTime: t3,
-									LastSentAt:         &t1, // We don't bother updating LastSentAt for StateReasonMissingSeries since it's deleted from state.
+									ResolvedAt:         &t3,
+									LastSentAt:         &t3,
 								},
 							},
 						},
@@ -3539,7 +3540,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t3,
 									LastEvaluationTime: t3,
-									LastSentAt:         &t1, // We don't bother updating LastSentAt for StateReasonMissingSeries since it's deleted from state.
+									LastSentAt:         &t3,
+									ResolvedAt:         &t3,
 									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
 										"Error": datasourceError.Error(),
 									}),

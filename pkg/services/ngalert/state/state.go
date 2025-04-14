@@ -651,6 +651,20 @@ func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
 }
 
+// If the state is Normal, and the previous state was Alerting, Error, NoData, or Recovering,
+// we can consider the state to be resolved. This is used to determine if we should send a resolved notification.
+func (a *State) ShouldBeResolved(oldState eval.State) bool {
+	if a.State != eval.Normal {
+		return false
+	}
+
+	if oldState != eval.Alerting && oldState != eval.Error && oldState != eval.NoData && oldState != eval.Recovering {
+		return false
+	}
+
+	return true
+}
+
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
 // newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
 func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
