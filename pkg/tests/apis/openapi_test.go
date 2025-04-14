@@ -56,6 +56,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, info.Major, fmt.Sprintf("%d", v.Major()))
 		require.Equal(t, info.Minor, fmt.Sprintf("%d", v.Minor()))
+
+		// Check that OpenAPI v2 (used by kubectl) returns propertly
+		v2, err := disco.OpenAPISchema()
+		require.NoError(t, err, "requesting OpenAPI v2")
+		require.Equal(t, "Grafana API Server", v2.Info.Title)
 	})
 
 	dir := "openapi_snapshots"

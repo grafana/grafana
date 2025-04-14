@@ -224,6 +224,7 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
