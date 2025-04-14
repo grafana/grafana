@@ -33,13 +33,13 @@ You may choose to test Grafana Cloud for some time before migrating your entire 
 
 When you decide to migrate, set aside a day of cutover during which users should not create new dashboards or alerts. Migrate any newly-created resources, turn on your production Alerting contact points and notification policies in Cloud and turn them off in Grafana OSS/Enterprise, and notify your users. You may also choose to redirect the Grafana OSS/Enterprise URL to your Grafana Cloud URL.
 
-| Component    | Migration Effort | Notes                                                                      |
-| ------------ | ---------------- | -------------------------------------------------------------------------- |
-| Folders      | Low              |                                                                            |
-| Dashboards   | Low              | Data source references might need to be renamed                            |
-| Alerts       | Medium           | Data source based alerts might need to be adapted                          |
-| Plugins      | Medium           | Depends on the feature set of the plugin                                   |
-| Data sources | High             | If the data sources references any secrets, you need to provide them again |
+| Component    | Migration Effort | Notes                                                                     |
+| ------------ | ---------------- | ------------------------------------------------------------------------- |
+| Folders      | Low              |                                                                           |
+| Dashboards   | Low              | Data source references might need to be renamed                           |
+| Alerts       | Medium           | Data source based alerts might need to be adapted                         |
+| Plugins      | Medium           | Depends on the feature set of the plugin                                  |
+| Data sources | High             | If the data sources reference any secrets, you need to provide them again |
 
 ## Before you begin
 
