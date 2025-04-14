@@ -115,7 +115,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    {{< /admonition >}}
 1. Click **Build snapshot**
 
-![A list of resources selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
+   ![A list of resources selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
 
 ### Upload resources to the cloud
 
