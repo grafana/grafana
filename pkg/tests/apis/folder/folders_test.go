@@ -36,8 +36,8 @@ func TestMain(m *testing.M) {
 }
 
 var gvr = schema.GroupVersionResource{
-	Group:    "folder.grafana.app",
-	Version:  "v1",
+	Group:    folders.GROUP,
+	Version:  folders.VERSION,
 	Resource: "folders",
 }
 
@@ -54,7 +54,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -62,8 +62,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
-			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v1",
+			"apiVersion": "v1beta1",
+			"groupVersion": "folder.grafana.app/v1beta1",
 			"resources": [
 			  {
 				"name": "folders",
@@ -237,7 +237,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v1",
+			"apiVersion": "folder.grafana.app/v1beta1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
