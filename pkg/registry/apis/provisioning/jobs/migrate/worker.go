@@ -144,6 +144,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 
 		if options.History {
 			progress.SetMessage(ctx, "loading users")
+			// TODO: have this as Client create option
 			if err := repositoryResources.EnableCommitWithOriginalAuthors(ctx); err != nil {
 				return fmt.Errorf("error loading users: %w", err)
 			}
