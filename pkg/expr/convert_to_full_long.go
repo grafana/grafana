@@ -145,7 +145,27 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		labels  data.Labels
 	}
 
-	var rows []row
+	// Calculate total row count to pre-allocate
+	var totalRows int
+	for _, frame := range frames {
+		var timeField *data.Field
+		for _, f := range frame.Fields {
+			if f.Type() == data.FieldTypeTime {
+				timeField = f
+				break
+			}
+		}
+		if timeField == nil {
+			continue
+		}
+		for _, f := range frame.Fields {
+			if f.Type().Numeric() {
+				totalRows += f.Len()
+			}
+		}
+	}
+
+	rows := make([]row, 0, totalRows)
 	labelKeysSet := map[string]struct{}{}
 	hasDisplayCol := false
 
@@ -272,10 +292,25 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	var (
-		rows          []row
 		labelKeysSet  = map[string]struct{}{}
 		hasDisplayCol bool
 	)
+
+	// Count numeric fields to calculate row capacity
+	var numericFieldCount int
+	var timeLen int
+	for _, f := range frame.Fields {
+		if f.Type() == data.FieldTypeTime {
+			timeLen = f.Len()
+			continue
+		}
+		if f.Type().Numeric() {
+			numericFieldCount++
+		}
+	}
+
+	// Pre-allocate rows slice with capacity for all numeric fields * time points
+	rows := make([]row, 0, numericFieldCount*timeLen)
 
 	// Collect all label keys
 	for _, f := range frame.Fields {
@@ -293,7 +328,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 	sort.Strings(labelKeys)
 
-	timeLen := timeField.Len()
+	timeLen = timeField.Len()
 	for _, f := range frame.Fields {
 		if !f.Type().Numeric() {
 			continue
