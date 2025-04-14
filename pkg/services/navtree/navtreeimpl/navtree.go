@@ -425,7 +425,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
-	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.SignedInUser.GetOrgID()})
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
 	if err != nil {
 		s.log.Error("Failed to get plugin settings", "error", err)
 		return nil
