@@ -3,6 +3,7 @@ package migrate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	mock "github.com/stretchr/testify/mock"
@@ -286,5 +287,150 @@ func TestLegacyMigrator_SyncFails(t *testing.T) {
 
 		// Verify both errors occurred
 		mockStorageSwapper.AssertCalled(t, "StopReadingUnifiedStorage", mock.Anything)
+	})
+}
+
+func TestLegacyMigrator_Success(t *testing.T) {
+	t.Run("should complete migration successfully", func(t *testing.T) {
+		// Setup
+		ctx := context.Background()
+
+		mockLegacyMigrator := NewMockLegacyResourcesMigrator(t)
+		mockLegacyMigrator.On("Migrate", mock.Anything, mock.Anything, "test-namespace", mock.Anything, mock.Anything).
+			Return(nil)
+
+		mockStorageSwapper := NewMockStorageSwapper(t)
+		mockStorageSwapper.On("WipeUnifiedAndSetMigratedFlag", mock.Anything, "test-namespace").
+			Return(nil)
+
+		mockWorker := jobs.NewMockWorker(t)
+		mockWorker.On("Process", mock.Anything, mock.Anything, mock.MatchedBy(func(job provisioning.Job) bool {
+			return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
+		}), mock.Anything).Return(nil)
+
+		// Create a wrapper function that calls the provided function
+		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+			return fn(rw, true)
+		}
+
+		legacyMigrator := NewLegacyMigrator(
+			mockLegacyMigrator,
+			mockStorageSwapper,
+			mockWorker,
+			wrapFn,
+		)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("ResetResults").Return()
+
+		// Execute
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+		})
+
+		err := legacyMigrator.Migrate(ctx, repo, provisioning.MigrateJobOptions{}, progress)
+
+		// Assert
+		require.NoError(t, err)
+
+		// Verify all expected operations were called in order
+		mockLegacyMigrator.AssertCalled(t, "Migrate", mock.Anything, mock.Anything, "test-namespace", mock.Anything, mock.Anything)
+		mockStorageSwapper.AssertCalled(t, "WipeUnifiedAndSetMigratedFlag", mock.Anything, "test-namespace")
+		mockWorker.AssertCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}
+
+func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
+	t.Run("should execute beforeFn functions", func(t *testing.T) {
+		// Setup
+		mockLegacyMigrator := NewMockLegacyResourcesMigrator(t)
+		mockStorageSwapper := NewMockStorageSwapper(t)
+		mockWorker := jobs.NewMockWorker(t)
+		// Create a wrapper function that calls the provided function
+		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+			if clone.BeforeFn != nil {
+				clone.BeforeFn()
+			}
+
+			if push.BeforeFn != nil {
+				push.BeforeFn()
+			}
+
+			return errors.New("abort test here")
+		}
+
+		legacyMigrator := NewLegacyMigrator(
+			mockLegacyMigrator,
+			mockStorageSwapper,
+			mockWorker,
+			wrapFn,
+		)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "clone repository").Return()
+		progress.On("SetMessage", mock.Anything, "push changes").Return()
+
+		// Execute
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+		})
+
+		err := legacyMigrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{}, progress)
+		require.EqualError(t, err, "migrate from SQL: abort test here")
+	})
+}
+
+func TestLegacyMigrator_ProgressScanner(t *testing.T) {
+	t.Run("should update progress with scanner", func(t *testing.T) {
+		mockLegacyMigrator := NewMockLegacyResourcesMigrator(t)
+		mockStorageSwapper := NewMockStorageSwapper(t)
+		mockWorker := jobs.NewMockWorker(t)
+
+		// Create a wrapper function that calls the provided function
+		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+			if clone.Progress != nil {
+				if _, err := clone.Progress.Write([]byte("clone repository\n")); err != nil {
+					return fmt.Errorf("failed to write to clone progress in tests: %w", err)
+				}
+			}
+
+			if push.Progress != nil {
+				if _, err := push.Progress.Write([]byte("push changes\n")); err != nil {
+					return fmt.Errorf("failed to write to push progress in tests: %w", err)
+				}
+			}
+
+			return errors.New("abort test here")
+		}
+
+		legacyMigrator := NewLegacyMigrator(
+			mockLegacyMigrator,
+			mockStorageSwapper,
+			mockWorker,
+			wrapFn,
+		)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "clone repository").Return()
+		progress.On("SetMessage", mock.Anything, "push changes").Return()
+
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+		})
+
+		err := legacyMigrator.Migrate(context.Background(), repo, provisioning.MigrateJobOptions{}, progress)
+		require.EqualError(t, err, "migrate from SQL: abort test here")
+
+		progress.AssertExpectations(t)
 	})
 }
