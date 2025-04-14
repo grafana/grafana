@@ -9,7 +9,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
 
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
-    const fieldValue = row[field.name];
+    const fieldValue = row[field.state?.displayName ?? field.name];
     const displayValue = field.display ? field.display(fieldValue) : fieldValue;
     const value = field.display ? formattedValueToString(displayValue) : displayValue;
 

@@ -195,7 +195,11 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    () =>
+      props.data.fields.reduce(
+        (acc, field) => ({ ...acc, [field.state?.displayName ?? field.name]: field.type }),
+        {} as ColumnTypes
+      ),
     [props.data.fields]
   );
 
@@ -203,7 +207,10 @@ export function TableNG(props: TableNGProps) {
   const textWraps = useMemo(
     () =>
       props.data.fields.reduce(
-        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
+        (acc, field) => ({
+          ...acc,
+          [field.state?.displayName ?? field.name]: field.config?.custom?.cellOptions?.wrapText ?? false,
+        }),
         {} as { [key: string]: boolean }
       ),
     [props.data.fields]
@@ -217,12 +224,12 @@ export function TableNG(props: TableNGProps) {
     const widths: Record<string, number> = {};
 
     // Set default widths from field config if they exist
-    props.data.fields.forEach(({ name, config }) => {
-      const configWidth = config?.custom?.width;
+    props.data.fields.forEach((field) => {
+      const configWidth = field.config?.custom?.width;
       const totalWidth = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
       // subtract out padding and 1px right border
       const contentWidth = totalWidth - 2 * TABLE.CELL_PADDING - 1;
-      widths[name] = contentWidth;
+      widths[field.state?.displayName ?? field.name] = contentWidth;
     });
 
     // Measure actual widths if available
@@ -243,9 +250,9 @@ export function TableNG(props: TableNGProps) {
 
   const fieldDisplayType = useMemo(() => {
     return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
+      (acc, field) => {
+        if (field.config?.custom?.cellOptions?.type) {
+          acc[field.state?.displayName ?? field.name] = field.config.custom.cellOptions.type;
         }
         return acc;
       },
@@ -266,7 +273,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
-    const field = props.data.fields.find((field) => field.name === key)!;
+    const field = props.data.fields.find((field) => field.state?.displayName ?? field.name === key)!;
     const displayedValue = formattedValueToString(field.display!(row[key]));
     return displayedValue;
   };
@@ -763,7 +770,7 @@ export function mapFrameToDataGrid({
       return;
     }
     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
-    const key = field.name;
+    const key = field.state?.displayName ?? field.name;
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -774,12 +781,14 @@ export function mapFrameToDataGrid({
       fieldCountWithoutWidth++;
     }
 
+    console.log({ field });
+
     // Add a column for each field
     columns.push({
       key,
       name: field.name,
       field,
-      cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
+      cellClass: textWraps[field?.state?.displayName ?? field.name] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -806,7 +815,7 @@ export function mapFrameToDataGrid({
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
-                textWraps[field.name],
+                textWraps[field?.state?.displayName ?? field.name],
                 field,
                 cellType
               )

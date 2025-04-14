@@ -52,10 +52,10 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     isColumnFilterable = field.config.custom?.filterable || false;
   }
   // we have to remove/reset the filter if the column is not filterable
-  if (!isColumnFilterable && filter[field.name]) {
+  if (!isColumnFilterable && filter[field.state?.displayName ?? field.name]) {
     setFilter((filter: FilterType) => {
       const newFilter = { ...filter };
-      delete newFilter[field.name];
+      delete newFilter[field.state?.displayName ?? field.name];
       return newFilter;
     });
   }

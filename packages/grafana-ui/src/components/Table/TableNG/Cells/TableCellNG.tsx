@@ -170,15 +170,23 @@ export function TableCellNG(props: TableCellNGProps) {
 
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: field.state?.displayName ?? field.name,
+        operator: FILTER_FOR_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [field.state?.displayName, field.name, onCellFilterAdded, value]);
 
   const onFilterOut = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: field.state?.displayName ?? field.name,
+        operator: FILTER_OUT_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [field.state?.displayName, field.name, onCellFilterAdded, value]);
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
