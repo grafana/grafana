@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -58,7 +59,7 @@ describe('AdvisorRedirectNotice', () => {
 
     const closeButton = screen.getByRole('button', { name: /close alert/i });
 
-    fireEvent.click(closeButton);
+    await userEvent.click(closeButton);
 
     await waitFor(() => {
       expect(
