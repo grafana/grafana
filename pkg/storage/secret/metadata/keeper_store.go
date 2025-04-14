@@ -375,7 +375,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}
 
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("rows error: %w", err)
+		return fmt.Errorf("secret value rows error: %w", err)
 	}
 
 	// If not all secure values being referenced exist, return an error with the missing ones.
@@ -419,8 +419,12 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 
 	rows2, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("execute list template %q: %w", qKeeper, err)
+		return fmt.Errorf("execute list by name template %q: %w", qKeeper, err)
 	}
+
+	defer func() {
+		_ = rows2.Close()
+	}()
 
 	// TODO Only fetch the values we need?
 	thirdPartyKeepers := make([]*keeperDB, 0)
@@ -437,6 +441,10 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 			return fmt.Errorf("error reading keeper row: %w", err)
 		}
 		thirdPartyKeepers = append(thirdPartyKeepers, &row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("third party keeper rows error: %w", err)
 	}
 
 	// Found secureValueNames that are referenced by third-party keepers.
