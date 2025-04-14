@@ -82,11 +82,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("DELETE /apis/folder.grafana.app/v1beta1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		l := &foldersv1.FolderList{}
 		l.Kind = "Folder"
@@ -94,7 +94,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(fooFolder, namespacer)
@@ -104,7 +104,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(updateFolder, namespacer)
@@ -114,7 +114,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
@@ -133,17 +133,17 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("POST /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("POST /apis/folder.grafana.app/v1beta1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
