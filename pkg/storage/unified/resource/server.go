@@ -384,23 +384,16 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	check := claims.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
 		Object: obj,
 	}
+
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
 		event.Type = WatchEvent_MODIFIED
-		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -444,19 +437,34 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
-	// We only set name for update checks
-	if check.Verb == utils.VerbUpdate {
-		check.Name = key.Name
-	}
+	// For folder moves, we need to check permissions on both folders
+	if s.isFolderMove(event) {
+		if err := s.checkFolderMovePermissions(ctx, user, key, event.ObjectOld.GetFolder(), obj.GetFolder()); err != nil {
+			return nil, err
+		}
+	} else {
+		// Regular permission check for create/update
+		check := claims.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+		}
 
-	check.Folder = obj.GetFolder()
-	a, err := s.access.Check(ctx, user, check)
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if !a.Allowed {
-		return nil, &ErrorResult{
-			Code: http.StatusForbidden,
+		if event.Type == WatchEvent_MODIFIED {
+			check.Verb = utils.VerbUpdate
+			check.Name = key.Name
+		}
+
+		check.Folder = obj.GetFolder()
+		a, err := s.access.Check(ctx, user, check)
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+		if !a.Allowed {
+			return nil, &ErrorResult{
+				Code: http.StatusForbidden,
+			}
 		}
 	}
 
@@ -468,6 +476,59 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 	return event, nil
+}
+
+// isFolderMove determines if an event represents a resource being moved between folders
+func (s *server) isFolderMove(event *WriteEvent) bool {
+	return event.Type == WatchEvent_MODIFIED &&
+		event.ObjectOld != nil &&
+		event.ObjectOld.GetFolder() != event.Object.GetFolder()
+}
+
+// checkFolderMovePermissions handles permission checks when a resource is being moved between folders
+func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.AuthInfo, key *ResourceKey, oldFolder, newFolder string) *ErrorResult {
+	// First check if user can update the resource in the original folder
+	updateCheck := claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+		Folder:    oldFolder,
+	}
+
+	a, err := s.access.Check(ctx, user, updateCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to update resource in the source folder",
+		}
+	}
+
+	// Then check if user can create the resource in the destination folder
+	createCheck := claims.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Folder:    newFolder,
+	}
+
+	a, err = s.access.Check(ctx, user, createCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to create resource in the destination folder",
+		}
+	}
+
+	return nil
 }
 
 func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
