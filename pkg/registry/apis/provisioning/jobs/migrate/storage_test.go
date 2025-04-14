@@ -125,6 +125,18 @@ func TestStorageSwapper_WipeUnifiedAndSetMigratedFlag(t *testing.T) {
 			expectedError: "update failed",
 		},
 		{
+			name: "should fail if bulk process stream close fails",
+			setupMocks: func(bulk *MockBulkStoreClient, dual *dualwrite.MockService) {
+				gr := resources.SupportedProvisioningResources[0]
+				dual.On("Status", mock.Anything, gr.GroupResource()).Return(dualwrite.StorageStatus{}, nil)
+
+				mockStream := NewBulkStore_BulkProcessClient(t)
+				mockStream.On("CloseAndRecv").Return(nil, errors.New("stream close failed"))
+				bulk.On("BulkProcess", mock.Anything, mock.Anything).Return(mockStream, nil)
+			},
+			expectedError: "error clearing unified",
+		},
+		{
 			name: "should succeed with complete workflow",
 			setupMocks: func(bulk *MockBulkStoreClient, dual *dualwrite.MockService) {
 				for _, gr := range resources.SupportedProvisioningResources {
