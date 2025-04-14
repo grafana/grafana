@@ -3,7 +3,7 @@ module high-card
 go 1.24.2
 
 require (
-	github.com/prometheus/client_golang v1.20.2
+	github.com/prometheus/client_golang v1.22.0
 	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 )
 
