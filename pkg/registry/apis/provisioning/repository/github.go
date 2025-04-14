@@ -11,12 +11,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v70/github"
+	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -36,6 +35,8 @@ type githubRepository struct {
 
 	owner string
 	repo  string
+
+	cloneFn CloneFn
 }
 
 var (
@@ -45,6 +46,7 @@ var (
 	_ Writer             = (*githubRepository)(nil)
 	_ Reader             = (*githubRepository)(nil)
 	_ RepositoryWithURLs = (*githubRepository)(nil)
+	_ ClonableRepository = (*githubRepository)(nil)
 )
 
 func NewGitHub(
@@ -53,18 +55,15 @@ func NewGitHub(
 	factory *pgh.Factory,
 	secrets secrets.Service,
 	webhookURL string,
-) (*githubRepository, error) {
-	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
-	if err != nil {
-		return nil, err
-	}
+	cloneFn CloneFn,
+) *githubRepository {
+	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			token = string(decrypted)
 		}
-		token = string(decrypted)
 	}
 	return &githubRepository{
 		config:     config,
@@ -73,7 +72,8 @@ func NewGitHub(
 		webhookURL: webhookURL,
 		owner:      owner,
 		repo:       repo,
-	}, nil
+		cloneFn:    cloneFn,
+	}
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -133,59 +133,48 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 	return parts[1], parts[2], nil
 }
 
-func fromError(err error, code int) *provisioning.TestResults {
-	statusErr, ok := err.(apierrors.APIStatus)
-	if ok {
-		s := statusErr.Status()
-		return &provisioning.TestResults{
-			Code:    int(s.Code),
-			Success: false,
-			Errors:  []string{s.Message},
-		}
-	}
-	return &provisioning.TestResults{
-		Code:    code,
-		Success: false,
-		Errors:  []string{err.Error()},
-	}
-}
-
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		return fromError(err, http.StatusUnauthorized), nil
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "token").String(),
+				Detail: err.Error(),
+			}}}, nil
 	}
 
-	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
+	url := r.config.Spec.GitHub.URL
+	owner, repo, err := parseOwnerRepo(url)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	// FIXME: check token permissions
 	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"repository does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "url"), url)), nil
 	}
 
-	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
+	branch := r.config.Spec.GitHub.Branch
+	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, branch)
 	if err != nil {
-		return fromError(err, http.StatusBadRequest), nil
+		return fromFieldError(field.Invalid(
+			field.NewPath("spec", "github", "branch"), branch, err.Error())), nil
 	}
 
 	if !ok {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{"branch does not exist"},
-		}, nil
+		return fromFieldError(field.NotFound(
+			field.NewPath("spec", "github", "branch"), branch)), nil
 	}
 
 	return &provisioning.TestResults{
@@ -257,8 +246,15 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
+		isBlob := !entry.IsDirectory()
+		// FIXME: this we could potentially do somewhere else on in a different way
+		filePath := entry.GetPath()
+		if !isBlob && !safepath.IsDir(filePath) {
+			filePath = filePath + "/"
+		}
+
 		converted := FileTreeEntry{
-			Path: entry.GetPath(),
+			Path: filePath,
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
@@ -667,30 +663,75 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:   f.GetFilename(),
+				Path:   currentPath,
 				Ref:    ref,
 				Action: FileActionCreated,
 			})
 		case "modified", "changed":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:   f.GetFilename(),
+				Path:   currentPath,
 				Ref:    ref,
 				Action: FileActionUpdated,
 			})
 		case "renamed":
+			previousPath, previousErr := safepath.RelativeTo(f.GetPreviousFilename(), r.config.Spec.GitHub.Path)
+			currentPath, currentErr := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+
+			// Handle all possible combinations of path validation results:
+			// 1. Both paths outside configured path, do nothing
+			// 2. Both paths inside configured path, rename
+			// 3. Moving out of configured path, delete previous file
+			// 4. Moving into configured path, create new file
+			switch {
+			case previousErr != nil && currentErr != nil:
+				// do nothing as it's outside of configured path
+			case previousErr == nil && currentErr == nil:
+				changes = append(changes, VersionedFileChange{
+					Path:         currentPath,
+					PreviousPath: previousPath,
+					Ref:          ref,
+					PreviousRef:  base,
+					Action:       FileActionRenamed,
+				})
+			case previousErr == nil && currentErr != nil:
+				changes = append(changes, VersionedFileChange{
+					Path:   currentPath,
+					Ref:    ref,
+					Action: FileActionDeleted,
+				})
+			case previousErr != nil && currentErr == nil:
+				changes = append(changes, VersionedFileChange{
+					Path:   currentPath,
+					Ref:    ref,
+					Action: FileActionCreated,
+				})
+			}
+		case "removed":
+			currentPath, err := safepath.RelativeTo(f.GetFilename(), r.config.Spec.GitHub.Path)
+			if err != nil {
+				// do nothing as it's outside of configured path
+				continue
+			}
+
 			changes = append(changes, VersionedFileChange{
-				Path:         f.GetFilename(),
-				PreviousPath: f.GetPreviousFilename(),
 				Ref:          ref,
 				PreviousRef:  base,
-				Action:       FileActionRenamed,
-			})
-		case "removed":
-			changes = append(changes, VersionedFileChange{
-				Ref:    base,
-				Path:   f.GetFilename(),
-				Action: FileActionDeleted,
+				Path:         currentPath,
+				PreviousPath: currentPath,
+				Action:       FileActionDeleted,
 			})
 		case "unchanged":
 			// do nothing
@@ -894,6 +935,10 @@ func (r *githubRepository) OnDelete(ctx context.Context) error {
 	}
 	ctx, _ = r.logger(ctx, "")
 	return r.deleteWebhook(ctx)
+}
+
+func (r *githubRepository) Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
+	return r.cloneFn(ctx, opts)
 }
 
 func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

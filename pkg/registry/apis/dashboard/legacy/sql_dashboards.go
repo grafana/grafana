@@ -15,11 +15,14 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -57,19 +60,18 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
-	softDelete            bool
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
+	log         log.Logger
 }
 
 func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
-	softDelete bool,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -78,8 +80,8 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		namespacer:            namespacer,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
-		softDelete:            softDelete,
 		dashboardSearchClient: *dashboardSearchClient,
+		log:                   log.New("dashboard.legacysql"),
 	}
 }
 
@@ -367,16 +369,6 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return nil, false, err
 	}
 
-	if a.softDelete {
-		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
-		if err == nil && dash != nil {
-			now := metav1.NewTime(time.Now())
-			dash.DeletionTimestamp = &now
-			return dash, true, err
-		}
-		return dash, false, err
-	}
-
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 		OrgID: orgId,
 		UID:   uid,
@@ -423,6 +415,15 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		}
 	}
 
+	// v1 should be saved as schema version 41. v0 allows for older versions
+	if strings.HasSuffix(dash.APIVersion, "v1alpha1") {
+		schemaVersion := schemaversion.GetSchemaVersion(dash.Spec.Object)
+		if schemaVersion < int(schemaversion.LATEST_VERSION) {
+			dash.APIVersion = dashboardv0.VERSION
+			a.log.Info("Downgrading v1alpha1 dashboard to v0alpha1 due to schema version mismatch", "dashboard", dash.Name, "schema_version", schemaVersion)
+		}
+	}
+
 	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
@@ -441,7 +442,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}, created, nil
 }
 
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard, failOnExisting bool) (*dashboard.Dashboard, bool, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, false, fmt.Errorf("no user found in context")
@@ -450,6 +451,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	cmd, created, err := a.buildSaveDashboardCommand(ctx, orgId, dash)
 	if err != nil {
 		return nil, created, err
+	}
+	if failOnExisting && !created {
+		return nil, created, dashboards.ErrDashboardWithSameUIDExists
 	}
 
 	out, err := a.dashStore.SaveDashboard(ctx, *cmd)

@@ -53,3 +53,10 @@ post-generate-cleanup: ## Clean up the generated code
 	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp2
 	@rm ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp
 	@mv ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go
+
+	# Copy dashboard/v2alpha1 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2alpha1/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
+	@cat ./kinds/v2alpha1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue

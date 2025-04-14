@@ -141,8 +141,7 @@ describe('Prometheus query editor', () => {
 
       getResources();
 
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
-
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click().type('metric1');
       selectOption('metric1');
 
       e2e.components.DataSource.Prometheus.queryEditor.builder.hints().contains('hint: add rate');
@@ -153,15 +152,11 @@ describe('Prometheus query editor', () => {
 
       getResources();
 
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
-
-      selectOption('Metrics explorer');
-
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
+      cy.get(`[aria-label="Open metrics explorer"]`).should('exist');
     });
   });
 });
 
 function selectOption(option: string) {
-  e2e.components.Select.option().contains(option).should('be.visible').click();
+  cy.get('[role="option"]').filter(`:contains("${option}")`).should('be.visible').click();
 }

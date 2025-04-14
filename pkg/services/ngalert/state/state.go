@@ -280,7 +280,7 @@ type StateTransition struct {
 }
 
 func (c StateTransition) Formatted() string {
-	return FormatStateAndReason(c.State.State, c.State.StateReason)
+	return FormatStateAndReason(c.State.State, c.StateReason)
 }
 
 func (c StateTransition) PreviousFormatted() string {
@@ -288,7 +288,7 @@ func (c StateTransition) PreviousFormatted() string {
 }
 
 func (c StateTransition) Changed() bool {
-	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.StateReason
 }
 
 type StateTransitions []StateTransition
@@ -417,8 +417,9 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-		if rule.For > 0 {
-			// If the alert rule has a For duration that should be observed then the state should be set to Pending
+		if state.State != eval.Recovering && rule.For > 0 {
+			// If the alert rule has a For duration that should be observed then the state should be set to Pending.
+			// If the alert is currently in the Recovering state then we skip Pending and set it directly to Alerting.
 			logger.Debug("Changing state",
 				"previous_state",
 				state.State,
@@ -600,9 +601,9 @@ func (a *State) Equals(b *State) bool {
 		a.CacheID == b.CacheID &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
-		a.StartsAt == b.StartsAt &&
-		a.EndsAt == b.EndsAt &&
-		a.LastEvaluationTime == b.LastEvaluationTime &&
+		a.StartsAt.Equal(b.StartsAt) &&
+		a.EndsAt.Equal(b.EndsAt) &&
+		a.LastEvaluationTime.Equal(b.LastEvaluationTime) &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 

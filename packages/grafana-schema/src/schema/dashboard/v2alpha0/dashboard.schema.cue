@@ -64,7 +64,6 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-
   libraryPanel: LibraryPanelRef
 }
 
@@ -236,7 +235,7 @@ DynamicConfigValue: {
 }
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+// It comes with in id ( to resolve implementation from registry) and a configuration that's specific to a particular matcher type.
 MatcherConfig: {
   // The matcher id. This is used to find the matcher implementation from registry.
   id: string | *""
@@ -394,6 +393,7 @@ AnnotationQuerySpec: {
   name: string
   builtIn?: bool | *false
   filter?: AnnotationPanelFilter
+  options?: [string]: _ // Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -494,6 +494,11 @@ RowRepeatOptions: {
   value: string
 }
 
+TabRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
@@ -515,7 +520,7 @@ GridLayoutItemKind: {
 
 GridLayoutRowKind: {
   kind: "GridLayoutRow"
-  spec: GridLayoutRowSpec 
+  spec: GridLayoutRowSpec
 }
 
 GridLayoutRowSpec: {
@@ -602,6 +607,8 @@ TabsLayoutTabKind: {
 TabsLayoutTabSpec: {
   title?: string
   layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  repeat?: TabRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {
@@ -928,8 +935,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+  visibility: "show" | "hide"
   condition: "and" | "or"
-  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -952,11 +960,11 @@ ConditionalRenderingDataSpec: {
   value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-  kind: "ConditionalRenderingTimeInterval"
-  spec: ConditionalRenderingTimeIntervalSpec
-} 
+ConditionalRenderingTimeRangeSizeKind: {
+  kind: "ConditionalRenderingTimeRangeSize"
+  spec: ConditionalRenderingTimeRangeSizeSpec
+}
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
   value: string
 }

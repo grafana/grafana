@@ -443,7 +443,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 		invalidInstance := generateTestAlertInstance(orgID, "")
 		// Make the invalid instance actually invalid
-		invalidInstance.AlertInstanceKey.RuleUID = ""
+		invalidInstance.RuleUID = ""
 
 		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{validInstance, invalidInstance}, 2)
 		require.NoError(t, err)

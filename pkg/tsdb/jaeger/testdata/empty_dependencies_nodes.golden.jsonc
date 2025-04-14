@@ -1,0 +1,59 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "nodeGraph"
+//  }
+//  Name: test_nodes
+//  Dimensions: 2 Fields by 0 Rows
+//  +----------------+----------------+
+//  | Name: id       | Name: title    |
+//  | Labels:        | Labels:        |
+//  | Type: []string | Type: []string |
+//  +----------------+----------------+
+//  +----------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test_nodes",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "nodeGraph"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
+        ]
+      }
+    }
+  ]
+}

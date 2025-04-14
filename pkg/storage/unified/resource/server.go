@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -32,15 +33,18 @@ type ResourceServer interface {
 }
 
 type ListIterator interface {
+	// Next advances iterator and returns true if there is next value is available from the iterator.
+	// Error() should be checked after every call of Next(), even when Next() returns true.
 	Next() bool // sql.Rows
 
-	// Iterator error (if exts)
+	// Error returns iterator error, if any. This should be checked after any Next() call.
+	// (Some iterator implementations return true from Next, but also set the error at the same time).
 	Error() error
 
-	// The token that can be used to start iterating *after* this item
+	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// The token that can be used to start iterating *before* this item
+	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
 	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
@@ -376,6 +380,10 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
+	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+	}
+
 	check := claims.CheckRequest{
 		Verb:      utils.VerbCreate,
 		Group:     key.Group,
@@ -476,22 +484,14 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
-	if found != nil && len(found.Value) > 0 {
-		rsp.Error = &ErrorResult{
-			Code:    http.StatusConflict,
-			Reason:  string(metav1.StatusReasonAlreadyExists),
-			Message: "key already exists", // TODO?? soft delete replace?
-		}
-		return rsp, nil
-	}
-
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
 
+	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
+	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
@@ -658,6 +658,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return &ReadResponse{Error: rsp.Error}, nil
+	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
@@ -764,11 +767,10 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
-
-				break
+				return iter.Error()
 			}
 		}
-		return nil
+		return iter.Error()
 	})
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -872,7 +874,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 			}
-			return nil
+			return iter.Error()
 		})
 		if err != nil {
 			return err

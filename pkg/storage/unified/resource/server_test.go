@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -94,6 +95,12 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, all.Items, 0)
 
+		// should return 404 if not found
+		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, found.Error)
+		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+
 		created, err := server.Create(ctx, &CreateRequest{
 			Value: raw,
 			Key:   key,
@@ -103,7 +110,7 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
-		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)

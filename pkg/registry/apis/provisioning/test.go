@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -67,21 +66,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					responder.Error(err)
 					return
 				}
-
-				// TODO: Explore how to better support synchronous validation for the UI (and likely remove this hack)
-				if name != "new" {
-					repo, err = s.getter.AsRepository(ctx, &cfg)
-					if err != nil {
-						responder.Error(err)
-						return
-					}
-
-					// Make sure we are OK with the changes
-					if cfg.Spec.Type != repo.Config().Spec.Type {
-						responder.Error(apierrors.NewBadRequest("test config must be the same type"))
-						return
-					}
-				}
 				repo = tmp
 			}
 		}
@@ -115,9 +99,9 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	if res == nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"missing health status",
-			},
+			Errors: []provisioning.ErrorDetails{{
+				Detail: "missing health status",
+			}},
 		}
 	}
 
@@ -125,7 +109,11 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	repo.Status.Health = provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
+	}
+	for _, err := range res.Errors {
+		if err.Detail != "" {
+			repo.Status.Health.Message = append(repo.Status.Health.Message, err.Detail)
+		}
 	}
 
 	_, err := t.client.Repositories(repo.GetNamespace()).

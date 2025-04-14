@@ -16,7 +16,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -173,11 +173,19 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   }, [options, valueInForm]);
 
   if (error) {
-    return <div>Error loading templates</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.error-loading-templates">Error loading templates</Trans>
+      </div>
+    );
   }
 
   if (isLoading || !data || !defaultTemplates) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   return (
@@ -195,8 +203,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
                 data-testid="existing-templates-selector"
-                placeholder="Choose notification template"
-                aria-label="Choose notification template"
+                placeholder={t(
+                  'alerting.template-selector.existing-templates-selector-placeholder-choose-notification-template',
+                  'Choose notification template'
+                )}
+                aria-label={t(
+                  'alerting.template-selector.existing-templates-selector-aria-label-choose-notification-template',
+                  'Choose notification template'
+                )}
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
                 }}
@@ -206,9 +220,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
               />
               <IconButton
                 tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
-                onClick={() =>
-                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
-                }
+                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />
             </Stack>
@@ -272,7 +284,7 @@ function OptionCustomfield({
       </Label>
       <TextArea
         id={id}
-        label="Custom template"
+        label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
         placeholder={option.placeholder}
         onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
         defaultValue={initialValue}

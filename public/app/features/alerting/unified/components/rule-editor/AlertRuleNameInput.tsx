@@ -8,6 +8,7 @@ import { t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '../../utils/datasource';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
@@ -53,7 +54,11 @@ export const AlertRuleNameAndMetric = () => {
       }
     >
       <Stack direction="column">
-        <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
+        <Field
+          label={t('alerting.alert-rule-name-and-metric.label-name', 'Name')}
+          error={errors?.name?.message}
+          invalid={!!errors.name?.message}
+        >
           <Input
             data-testid={selectors.components.AlertRules.ruleNameField}
             id="name"
@@ -64,12 +69,16 @@ export const AlertRuleNameAndMetric = () => {
                 ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
                 : undefined,
             })}
-            aria-label="name"
+            aria-label={t('alerting.alert-rule-name-and-metric.aria-label-name', 'name')}
             placeholder={`Give your ${namePlaceholder} a name`}
           />
         </Field>
         {isGrafanaRecordingRule && (
-          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+          <Field
+            label={t('alerting.alert-rule-name-and-metric.label-metric', 'Metric')}
+            error={errors?.metric?.message}
+            invalid={!!errors.metric?.message}
+          >
             <Input
               id="metric"
               width={38}
@@ -77,7 +86,7 @@ export const AlertRuleNameAndMetric = () => {
                 required: { value: true, message: 'Must enter a metric name' },
                 pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
               })}
-              aria-label="metric"
+              aria-label={t('alerting.alert-rule-name-and-metric.metric-aria-label-metric', 'metric')}
               placeholder={`Give the name of the new recorded metric`}
             />
           </Field>
@@ -89,7 +98,7 @@ export const AlertRuleNameAndMetric = () => {
             label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
             description={t(
               'alerting.recording-rules.description-target-data-source',
-              'The Prometheus data source to store the recording rule in'
+              'The Prometheus data source to store recording rules in'
             )}
             error={errors.targetDatasourceUid?.message}
             invalid={!!errors.targetDatasourceUid?.message}
@@ -101,7 +110,9 @@ export const AlertRuleNameAndMetric = () => {
                   current={field.value}
                   noDefault
                   // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
-                  filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+                  filter={(ds: DataSourceInstanceSettings) =>
+                    isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)
+                  }
                   onChange={(ds: DataSourceInstanceSettings) => {
                     setValue('targetDatasourceUid', ds.uid);
                   }}
