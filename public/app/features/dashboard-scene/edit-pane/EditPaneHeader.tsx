@@ -27,7 +27,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={0.5}>
         {canGoBack && (
           <IconButton
             name="arrow-left"
