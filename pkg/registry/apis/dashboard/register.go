@@ -254,12 +254,12 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, accessor.GetName(), accessor.GetMessage()); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	id, err := identity.GetRequester(ctx)
@@ -270,7 +270,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
 		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return err
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), accessor.GetFolder())
 		}
 	}
 
@@ -288,7 +288,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 			return err
 		}
 		if quotaReached {
-			return dashboards.ErrQuotaReached
+			return apierrors.NewForbidden(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(), dashboards.ErrQuotaReached)
 		}
 	}
 
@@ -324,19 +324,19 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	// Validate folder existence if specified and changed
 	if !a.IsDryRun() && newAccessor.GetFolder() != "" && newAccessor.GetFolder() != oldAccessor.GetFolder() {
 		if err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
-			return err
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
 		}
 	}
 
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.cfg.MinRefreshInterval, refresh); err != nil {
-		return err
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	allowOverwrite := false // TODO: Add support for overwrite flag
@@ -345,7 +345,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		if allowOverwrite {
 			newAccessor.SetGeneration(oldAccessor.GetGeneration())
 		} else {
-			return dashboards.ErrDashboardVersionMismatch
+			return apierrors.NewBadRequest(dashboards.ErrDashboardVersionMismatch.Error())
 		}
 	}
 

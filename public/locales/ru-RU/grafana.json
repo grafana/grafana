@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1739,6 +1746,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Настроить",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1746,8 +1755,11 @@
         "title": "Не удалось загрузить правила из этого источника данных"
       },
       "filter-view": {
-        "no-more-results": "Больше нет результатов. Показано правил: {{numberOfRules}}",
-        "no-rules-found": "Ни одно правило оповещения или записи не соответствует текущему набору фильтров."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Ни одно правило оповещения или записи не соответствует текущему набору фильтров.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1970,7 +1982,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2083,8 +2094,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3124,9 +3138,20 @@
       "description": "Организуйте панели в горизонтальные вкладки",
       "name": "Вкладки",
       "tab": {
-        "new": "Новая вкладка"
+        "new": "Новая вкладка",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Название"
       },
@@ -3615,6 +3640,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4455,22 +4482,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Очистить фильтр",
-      "labelSelect": "Выбрать",
-      "missing-otel-labels": "В этой метрике слишком много значений меток заданий и экземпляров для вызова конечной точки Prometheus label_values с параметром match[]. Эти значения меток используются для объединения метрики с target_info, которая содержит атрибуты ресурса. Добавьте больше фильтров атрибутов ресурса.",
-      "noMatchingValue": "Соответствующие значения не найдены; {{filter}}",
-      "sortBy": "Сортировать по"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Правило записи Loki",
-      "openExploreLogs": "Открыть журналы Explore",
-      "relatedLogsUnavailable": "Связанные журналы не найдены. Для просмотра связанных журналов можно:<1><0>настроить фильтр меток, чтобы найти журналы с теми же метками, что и выбранная в данный момент метрика</0><1>выбрать метрику, созданную с помощью <2><0>правила записи Loki</0></2></1></1>",
-      "warnExperimentalFeature": "Связанные журналы — это экспериментальная функция."
-    },
-    "viewBy": "Просмотр по"
   },
   "export": {
     "json": {
@@ -6018,12 +6029,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Пригласить",
-      "invite-tooltip": "Пригласить нового члена"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",
@@ -6502,18 +6515,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6649,7 +6653,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6747,12 +6750,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6815,8 +6812,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7802,105 +7798,6 @@
     "zone": {
       "select-aria-label": "Указатель часового пояса",
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Или просмотрите закладки"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Дата создания: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "Подробнее",
-      "lets-start": "Давайте начнем.",
-      "start-your-metrics-exploration": "Начните знакомство с метриками.",
-      "subtitle": "Получайте совместимые с Prometheus метрики без написания запроса."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Фильтр по",
-      "native-histogram": "Встроенная гистограмма",
-      "new-badge": "Новое",
-      "otel-switch": "Этот переключатель включает фильтрацию по ресурсам OTel для собственных источников данных OTel."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Классическая гистограмма, отображаемая в виде тепловой карты:",
-      "ch-histogram": "Классическая гистограмма, отображаемая в виде гистограммы:",
-      "click-histogram": "Нажмите на любую из встроенных гистограмм ниже, чтобы просмотреть их:",
-      "hide-examples": "Скрыть примеры",
-      "learn-more": "Подробнее",
-      "metric-examples": "",
-      "nh-heatmap": "Встроенная гистограмма, отображаемая в виде тепловой карты:",
-      "nh-histogram": "Собственная гистограмма, отображаемая в виде гистограммы:",
-      "now": "Сейчас:",
-      "previously": "Ранее:",
-      "see-examples": "> См. примеры",
-      "sentence": "Встроенные гистограммы Prometheus обеспечивают высокое разрешение и точность, простоту использования в инструментах, а также возможность комбинировать гистограммы и управлять ими в запросах и в Grafana.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Или посмотрите недавние данные"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Всегда держать выбранный граф метрик в поле зрения",
-      "show-previews-of-metric-graphs": "Показать предварительный просмотр графов метрик"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

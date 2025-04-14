@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1724,6 +1731,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurasikan",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1731,8 +1740,11 @@
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
       "filter-view": {
-        "no-more-results": "Tidak ada hasil lagi - menampilkan {{numberOfRules}} aturan",
-        "no-rules-found": "Tidak ada aturan peringatan atau pencatatan yang cocok dengan rangkaian filter Anda saat ini."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Tidak ada aturan peringatan atau pencatatan yang cocok dengan rangkaian filter Anda saat ini.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1952,7 +1964,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2065,8 +2076,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3091,9 +3105,20 @@
       "description": "Atur panel menjadi tab horizontal",
       "name": "Tab",
       "tab": {
-        "new": "Tab baru"
+        "new": "Tab baru",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Judul"
       },
@@ -3582,6 +3607,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4422,22 +4449,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Hapus filter",
-      "labelSelect": "Pilih",
-      "missing-otel-labels": "Metrik ini memiliki terlalu banyak nilai label pekerjaan dan instans untuk memanggil titik akhir label_values Prometheus dengan parameter match[]. Nilai label ini digunakan untuk menggabungkan metrik dengan target_info, yang berisi atribut sumber daya. Sertakan lebih banyak filter atribut sumber daya.",
-      "noMatchingValue": "Tidak ada nilai yang ditemukan cocok; {{filter}}",
-      "sortBy": "Urutkan berdasarkan"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Aturan Pencatatan Loki",
-      "openExploreLogs": "Buka Log Explore",
-      "relatedLogsUnavailable": "Tidak ada log terkait yang ditemukan. Untuk melihat log terkait, Anda dapat:<1><0>menyesuaikan filter label untuk menemukan log dengan label yang sama dengan metrik yang dipilih saat ini </0><1>memilih metrik yang dibuat oleh <2><0>Aturan Pencatatan Loki</0></2></1></1>",
-      "warnExperimentalFeature": "Log terkait adalah fitur eksperimental."
-    },
-    "viewBy": "Dilihat oleh"
   },
   "export": {
     "json": {
@@ -5982,12 +5993,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Undang",
-      "invite-tooltip": "Undang anggota baru"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Tambahkan ke Bookmark",
@@ -6463,18 +6476,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6610,7 +6614,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6708,12 +6711,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6776,8 +6773,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7751,105 +7747,6 @@
     "zone": {
       "select-aria-label": "Pemilih zona waktu",
       "select-search-input": "Ketik untuk mencari (negara, kota, singkatan)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Atau lihat bookmark"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Tanggal Diciptakan: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "Pelajari lebih lanjut",
-      "lets-start": "Ayo mulai!",
-      "start-your-metrics-exploration": "Mulai eksplorasi metrik Anda!",
-      "subtitle": "Jelajahi metrik yang kompatibel dengan Prometheus tanpa menulis kueri."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Filter berdasarkan",
-      "native-histogram": "Histogram Asli",
-      "new-badge": "Baru",
-      "otel-switch": "Sakelar ini memungkinkan pemfilteran berdasarkan sumber daya OTel untuk sumber data asli OTel."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Histogram Klasik ditampilkan sebagai peta panas:",
-      "ch-histogram": "Histogram Klasik ditampilkan sebagai histogram:",
-      "click-histogram": "Klik salah satu histogram asli di bawah ini untuk menjelajahinya:",
-      "hide-examples": "Sembunyikan contoh",
-      "learn-more": "Pelajari lebih lanjut",
-      "metric-examples": "",
-      "nh-heatmap": "Histogram Asli ditampilkan sebagai peta panas:",
-      "nh-histogram": "Histogram Asli ditampilkan sebagai histogram:",
-      "now": "Sekarang:",
-      "previously": "Sebelumnya:",
-      "see-examples": "> Lihat contoh",
-      "sentence": "Histogram asli Prometheus menawarkan resolusi tinggi, presisi tinggi, penggunaan sederhana dalam instrumentasi, serta cara untuk menggabungkan dan memanipulasi histogram dalam kueri dan di Grafana.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Atau lihat eksplorasi terbaru"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Selalu pertahankan tampilan grafik metrik yang dipilih",
-      "show-previews-of-metric-graphs": "Tampilkan pratinjau grafik metrik"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

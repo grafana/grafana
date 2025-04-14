@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1729,6 +1736,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurieren",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1736,8 +1745,11 @@
         "title": "Regeln aus dieser Datenquelle können nicht geladen werden"
       },
       "filter-view": {
-        "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln werden angezeigt",
-        "no-rules-found": "Es gibt keine Warn- oder Aufnahmeregeln, die Ihren aktuellen Filtereinstellungen entsprechen."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Es gibt keine Warn- oder Aufnahmeregeln, die Ihren aktuellen Filtereinstellungen entsprechen.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1958,7 +1970,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2071,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3102,9 +3116,20 @@
       "description": "Panels in horizontalen Tabs organisieren",
       "name": "Tabs",
       "tab": {
-        "new": "Neues Tab"
+        "new": "Neues Tab",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": ""
       },
@@ -3593,6 +3618,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4433,22 +4460,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Filter löschen",
-      "labelSelect": "",
-      "missing-otel-labels": "Diese Metrik hat zu viele Job- und Instanz-Label-Werte, um den Prometheus-Endpunkt „label_values“ mit dem Parameter „match[]“ aufzurufen. Diese Label-Werte werden verwendet, um die Metrik mit „target_info“ zu verbinden, die die Ressourcenattribute enthält. Bitte geben Sie weitere Ressourcenattributfilter an.",
-      "noMatchingValue": "Keine übereinstimmenden Werte gefunden; {{filter}}",
-      "sortBy": "Sortieren nach"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki-Aufnahmeregel",
-      "openExploreLogs": "Explore-Protokolle öffnen",
-      "relatedLogsUnavailable": "Keine zugehörigen Protokolle gefunden. Um zugehörige Protokolle anzuzeigen, können Sie entweder:<1><0>den Label-Filter anpassen, um Protokolle mit den gleichen Labels wie die derzeit ausgewählte Metrik zu finden</0><1>eine Metrik auswählen, die von einer <2><0>Loki-Aufnahmeregel erstellt wurde</0></2></1></1>",
-      "warnExperimentalFeature": "Bei den zugehörigen Protokollen handelt es sich um eine experimentelle Funktion."
-    },
-    "viewBy": "Anzeigen nach"
   },
   "export": {
     "json": {
@@ -5994,12 +6005,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "",
-      "invite-tooltip": "Neues Mitglied einladen"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Zu Lesezeichen hinzufügen",
@@ -6476,18 +6489,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6623,7 +6627,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6721,12 +6724,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6789,8 +6786,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7768,105 +7764,6 @@
     "zone": {
       "select-aria-label": "Zeitzonen-Auswähler",
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Oder Lesezeichen anzeigen"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Erstellt am: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "",
-      "lets-start": "Los geht’s!",
-      "start-your-metrics-exploration": "Lernen Sie zunächst Ihre Kennzahlen kennen!",
-      "subtitle": "Entdecken Sie Ihre mit Prometheus kompatiblen Metriken, ohne eine Abfrage zu schreiben."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Filtern nach",
-      "native-histogram": "Natives Histogramm",
-      "new-badge": "",
-      "otel-switch": "Dieser Schalter ermöglicht es, nach OTel-Ressourcen für native OTel-Datenquellen zu filtern."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Klassisches Histogramm als Heatmap dargestellt:",
-      "ch-histogram": "Klassisches Histogramm als Histogramm dargestellt:",
-      "click-histogram": "Klicken Sie unten auf eines der nativen Histogramme, um es zu entdecken:",
-      "hide-examples": "Beispiele ausblenden",
-      "learn-more": "",
-      "metric-examples": "",
-      "nh-heatmap": "Natives Histogramm als Heatmap dargestellt:",
-      "nh-histogram": "Natives Histogramm als Histogramm dargestellt:",
-      "now": "Jetzt:",
-      "previously": "Zuvor:",
-      "see-examples": "> Beispiele ansehen",
-      "sentence": "Native Prometheus-Histogramme überzeugen durch eine hohe Auflösung, eine hohe Präzision, eine einfache Verwendung bei der Instrumentierung sowie die Möglichkeit, Histogramme in Abfragen und in Grafana zu kombinieren und zu bearbeiten.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Oder eine aktuelle Erkundung anzeigen"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Behalten Sie ausgewählte Metrik-Diagramme im Blick",
-      "show-previews-of-metric-graphs": "Vorschau von Metrik-Diagrammen anzeigen"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {

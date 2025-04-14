@@ -1115,7 +1115,8 @@
       "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-09T18:15:18Z"
+        "creationTimestamp": "2024-04-09T18:15:18Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z"
       },
       "spec": {
         "description": "Enables the new Grafana Metrics Drilldown core app",
@@ -1143,6 +1144,7 @@
         "name": "exploreMetricsUseExternalAppPlugin",
         "resourceVersion": "1744146547481",
         "creationTimestamp": "2025-04-03T15:18:37Z",
+        "deletionTimestamp": "2025-04-11T01:41:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-08 21:09:07.481769 +0000 UTC"
         }
@@ -2581,7 +2583,8 @@
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-12T12:31:39Z"
+        "creationTimestamp": "2024-08-12T12:31:39Z",
+        "deletionTimestamp": "2025-04-10T18:16:18Z"
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
@@ -2893,6 +2896,23 @@
         "description": "Enables the use of scope filters in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "scopeSearchAllLevels",
+        "resourceVersion": "1744370973814",
+        "creationTimestamp": "2025-04-10T12:49:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-11 11:29:33.814419 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable scope search to include all levels of the scope node tree",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -3269,14 +3289,18 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "resourceVersion": "1744289349951",
+        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-10 12:49:09.951013 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
