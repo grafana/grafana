@@ -28,6 +28,8 @@ type MigrationWorker struct {
 
 	clients resources.ClientFactory
 
+	repositoryResources resources.RepositoryResourcesFactory
+
 	storageSwapper *StorageSwapper
 
 	// Support reading from history
@@ -46,19 +48,21 @@ func NewMigrationWorker(
 	legacyMigrator legacy.LegacyMigrator,
 	parsers resources.ParserFactory, // should not be necessary!
 	clients resources.ClientFactory,
+	repositoryResources resources.RepositoryResourcesFactory,
 	storageSwapper *StorageSwapper,
 	exportWorker jobs.Worker,
 	syncWorker jobs.Worker,
 	wrapWithCloneFn WrapWithCloneFn,
 ) *MigrationWorker {
 	return &MigrationWorker{
-		parsers:         parsers,
-		clients:         clients,
-		storageSwapper:  storageSwapper,
-		legacyMigrator:  legacyMigrator,
-		exportWorker:    exportWorker,
-		syncWorker:      syncWorker,
-		wrapWithCloneFn: wrapWithCloneFn,
+		parsers:             parsers,
+		clients:             clients,
+		repositoryResources: repositoryResources,
+		storageSwapper:      storageSwapper,
+		legacyMigrator:      legacyMigrator,
+		exportWorker:        exportWorker,
+		syncWorker:          syncWorker,
+		wrapWithCloneFn:     wrapWithCloneFn,
 	}
 }
 
@@ -99,16 +103,6 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.ReaderWriter, parser resources.Parser, clients resources.ResourceClients, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
 
-	var userInfo map[string]repository.CommitSignature
-	if options.History {
-		progress.SetMessage(ctx, "loading users")
-		var err error
-		userInfo, err = loadUsers(ctx, clients)
-		if err != nil {
-			return fmt.Errorf("error loading users: %w", err)
-		}
-	}
-
 	reader, writer := io.Pipe()
 	go func() {
 		scanner := bufio.NewScanner(reader)
@@ -143,27 +137,31 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 			return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 		}
 
-		progress.SetMessage(ctx, "migrate folders from SQL")
-		// TODO: use resources.RepositoryResources
-		folderClient, err := clients.Folder()
+		repositoryResources, err := w.repositoryResources.Client(ctx, rw)
 		if err != nil {
-			return fmt.Errorf("error getting folder client: %w", err)
+			return fmt.Errorf("get repository resources: %w", err)
 		}
 
-		folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree())
+		if options.History {
+			progress.SetMessage(ctx, "loading users")
+			if err := repositoryResources.EnableCommitWithOriginalAuthors(ctx); err != nil {
+				return fmt.Errorf("error loading users: %w", err)
+			}
+		}
+
+		progress.SetMessage(ctx, "migrate folders from SQL")
 		folderMigrator := NewLegacyFolderMigrator(w.legacyMigrator)
-		if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, folders, progress); err != nil {
+		if err = folderMigrator.Migrate(ctx, w.legacyMigrator, namespace, repositoryResources, progress); err != nil {
 			return fmt.Errorf("migrate folders from SQL: %w", err)
 		}
 
 		progress.SetMessage(ctx, "exporting resources from SQL")
-		resourceManager := resources.NewResourcesManager(rw, folders, parser, clients, userInfo)
 		for _, kind := range resources.SupportedProvisioningResources {
 			if kind == resources.FolderResource {
 				continue
 			}
 
-			reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, resourceManager, progress, options, namespace, kind.GroupResource())
+			reader := NewLegacyResourceMigrator(w.legacyMigrator, parser, repositoryResources, progress, options, namespace, kind.GroupResource())
 			if err := reader.Migrate(ctx); err != nil {
 				return fmt.Errorf("migrate resource %s: %w", kind, err)
 			}

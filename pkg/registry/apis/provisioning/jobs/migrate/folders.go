@@ -59,7 +59,7 @@ func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.Resource
 	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, folders *resources.FolderManager, progress jobs.JobProgressRecorder) error {
+func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "read folders from SQL")
 	if _, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
@@ -70,7 +70,7 @@ func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legac
 	}
 
 	progress.SetMessage(ctx, "export folders from SQL")
-	if err := folders.EnsureFolderTreeExists(ctx, "", "", f.Tree(), func(folder resources.Folder, created bool, err error) error {
+	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.Tree(), func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
 			Name:     folder.ID,

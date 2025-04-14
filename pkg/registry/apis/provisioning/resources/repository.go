@@ -17,6 +17,9 @@ type RepositoryResourcesFactory interface {
 
 //go:generate mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
 type RepositoryResources interface {
+	// Commits
+	EnableCommitWithOriginalAuthors(ctx context.Context) error
+
 	// Folders
 	SetTree(tree FolderTree)
 	EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error)
@@ -41,6 +44,7 @@ type repositoryResourcesFactor struct {
 type repositoryResources struct {
 	*FolderManager
 	*ResourcesManager
+	clients   ResourceClients
 	lister    ResourceLister
 	namespace string
 	repoName  string
@@ -80,7 +84,20 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 		FolderManager:    folders,
 		ResourcesManager: resources,
 		lister:           r.lister,
+		clients:          clients,
 		namespace:        repo.Config().Namespace,
 		repoName:         repo.Config().Name,
 	}, nil
+}
+
+func (r *repositoryResources) EnableCommitWithOriginalAuthors(ctx context.Context) error {
+	signatures, err := loadUsers(ctx, r.clients)
+	if err != nil {
+		return fmt.Errorf("load users: %w", err)
+	}
+
+	// HACK: we set it directly into the resources
+	r.ResourcesManager.userInfo = signatures
+
+	return nil
 }

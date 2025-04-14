@@ -26,10 +26,10 @@ type legacyResourceResourceMigrator struct {
 	namespace string
 	kind      schema.GroupResource
 	options   provisioning.MigrateJobOptions
-	resources *resources.ResourcesManager
+	resources resources.RepositoryResources
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources resources.RepositoryResources, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,

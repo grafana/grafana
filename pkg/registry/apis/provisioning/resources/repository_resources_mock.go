@@ -84,6 +84,52 @@ func (_c *MockRepositoryResources_CreateResourceFileFromObject_Call) RunAndRetur
 	return _c
 }
 
+// EnableCommitWithOriginalAuthors provides a mock function with given fields: ctx
+func (_m *MockRepositoryResources) EnableCommitWithOriginalAuthors(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableCommitWithOriginalAuthors")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRepositoryResources_EnableCommitWithOriginalAuthors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableCommitWithOriginalAuthors'
+type MockRepositoryResources_EnableCommitWithOriginalAuthors_Call struct {
+	*mock.Call
+}
+
+// EnableCommitWithOriginalAuthors is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRepositoryResources_Expecter) EnableCommitWithOriginalAuthors(ctx interface{}) *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call {
+	return &MockRepositoryResources_EnableCommitWithOriginalAuthors_Call{Call: _e.mock.On("EnableCommitWithOriginalAuthors", ctx)}
+}
+
+func (_c *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call) Run(run func(ctx context.Context)) *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call) Return(_a0 error) *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call) RunAndReturn(run func(context.Context) error) *MockRepositoryResources_EnableCommitWithOriginalAuthors_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnsureFolderExists provides a mock function with given fields: ctx, folder, parentID
 func (_m *MockRepositoryResources) EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error {
 	ret := _m.Called(ctx, folder, parentID)
