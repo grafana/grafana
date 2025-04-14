@@ -439,9 +439,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 
 	// For folder moves, we need to check permissions on both folders
 	if s.isFolderMove(event) {
-		if event.ObjectOld == nil {
-			return nil, NewBadRequestError("missing old object")
-		}
 		if err := s.checkFolderMovePermissions(ctx, user, key, event.ObjectOld.GetFolder(), obj.GetFolder()); err != nil {
 			return nil, err
 		}
