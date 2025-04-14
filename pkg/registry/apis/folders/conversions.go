@@ -18,8 +18,8 @@ import (
 
 func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstructured.Unstructured, error) {
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		Object: map[string]any{
+			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
 			},
@@ -55,7 +55,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		},
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: &v.Description,
+			Description: descr(v.Description),
 		},
 	}
 
@@ -91,4 +91,11 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
+}
+
+func descr(str string) *string {
+	if str == "" {
+		return nil
+	}
+	return &str
 }

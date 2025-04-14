@@ -62,53 +62,53 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
-			"apiVersion": "v1beta1",
+			"apiVersion": "v1",
 			"groupVersion": "folder.grafana.app/v1beta1",
 			"resources": [
-			  {
-				"name": "folders",
-				"singularName": "folder",
-				"namespaced": true,
-				"kind": "Folder",
-				"verbs": [
-				  "create",
-				  "delete",
-				  "deletecollection",
-				  "get",
-				  "list",
-				  "patch",
-				  "update"
-				]
-			  },
-			  {
-				"name": "folders/access",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderAccessInfo",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/counts",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "DescendantCounts",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/parents",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderInfoList",
-				"verbs": [
-				  "get"
-				]
-			  }
+				{
+					"name": "folders",
+					"singularName": "folder",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"create",
+						"delete",
+						"deletecollection",
+						"get",
+						"list",
+						"patch",
+						"update"
+					]
+				},
+				{
+					"name": "folders/access",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/counts",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "DescendantCounts",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/parents",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderInfoList",
+					"verbs": [
+						"get"
+					]
+				}
 			]
-		  }`, string(v1Disco))
+		}`, string(v1Disco))
 	})
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
@@ -249,7 +249,8 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			},
 			"spec": {
 			  "title": "Test"
-			}
+			},
+			"status": {}
 		  }`
 
 		// Get should return the same result
