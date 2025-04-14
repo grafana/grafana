@@ -373,7 +373,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		}
 		secureValueRows = append(secureValueRows, &row)
 	}
-
+	
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error: %w", err)
+	}
+	
 	// If not all secure values being referenced exist, return an error with the missing ones.
 	if len(secureValueRows) != len(usedSecureValues) {
 		// We are guaranteed that the returned `secureValueRows` are a subset of `usedSecureValues`,
