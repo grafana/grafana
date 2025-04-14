@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import "k8s.io/apimachinery/pkg/runtime/schema"
 

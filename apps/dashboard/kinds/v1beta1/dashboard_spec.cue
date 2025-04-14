@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 // TODO: this outputs nothing.
 // For now, we use unstructured for the spec,

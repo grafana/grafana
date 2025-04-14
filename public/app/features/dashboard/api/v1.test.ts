@@ -8,7 +8,7 @@ import { K8sDashboardAPI } from './v1';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v1alpha1',
+  apiVersion: 'v1beta1',
 
   metadata: {
     name: 'dash-uid',
@@ -293,7 +293,7 @@ describe('v1 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it.each(['v0alpha1', 'v1alpha1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
+    it.each(['v0alpha1', 'v1beta1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {

@@ -3,10 +3,11 @@ package apistore
 import (
 	"context"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type LargeObjectSupportFake struct {

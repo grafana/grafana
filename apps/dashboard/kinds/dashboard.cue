@@ -55,7 +55,7 @@ dashboard: {
 				status: DashboardStatus
 			}
 		}
-		"v1alpha1": {
+		"v1beta1": {
 			schema: {
 				spec:   v1.DashboardSpec
 				status: DashboardStatus

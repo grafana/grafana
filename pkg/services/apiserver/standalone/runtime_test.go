@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/stretchr/testify/require"
+
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 )
 
 func TestReadRuntimeCOnfig(t *testing.T) {

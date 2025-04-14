@@ -27,7 +27,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>({
       group: 'dashboard.grafana.app',
-      version: 'v1alpha1',
+      version: 'v1beta1',
       resource: 'dashboards',
     });
   }
