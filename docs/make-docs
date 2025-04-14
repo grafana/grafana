@@ -8,6 +8,14 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 9.0.0 (2025-04-05)
+#
+# ### Removed
+#
+# - doc-validator target and associated scripts.
+#
+#   Most useful rules have been migrated to Vale and the others are often false positives.
+#
 # ## 8.5.2 (2025-02-28)
 #
 # ### Fixed
@@ -831,51 +839,6 @@ ${DOCS_IMAGE}
 POSIX_HERESTRING
 
 case "${image}" in
-  'grafana/doc-validator')
-    proj="$(new_proj "$1")"
-    printf '\r\n'
-
-    IFS='' read -r cmd <<EOF
-    ${PODMAN} run \
-                --init \
-                --interactive \
-                --platform linux/amd64 \
-                --rm \
-                --tty \
-                ${volumes} \
-                ${DOCS_IMAGE} \
-                --include=${DOC_VALIDATOR_INCLUDE} \
-                --skip-checks=${DOC_VALIDATOR_SKIP_CHECKS} \
-                /hugo/content$(proj_canonical "${proj}") \
-                "$(proj_canonical "${proj}") \
-                | sed "s#$(proj_dst "${proj}")#sources#"
-EOF
-
-    if [ -n "${DEBUG}" ]; then
-      debg "${cmd}"
-    fi
-
-    case "${OUTPUT_FORMAT}" in
-      human)
-        if ! command -v jq >/dev/null 2>&1; then
-          # shellcheck disable=SC2016
-          errr '`jq` must be installed for the `doc-validator` target to work.'
-          # shellcheck disable=SC2016
-          note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
-
-          exit 1
-        fi
-
-        ${cmd} \
-        | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
-      ;;
-      json)
-        ${cmd}
-      ;;
-      *)  # default
-        errr "Invalid output format '${OUTPUT_FORMAT}'"
-    esac
-    ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
     printf '\r\n'
