@@ -3,7 +3,6 @@ import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
 import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
 import { isReactClassComponent, logWarning, unboxNearMembraneProxies } from './utils';
