@@ -2428,6 +2428,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "Link to Advisor",
+      "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",
+      "go-to-advisor": "Go to Advisor"
+    },
     "connect-data": {
       "category-header-label": "Data sources",
       "empty-message": "No results matching your query were found",
