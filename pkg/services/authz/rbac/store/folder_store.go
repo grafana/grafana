@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/tools/pager"
 
 	"github.com/grafana/authlib/types"
-
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
