@@ -812,10 +812,10 @@
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
     "editor": {
-      "alerting-rule-entity-name": "alert rule",
-      "edit-action": "Edit",
-      "new-action": "New",
-      "recording-rule-entity-name": "recording rule"
+      "edit-alert-rule": "Edit alert rule",
+      "edit-recording-rule": "Edit recording rule",
+      "new-alert-rule": "New alert rule",
+      "new-recording-rule": "New recording rule"
     },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",

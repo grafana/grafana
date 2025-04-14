@@ -80,20 +80,23 @@ function NewRuleEditor() {
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
 
-  const entityName = RECORDING_TYPE.includes(type)
-    ? t('alerting.editor.recording-rule-entity-name', 'recording rule')
-    : t('alerting.editor.alerting-rule-entity-name', 'alert rule');
+  const isExisting = Boolean(identifier);
+  const isRecordingRule = RECORDING_TYPE.includes(type);
 
-  const actionName = Boolean(identifier)
-    ? t('alerting.editor.edit-action', 'Edit')
-    : t('alerting.editor.new-action', 'New');
+  const newText = isRecordingRule
+    ? t('alerting.editor.new-recording-rule', 'New recording rule')
+    : t('alerting.editor.new-alert-rule', 'New alert rule');
+
+  const editText = isRecordingRule
+    ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
+    : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
   return (
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
         id: 'alert-rule-add',
-        text: `${actionName} ${entityName}`,
+        text: isExisting ? editText : newText,
       }}
     >
       <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />
