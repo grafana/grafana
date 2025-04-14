@@ -7,6 +7,7 @@ import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertContent: css({
@@ -26,8 +27,9 @@ const userStorage = new UserStorage('advisor-redirect-notice');
 export function AdvisorRedirectNotice() {
   const styles = useStyles2(getStyles);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor;
   const [showNotice, setShowNotice] = useState(false);
+  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && !!config.apps['grafana-advisor-app'];
+
   useEffect(() => {
     if (canUseAdvisor) {
       userStorage.getItem('showNotice').then((showNotice) => {
