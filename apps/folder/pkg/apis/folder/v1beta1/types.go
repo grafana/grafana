@@ -8,6 +8,7 @@ import (
 
 // FolderInfoList returns a list of folder references (parents or children)
 // Unlike FolderList, each item is not a full k8s object
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FolderInfoList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -38,6 +39,7 @@ type FolderInfo struct {
 }
 
 // Access control information for the current user
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FolderAccessInfo struct {
 	metav1.TypeMeta `json:",inline"`
@@ -48,6 +50,7 @@ type FolderAccessInfo struct {
 	CanDelete bool `json:"canDelete"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DescendantCounts struct {
 	metav1.TypeMeta `json:",inline"`

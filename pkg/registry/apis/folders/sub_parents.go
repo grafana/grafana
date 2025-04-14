@@ -67,10 +67,14 @@ func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *f
 	}
 	for folder != nil {
 		parent := getParent(folder)
+		descr := ""
+		if folder.Spec.Description != nil {
+			descr = *folder.Spec.Description
+		}
 		info.Items = append(info.Items, folders.FolderInfo{
 			Name:        folder.Name,
 			Title:       folder.Spec.Title,
-			Description: folder.Spec.Description,
+			Description: descr,
 			Parent:      parent,
 		})
 		if parent == "" {
