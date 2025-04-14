@@ -1,8 +1,10 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
@@ -18,6 +20,7 @@ import { DashboardJson } from '../types';
 
 import {
   clearDashboard,
+  DataSourceInput,
   fetchDashboard,
   fetchFailed,
   ImportDashboardDTO,
@@ -53,6 +56,13 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
     await dispatch(processElements(dashboard));
     await dispatch(processJsonDashboard(dashboard));
     dispatch(processInputs());
+  };
+}
+
+export function importDashboardV2Json(dashboard: DashboardV2Spec): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(setJsonDashboard(dashboard));
+    dispatch(processV2Elements(dashboard));
   };
 }
 
@@ -139,6 +149,53 @@ function processElements(dashboardJson?: { __elements?: Record<string, LibraryEl
   return async function (dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
+  };
+}
+
+function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
+  return async function (dispatch) {
+    const elements = dashboard.elements;
+    // get elements from dashboard
+    // each element can only be a panel
+    const inputs: Record<string, DataSourceInput> = {};
+    for (const element of Object.values(elements)) {
+      if (element.kind !== 'Panel') {
+        throw new Error('Only panels are currenlty supported in v2 dashboards');
+      }
+
+      for (const query of element.spec.data.spec.queries) {
+        const datasourceRef = query.spec.datasource;
+        if (!datasourceRef) {
+          let dataSourceInput: DataSourceInput | undefined;
+          const dsType = query.spec.query.kind;
+          const datasource = await getDatasourceSrv().get({ type: dsType });
+          if (!datasource) {
+            dataSourceInput = {
+              name: dsType,
+              label: dsType,
+              info: `No data sources of type ${dsType} found`,
+              value: '',
+              type: InputType.DataSource,
+              pluginId: dsType,
+            };
+
+            inputs[dsType] = dataSourceInput;
+          } else {
+            dataSourceInput = {
+              name: datasource.name,
+              label: datasource.name,
+              info: `Select a ${datasource.name} data source`,
+              value: datasource.uid,
+              type: InputType.DataSource,
+              pluginId: datasource.meta?.id,
+            };
+
+            inputs[datasource.meta?.id] = dataSourceInput;
+          }
+        }
+      }
+    }
+    dispatch(setInputs(Object.values(inputs)));
   };
 }
 

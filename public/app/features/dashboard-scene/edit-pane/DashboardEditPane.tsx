@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useEffect } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,7 +17,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { isInCloneChain } from '../utils/clone';
+import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
@@ -102,7 +101,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const obj = sceneGraph.findByKey(this, element.id);
+    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
+
+    const obj = sceneGraph.findByKey(this, elementId);
     if (obj) {
       this.selectObject(obj, element.id, options);
     }
@@ -177,6 +178,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
+    this.state.selection!.markAsNewElement();
   }
 }
 
@@ -191,25 +193,11 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
-  // Activate the edit pane
-  useEffect(() => {
-    editPane.enableSelection();
-
-    return () => {
-      editPane.disableSelection();
-    };
-  }, [editPane]);
-
-  useEffect(() => {
-    if (isCollapsed) {
-      editPane.clearSelection();
-    }
-  }, [editPane, isCollapsed]);
-
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
+  const isNewElement = selection?.isNewElement() ?? false;
   const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
     'grafana.dashboard.edit-pane.outline.collapsed',
     true
@@ -249,7 +237,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={styles.overlayWrapper} defaultSize={{ height: '100%', width: '300px' }}>
-            <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
+            <ElementEditPane
+              element={editableElement}
+              key={selectedObject?.state.key}
+              editPane={editPane}
+              isNewElement={isNewElement}
+            />
           </Resizable>
         )}
       </>
@@ -270,7 +263,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     <div className={styles.wrapper}>
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
-          <ElementEditPane element={editableElement} key={selectedObject?.state.key} editPane={editPane} />
+          <ElementEditPane
+            element={editableElement}
+            key={selectedObject?.state.key}
+            editPane={editPane}
+            isNewElement={isNewElement}
+          />
         </div>
         <div
           {...splitter.splitterProps}

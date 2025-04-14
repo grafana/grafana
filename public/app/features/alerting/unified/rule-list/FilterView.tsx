@@ -1,15 +1,17 @@
-import { empty } from 'ix/asynciterable';
-import { catchError, take, tap, withAbort } from 'ix/asynciterable/operators';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
+import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
+import { useUnmount } from 'react-use';
 
-import { Card, EmptyState, Stack, Text } from '@grafana/ui';
+import { EmptyState, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
+import { FilterProgressState, FilterStatus } from './FilterViewStatus';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -54,54 +56,85 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
+  const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
 
-  /* this is the abort controller that allows us to stop an AsyncIterable */
-  const controller = useRef(new AbortController());
-
-  /**
-   * This an iterator that we can use to populate the search results.
-   * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
-   * callback function to detect when we've exhausted the source.
-   * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-  const rulesIterator = useRef(
-    getFilteredRulesIterator(filterState, API_PAGE_SIZE).pipe(
-      withAbort(controller.current.signal),
-      onFinished(() => setDoneSearching(true))
-    )
-  );
+  const iteration = useRef<{
+    rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
+    abortController: AbortController;
+  } | null>(null);
 
   const [rules, setRules] = useState<KeyedRuleWithOrigin[]>([]);
   const [doneSearching, setDoneSearching] = useState(false);
 
-  /* This function will fetch a page of results from the iterable */
-  const [{ execute: loadResultPage }, state] = useAsync(async () => {
-    for await (const rule of rulesIterator.current.pipe(
-      // grab <FRONTENT_PAGE_SIZE> from the rules iterable
-      take(FRONTENT_PAGE_SIZE),
-      // if an error occurs trying to fetch a page, return an empty iterable so the front-end isn't caught in an infinite loop
-      catchError(() => empty())
-    )) {
-      startTransition(() => {
-        // Rule key could be computed on the fly, but we do it here to avoid recalculating it with each render
-        // It's a not trivial computation because it involves hashing the rule
-        setRules((rules) => rules.concat({ key: getRuleKey(rule), ...rule }));
-      });
+  // Lazy initialization of useRef
+  // https://18.react.dev/reference/react/useRef#how-to-avoid-null-checks-when-initializing-use-ref-later
+  const getRulesBatchIterator = useCallback(() => {
+    if (!iteration.current) {
+      /**
+       * This an iterator that we can use to populate the search results.
+       * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
+       * callback function to detect when we've exhausted the source.
+       * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results
+       *
+       * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
+       * and the iterator will allow us to exhaust the iterable in a stateful way
+       */
+      const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
+      const rulesBatchIterator = iterable
+        .pipe(
+          bufferCountOrTime(FRONTENT_PAGE_SIZE, 1000),
+          onFinished(() => setDoneSearching(true))
+        )
+        [Symbol.asyncIterator]();
+      iteration.current = { rulesBatchIterator: rulesBatchIterator, abortController };
     }
-  });
+    return iteration.current.rulesBatchIterator;
+  }, [filterState, getFilteredRulesIterator]);
 
-  /* When we unmount the component we make sure to abort all iterables */
-  useEffect(() => {
-    const currentAbortController = controller.current;
+  /* This function will fetch a page of results from the iterable */
+  const [{ execute: loadResultPage }, state] = useAsync(
+    withPerformanceLogging(async () => {
+      const rulesIterator = getRulesBatchIterator();
 
-    return () => {
-      currentAbortController.abort();
-    };
-  }, [controller]);
+      let loadedRulesCount = 0;
+
+      while (loadedRulesCount < FRONTENT_PAGE_SIZE) {
+        const nextRulesBatch = await rulesIterator.next();
+        if (nextRulesBatch.done) {
+          return;
+        }
+        if (nextRulesBatch.value) {
+          startTransition(() => {
+            setRules((rules) => rules.concat(nextRulesBatch.value.map((rule) => ({ key: getRuleKey(rule), ...rule }))));
+          });
+        }
+        loadedRulesCount += nextRulesBatch.value.length;
+      }
+    }, 'alerting.rule-list.filter-view.load-result-page')
+  );
 
   const loading = isLoading(state) || transitionPending;
   const numberOfRules = rules.length;
   const noRulesFound = numberOfRules === 0 && !loading;
+  const loadingAborted = iteration.current?.abortController.signal.aborted;
+  const cancelSearch = useCallback(() => {
+    iteration.current?.abortController.abort();
+  }, []);
+
+  /* When we unmount the component we make sure to abort all iterables and stop making HTTP requests */
+  useUnmount(() => {
+    cancelSearch();
+  });
+
+  // track the state of the filter progress, which is either searching, done or aborted
+  const filterProgressState = useMemo<FilterProgressState>(() => {
+    if (loadingAborted) {
+      return 'aborted';
+    } else if (doneSearching) {
+      return 'done';
+    }
+    return 'searching';
+  }, [doneSearching, loadingAborted]);
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
@@ -150,16 +183,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           </>
         )}
       </ul>
-      {doneSearching && !noRulesFound && (
-        <Card>
-          <Text color="secondary">
-            <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">
-              No more results – showing {{ numberOfRules }} rules
-            </Trans>
-          </Text>
-        </Card>
+      {!noRulesFound && (
+        <FilterStatus state={filterProgressState} numberOfRules={numberOfRules} onCancel={cancelSearch} />
       )}
-      {!doneSearching && !loading && <LoadMoreHelper handleLoad={loadResultPage} />}
+      {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }

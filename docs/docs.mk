@@ -31,9 +31,6 @@ ifeq ($(PROJECTS),)
 $(error "PROJECTS variable must be defined in variables.mk")
 endif
 
-# First project is considered the primary one used for doc-validator.
-PRIMARY_PROJECT := $(subst /,-,$(firstword $(subst :, ,$(firstword $(PROJECTS)))))
-
 # Host port to publish container port to.
 ifeq ($(origin DOCS_HOST_PORT), undefined)
 export DOCS_HOST_PORT := 3002
@@ -44,12 +41,7 @@ ifeq ($(origin DOCS_IMAGE), undefined)
 export DOCS_IMAGE := grafana/docs-base:latest
 endif
 
-# Container image used for doc-validator linting.
-ifeq ($(origin DOC_VALIDATOR_IMAGE), undefined)
-export DOC_VALIDATOR_IMAGE := grafana/doc-validator:latest
-endif
-
-# Container image used for vale linting.
+# Container image used for Vale linting.
 ifeq ($(origin VALE_IMAGE), undefined)
 export VALE_IMAGE := grafana/vale:latest
 endif
@@ -98,14 +90,6 @@ endif
 docs-debug: ## Run Hugo web server with debugging enabled. TODO: support all SERVER_FLAGS defined in website Makefile.
 docs-debug: make-docs
 	WEBSITE_EXEC='hugo server --bind 0.0.0.0 --port 3002 --debug' $(CURDIR)/make-docs $(PROJECTS)
-
-.PHONY: doc-validator
-doc-validator: ## Run doc-validator on the entire docs folder which includes pulling the latest `DOC_VALIDATOR_IMAGE` (default: `grafana/doc-validator:latest`) container image. To not pull the image, set `PULL=false`.
-doc-validator: make-docs
-ifeq ($(PULL), true)
-	$(PODMAN) pull -q $(DOC_VALIDATOR_IMAGE)
-endif
-	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: vale
 vale: ## Run vale on the entire docs folder which includes pulling the latest `VALE_IMAGE` (default: `grafana/vale:latest`) container image. To not pull the image, set `PULL=false`.

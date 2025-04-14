@@ -69,7 +69,7 @@ func newReturnsRow[T any](dbmock sqlmock.Sqlmock, req *sqltemplateMocks.WithResu
 func (r *expectRows[T]) Add(value T, err error) *expectRows[T] {
 	r.req.EXPECT().GetScanDest().Return(nil).Once()
 	r.req.EXPECT().Results().Return(value, err).Once()
-	r.Rows.AddRow()
+	r.AddRow()
 	r.ExpectedResults = append(r.ExpectedResults, value)
 
 	return r
@@ -227,8 +227,8 @@ func TestQuery(t *testing.T) {
 		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
-		rows.Rows.AddRow() // we don't expect GetScanDest or Results here
-		rows.Rows.RowError(0, errTest)
+		rows.AddRow() // we don't expect GetScanDest or Results here
+		rows.RowError(0, errTest)
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rows.Rows)
 
 		// execute and assert
@@ -254,7 +254,7 @@ func TestQuery(t *testing.T) {
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows1.Add(1, nil)
-		rows2.Rows.AddRow() // we don't expect GetScanDest or Results here
+		rows2.AddRow() // we don't expect GetScanDest or Results here
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rows1.Rows, rows2.Rows)
 
 		// execute and assert
@@ -377,7 +377,7 @@ func TestQueryRow(t *testing.T) {
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows1.Add(1, nil)
-		rows2.Rows.AddRow() // we don't expect GetScanDest or Results here
+		rows2.AddRow() // we don't expect GetScanDest or Results here
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rows1.Rows, rows2.Rows)
 
 		// execute and assert

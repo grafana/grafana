@@ -12,7 +12,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
-import { usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
@@ -25,7 +25,9 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
   const { uid, name } = rulesSourceIdentifier;
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
 
-  const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE));
+  const groupsGenerator = useRef(
+    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE))
+  );
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
