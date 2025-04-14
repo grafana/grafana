@@ -9,7 +9,7 @@ import (
 // Service is the interface for secret keeper services.
 // This exists because OSS and Enterprise have different amounts of keepers available.
 type Service interface {
-	GetKeepers() map[contracts.KeeperType]contracts.Keeper
+	GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error)
 }
 
 // OSSKeeperService is the OSS implementation of the Service interface.
@@ -31,8 +31,8 @@ func ProvideService(
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeepers() map[contracts.KeeperType]contracts.Keeper {
+func (ks OSSKeeperService) GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error) {
 	return map[contracts.KeeperType]contracts.Keeper{
 		contracts.SQLKeeperType: sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store),
-	}
+	}, nil
 }

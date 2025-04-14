@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )

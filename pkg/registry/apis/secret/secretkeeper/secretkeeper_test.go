@@ -40,7 +40,8 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("GetKeepers should return a map with a sql keeper", func(t *testing.T) {
-		keeperMap := keeperService.GetKeepers()
+		keeperMap, err := keeperService.GetKeepers()
+		require.NoError(t, err)
 		require.NoError(t, err)
 
 		assert.NotNil(t, keeperMap)

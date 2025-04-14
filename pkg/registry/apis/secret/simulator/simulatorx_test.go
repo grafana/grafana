@@ -480,7 +480,7 @@ func TestSimulateWithRealImplementation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperService, keeperMetadataStorage)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
 	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)

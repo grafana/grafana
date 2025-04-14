@@ -42,7 +42,10 @@ func ProvideSecureValueMetadataStorage(
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	keepers := keeperService.GetKeepers()
+	keepers, err := keeperService.GetKeepers()
+	if err != nil {
+		return nil, fmt.Errorf("getting map of keepers: %+w", err)
+	}
 
 	return &secureValueMetadataStorage{
 		db:                    db,

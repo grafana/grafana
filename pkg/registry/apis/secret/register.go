@@ -68,8 +68,12 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 	isDevMode bool, // REMOVE ME
-) *SecretAPIBuilder {
+) (*SecretAPIBuilder, error) {
 	database := database.New(db)
+	keepers, err := keeperService.GetKeepers()
+	if err != nil {
+		return nil, fmt.Errorf("getting map of keepers: %+w", err)
+	}
 
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
@@ -88,10 +92,11 @@ func NewSecretAPIBuilder(
 			secretsOutboxQueue,
 			secureValueMetadataStorage,
 			keeperMetadataStorage,
-			keeperService.GetKeepers(),
+			keepers,
 		),
 		decryptersAllowList: decryptersAllowList,
-		isDevMode:           isDevMode}
+		isDevMode:           isDevMode,
+	}, nil
 }
 
 func RegisterAPIService(
@@ -125,7 +130,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
 
-	builder := NewSecretAPIBuilder(
+	builder, err := NewSecretAPIBuilder(
 		tracer,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
@@ -136,6 +141,9 @@ func RegisterAPIService(
 		nil, // OSS does not need an allow list.
 		cfg.SecretsManagement.IsDeveloperMode,
 	)
+	if err != nil {
+		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
+	}
 
 	apiregistration.RegisterAPI(builder)
 
