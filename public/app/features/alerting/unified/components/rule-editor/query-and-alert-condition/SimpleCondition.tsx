@@ -9,7 +9,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
-import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
+import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
@@ -55,9 +55,7 @@ export const SimpleConditionEditor = ({
     updateReduceExpression(value.value ?? ReducerID.last, expressionQueriesList, dispatch);
   };
 
-  const isRange =
-    simpleCondition.evaluator.type === EvalFunction.IsWithinRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange;
+  const isRange = isRangeEvaluator(simpleCondition.evaluator.type);
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === simpleCondition.evaluator?.type);
 
@@ -71,24 +69,17 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index?: number) => {
-    if (isRange) {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = parseFloat(event.currentTarget.value);
-      });
-      // update the condition kept in the parent
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), index ?? 0, expressionQueriesList, dispatch);
-    } else {
-      // update the condition kept in the parent
-      onChange({
-        ...simpleCondition,
-        evaluator: { ...simpleCondition.evaluator, params: [parseFloat(event.currentTarget.value)] },
-      });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), 0, expressionQueriesList, dispatch);
-    }
+  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index = 0) => {
+    const value = event.currentTarget.value;
+    const numericValue = parseFloat(value) || 0; // try to convert input to a number that isn't NaN
+
+    onChange(
+      produce(simpleCondition, (draftCondition) => {
+        draftCondition.evaluator.params[index] = numericValue;
+      })
+    );
+
+    updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
   const styles = useStyles2(getStyles);
@@ -120,23 +111,35 @@ export const SimpleConditionEditor = ({
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[0]}
-                    onChange={(event) => onEvaluateValueChange(event, 0)}
+                    // by using the key prop we can force the input to re-render whenever the defaultValue updates
+                    // this is because we have a useEffect() that updates the data structure but "defaultValue" will memoize the
+                    // first value before the useEffect() runs
+                    key={simpleCondition.evaluator.params[0]}
+                    defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 0);
+                    }}
                   />
                   <ToLabel />
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[1]}
-                    onChange={(event) => onEvaluateValueChange(event, 1)}
+                    key={simpleCondition.evaluator.params[1]}
+                    defaultValue={simpleCondition.evaluator.params[1] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 1);
+                    }}
                   />
                 </>
               ) : (
                 <Input
                   type="number"
                   width={10}
-                  onChange={onEvaluateValueChange}
-                  value={simpleCondition.evaluator.params[0]}
+                  key={simpleCondition.evaluator.params[0]}
+                  defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                  onBlur={(event) => {
+                    onEvaluateValueChange(event, 0);
+                  }}
                 />
               )}
             </Stack>
