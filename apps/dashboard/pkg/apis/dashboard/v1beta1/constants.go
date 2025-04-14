@@ -6,7 +6,7 @@ const (
 	// Group is the API group used by all kinds in this package
 	Group = "dashboard.grafana.app"
 	// Version is the API version used by all kinds in this package
-	Version = "v1alpha1"
+	Version = "v1beta1"
 )
 
 var (
