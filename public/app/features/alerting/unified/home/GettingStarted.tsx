@@ -77,12 +77,7 @@ export default function GettingStarted() {
           <p>
             <Trans i18nKey="alerting.getting-stared.learn-more">
               For a hands-on introduction, refer to our{' '}
-              <TextLink
-                href="https://grafana.com/tutorials/alerting-get-started/"
-                icon="angle-right"
-                inline={true}
-                external
-              >
+              <TextLink href="https://grafana.com/tutorials/alerting-get-started/" inline={true} external>
                 tutorial to get started with Grafana Alerting
               </TextLink>
             </Trans>
