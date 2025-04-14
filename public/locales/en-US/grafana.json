@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "Disable",
+      "edit-configuration": "Edit configuration",
       "enable": "Enable",
       "not-receiving-grafana-managed-alerts": "Not receiving Grafana managed alerts",
       "text-activation-in-progress": "Activation in progress",
       "text-failed-to-adopt-alertmanager": "Failed to adopt Alertmanager",
       "text-inconclusive": "Inconclusive",
       "text-receiving-grafanamanaged-alerts": "Receiving Grafana-managed alerts",
-      "title-alerting-settings": "Alerting settings"
+      "title-alerting-settings": "Alerting settings",
+      "view-configuration": "View configuration"
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
+      "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "reset": "Reset",
+      "reset-confirmation": "Are you sure you want to reset configuration for \"{{alertmanagerName}}\"? Contact points and notification policies will be reset to their defaults.",
       "resetting-configuration-might-while": "Resetting configuration, this might take a while.",
       "title-failed-to-load-alertmanager-configuration": "Failed to load Alertmanager configuration",
       "title-oops-something-went-wrong": "Oops, something went wrong",
@@ -435,6 +440,8 @@
         "restore": "Restore",
         "text-latest": "Latest"
       },
+      "loading": "Loading...",
+      "no-previous-configurations": "No previous configurations",
       "this-might-take-a-while": "This might take a while...",
       "title-failed-to-load-configuration-history": "Failed to load configuration history",
       "title-restore-version": "Restore version",
@@ -1963,7 +1970,6 @@
       "tooltip-delete": "delete"
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "Preview with the default payload",
       "label-template-content": "Template content"
     },
     "template-data-table": {
@@ -2076,8 +2082,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "Grafana built-in Alertmanager",
         "label-json-model": "JSON Model",
-        "label-versions": "Versions"
+        "label-versions": "Versions",
+        "title-edit-the-alertmanager-configuration": "Edit Alertmanager configuration",
+        "title-view-the-alertmanager-configuration": "View Alertmanager configuration"
       }
     },
     "use-edit-policy-modal": {
@@ -3609,6 +3618,8 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "schema-v2-library-panels-export": "The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards behaviour. It is based on a new schema format, that does not support library panels. This means that when exporting the dashboard to use it in another instance, we will not include library panels. We intend to support them as we progress in the feature <2>life cycle</2>.",
+      "schema-v2-library-panels-export-title": "Dashboard Schema V2 does not support exporting library panels to be used in another instance yet",
       "title-dashboard-drastically-changed": "Dashboard drastically changed"
     },
     "save-dashboard-form-common-options": {
@@ -4449,22 +4460,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": "Scroll to top"
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Clear filter",
-      "labelSelect": "Select",
-      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
-      "noMatchingValue": "No values found matching; {{filter}}",
-      "sortBy": "Sort by"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Loki Recording Rule",
-      "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
-      "warnExperimentalFeature": "Related logs is an experimental feature."
-    },
-    "viewBy": "View by"
   },
   "export": {
     "json": {
@@ -6017,8 +6012,7 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-button": "Invite",
-      "invite-tooltip": "Invite new member"
+      "invite-new-member-button": "Invite new member"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
@@ -6633,7 +6627,6 @@
       "title-legacy-storage-detected": "Legacy storage detected"
     },
     "job-status": {
-      "error-unknown": "An unknown error occurred",
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
@@ -6731,12 +6724,6 @@
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
-    "request-error": {
-      "failed-to-migrate": "Failed to migrate dashboards",
-      "failed-to-save": "Failed to save repository",
-      "failed-to-sync": "Failed to sync dashboards",
-      "operation-failed": "Operation failed"
-    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
@@ -6799,8 +6786,7 @@
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-submitting": "Submitting...",
-      "error-instance-repository-exists": "Instance repository already exists",
-      "title-repository-verification-failed": "Repository verification failed"
+      "error-instance-repository-exists": "Instance repository already exists"
     }
   },
   "public-dashboard": {
@@ -7778,105 +7764,6 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": "Add to filters"
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Or view bookmarks"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": "Search for value"
-    },
-    "build-normal-layout": {
-      "text-loading": "Loading..."
-    },
-    "card": {
-      "date-created": "Date created: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "You can view bookmarks under <1>Explore > Metrics</1>",
-      "view-bookmarks": "View bookmarks"
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": "Remove bookmark"
-    },
-    "data-trail-history": {
-      "history": "History"
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": "Settings"
-      }
-    },
-    "home": {
-      "learn-more": "Learn more",
-      "lets-start": "Let's start!",
-      "start-your-metrics-exploration": "Start your metrics exploration!",
-      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
-    },
-    "label-breakdown-scene": {
-      "label-search": "Search",
-      "label-view": "View",
-      "title-warning-there-missing-telemetry-resource-attributes": "Warning: There may be missing Open Telemetry resource attributes"
-    },
-    "metric-action-bar": {
-      "open": "Open",
-      "select-new-metric": "Select new metric",
-      "tooltip-bookmark": "Bookmark",
-      "tooltip-open-in-explore": "Open in explore",
-      "tooltip-remove-existing-metric-choose": "Remove existing metric and choose a new metric"
-    },
-    "metric-select": {
-      "filter-by": "Filter by",
-      "native-histogram": "Native Histogram",
-      "new-badge": "New",
-      "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "OTel experience",
-      "label-search-metrics": "Search metrics",
-      "placeholder-search-metrics": "Search metrics",
-      "title-unable-to-retrieve-all-metric-names": "Unable to retrieve all metric names",
-      "unable-to-retrieve-metric-names": "Unable to retrieve metric names"
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "Explore your Prometheus-compatible metrics without writing a query",
-      "metrics": "Metrics"
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Classic Histogram displayed as heatmap:",
-      "ch-histogram": "Classic Histogram displayed as histogram:",
-      "click-histogram": "Click any of the native histograms below to explore them:",
-      "hide-examples": "Hide examples",
-      "learn-more": "Learn more",
-      "metric-examples": "",
-      "nh-heatmap": "Native Histogram displayed as heatmap:",
-      "nh-histogram": "Native Histogram displayed as histogram:",
-      "now": "Now:",
-      "previously": "Previously:",
-      "see-examples": "> See examples",
-      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana.",
-      "title-native-histogram-support": "Native histogram support"
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Or view a recent exploration"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": "Navigate to the Explore Logs app"
-    },
-    "search-input": {
-      "title-clear-search": "Clear search"
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
-      "show-previews-of-metric-graphs": "Show previews of metric graphs"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "Choose criteria",
-      "tooltip-sorts-values-using-standard-smart-series": "Sorts values using standard or smart time series calculations."
     }
   },
   "transformations": {

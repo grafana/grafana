@@ -207,14 +207,6 @@ var (
 			Owner:        grafanaPartnerPluginsSquad,
 		},
 		{
-			Name:         "prometheusRunQueriesInParallel",
-			Description:  "Enables running Prometheus queries in parallel",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaOSSBigTent,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
@@ -490,13 +482,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "pluginsAPIMetrics",
-			Description:  "Sends metrics of public grafana packages usage by plugins",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -564,6 +549,25 @@ var (
 		{
 			Name:        "kubernetesClientDashboardsFolders",
 			Description: "Route the folder and dashboard service requests to k8s",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV1",
+			Description: "Disable schema validation for dashboards/v1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardDisableSchemaValidationV2",
+			Description: "Disable schema validation for dashboards/v2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dashboardSchemaValidationLogging",
+			Description: "Log schema validation errors so they can be analyzed later",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
@@ -749,14 +753,6 @@ var (
 			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "exploreMetrics",
-			Description:  "Enables the new Grafana Metrics Drilldown core app",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1546,15 +1542,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaObservabilityMetricsSquad,
-			Expression:      "true",
-			FrontendOnly:    false,
-			RequiresRestart: true,
-		},
-		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStagePrivatePreview,
@@ -1602,12 +1589,21 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-			HideFromDocs: true,
+			Name:              "useScopesNavigationEndpoint",
+			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "scopeSearchAllLevels",
+			Description:       "Enable scope search to include all levels of the scope node tree",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "alertingRuleVersionHistoryRestore",

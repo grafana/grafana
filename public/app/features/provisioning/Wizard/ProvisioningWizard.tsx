@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -14,11 +14,11 @@ import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
+import { getFormErrors } from '../utils/getFormErrors';
 
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
-import { RequestErrorAlert } from './RequestErrorAlert';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
@@ -83,11 +83,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     setValue,
     getValues,
     trigger,
+    setError,
     formState: { isDirty },
+    handleSubmit,
   } = methods;
 
   const repoName = watch('repositoryName');
-  const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
+  const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -191,10 +193,17 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           console.error('Saved repository without a name:', rsp);
         }
       } catch (error) {
-        setStepStatusInfo({
-          status: 'error',
-          error: 'Repository connection failed',
-        });
+        if (isFetchError(error)) {
+          const [field, errorMessage] = getFormErrors(error.data.errors);
+          if (field && errorMessage) {
+            setError(field, errorMessage);
+          }
+        } else {
+          setStepStatusInfo({
+            status: 'error',
+            error: 'Repository connection failed',
+          });
+        }
       } finally {
         setIsSubmitting(false);
       }
@@ -210,7 +219,12 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (activeStep === 'synchronize') {
       return stepStatusInfo.status !== 'success';
     }
-    return isSubmitting || isCancelling || stepStatusInfo.status === 'running' || stepStatusInfo.status === 'error';
+    return (
+      isSubmitting ||
+      isCancelling ||
+      stepStatusInfo.status === 'running' ||
+      (activeStep !== 'connection' && stepStatusInfo.status === 'error')
+    );
   };
 
   return (
@@ -218,7 +232,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       <Stack gap={6} direction="row" alignItems="flex-start">
         <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
         <div className={styles.divider} />
-        <form className={styles.form}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
           <Stack direction="column">
             <Box marginBottom={2}>
@@ -228,13 +242,9 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            <RequestErrorAlert
-              request={saveRequest}
-              title={t(
-                'provisioning.wizard-content.title-repository-verification-failed',
-                'Repository verification failed'
-              )}
-            />
+            {stepStatusInfo.status === 'error' && (
+              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
+            )}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
@@ -252,21 +262,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               {activeStep === 'finish' && <FinishStep />}
             </div>
 
-            {stepStatusInfo.status === 'error' && (
-              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
-            )}
-
             <Stack gap={2} justifyContent="flex-end">
-              <Button
-                variant={stepStatusInfo.status === 'error' ? 'primary' : 'secondary'}
-                onClick={handleCancel}
-                disabled={isSubmitting || isCancelling}
-              >
+              <Button variant={'secondary'} onClick={handleCancel} disabled={isSubmitting || isCancelling}>
                 {isCancelling
                   ? t('provisioning.wizard-content.button-cancelling', 'Cancelling...')
                   : t('provisioning.wizard-content.button-cancel', 'Cancel')}
               </Button>
-              <Button onClick={onSubmit} disabled={isNextButtonDisabled()}>
+              <Button type={'submit'} disabled={isNextButtonDisabled()}>
                 {isSubmitting
                   ? t('provisioning.wizard-content.button-submitting', 'Submitting...')
                   : getNextButtonText(activeStep)}

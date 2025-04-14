@@ -413,16 +413,21 @@
     },
     "alertmanager-card": {
       "disable": "",
+      "edit-configuration": "",
       "enable": "",
       "not-receiving-grafana-managed-alerts": "",
       "text-activation-in-progress": "",
       "text-failed-to-adopt-alertmanager": "",
       "text-inconclusive": "",
       "text-receiving-grafanamanaged-alerts": "",
-      "title-alerting-settings": ""
+      "title-alerting-settings": "",
+      "view-configuration": ""
     },
     "alertmanager-config": {
+      "gma-manual-configuration-description": "",
+      "gma-manual-configuration-is-not-supported": "",
       "reset": "",
+      "reset-confirmation": "",
       "resetting-configuration-might-while": "",
       "title-failed-to-load-alertmanager-configuration": "",
       "title-oops-something-went-wrong": "",
@@ -435,6 +440,8 @@
         "restore": "",
         "text-latest": ""
       },
+      "loading": "",
+      "no-previous-configurations": "",
       "this-might-take-a-while": "",
       "title-failed-to-load-configuration-history": "",
       "title-restore-version": "",
@@ -1739,6 +1746,8 @@
       "title-inspect-alert-rule": ""
     },
     "rule-list": {
+      "cannot-find-rule-details-for": "",
+      "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurovat",
       "draft-new-rule": "",
       "ds-error-boundary": {
@@ -1746,8 +1755,11 @@
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
       },
       "filter-view": {
-        "no-more-results": "Žádné další výsledky – zobrazují se {{numberOfRules}} pravidla",
-        "no-rules-found": "Vaší aktuální sadě filtrů neodpovídají žádná pravidla výstrah ani nahrávání."
+        "cancel-search": "",
+        "no-more-results": "",
+        "no-rules-found": "Vaší aktuální sadě filtrů neodpovídají žádná pravidla výstrah ani nahrávání.",
+        "results-loading": "",
+        "results-with-cancellation": ""
       },
       "import-to-gma": {
         "new-badge": "",
@@ -1970,7 +1982,6 @@
       "tooltip-delete": ""
     },
     "template-content-and-preview": {
-      "label-preview-with-the-default-payload": "",
       "label-template-content": ""
     },
     "template-data-table": {
@@ -2083,8 +2094,11 @@
     },
     "use-edit-configuration-drawer": {
       "drawer": {
+        "internal-grafana-alertmanager-title": "",
         "label-json-model": "",
-        "label-versions": ""
+        "label-versions": "",
+        "title-edit-the-alertmanager-configuration": "",
+        "title-view-the-alertmanager-configuration": ""
       }
     },
     "use-edit-policy-modal": {
@@ -3124,9 +3138,20 @@
       "description": "Uspořádat panely do vodorovných karet",
       "name": "Karty",
       "tab": {
-        "new": "Nová karta"
+        "new": "Nová karta",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
       },
       "tab-options": {
+        "repeat": {
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        },
         "title-not-unique": "",
         "title-option": "Název"
       },
@@ -3615,6 +3640,8 @@
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
       },
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -4455,22 +4482,6 @@
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": ""
     }
-  },
-  "explore-metrics": {
-    "breakdown": {
-      "clearFilter": "Vymazat filtr",
-      "labelSelect": "Vybrat",
-      "missing-otel-labels": "Tato metrika má příliš mnoho hodnot štítků úloh a instancí pro volání koncového bodu Prometheus label_values s parametrem shody []. Tyto hodnoty štítků se používají k propojení metriky target_info, která obsahuje atributy zdroje. Zahrňte více filtrů atributů zdrojů.",
-      "noMatchingValue": "Nebyly nalezeny žádné odpovídající hodnoty; {{filter}}",
-      "sortBy": "Řadit podle"
-    },
-    "related-logs": {
-      "LrrDocsLink": "Pravidlo nahrávání Loki",
-      "openExploreLogs": "Otevřít protokoly na kartě Prozkoumat",
-      "relatedLogsUnavailable": "Nebyly nalezeny žádné související protokoly. Chcete-li zobrazit související protokoly, můžete buď:<1><0>Upravit filtr štítků tak, aby našel protokoly se stejnými štítky jako aktuálně vybraná metrika, nebo </0><1>vybrat metriku vytvořenou <2><0>pravidlem záznamu Loki</0></2></1></1>",
-      "warnExperimentalFeature": "Související protokoly je experimentální funkce."
-    },
-    "viewBy": "Zobrazit podle"
   },
   "export": {
     "json": {
@@ -6018,12 +6029,14 @@
     "breadcrumbs": {
       "aria-label": ""
     },
+    "extension-sidebar": {
+      "button-tooltip": ""
+    },
     "help": {
       "aria-label": ""
     },
     "invite-user": {
-      "invite-button": "Pozvat",
-      "invite-tooltip": "Pozvat nového člena"
+      "invite-new-member-button": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -6502,18 +6515,9 @@
       "placeholder-select-repository-type": ""
     },
     "config-form-github-collapse": {
-      "description-attach-dashboard-previews": "",
-      "instructions": "",
-      "label-attach-dashboard-previews": "",
+      "description-realtime-feedback": "",
       "label-git-hub-features": "",
-      "pull-request-image-previews": "",
-      "realtime-feedback": "",
-      "text-changes-in-git-eventually-pulled": "",
-      "text-changes-in-git-quick-pull": "",
-      "text-when-image-renderer-configured": "",
-      "title-image-renderer-not-configured": "",
-      "title-public-url-not-configured": "",
-      "title-webhook-will-be-created": ""
+      "label-realtime-feedback": ""
     },
     "connect-repository-button": {
       "configure": "",
@@ -6649,7 +6653,6 @@
       "title-legacy-storage-detected": ""
     },
     "job-status": {
-      "error-unknown": "",
       "label-view-details": "",
       "loading-finished-job": "",
       "no-job-found": "",
@@ -6747,12 +6750,6 @@
       "title-legacy-storage": "",
       "title-queued-for-deletion": ""
     },
-    "request-error": {
-      "failed-to-migrate": "",
-      "failed-to-save": "",
-      "failed-to-sync": "",
-      "operation-failed": ""
-    },
     "resource-view": {
       "base": "",
       "dashboard-preview": "",
@@ -6815,8 +6812,7 @@
       "button-cancel": "",
       "button-cancelling": "",
       "button-submitting": "",
-      "error-instance-repository-exists": "",
-      "title-repository-verification-failed": ""
+      "error-instance-repository-exists": ""
     }
   },
   "public-dashboard": {
@@ -7802,105 +7798,6 @@
     "zone": {
       "select-aria-label": "Volič časového pásma",
       "select-search-input": "Zadejte pro vyhledávání (země, město, zkratka)"
-    }
-  },
-  "trails": {
-    "add-to-filters-graph-action": {
-      "add-to-filters": ""
-    },
-    "bookmarks": {
-      "or-view-bookmarks": "Nebo zobrazit záložky"
-    },
-    "breakdown-search-scene": {
-      "placeholder-search-for-value": ""
-    },
-    "build-normal-layout": {
-      "text-loading": ""
-    },
-    "card": {
-      "date-created": "Datum vytvoření: "
-    },
-    "create-bookmark-saved-notification": {
-      "description": "",
-      "view-bookmarks": ""
-    },
-    "data-trail-card": {
-      "deleteButton-tooltip-remove-bookmark": ""
-    },
-    "data-trail-history": {
-      "history": ""
-    },
-    "data-trail-settings": {
-      "render-popover": {
-        "settings": ""
-      }
-    },
-    "home": {
-      "learn-more": "Zjistěte víc",
-      "lets-start": "Pojďme na to!",
-      "start-your-metrics-exploration": "Začněte prozkoumávat své metriky.",
-      "subtitle": "Prozkoumejte své metriky kompatibilní se systémem Prometheus bez psaní dotazu."
-    },
-    "label-breakdown-scene": {
-      "label-search": "",
-      "label-view": "",
-      "title-warning-there-missing-telemetry-resource-attributes": ""
-    },
-    "metric-action-bar": {
-      "open": "",
-      "select-new-metric": "",
-      "tooltip-bookmark": "",
-      "tooltip-open-in-explore": "",
-      "tooltip-remove-existing-metric-choose": ""
-    },
-    "metric-select": {
-      "filter-by": "Filtrovat podle",
-      "native-histogram": "Nativní histogram",
-      "new-badge": "Nové",
-      "otel-switch": "Tento přepínač umožňuje filtrování podle zdrojů OTel pro nativní zdroje dat OTel."
-    },
-    "metric-select-scene": {
-      "label-otel-experience": "",
-      "label-search-metrics": "",
-      "placeholder-search-metrics": "",
-      "title-unable-to-retrieve-all-metric-names": "",
-      "unable-to-retrieve-metric-names": ""
-    },
-    "metrics-header": {
-      "explore-prometheuscompatible-metrics-without-writing-query": "",
-      "metrics": ""
-    },
-    "native-histogram-banner": {
-      "ch-heatmap": "Klasický histogram zobrazený jako teplotní mapa:",
-      "ch-histogram": "Klasický histogram zobrazený jako histogram:",
-      "click-histogram": "Kliknutím na některý z nativních histogramů níže je můžete prozkoumat:",
-      "hide-examples": "Skrýt příklady",
-      "learn-more": "Zjistěte víc",
-      "metric-examples": "",
-      "nh-heatmap": "Nativní histogram zobrazený jako teplotní mapa:",
-      "nh-histogram": "Nativní histogram zobrazený jako histogram:",
-      "now": "Teď:",
-      "previously": "Dříve:",
-      "see-examples": "> Zobrazit příklady",
-      "sentence": "Nativní histogramy Prometheus nabízejí vysoké rozlišení, vysokou přesnost, jednoduché použití v instrumentaci a způsob, jak kombinovat a manipulovat s histogramy v dotazech a na Grafaně.",
-      "title-native-histogram-support": ""
-    },
-    "recent-metrics": {
-      "or-view-a-recent-exploration": "Nebo zobrazit nedávné prozkoumané"
-    },
-    "related-logs-scene": {
-      "tooltip-navigate-to-the-explore-logs-app": ""
-    },
-    "search-input": {
-      "title-clear-search": ""
-    },
-    "settings": {
-      "always-keep-selected-metric-graph-in-view": "Vždy mějte vybraný graf s metrikami pod dohledem",
-      "show-previews-of-metric-graphs": "Zobrazit náhledy grafů s metrikami"
-    },
-    "sort-by-scene": {
-      "placeholder-choose-criteria": "",
-      "tooltip-sorts-values-using-standard-smart-series": ""
     }
   },
   "transformations": {
