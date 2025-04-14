@@ -1,4 +1,5 @@
-SELECT "guid",
+SELECT
+  "guid",
   "name",
   "namespace",
   "annotations",
@@ -17,7 +18,7 @@ SELECT "guid",
 FROM
   "secret_secure_value"
 WHERE 1 = 1 AND
-  "name" IN ('a', 'b') AND
-  "namespace" = 'ns'
+  "namespace" = 'ns' AND
+  "name" IN ('a', 'b')
 FOR UPDATE
 ;

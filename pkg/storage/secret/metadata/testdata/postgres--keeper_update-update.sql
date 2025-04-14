@@ -1,4 +1,5 @@
-UPDATE "secret_keeper"
+UPDATE
+  "secret_keeper"
 SET
   "guid" = 'abc',
   "name" = 'name',
@@ -13,6 +14,6 @@ SET
   "type" = 'sql',
   "payload" = ''
 WHERE 1 = 1 AND
-  "name" = 'name' AND
-  "namespace"= 'ns'
+  "namespace" = 'ns' AND
+  "name" = 'name'
 ;

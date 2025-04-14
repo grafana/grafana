@@ -14,7 +14,7 @@ SELECT
 FROM
   `secret_keeper`
 WHERE 1 = 1 AND
-  `name` = 'name' AND
-  `namespace` = 'ns'
+  `namespace` = 'ns' AND
+  `name` = 'name'
 ORDER BY `updated` DESC
 ;
