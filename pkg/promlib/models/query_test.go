@@ -23,6 +23,52 @@ var (
 	tracer             = otel.Tracer("instrumentation/package/name")
 )
 
+func TestLargeInterval(t *testing.T) {
+	testCases := []struct {
+		timeRange        time.Duration
+		promRateInterval time.Duration
+		expectedInterval time.Duration
+	}{
+		{
+			timeRange:        time.Hour,
+			promRateInterval: 15 * time.Second,
+			expectedInterval: time.Minute,
+		},
+		{
+			timeRange:        3 * time.Hour,
+			promRateInterval: 15 * time.Second,
+			expectedInterval: 2 * time.Minute,
+		},
+		{
+			timeRange:        12 * time.Hour,
+			promRateInterval: 15 * time.Second,
+			expectedInterval: 8 * time.Minute,
+		},
+		{
+			timeRange:        23 * time.Hour,
+			promRateInterval: 15 * time.Second,
+			expectedInterval: 14 * time.Minute,
+		},
+		{
+			timeRange:        28 * time.Hour,
+			promRateInterval: 15 * time.Second,
+			expectedInterval: 17 * time.Minute,
+		},
+		{
+			timeRange:        2 * 24 * time.Hour,
+			promRateInterval: 40 * time.Minute,
+			expectedInterval: 30 * time.Minute,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("timeRange: %s, promRateInterval: %s", tc.timeRange, tc.promRateInterval), func(t *testing.T) {
+			ddInterval := models.CalculateInterval(models.NumLargeIntervalParts, tc.timeRange, tc.promRateInterval, false)
+			require.Equal(t, tc.expectedInterval, ddInterval)
+		})
+	}
+}
+
 func TestDDInterval(t *testing.T) {
 	testCases := []struct {
 		timeRange          time.Duration
@@ -84,7 +130,7 @@ func TestDDInterval(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("timeRange: %s, promRateInterval: %s", tc.timeRange, tc.promRateInterval), func(t *testing.T) {
-			ddInterval := models.CalculateDDInterval(tc.timeRange, tc.promRateInterval)
+			ddInterval := models.CalculateInterval(models.NumDDTargetParts, tc.timeRange, tc.promRateInterval, true)
 			require.Equal(t, tc.expectedDDInterval, ddInterval)
 		})
 	}

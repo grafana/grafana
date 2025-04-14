@@ -288,6 +288,7 @@ const builtInVariables = [
   '__range',
   '__rate_interval',
   '__dd_interval',
+  '__large_interval',
   '__timeFilter',
   'timeFilter',
   // These are only applicable in dashboards so should not affect this for Explore
