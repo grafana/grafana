@@ -27,14 +27,14 @@ type legacyResorucesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
-	folderMigrator      *legacyFoldersMigrator
+	folderMigrator      LegacyFoldersMigrator
 }
 
 func NewLegacyResourcesMigrator(
 	repositoryResources resources.RepositoryResourcesFactory,
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
-	folderMigrator *legacyFoldersMigrator,
+	folderMigrator LegacyFoldersMigrator,
 ) *legacyResorucesMigrator {
 	return &legacyResorucesMigrator{
 		repositoryResources: repositoryResources,
