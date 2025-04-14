@@ -18,32 +18,32 @@ import (
 
 const maxFolders = 10000
 
-var _ resource.BulkResourceWriter = (*LegacyFolderMigrator)(nil)
+var _ resource.BulkResourceWriter = (*LegacyFoldersMigrator)(nil)
 
-type LegacyFolderMigrator struct {
+type LegacyFoldersMigrator struct {
 	tree           resources.FolderTree
 	legacyMigrator legacy.LegacyMigrator
 }
 
-func NewLegacyFolderMigrator(legacyMigrator legacy.LegacyMigrator) *LegacyFolderMigrator {
-	return &LegacyFolderMigrator{
+func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) *LegacyFoldersMigrator {
+	return &LegacyFoldersMigrator{
 		legacyMigrator: legacyMigrator,
 		tree:           resources.NewEmptyFolderTree(),
 	}
 }
 
 // Close implements resource.BulkResourceWrite.
-func (f *LegacyFolderMigrator) Close() error {
+func (f *LegacyFoldersMigrator) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BulkResourceWrite.
-func (f *LegacyFolderMigrator) CloseWithResults() (*resource.BulkResponse, error) {
+func (f *LegacyFoldersMigrator) CloseWithResults() (*resource.BulkResponse, error) {
 	return &resource.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWrite.
-func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (f *LegacyFoldersMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
@@ -59,7 +59,7 @@ func (f *LegacyFolderMigrator) Write(ctx context.Context, key *resource.Resource
 	return f.tree.AddUnstructured(item)
 }
 
-func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func (f *LegacyFoldersMigrator) Migrate(ctx context.Context, legacyMigrator legacy.LegacyMigrator, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "read folders from SQL")
 	if _, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
@@ -93,6 +93,6 @@ func (f *LegacyFolderMigrator) Migrate(ctx context.Context, legacyMigrator legac
 	return nil
 }
 
-func (f *LegacyFolderMigrator) Tree() resources.FolderTree {
+func (f *LegacyFoldersMigrator) Tree() resources.FolderTree {
 	return f.tree
 }
