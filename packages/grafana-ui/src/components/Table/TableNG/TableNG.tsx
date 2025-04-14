@@ -1,5 +1,5 @@
 import 'react-data-grid/lib/styles.css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
@@ -399,12 +399,7 @@ export function TableNG(props: TableNGProps) {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
     } else {
-      const currentExpandedRows = expandedRows;
-      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-      if (indexToRemove > -1) {
-        currentExpandedRows.splice(indexToRemove, 1);
-        setExpandedRows(currentExpandedRows);
-      }
+      setExpandedRows(expandedRows.filter((id) => id !== rowIdx));
     }
     setResizeTrigger((prev) => prev + 1);
   };
@@ -725,6 +720,7 @@ export function mapFrameToDataGrid({
             rows={expandedRecords}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
+            className={cx(useStyles2(getStyles).dataGrid)}
             style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
           />
