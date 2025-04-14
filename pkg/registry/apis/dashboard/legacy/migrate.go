@@ -13,7 +13,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -222,7 +222,9 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << eventually v0
+		if dash.APIVersion == "" {
+			dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP)
+		}
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 
@@ -326,7 +328,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = "folder.grafana.app/v0alpha1"
+		dash.APIVersion = "folder.grafana.app/v1"
 		dash.Kind = "Folder"
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend

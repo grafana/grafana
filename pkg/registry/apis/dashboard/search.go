@@ -23,7 +23,7 @@ import (
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -265,7 +265,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+			federate, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
 		}
 	case 1:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
@@ -473,7 +473,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
 	}

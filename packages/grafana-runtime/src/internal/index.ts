@@ -25,3 +25,5 @@ export {
   setGetObservablePluginLinks,
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
+
+export { UserStorage } from '../utils/userStorage';

@@ -29,7 +29,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -125,6 +125,7 @@ func NewAPIBuilder(
 
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	return &APIBuilder{
 		urlProvider:         urlProvider,
@@ -135,10 +136,10 @@ func NewAPIBuilder(
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		render:              render,
 		clonedir:            clonedir,
-		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
@@ -518,7 +519,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -536,13 +537,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
+			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
-				b.GetClient(),
-				b.parsers,
 				b.clients,
-				b.resourceLister,
+				b.repositoryResources,
 				b.storageStatus,
+				statusPatcher.Patch,
+				syncer,
 			)
+
 			migrationWorker := migrate.NewMigrationWorker(
 				b.legacyMigrator,
 				b.parsers,
@@ -554,9 +558,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 
 			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
-			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
+			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
+			commenter := pullrequest.NewCommenter()
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
 			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
@@ -1111,7 +1116,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

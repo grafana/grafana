@@ -35,10 +35,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "loki",
-          "uid": "Loki",
-        },
         "enable": true,
         "hide": true,
         "iconColor": "green",
@@ -101,7 +97,17 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "description": "Test Description 2",
         "id": 2,
-        "links": [],
+        "links": [
+          {
+            "targetBlank": true,
+            "title": "Test Link 1",
+            "url": "http://test1.com",
+          },
+          {
+            "title": "Test Link 2",
+            "url": "http://test2.com",
+          },
+        ],
         "title": "Test Panel 2",
         "vizConfig": {
           "kind": "graph",

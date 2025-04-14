@@ -7,8 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -212,26 +214,95 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
 			nonExistentFolderUID := "non-existent-folder-uid"
 			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
-			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folder not found")
+			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
 	})
 
 	t.Run("Dashboard schema validations", func(t *testing.T) {
 		// Test invalid dashboard schema
 		t.Run("reject dashboard with invalid schema", func(t *testing.T) {
-			dashObj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-					"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
-					"metadata": map[string]interface{}{
-						"generateName": "test-",
+			testCases := []struct {
+				name          string
+				resourceInfo  utils.ResourceInfo
+				expectSpecErr bool
+				testObject    *unstructured.Unstructured
+			}{
+				{
+					name:          "v0alpha1 dashboard with wrong spec should not throw on v0",
+					resourceInfo:  dashboardv0alpha1.DashboardResourceInfo,
+					expectSpecErr: false,
+					testObject: &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": dashboardv0alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"kind":       "Dashboard",
+							"metadata": map[string]interface{}{
+								"generateName": "test-",
+							},
+							"spec": map[string]interface{}{
+								"title":         "Dashboard Title",
+								"schemaVersion": 41,
+								"editable":      "elephant",
+								"time":          9000,
+								"uid":           strings.Repeat("a", 100),
+							},
+						},
 					},
-					// Missing spec
+				},
+				{
+					name:          "v1 dashboard with wrong spec should throw on v1",
+					resourceInfo:  dashboardv1.DashboardResourceInfo,
+					expectSpecErr: true,
+					testObject: &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": dashboardv1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"kind":       "Dashboard",
+							"metadata": map[string]interface{}{
+								"generateName": "test-",
+							},
+							"spec": map[string]interface{}{
+								"title":         "Dashboard Title",
+								"schemaVersion": 41,
+								"editable":      "elephant",
+								"time":          9000,
+								"uid":           strings.Repeat("a", 100),
+							},
+						},
+					},
+				},
+				{
+					name:          "v2alpha1 dashboard with correct spec should not throw on v2",
+					resourceInfo:  dashboardv2alpha1.DashboardResourceInfo,
+					expectSpecErr: false,
+					testObject: &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": dashboardv2alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"kind":       "Dashboard",
+							"metadata": map[string]interface{}{
+								"generateName": "test-",
+							},
+							"spec": map[string]interface{}{
+								"title":       "Dashboard Title",
+								"description": "valid description",
+							},
+						},
+					},
 				},
 			}
 
-			_, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
-			require.Error(t, err)
+			for _, tc := range testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					resourceClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, tc.resourceInfo.GroupVersionResource())
+					createdDashboard, err := resourceClient.Resource.Create(context.Background(), tc.testObject, v1.CreateOptions{})
+					if tc.expectSpecErr {
+						ctx.Helper.RequireApiErrorStatus(err, v1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+					} else {
+						require.NoError(t, err)
+						require.NotNil(t, createdDashboard)
+						err = resourceClient.Resource.Delete(context.Background(), createdDashboard.GetName(), v1.DeleteOptions{})
+						require.NoError(t, err)
+					}
+				})
+			}
 		})
 	})
 
@@ -683,20 +754,12 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 
 // getDashboardGVR returns the dashboard GroupVersionResource
 func getDashboardGVR() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    dashboardv1alpha1.DashboardResourceInfo.GroupVersion().Group,
-		Version:  dashboardv1alpha1.DashboardResourceInfo.GroupVersion().Version,
-		Resource: dashboardv1alpha1.DashboardResourceInfo.GetName(),
-	}
+	return dashboardv1.DashboardResourceInfo.GroupVersionResource()
 }
 
 // getFolderGVR returns the folder GroupVersionResource
 func getFolderGVR() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    folderv0alpha1.FolderResourceInfo.GroupVersion().Group,
-		Version:  folderv0alpha1.FolderResourceInfo.GroupVersion().Version,
-		Resource: folderv0alpha1.FolderResourceInfo.GetName(),
-	}
+	return folders.FolderResourceInfo.GroupVersionResource()
 }
 
 // Get a resource client for the specified user
@@ -728,8 +791,8 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 
 	folderObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": folderv0alpha1.FolderResourceInfo.GroupVersion().String(),
-			"kind":       folderv0alpha1.FolderResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": folders.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folders.FolderResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
@@ -784,8 +847,8 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 
 	dashObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv1alpha1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1alpha1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-",
 				"annotations": map[string]interface{}{
@@ -793,7 +856,8 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 				},
 			},
 			"spec": map[string]interface{}{
-				"title": title,
+				"title":         title,
+				"schemaVersion": 41,
 			},
 		},
 	}
