@@ -20,7 +20,7 @@ type ExtensionSidebarComponentProps = {
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled, props } = useExtensionSidebarContext();
+  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
   });
@@ -45,7 +45,7 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
-        <ExtensionComponent props={props} />
+        <ExtensionComponent {...props} />
       </div>
     </div>
   );

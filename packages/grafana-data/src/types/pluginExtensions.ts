@@ -171,7 +171,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * @alpha @internal
    * Opens the extension sidebar with the registered component.
    */
-  openExtensionSidebar: (componentTitle: string, context: Context) => void;
+  openExtensionSidebar?: (componentTitle: string, context: Context) => void;
 };
 
 // Extension Points & Contexts

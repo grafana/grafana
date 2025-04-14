@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
@@ -18,10 +18,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-dash-app',
 ];
 
-export interface OpenExtensionSidebarPayload {
-  componentId: string;
-  props?: any;
-}
+type Props = any;
 
 type ExtensionSidebarContextType = {
   /**
@@ -53,7 +50,7 @@ type ExtensionSidebarContextType = {
    */
   setExtensionSidebarWidth: (width: number) => void;
 
-  props?: any;
+  props?: Props;
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
@@ -75,7 +72,7 @@ interface ExtensionSidebarContextProps {
 }
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
-  const propsRef = useRef<any>();
+  const [props, setProps] = useState<Props | undefined>(undefined);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -115,8 +112,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
 
   const setDockedComponentWithProps = useCallback(
-    (componentId: string | undefined, props?: any) => {
-      propsRef.current = props;
+    (componentId: string | undefined, props?: Props) => {
+      setProps(props);
       setDockedComponentId(componentId);
     },
     [setDockedComponentId]
@@ -166,7 +163,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         availableComponents,
         extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
         setExtensionSidebarWidth,
-        props: propsRef.current,
+        props,
       }}
     >
       {children}
