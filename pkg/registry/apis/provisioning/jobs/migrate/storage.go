@@ -13,13 +13,32 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) error {
+type StorageSwapper struct {
+	// Direct access to unified storage... use carefully!
+	bulk resource.BulkStoreClient
+	dual dualwrite.Service
+}
+
+func NewStorageSwapper(batch resource.BulkStoreClient, dual dualwrite.Service) *StorageSwapper {
+	return &StorageSwapper{
+		bulk: batch,
+		dual: dual,
+	}
+}
+
+func (s *StorageSwapper) IsReadingFromUnifiedStorage(ctx context.Context) bool {
+	return !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, s.dual)
+}
+
+func (s *StorageSwapper) StopReadingUnifiedStorage(ctx context.Context) error {
+	// FIXME: dual writer is not namespaced which means that we would consider all namespaces migrated
+	// after one migrates
 	for _, gr := range resources.SupportedProvisioningResources {
-		status, _ := dual.Status(ctx, gr.GroupResource())
+		status, _ := s.dual.Status(ctx, gr.GroupResource())
 		status.ReadUnified = false
 		status.Migrated = 0
 		status.Migrating = 0
-		_, err := dual.Update(ctx, status)
+		_, err := s.dual.Update(ctx, status)
 		if err != nil {
 			return err
 		}
@@ -28,9 +47,9 @@ func stopReadingUnifiedStorage(ctx context.Context, dual dualwrite.Service) erro
 	return nil
 }
 
-func wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service, namespace string, batch resource.BulkStoreClient) error {
+func (s *StorageSwapper) WipeUnifiedAndSetMigratedFlag(ctx context.Context, namespace string) error {
 	for _, gr := range resources.SupportedProvisioningResources {
-		status, _ := dual.Status(ctx, gr.GroupResource())
+		status, _ := s.dual.Status(ctx, gr.GroupResource())
 		if status.ReadUnified {
 			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)
 		}
@@ -48,7 +67,7 @@ func wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service, 
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := batch.BulkProcess(ctx)
+		stream, err := s.bulk.BulkProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}
@@ -57,12 +76,12 @@ func wipeUnifiedAndSetMigratedFlag(ctx context.Context, dual dualwrite.Service, 
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}
 		logger := logging.FromContext(ctx)
-		logger.Error("cleared unified stoage", "stats", stats)
+		logger.Error("cleared unified storage", "stats", stats)
 
 		status.Migrated = time.Now().UnixMilli() // but not really... since the sync is starting
 		status.ReadUnified = true
 		status.WriteLegacy = false // keep legacy "clean"
-		_, err = dual.Update(ctx, status)
+		_, err = s.dual.Update(ctx, status)
 		if err != nil {
 			return err
 		}

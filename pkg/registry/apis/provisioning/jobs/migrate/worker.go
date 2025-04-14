@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 //go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
@@ -30,14 +28,10 @@ type MigrationWorker struct {
 
 	clients resources.ClientFactory
 
-	// Check where values are currently saved
-	storageStatus dualwrite.Service
+	storageSwapper *StorageSwapper
 
 	// Support reading from history
 	legacyMigrator legacy.LegacyMigrator
-
-	// Direct access to unified storage... use carefully!
-	bulk resource.BulkStoreClient
 
 	// Delegate the export to the export worker
 	exportWorker jobs.Worker
@@ -52,8 +46,7 @@ func NewMigrationWorker(
 	legacyMigrator legacy.LegacyMigrator,
 	parsers resources.ParserFactory, // should not be necessary!
 	clients resources.ClientFactory,
-	storageStatus dualwrite.Service,
-	batch resource.BulkStoreClient,
+	storageSwapper *StorageSwapper,
 	exportWorker jobs.Worker,
 	syncWorker jobs.Worker,
 	wrapWithCloneFn WrapWithCloneFn,
@@ -61,9 +54,8 @@ func NewMigrationWorker(
 	return &MigrationWorker{
 		parsers:         parsers,
 		clients:         clients,
-		storageStatus:   storageStatus,
+		storageSwapper:  storageSwapper,
 		legacyMigrator:  legacyMigrator,
-		bulk:            batch,
 		exportWorker:    exportWorker,
 		syncWorker:      syncWorker,
 		wrapWithCloneFn: wrapWithCloneFn,
@@ -96,11 +88,11 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting clients: %w", err)
 	}
 
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
-		return w.migrateFromLegacy(ctx, rw, parser, clients, *options, progress)
+	if w.storageSwapper.IsReadingFromUnifiedStorage(ctx) {
+		return w.migrateFromAPIServer(ctx, rw, clients, *options, progress)
 	}
 
-	return w.migrateFromAPIServer(ctx, rw, clients, *options, progress)
+	return w.migrateFromLegacy(ctx, rw, parser, clients, *options, progress)
 }
 
 // migrateFromLegacy will export the resources from legacy storage and import them into the target repository
@@ -182,7 +174,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 	}
 
 	progress.SetMessage(ctx, "resetting unified storage")
-	if err := wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus, namespace, w.bulk); err != nil {
+	if err := w.storageSwapper.WipeUnifiedAndSetMigratedFlag(ctx, namespace); err != nil {
 		return fmt.Errorf("unable to reset unified storage %w", err)
 	}
 
@@ -199,7 +191,7 @@ func (w *MigrationWorker) migrateFromLegacy(ctx context.Context, rw repository.R
 		},
 	}, progress); err != nil { // this will have an error when too many errors exist
 		progress.SetMessage(ctx, "error importing resources, reverting")
-		if e2 := stopReadingUnifiedStorage(ctx, w.storageStatus); e2 != nil {
+		if e2 := w.storageSwapper.StopReadingUnifiedStorage(ctx); e2 != nil {
 			logger := logging.FromContext(ctx)
 			logger.Warn("error trying to revert dual write settings after an error", "err", err)
 		}
