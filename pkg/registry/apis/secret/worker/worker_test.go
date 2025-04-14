@@ -262,7 +262,7 @@ func nextAction(rng *rand.Rand, state *state) action {
 }
 
 func buildState(database contracts.Database) *state {
-	const query = `
+	const secureValuesNotInOutboxQueueQuery = `
 	SELECT 
 		secret_secure_value.namespace,
 		secret_secure_value.name,
@@ -274,7 +274,7 @@ func buildState(database contracts.Database) *state {
 					AND secret_secure_value_outbox.name = secret_secure_value.name
 		)
 	`
-	rows, err := database.QueryContext(context.Background(), query)
+	rows, err := database.QueryContext(context.Background(), secureValuesNotInOutboxQueueQuery)
 	if err != nil {
 		panic(err)
 	}
