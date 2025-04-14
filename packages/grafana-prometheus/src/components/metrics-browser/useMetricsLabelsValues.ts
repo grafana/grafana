@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
@@ -9,7 +10,8 @@ import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, MET
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
-  // const [initTrigger, setInitTrigger] = useState(Date.now());
+  const lastSeriesLimitRef = useRef(DEFAULT_SERIES_LIMIT);
+  const isInitializedRef = useRef(false);
 
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
@@ -181,8 +183,22 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Initialize the hook
   useEffect(() => {
     initialize(selectedMetric, selectedLabelValues);
+    isInitializedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // We use debounce here to prevent fetching data on every keystroke
+  // We also track the seriesLimit change to prevent fetching twice right after the initialization
+  useDebounce(
+    () => {
+      if (isInitializedRef.current && lastSeriesLimitRef.current !== seriesLimit) {
+        initialize(selectedMetric, selectedLabelValues);
+        lastSeriesLimitRef.current = seriesLimit;
+      }
+    },
+    300,
+    [seriesLimit]
+  );
 
   // Handles metric selection changes.
   // If a metric selected it fetches the labels of that metric
