@@ -1,7 +1,5 @@
 import { forwardRef, useState, useCallback, useEffect } from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { Input, Props as InputProps } from '../Input/Input';
 import { Text, TextProps } from '../Text/Text';
 
@@ -31,7 +29,7 @@ export const EditableText = forwardRef<HTMLDivElement, EditableTextProps>(
     );
 
     return (
-      <div ref={ref} data-testid={selectors.components.EditableText.name}>
+      <div ref={ref} data-testid="EditableText">
         {editable ? (
           <Input {...props} data-testid="editable-text-input" onChange={handleChange} value={currentText} />
         ) : (
