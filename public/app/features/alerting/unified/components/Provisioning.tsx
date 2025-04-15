@@ -20,9 +20,17 @@ interface ProvisioningAlertProps extends ExtraAlertProps {
 
 export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps) => {
   return (
-    <Alert title={`This ${resource} cannot be edited through the UI`} severity="info" {...rest}>
-      This {resource} has been provisioned, that means it was created by config. Please contact your server admin to
-      update this {resource}.
+    <Alert
+      title={t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
+        resource,
+      })}
+      severity="info"
+      {...rest}
+    >
+      <Trans i18nKey="alerting.provisioning.body-provisioned">
+        This {{ resource }} has been provisioned, that means it was created by config. Please contact your server admin
+        to update this {{ resource }}.
+      </Trans>
     </Alert>
   );
 };

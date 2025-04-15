@@ -29,8 +29,10 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
           <div className="gf-form max-width-30">
             <InlineField
               label={t('datasources.basic-settings.label-name', 'Name')}
-              tooltip="The name is used when you select the data source in panels. The default data source is
-              'preselected in new panels."
+              tooltip={t(
+                'datasources.basic-serttings.tooltip-name',
+                'The name is used when you select the data source in panels. The default data source is preselected in new panels.'
+              )}
               grow
               disabled={disabled}
               labelWidth={14}

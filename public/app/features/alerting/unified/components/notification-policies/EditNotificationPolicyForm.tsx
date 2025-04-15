@@ -95,7 +95,10 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
             color="orange"
             className={styles.noMatchersWarning}
             icon="exclamation-triangle"
-            text="If no matchers are specified, this notification policy will handle all alert instances."
+            text={t(
+              'alerting.am-routes-expanded-form.badge-no-matchers',
+              'If no matchers are specified, this notification policy will handle all alert instances.'
+            )}
           />
         )}
         {fields.length > 0 && (
@@ -197,7 +200,10 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
       {watch().overrideGrouping && (
         <Field
           label={t('alerting.am-routes-expanded-form.label-group-by', 'Group by')}
-          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
+          description={t(
+            'alerting.am-routes-expanded-form.description-group-by',
+            'Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy.'
+          )}
         >
           <Controller
             rules={{

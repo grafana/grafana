@@ -7,6 +7,7 @@ import { VariableSizeList as List } from 'react-window';
 import { DataFrame, Field as DataFrameField } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ItemLabels } from './ItemLabels';
 import RawListItem from './RawListItem';
@@ -117,9 +118,18 @@ const RawListContainer = (props: RawListContainerProps) => {
   return (
     <section>
       <header className={styles.header}>
-        <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
+        <Field
+          className={styles.switchWrapper}
+          label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
+          htmlFor={'isExpandedView'}
+        >
           <div className={styles.switch}>
-            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={`Expand results`} />
+            <Switch
+              onChange={onContentClick}
+              id={switchId}
+              value={isExpandedView}
+              label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
+            />
           </div>
         </Field>
 
