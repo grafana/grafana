@@ -79,7 +79,6 @@ cloud.google.com/go/auth v0.9.9/go.mod h1:xxA5AqpDrvS+Gkmo9RqrGGRh6WSNKKOXhY3zNO
 cloud.google.com/go/auth v0.12.1/go.mod h1:BFMu+TNpF3DmvfBO9ClqTR/SiqVIm7LukKF9mbendF4=
 cloud.google.com/go/auth v0.13.0/go.mod h1:COOjD9gwfKNKz+IIduatIhYJQIc0mG3H102r/EMxX6Q=
 cloud.google.com/go/auth v0.14.0/go.mod h1:CYsoRL1PdiDuqeQpZE0bP2pnPrGqFcOkI0nldEQis+A=
-cloud.google.com/go/auth v0.14.1/go.mod h1:4JHUxlGXisL0AW8kXPtUF6ztuOksyfUQNFjfsOCXkPM=
 cloud.google.com/go/auth/oauth2adapt v0.2.2/go.mod h1:wcYjgpZI9+Yu7LyYBg4pqSiaRkfEK3GQcpb7C/uyF1Q=
 cloud.google.com/go/auth/oauth2adapt v0.2.4/go.mod h1:jC/jOpwFP6JBxhB3P5Rr0a9HLMC/Pe3eaL4NmdvqPtc=
 cloud.google.com/go/auth/oauth2adapt v0.2.6/go.mod h1:AlmsELtlEBnaNTL7jCj8VQFLy6mbZv0s4Q7NGBeQ5E8=
@@ -533,7 +532,6 @@ github.com/Azure/go-autorest/autorest/azure/auth v0.5.13/go.mod h1:5BAVfWLWXihP4
 github.com/Azure/go-autorest/autorest/azure/cli v0.4.6 h1:w77/uPk80ZET2F+AfQExZyEWtn+0Rk/uw17m9fv5Ajc=
 github.com/Azure/go-autorest/autorest/azure/cli v0.4.6/go.mod h1:piCfgPho7BiIDdEQ1+g4VmKyD5y+p/XtSNqE6Hc4QD0=
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802 h1:1BDTz0u9nC3//pOCMdNH+CiXJVYJh5UQNCOBG7jbELc=
 github.com/ClickHouse/ch-go v0.61.5 h1:zwR8QbYI0tsMiEcze/uIMK+Tz1D3XZXLdNrlaOpeEI4=
 github.com/ClickHouse/ch-go v0.61.5/go.mod h1:s1LJW/F/LcFs5HJnuogFMta50kKDO0lf9zzfrbl0RQg=
@@ -900,14 +898,12 @@ github.com/dolthub/go-icu-regex v0.0.0-20241215010122-db690dd53c90/go.mod h1:ylU
 github.com/dolthub/go-icu-regex v0.0.0-20250319212010-451ea8d003fa/go.mod h1:ylU4XjUpsMcvl/BKeRRMXSH7e7WBrPXdSLvnRJYrxEA=
 github.com/dolthub/go-mysql-server v0.19.1-0.20250206012855-c216e59c21a7/go.mod h1:jYEJ8tNkA7K3k39X8iMqaX3MSMmViRgh222JSLHDgVc=
 github.com/dolthub/go-mysql-server v0.19.1-0.20250319232254-8c915e51131f/go.mod h1:9itIc5jYYDRxmchFmegPaLaqdf4XWYX6nua5HhrajgA=
-github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc/go.mod h1:lt1xwT52nowkmcVWaFpLShNUrScQV8EQ1aNNGGMduRE=
 github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81 h1:7/v8q9XGFa6q5Ap4Z/OhNkAMBaK5YeuEzwJt+NZdhiE=
 github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81/go.mod h1:siLfyv2c92W1eN/R4QqG/+RjjX5W2+gCTRjZxBjI3TY=
 github.com/dolthub/swiss v0.2.1 h1:gs2osYs5SJkAaH5/ggVJqXQxRXtWshF6uE0lgR/Y3Gw=
 github.com/dolthub/swiss v0.2.1/go.mod h1:8AhKZZ1HK7g18j7v7k6c5cYIGEZJcPn0ARsai8cUrh0=
 github.com/dolthub/vitess v0.0.0-20250123002143-3b45b8cacbfa/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
 github.com/dolthub/vitess v0.0.0-20250304211657-920ca9ec2b9a/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
-github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
 github.com/drone/funcmap v0.0.0-20220929084810-72602997d16f h1:/jEs7lulqVO2u1+XI5rW4oFwIIusxuDOVKD9PAzlW2E=
 github.com/drone/funcmap v0.0.0-20220929084810-72602997d16f/go.mod h1:nDRkX7PHq+p39AD5/usv3KZMerxZTYU/9rfLS5IDspU=
 github.com/drone/signal v1.0.0 h1:NrnM2M/4yAuU/tXs6RP1a1ZfxnaHwYkd0kJurA1p6uI=
@@ -1101,7 +1097,6 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250129195454-3e5b80036b7a/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
 github.com/grafana/alerting v0.0.0-20250310104713-16b885f1c79e/go.mod h1:HfvjmU3UqCIpoy9Z2wgKGrZ4A5vz+yQlP9ZXvCfEkiA=
-github.com/grafana/alerting v0.0.0-20250331100049-71df46678ea6/go.mod h1:3ER/8BhIEhvrddcztLQSc5ez1f1jNHIPdquc1F+DzOw=
 github.com/grafana/alerting v0.0.0-20250403153742-418bc7118d05 h1:hMzOzI/S0nkZt0nUqpfAa4Rdb+YL8z8oG3pl4Jb31h8=
 github.com/grafana/alerting v0.0.0-20250403153742-418bc7118d05/go.mod h1:K3YAJumchx5EEZItGv4D3pCv/Ux796hmoOibP/p/eYk=
 github.com/grafana/authlib v0.0.0-20250123104008-e99947858901/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
@@ -1117,14 +1112,12 @@ github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD
 github.com/grafana/grafana-app-sdk/logging v0.35.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-plugin-sdk-go v0.263.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana-plugin-sdk-go v0.267.0/go.mod h1:OuwS4c/JYgn0rr/w5zhJBpLo4gKm/vw15RsfpYAvK9Q=
-github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0/go.mod h1:jV+CTjXqXYuaz8FgSG7ALOib3sgiDo/00dfsQFVTSpM=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250220154326-6e5de80ef295/go.mod h1:9I1dKV3Dqr0NPR9Af0WJGxOytp5/6W3JLiNChOz8r+c=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d/go.mod h1:AvleS6icyPmcBjihtx5jYEvdzLmHGBp66NuE0AMR57A=
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
-github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9/go.mod h1:QdqsZpdCtg+3TEzXX3mUakjq79LFblZ8xliHmqZj3oA=
 github.com/grafana/grafana/pkg/build v0.0.0-20250220114259-be81314e2118/go.mod h1:STVpVboMYeBAfyn6Zw6XHhTHqUxzMy7pzRiVgk1l0W0=
 github.com/grafana/grafana/pkg/build v0.0.0-20250227105625-8f465f124924/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
 github.com/grafana/grafana/pkg/build v0.0.0-20250227163402-d78c646f93bb/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
@@ -1566,7 +1559,6 @@ github.com/shurcooL/sanitized_anchor_name v1.0.0 h1:PdmoCO6wvbs+7yrJyMORt4/BmY5I
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sony/gobreaker v0.4.1/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/spf13/afero v1.10.0/go.mod h1:UBogFpq8E9Hx+xc5CNTTEpTnuHVmXDwZcZcE1eb/UhQ=
-github.com/spf13/afero v1.11.0/go.mod h1:GH9Y3pIexgf1MTIWtNGyogA5MwRIDXGUr+hbWNoBjkY=
 github.com/spf13/cobra v0.0.3/go.mod h1:1l0Ry5zgKvJasoi3XT1TypsSe7PqH0Sj9dhYf7v3XqQ=
 github.com/spf13/cobra v1.4.0/go.mod h1:Wo4iy3BUC+X2Fybo0PDqwJIv3dNRiZLHQymsfxlB84g=
 github.com/spf13/cobra v1.7.0/go.mod h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRMrb0=
@@ -1794,7 +1786,6 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0/go.mod h1:
 go.opentelemetry.io/contrib/propagators/b3 v1.27.0 h1:IjgxbomVrV9za6bRi8fWCNXENs0co37SZedQilP2hm0=
 go.opentelemetry.io/contrib/propagators/b3 v1.27.0/go.mod h1:Dv9obQz25lCisDvvs4dy28UPh974CxkahRDUPsY7y9E=
 go.opentelemetry.io/contrib/propagators/jaeger v1.33.0/go.mod h1:ku/EpGk44S5lyVMbtJRK2KFOnXEehxf6SDnhu1eZmjA=
-go.opentelemetry.io/contrib/propagators/jaeger v1.34.0/go.mod h1:DAX1bsj+uDm2ZuOQH/RgZRx7RQZWyzV5W2WR/0UX8JA=
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.27.0/go.mod h1:IohbtCIY5Erb6wKnDddXOMNlG7GwyZnkrgcqjPmhpaA=
 go.opentelemetry.io/otel v1.24.0/go.mod h1:W7b9Ozg4nkF5tWI5zsXkaKKDjdVjpD4oAt9Qi/MArHo=
 go.opentelemetry.io/otel v1.26.0/go.mod h1:UmLkJHUAidDval2EICqBMbnAd0/m2vmpf/dAM+fvFs4=
@@ -1876,7 +1867,6 @@ golang.org/x/crypto v0.31.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ss
 golang.org/x/crypto v0.32.0/go.mod h1:ZnnJkOaASj8g0AjIduWNlq2NRxL0PlBrbKVyZ6V/Ugc=
 golang.org/x/crypto v0.33.0/go.mod h1:bVdXmD7IV/4GdElGPozy6U7lWdRXA4qyRVGJV57uQ5M=
 golang.org/x/crypto v0.35.0/go.mod h1:dy7dXNW32cAb/6/PRuTNsix8T+vJAqvuIy5Bli/x0YQ=
-golang.org/x/crypto v0.36.0/go.mod h1:Y4J0ReaxCR1IMaabaSMugxJES1EpwhBHhv2bDHklZvc=
 golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc/go.mod h1:V1LtkGg67GoY2N1AnLN78QLrzxkLyJw7RJb1gzOOz9w=
 golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1/go.mod h1:V1LtkGg67GoY2N1AnLN78QLrzxkLyJw7RJb1gzOOz9w=
@@ -1960,7 +1950,6 @@ golang.org/x/telemetry v0.0.0-20240521205824-bda55230c457/go.mod h1:pRgIJT+bRLFK
 golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
 golang.org/x/term v0.25.0/go.mod h1:RPyXicDX+6vLxogjjRxjgD2TKtmAO6NZBsBRfrOLu7M=
-golang.org/x/term v0.30.0/go.mod h1:NYYFdzHoI5wRh/h5tDMdMqCqPJZEuNqVR5xJLd/n67g=
 golang.org/x/text v0.12.0/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
 golang.org/x/text v0.16.0/go.mod h1:GhwF1Be+LQoKShO3cGOHzqOgRrGaYc9AvblQOmPVHnI=
 golang.org/x/text v0.17.0/go.mod h1:BuEKDfySbSR4drPmRPG/7iBdf8hvFMuRexcpahXilzY=
@@ -1988,7 +1977,6 @@ golang.org/x/tools v0.25.0/go.mod h1:/vtpO8WL1N9cQC3FN5zPqb//fRXskFHbLKk4OW1Q7rg
 golang.org/x/tools v0.26.0/go.mod h1:TPVVj70c7JJ3WCazhD8OdXcZg/og+b9+tH/KxylGwH0=
 golang.org/x/tools v0.28.0/go.mod h1:dcIOrVd3mfQKTgrDVQHqCPMWy6lnhfhtX3hLXYVLfRw=
 golang.org/x/tools v0.30.0/go.mod h1:c347cR/OJfw5TI+GfX7RUPNMdDRRbjvYTS0jPyvsVtY=
-golang.org/x/tools v0.31.0/go.mod h1:naFTU+Cev749tSJRXJlna0T3WxKvb1kWEx15xA4SdmQ=
 golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028/go.mod h1:NDW/Ps6MPRej6fsCIbMTohpP40sJ/P/vI1MoTEGwX90=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0 h1:OE9mWmgKkjJyEmDAAtGMPjXu+YNeGvK9VTSHY6+Qihc=
 gonum.org/v1/plot v0.14.0 h1:+LBDVFYwFe4LHhdP8coW6296MBEY4nQ+Y4vuUpJopcE=
@@ -2002,7 +1990,6 @@ google.golang.org/api v0.214.0/go.mod h1:bYPpLG8AyeMWwDU6NXoB00xC0DFkikVvd5Mfwox
 google.golang.org/api v0.215.0/go.mod h1:fta3CVtuJYOEdugLNWm6WodzOS8KdFckABwN4I40hzY=
 google.golang.org/api v0.217.0/go.mod h1:qMc2E8cBAbQlRypBTBWHklNJlaZZJBwDv81B1Iu8oSI=
 google.golang.org/api v0.218.0/go.mod h1:5VGHBAkxrA/8EFjLVEYmMUJ8/8+gWWQ3s4cFH0FxG2M=
-google.golang.org/api v0.220.0/go.mod h1:26ZAlY6aN/8WgpCzjPNy18QpYaz7Zgg1h0qe1GkZEmY=
 google.golang.org/appengine v1.2.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.6.8 h1:IhEN5q69dyKagZPYMSdIjS2HqprW324FRQZJcGqPAsM=
 google.golang.org/appengine v1.6.8/go.mod h1:1jJ3jBArFh5pcgW8gCtRJnepW8FzD1V44FJffLiz/Ds=

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-logfmt/logfmt"
+	// "github.com/go-logfmt/logfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
@@ -123,15 +123,26 @@ func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
 	jaegerURL.Path = "/api/traces"
 
 	var queryTags string
+	// if query.Tags != "" {
+	// 	tagMap := make(map[string]string)
+	// 	decoder := logfmt.NewDecoder(strings.NewReader(query.Tags))
+	// 	for decoder.ScanRecord() {
+	// 		for decoder.ScanKeyval() {
+	// 			key := decoder.Key()
+	// 			value := decoder.Value()
+	// 			tagMap[string(key)] = string(value)
+	// 		}
+	// 	}
+
 	if query.Tags != "" {
 		tagMap := make(map[string]string)
-		decoder := logfmt.NewDecoder(strings.NewReader(query.Tags))
-		for decoder.ScanRecord() {
-			for decoder.ScanKeyval() {
-				key := decoder.Key()
-				value := decoder.Value()
-				tagMap[string(key)] = string(value)
+		pairs := strings.Split(query.Tags, " ")
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				continue
 			}
+			tagMap[kv[0]] = kv[1]
 		}
 
 		marshaledTags, err := json.Marshal(tagMap)
