@@ -4,7 +4,9 @@ import (
 	context "context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -18,7 +20,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/flagext"
+	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/dskit/user"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // ResourceServer implements all gRPC services
@@ -149,6 +158,14 @@ type SearchOptions struct {
 	InitMinCount int
 }
 
+type ShardingConfig struct {
+	Enabled              bool
+	RingDebugServerPort  string
+	MemberlistBindAddr   string
+	MemberlistJoinMember string
+	RingListenPort       int
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
@@ -184,6 +201,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	ShardingConfig *ShardingConfig
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -251,6 +270,13 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		indexMetrics:   opts.IndexMetrics,
 	}
 
+	if opts.ShardingConfig != nil && opts.ShardingConfig.Enabled {
+		err := s.enableSharding(*opts.ShardingConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error sharding", err)
+		}
+	}
+
 	if opts.Search.Resources != nil {
 		var err error
 		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
@@ -293,6 +319,12 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	// sharding things
+	shardingEnabled bool
+	pool            *ringclient.Pool
+	ring            *ring.Ring
+	lifecycler      *ring.BasicLifecycler
 }
 
 // Init implements ResourceServer.
@@ -321,6 +353,70 @@ func (s *server) Init(ctx context.Context) error {
 		}
 	})
 	return s.initErr
+}
+
+func (s *server) enableSharding(cfg ShardingConfig) error {
+	ctx := context.Background()
+	grpcclientcfg := &grpcclient.Config{}
+	flagext.DefaultValues(grpcclientcfg)
+	pool := newClientPool(*grpcclientcfg /*TODO*/, s.log, nil)
+
+	ringsvc, lfcsvc, err := initRing(cfg, log.New("resource-server-ring"), nil)
+
+	if err != nil {
+		return err
+	}
+
+	err = ringsvc.StartAsync(ctx)
+	if err != nil {
+		return err
+	}
+	err = lfcsvc.StartAsync(ctx)
+	if err != nil {
+		return err
+	}
+
+	s.log.Info("waiting until resource server is JOINING in the ring")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	if err := ring.WaitInstanceState(ctx, ringsvc, lfcsvc.GetInstanceID(), ring.JOINING); err != nil {
+		return err
+	}
+	s.log.Info("resource server is JOINING in the ring")
+
+	if err := lfcsvc.ChangeState(context.Background(), ring.ACTIVE); err != nil {
+		return fmt.Errorf("switch instance to %s in the ring: %w", ring.ACTIVE, err)
+	}
+
+	s.log.Info("waiting until resource server is ACTIVE in the ring")
+	if err := ring.WaitInstanceState(context.Background(), ringsvc, lfcsvc.GetInstanceID(), ring.ACTIVE); err != nil {
+		return err
+	}
+	s.log.Info("resource server is ACTIVE in the ring")
+
+	if err := pool.StartAsync(context.Background()); err != nil {
+		return fmt.Errorf("failed to create pool client: %w", err)
+	}
+
+	s.pool = pool
+	s.ring = ringsvc
+	s.lifecycler = lfcsvc
+	s.shardingEnabled = true
+
+	if cfg.RingDebugServerPort != "" {
+		go func() {
+			listener, err := net.Listen("tcp", net.JoinHostPort(cfg.MemberlistBindAddr, cfg.RingDebugServerPort))
+			if err != nil {
+				panic(err)
+			}
+			mux := http.NewServeMux()
+			mux.Handle("/ring", lfcsvc)
+			http.Serve(listener, mux)
+			// mux.Handle("/kv", memberlistsvc)
+		}()
+	}
+
+	return nil
 }
 
 func (s *server) Stop(ctx context.Context) error {
@@ -956,6 +1052,38 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
+
+	nsr := NamespacedResource{
+		Group:     req.Options.Key.Group,
+		Namespace: req.Options.Key.Namespace,
+		Resource:  req.Options.Key.Resource,
+	}
+
+	if s.shardingEnabled {
+		ringHasher := fnv.New32a()
+		ringHasher.Write([]byte(nsr.Namespace))
+		rs, err := s.ring.Get(ringHasher.Sum32(), ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+			return s != ring.ACTIVE
+		}), nil, nil, nil)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
+			fmt.Println("request for another instance. sending over to", rs.Instances[0].Id)
+
+			ins, err := s.pool.GetClientForInstance(rs.Instances[0])
+			if err != nil {
+				return nil, err
+			}
+			client := ins.(*ringClient)
+			_ctx, _ := identity.WithServiceIdentity(user.InjectOrgID(ctx, "1"), 1)
+			res, err := client.client.Search(_ctx, req)
+			return res, err
+		}
+	}
+
 	return s.search.Search(ctx, req)
 }
 

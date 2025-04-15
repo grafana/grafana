@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,8 +24,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/dskit/flagext"
-	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 
@@ -104,96 +100,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 	go bleveBackend.updateIndexSizeMetric(opts.Root)
 
-	// TODO wrap in feature flag
-	if opts.Cfg.IndexEnableSharding {
-		err = bleveBackend.enableSharding(opts.Cfg)
-		if err != nil {
-			return nil, fmt.Errorf("error sharding", err)
-		}
-	}
-
 	return bleveBackend, nil
-}
-
-func (b *bleveBackend) enableSharding(cfg *setting.Cfg) error {
-	ctx := context.Background()
-	grpcclientcfg := &grpcclient.Config{}
-	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg /*TODO*/, b.log, nil, cfg)
-
-	ringsvc, lfcsvc, err := initRing(cfg, log.New("bleve-ring"), nil)
-
-	if err != nil {
-		return err
-	}
-
-	err = ringsvc.StartAsync(ctx)
-	if err != nil {
-		return err
-	}
-	err = lfcsvc.StartAsync(ctx)
-	if err != nil {
-		return err
-	}
-
-	b.log.Info("waiting until bleve is JOINING in the rinng")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	if err := ring.WaitInstanceState(ctx, ringsvc, lfcsvc.GetInstanceID(), ring.JOINING); err != nil {
-		return err
-	}
-	b.log.Info("bleve is JOINING in the rinng")
-
-	if err := lfcsvc.ChangeState(context.Background(), ring.ACTIVE); err != nil {
-		return fmt.Errorf("switch instance to %s in the ring: %w", ring.ACTIVE, err)
-	}
-
-	b.log.Info("waiting until bleve is ACTIVE in the rinng")
-	if err := ring.WaitInstanceState(context.Background(), ringsvc, lfcsvc.GetInstanceID(), ring.ACTIVE); err != nil {
-		return err
-	}
-	b.log.Info("bleve is ACTIVE in the rinng")
-
-	if err := pool.StartAsync(context.Background()); err != nil {
-		return fmt.Errorf("failed to create pool client: %w", err)
-	}
-
-	b.pool = pool
-	b.ring = ringsvc
-	b.lifecycler = lfcsvc
-
-	if cfg.IndexRingDebugServerPort != "" {
-		go func() {
-			listener, err := net.Listen("tcp", net.JoinHostPort(cfg.IndexMemberlistBindAddr, cfg.IndexRingDebugServerPort))
-			if err != nil {
-				panic(err)
-			}
-			mux := http.NewServeMux()
-			mux.Handle("/ring", lfcsvc)
-			http.Serve(listener, mux)
-			// mux.Handle("/kv", memberlistsvc)
-		}()
-	}
-
-	return nil
-
-}
-
-func (b *bleveBackend) GetClientPool() *ringclient.Pool {
-	return b.pool
-}
-
-func (b *bleveBackend) GetRing() *ring.Ring {
-	return b.ring
-}
-
-func (b *bleveBackend) GetLifecycler() *ring.BasicLifecycler {
-	return b.lifecycler
-}
-
-func (b *bleveBackend) IsShardingEnabled() bool {
-	// TODO configure this
-	return true
 }
 
 // This will return nil if the key does not exist

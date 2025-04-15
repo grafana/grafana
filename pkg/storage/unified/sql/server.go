@@ -68,6 +68,13 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	opts.Lifecycle = store
 	opts.Search = searchOptions
 	opts.IndexMetrics = indexMetrics
+	opts.ShardingConfig = &resource.ShardingConfig{
+		Enabled: cfg.EnableSharding,
+		MemberlistBindAddr: cfg.MemberlistBindAddr,
+		MemberlistJoinMember: cfg.MemberlistJoinMember,
+		RingDebugServerPort: cfg.RingDebugServerPort,
+		RingListenPort: cfg.RingListenPort,
+	}
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
