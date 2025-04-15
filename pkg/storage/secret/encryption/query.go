@@ -21,6 +21,7 @@ var (
 	sqlEncryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
 )
 
+// TODO: Move this to a common place so that all stores can use
 func mustTemplate(filename string) *template.Template {
 	if t := sqlTemplates.Lookup(filename); t != nil {
 		return t
