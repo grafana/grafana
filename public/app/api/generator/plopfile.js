@@ -71,7 +71,7 @@ module.exports = function (plop) {
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
-        pattern: /  },\n  },\n};/g,
+        pattern: /};/g,
         templateFile: './templates/config-entry.hbs',
       },
 
@@ -84,28 +84,28 @@ module.exports = function (plop) {
 
       // Update reducers and middleware
       {
-        type: 'prepend',
+        type: 'modify',
         path: projectPath('public/app/core/reducers/root.ts'),
         pattern: '// PLOP_INJECT_IMPORT',
-        template: `import { ${reducerPath} } from '../../api/clients/${groupName}';`,
+        template: `import { ${reducerPath} } from '../../api/clients/${groupName}';\n// PLOP_INJECT_IMPORT`,
       },
       {
-        type: 'prepend',
+        type: 'modify',
         path: projectPath('public/app/core/reducers/root.ts'),
         pattern: '// PLOP_INJECT_REDUCER',
-        template: `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,`,
+        template: `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
       },
       {
-        type: 'prepend',
+        type: 'modify',
         path: projectPath('public/app/store/configureStore.ts'),
         pattern: '// PLOP_INJECT_IMPORT',
-        template: `import { ${reducerPath} } from '../api/clients/${groupName}';`,
+        template: `import { ${reducerPath} } from '../api/clients/${groupName}';\n// PLOP_INJECT_IMPORT`,
       },
       {
-        type: 'prepend',
+        type: 'modify',
         path: projectPath('public/app/store/configureStore.ts'),
         pattern: '// PLOP_INJECT_MIDDLEWARE',
-        template: `        ${reducerPath}.middleware,`,
+        template: `        ${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
       },
 
       // Display success message using the custom action type
