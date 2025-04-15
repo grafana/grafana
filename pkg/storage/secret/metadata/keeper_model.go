@@ -103,7 +103,7 @@ func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*keeperDB, e
 		return nil, fmt.Errorf("failed to map to row: %w", err)
 	}
 
-	now := time.Now().UTC().UnixMilli()
+	now := time.Now().UTC().Unix()
 
 	row.GUID = uuid.New().String()
 	row.Created = now
@@ -121,7 +121,7 @@ func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv0alpha1.Keeper, a
 		return nil, fmt.Errorf("failed to map to row: %w", err)
 	}
 
-	now := time.Now().UTC().UnixMilli()
+	now := time.Now().UTC().Unix()
 
 	row.GUID = currentRow.GUID
 	row.Created = currentRow.Created
@@ -185,7 +185,7 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 		Namespace:   kp.Namespace,
 		Annotations: annotations,
 		Labels:      labels,
-		Created:     meta.GetCreationTimestamp().UnixMilli(),
+		Created:     meta.GetCreationTimestamp().Unix(),
 		CreatedBy:   meta.GetCreatedBy(),
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
