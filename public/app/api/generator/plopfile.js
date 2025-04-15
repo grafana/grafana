@@ -1,6 +1,14 @@
 const path = require('path');
 
-const { projectPath: createProjectPath, formatOperationIds, validateGroup, validateVersion } = require('./helpers');
+const { 
+  projectPath: createProjectPath, 
+  formatOperationIds, 
+  validateGroup, 
+  validateVersion,
+  getFilesToFormat,
+  runGenerateApis,
+  formatFiles
+} = require('./helpers');
 
 module.exports = function (plop) {
   // Grafana root path
@@ -8,60 +16,12 @@ module.exports = function (plop) {
   // Create project path helper with the base path
   const projectPath = createProjectPath(basePath);
 
-  // List of created or modified files
-  const getFilesToFormat = (groupName) => [
-    `public/app/api/clients/${groupName}/baseAPI.ts`,
-    `public/app/api/clients/${groupName}/index.ts`,
-    `scripts/generate-rtk-apis.ts`,
-    `public/app/core/reducers/root.ts`,
-    `public/app/store/configureStore.ts`,
-  ];
+  plop.setActionType('runGenerateApis', runGenerateApis(basePath));
+  plop.setActionType('formatFiles', formatFiles(basePath, createProjectPath));
 
-  plop.setActionType('runGenerateApis', function () {
-    const { execSync } = require('child_process');
-    try {
-      console.log('⏳ Running yarn generate-apis to generate endpoints...');
-      execSync('yarn generate-apis', { stdio: 'inherit', cwd: basePath });
-      return '✅ API endpoints generated successfully!';
-    } catch (error) {
-      console.error('❌ Failed to generate API endpoints:', error.message);
-      return '❌ Failed to generate API endpoints. See error above.';
-    }
-  });
-
-  // Custom action function for formatting files with prettier and eslint
-  plop.setActionType('formatFiles', function (_, config) {
-    const { execSync } = require('child_process');
-    const filesToFormat = config.files.map((file) => projectPath(file));
-
-    try {
-      const filesList = filesToFormat.map((file) => `"${file}"`).join(' ');
-
-      console.log('🧹 Running ESLint on generated/modified files...');
-      try {
-        execSync(`yarn eslint --fix ${filesList}`, { cwd: basePath });
-      } catch (error) {
-        console.warn(`⚠️ Warning: ESLint encountered issues: ${error.message}`);
-      }
-
-      console.log('🧹 Running Prettier on generated/modified files...');
-      try {
-        execSync(`yarn prettier --write ${filesList}`, { cwd: basePath });
-      } catch (error) {
-        console.warn(`⚠️ Warning: Prettier encountered issues: ${error.message}`);
-      }
-
-      return '✅ Files linted and formatted successfully!';
-    } catch (error) {
-      console.error('⚠️ Warning: Formatting operations failed:', error.message);
-      return '⚠️ Warning: Formatting operations failed.';
-    }
-  });
-
-  // Register the helper used in templates
+  // Used in templates to format operation IDs
   plop.setHelper('formatOperationIds', formatOperationIds(plop));
 
-  // Helper function to generate actions for creating RTK API client
   const generateRtkApiActions = (data) => {
     const { reducerPath, groupName } = data;
 
@@ -72,7 +32,7 @@ module.exports = function (plop) {
         path: projectPath(`public/app/api/clients/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
-
+    
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
