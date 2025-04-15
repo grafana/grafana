@@ -3,6 +3,7 @@ package signature
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,9 +20,13 @@ import (
 type mockDynamicInterface struct {
 	dynamic.ResourceInterface
 	items []unstructured.Unstructured
+	err   error
 }
 
 func (m *mockDynamicInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
 	return &unstructured.UnstructuredList{
 		Items: m.items,
 	}, nil
@@ -63,6 +68,7 @@ func TestLoadUsersOnceSigner_Sign(t *testing.T) {
 		name          string
 		items         []unstructured.Unstructured
 		meta          *mockGrafanaMetaAccessor
+		clientErr     error
 		expectedSig   repository.CommitSignature
 		expectedError string
 	}{
@@ -279,12 +285,43 @@ func TestLoadUsersOnceSigner_Sign(t *testing.T) {
 				When:  baseTime,
 			},
 		},
+		{
+			name: "should fail when listing users fails",
+			meta: &mockGrafanaMetaAccessor{
+				updatedBy:         "user:user1",
+				creationTimestamp: baseTime,
+			},
+			clientErr:     fmt.Errorf("failed to list users"),
+			expectedError: "load signatures: error executing list: failed to list users",
+		},
+		{
+			name: "should handle empty user list",
+			meta: &mockGrafanaMetaAccessor{
+				updatedBy:         "user:user1",
+				creationTimestamp: baseTime,
+			},
+			items: []unstructured.Unstructured{},
+			expectedSig: repository.CommitSignature{
+				Name: "user:user1",
+				When: baseTime,
+			},
+		},
+		{
+			name: "should handle multiple calls with error",
+			meta: &mockGrafanaMetaAccessor{
+				updatedBy:         "user:user1",
+				creationTimestamp: baseTime,
+			},
+			clientErr:     fmt.Errorf("failed to list users"),
+			expectedError: "load signatures: error executing list: failed to list users",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mockDynamicInterface{
 				items: tt.items,
+				err:   tt.clientErr,
 			}
 
 			signer := NewLoadUsersOnceSigner(client)
@@ -295,6 +332,11 @@ func TestLoadUsersOnceSigner_Sign(t *testing.T) {
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectedError)
+
+				// Test that subsequent calls also fail with the same error
+				_, err2 := signer.Sign(ctx, tt.meta)
+				require.Error(t, err2)
+				require.Contains(t, err2.Error(), tt.expectedError)
 				return
 			}
 

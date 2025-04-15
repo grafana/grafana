@@ -21,6 +21,7 @@ type loadUsersOnceSigner struct {
 	signatures map[string]repository.CommitSignature
 	client     dynamic.ResourceInterface
 	once       sync.Once
+	onceErr    error
 }
 
 // NewLoadUsersOnceSigner returns a Signer that loads the signatures from users
@@ -35,11 +36,15 @@ func NewLoadUsersOnceSigner(client dynamic.ResourceInterface) Signer {
 }
 
 func (s *loadUsersOnceSigner) Sign(ctx context.Context, item utils.GrafanaMetaAccessor) (context.Context, error) {
+	if s.onceErr != nil {
+		return ctx, fmt.Errorf("load signatures: %w", s.onceErr)
+	}
+
 	var err error
 	s.once.Do(func() {
 		s.signatures, err = s.load(ctx, s.client)
+		s.onceErr = err
 	})
-
 	if err != nil {
 		return ctx, fmt.Errorf("load signatures: %w", err)
 	}
