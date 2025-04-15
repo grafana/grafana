@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -49,7 +48,7 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 	var schemaVersionError field.ErrorList
 	if errorOnSchemaMismatches || alwaysLogSchemaValidationErrors {
 		switch v := obj.(type) {
-		case *v0alpha1.Dashboard:
+		case *v0.Dashboard:
 			errors, schemaVersionError = v0.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
 		case *v1.Dashboard:
 			errors, schemaVersionError = v1.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
