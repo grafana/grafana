@@ -1,55 +1,64 @@
-import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { Badge, Stack, useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Button, ButtonProps, Stack } from '@grafana/ui';
 
-import { useFeatureToggle } from '../featureToggles';
+import { setLocalStorageFeatureToggle, shouldUseAlertingListViewV2 } from '../featureToggles';
 
 export function RuleListPageTitle({ title }: { title: string }) {
-  const styles = useStyles2(ruleListPageTitleStyles);
+  const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
+
   const { listViewV2Enabled, enableListViewV2, disableListViewV2 } = useV2AlertListViewToggle();
 
   const toggleListView = () => {
     if (listViewV2Enabled) {
       disableListViewV2();
+      reportInteraction('alerting.list_view.v2.disabled');
     } else {
       enableListViewV2();
+      reportInteraction('alerting.list_view.v2.enabled');
     }
     window.location.reload();
   };
 
-  const badgeProps = listViewV2Enabled
-    ? ({
-        color: 'darkgrey',
+  const buttonConfig: ButtonProps & { text: string; 'data-testid': string } = listViewV2Enabled
+    ? {
+        variant: 'secondary',
         icon: undefined,
         text: 'Go back to the old look',
-      } as const)
-    : ({
-        color: 'blue',
+        'data-testid': 'alerting-list-view-toggle-v1',
+      }
+    : {
+        variant: 'primary',
         icon: 'rocket',
         text: 'Try out the new look!',
-      } as const);
+        'data-testid': 'alerting-list-view-toggle-v2',
+      };
 
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
       <h1>{title}</h1>
-      <div>
-        <Badge {...badgeProps} onClick={toggleListView} className={styles.badge} />
-      </div>
+      {shouldShowV2Toggle && (
+        <div>
+          <Button size="sm" fill="outline" {...buttonConfig} onClick={toggleListView} className="fs-unmask">
+            {buttonConfig.text}
+          </Button>
+        </div>
+      )}
     </Stack>
   );
 }
 
 function useV2AlertListViewToggle() {
-  const [listViewV2Enabled, setListViewV2Enabled] = useFeatureToggle('alertingListViewV2');
+  const listViewV2Enabled = shouldUseAlertingListViewV2();
 
   const enableListViewV2 = useCallback(() => {
-    setListViewV2Enabled(true);
-  }, [setListViewV2Enabled]);
+    setLocalStorageFeatureToggle('alertingListViewV2', true);
+  }, []);
 
   const disableListViewV2 = useCallback(() => {
-    setListViewV2Enabled(undefined);
-  }, [setListViewV2Enabled]);
+    setLocalStorageFeatureToggle('alertingListViewV2', undefined);
+  }, []);
 
   return {
     listViewV2Enabled,
@@ -57,9 +66,3 @@ function useV2AlertListViewToggle() {
     disableListViewV2,
   };
 }
-
-const ruleListPageTitleStyles = () => ({
-  badge: css({
-    cursor: 'pointer',
-  }),
-});

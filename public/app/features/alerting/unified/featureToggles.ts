@@ -1,5 +1,3 @@
-import { useLocalStorage } from 'react-use';
-
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -18,28 +16,11 @@ export const shouldAllowRecoveringDeletedRules = () =>
 export const shouldAllowPermanentlyDeletingRules = () =>
   (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;
 
-export function useFeatureToggle(featureName: keyof FeatureToggles) {
-  const [featureToggles, setFeatureToggles] = useLocalStorage<string>('grafana.featureToggles', '', {
-    raw: true,
-  });
+export function setLocalStorageFeatureToggle(featureName: keyof FeatureToggles, value: boolean | undefined) {
+  const featureToggles = localStorage.getItem('grafana.featureToggles') ?? '';
 
-  const toggleValue = getToggleValue(featureToggles, featureName);
-
-  const setToggle = (value: boolean | undefined) => {
-    const newToggles = updateFeatureToggle(featureToggles, featureName, value);
-    setFeatureToggles(newToggles);
-  };
-
-  return [toggleValue, setToggle] as const;
-}
-
-function getToggleValue(featureToggles: string | undefined, featureName: string): boolean | undefined {
-  const pattern = new RegExp(`${featureName}=([^,]+)`);
-  const match = featureToggles?.match(pattern);
-  if (!match) {
-    return undefined;
-  }
-  return match[1] === 'true' || match[1] === '1';
+  const newToggles = updateFeatureToggle(featureToggles, featureName, value);
+  localStorage.setItem('grafana.featureToggles', newToggles);
 }
 
 function updateFeatureToggle(
