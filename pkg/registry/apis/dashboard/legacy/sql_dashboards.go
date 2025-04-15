@@ -15,8 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -44,7 +43,7 @@ type dashboardRow struct {
 	RV int64
 
 	// Dashboard resource
-	Dash *dashboard.Dashboard
+	Dash *dashboardV1.Dashboard
 
 	// The folder UID (needed for access control checks)
 	FolderUID string
@@ -241,8 +240,8 @@ func (r *rowsWrapper) Value() []byte {
 }
 
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
-	dash := &dashboard.Dashboard{
-		TypeMeta:   dashboard.DashboardResourceInfo.TypeMeta(),
+	dash := &dashboardV1.Dashboard{
+		TypeMeta:   dashboardV1.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
 	}
 	row := &dashboardRow{Dash: dash}
@@ -289,7 +288,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
-		dash.APIVersion = fmt.Sprintf("%s/%s", dashboard.GROUP, apiVersion.String)
+		dash.APIVersion = fmt.Sprintf("%s/%s", dashboardV1.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
@@ -364,7 +363,7 @@ func getUserID(v sql.NullString, id sql.NullInt64) string {
 }
 
 // DeleteDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardV1.Dashboard, bool, error) {
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
@@ -380,7 +379,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	return dash, true, nil
 }
 
-func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboards.SaveDashboardCommand, bool, error) {
+func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard) (*dashboards.SaveDashboardCommand, bool, error) {
 	created := false
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -443,7 +442,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}, created, nil
 }
 
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard, failOnExisting bool) (*dashboard.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard, failOnExisting bool) (*dashboardV1.Dashboard, bool, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, false, fmt.Errorf("no user found in context")
@@ -483,7 +482,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	return dash, created, err
 }
 
-func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboard.LibraryPanelList, error) {
+func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
 	limit := int(query.Limit)
 	query.Limit += 1 // for continue
 	if query.OrgID == 0 {
@@ -502,7 +501,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 	q := rawQuery
 
-	res := &dashboard.LibraryPanelList{}
+	res := &dashboardV0.LibraryPanelList{}
 	rows, err := sqlx.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {

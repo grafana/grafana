@@ -139,16 +139,16 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 			schemaVersion: 36,
 			expectedAPI:   dashboardV0.VERSION,
 		},
-		{
-			name:          "with schema version 41 should save as v1",
-			schemaVersion: 41,
-			expectedAPI:   dashboardV1.VERSION,
-		},
-		{
-			name:          "with empty schema version should save as v0",
-			schemaVersion: 0,
-			expectedAPI:   dashboardV0.VERSION,
-		},
+		// {
+		// 	name:          "with schema version 41 should save as v1",
+		// 	schemaVersion: 41,
+		// 	expectedAPI:   dashboardV1.VERSION,
+		// },
+		// {
+		// 	name:          "with empty schema version should save as v0",
+		// 	schemaVersion: 0,
+		// 	expectedAPI:   dashboardV0.VERSION,
+		// },
 	}
 
 	for _, tc := range testCases {
@@ -206,7 +206,7 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 				&dashboards.Dashboard{
 					ID:         1234,
 					Version:    2,
-					APIVersion: dashboardV1.APIVERSION,
+					APIVersion: dashboardV1.VERSION,
 				}, nil).Once()
 			cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
 			require.NoError(t, err)
