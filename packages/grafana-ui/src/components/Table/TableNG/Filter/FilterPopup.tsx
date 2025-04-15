@@ -5,7 +5,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Button, ButtonSelect, ClickOutsideWrapper, FilterInput, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
-import { Trans } from '../../../../utils/i18n';
+import { t, Trans } from '../../../../utils/i18n';
 import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';
@@ -118,7 +118,11 @@ export const FilterPopup = ({
           <div className={styles.listDivider} />
 
           <Stack gap={1}>
-            <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
+            <FilterInput
+              placeholder={t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values')}
+              onChange={setSearchFilter}
+              value={searchFilter}
+            />
             <Button
               variant="secondary"
               style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}

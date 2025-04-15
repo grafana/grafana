@@ -12,9 +12,7 @@ describe('Pin nav items', () => {
   });
 
   it('should pin the selected menu item and add it as a Bookmarks menu item child', () => {
-    // Open, dock and check if the mega menu is visible
-    cy.get('[aria-label="Open menu"]').click();
-    cy.get('[aria-label="Dock menu"]').click();
+    // Check if the mega menu is visible
     e2e.components.NavMenu.Menu().should('be.visible');
 
     // Check if the Bookmark section is visible
@@ -27,7 +25,7 @@ describe('Pin nav items', () => {
     bookmarkPinIcon.click({ force: true });
 
     // Check if the Administration menu item is visible in the Bookmarks section
-    cy.get('[aria-label="Expand section Bookmarks"]').click();
+    cy.get('[aria-label="Expand section: Bookmarks"]').click();
     const bookmarks = cy.get('[href="/bookmarks"]').parentsUntil('li').siblings('ul');
     bookmarks.within(() => {
       cy.get('a').should('contain.text', 'Administration');
@@ -39,14 +37,12 @@ describe('Pin nav items', () => {
     e2e.flows.setUserPreferences({ navbar: { bookmarkUrls: ['/admin'] } });
     cy.reload();
 
-    // Open, dock and check if the mega menu is visible
-    cy.get('[aria-label="Open menu"]').click();
-    cy.get('[aria-label="Dock menu"]').click();
+    // Check if the mega menu is visible
     e2e.components.NavMenu.Menu().should('be.visible');
 
     // Check if the Bookmark section is visible and open it
     cy.get('[href="/bookmarks"]').should('be.visible');
-    cy.get('[aria-label="Expand section Bookmarks"]').click();
+    cy.get('[aria-label="Expand section: Bookmarks"]').click();
 
     // Check if the Administration menu item is visible in the Bookmarks section
     const bookmarks = cy.get('[href="/bookmarks"]').parentsUntil('li').siblings('ul').children();

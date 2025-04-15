@@ -1,33 +1,44 @@
-import { css } from '@emotion/css';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
-import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
+import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ConditionHeader } from './ConditionHeader';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { handleDeleteNonGroupCondition } from './shared';
-
-export type VariableConditionValue = {
-  name: string;
-  operator: '=' | '!=';
-  value: string;
-};
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  VariableConditionValue,
+  VariableConditionValueOperator,
+} from './types';
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
+  public static Component = ConditionalRenderingVariableRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingVariable',
+    name: 'Variable',
+    deserialize: this.deserialize,
+  };
+
   public get title(): string {
-    return t('dashboard.conditional-rendering.variable.label', 'Variable');
+    return t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable');
+  }
+
+  public get info(): string {
+    return t(
+      'dashboard.conditional-rendering.conditions.variable.info',
+      'Show or hide the {{type}} dynamically based on the variable value.',
+      { type: this.getItemType() }
+    );
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {
-        this.getConditionalLogicRoot().notifyChange();
+        this.notifyChange();
       }
     },
   });
@@ -37,25 +48,19 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
       return true;
     }
 
-    const variable = sceneGraph.getVariables(this).state.variables.find((v) => v.state.name === this.state.value.name);
+    const variable = sceneGraph.getVariables(this).getByName(this.state.value.name);
 
-    // name is defined but no variable found - return false
     if (!variable) {
       return false;
     }
-    const value = variable.getValue();
 
-    let hit = Array.isArray(value) ? value.includes(this.state.value.value) : value === this.state.value.value;
+    const variableValue = variable.getValue() ?? '';
 
-    if (this.state.value.operator === '!=') {
-      hit = !hit;
-    }
+    const hit = Array.isArray(variableValue)
+      ? variableValue.includes(this.state.value.value)
+      : variableValue === this.state.value.value;
 
-    return hit;
-  }
-
-  public render(): ReactNode {
-    return <ConditionalRenderingVariableRenderer model={this} />;
+    return this.state.value.operator === '!=' ? !hit : hit;
   }
 
   public serialize(): ConditionalRenderingVariableKind {
@@ -69,70 +74,67 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     };
   }
 
-  public onDelete() {
-    handleDeleteNonGroupCondition(this);
+  public static deserialize(model: ConditionalRenderingVariableKind): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({
+      value: {
+        name: model.spec.variable,
+        operator: model.spec.operator === 'equals' ? '=' : '!=',
+        value: model.spec.value,
+      },
+    });
+  }
+
+  public static createEmpty(name: string): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({ value: { name, operator: '=', value: '' } });
   }
 }
 
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
+  const { value } = model.useState();
+
   const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
-  const variableNames = useMemo(
+
+  const variableNames: Array<ComboboxOption<string>> = useMemo(
     () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
     [variables.state.variables]
   );
-  const operatorOptions: Array<ComboboxOption<'=' | '!='>> = useMemo(
+
+  const operatorOptions: Array<ComboboxOption<VariableConditionValueOperator>> = useMemo(
     () => [
-      { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
-      { value: '!=', description: t('dashboard.conditional-rendering.variable.operator.not-equal', 'Not equal') },
+      { value: '=', description: t('dashboard.conditional-rendering.conditions.variable.operator.equals', 'Equals') },
+      {
+        value: '!=',
+        description: t('dashboard.conditional-rendering.conditions.variable.operator.not-equals', 'Not equals'),
+      },
     ],
     []
   );
-  const { value } = model.useState();
-
-  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Stack direction="column">
-        <Stack direction="row" gap={0.5} grow={1}>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-variable', 'Select variable')}
-            className={styles.variableNameSelect}
-          >
-            <Combobox
-              options={variableNames}
-              value={value.name}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
-            />
-          </Field>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-operator', 'Operator')}
-            className={styles.operatorSelect}
-          >
-            <Combobox
-              options={operatorOptions}
-              value={value.operator}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
-            />
-          </Field>
-        </Stack>
-        <Field label={t('dashboard.conditional-rendering.variable.value-input', 'Value')}>
-          <Input
-            value={value.value}
-            onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+    <Stack direction="column" gap={0.5}>
+      <Stack direction="row" gap={0.5} grow={1}>
+        <Box flex={1}>
+          <Combobox
+            placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
+            options={variableNames}
+            value={value.name}
+            onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
           />
-        </Field>
+        </Box>
+
+        <Combobox
+          width="auto"
+          minWidth={10}
+          options={operatorOptions}
+          value={value.operator}
+          onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
+        />
       </Stack>
+      <Input
+        placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
+        value={value.value}
+        onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+      />
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  variableNameSelect: css({
-    flexGrow: 1,
-  }),
-  operatorSelect: css({
-    width: theme.spacing(12),
-  }),
-});

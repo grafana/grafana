@@ -7,8 +7,10 @@ check: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: true
 				backend:  true
+				// Frontend code is generated following the instructions from
+				// https://github.com/grafana/grafana/blob/main/public/app/api/README.md
+				frontend: false
 			}
 			validation: {
 				operations: [

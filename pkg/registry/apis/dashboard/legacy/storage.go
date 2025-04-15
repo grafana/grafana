@@ -118,7 +118,8 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					rv = int64(after.Version)
 				}
 			} else {
-				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash)
+				failOnExisting := event.Type == resource.WatchEvent_ADDED
+				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
 				if err != nil {
 					return 0, err
 				}

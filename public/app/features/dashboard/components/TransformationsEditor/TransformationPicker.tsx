@@ -5,6 +5,7 @@ import { DocsId, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, Container, VerticalGroup, Alert, Input, useStyles2 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { t, Trans } from 'app/core/internationalization';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -35,7 +36,7 @@ export function TransformationPicker(props: TransformationPickerProps) {
 
               return (
                 <Alert
-                  title="Transformations"
+                  title={t('dashboard.transformation-picker.title-transformations', 'Transformations')}
                   severity="info"
                   onRemove={() => {
                     onDismiss(true);
@@ -54,7 +55,7 @@ export function TransformationPicker(props: TransformationPickerProps) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Read more
+                    <Trans i18nKey="dashboard.transformation-picker.read-more">Read more</Trans>
                   </a>
                 </Alert>
               );
@@ -66,7 +67,10 @@ export function TransformationPicker(props: TransformationPickerProps) {
         data-testid={selectors.components.Transforms.searchInput}
         value={search ?? ''}
         autoFocus={!noTransforms}
-        placeholder="Search for transformation"
+        placeholder={t(
+          'dashboard.transformation-picker.placeholder-search-for-transformation',
+          'Search for transformation'
+        )}
         onChange={onSearchChange}
         onKeyDown={onSearchKeyDown}
         suffix={suffix}

@@ -3,6 +3,7 @@ import { noop } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 type VersionHistoryHeaderProps = {
   onClick?: () => void;
@@ -21,10 +22,19 @@ export const VersionHistoryHeader = ({
 
   return (
     <h3 className={styles.header}>
-      <IconButton name="arrow-left" size="xl" onClick={onClick} tooltip="Reset version" />
+      <IconButton
+        name="arrow-left"
+        size="xl"
+        onClick={onClick}
+        tooltip={t('dashboard-scene.version-history-header.tooltip-reset-version', 'Reset version')}
+      />
       <span>
         Comparing {baseVersion} <Icon name="arrows-h" /> {newVersion}{' '}
-        {isNewLatest && <cite className="muted">(Latest)</cite>}
+        {isNewLatest && (
+          <cite className="muted">
+            <Trans i18nKey="dashboard-scene.version-history-header.latest">(Latest)</Trans>
+          </cite>
+        )}
       </span>
     </h3>
   );

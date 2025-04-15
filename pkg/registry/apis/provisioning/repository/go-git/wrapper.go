@@ -68,6 +68,12 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return nil, err
+		}
+	}
+
 	// add a timeout to the operation
 	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
@@ -193,6 +199,12 @@ func (g *GoGitRepo) Push(ctx context.Context, opts repository.PushOptions) error
 	progress := opts.Progress
 	if progress == nil {
 		progress = io.Discard
+	}
+
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)

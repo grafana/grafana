@@ -17,7 +17,7 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { dashboardApi } from '../../api/dashboardApi';
@@ -168,7 +168,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   return (
     <Modal
-      title="Select dashboard and panel"
+      title={t('alerting.dashboard-picker.title-select-dashboard-and-panel', 'Select dashboard and panel')}
       closeOnEscape
       isOpen={isOpen}
       onDismiss={onDismiss}
@@ -177,7 +177,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
       {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
-        <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
+        <Alert
+          title={t('alerting.dashboard-picker.title-current-selection', 'Current selection')}
+          severity="info"
+          topSpacing={0}
+          bottomSpacing={1}
+          className={styles.modalAlert}
+        >
           <div>
             Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
             {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
@@ -193,15 +199,23 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <FilterInput
           value={dashboardFilter}
           onChange={setDashboardFilter}
-          title="Search dashboard"
-          placeholder="Search dashboard"
+          title={t('alerting.dashboard-picker.title-search-dashboard', 'Search dashboard')}
+          placeholder={t('alerting.dashboard-picker.placeholder-search-dashboard', 'Search dashboard')}
           autoFocus
         />
-        <FilterInput value={panelFilter} onChange={setPanelFilter} title="Search panel" placeholder="Search panel" />
+        <FilterInput
+          value={panelFilter}
+          onChange={setPanelFilter}
+          title={t('alerting.dashboard-picker.title-search-panel', 'Search panel')}
+          placeholder={t('alerting.dashboard-picker.placeholder-search-panel', 'Search panel')}
+        />
 
         <div className={styles.column}>
           {isDashSearchFetching && (
-            <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
+            <LoadingPlaceholder
+              text={t('alerting.dashboard-picker.text-loading-dashboards', 'Loading dashboards...')}
+              className={styles.loadingPlaceholder}
+            />
           )}
 
           {!isDashSearchFetching && (
@@ -224,11 +238,18 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <div className={styles.column}>
           {!selectedDashboardUid && !isDashboardFetching && (
             <div className={styles.selectDashboardPlaceholder}>
-              <div>Select a dashboard to get a list of available panels</div>
+              <div>
+                <Trans i18nKey="alerting.dashboard-picker.select-dashboard-available-panels">
+                  Select a dashboard to get a list of available panels
+                </Trans>
+              </div>
             </div>
           )}
           {isDashboardFetching && (
-            <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
+            <LoadingPlaceholder
+              text={t('alerting.dashboard-picker.text-loading-dashboard', 'Loading dashboard...')}
+              className={styles.loadingPlaceholder}
+            />
           )}
 
           {selectedDashboardUid && !isDashboardFetching && (
@@ -256,7 +277,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             }
           }}
         >
-          Confirm
+          <Trans i18nKey="alerting.dashboard-picker.confirm">Confirm</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

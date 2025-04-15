@@ -14,18 +14,19 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
+
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -67,7 +68,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	newResource := &v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
@@ -145,7 +146,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	admin := org1.Admin
 	viewer := org1.Viewer
 	editor := org1.Editor
-	adminClient := newClient(t, admin)
+	adminClient := test_common.NewReceiverClient(t, admin)
 
 	writeACMetadata := []string{"canWrite", "canDelete"}
 	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin"}
@@ -297,8 +298,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			createClient := newClient(t, tc.creatingUser)
-			client := newClient(t, tc.testUser)
+			createClient := test_common.NewReceiverClient(t, tc.creatingUser)
+			client := test_common.NewReceiverClient(t, tc.testUser)
 
 			var created = &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
@@ -561,10 +562,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := test_common.NewReceiverClient(t, tc.user)
 
 			var expected = &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
@@ -739,7 +740,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
@@ -754,7 +755,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+	persistInitialConfig(t, amConfig)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -817,8 +818,11 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	require.NoError(t, err)
+	routeAdminClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	_, err = routeAdminClient.Update(ctx, v1Route, v1.UpdateOptions{})
+	require.NoError(t, err)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 1, 2)
@@ -834,11 +838,14 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 
-	// Remove the rest.
+	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	v1route, err := routingtree.ConvertToK8sResource(1, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	require.NoError(t, err)
+	_, err = routeAdminClient.Update(ctx, v1route, v1.UpdateOptions{})
+	require.NoError(t, err)
 
+	// Remove the remaining rules.
 	ruleGroup.Rules = nil
 	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
@@ -861,7 +868,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
@@ -915,7 +922,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	receiver := v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
@@ -998,7 +1005,7 @@ func TestIntegrationPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	receiver := v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
@@ -1086,75 +1093,6 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
-func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	helper := getTestHelper(t)
-
-	cliCfg := helper.Org1.Admin.NewRestConfig()
-	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
-
-	adminClient := newClient(t, helper.Org1.Admin)
-
-	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
-	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
-	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
-
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
-
-	// We modify the receiver, this should cause the POST to be rejected.
-	userDefinedReceiver := amConfig.AlertmanagerConfig.Receivers[slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.Receiver.Name == "user-defined"
-	})]
-	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %t", success)
-	require.ErrorContainsf(t, err, "alertingApiServer", "Expected error message to contain 'alertingApiServer', but got %s", err)
-
-	// Revert the change.
-	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
-
-	// We add a receiver, this should be accepted.
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, &definitions.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: "new receiver",
-		},
-		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
-				{
-					Name:     "new receiver",
-					Type:     "email",
-					Settings: []byte(`{"addresses": "<some@email.com>"}`),
-				},
-			},
-		},
-	})
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
-	require.NoError(t, err)
-
-	// Sanity check.
-	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 3, "Expected 3 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
-
-	// We remove the receiver, this should be accepted.
-	amConfig.AlertmanagerConfig.Receivers = slices.DeleteFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.GrafanaManagedReceivers[0].Name == "new receiver"
-	})
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
-	require.NoError(t, err)
-
-	// Sanity check.
-	gettable, status, body = legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 2, "Expected 2 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
-}
-
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -1171,14 +1109,14 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+	persistInitialConfig(t, amConfig)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -1283,7 +1221,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	var defaultReceiver *v0alpha1.Receiver
 	t.Run("should list the default receiver", func(t *testing.T) {
 		items, err := adminClient.List(ctx, v1.ListOptions{})
@@ -1451,7 +1389,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	recv1 := &v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
@@ -1533,13 +1471,14 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList], legacyCli alerting.LegacyApiClient) {
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig) {
 	ctx := context.Background()
 
-	var defaultReceiver *definitions.PostableApiReceiver
+	helper := getTestHelper(t)
+
+	receiverClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
 		if receiver.Name == "grafana-default-email" {
-			defaultReceiver = receiver
 			continue
 		}
 
@@ -1563,7 +1502,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 			})
 		}
 
-		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		created, err := receiverClient.Create(ctx, &toCreate, v1.CreateOptions{})
 		require.NoError(t, err)
 
 		for i, integration := range created.Spec.Integrations {
@@ -1571,19 +1510,13 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 		}
 	}
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	nsMapper := func(_ int64) string { return "default" }
 
-	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-
-	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
-		return recv.Name == "grafana-default-email"
-	})
-	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
-
-	// Assign uid of default receiver as well.
-	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
+	routeClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
+	require.NoError(t, err)
+	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
@@ -1607,21 +1540,5 @@ func createWildcardPermission(actions ...string) resourcepermissions.SetResource
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
 		ResourceID:        "*",
-	}
-}
-
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
-	t.Helper()
-
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
-
-	return &apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
 	}
 }

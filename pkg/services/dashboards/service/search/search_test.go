@@ -74,8 +74,8 @@ func TestParseResults(t *testing.T) {
 						Type: resource.ResourceTableColumnDefinition_INT32,
 					},
 					{
-						Name: search.DASHBOARD_LEGACY_ID,
-						Type: resource.ResourceTableColumnDefinition_INT32,
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{

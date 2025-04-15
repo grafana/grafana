@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	sqlite "github.com/mattn/go-sqlite3"
 	"xorm.io/core"
 )
 
@@ -472,6 +473,14 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 
 func (db *sqlite3) Filters() []core.Filter {
 	return []core.Filter{&core.IdFilter{}}
+}
+
+func (db *sqlite3) RetryOnError(err error) bool {
+	var sqlError sqlite.Error
+	if errors.As(err, &sqlError) && (sqlError.Code == sqlite.ErrLocked || sqlError.Code == sqlite.ErrBusy) {
+		return true
+	}
+	return false
 }
 
 type sqlite3Driver struct {

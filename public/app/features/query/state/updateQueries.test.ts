@@ -415,10 +415,10 @@ describe('updateQueries with import', () => {
       ];
 
       const updated = await updateQueries(
-        newUidDSWithAbstract as any,
-        (newUidDSWithAbstract as any).uid,
+        newUidDSWithAbstract as unknown as DataSourceApi,
+        (newUidDSWithAbstract as unknown as DataSourceApi).uid,
         queries,
-        oldUidDSWithAbstract as any
+        oldUidDSWithAbstract as unknown as DataSourceApi
       );
 
       expect(exportSpy).toHaveBeenCalledWith(queries);
@@ -492,10 +492,10 @@ describe('updateQueries with import', () => {
       ];
 
       const updated = await updateQueries(
-        newUidDSWithAbstract as any,
-        (newUidDSWithAbstract as any).uid,
+        newUidDSWithAbstract as unknown as DataSourceApi,
+        (newUidDSWithAbstract as unknown as DataSourceApi).uid,
         queries,
-        oldUidDSWithAbstract as any
+        oldUidDSWithAbstract as unknown as DataSourceApi
       );
 
       expect(updated.length).toEqual(1);

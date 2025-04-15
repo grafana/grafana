@@ -117,7 +117,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	runtime.SetFinalizer(engine, close)
 
-	if ext, ok := dialect.(DialectExt); ok {
+	if ext, ok := dialect.(DialectWithSequenceGenerator); ok {
 		engine.sequenceGenerator, err = ext.CreateSequenceGenerator(db.DB)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create sequence generator: %w", err)
@@ -138,9 +138,14 @@ type SequenceGenerator interface {
 	Reset()
 }
 
-type DialectExt interface {
+type DialectWithSequenceGenerator interface {
 	core.Dialect
 
 	// CreateSequenceGenerator returns optional generator used to create AUTOINCREMENT ids for inserts.
 	CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
+}
+
+type DialectWithRetryableErrors interface {
+	core.Dialect
+	RetryOnError(err error) bool
 }

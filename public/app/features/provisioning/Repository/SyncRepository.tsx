@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
 import { Trans, t } from 'app/core/internationalization';
@@ -18,21 +16,6 @@ export function SyncRepository({ repository }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const name = repository.metadata?.name;
-
-  useEffect(() => {
-    const appEvents = getAppEvents();
-    if (jobQuery.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('provisioning.sync-repository.success-pull-started', 'Pull started')],
-      });
-    } else if (jobQuery.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources'), jobQuery.error],
-      });
-    }
-  }, [jobQuery.error, jobQuery.isError, jobQuery.isSuccess]);
 
   const onClick = () => {
     if (!name) {

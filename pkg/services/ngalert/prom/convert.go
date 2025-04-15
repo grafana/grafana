@@ -72,7 +72,7 @@ var (
 	defaultConfig = Config{
 		FromTimeRange:              &defaultTimeRange,
 		EvaluationOffset:           &defaultEvaluationOffset,
-		ExecErrState:               models.ErrorErrState,
+		ExecErrState:               models.OkErrState,
 		NoDataState:                models.OK,
 		KeepOriginalRuleDefinition: util.Pointer(true),
 	}
@@ -196,6 +196,11 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		forInterval = time.Duration(*rule.For)
 	}
 
+	var keepFiringFor time.Duration
+	if rule.KeepFiringFor != nil {
+		keepFiringFor = time.Duration(*rule.KeepFiringFor)
+	}
+
 	var query []models.AlertQuery
 	var title string
 	var isPaused bool
@@ -236,19 +241,20 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	result := models.AlertRule{
-		OrgID:        orgID,
-		NamespaceUID: namespaceUID,
-		Title:        title,
-		Data:         query,
-		Condition:    query[len(query)-1].RefID,
-		NoDataState:  p.cfg.NoDataState,
-		ExecErrState: p.cfg.ExecErrState,
-		Annotations:  rule.Annotations,
-		Labels:       labels,
-		For:          forInterval,
-		RuleGroup:    promGroup.Name,
-		IsPaused:     isPaused,
-		Record:       record,
+		OrgID:         orgID,
+		NamespaceUID:  namespaceUID,
+		Title:         title,
+		Data:          query,
+		Condition:     query[len(query)-1].RefID,
+		NoDataState:   p.cfg.NoDataState,
+		ExecErrState:  p.cfg.ExecErrState,
+		Annotations:   rule.Annotations,
+		Labels:        labels,
+		For:           forInterval,
+		KeepFiringFor: keepFiringFor,
+		RuleGroup:     promGroup.Name,
+		IsPaused:      isPaused,
+		Record:        record,
 
 		// MissingSeriesEvalsToResolve is set to 1 to match the Prometheus behaviour.
 		// Prometheus resolves alerts as soon as the series disappears.

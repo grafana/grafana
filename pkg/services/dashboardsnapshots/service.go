@@ -42,7 +42,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
+	uid := cmd.Dashboard.GetNestedString("uid")
 	user, err := identity.GetRequester(c.Req.Context())
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
@@ -59,8 +59,8 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	if cmd.DashboardCreateCommand.Name == "" {
-		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
+	if cmd.Name == "" {
+		cmd.Name = "Unnamed snapshot"
 	}
 
 	var snapshotUrl string
@@ -73,7 +73,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	if cmd.DashboardCreateCommand.External {
+	if cmd.External {
 		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return
@@ -90,11 +90,11 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
 		cmd.ExternalDeleteURL = resp.DeleteUrl
-		cmd.DashboardCreateCommand.Dashboard = &common.Unstructured{}
+		cmd.Dashboard = &common.Unstructured{}
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
-		cmd.DashboardCreateCommand.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
+		cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
 
 		if cmd.Key == "" {
 			var err error
