@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -66,6 +66,26 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		authlib.OrgNamespaceFormatter,
 		nil, provisioning, sort.ProvideService(),
 	)
+
+	if c.Bool("non-interactive") {
+		client, err := newUnifiedClient(cfg, sqlStore)
+		if err != nil {
+			return err
+		}
+
+		opts.Store = client
+		opts.BlobStore = client
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Unified storage export: %s\n", time.Since(start))
+		if rsp != nil {
+			jj, _ := json.MarshalIndent(rsp, "", "  ")
+			fmt.Printf("%s\n", string(jj))
+		}
+		return nil
+	}
 
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {

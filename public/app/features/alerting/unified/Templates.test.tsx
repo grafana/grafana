@@ -8,7 +8,6 @@ import { byLabelText, byRole } from 'testing-library-selector';
 import { CodeEditor } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
 import Templates from './Templates';
@@ -76,15 +75,18 @@ const setup = (initialEntries: InitialEntry[]) => {
   );
 };
 
+const slackTemplate = 'k8s-template%20with%20spaces-resource-name';
+const emailTemplate = 'k8s-custom-email-resource-name';
+
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
-    setup([navUrl.duplicate('template%20with%20spaces')]);
+    setup([navUrl.duplicate(slackTemplate)]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('allows editing of template with spaces in name', async () => {
-    setup([navUrl.edit('template%20with%20spaces')]);
+    setup([navUrl.edit(slackTemplate)]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
@@ -99,7 +101,7 @@ describe('Templates routes', () => {
   });
 
   it('should pass name validation when editing existing template', async () => {
-    const { user } = setup([navUrl.edit('custom-email')]);
+    const { user } = setup([navUrl.edit(emailTemplate)]);
 
     const titleElement = await ui.form.title.find();
     await waitFor(() => {
@@ -114,21 +116,6 @@ describe('Templates routes', () => {
       expect(screen.getByText('Template saved')).toBeInTheDocument();
     });
   });
-
-  it('should display error message when creating new template with duplicate name', async () => {
-    const { user } = setup([navUrl.new]);
-
-    const titleElement = await ui.form.title.find();
-    await user.type(titleElement, 'custom-email');
-
-    await user.click(ui.form.saveButton.get());
-
-    expect(screen.getByText('Another template with this name already exists')).toBeInTheDocument();
-  });
-});
-
-describe('Templates K8s API', () => {
-  testWithFeatureToggles(['alertingApiServer']);
 
   it('form edit renders with correct form values', async () => {
     setup([navUrl.edit('k8s-custom-email-resource-name')]);
