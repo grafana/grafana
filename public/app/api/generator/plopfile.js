@@ -35,7 +35,7 @@ module.exports = function (plop) {
     const filesToFormat = config.files.map((file) => projectPath(file));
 
     try {
-      const filesList = filesToFormat.map(file => `"${file}"`).join(' ');
+      const filesList = filesToFormat.map((file) => `"${file}"`).join(' ');
 
       console.log('🧹 Running ESLint on generated/modified files...');
       try {
@@ -166,7 +166,12 @@ module.exports = function (plop) {
     ],
     actions: function (data) {
       // Format data for templates
-      data.operationIdArray = data.operationIds ? data.operationIds.split(',').map((id) => id.trim()).filter(Boolean) : [];
+      data.operationIdArray = data.operationIds
+        ? data.operationIds
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean)
+        : [];
 
       // Generate actions
       return generateRtkApiActions(data);
