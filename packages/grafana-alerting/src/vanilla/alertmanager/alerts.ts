@@ -1,4 +1,4 @@
-import { Annotations, Labels } from '../common/rules';
+import { Annotations, Labels } from '../../common/types/rules';
 
 export interface ActiveNotification {
   receivers: NotificationReceiver[];

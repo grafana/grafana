@@ -1,6 +1,6 @@
 import { expectTypeOf } from 'expect-type';
 
-import { Response, ErrorResponse, SuccessResponse } from '../common/api';
+import { ErrorResponse, SuccessResponse, Response } from '../../../common/types/api';
 
 test('success response', () => {
   const response = {

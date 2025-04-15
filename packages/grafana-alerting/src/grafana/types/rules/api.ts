@@ -1,5 +1,4 @@
-import { SuccessResponse } from '../../common/api';
-import { Annotations, Labels } from '../../common/rules';
+import type { Annotations, Labels, SuccessResponse } from '../../../common';
 
 /**
  * Base rule object shared between alerting and recording rules

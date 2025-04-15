@@ -1,5 +1,5 @@
-import * as PrometheusAPI from '../types/prometheus/rules/api.mocks';
-import * as PrometheusDefinition from '../types/prometheus/rules/definitions.mocks';
+import * as PrometheusAPI from '../grafana/types/prometheus/rules/api.mocks';
+import * as PrometheusDefinition from '../grafana/types/prometheus/rules/definitions.mocks';
 
 /**
  * These annotations have special meaning / reserved usage in Grafana.

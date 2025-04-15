@@ -1,4 +1,5 @@
-import { GrafanaAPI, PrometheusAPI } from '../index';
+import type { API as GrafanaAPI } from '../../grafana';
+import type { API as PrometheusAPI } from '../../vanilla/prometheus';
 
 /* Prometheus API success response */
 export interface SuccessResponse<Data = unknown> {

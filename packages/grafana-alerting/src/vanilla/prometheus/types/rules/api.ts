@@ -1,5 +1,4 @@
-import { SuccessResponse } from '../../common/api';
-import { Annotations, Labels } from '../../common/rules';
+import type { Annotations, Labels, SuccessResponse } from '../../../../common';
 
 /**
  * Rule health in Grafana-flavored Prometheus indicates the evaluation status of a rule, which can be "ok", "unknown", or "error".

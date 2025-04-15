@@ -24,16 +24,28 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
+      "import": "./src/grafana/index.ts",
+      "require": "./src/grafana/index.ts"
     },
     "./internal": {
-      "import": "./src/internal/index.ts",
-      "require": "./src/internal/index.ts"
+      "import": "./src/internal.ts",
+      "require": "./src/internal.ts"
     },
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./vanilla/alertmanager": {
+      "import": "./src/vanilla/alertmanager/index.ts",
+      "require": "./src/vanilla/alertmanager/index.ts"
+    },
+    "./vanilla/prometheus": {
+      "import": "./src/vanilla/prometheus/index.ts",
+      "require": "./src/vanilla/prometheus/index.ts"
+    },
+    "./common": {
+      "import": "./src/common/index.ts",
+      "require": "./src/common/index.ts"
     }
   },
   "publishConfig": {
@@ -53,12 +65,16 @@
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --erasableSyntaxOnly --noEmit",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable",
+    "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
+    "@reduxjs/toolkit": "2.5.1",
     "@rollup/plugin-node-resolve": "16.0.0",
+    "@rtk-query/codegen-openapi": "^2.0.0",
     "@types/d3-random": "^3.0.2",
+    "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "d3-random": "^3.0.1",
@@ -76,5 +92,8 @@
   "peerDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
 }
