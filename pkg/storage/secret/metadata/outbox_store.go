@@ -29,7 +29,7 @@ type outboxMessageDB struct {
 	Name            string                      `xorm:"name"`
 	Namespace       string                      `xorm:"namespace"`
 	EncryptedSecret string                      `xorm:"encrypted_secret"`
-	KeeperName      string                      `xorm:"keeper_name"`
+	KeeperName      *string                     `xorm:"keeper_name"`
 	ExternalID      *string                     `xorm:"external_id"`
 	Created         int64                       `xorm:"created"`
 }

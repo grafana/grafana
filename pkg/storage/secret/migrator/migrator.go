@@ -53,7 +53,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 
 			// Spec
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
-			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
+			{Name: "keeper", Type: migrator.DB_Text, Nullable: true}, // If using the system keeper, this is null.
 			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
 			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
@@ -125,7 +125,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
-			{Name: "keeper_name", Type: migrator.DB_Text, Nullable: false},
+			{Name: "keeper_name", Type: migrator.DB_Text, Nullable: true},
 			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},

@@ -120,7 +120,7 @@ func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, permissionMap map
 	return mustCreateUsersWithOrg(t, helper, orgID, permissionMap)
 }
 
-func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName string) *unstructured.Unstructured {
+func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName ...string) *unstructured.Unstructured {
 	t.Helper()
 
 	ctx, cancel := context.WithCancel(context.Background())

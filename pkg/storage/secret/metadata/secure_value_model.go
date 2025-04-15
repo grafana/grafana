@@ -32,7 +32,7 @@ type secureValueDB struct {
 
 	// Spec
 	Title      string  `xorm:"title"`
-	Keeper     string  `xorm:"keeper"`
+	Keeper     *string `xorm:"keeper"`
 	Decrypters *string `xorm:"decrypters"`
 	Ref        *string `xorm:"ref"`
 	ExternalID string  `xorm:"external_id"`

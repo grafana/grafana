@@ -62,8 +62,6 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	// Obtain provider configs
 	provider := toProvider(kp.Type, kp.Payload)
 	switch v := provider.(type) {
-	case *secretv0alpha1.SQLKeeperConfig:
-		resource.Spec.SQL = v
 	case *secretv0alpha1.AWSKeeperConfig:
 		resource.Spec.AWS = v
 	case *secretv0alpha1.AzureKeeperConfig:
@@ -202,14 +200,7 @@ func toTypeAndPayload(kp *secretv0alpha1.Keeper) (contracts.KeeperType, string, 
 	var keeperType contracts.KeeperType
 	var keeperPayload string
 
-	if kp.Spec.SQL != nil {
-		keeperType = contracts.SQLKeeperType
-		jsonData, err := json.Marshal(kp.Spec.SQL)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
-	} else if kp.Spec.AWS != nil {
+	if kp.Spec.AWS != nil {
 		keeperType = contracts.AWSKeeperType
 		jsonData, err := json.Marshal(kp.Spec.AWS.AWSCredentials)
 		if err != nil {
@@ -245,12 +236,6 @@ func toTypeAndPayload(kp *secretv0alpha1.Keeper) (contracts.KeeperType, string, 
 // toProvider maps a KeeperType and payload into a provider config struct.
 func toProvider(keeperType contracts.KeeperType, payload string) secretv0alpha1.KeeperConfig {
 	switch keeperType {
-	case contracts.SQLKeeperType:
-		sql := &secretv0alpha1.SQLKeeperConfig{}
-		if err := json.Unmarshal([]byte(payload), sql); err != nil {
-			return nil
-		}
-		return sql
 	case contracts.AWSKeeperType:
 		aws := &secretv0alpha1.AWSKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), aws); err != nil {
@@ -313,26 +298,6 @@ func extractSecureValues(kp *secretv0alpha1.Keeper) []string {
 	}
 
 	switch {
-	case kp.Spec.SQL != nil && kp.Spec.SQL.Encryption != nil:
-		enc := kp.Spec.SQL.Encryption
-
-		switch {
-		case enc.AWS != nil:
-			return secureValuesFromAWS(*enc.AWS)
-
-		case enc.Azure != nil:
-			return secureValuesFromAzure(*enc.Azure)
-
-		// GCP does not reference secureValues.
-		case enc.GCP != nil:
-			return nil
-
-		case enc.HashiCorp != nil:
-			return secureValuesFromHashiCorp(*enc.HashiCorp)
-		}
-
-		return nil
-
 	case kp.Spec.AWS != nil:
 		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
 

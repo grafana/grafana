@@ -17,7 +17,6 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -605,7 +604,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
-		raw := mustGenerateSecureValue(t, helper, genericUserEditor, contracts.DefaultSQLKeeper)
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -645,7 +644,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = contracts.DefaultSQLKeeper
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"actor_app1", "actor_app2"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 

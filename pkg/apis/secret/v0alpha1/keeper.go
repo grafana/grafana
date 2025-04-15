@@ -19,10 +19,6 @@ type Keeper struct {
 	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
-func (k *Keeper) IsSqlKeeper() bool {
-	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
-}
-
 type KeeperConfig interface {
 	Type() string
 }
@@ -32,7 +28,6 @@ type KeeperSpec struct {
 	Title string `json:"title"`
 
 	// You can only chose one of the following.
-	SQL       *SQLKeeperConfig       `json:"sql,omitempty"`
 	AWS       *AWSKeeperConfig       `json:"aws,omitempty"`
 	Azure     *AzureKeeperConfig     `json:"azurekeyvault,omitempty"`
 	GCP       *GCPKeeperConfig       `json:"gcp,omitempty"`
@@ -50,25 +45,6 @@ type KeeperList struct {
 
 	// Slice containing all keepers.
 	Items []Keeper `json:"items,omitempty"`
-}
-
-// The default SQL keeper.
-type SQLKeeperConfig struct {
-	Encryption *Encryption `json:"encryption,omitempty"`
-}
-
-func (s *SQLKeeperConfig) Type() string {
-	return "sql"
-}
-
-// Encryption of default SQL keeper.
-type Encryption struct {
-	Envelope *Envelope `json:"envelope,omitempty"` // TODO: what would this be
-
-	AWS       *AWSCredentials       `json:"aws,omitempty"`
-	Azure     *AzureCredentials     `json:"azure,omitempty"`
-	GCP       *GCPCredentials       `json:"gcp,omitempty"`
-	HashiCorp *HashiCorpCredentials `json:"hashicorp,omitempty"`
 }
 
 // Credentials of remote keepers.

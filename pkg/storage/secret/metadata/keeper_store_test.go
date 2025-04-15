@@ -19,14 +19,15 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("get default sql keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := storage.GetKeeperConfig(ctx, "default", "kp-default-sql")
+		keeperType, keeperConfig, err := storage.GetKeeperConfig(ctx, "default", nil)
 		require.NoError(t, err)
 		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := storage.GetKeeperConfig(ctx, "default", "kp-test")
+		keeperTest := "kp-test"
+		keeperType, keeperConfig, err := storage.GetKeeperConfig(ctx, "default", &keeperTest)
 		require.NoError(t, err)
 		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.NotNil(t, keeperConfig)

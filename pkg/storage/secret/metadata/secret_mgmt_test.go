@@ -44,11 +44,12 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
+
+	notImplementedKeeper := "not-implemented-keeper"
 
 	t.Run("store secure value in default sql keeper does not return error", func(t *testing.T) {
 		externalID, err := s.storeInKeeper(ctx, testSV)
@@ -57,14 +58,14 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 	})
 
 	t.Run("store secure value in a non implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		testSV.Spec.Keeper = &notImplementedKeeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
 	})
 
 	t.Run("store secure value in a not implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		testSV.Spec.Keeper = &notImplementedKeeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
@@ -82,14 +83,12 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
 	testsvDB := &secureValueDB{
 		Namespace: "default",
 		Name:      "name",
-		Keeper:    "kp-default-sql",
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
 
@@ -105,8 +104,10 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		})
 
 		t.Run("updating a secure value keeper returns error", func(t *testing.T) {
+			anotherKeeper := "another-keeper"
+
 			updateSV := testSV.DeepCopy()
-			updateSV.Spec.Keeper = "another-keeper"
+			updateSV.Spec.Keeper = &anotherKeeper
 			err := s.updateInKeeper(ctx, testsvDB, updateSV)
 			require.Error(t, err)
 		})
@@ -139,7 +140,6 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
@@ -215,7 +215,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
 			Title: "title",
-			SQL:   &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
+			AWS:   &secretv0alpha1.AWSKeeperConfig{},
 		},
 	}
 	testKeeper.Name = "kp-test"

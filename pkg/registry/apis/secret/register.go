@@ -209,22 +209,6 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Examples: map[string]*spec3.Example{
-								"a sql keeper": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "SQL XYZ Keeper",
-													SQL: &secretv0alpha1.SQLKeeperConfig{
-														Encryption: &secretv0alpha1.Encryption{
-															Envelope: &secretv0alpha1.Envelope{},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
 								"an aws keeper": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
@@ -409,6 +393,8 @@ spec:
 		}
 	}
 
+	awsKeeperExample := "{aws-keeper-that-must-already-exist}"
+
 	sub = oas.Paths.Paths[smprefix+"/securevalues"]
 	if sub != nil {
 		optionsSchema := defs[defsBase+"SecureValueSpec"].Schema
@@ -427,7 +413,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in default",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -441,7 +426,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in aws",
 													Value:      "this is super duper secure",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &awsKeeperExample,
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -455,7 +440,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret from aws",
 													Ref:        "my-secret-in-aws",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &awsKeeperExample,
 													Decrypters: []string{"actor_k6"},
 												},
 											},
@@ -472,7 +457,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "XYZ secret",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -500,7 +484,6 @@ metadata:
     bb: BBB
 spec:
   title: A secret value
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -560,7 +543,6 @@ metadata:
     bb: BBB
 spec:
   title: XYZ secret
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 

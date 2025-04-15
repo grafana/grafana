@@ -396,8 +396,12 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	keeperSecureValues := make(map[string][]string, 0)
 
 	for _, svRow := range secureValueRows {
-		keeperNames = append(keeperNames, svRow.Keeper)
-		keeperSecureValues[svRow.Keeper] = append(keeperSecureValues[svRow.Keeper], svRow.Name)
+		if svRow.Keeper == nil {
+			continue
+		}
+
+		keeperNames = append(keeperNames, *svRow.Keeper)
+		keeperSecureValues[*svRow.Keeper] = append(keeperSecureValues[*svRow.Keeper], svRow.Name)
 	}
 
 	reqKeeper := listByNameKeeper{
@@ -459,14 +463,14 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Check if keeper is default sql.
-	if name == contracts.DefaultSQLKeeper {
+	if name == nil {
 		return contracts.SQLKeeperType, nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, namespace, name)
+	kp, err := s.read(ctx, namespace, *name)
 	if err != nil {
 		return "", nil, err
 	}

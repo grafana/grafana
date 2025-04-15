@@ -74,9 +74,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			if row.Keeper != contracts.DefaultSQLKeeper {
+			if row.Keeper != nil {
 				// Validate before inserting that the chosen `keeper` exists.
-				keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+				keeperRow := &keeperDB{Name: *row.Keeper, Namespace: row.Namespace}
 
 				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 				if err != nil {
@@ -187,9 +187,9 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if newRow.Keeper != contracts.DefaultSQLKeeper {
+		if newRow.Keeper != nil {
 			// Validate before updating that the new `keeper` exists.
-			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+			keeperRow := &keeperDB{Name: *newRow.Keeper, Namespace: newRow.Namespace}
 
 			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 			if err != nil {

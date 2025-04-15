@@ -21,7 +21,7 @@ type KeeperMetadataStorage interface {
 	Update(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name string) (KeeperType, secretv0alpha1.KeeperConfig, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name *string) (KeeperType, secretv0alpha1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.
@@ -112,7 +112,3 @@ type Keeper interface {
 	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (secretv0alpha1.ExposedSecureValue, error)
 	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) error
 }
-
-const (
-	DefaultSQLKeeper = "kp-default-sql"
-)
