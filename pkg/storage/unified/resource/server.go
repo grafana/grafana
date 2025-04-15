@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
-	"github.com/grafana/dskit/user"
+	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -413,6 +413,30 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 			http.Serve(listener, mux)
 			// mux.Handle("/kv", memberlistsvc)
 		}()
+	}
+
+	return nil
+}
+
+func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
+	ringHasher := fnv.New32a()
+	ringHasher.Write([]byte(namespace))
+	rs, err := s.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+
+	if err != nil {
+		s.log.Error("Error getting replication set. Will not distribute request", err)
+		return nil
+	}
+
+	if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
+		s.log.Info("distributing request to ", rs.Instances[0].Id)
+
+		ins, err := s.pool.GetClientForInstance(rs.Instances[0])
+		if err != nil {
+			s.log.Error("Error getting client. Will not distribute request", err)
+			return nil
+		}
+		return ins.(*ringClient)
 	}
 
 	return nil
@@ -1052,33 +1076,10 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 		return nil, fmt.Errorf("search index not configured")
 	}
 
-	nsr := NamespacedResource{
-		Group:     req.Options.Key.Group,
-		Namespace: req.Options.Key.Namespace,
-		Resource:  req.Options.Key.Resource,
-	}
-
 	if s.shardingEnabled {
-		ringHasher := fnv.New32a()
-		ringHasher.Write([]byte(nsr.Namespace))
-		rs, err := s.ring.Get(ringHasher.Sum32(), ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-			return s != ring.ACTIVE
-		}), nil, nil, nil)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
-			fmt.Println("request for another instance. sending over to", rs.Instances[0].Id)
-
-			ins, err := s.pool.GetClientForInstance(rs.Instances[0])
-			if err != nil {
-				return nil, err
-			}
-			client := ins.(*ringClient)
-			res, err := client.client.Search(user.InjectOrgID(ctx, "1"), req)
-			return res, err
+		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
+		if client != nil {
+			return client.client.Search(userutils.InjectOrgID(ctx, "1"), req)
 		}
 	}
 
@@ -1090,6 +1091,14 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+
+	if s.shardingEnabled {
+		client := s.getClientToDistributeRequest(req.Namespace)
+		if client != nil {
+			return client.client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
+		}
+	}
+
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
 		srv, ok := s.backend.(ResourceIndexServer)

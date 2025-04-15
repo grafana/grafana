@@ -42,7 +42,7 @@ type RingConfig struct {
 	SkipUnregister bool `yaml:"-"`
 }
 
-var RingOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
 	// Only ACTIVE memora nodes get any work. If instance is not ACTIVE, we need to find another memora node.
 	return s != ring.ACTIVE
 })
