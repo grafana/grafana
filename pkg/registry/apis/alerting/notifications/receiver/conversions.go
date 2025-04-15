@@ -59,7 +59,7 @@ func convertToK8sResource(
 ) (*model.Receiver, error) {
 	spec := model.Spec{
 		Title:        receiver.Name,
-		Integrations: []model.Integration{},
+		Integrations: make([]model.Integration, 0, len(receiver.Integrations)),
 	}
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.Integration{
