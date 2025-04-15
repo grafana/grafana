@@ -33,24 +33,24 @@ module.exports = function (plop) {
   plop.setActionType('formatFiles', function (_, config) {
     const { execSync } = require('child_process');
     const filesToFormat = config.files.map((file) => projectPath(file));
-    
+
     try {
       const filesList = filesToFormat.map(file => `"${file}"`).join(' ');
-      
+
       console.log('🧹 Running ESLint on generated/modified files...');
       try {
         execSync(`yarn eslint --fix ${filesList}`, { cwd: basePath });
       } catch (error) {
         console.warn(`⚠️ Warning: ESLint encountered issues: ${error.message}`);
       }
-      
+
       console.log('🧹 Running Prettier on generated/modified files...');
       try {
         execSync(`yarn prettier --write ${filesList}`, { cwd: basePath });
       } catch (error) {
         console.warn(`⚠️ Warning: Prettier encountered issues: ${error.message}`);
       }
-      
+
       return '✅ Files linted and formatted successfully!';
     } catch (error) {
       console.error('⚠️ Warning: Formatting operations failed:', error.message);
@@ -160,13 +160,13 @@ module.exports = function (plop) {
       {
         type: 'input',
         name: 'operationIds',
-        message: 'Operation IDs to include (comma-separated):',
-        validate: (input) => (input && input.trim() ? true : 'At least one operation ID is required'),
+        message: 'Operation IDs to include (comma-separated, optional):',
+        validate: () => true,
       },
     ],
     actions: function (data) {
       // Format data for templates
-      data.operationIdArray = data.operationIds.split(',').map((id) => id.trim());
+      data.operationIdArray = data.operationIds ? data.operationIds.split(',').map((id) => id.trim()).filter(Boolean) : [];
 
       // Generate actions
       return generateRtkApiActions(data);

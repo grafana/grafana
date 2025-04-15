@@ -14,7 +14,7 @@ This will prompt you for:
 2. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
 3. **API version** - The API version (e.g., `v0alpha1`)
 4. **Reducer path** - The Redux reducer path (defaults to `<group-name>API`)
-5. **Operation IDs** - Comma-separated list of operation IDs to include (e.g., `createDashboard,updateDashboard`)
+5. **Operation IDs** - Optional comma-separated list of operation IDs to include (e.g., `createDashboard,updateDashboard`). If not provided, all operations will be included.
 
 ## What It Does
 
@@ -66,7 +66,6 @@ If you see an error about a missing OpenAPI schema, make sure:
 - API group must include `.grafana.app`
 - Version must be in format `v0alpha1`, `v1beta2`, etc.
 - Reducer path must end with `API`
-- At least one operation ID must be provided
 
 ### Generation Failed
 
