@@ -1,0 +1,6 @@
+import { generatedAPI } from './endpoints.gen';
+
+export const {{camelCase reducerPath}} = generatedAPI;
+export const { {{#each operationIdArray}}use{{pascalCase this}}{{#unless @last}}, {{/unless}}{{/each}} } = generatedAPI;
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { {{#each typeExports}}type {{this}}{{#unless @last}}, {{/unless}}{{/each}} } from './endpoints.gen'; 

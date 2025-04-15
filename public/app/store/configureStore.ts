@@ -12,6 +12,7 @@ import { advisorAPI } from '../api/clients/advisor';
 import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
 import { provisioningAPI } from '../api/clients/provisioning';
+// PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
@@ -47,6 +48,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPI.middleware,
         folderAPI.middleware,
         advisorAPI.middleware,
+        // PLOP_INJECT_MIDDLEWARE
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
