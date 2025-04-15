@@ -169,7 +169,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   );
 
   const newResolvedTarget = state.queryModel.target.targetFull ?? state.queryModel.target.target;
-  const newTargetRemovedSpaces = newResolvedTarget. replace(/\s+/g, '');
+  const newTargetRemovedSpaces = newResolvedTarget.replace(/\s+/g, '');
 
   if (newTargetRemovedSpaces !== oldTargetRemovedSpaces && !state.paused) {
     state.refresh();
