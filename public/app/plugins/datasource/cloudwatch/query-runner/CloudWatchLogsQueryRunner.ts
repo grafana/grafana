@@ -227,12 +227,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       return value;
     };
     const formatter = query.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
-    const queryString = this.templateSrv.replace(query.expression || '', scopedVars, formatter);
+    const expression = this.templateSrv.replace(query.expression || '', scopedVars, formatter);
 
     return {
       logGroups,
       logGroupNames,
-      expression: queryString,
+      expression,
     };
   }
 
