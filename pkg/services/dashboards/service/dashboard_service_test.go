@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -2610,11 +2611,12 @@ func TestCleanUpDashboard(t *testing.T) {
 
 func TestK8sDashboardCleanupJob(t *testing.T) {
 	tests := []struct {
-		name           string
-		featureEnabled bool
-		batchSize      int
-		setupFunc      func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
-		verifyFunc     func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
+		name            string
+		featureEnabled  bool
+		readFromUnified bool
+		batchSize       int
+		setupFunc       func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
+		verifyFunc      func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
 	}{
 		{
 			name:           "Should not run cleanup when feature flag is disabled",
@@ -2622,9 +2624,16 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			batchSize:      10,
 		},
 		{
-			name:           "Should process dashboard cleanup for all orgs",
-			featureEnabled: true,
-			batchSize:      10,
+			name:            "Should not run cleanup when feature flag is enabled but we're reading from legacy",
+			featureEnabled:  true,
+			readFromUnified: false,
+			batchSize:       10,
+		},
+		{
+			name:            "Should process dashboard cleanup for all orgs",
+			featureEnabled:  true,
+			readFromUnified: true,
+			batchSize:       10,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organizations
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2692,9 +2701,10 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			},
 		},
 		{
-			name:           "Should handle pagination and batching when processing large sets of dashboards",
-			featureEnabled: true,
-			batchSize:      3,
+			name:            "Should handle pagination and batching when processing large sets of dashboards",
+			featureEnabled:  true,
+			readFromUnified: true,
+			batchSize:       3,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organization
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2778,6 +2788,8 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			sqlStore, _ := sqlstore.InitTestDB(t)
 			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
+			dual := dualwrite.NewMockService(t)
+			dual.On("ReadFromUnified", mock.Anything, mock.Anything).Return(tc.readFromUnified, nil)
 
 			fakeStore := dashboards.FakeDashboardStore{}
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2797,6 +2809,7 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 				serverLockService:      lockService,
 				kvstore:                kv,
 				features:               features,
+				dual:                   dual,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)
