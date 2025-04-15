@@ -2450,6 +2450,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "Источники данных",
       "empty-message": "По вашему запросу ничего не найдено",
@@ -2460,11 +2465,6 @@
       "aria-label-link-to-connections": "",
       "body": "",
       "go-to-connections": ""
-    },
-    "advisor-redirect-notice": {
-      "aria-label-link-to-advisor": "",
-      "body": "",
-      "go-to-advisor": ""
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "",
