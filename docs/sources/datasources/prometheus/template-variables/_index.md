@@ -50,8 +50,6 @@ For an introduction to templating and template variables, refer to [Templating](
 
 Grafana supports several types of variables, but `Query` variables are specifically used to query Prometheus. They can return a list of metrics, labels, label values, query results, or series.
 
-<!-- You have the option to use several different variable types, but variables of the type `Query` will query Prometheus for a list of metrics, labels, label values, a query result or a series. -->
-
 Select a Prometheus data source query type and enter the required inputs:
 
 | Query Type      | Input(\* required)        | Description                                                                                                                                                   | Used API endpoints                             |
@@ -63,7 +61,7 @@ Select a Prometheus data source query type and enter the required inputs:
 | `Series query`  | `metric`, `label` or both | Returns a list of time series associated with the entered data.                                                                                               | /api/v1/series                                 |
 | `Classic query` | classic query string      | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
 
-For details on _metric names_, _label names_, and _label values_, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
 ### Query options
 
@@ -103,7 +101,7 @@ Configure the variable’s `refresh` setting to `On Time Range Change` to ensure
 
 **Example:**
 
-Populate a variablewith the top 5 busiest request instances ranked by average QPS over the dashboard's selected time range:
+Populate a variable with the top 5 busiest request instances ranked by average QPS over the dashboard's selected time range:
 
 ```
 query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
@@ -164,9 +162,3 @@ If you've enabled the `Multi-value_` or `Include all value_` options, Grafana co
 ## Use the ad hoc filters variable type
 
 Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, enabling flexible filtering without modifying individual queries.
-
-
-
-
-<!-- which you can use to specify any number of label/value filters on the fly.
-These filters are automatically applied to all your Prometheus queries. -->

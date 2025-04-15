@@ -94,7 +94,6 @@ You are taken to the **Settings** tab where you will set up your Prometheus conf
 Following is a list of configuration options for Prometheus.
 
 - **Name** - The data source name. Sets the name you use to refer to the data source in panels and queries. Examples: prometheus-1, prom-metrics.
-
 - **Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the default selected data source.
 
 **Connection:**
@@ -105,7 +104,7 @@ Following is a list of configuration options for Prometheus.
 {{< admonition type="note" >}}
 When running Grafana and Prometheus in separate containers, localhost refers to each container’s own network namespace. This means that `localhost:9090` points to port 9090 inside the Grafana container, not on the host machine.
 
-You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can use `http://host.docker.internal:9090` to reference the host machine.
+Use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can use `http://host.docker.internal:9090` to reference the host machine.
 {{< /admonition >}}
 
 {{< /shared >}}
@@ -129,13 +128,13 @@ There are three authentication option for the Prometheus data source.
 Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/). You must add TLS settings to your Prometheus configuration file **prior** to setting these options in Grafana.
 {{< /admonition >}}
 
-- **Add self-signed certificate** - Check the box to ass a self-signed certificate.
-  \_ **CA certificate** - Add your certificate.
+- **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
+  - **CA certificate** - Add your certificate.
 - **TLS client authentication** - Check the box to enable TLS client authentication.
-  - **Server name** -
+  - **Server name** - Add the server name, which is used to verify the hostname on the returned certificate. 
   - **Client certificate** - The client certificate is generated from a Certificate Authority or it's self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
-  - **Client key** - The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server.
-- **Skip TLS verify** - Toggle on to bypass TLS certificate validation.
+  - **Client key** - Add your client key, which can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts data between the client and server.
+- **Skip TLS verify** - Toggle on to bypass TLS certificate validation. Skipping TLS certificate validation is not recommended unless absolutely necessary or for testing purposes.
 
 **HTTP headers:**
 
@@ -150,7 +149,7 @@ Following are optional configuration settings you can configure for more control
 
 - **Advanced HTTP settings:**
   - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
-  - **Timeout** - The HTTP request timeout. This must be in seconds. The default is 30 seconds.
+  - **Timeout** - The HTTP request timeout, must be in seconds. 
 
 **Alerting:**
 
@@ -180,9 +179,6 @@ Following are optional configuration settings you can configure for more control
 - **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST`is recommended and selected by default, as it supports larger queries. Select `GET` if you're using Prometheus version 2.1 or older, or if your network restricts `POST` requests.
 Toggle on 
 - **Use series endpoint** - Enabling this option makes Grafana use the series endpoint (/api/v1/series) with the match[] parameter instead of the label values endpoint (/api/v1/label/<label_name>/values). While the label values endpoint is generally more performant, some users may prefer the series endpoint because it supports the `POST` method, whereas the label values endpoint only allows `GET` requests.
-
-
- <!-- Checking this option will favor the series endpoint with match[] parameter over the label values endpoint with match[] parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method. Visit docs for more details here. -->
 
 **Exemplars:**
 
@@ -251,26 +247,14 @@ Once you have provisioned a data source you cannot edit it.
 
 The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
 
-## Troubleshooting
+## Troubleshooting configuration issues
 
-Refer to the following troubleshooting information, as required.
+Refer to the following troubleshooting information as needed.
 
 **Data doesn't appear in Explore metrics:**
 
-<!-- vale Grafana.Spelling = NO -->
-
-<!-- If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source or sent
-metrics to Grafana Cloud, ensure that you've selected the correct data source in the **Data source** drop-down menu. If
-you've used remote_write to send metrics to Grafana Cloud, the data source name follows the convention
-`grafanacloud-stackname-prom`. -->
-
 If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
 
-
-<!-- If metric data doesn't appear in Explore after successfully testing the connection to a Prometheus data source or sending metrics to Grafana Cloud, make sure you've selected the correct data source from the Data Source drop-down menu. When using remote_write to send metrics to Grafana Cloud, the data source name follows the convention grafanacloud-stackname-prom." -->
-
-<!-- vale Grafana.Spelling = YES -->
-
-The following image shows the **Data source** field in Explore metrics.
+The following image shows the **Data source** field in Explore metrics:
 
 ![Image that shows Prometheus metrics in Explore](/media/docs/grafana/data-sources/prometheus/troubleshoot-connection-1.png)
