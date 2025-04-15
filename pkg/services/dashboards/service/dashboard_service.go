@@ -95,6 +95,7 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
+	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -146,6 +147,12 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	defer span.End()
 
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return nil
+	}
+
+	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
+	if readingFromLegacy {
+		// Legacy does its own cleanup
 		return nil
 	}
 
@@ -394,6 +401,7 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
+		dual:                      dual,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
