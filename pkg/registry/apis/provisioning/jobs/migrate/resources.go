@@ -47,7 +47,7 @@ func NewLegacyResourcesMigrator(
 func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	parser, err := m.parsers.GetParser(ctx, rw)
 	if err != nil {
-		return fmt.Errorf("error getting parser: %w", err)
+		return fmt.Errorf("get parser: %w", err)
 	}
 
 	repoOpts := resources.RepositoryResourcesOptions{
@@ -64,7 +64,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 		return fmt.Errorf("migrate folders from SQL: %w", err)
 	}
 
-	progress.SetMessage(ctx, "exporting resources from SQL")
+	progress.SetMessage(ctx, "migrate resources from SQL")
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
 			continue

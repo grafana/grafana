@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -34,7 +35,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "error getting parser")
+		require.EqualError(t, err, "get parser: parser factory error")
 
 		mockParserFactory.AssertExpectations(t)
 	})
@@ -57,7 +58,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "get repository resources")
+		require.EqualError(t, err, "get repository resources: repo resources factory error")
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
@@ -114,16 +115,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{
-			Summary: []*resource.BulkResponse_Summary{
-				{
-					Group:    "test.grafana.app",
-					Resource: "tests",
-					Count:    10,
-					History:  5,
-				},
-			},
-		}, errors.New("legacy migrator error"))
+		})).Return(&resource.BulkResponse{}, errors.New("legacy migrator error"))
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -164,16 +156,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{
-			Summary: []*resource.BulkResponse_Summary{
-				{
-					Group:    "test.grafana.app",
-					Resource: "tests",
-					Count:    10,
-					History:  5,
-				},
-			},
-		}, nil).Once() // Count phase
+		})).Return(&resource.BulkResponse{}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
 		})).Return(&resource.BulkResponse{
@@ -188,8 +171,9 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		}, nil).Once() // Migration phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
-		progress.On("SetTotal", mock.Anything, 10).Return()
+		progress.On("SetMessage", mock.Anything, "migrate folders from SQL").Return()
+		progress.On("SetMessage", mock.Anything, "migrate resources from SQL").Return()
+		progress.On("SetMessage", mock.Anything, "migrate dashboards resource").Return()
 
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
@@ -294,6 +278,17 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		}
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindRepo,
+			Identity:    "test",
+			AllowsEdits: true,
+			Suspended:   false,
+		})
+		meta.SetSourceProperties(utils.SourceProperties{
+			Path:            "test",
+			Checksum:        "test",
+			TimestampMillis: 1234567890,
+		})
 
 		mockParser.On("Parse", mock.Anything, mock.MatchedBy(func(info *repository.FileInfo) bool {
 			return info != nil && info.Path == "" && string(info.Data) == "test"
@@ -304,7 +299,21 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			}, nil)
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, resources.WriteOptions{
+		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			if obj == nil {
+				return false
+			}
+			if obj.GetName() != "test" {
+				return false
+			}
+
+			meta, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			managerProps, _ := meta.GetManagerProperties()
+			sourceProps, _ := meta.GetSourceProperties()
+
+			return assert.Zero(t, sourceProps) && assert.Zero(t, managerProps)
+		}), resources.WriteOptions{
 			Path: "",
 			Ref:  "",
 		}).
@@ -333,6 +342,50 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
 		require.NoError(t, err)
+
+		mockParser.AssertExpectations(t)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should fail when too many errors", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, resources.WriteOptions{}).
+			Return("test/path", nil)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+		progress.On("TooManyErrors").Return(errors.New("too many errors"))
+
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			mockRepoResources,
+			progress,
+			provisioning.MigrateJobOptions{},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+		)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		require.EqualError(t, err, "too many errors")
 
 		mockParser.AssertExpectations(t)
 		mockRepoResources.AssertExpectations(t)
@@ -501,5 +554,25 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 
 		mockLegacyMigrator.AssertExpectations(t)
 		progress.AssertExpectations(t)
+	})
+}
+
+func TestLegacyResourceResourceMigrator_Close(t *testing.T) {
+	t.Run("should return nil error", func(t *testing.T) {
+		migrator := &legacyResourceResourceMigrator{}
+		err := migrator.Close()
+		require.NoError(t, err)
+	})
+}
+
+func TestLegacyResourceResourceMigrator_CloseWithResults(t *testing.T) {
+	t.Run("should return empty bulk response and nil error", func(t *testing.T) {
+		migrator := &legacyResourceResourceMigrator{}
+		response, err := migrator.CloseWithResults()
+
+		require.NoError(t, err)
+		require.NotNil(t, response)
+		require.IsType(t, &resource.BulkResponse{}, response)
+		require.Empty(t, response.Summary)
 	})
 }
