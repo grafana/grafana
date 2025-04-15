@@ -15,6 +15,8 @@ import (
 
 // Store is an abstraction for the storage API.
 // This exists to allow for unit testing.
+//
+//go:generate mockery --name Store --structname MockStore --inpackage --filename store_mock.go --with-expecter
 type Store interface {
 	// Claim takes a job from storage, marks it as ours, and returns it.
 	//
@@ -176,7 +178,7 @@ func (d *jobDriver) drive(ctx context.Context) error {
 	}
 
 	// Save the finished job
-	err = d.historicJobs.WriteJob(ctx, job)
+	err = d.historicJobs.WriteJob(ctx, job.DeepCopy())
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
 		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)

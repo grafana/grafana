@@ -78,7 +78,7 @@ export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleC
 };
 
 function toVisNetworkNodes(visJs: any, nodes: GraphNode[]): any[] {
-  const nodesWithStyle: any[] = nodes.map((node) => ({
+  const nodesWithStyle = nodes.map((node) => ({
     ...node,
     shape: 'box',
   }));
@@ -86,6 +86,6 @@ function toVisNetworkNodes(visJs: any, nodes: GraphNode[]): any[] {
 }
 
 function toVisNetworkEdges(visJs: any, edges: GraphEdge[]): any[] {
-  const edgesWithStyle: any[] = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
+  const edgesWithStyle = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
   return new visJs.DataSet(edgesWithStyle);
 }

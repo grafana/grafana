@@ -41,7 +41,7 @@ describe('Variables - Query - Add variable', () => {
         expect(input.attr('placeholder')).equals('Descriptive text');
         expect(input.val()).equals('');
       });
-    cy.get('label').contains('Show on dashboard').should('be.visible');
+    cy.get('label').contains('Hide').should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .get('input[placeholder="gdev-testdata"]')

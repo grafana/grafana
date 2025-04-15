@@ -80,13 +80,17 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
         </Field>
         {signup && (
           <>
-            <Field label={'Username'} invalid={!!errors.code} error={errors.code?.message} hidden={true}>
+            <Field
+              label={t('login.form.passwordless-username-label', 'Username')}
+              invalid={!!errors.code}
+              error={errors.code?.message}
+              hidden={true}
+            >
               <Input
                 {...register('username')}
                 id={usernameId}
                 autoFocus
                 autoCapitalize="none"
-                placeholder={'username'}
                 data-testid={selectors.pages.PasswordlessLogin.email}
                 hidden={true}
               />
@@ -97,7 +101,6 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
                 id={nameId}
                 autoFocus
                 autoCapitalize="none"
-                placeholder={t('login.form.name-placeholder', 'name')}
                 data-testid={selectors.pages.PasswordlessLogin.email}
               />
             </Field>

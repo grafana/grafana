@@ -95,7 +95,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	var dialOps []grpc.DialOption
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
-		dialOps = append(dialOps, grpc.WithTransportCredentials(creds))
+		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
 		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
 			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
 		}))

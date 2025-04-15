@@ -70,22 +70,100 @@ func (d *dashboardStore) emitEntityEvent() bool {
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
-// TODO: once the folder service removes usage of this function, remove it here. The dashboard service now implements this
-// on the service level for dashboards.
-func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
+func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
 
 	isParentFolderChanged := false
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		isParentFolderChanged, err = getExistingDashboardByIDOrUIDForUpdate(sess, dashboard, overwrite)
-		if err != nil {
-			return err
+		dashWithIdExists := false
+		var existingById dashboards.Dashboard
+
+		// we don't save FolderID in kubernetes object when saving through k8s
+		// this block guarantees we save dashboards with folder_id and folder_uid in those cases
+		if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+			var existing dashboards.Dashboard
+			folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
+			if err != nil {
+				return err
+			}
+
+			if folderIdFound {
+				dash.FolderID = existing.ID // nolint:staticcheck
+			} else {
+				return dashboards.ErrDashboardFolderNotFound
+			}
+		}
+
+		if dash.ID > 0 {
+			var err error
+			dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existingById)
+			if err != nil {
+				return fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
+			}
+
+			if !dashWithIdExists {
+				return dashboards.ErrDashboardNotFound
+			}
+
+			if dash.UID == "" {
+				dash.SetUID(existingById.UID)
+			}
+		}
+
+		dashWithUidExists := false
+		var existingByUid dashboards.Dashboard
+
+		if dash.UID != "" {
+			var err error
+			dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgID, dash.UID).Get(&existingByUid)
+			if err != nil {
+				return fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
+			}
+		}
+
+		if !dashWithIdExists && !dashWithUidExists {
+			return nil
+		}
+
+		if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
+			return dashboards.ErrDashboardWithSameUIDExists
+		}
+
+		existing := existingById
+
+		if !dashWithIdExists && dashWithUidExists {
+			dash.SetID(existingByUid.ID)
+			dash.SetUID(existingByUid.UID)
+			existing = existingByUid
+		}
+
+		if (existing.IsFolder && !dash.IsFolder) ||
+			(!existing.IsFolder && dash.IsFolder) {
+			return dashboards.ErrDashboardTypeMismatch
+		}
+
+		if !dash.IsFolder && dash.FolderUID != existing.FolderUID {
+			isParentFolderChanged = true
+		}
+
+		// check for is someone else has written in between
+		if dash.Version != existing.Version {
+			if overwrite {
+				dash.SetVersion(existing.Version)
+			} else {
+				return dashboards.ErrDashboardVersionMismatch
+			}
+		}
+
+		// do not allow plugin dashboard updates without overwrite flag
+		if existing.PluginID != "" && !overwrite {
+			return dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
 		}
 
 		return nil
 	})
+
 	if err != nil {
 		return false, err
 	}
@@ -186,7 +264,7 @@ func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashb
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(ctx, sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -207,7 +285,7 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(ctx, sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -324,126 +402,16 @@ func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64, isFolder b
 	return r.Count, nil
 }
 
-func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
-	dashWithIdExists := false
-	isParentFolderChanged := false
-	var existingById dashboards.Dashboard
-
-	if dash.ID > 0 {
-		var err error
-		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existingById)
-		if err != nil {
-			return false, fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
-		}
-
-		if !dashWithIdExists {
-			return false, dashboards.ErrDashboardNotFound
-		}
-
-		if dash.UID == "" {
-			dash.SetUID(existingById.UID)
-		}
-	}
-
-	dashWithUidExists := false
-	var existingByUid dashboards.Dashboard
-
-	if dash.UID != "" {
-		var err error
-		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgID, dash.UID).Get(&existingByUid)
-		if err != nil {
-			return false, fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
-		}
-	}
-
-	if !dashWithIdExists && !dashWithUidExists {
-		return false, nil
-	}
-
-	if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
-		return false, dashboards.ErrDashboardWithSameUIDExists
-	}
-
-	existing := existingById
-
-	if !dashWithIdExists && dashWithUidExists {
-		dash.SetID(existingByUid.ID)
-		dash.SetUID(existingByUid.UID)
-		existing = existingByUid
-	}
-
-	if (existing.IsFolder && !dash.IsFolder) ||
-		(!existing.IsFolder && dash.IsFolder) {
-		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
-	}
-
-	if !dash.IsFolder && dash.FolderUID != existing.FolderUID {
-		isParentFolderChanged = true
-	}
-
-	// check for is someone else has written in between
-	if dash.Version != existing.Version {
-		if overwrite {
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, dashboards.ErrDashboardVersionMismatch
-		}
-	}
-
-	// do not allow plugin dashboard updates without overwrite flag
-	if existing.PluginID != "" && !overwrite {
-		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) saveDashboard(ctx context.Context, sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	dash := cmd.GetDashboardModel()
 
-	userId := cmd.UserID
-
-	if userId == 0 {
-		userId = -1
+	isParentFolderChanged, err := d.ValidateDashboardBeforeSave(ctx, dash, cmd.Overwrite)
+	if err != nil {
+		return nil, err
 	}
 
-	// we don't save FolderID in kubernetes object when saving through k8s
-	// this block guarantees we save dashboards with folder_id and folder_uid in those cases
-	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
-		var existing dashboards.Dashboard
-		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
-		if err != nil {
-			return nil, err
-		}
-
-		if folderIdFound {
-			dash.FolderID = existing.ID // nolint:staticcheck
-		}
-	}
-
-	if dash.ID > 0 {
-		var existing dashboards.Dashboard
-		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
-		if err != nil {
-			return nil, err
-		}
-		if !dashWithIdExists {
-			return nil, dashboards.ErrDashboardNotFound
-		}
-
-		// check for is someone else has written in between
-		if dash.Version != existing.Version {
-			if cmd.Overwrite {
-				dash.SetVersion(existing.Version)
-			} else {
-				return nil, dashboards.ErrDashboardVersionMismatch
-			}
-		}
-
-		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginID != "" && !cmd.Overwrite {
-			return nil, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
-		}
+	if isParentFolderChanged {
+		d.log.Debug("Dashboard parent folder has changed", "dashboard", dash.UID, "newFolder", dash.FolderUID)
 	}
 
 	if dash.UID == "" {
@@ -452,14 +420,12 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 	parentVersion := dash.Version
 	var affectedRows int64
-	var err error
 
 	if dash.ID == 0 {
 		dash.SetVersion(1)
 		dash.Created = time.Now()
-		dash.CreatedBy = userId
+		dash.CreatedBy = dash.UpdatedBy
 		dash.Updated = time.Now()
-		dash.UpdatedBy = userId
 		metrics.MApiDashboardInsert.Inc()
 		affectedRows, err = sess.Nullable("folder_uid").Insert(dash)
 	} else {
@@ -470,8 +436,6 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		} else {
 			dash.Updated = time.Now()
 		}
-
-		dash.UpdatedBy = userId
 
 		affectedRows, err = sess.MustCols("folder_id", "folder_uid").Nullable("folder_uid").ID(dash.ID).Update(dash)
 	}

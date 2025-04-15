@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -60,9 +59,8 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
         {versions.map((version) => {
           let tooltip: string | undefined = undefined;
           const isInstalledVersion = installedVersion === version.version;
-          const canInstall = version.angularDetected ? config.angularSupportEnabled : true;
 
-          if (!canInstall) {
+          if (version.angularDetected) {
             tooltip = 'This plugin version is AngularJS type which is not supported';
           }
 
@@ -96,9 +94,8 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                   disabled={
                     isInstalledVersion ||
                     isInstalling ||
-                    !canInstall ||
+                    version.angularDetected ||
                     !version.isCompatible ||
-                    !canInstall ||
                     disableInstallation
                   }
                   tooltip={tooltip}

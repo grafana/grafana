@@ -6,22 +6,28 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var ErrAlreadyInRepository = errors.New("already in repository")
+var (
+	ErrAlreadyInRepository = errors.New("already in repository")
+	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
+)
 
 type WriteOptions struct {
-	Identifier bool
-	Path       string
-	Ref        string
+	Path string
+	Ref  string
 }
 
 type resourceID struct {
@@ -33,13 +39,13 @@ type resourceID struct {
 type ResourcesManager struct {
 	repo            repository.ReaderWriter
 	folders         *FolderManager
-	parser          *Parser
-	clients         *ResourceClients
+	parser          Parser
+	clients         ResourceClients
 	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser *Parser, clients *ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
@@ -75,6 +81,10 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	ctx = r.withAuthorSignature(ctx, meta)
 
 	name := meta.GetName()
+	if name == "" {
+		return "", ErrMissingName
+	}
+
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how we should handle this?
 	if manager.Identity == r.repo.Config().GetName() {
@@ -101,9 +111,8 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if options.Identifier {
-		meta.SetName(name) // keep the identifier in the metadata
-	}
+	// Always write the identifier
+	meta.SetName(name)
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
@@ -126,16 +135,20 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	return fileName, nil
 }
 
-func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	// Read the referenced file
 	fileInfo, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
+	parsed, err := r.parser.Parse(ctx, fileInfo)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to parse file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
+	}
+
+	if parsed.Obj.GetName() == "" {
+		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
 	// Check if the resource already exists
@@ -150,23 +163,40 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	r.resourcesLookup[id] = path
 
-	// Make sure the parent folders exist
-	folder, err := r.folders.EnsureFolderPathExist(ctx, path)
-	if err != nil {
-		return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+	// For resources that exist in folders, set the header annotation
+	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
+		// Make sure the parent folders exist
+		folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+		if err != nil {
+			return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
+		}
+		parsed.Meta.SetFolder(folder)
 	}
 
-	parsed.Meta.SetFolder(folder)
-	parsed.Meta.SetUID("")             // clear identifiers
-	parsed.Meta.SetResourceVersion("") // clear identifiers
+	// Clear any saved identifiers
+	parsed.Meta.SetUID("")
+	parsed.Meta.SetResourceVersion("")
 
-	// Update will also create (for resources we care about)
-	_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+	// TODO: use parsed.Run() (but that has an extra GET now!!)
+	fieldValidation := "Strict"
+	if parsed.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// Update or Create resource
+	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
+	if apierrors.IsNotFound(err) {
+		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+	}
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error) {
 	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
 	if err != nil {
 		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
@@ -175,34 +205,33 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	return r.WriteResourceFromFile(ctx, newPath, newRef)
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, *schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return "", nil, fmt.Errorf("no object found")
+		return "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
 	}
 
 	objName := obj.GetName()
 	if objName == "" {
-		// Find the referenced file
-		objName, _ = NamesFromHashedRepoPath(r.repo.Config().Name, path)
+		return "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
 	client, _, err := r.clients.ForKind(*gvk)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get client for deleted object: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
 	}
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to delete: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, gvk, nil
+	return objName, schema.GroupVersionKind{}, nil
 }
 
 func (r *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {

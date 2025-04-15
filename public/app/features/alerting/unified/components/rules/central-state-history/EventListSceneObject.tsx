@@ -349,6 +349,12 @@ export function EventState({ state, showLabel = false, addFilter, type }: EventS
       tooltipContent: Boolean(reason) ? `Pending (${reason})` : 'Pending',
       labelText: <Trans i18nKey="alerting.central-alert-history.details.state.pending">Pending</Trans>,
     },
+    Recovering: {
+      iconName: 'circle',
+      iconColor: styles.warningColor,
+      tooltipContent: Boolean(reason) ? `Recovering (${reason})` : 'Recovering',
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.recovering">Recovering</Trans>,
+    },
   };
   function onStateClick() {
     addFilter('state', baseState, type === 'from' ? 'stateFrom' : 'stateTo');

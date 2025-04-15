@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
@@ -67,9 +67,10 @@ export const SaveDashboardDiff = ({
       {hasMigratedToV2 && (
         <Box paddingTop={1}>
           <Alert
-            title={
+            title={t(
+              'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
               'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
-            }
+            )}
             severity="info"
           />
         </Box>
@@ -87,7 +88,7 @@ export const SaveDashboardDiff = ({
             },
           ]}
           key={'folder'}
-          title={'folder'}
+          title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
         />
       )}
       {(!value || !oldValue) && <Spinner />}

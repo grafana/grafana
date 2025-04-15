@@ -3,7 +3,9 @@ import { Observable } from 'rxjs';
 
 import { DataSourceRef } from '@grafana/schema';
 
+import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { throwIfAngular } from '../utils/throwIfAngular';
 
 import { ScopedVars } from './ScopedVars';
 import { WithAccessControlMetadata } from './accesscontrol';
@@ -50,12 +52,16 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setConfigCtrl(ConfigCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setConfigCtrl');
     this.angularConfigCtrl = ConfigCtrl;
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setQueryCtrl(QueryCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setQueryCtrl');
     this.components.QueryCtrl = QueryCtrl;
     return this;
   }
@@ -115,7 +121,7 @@ export class DataSourcePlugin<
   }
 
   setComponentsFromLegacyExports(pluginExports: System.Module) {
-    this.angularConfigCtrl = pluginExports.ConfigCtrl;
+    throwIfAngular(pluginExports);
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
@@ -161,7 +167,9 @@ export interface DataSourcePluginComponents<
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   TSecureOptions = {},
 > {
+  /** @deprecated it will be removed in a future release */
   QueryCtrl?: any;
+  /** @deprecated it will be removed in a future release */
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;

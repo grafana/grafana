@@ -727,10 +727,9 @@ export type ObjectMeta = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
 };
 export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -748,8 +747,6 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
   /** Prefix in target file system */
   path?: string;
 };
@@ -1099,15 +1096,18 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ErrorDetails = {
+  detail?: string;
+  field?: string;
+  type: string;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** HTTP status code */
   code: number;
-  /** Optional details */
-  details?: Unstructured;
-  /** Error descriptions */
-  errors?: string[];
+  /** Field related errors */
+  errors?: ErrorDetails[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Is the connection healthy */
@@ -1126,10 +1126,10 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type RepositoryView = {
+  /** For git, this is the target branch */
+  branch?: string;
   /** The k8s name for this repository */
   name: string;
-  /** Edit options within the repository */
-  readOnly: boolean;
   /** When syncing, where values are saved
     
     Possible enum values:
@@ -1144,6 +1144,8 @@ export type RepositoryView = {
      - `"github"`
      - `"local"` */
   type: 'github' | 'local';
+  /** The supported workflows */
+  workflows: ('branch' | 'write')[];
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
