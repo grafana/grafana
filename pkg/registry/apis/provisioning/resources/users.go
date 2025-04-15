@@ -6,21 +6,17 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 const maxUsers = 10000
 
-func loadUsers(ctx context.Context, clients ResourceClients) (map[string]repository.CommitSignature, error) {
-	client, err := clients.User()
-	if err != nil {
-		return nil, err
-	}
-
+func loadUsers(ctx context.Context, client dynamic.ResourceInterface) (map[string]repository.CommitSignature, error) {
 	userInfo := make(map[string]repository.CommitSignature)
 	var count int
-	err = ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+	err := ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 		count++
 		if count > maxUsers {
 			return errors.New("too many users")
@@ -28,7 +24,11 @@ func loadUsers(ctx context.Context, clients ResourceClients) (map[string]reposit
 
 		sig := repository.CommitSignature{}
 		// FIXME: should we improve logging here?
-		var ok bool
+		var (
+			ok  bool
+			err error
+		)
+
 		sig.Name, ok, err = unstructured.NestedString(item.Object, "spec", "login")
 		if !ok || err != nil {
 			return nil

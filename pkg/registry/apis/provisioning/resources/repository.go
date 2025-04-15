@@ -79,7 +79,12 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 
 	signatures := map[string]repository.CommitSignature{}
 	if opts.CommitWithOriginalAuthors {
-		signatures, err = loadUsers(ctx, clients)
+		userClient, err := clients.User()
+		if err != nil {
+			return nil, fmt.Errorf("create user client: %w", err)
+		}
+
+		signatures, err = loadUsers(ctx, userClient)
 		if err != nil {
 			return nil, fmt.Errorf("load users: %w", err)
 		}
