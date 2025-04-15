@@ -499,6 +499,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 		_, err = scimSection.NewKey("user_sync_enabled", "true")
 		require.NoError(t, err)
+		_, err = scimSection.NewKey("group_sync_enabled", "true")
+		require.NoError(t, err)
 	}
 
 	dbSection, err := getOrCreateSection("database")
