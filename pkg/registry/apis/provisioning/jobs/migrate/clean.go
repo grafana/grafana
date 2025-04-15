@@ -31,11 +31,12 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 	}
 
 	for _, kind := range resources.SupportedProvisioningResources {
-		progress.SetMessage(ctx, fmt.Sprintf("removing unprovisioned %s", kind.Resource))
+		progress.SetMessage(ctx, fmt.Sprintf("remove unprovisioned %s", kind.Resource))
 		client, _, err := clients.ForResource(kind)
 		if err != nil {
-			return err
+			return fmt.Errorf("get resource client: %w", err)
 		}
+
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 			result := jobs.JobResourceResult{
 				Name:     item.GetName(),
@@ -45,9 +46,9 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 			}
 
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("failed to delete folder: %w", err)
+				result.Error = err
 				progress.Record(ctx, result)
-				return result.Error
+				return fmt.Errorf("delete resource: %w", err)
 			}
 
 			progress.Record(ctx, result)
@@ -56,5 +57,6 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 			return err
 		}
 	}
+
 	return nil
 }
