@@ -107,8 +107,6 @@ Use the `+` button to add a label, and the `x` button to remove a label.
 Click **+ Operations** to select from a list of operations including Aggregations, Range functions, Functions, Binary operations, Trigonometric and Time functions. You can select multiple operations. Refer to [Operations](#operations) for more detail.
 
 
-
-
 **Options:**
 
 - **Legend**- Let's you customize the name for the time series. You can use a predefined or custom format.

@@ -51,6 +51,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
+  provision-grafana:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+  
 ---
 
 # Configure the Prometheus data source
@@ -59,7 +65,7 @@ This document provides instructions for configuring the Prometheus data source a
 
 ## Before you begin
 
-- You must have the `Organization administrator` role to add a data source. Administrators can also configure a data source via [YAML with the Grafana provisioning system](https://grafana.com//docs/plugins/grafana-mongodb-datasource/<GRAFANA_VERSION>/#provision-the-mongodb-data-source).
+- You must have the `Organization administrator` role to add a data source. Administrators can also configure a data source via YAML files.
 
 - Know which Prometheus-compatible database you are using.
 
@@ -205,44 +211,13 @@ You can also remove a connection by clicking **Delete**.
 
 ## Provision the Prometheus data source
 
-You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provision-grafana).
 
 {{< admonition type="note" >}}
 Once you have provisioned a data source you cannot edit it.
 {{< /admonition >}}
 
-### Provisioning example
-
-<!-- ```yaml
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    # Access mode - proxy (server in the UI) or direct (browser in the UI).
-    url: http://localhost:9090
-    jsonData:
-      httpMethod: POST
-      manageAlerts: true
-      prometheusType: Prometheus
-      prometheusVersion: 2.44.0
-      cacheLevel: 'High'
-      disableRecordingRules: false
-      incrementalQueryOverlapWindow: 10m
-      exemplarTraceIdDestinations:
-        # Field with internal link pointing to data source in Grafana.
-        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-        - datasourceUid: my_jaeger_uid
-          name: traceID
-
-        # Field with external link.
-        - name: traceID
-          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
-``` -->
-
-Example of a Prometheus data source configuration:
+**Example of a Prometheus data source configuration:**
 
     ```yaml
     apiVersion: 1
