@@ -33,30 +33,28 @@ module.exports = function (plop) {
   plop.setActionType('formatFiles', function (_, config) {
     const { execSync } = require('child_process');
     const filesToFormat = config.files.map((file) => projectPath(file));
-
+    
     try {
-      console.log('🧹 Formatting files with Prettier...');
-      filesToFormat.forEach((file) => {
-        try {
-          execSync(`yarn prettier --write "${file}"`, { cwd: basePath });
-        } catch (error) {
-          console.warn(`⚠️ Warning: Could not format ${file} with prettier: ${error.message}`);
-        }
-      });
-
-      console.log('🧹 Running ESLint fix...');
-      filesToFormat.forEach((file) => {
-        try {
-          execSync(`yarn eslint --fix "${file}"`, { cwd: basePath });
-        } catch (error) {
-          console.warn(`⚠️ Warning: Could not lint ${file}: ${error.message}`);
-        }
-      });
-
-      return '✅ Files formatted successfully!';
+      const filesList = filesToFormat.map(file => `"${file}"`).join(' ');
+      
+      console.log('🧹 Running ESLint on generated/modified files...');
+      try {
+        execSync(`yarn eslint --fix ${filesList}`, { cwd: basePath });
+      } catch (error) {
+        console.warn(`⚠️ Warning: ESLint encountered issues: ${error.message}`);
+      }
+      
+      console.log('🧹 Running Prettier on generated/modified files...');
+      try {
+        execSync(`yarn prettier --write ${filesList}`, { cwd: basePath });
+      } catch (error) {
+        console.warn(`⚠️ Warning: Prettier encountered issues: ${error.message}`);
+      }
+      
+      return '✅ Files linted and formatted successfully!';
     } catch (error) {
-      console.error('⚠️ Warning: Some formatting operations failed:', error.message);
-      return '⚠️ Warning: Some formatting operations failed.';
+      console.error('⚠️ Warning: Formatting operations failed:', error.message);
+      return '⚠️ Warning: Formatting operations failed.';
     }
   });
 
