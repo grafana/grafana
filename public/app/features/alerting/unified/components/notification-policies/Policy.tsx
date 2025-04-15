@@ -894,7 +894,9 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
         <Label
           icon="at"
           key={uniqueId()}
-          label={`Contact Point › ${status.name}`}
+          label={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
+            name: status.name,
+          })}
           value={status.lastNotifyAttemptError}
         />
       ));

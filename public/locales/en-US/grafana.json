@@ -666,6 +666,9 @@
       "restore": "Restore",
       "return": "Return"
     },
+    "contact-point-errors": {
+      "label-contact-point": "Contact Point › {{name}}"
+    },
     "contact-point-header": {
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
       "export-label-export": "Export",
@@ -1306,6 +1309,10 @@
       "action-buttons": {
         "export": "Export"
       }
+    },
+    "more-button": {
+      "aria-label": "More",
+      "button-text": "More"
     },
     "mute_timings": {
       "error-loading": {
@@ -2524,6 +2531,7 @@
     "no-access-modal": {
       "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
       "editor-warning": "Editors cannot add new connections. You may check to see if it is already configured in <2>Data sources</2>.",
+      "links": "Links",
       "okay": "Okay"
     },
     "not-found-datasource": {
@@ -2829,6 +2837,9 @@
         "tooltip-view-as-scene": "View as Scene"
       }
     },
+    "dashboard-links-menu": {
+      "aria-label-dashboard-name": "{{dashboardName}} dashboard"
+    },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Cancel loading dashboard"
     },
@@ -2979,6 +2990,7 @@
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
+      "description-support-snapshot": "Panel: {{panelTitle}}",
       "download-snapshot": "Download ({{snapshotSize}})",
       "label-obfuscate-data": "Obfuscate data",
       "label-support-snapshot": "Support snapshot",
@@ -3075,7 +3087,9 @@
     },
     "options-pane-options": {
       "placeholder-search-options": "Search options",
-      "Recent options-title-recent-options": "Recent options"
+      "Recent options-title-recent-options": "Recent options",
+      "title-matched_one": "Matched {{count}}/{{totalCount}} options",
+      "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
       "tree-item": {
@@ -4033,7 +4047,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "title-includes-active-metrics-storage": "The free plan includes 10k active metrics and 50gb storage."
+      "body-alert": "Or skip the effort and get {{mainDS}} (and {{extraDS}}) as fully-managed, scalable, and hosted data sources from Grafana Labs with the <6>free-forever Grafana Cloud plan</6>.",
+      "title-alert": "Configure your {{mainDS}} data source below"
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Delete dashboard",
@@ -4057,6 +4072,9 @@
     },
     "data-source-read-only-message": {
       "title-provisioned-data-source": "Provisioned data source"
+    },
+    "data-source-type-card": {
+      "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
       "build-a-dashboard": "Build a dashboard",
@@ -4120,8 +4138,12 @@
       "label-template": "Template",
       "label-value": "Value"
     },
+    "threshold-editor": {
+      "tooltip-remove-threshold": "Remove threshold {{thresholdNumber}}"
+    },
     "thresholds-editor": {
       "add-threshold": "Add threshold",
+      "aria-label-threshold": "Threshold {{thresholdNumber}}",
       "description-percentage-means-thresholds-relative": "Percentage means thresholds relative to min & max",
       "thresholds-mode": "Thresholds mode"
     },
@@ -4307,6 +4329,9 @@
         "open-logs-in-split-view": "Open logs in split view"
       },
       "title-failed-sample-query": "Failed to load logs sample for this query"
+    },
+    "logs-table-available-fields": {
+      "title-label-percentage": "{{labelName}} appears in {{percentage}}% of log lines"
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
@@ -6308,6 +6333,11 @@
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
+    "panel-plugin-error": {
+      "text-load-error": "Check the server startup logs for more information. <1></1>If this plugin was loaded from Git, then make sure it was compiled.",
+      "title-load-error": "Error loading: {{panelId}}",
+      "title-not-found": "Panel plugin not found: {{id}}"
+    },
     "panel-renderer": {
       "loading-plugin-panel": "Loading plugin panel...",
       "no-panel-data": "No panel data"
@@ -6553,6 +6583,10 @@
     },
     "plugin-installed-badge": {
       "text-installed": "Installed"
+    },
+    "plugin-list-item": {
+      "label-author": "By {{author}}",
+      "title-icon-plugin-type": "{{pluginType}} plugin"
     },
     "plugin-signature-details-badge": {
       "signed-by": "Signed by: {{signatureOrg}}"
@@ -7509,7 +7543,11 @@
       "title-disable-service-account": "Disable service account"
     },
     "token-expiration": {
+      "expired-label": "Expired",
       "never": "Never"
+    },
+    "token-revoked": {
+      "revoked-label": "Revoked"
     }
   },
   "share-dashboard": {
@@ -8020,7 +8058,8 @@
       "label-replace-all-fields": "Replace all fields",
       "label-source": "Source",
       "placeholder-auto": "Auto",
-      "placeholder-select-delimiter": "Select delimiter..."
+      "placeholder-select-delimiter": "Select delimiter...",
+      "tooltip-regexp": "Example: {{regexExample}}"
     },
     "field-config-mapping-handler-arguments-editor": {
       "aria-label-threshold-color": "Threshold color"
@@ -8319,6 +8358,11 @@
   "variables": {
     "ad-hoc-filter": {
       "label-and": "AND"
+    },
+    "ad-hoc-filter-key": {
+      "plus-segment": {
+        "aria-label-add-filter": "Add Filter"
+      }
     },
     "confirm-delete-modal": {
       "title-delete-variable": "Delete variable"
