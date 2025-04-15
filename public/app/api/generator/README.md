@@ -39,11 +39,13 @@ $ yarn generate:api-client
 ```
 
 This will generate:
+
 - `public/app/api/clients/dashboard/baseAPI.ts`
 - `public/app/api/clients/dashboard/endpoints.gen.ts` (automatically generated)
 - `public/app/api/clients/dashboard/index.ts`
 
 And update:
+
 - `scripts/generate-rtk-apis.ts`
 - `public/app/core/reducers/root.ts`
 - `public/app/store/configureStore.ts`
@@ -53,6 +55,7 @@ And update:
 ### Missing OpenAPI Schema
 
 If you see an error about a missing OpenAPI schema, make sure:
+
 1. The API group and version exist in the backend
 2. You've run `TestIntegrationOpenAPIs` test to generate the schema
 3. The schema file exists at `data/openapi/<group>-<version>.json`
@@ -67,6 +70,7 @@ If you see an error about a missing OpenAPI schema, make sure:
 ### Generation Failed
 
 If endpoint generation fails:
+
 1. Check the error message from `yarn generate-apis`
 2. Verify that the OpenAPI schema contains the operation IDs you specified
-3. Try running `yarn generate-apis` manually 
+3. Try running `yarn generate-apis` manually

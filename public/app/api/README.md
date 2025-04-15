@@ -3,9 +3,11 @@
 To show the steps to follow, we are going to work on adding an API client to create a new dashboard. Just adapt the following guide to your use case.
 
 > **NEW:** You can now use our automated generator to create API clients:
+>
 > ```bash
 > yarn generate:api-client
 > ```
+>
 > See [API Client Generator](./generator/README.md) for details.
 
 ### 1. Generate an OpenAPI snapshot
