@@ -9,12 +9,12 @@ receiver: {
 	apiResource: {
 		groupOverride: "notifications.alerting.grafana.app"
 	}
-	codegen: {
-		frontend: false
-		backend:  true
-	}
 	pluralName: "Receivers"
 	current:    "v0alpha1"
+	codegen: {
+		ts: {enabled: false}
+		go: {enabled: true}
+	}
 	versions: {
 		"v0alpha1": {
 			schema: {
