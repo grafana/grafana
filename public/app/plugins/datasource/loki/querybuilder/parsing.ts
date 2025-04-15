@@ -531,6 +531,7 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   if (numberNode) {
     params.push(Number(getString(expr, numberNode)));
   } else if (errorNode) {
+    // Variables get parsed as errors, so the value us an identifier within an error node.
     params.push(getString(expr, errorNode));
   }
 
