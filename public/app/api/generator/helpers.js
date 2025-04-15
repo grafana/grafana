@@ -1,0 +1,70 @@
+const path = require('path');
+
+// Helper function to create paths relative to project root
+const projectPath = (basePath) => (relativePath) => path.join(basePath, relativePath);
+
+// Helper to remove quotes from operation IDs
+const removeQuotes = (str) => {
+  if (typeof str !== 'string') {
+    return str;
+  }
+  return str.replace(/^['"](.*)['"]$/, '$1');
+};
+
+// Helper to format operation IDs for filter endpoints
+const formatOperationIds = (plop) => (operationArray) => {
+  if (!Array.isArray(operationArray)) {
+    return '';
+  }
+  return operationArray.map((op) => `'${removeQuotes(op)}'`).join(', ');
+};
+
+// Helper to format operation IDs for hooks
+const formatHooks = (operationArray) => {
+  if (!Array.isArray(operationArray)) {
+    return '';
+  }
+  return operationArray
+    .map((op) => {
+      const cleanOp = removeQuotes(op);
+      return `use${cleanOp.charAt(0).toUpperCase() + cleanOp.slice(1)}`;
+    })
+    .join(', ');
+};
+
+// Helper to format type exports
+const formatTypeExports = (operationArray) => {
+  if (!Array.isArray(operationArray)) {
+    return '';
+  }
+  return operationArray
+    .map((op) => {
+      const cleanOp = removeQuotes(op);
+      return `type ${cleanOp}`;
+    })
+    .join(', ');
+};
+
+// Validation helpers
+const validateGroup = (group) => {
+  return group && group.includes('.grafana.app') ? true : 'Group should be in format: name.grafana.app';
+};
+
+const validateVersion = (version) => {
+  return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
+};
+
+const extractGroupName = (group) => {
+  return group.split('.')[0];
+};
+
+module.exports = {
+  projectPath,
+  removeQuotes,
+  formatOperationIds,
+  formatHooks,
+  formatTypeExports,
+  validateGroup,
+  validateVersion,
+  extractGroupName,
+}; 

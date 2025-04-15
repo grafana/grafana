@@ -1,8 +1,22 @@
 const path = require('path');
 
+const {
+  projectPath: createProjectPath,
+  removeQuotes,
+  formatOperationIds,
+  formatHooks,
+  formatTypeExports,
+  validateGroup,
+  validateVersion,
+  extractGroupName,
+} = require('./helpers');
+
 module.exports = function (plop) {
   // Get the base path (project root)
   const basePath = path.resolve(__dirname, '../../../..');
+  
+  // Create project path helper with the base path
+  const projectPath = createProjectPath(basePath);
 
   // Custom action function for displaying messages
   plop.setActionType('logMessage', function (answers, config) {
@@ -10,54 +24,18 @@ module.exports = function (plop) {
     return '✅ Message logged successfully';
   });
 
-  // Helper function to create paths relative to project root
-  const projectPath = (relativePath) => path.join(basePath, relativePath);
-
-  // Helper to remove quotes from operation IDs
-  plop.setHelper('removeQuotes', (str) => {
-    if (typeof str !== 'string') {
-      return str;
-    }
-    return str.replace(/^['"](.*)['"]$/, '$1');
-  });
-
-  // Helper to format operation IDs for filter endpoints
-  plop.setHelper('formatOperationIds', (operationArray) => {
-    if (!Array.isArray(operationArray)) {
-      return '';
-    }
-    return operationArray.map((op) => `'${plop.getHelper('removeQuotes')(op)}'`).join(', ');
-  });
-
-  // Helper to format operation IDs for hooks
-  plop.setHelper('formatHooks', (operationArray) => {
-    if (!Array.isArray(operationArray)) {
-      return '';
-    }
-    return operationArray
-      .map((op) => {
-        const cleanOp = plop.getHelper('removeQuotes')(op);
-        return `use${cleanOp.charAt(0).toUpperCase() + cleanOp.slice(1)}`;
-      })
-      .join(', ');
-  });
-
-  // Helper to format type exports
-  plop.setHelper('formatTypeExports', (operationArray) => {
-    if (!Array.isArray(operationArray)) {
-      return '';
-    }
-    return operationArray
-      .map((op) => {
-        const cleanOp = plop.getHelper('removeQuotes')(op);
-        return `type ${cleanOp}`;
-      })
-      .join(', ');
-  });
+  // Register helper functions
+  plop.setHelper('removeQuotes', removeQuotes);
+  plop.setHelper('formatOperationIds', formatOperationIds(plop));
+  plop.setHelper('formatHooks', formatHooks);
+  plop.setHelper('formatTypeExports', formatTypeExports);
+  plop.setHelper('validateGroup', validateGroup);
+  plop.setHelper('validateVersion', validateVersion);
+  plop.setHelper('extractGroupName', extractGroupName);
 
   // Helper function to generate actions for creating RTK API client
   const generateRtkApiActions = (data) => {
-    const { reducerPath, groupName } = data;
+    const { reducerPath, groupName, group, version, operationIdArray } = data;
 
     return [
       // Create baseAPI.ts
@@ -66,6 +44,7 @@ module.exports = function (plop) {
         path: projectPath(`public/app/api/clients/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
+      
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
@@ -109,24 +88,10 @@ module.exports = function (plop) {
       // Display success message using the custom action type
       {
         type: 'logMessage',
-        message:
-          '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
+        message: '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
       },
     ];
   };
-
-  // Add input validation helpers
-  plop.setHelper('validateGroup', (group) => {
-    return group && group.includes('.grafana.app') ? true : 'Group should be in format: name.grafana.app';
-  });
-
-  plop.setHelper('validateVersion', (version) => {
-    return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
-  });
-
-  plop.setHelper('extractGroupName', (group) => {
-    return group.split('.')[0];
-  });
 
   plop.setGenerator('rtk-api-client', {
     description: 'Generate RTK Query API client for a Grafana API group',
