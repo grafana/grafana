@@ -214,6 +214,7 @@ Experimental features might be changed or removed without prior notice.
 | `extensionSidebar`                          | Enables the extension sidebar                                                                                                                                                                                                                                                     |
 | `localizationForPlugins`                    | Enables localization for plugins                                                                                                                                                                                                                                                  |
 | `metricsFromProfiles`                       | Enables creating metrics from profiles and storing them as recording rules                                                                                                                                                                                                        |
+| `alertingListViewV2PreviewToggle`           | Enables the alerting list view v2 preview toggle                                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 

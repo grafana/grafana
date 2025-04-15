@@ -942,4 +942,8 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagAlertingListViewV2PreviewToggle
+	// Enables the alerting list view v2 preview toggle
+	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
 )

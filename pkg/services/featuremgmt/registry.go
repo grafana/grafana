@@ -1786,6 +1786,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "alertingListViewV2PreviewToggle",
+			Description:  "Enables the alerting list view v2 preview toggle",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )
 
