@@ -715,7 +715,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 		max = *model.Max
 	}
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	walker := startValue
@@ -737,7 +737,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			// skip value
 		} else {
 			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-			timeVec = append(timeVec, &t)
+			timeVec = append(timeVec, t)
 			floatVec = append(floatVec, &nextValue)
 		}
 
@@ -758,6 +758,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			"customStat": 10,
 		},
 	})
+	frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 	return frame
 }
@@ -902,7 +903,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	wavePeriod := timeStep * length
 	maxPoints := 10000 // Don't return too many points
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	for i := 0; i < maxPoints && timeCursor < to; i++ {
@@ -912,7 +913,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 		}
 
 		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
-		timeVec = append(timeVec, &t)
+		timeVec = append(timeVec, t)
 		floatVec = append(floatVec, val)
 
 		timeCursor += timeStep
