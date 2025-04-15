@@ -155,7 +155,6 @@ func TestLegacyFoldersMigrator_Migrate(t *testing.T) {
 				Key:   &resource.ResourceKey{Namespace: "test-namespace", Name: "test-folder"},
 				Value: data,
 			}))
-
 		}).Return(&resource.BulkResponse{}, nil)
 
 		mockRepositoryResources := resources.NewMockRepositoryResources(t)
@@ -218,7 +217,6 @@ func TestLegacyFoldersMigrator_Migrate(t *testing.T) {
 				Key:   &resource.ResourceKey{Namespace: "test-namespace", Name: "test-folder"},
 				Value: data,
 			}))
-
 		}).Return(&resource.BulkResponse{}, nil)
 
 		mockRepositoryResources := resources.NewMockRepositoryResources(t)

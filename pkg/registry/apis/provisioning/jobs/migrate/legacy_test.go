@@ -354,11 +354,15 @@ func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
 		// Create a wrapper function that calls the provided function
 		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
 			if clone.BeforeFn != nil {
-				clone.BeforeFn()
+				if err := clone.BeforeFn(); err != nil {
+					return err
+				}
 			}
 
 			if push.BeforeFn != nil {
-				push.BeforeFn()
+				if err := push.BeforeFn(); err != nil {
+					return err
+				}
 			}
 
 			return errors.New("abort test here")
