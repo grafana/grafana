@@ -182,17 +182,17 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	})
 }
 
-func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
+func TestIntegrationDashboardsAppV1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
 		Group:    dashboardV1.GROUP,
-		Version:  dashboardV1.GROUP,
+		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	t.Run("v1alpha1 with dual writer mode 0", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -204,7 +204,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 1", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 1", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -216,7 +216,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 2", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 2", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -228,7 +228,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 3", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 3", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -240,7 +240,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 4", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 4", func(t *testing.T) {
 		t.Skip("skipping test because of authorizer issue")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
