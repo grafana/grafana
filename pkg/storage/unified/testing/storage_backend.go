@@ -882,7 +882,7 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 		},
 	}
 
-	shortContext, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	shortContext, cancel := context.WithTimeout(ctx, 1*time.Microsecond)
 	defer cancel()
 
 	res, err := server.List(shortContext, req)
@@ -890,6 +890,7 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 	t.Log("list error:", err)
 	if res != nil {
 		t.Log("iterator error:", res.Error)
+		t.Log("numItems:", len(res.Items))
 	}
 	require.True(t, err != nil || (res != nil && res.Error != nil))
 }
