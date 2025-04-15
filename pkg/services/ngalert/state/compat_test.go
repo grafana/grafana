@@ -99,10 +99,11 @@ func Test_StateToPostableAlert(t *testing.T) {
 				}
 
 				alertState := randomTransition(eval.Normal, tc.state)
-				fmt.Println("alertState.StartsAt", alertState.StartsAt, "alertState.FiredAt", alertState.FiredAt)
+
 				// feature flag is disabled
 				result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
 				require.Equal(t, strfmt.DateTime(alertState.StartsAt), result.StartsAt)
+
 				// feature flag is enabled
 				result = StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt))
 				require.Equal(t, strfmt.DateTime(alertState.FiredAt), result.StartsAt)
