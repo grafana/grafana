@@ -267,12 +267,13 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
+		reg:            opts.Reg,
 	}
 
 	if opts.ShardingConfig != nil && opts.ShardingConfig.Enabled {
 		err := s.enableSharding(*opts.ShardingConfig)
 		if err != nil {
-			return nil, fmt.Errorf("error sharding", err)
+			return nil, fmt.Errorf("error sharding: %s", err)
 		}
 	}
 
@@ -324,6 +325,7 @@ type server struct {
 	pool            *ringclient.Pool
 	ring            *ring.Ring
 	lifecycler      *ring.BasicLifecycler
+	reg             prometheus.Registerer
 }
 
 // Init implements ResourceServer.
@@ -358,9 +360,9 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 	ctx := context.Background()
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg /*TODO*/, s.log, nil)
+	pool := newClientPool(*grpcclientcfg, s.log, s.reg)
 
-	ringsvc, lfcsvc, err := initRing(cfg, log.New("resource-server-ring"), nil)
+	ringsvc, lfcsvc, err := initRing(cfg, log.New("resource-server-ring"), s.reg)
 
 	if err != nil {
 		return err
@@ -424,16 +426,16 @@ func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
 	rs, err := s.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
 
 	if err != nil {
-		s.log.Error("Error getting replication set. Will not distribute request", err)
+		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
 		return nil
 	}
 
 	if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
-		s.log.Info("distributing request to ", rs.Instances[0].Id)
+		s.log.Info("distributing request to ", "instanceId", rs.Instances[0].Id)
 
 		ins, err := s.pool.GetClientForInstance(rs.Instances[0])
 		if err != nil {
-			s.log.Error("Error getting client. Will not distribute request", err)
+			s.log.Error("Error getting client. Will not distribute request", "err", err)
 			return nil
 		}
 		return ins.(*ringClient)
