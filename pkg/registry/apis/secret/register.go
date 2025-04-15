@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -60,7 +59,7 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	db db.DB,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 	isDevMode bool, // REMOVE ME
@@ -88,7 +87,7 @@ func RegisterAPIService(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
 	db db.DB,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {

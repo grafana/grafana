@@ -10,7 +10,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -25,7 +24,8 @@ func ProvideSecureValueMetadataStorage(
 	features featuremgmt.FeatureToggles,
 	accessClient claims.AccessClient,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+	keeperService contracts.KeeperService,
+) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -37,16 +37,11 @@ func ProvideSecureValueMetadataStorage(
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("getting keepers from keeper service: %+w", err)
-	}
-
 	return &secureValueMetadataStorage{
 		db:                    db,
 		accessClient:          accessClient,
 		keeperMetadataStorage: keeperMetadataStorage,
-		keepers:               keepers,
+		keeperService:         keeperService,
 	}, nil
 }
 
@@ -55,7 +50,7 @@ type secureValueMetadataStorage struct {
 	db                    db.DB
 	accessClient          claims.AccessClient
 	keeperMetadataStorage contracts.KeeperMetadataStorage
-	keepers               map[contracts.KeeperType]contracts.Keeper
+	keeperService         contracts.KeeperService
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {

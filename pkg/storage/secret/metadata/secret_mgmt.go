@@ -16,15 +16,15 @@ func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secr
 		return "", fmt.Errorf("store by ref in keeper")
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
 	if err != nil {
 		return "", fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Store in keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return "", fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return "", fmt.Errorf("could not find keeper: %s", keeperConfig.Type())
 	}
 	externalID, err := keeper.Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
 	if err != nil {
@@ -49,15 +49,15 @@ func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow
 		return fmt.Errorf("keeper change not allowed")
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Update in keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return fmt.Errorf("could not find keeper: %s", keeperConfig.Type())
 	}
 
 	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, contracts.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
@@ -86,16 +86,17 @@ func (s *secureValueMetadataStorage) deleteFromKeeper(ctx context.Context, names
 		return fmt.Errorf("db failure: %w", err)
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Delete from keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return fmt.Errorf("could not find keeper: %s", keeperConfig.Type())
 	}
+
 	err = keeper.Delete(ctx, keeperConfig, namespace.String(), contracts.ExternalID(sv.ExternalID))
 	if err != nil {
 		return fmt.Errorf("delete in keeper: %w", err)

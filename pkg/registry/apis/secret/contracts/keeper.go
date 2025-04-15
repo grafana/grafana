@@ -21,7 +21,7 @@ type KeeperMetadataStorage interface {
 	Update(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name *string) (KeeperType, secretv0alpha1.KeeperConfig, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.
@@ -85,17 +85,6 @@ func (e *ErrKeeperInvalidSecureValuesReference) ErrorList() field.ErrorList {
 	return errs
 }
 
-// KeeperType represents the type of a Keeper.
-type KeeperType string
-
-const (
-	SQLKeeperType       KeeperType = "sql"
-	AWSKeeperType       KeeperType = "aws"
-	AzureKeeperType     KeeperType = "azure"
-	GCPKeeperType       KeeperType = "gcp"
-	HashiCorpKeeperType KeeperType = "hashicorp"
-)
-
 // ExternalID represents either the secure value's GUID or ref (in case of external secret references).
 // This is saved in the secure_value metadata storage as `external_id`.
 // TODO: this does not belong in the k8s spec, but it is used by us internally. Place it somewhere appropriate.
@@ -111,4 +100,10 @@ type Keeper interface {
 	Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID, exposedValueOrRef string) error
 	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (secretv0alpha1.ExposedSecureValue, error)
 	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) error
+}
+
+// Service is the interface for secret keeper services.
+// This exists because OSS and Enterprise have different amounts of keepers available.
+type KeeperService interface {
+	KeeperForConfig(secretv0alpha1.KeeperConfig) (Keeper, error)
 }

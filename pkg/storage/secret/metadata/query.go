@@ -104,9 +104,8 @@ func (r listByNameSecureValue) Validate() error {
 // This is used at keeper store to validate create & update operations
 type listByNameKeeper struct {
 	sqltemplate.SQLTemplate
-	Namespace        string
-	KeeperNames      []string
-	ExcludeSQLKeeper string
+	Namespace   string
+	KeeperNames []string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`

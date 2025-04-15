@@ -21,7 +21,6 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -103,10 +102,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
-		sqlKeeperWrapper := newKeeperWrapper(rng, fakes.NewFakeKeeper())
-		keepers := map[contracts.KeeperType]contracts.Keeper{
-			contracts.SQLKeeperType: sqlKeeperWrapper,
-		}
+		keeperServiceWrapper := newKeeperServiceWrapper(rng, keeperService)
 
 		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, utils.ResourceInfo{})
 
@@ -120,7 +116,7 @@ func TestProcessMessage(t *testing.T) {
 			outboxQueueWrapper,
 			secureValueMetadataStorageWrapper,
 			keeperMetadataStorageWrapper,
-			keepers,
+			keeperServiceWrapper,
 		)
 
 		for i := range 1000 {
@@ -490,6 +486,24 @@ func (wrapper *keeperWrapper) Delete(ctx context.Context, cfg secretv0alpha1.Kee
 	return nil
 }
 
+type keeperServiceWrapper struct {
+	rng  *rand.Rand
+	impl contracts.KeeperService
+}
+
+func newKeeperServiceWrapper(rng *rand.Rand, impl contracts.KeeperService) *keeperServiceWrapper {
+	return &keeperServiceWrapper{rng: rng, impl: impl}
+}
+
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+	// Maybe return an error before calling the real implementation
+	if wrapper.rng.Float32() <= 0.2 {
+		return nil, context.DeadlineExceeded
+	}
+
+	return wrapper.impl.KeeperForConfig(cfg)
+}
+
 type keeperMetadataStorageWrapper struct {
 	rng  *rand.Rand
 	impl contracts.KeeperMetadataStorage
@@ -514,18 +528,18 @@ func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.N
 func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace, _ *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return "", nil, context.DeadlineExceeded
+		return nil, context.DeadlineExceeded
 	}
-	keeperType, cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
+	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
 	if err != nil {
-		return keeperType, cfg, err
+		return cfg, err
 	}
 	// Maybe return an error after calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return keeperType, cfg, context.DeadlineExceeded
+		return cfg, context.DeadlineExceeded
 	}
-	return keeperType, cfg, nil
+	return cfg, nil
 }

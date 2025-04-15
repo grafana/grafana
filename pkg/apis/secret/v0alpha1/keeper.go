@@ -19,8 +19,23 @@ type Keeper struct {
 	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
+// KeeperType represents the type of a Keeper.
+type KeeperType string
+
+const (
+	AWSKeeperType       KeeperType = "aws"
+	AzureKeeperType     KeeperType = "azure"
+	GCPKeeperType       KeeperType = "gcp"
+	HashiCorpKeeperType KeeperType = "hashicorp"
+)
+
+func (kt KeeperType) String() string {
+	return string(kt)
+}
+
+// KeeperConfig is an interface that all keeper config types must implement.
 type KeeperConfig interface {
-	Type() string
+	Type() KeeperType
 }
 
 type KeeperSpec struct {
@@ -104,18 +119,18 @@ type HashiCorpKeeperConfig struct {
 	HashiCorpCredentials `json:",inline"`
 }
 
-func (s *AWSKeeperConfig) Type() string {
-	return "aws"
+func (s *AWSKeeperConfig) Type() KeeperType {
+	return AWSKeeperType
 }
 
-func (s *AzureKeeperConfig) Type() string {
-	return "azure"
+func (s *AzureKeeperConfig) Type() KeeperType {
+	return AzureKeeperType
 }
 
-func (s *GCPKeeperConfig) Type() string {
-	return "gcp"
+func (s *GCPKeeperConfig) Type() KeeperType {
+	return GCPKeeperType
 }
 
-func (s *HashiCorpKeeperConfig) Type() string {
-	return "hashicorp"
+func (s *HashiCorpKeeperConfig) Type() KeeperType {
+	return HashiCorpKeeperType
 }
