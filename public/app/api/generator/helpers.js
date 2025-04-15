@@ -28,17 +28,9 @@ const validateVersion = (version) => {
   return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
 };
 
-const extractGroupName = (group) => {
-  if (!group) {
-    return '';
-  }
-  return group.split('.')[0];
-};
-
 module.exports = {
   projectPath,
   formatOperationIds,
   validateGroup,
   validateVersion,
-  extractGroupName,
 };

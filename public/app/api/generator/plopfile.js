@@ -1,12 +1,6 @@
 const path = require('path');
 
-const {
-  projectPath: createProjectPath,
-  formatOperationIds,
-  validateGroup,
-  validateVersion,
-  extractGroupName,
-} = require('./helpers');
+const { projectPath: createProjectPath, formatOperationIds, validateGroup, validateVersion } = require('./helpers');
 
 module.exports = function (plop) {
   // Get the base path (project root)
@@ -26,7 +20,7 @@ module.exports = function (plop) {
 
   // Helper function to generate actions for creating RTK API client
   const generateRtkApiActions = (data) => {
-    const { reducerPath, groupName, group, version, operationIdArray } = data;
+    const { reducerPath, groupName } = data;
 
     return [
       // Create baseAPI.ts
@@ -90,8 +84,15 @@ module.exports = function (plop) {
     prompts: [
       {
         type: 'input',
+        name: 'groupName',
+        message: 'API group name (e.g. dashboard):',
+        validate: (input) => (input && input.trim() ? true : 'Group name is required'),
+      },
+      {
+        type: 'input',
         name: 'group',
         message: 'API group (e.g. dashboard.grafana.app):',
+        default: (answers) => `${answers.groupName}.grafana.app`,
         validate: validateGroup,
       },
       {
@@ -105,6 +106,7 @@ module.exports = function (plop) {
         type: 'input',
         name: 'reducerPath',
         message: 'Reducer path (e.g. dashboardAPI):',
+        default: (answers) => `${answers.groupName}API`,
         validate: (input) =>
           input && input.endsWith('API') ? true : 'Reducer path should end with "API" (e.g. dashboardAPI)',
       },
@@ -118,7 +120,6 @@ module.exports = function (plop) {
     actions: function (data) {
       // Format data for templates
       data.operationIdArray = data.operationIds.split(',').map((id) => id.trim());
-      data.groupName = extractGroupName(data.group);
 
       // Generate actions
       return generateRtkApiActions(data);

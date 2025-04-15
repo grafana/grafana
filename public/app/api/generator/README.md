@@ -10,10 +10,11 @@ yarn generate:api-client
 
 This will prompt you for:
 
-1. **API group** - The API group name (e.g., `dashboard.grafana.app`)
-2. **API version** - The API version (e.g., `v0alpha1`)
-3. **Reducer path** - The Redux reducer path (e.g., `dashboardAPI`)
-4. **Operation IDs** - Comma-separated list of operation IDs to include (e.g., `createDashboard,updateDashboard`)
+1. **API group name** - The basic name for your API (e.g., `dashboard`)
+2. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
+3. **API version** - The API version (e.g., `v0alpha1`)
+4. **Reducer path** - The Redux reducer path (defaults to `<group-name>API`)
+5. **Operation IDs** - Comma-separated list of operation IDs to include (e.g., `createDashboard,updateDashboard`)
 
 ## What It Does
 
@@ -30,6 +31,7 @@ The generator automates the following:
 ```bash
 $ yarn generate:api-client
 
+? API group name (e.g. dashboard): dashboard
 ? API group (e.g. dashboard.grafana.app): dashboard.grafana.app
 ? API version (e.g. v0alpha1): v0alpha1
 ? Reducer path (e.g. dashboardAPI): dashboardAPI
