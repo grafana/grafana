@@ -1205,6 +1205,9 @@
       "notes": "Notes",
       "returns": "Returns"
     },
+    "label-picker": {
+      "no-options-message": "No labels found"
+    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit labels"
     },
@@ -1220,6 +1223,7 @@
       "title-labels": "Labels"
     },
     "labels-sub-form": {
+      "description": "Select a label key/value from the options below, or type a new one and press Enter.",
       "save": "Save"
     },
     "labels-with-suggestions": {

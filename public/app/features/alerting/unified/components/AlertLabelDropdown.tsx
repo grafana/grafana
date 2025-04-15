@@ -4,8 +4,7 @@ import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-
-import { t } from '../../../../core/internationalization';
+import { t } from 'app/core/internationalization';
 
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
@@ -54,7 +53,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
             isValidNewOption={handleIsValidNewOption}
             options={options}
             maxMenuHeight={500}
-            noOptionsMessage="No labels found"
+            noOptionsMessage={t('alerting.label-picker.no-options-message', 'No labels found')}
             defaultValue={defaultValue}
             allowCustomValue
           />
