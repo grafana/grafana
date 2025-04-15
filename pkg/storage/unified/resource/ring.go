@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-type RingConfig struct {
+type resourceRingConfig struct {
 	KVStore          kv.Config     `yaml:"kvstore"`
 	HeartbeatPeriod  time.Duration `yaml:"heartbeat_period" category:"advanced"`
 	HeartbeatTimeout time.Duration `yaml:"heartbeat_timeout" category:"advanced"`
@@ -43,33 +43,17 @@ type RingConfig struct {
 }
 
 var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-	// Only ACTIVE memora nodes get any work. If instance is not ACTIVE, we need to find another memora node.
 	return s != ring.ACTIVE
 })
 
-var ip = "127.0.0.2"
-
-// TODO make this configurable
-var cfg_replaceme = RingConfig{
-	KVStore:                kv.Config{Store: "memberlist"},
-	HeartbeatPeriod:        15 * time.Second,
-	HeartbeatTimeout:       time.Minute,
-	InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, log.NewNopLogger()),
-	InstanceAddr:           ip,
-	// TODO configure this to match grpc server port
-	ListenPort:             10000,
-	InstancePort:           10000,
-	NumTokens:              128,
-}
-
 const ringKey = "ring"
-const ringName = "bleve"
+const ringName = "unified_storage"
 
 var metricsPrefix = ringName + "_"
 
 const ringAutoForgetUnhealthyPeriods = 2
 
-func (cfg *RingConfig) toLifecyclerConfig(logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+func (cfg *resourceRingConfig) toLifecyclerConfig(logger log.Logger) (ring.BasicLifecyclerConfig, error) {
 	instanceAddr, err := ring.GetInstanceAddr(cfg.InstanceAddr, cfg.InstanceInterfaceNames, logger, true)
 	if err != nil {
 		return ring.BasicLifecyclerConfig{}, err
@@ -87,7 +71,7 @@ func (cfg *RingConfig) toLifecyclerConfig(logger log.Logger) (ring.BasicLifecycl
 	}, nil
 }
 
-func (cfg *RingConfig) toRingConfig() ring.Config {
+func (cfg *resourceRingConfig) toRingConfig() ring.Config {
 	rc := ring.Config{}
 	flagext.DefaultValues(&rc)
 
@@ -105,10 +89,18 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		return nil, nil, fmt.Errorf("bad sharding configuration. Missing Join Member")
 	}
 
-	cfg_replaceme.InstanceAddr = cfg.MemberlistBindAddr
-	cfg_replaceme.InstanceID = cfg.MemberlistBindAddr
-	cfg_replaceme.ListenPort = cfg.RingListenPort
-	cfg_replaceme.InstancePort = cfg.RingListenPort
+	resourceRingConfig := &resourceRingConfig{
+		KVStore:                kv.Config{Store: "memberlist"},
+		HeartbeatPeriod:        15 * time.Second,
+		HeartbeatTimeout:       time.Minute,
+		InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, log.NewNopLogger()),
+		InstanceAddr:           cfg.MemberlistBindAddr,
+		InstanceID:             cfg.MemberlistBindAddr,
+		ListenPort:             cfg.RingListenPort,
+		InstancePort:           cfg.RingListenPort,
+		NumTokens: 128,
+	}
+
 	memberlistKVcfg := &memberlist.KVConfig{}
 	flagext.DefaultValues(memberlistKVcfg)
 	memberlistKVcfg.MetricsNamespace = ringName
@@ -131,10 +123,10 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 
 	memberlistKVsvc := memberlist.NewKVInitService(memberlistKVcfg, logger, dnsProvider, registerer)
 	memberlistKVsvc.StartAsync(context.Background())
-	cfg_replaceme.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
+	resourceRingConfig.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
 
 	ringStore, err := kv.NewClient(
-		cfg_replaceme.KVStore,
+		resourceRingConfig.KVStore,
 		ring.GetCodec(),
 		kv.RegistererWithKVName(prometheus.WrapRegistererWithPrefix(metricsPrefix, registerer), "ruler"),
 		logger,
@@ -143,16 +135,16 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		return nil, nil, errors.Wrap(err, "failed to create KV store client")
 	}
 
-	lifecyclerCfg, err := cfg_replaceme.toLifecyclerConfig(logger)
+	lifecyclerCfg, err := resourceRingConfig.toLifecyclerConfig(logger)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to initialize ruler's lifecycler config")
 	}
 
 	// Define lifecycler delegates in reverse order (last to be called defined first because they're
 	// chained via "next delegate").
-	delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, cfg_replaceme.NumTokens))
+	delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resourceRingConfig.NumTokens))
 	delegate = ring.NewLeaveOnStoppingDelegate(delegate, logger)
-	delegate = ring.NewAutoForgetDelegate(cfg_replaceme.HeartbeatTimeout*ringAutoForgetUnhealthyPeriods, delegate, logger)
+	delegate = ring.NewAutoForgetDelegate(resourceRingConfig.HeartbeatTimeout*ringAutoForgetUnhealthyPeriods, delegate, logger)
 
 	lifecycler, err := ring.NewBasicLifecycler(
 		lifecyclerCfg,
@@ -168,7 +160,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 	}
 
 	rulerRing, err := ring.NewWithStoreClientAndStrategy(
-		cfg_replaceme.toRingConfig(),
+		resourceRingConfig.toRingConfig(),
 		ringName,
 		ringKey,
 		ringStore,
@@ -208,16 +200,16 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 		HealthCheckTimeout: 10 * time.Second,
 	}
 	clientsCount := promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-		Name: "memora_clients",
-		Help: "The current number of memora clients in the pool.",
+		Name: "resource_server_clients",
+		Help: "The current number of resource server clients in the pool.",
 	})
 	log.Info("ring client pool",
 		"grcp.MaxSendMsgSize", clientCfg.MaxSendMsgSize,
 		"grpc.MaxRecvMsgSize", clientCfg.MaxRecvMsgSize)
 
 	factoryRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "memora_client_request_duration_seconds",
-		Help:    "Time spent executing requests to memora.",
+		Name:    "resource_server_client_request_duration_seconds",
+		Help:    "Time spent executing requests to resource server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})
 
@@ -229,14 +221,14 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 
 		conn, err := grpc.NewClient(inst.Addr, opts...)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to dial memora %s %s", inst.Id, inst.Addr)
+			return nil, errors.Wrapf(err, "failed to dial resource server %s %s", inst.Id, inst.Addr)
 		}
 
 		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled
 		client := NewLegacyResourceClient(conn)
 
 		return &ringClient{
-			client:  client,
+			client:       client,
 			HealthClient: grpc_health_v1.NewHealthClient(conn),
 			conn:         conn,
 		}, nil
