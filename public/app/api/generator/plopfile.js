@@ -2,10 +2,7 @@ const path = require('path');
 
 const {
   projectPath: createProjectPath,
-  removeQuotes,
   formatOperationIds,
-  formatHooks,
-  formatTypeExports,
   validateGroup,
   validateVersion,
   extractGroupName,
@@ -14,7 +11,7 @@ const {
 module.exports = function (plop) {
   // Get the base path (project root)
   const basePath = path.resolve(__dirname, '../../../..');
-  
+
   // Create project path helper with the base path
   const projectPath = createProjectPath(basePath);
 
@@ -25,10 +22,7 @@ module.exports = function (plop) {
   });
 
   // Register helper functions
-  plop.setHelper('removeQuotes', removeQuotes);
   plop.setHelper('formatOperationIds', formatOperationIds(plop));
-  plop.setHelper('formatHooks', formatHooks);
-  plop.setHelper('formatTypeExports', formatTypeExports);
   plop.setHelper('validateGroup', validateGroup);
   plop.setHelper('validateVersion', validateVersion);
   plop.setHelper('extractGroupName', extractGroupName);
@@ -44,11 +38,11 @@ module.exports = function (plop) {
         path: projectPath(`public/app/api/clients/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
-      
+
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
-        pattern: /  },\n  },/g, // Match the end of the last entry and the end of outputFiles
+        pattern: '// PLOP_INJECT_API_CLIENT',
         templateFile: './templates/config-entry.hbs',
       },
 
@@ -88,7 +82,8 @@ module.exports = function (plop) {
       // Display success message using the custom action type
       {
         type: 'logMessage',
-        message: '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
+        message:
+          '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
       },
     ];
   };

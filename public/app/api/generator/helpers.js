@@ -14,35 +14,9 @@ const removeQuotes = (str) => {
 // Helper to format operation IDs for filter endpoints
 const formatOperationIds = (plop) => (operationArray) => {
   if (!Array.isArray(operationArray)) {
-    return '';
+    operationArray = operationArray.split(',');
   }
   return operationArray.map((op) => `'${removeQuotes(op)}'`).join(', ');
-};
-
-// Helper to format operation IDs for hooks
-const formatHooks = (operationArray) => {
-  if (!Array.isArray(operationArray)) {
-    return '';
-  }
-  return operationArray
-    .map((op) => {
-      const cleanOp = removeQuotes(op);
-      return `use${cleanOp.charAt(0).toUpperCase() + cleanOp.slice(1)}`;
-    })
-    .join(', ');
-};
-
-// Helper to format type exports
-const formatTypeExports = (operationArray) => {
-  if (!Array.isArray(operationArray)) {
-    return '';
-  }
-  return operationArray
-    .map((op) => {
-      const cleanOp = removeQuotes(op);
-      return `type ${cleanOp}`;
-    })
-    .join(', ');
 };
 
 // Validation helpers
@@ -60,11 +34,8 @@ const extractGroupName = (group) => {
 
 module.exports = {
   projectPath,
-  removeQuotes,
   formatOperationIds,
-  formatHooks,
-  formatTypeExports,
   validateGroup,
   validateVersion,
   extractGroupName,
-}; 
+};

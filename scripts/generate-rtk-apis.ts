@@ -66,6 +66,7 @@ const config: ConfigFile = {
       filterEndpoints: ['createCheck', 'getCheck', 'listCheck', 'deleteCheck', 'updateCheck', 'listCheckType'],
       tag: true,
     },
+    // PLOP_INJECT_API_CLIENT
   },
 };
 
