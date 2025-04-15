@@ -566,7 +566,8 @@
       "get-annotations-section-description": {
         "title-annotations": "Annotations"
       },
-      "link-dashboard-and-panel": "Link dashboard and panel"
+      "link-dashboard-and-panel": "Link dashboard and panel",
+      "placeholder-value-input-default": "Enter custom annotation content..."
     },
     "central-alert-history": {
       "details": {
@@ -640,6 +641,10 @@
       "description-whether-notify-about-resolved-alerts": "Whether or not to notify about resolved alerts.",
       "label-send-resolved": "Send resolved"
     },
+    "cloud-data-source-selector": {
+      "label": "Select data source",
+      "label-disabled": "Data source"
+    },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Period during which the threshold condition must be met to trigger an alert. Selecting \"None\" triggers the alert immediately once the condition is met.",
       "label-pending-period": "Pending period",
@@ -671,9 +676,12 @@
     },
     "contact-point-header": {
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
+      "button-edit": "Edit",
+      "button-view": "View",
       "export-label-export": "Export",
       "label-delete": "Delete",
-      "label-manage-permissions": "Manage permissions"
+      "label-manage-permissions": "Manage permissions",
+      "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
       "aria-label-refresh-contact-points": "Refresh contact points",
@@ -1488,6 +1496,10 @@
       "reference": "Reference"
     },
     "policies": {
+      "aria-label-collapse": "Collapse",
+      "aria-label-expand": "Expand",
+      "aria-label-more": "more actions for policy",
+      "aria-label-more-default": "more actions for default policy",
       "default-policy": {
         "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
         "title": "Default policy",
@@ -2015,7 +2027,9 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
-      "label-when": "WHEN"
+      "label-of-query": "OF QUERY",
+      "label-when": "WHEN",
+      "label-when-query": "WHEN QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
@@ -2289,6 +2303,10 @@
       "configuration-required": "Configuration required",
       "refer-documentation-configure-authentication": "Refer to the documentation on how to configure authentication"
     },
+    "provider-card": {
+      "text-badge-enabled": "Enabled",
+      "text-badge-not-enabled": "Not enabled"
+    },
     "provider-config-form": {
       "additional-actions-menu": {
         "label-reset-to-default-values": "Reset to default values"
@@ -2301,6 +2319,10 @@
       "title-more-actions": "More actions",
       "title-reset": "Reset",
       "tooltip-more-actions": "More actions"
+    },
+    "provider-config-page": {
+      "text-badge-enabled": "Enabled",
+      "text-badge-not-enabled": "Not enabled"
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
@@ -3457,7 +3479,11 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
-      "tooltip-click-to-change-visualization": "Click to change visualization"
+      "aria-label-close": "Close options pane",
+      "aria-label-show": "Show options pane",
+      "tooltip-click-to-change-visualization": "Click to change visualization",
+      "tooltip-close": "Close options pane",
+      "tooltip-show": "Show options pane"
     },
     "visualization-select-pane": {
       "placeholder-search-for": "Search for...",
@@ -4025,6 +4051,9 @@
     }
   },
   "datasources": {
+    "add-new-data-source-button": {
+      "tooltip-no-permission": "You do not have permission to configure new data sources"
+    },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Create a dashboard",
       "aria-label-explore-data": "Explore data"
@@ -4093,6 +4122,10 @@
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"
+    },
+    "use-data-source-info": {
+      "badge-text-not-supported": "Not supported",
+      "badge-text-supported": "Supported"
     }
   },
   "dimensions": {
@@ -4212,6 +4245,10 @@
       "open": "Open",
       "open-in-new-tab": "Open in new tab"
     },
+    "content-outline": {
+      "tooltip-collapse-outline": "Collapse outline",
+      "tooltip-expand-outline": "Expand outline"
+    },
     "content-outline-item-button": {
       "body": {
         "aria-label-content-outline-item-collapse-button": "Content outline item collapse button"
@@ -4230,13 +4267,19 @@
       "title-correlation-details": "Correlation details"
     },
     "correlation-transformation-add-modal": {
+      "add-transformation": "Add transformation to correlation",
+      "added-variables": "This transformation will add the following variables:",
       "aria-label-field": "Field",
       "aria-label-type": "Type",
+      "body": "A transformation extracts variables out of a single field. These variables will be available along with your field variables.",
       "cancel": "Cancel",
+      "edit-transformation": "Edit transformation",
       "label-expression": "Expression",
+      "label-expression-without-tooltip": "Expression",
       "label-field": "Field",
       "label-type": "Type",
       "label-variable-name": "Variable name",
+      "label-variable-name-without-tooltip": "Variable name",
       "title-add": "Add transformation",
       "title-edit": "Edit transformation"
     },
@@ -4568,6 +4611,10 @@
       "title": "Table",
       "title-with-name": "Table - {{name}}"
     },
+    "time-sync-button": {
+      "aria-label-synced": "Synced times",
+      "aria-label-unsynced": "Unsynced times"
+    },
     "timeline-collapser": {
       "tooltip-collapse": "Collapse +1",
       "tooltip-collapse-all": "Collapse all",
@@ -4597,7 +4644,9 @@
     },
     "trace-page-actions": {
       "give-feedback": "Give feedback",
+      "label-copied": "Copied!",
       "label-export": "Export",
+      "label-trace-id": "Trace ID",
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
     },
     "trace-page-header": {
@@ -4800,6 +4849,10 @@
       "palette-tab": "Colors",
       "spectrum-tab": "Custom"
     },
+    "color-swatch": {
+      "aria-label-default": "Pick a color",
+      "aria-label-selected-color": "{{colorLabel}} color"
+    },
     "confirm-button": {
       "cancel": "Cancel"
     },
@@ -4936,7 +4989,11 @@
       "clear": "Clear"
     },
     "interactive-table": {
-      "expand-row-tooltip": "Toggle row expanded"
+      "aria-label-collapse-all": "Collapse all rows",
+      "aria-label-expand-all": "Expand all rows",
+      "expand-row-tooltip": "Toggle row expanded",
+      "tooltip-collapse-all": "Collapse all rows",
+      "tooltip-expand-all": "Expand all rows"
     },
     "menu-item": {
       "keyboard-shortcut-label": "Keyboard shortcut"
@@ -4962,9 +5019,24 @@
       "next-page": "next page",
       "previous-page": "previous page"
     },
+    "panel-chrome": {
+      "aria-label-toggle-collapse": "toggle collapse panel"
+    },
     "panel-menu": {
       "label": "Menu for panel {{ title }}",
       "title": "Menu"
+    },
+    "password-field": {
+      "tooltip-hide": "Hide password",
+      "tooltip-show": "Show password"
+    },
+    "row-expander": {
+      "aria-label-expand": "Expand row",
+      "collapse": "Collapse row",
+      "expand": "Expand row"
+    },
+    "row-expander-ng": {
+      "aria-label-collapse": "Collapse row"
     },
     "secret-form-field": {
       "reset": "Reset"
@@ -5020,6 +5092,10 @@
     "tags-input": {
       "add": "Add",
       "remove": "Remove tag: {{name}}"
+    },
+    "time-sync-button": {
+      "aria-label-sync": "Sync times",
+      "aria-label-unsync": "Unsync times"
     },
     "toggletip": {
       "close": "Close"
@@ -6344,6 +6420,7 @@
     },
     "panel-type-card": {
       "aria-label-delete-button-on-panel-type-card": "Delete button on panel type card",
+      "title-click-to-close": "Click again to close this section",
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
@@ -6525,7 +6602,8 @@
       "enable": "Enable"
     },
     "get-started-with-data-source": {
-      "add-new-data-source": "Add new data source"
+      "add-new-data-source": "Add new data source",
+      "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls-button": {
       "title-uninstall-modal": "Uninstall {{plugin}}"
@@ -7317,7 +7395,8 @@
       "basic-roles": "Basic roles"
     },
     "input": {
-      "no-roles": "No roles assigned"
+      "no-roles": "No roles assigned",
+      "placeholder-select-role": "Select role"
     },
     "menu": {
       "clear-button": "Clear all",
@@ -8041,7 +8120,9 @@
     },
     "draggable-field-name": {
       "rename-placeholder": "Rename {{fieldName}}",
-      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-disable": "Disable",
+      "tooltip-enable": "Enable"
     },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
@@ -8266,9 +8347,13 @@
       "label-calculation": "Calculation",
       "label-field": "Field",
       "label-type": "Type",
+      "label-window-size": "Window size",
       "label-window-size-mode": "Window size mode",
+      "label-window-size-percent": "Window size %",
       "placeholder-auto": "Auto",
-      "placeholder-field": "Field"
+      "placeholder-field": "Field",
+      "tooltip-window-size": "Window size",
+      "tooltip-window-size-percent": "Set the window size as a percentage of the total data"
     }
   },
   "upgrade-box": {

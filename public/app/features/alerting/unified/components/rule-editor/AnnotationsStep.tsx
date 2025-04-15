@@ -182,8 +182,14 @@ const AnnotationsStep = () => {
                         placeholder={
                           isUrl
                             ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
+                            : (annotationField.key &&
+                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                  key: annotationField.key,
+                                })) ||
+                              t(
+                                'alerting.annotations-step.placeholder-value-input-default',
+                                'Enter custom annotation content...'
+                              )
                         }
                         defaultValue={annotationField.value}
                       />
