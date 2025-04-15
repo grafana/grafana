@@ -60,6 +60,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		var statusErr *apierrors.StatusError
 		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, "keeper.secret.grafana.app \"some-keeper-that-does-not-exist\" not found", err.Error())
 		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 	})
 
