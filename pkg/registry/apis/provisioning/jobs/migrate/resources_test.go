@@ -300,6 +300,108 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		progress.AssertExpectations(t)
 	})
 
+	t.Run("should fail when signer fails", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSigner.On("Sign", mock.Anything, meta).
+			Return(nil, errors.New("signing error"))
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			nil,
+			progress,
+			provisioning.MigrateJobOptions{},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			mockSigner,
+		)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		require.Error(t, err)
+		require.EqualError(t, err, "add author signature: signing error")
+
+		mockParser.AssertExpectations(t)
+		mockSigner.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should successfully add author signature", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		signedCtx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "test-user",
+			Email: "test@example.com",
+		})
+		mockSigner.On("Sign", mock.Anything, meta).
+			Return(signedCtx, nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResources.On("CreateResourceFileFromObject", signedCtx, mock.Anything, mock.Anything).
+			Return("test/path", nil)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionCreated &&
+				result.Name == "test" &&
+				result.Error == nil &&
+				result.Path == "test/path"
+		})).Return()
+		progress.On("TooManyErrors").Return(nil)
+
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			mockRepoResources,
+			progress,
+			provisioning.MigrateJobOptions{},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			mockSigner,
+		)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		require.NoError(t, err)
+
+		mockParser.AssertExpectations(t)
+		mockSigner.AssertExpectations(t)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
 	t.Run("should successfully write resource", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
