@@ -21,11 +21,8 @@ module.exports = function (plop) {
     return '✅ Message logged successfully';
   });
 
-  // Register helper functions
+  // Register the helper used in templates
   plop.setHelper('formatOperationIds', formatOperationIds(plop));
-  plop.setHelper('validateGroup', validateGroup);
-  plop.setHelper('validateVersion', validateVersion);
-  plop.setHelper('extractGroupName', extractGroupName);
 
   // Helper function to generate actions for creating RTK API client
   const generateRtkApiActions = (data) => {
@@ -64,7 +61,7 @@ module.exports = function (plop) {
         type: 'modify',
         path: projectPath('public/app/core/reducers/root.ts'),
         pattern: '// PLOP_INJECT_REDUCER',
-        template: `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
+        template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
       },
       {
         type: 'modify',
@@ -76,7 +73,7 @@ module.exports = function (plop) {
         type: 'modify',
         path: projectPath('public/app/store/configureStore.ts'),
         pattern: '// PLOP_INJECT_MIDDLEWARE',
-        template: `        ${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
+        template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
       },
 
       // Display success message using the custom action type
@@ -95,14 +92,14 @@ module.exports = function (plop) {
         type: 'input',
         name: 'group',
         message: 'API group (e.g. dashboard.grafana.app):',
-        validate: (input) => plop.getHelper('validateGroup')(input),
+        validate: validateGroup,
       },
       {
         type: 'input',
         name: 'version',
         message: 'API version (e.g. v0alpha1):',
         default: 'v0alpha1',
-        validate: (input) => plop.getHelper('validateVersion')(input),
+        validate: validateVersion,
       },
       {
         type: 'input',
@@ -121,7 +118,7 @@ module.exports = function (plop) {
     actions: function (data) {
       // Format data for templates
       data.operationIdArray = data.operationIds.split(',').map((id) => id.trim());
-      data.groupName = data.group.split('.')[0];
+      data.groupName = extractGroupName(data.group);
 
       // Generate actions
       return generateRtkApiActions(data);

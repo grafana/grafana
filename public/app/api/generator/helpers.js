@@ -12,7 +12,7 @@ const removeQuotes = (str) => {
 };
 
 // Helper to format operation IDs for filter endpoints
-const formatOperationIds = (plop) => (operationArray) => {
+const formatOperationIds = () => (operationArray) => {
   if (!Array.isArray(operationArray)) {
     operationArray = operationArray.split(',');
   }
@@ -29,6 +29,9 @@ const validateVersion = (version) => {
 };
 
 const extractGroupName = (group) => {
+  if (!group) {
+    return '';
+  }
   return group.split('.')[0];
 };
 
