@@ -19,9 +19,11 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
+import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
@@ -35,6 +37,7 @@ interface EditableVariableConfig {
   name: string;
   description: string;
   editor: React.ComponentType<any>;
+  getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
 //exclude system variable type and snapshot variable type
@@ -49,6 +52,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Custom',
     description: 'Define variable values manually',
     editor: CustomVariableEditor,
+    getOptions: getCustomVariableOptions,
   },
   query: {
     name: 'Query',
@@ -86,6 +90,15 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     editor: TextBoxVariableEditor,
   },
 };
+
+export function getEditableVariableDefinition(type: string): EditableVariableConfig {
+  const editableVariable = EDITABLE_VARIABLES[type as EditableVariableType];
+  if (!editableVariable) {
+    throw new Error(`Variable type ${type} not found`);
+  }
+
+  return editableVariable;
+}
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
