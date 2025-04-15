@@ -66,12 +66,10 @@ module.exports = function (plop) {
         path: projectPath(`public/app/api/clients/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
-
-      // Update generate-rtk-apis.ts - use a more specific pattern to add the entry right before the last key
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
-        pattern: /};/g,
+        pattern: /  },\n  },/g,  // Match the end of the last entry and the end of outputFiles
         templateFile: './templates/config-entry.hbs',
       },
 
