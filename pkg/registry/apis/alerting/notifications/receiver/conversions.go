@@ -58,7 +58,8 @@ func convertToK8sResource(
 	namespacer request.NamespaceMapper,
 ) (*model.Receiver, error) {
 	spec := model.Spec{
-		Title: receiver.Name,
+		Title:        receiver.Name,
+		Integrations: []model.Integration{},
 	}
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.Integration{
