@@ -13,6 +13,9 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { InviteUserButton } from '../../InviteUserButton/InviteUserButton';
+import { shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
+
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -125,6 +128,11 @@ export const MegaMenu = memo(
               ))}
             </ul>
           </ScrollContainer>
+          {shouldRenderInviteUserButton && (
+            <div className={styles.inviteNewMemberButton}>
+              <InviteUserButton />
+            </div>
+          )}
         </nav>
       </div>
     );
@@ -161,6 +169,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
+    }),
+    inviteNewMemberButton: css({
+      display: 'flex',
+      padding: theme.spacing(1.5, 1, 1.5, 1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     dockMenuButton: css({
       display: 'none',

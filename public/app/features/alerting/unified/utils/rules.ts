@@ -293,7 +293,13 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
         if (rule.promRule && isAlertingRule(rule.promRule)) {
-          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
+          acc.push({
+            dataSourceName: getRulesSourceName(rulesSource),
+            namespaceName,
+            groupName,
+            ...rule,
+            namespace: { ...rule.namespace, uid: rule.promRule.folderUid },
+          });
         }
       });
     });

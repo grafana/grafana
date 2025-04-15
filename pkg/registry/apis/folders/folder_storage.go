@@ -10,9 +10,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -91,7 +91,7 @@ func (s *folderStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*v0alpha1.Folder)
+	p, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, fmt.Errorf("expected folder?")
 	}
