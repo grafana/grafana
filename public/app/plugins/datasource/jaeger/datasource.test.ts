@@ -321,17 +321,6 @@ describe('JaegerDatasource', () => {
     });
 
     it('should add node graph frames to response when nodeGraph is enabled and query is a trace ID query', async () => {
-      // Mock the backend response
-      const mockResponse = {
-        data: [
-          {
-            fields: testResponseDataFrameFields,
-            values: testResponseDataFrameFields.values,
-          },
-        ],
-      };
-
-
       // Create a datasource with nodeGraph enabled
       const settings = {
         ...defaultSettings,
@@ -345,7 +334,14 @@ describe('JaegerDatasource', () => {
       
       // Mock the super.query method to return our mock response
       jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
-        return of(mockResponse);
+        return of({
+          data: [
+            {
+              fields: testResponseDataFrameFields,
+              values: testResponseDataFrameFields.values,
+            },
+          ],
+        });
       });
 
       // Create a query without queryType (trace ID query)
@@ -361,22 +357,11 @@ describe('JaegerDatasource', () => {
 
       // Execute the query
       const response = await lastValueFrom(ds.query(query));
-
       // Verify that the response contains the original data plus node graph frames
       expect(response.data.length).toBe(3);
     });
 
     it('should not add node graph frames when nodeGraph is disabled', async () => {
-      // Mock the backend response
-      const mockResponse = {
-        data: [
-          {
-            fields: testResponseDataFrameFields,
-            values: testResponseDataFrameFields.values,
-          },
-        ],
-      };
-
       // Create a datasource with nodeGraph disabled
       const settings = {
         ...defaultSettings,
@@ -390,7 +375,14 @@ describe('JaegerDatasource', () => {
       
       // Mock the super.query method to return our mock response
       jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
-        return of(mockResponse);
+        return of({
+          data: [
+            {
+              fields: testResponseDataFrameFields,
+              values: testResponseDataFrameFields.values,
+            },
+          ],
+        });
       });
 
       // Create a query without queryType (trace ID query)
@@ -406,7 +398,6 @@ describe('JaegerDatasource', () => {
 
       // Execute the query
       const response = await lastValueFrom(ds.query(query));
-
       // Verify that the response contains only the original data
       expect(response.data.length).toBe(1);
       expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
