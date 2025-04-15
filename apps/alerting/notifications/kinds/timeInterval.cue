@@ -1,8 +1,11 @@
-package core
+package kinds
+
+import (
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+)
 
 timeInterval: {
-	kind:  "TimeInterval"
-	group: "notifications"
+	kind: "TimeInterval"
 	apiResource: {
 		groupOverride: "notifications.alerting.grafana.app"
 	}
@@ -15,25 +18,10 @@ timeInterval: {
 	versions: {
 		"v0alpha1": {
 			schema: {
-				#TimeRange: {
-					start_time: string
-					end_time: string
-				}
-				#Interval: {
-					times?: [...#TimeRange]
-					weekdays?: [...string]
-					days_of_month?: [...string]
-					months?: [...string]
-					years?: [...string]
-					location?: string
-				}
-				spec: {
-					name: string
-					time_intervals: [...#Interval]
-				}
+				spec: v0alpha1.TimeIntervalSpec
 			}
 			selectableFields: [
-				 "spec.name",
+				"spec.name",
 			]
 		}
 	}
