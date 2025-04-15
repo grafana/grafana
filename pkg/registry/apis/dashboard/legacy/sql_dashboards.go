@@ -15,8 +15,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -415,19 +416,19 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 		}
 	}
 
-	// v1 should be saved as schema version 41. v0 allows for older versions
-	if strings.HasSuffix(dash.APIVersion, "v1alpha1") {
-		schemaVersion := schemaversion.GetSchemaVersion(dash.Spec.Object)
-		if schemaVersion < int(schemaversion.LATEST_VERSION) {
-			dash.APIVersion = dashboardv0.VERSION
-			a.log.Info("Downgrading v1alpha1 dashboard to v0alpha1 due to schema version mismatch", "dashboard", dash.Name, "schema_version", schemaVersion)
-		}
-	}
-
-	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
+	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboardV1.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, created, err
+	}
+
+	// v1 should be saved as schema version 41. v0 allows for older versions
+	if strings.HasPrefix(apiVersion, "v1") {
+		schemaVersion := schemaversion.GetSchemaVersion(dash.Spec.Object)
+		if schemaVersion < int(schemaversion.LATEST_VERSION) {
+			apiVersion = dashboardV0.VERSION
+			a.log.Info("Downgrading v1alpha1 dashboard to v0alpha1 due to schema version mismatch", "dashboard", dash.Name, "schema_version", schemaVersion)
+		}
 	}
 
 	return &dashboards.SaveDashboardCommand{
@@ -542,9 +543,9 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 		lastID = p.ID
 
-		item := dashboard.LibraryPanel{
+		item := dashboardV0.LibraryPanel{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: fmt.Sprintf("%s/%s", dashboard.GROUP, "v0alpha1"),
+				APIVersion: dashboardV0.APIVERSION,
 				Kind:       "LibraryPanel",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -552,10 +553,10 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 				CreationTimestamp: metav1.NewTime(p.Created),
 				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
 			},
-			Spec: dashboard.LibraryPanelSpec{},
+			Spec: dashboardV0.LibraryPanelSpec{},
 		}
 
-		status := &dashboard.LibraryPanelStatus{
+		status := &dashboardV0.LibraryPanelStatus{
 			Missing: v0alpha1.Unstructured{},
 		}
 		err = json.Unmarshal(p.Model, &item.Spec)
