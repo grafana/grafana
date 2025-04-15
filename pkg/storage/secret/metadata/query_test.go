@@ -117,3 +117,21 @@ func TestKeeperQueries(t *testing.T) {
 		},
 	})
 }
+
+func TestSecureValueQueries(t *testing.T) {
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir: "testdata",
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlSecureValueRead: {
+				{
+					Name: "read",
+					Data: &readSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
+		},
+	})
+}
