@@ -7,9 +7,45 @@ module.exports = function (plop) {
   // Helper function to create paths relative to project root
   const projectPath = (relativePath) => path.join(basePath, relativePath);
   
+  // Helper to remove quotes from operation IDs
+  plop.setHelper('removeQuotes', (str) => {
+    if (typeof str !== 'string') {return str;}
+    return str.replace(/^['"](.*)['"]$/, '$1');
+  });
+  
+  // Helper to format operation IDs for filter endpoints
+  plop.setHelper('formatOperationIds', (operationArray) => {
+    if (!Array.isArray(operationArray)) {return '';}
+    return operationArray
+      .map(op => `'${plop.getHelper('removeQuotes')(op)}'`)
+      .join(', ');
+  });
+  
+  // Helper to format operation IDs for hooks
+  plop.setHelper('formatHooks', (operationArray) => {
+    if (!Array.isArray(operationArray)) {return '';}
+    return operationArray
+      .map(op => {
+        const cleanOp = plop.getHelper('removeQuotes')(op);
+        return `use${cleanOp.charAt(0).toUpperCase() + cleanOp.slice(1)}`;
+      })
+      .join(', ');
+  });
+  
+  // Helper to format type exports
+  plop.setHelper('formatTypeExports', (operationArray) => {
+    if (!Array.isArray(operationArray)) {return '';}
+    return operationArray
+      .map(op => {
+        const cleanOp = plop.getHelper('removeQuotes')(op);
+        return `type ${cleanOp}`;
+      })
+      .join(', ');
+  });
+  
   // Helper function to generate actions for creating RTK API client
   const generateRtkApiActions = (data) => {
-    const { group, version, reducerPath, operationIdArray, groupName, typeExports } = data;
+    const {reducerPath, groupName } = data;
     
     return [
       // Create baseAPI.ts
@@ -121,9 +157,6 @@ module.exports = function (plop) {
     actions: function(data) {
       // Format data for templates
       data.operationIdArray = data.operationIds.split(',').map(id => id.trim());
-      data.typeExports = data.operationIdArray.map(op => {
-        return op.charAt(0).toUpperCase() + op.slice(1);
-      });
       data.groupName = data.group.split('.')[0];
       
       // Generate actions
