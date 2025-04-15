@@ -17,13 +17,13 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250414114055-2b279efe15bf
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 	k8s.io/apimachinery v0.32.3
 	k8s.io/apiserver v0.32.3
 	k8s.io/client-go v0.32.3
@@ -138,9 +138,9 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
 	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
-	github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc // indirect
+	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3 // indirect
+	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
@@ -210,9 +210,9 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.274.1-0.20250318081012-21a7f15619b0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // indirect
+	github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250411131846-e7b32d622991 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
@@ -321,7 +321,7 @@ require (
 	github.com/prometheus/alertmanager v0.27.0 // indirect
 	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
+	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.13.2 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -366,10 +366,10 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.34.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.60.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.34.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.35.0 // indirect
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.29.0 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
@@ -384,16 +384,16 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/oauth2 v0.27.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
-	golang.org/x/time v0.10.0 // indirect
-	golang.org/x/tools v0.31.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/oauth2 v0.29.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/term v0.31.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
+	golang.org/x/tools v0.32.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/api v0.223.0 // indirect

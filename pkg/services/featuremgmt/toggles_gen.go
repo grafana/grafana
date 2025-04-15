@@ -111,10 +111,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagPrometheusRunQueriesInParallel
-	// Enables running Prometheus queries in parallel
-	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
@@ -158,10 +154,6 @@ const (
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
-	// FlagFrontendSandboxMonitorOnly
-	// Enables monitor only in the plugin frontend sandbox (if enabled)
-	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
 
 	// FlagPluginsDetailsRightPanel
 	// Enables right panel for the plugins details page
@@ -262,10 +254,6 @@ const (
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
-
-	// FlagPluginsAPIMetrics
-	// Sends metrics of public grafana packages usage by plugins
-	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
@@ -414,10 +402,6 @@ const (
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
-
-	// FlagExploreMetrics
-	// Enables the new Grafana Metrics Drilldown core app
-	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
@@ -831,10 +815,6 @@ const (
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
-	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
-
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
@@ -862,6 +842,10 @@ const (
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
+	// FlagScopeSearchAllLevels
+	// Enable scope search to include all levels of the scope node tree
+	FlagScopeSearchAllLevels = "scopeSearchAllLevels"
 
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature

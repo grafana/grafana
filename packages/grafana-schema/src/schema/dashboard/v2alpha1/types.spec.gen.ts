@@ -67,7 +67,7 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
+export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
@@ -282,7 +282,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	//
+	// 
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -1367,7 +1367,6 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 });
 
 export interface Spec {
-	// Title of dashboard.
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -1413,3 +1412,4 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
+
