@@ -213,8 +213,8 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
           onChange={onChange}
           onRunQuery={onRunQuery}
           app={app}
-          maxLines={datasource.maxLines}
           queryStats={queryStats}
+          datasource={props.datasource}
         />
       </EditorRows>
     </>

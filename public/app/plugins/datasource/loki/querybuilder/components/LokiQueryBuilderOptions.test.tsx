@@ -7,6 +7,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
 
 import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
+import { createLokiDatasource } from '../../__mocks__/datasource';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -275,6 +276,9 @@ describe('LokiQueryBuilderOptions', () => {
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), propOverrides: Partial<Props> = {}) {
+  const datasource = createLokiDatasource();
+  datasource.maxLines = 20;
+
   const props = {
     query: {
       refId: 'A',
@@ -283,7 +287,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), pr
     },
     onRunQuery: jest.fn(),
     onChange,
-    maxLines: 20,
+    datasource,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
     ...propOverrides,
   };
