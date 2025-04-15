@@ -160,7 +160,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     }
   }, [simplifiedQueryStep, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
-  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler, isLoading: rulerSourcesIsLoading } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -515,8 +515,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </Field>
         )}
 
+        {rulerSourcesIsLoading && (
+          <Text>
+            <Trans i18nKey="alerting.query-and-expressions-step.loading-data-sources">Loading data sources...</Trans>
+          </Text>
+        )}
+
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
+        {!rulerSourcesIsLoading && isCloudAlertRuleType && dataSourceName && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
               <Controller
@@ -552,7 +558,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-        {isGrafanaManagedRuleByType(type) && (
+        {!rulerSourcesIsLoading && isGrafanaManagedRuleByType(type) && (
           <Stack direction="column">
             {/* Data Queries */}
             <QueryEditor
