@@ -23,7 +23,7 @@ type LegacyResourcesMigrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
 }
 
-type legacyResorucesMigrator struct {
+type legacyResourcesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
@@ -35,8 +35,8 @@ func NewLegacyResourcesMigrator(
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	folderMigrator LegacyFoldersMigrator,
-) *legacyResorucesMigrator {
-	return &legacyResorucesMigrator{
+) LegacyResourcesMigrator {
+	return &legacyResourcesMigrator{
 		repositoryResources: repositoryResources,
 		parsers:             parsers,
 		legacyMigrator:      legacyMigrator,
@@ -44,7 +44,7 @@ func NewLegacyResourcesMigrator(
 	}
 }
 
-func (m *legacyResorucesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	parser, err := m.parsers.GetParser(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("error getting parser: %w", err)
