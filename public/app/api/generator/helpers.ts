@@ -28,19 +28,33 @@ export const formatOperationIds = () => (operationArray: string[]) => {
 };
 
 // List of created or modified files
-export const getFilesToFormat = (groupName: string) => [
-  `public/app/api/clients/${groupName}/baseAPI.ts`,
-  `public/app/api/clients/${groupName}/index.ts`,
-  `scripts/generate-rtk-apis.ts`,
-  `public/app/core/reducers/root.ts`,
-  `public/app/store/configureStore.ts`,
-];
+export const getFilesToFormat = (groupName: string, isEnterprise = false) => {
+  const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
+  const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
+  
+  return [
+    `${apiClientBasePath}/${groupName}/baseAPI.ts`,
+    `${apiClientBasePath}/${groupName}/index.ts`,
+    generateScriptPath,
+    `public/app/core/reducers/root.ts`,
+    `public/app/store/configureStore.ts`,
+  ];
+};
 
 // Action function for running yarn generate-apis
-export const runGenerateApis = (basePath: string): PlopActionFunction => (_, __) => {
+export const runGenerateApis = (basePath: string): PlopActionFunction => (answers, config) => {
   try {
-    console.log('⏳ Running yarn generate-apis to generate endpoints...');
-    execSync('yarn generate-apis', { stdio: 'inherit', cwd: basePath });
+    const isEnterprise = answers.isEnterprise || (config && config.isEnterprise);
+    
+    let command;
+    if (isEnterprise) {
+      command = 'yarn process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
+    } else {
+      command = 'yarn generate-apis';
+    }
+    
+    console.log(`⏳ Running ${command} to generate endpoints...`);
+    execSync(command, { stdio: 'inherit', cwd: basePath });
     return '✅ API endpoints generated successfully!';
   } catch (error) {
     if (error instanceof Error) {
