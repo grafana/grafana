@@ -331,7 +331,7 @@ describe('JaegerDatasource', () => {
       };
 
       const ds = new JaegerDatasource(settings);
-      
+
       // Mock the super.query method to return our mock response
       jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
         return of({
@@ -372,7 +372,7 @@ describe('JaegerDatasource', () => {
       };
 
       const ds = new JaegerDatasource(settings);
-      
+
       // Mock the super.query method to return our mock response
       jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
         return of({

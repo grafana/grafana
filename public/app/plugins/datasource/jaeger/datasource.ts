@@ -80,9 +80,9 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     if (
       config.featureToggles.jaegerBackendMigration &&
       // No query type means that the query is a trace ID query
-      (!target.queryType ||  target.queryType === 'dependencyGraph')
+      (!target.queryType || target.queryType === 'dependencyGraph')
     ) {
-      return super.query({...options, targets: [target]}).pipe(
+      return super.query({ ...options, targets: [target] }).pipe(
         map((response) => {
           // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
           if (this.nodeGraph?.enabled && !target.queryType) {
@@ -90,9 +90,9 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
           }
           return response;
         })
-      )
+      );
     }
-   
+
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
     if (target.queryType === 'dependencyGraph') {
       const timeRange = options.range ?? getDefaultTimeRange();
@@ -320,6 +320,6 @@ export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQ
   const frame = toDataFrame(response.data[0]);
   return {
     ...response,
-    data: [...response.data, ...createNodeGraphFrames(frame)]
+    data: [...response.data, ...createNodeGraphFrames(frame)],
   };
 }
