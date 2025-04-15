@@ -56,7 +56,7 @@ const config: ConfigFile = {
     },
     '../public/app/api/clients/folder/endpoints.gen.ts': {
       apiFile: '../public/app/api/clients/folder/baseAPI.ts',
-      schemaFile: '../data/openapi/folder.grafana.app-v0alpha1.json',
+      schemaFile: '../data/openapi/folder.grafana.app-v1beta1.json',
       filterEndpoints: ['getFolder'],
       tag: true,
     },

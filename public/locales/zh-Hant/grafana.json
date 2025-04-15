@@ -2417,6 +2417,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "資料來源",
       "empty-message": "未找到符合您查詢的結果",
@@ -2427,11 +2432,6 @@
       "aria-label-link-to-connections": "",
       "body": "",
       "go-to-connections": ""
-    },
-    "advisor-redirect-notice": {
-      "aria-label-link-to-advisor": "",
-      "body": "",
-      "go-to-advisor": ""
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "",

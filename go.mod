@@ -43,8 +43,8 @@ require (
 	github.com/centrifugal/centrifuge v0.34.4 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
-	github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc // @grafana/grafana-datasources-core-services
-	github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3 // @grafana/grafana-datasources-core-services
+	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
+	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // @grafana/grafana-datasources-core-services
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
@@ -211,11 +211,11 @@ require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9 // indirect; @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // @grafana/grafana-app-platform-squad
 
