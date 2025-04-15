@@ -526,9 +526,12 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const params = [];
 
   const numberNode = node.getChild(NumberLezer);
+  const errorNode = node.getChild(ErrorId)?.getChild(Identifier);
 
   if (numberNode) {
     params.push(Number(getString(expr, numberNode)));
+  } else if (errorNode) {
+    params.push(getString(expr, errorNode));
   }
 
   if (grouping) {
