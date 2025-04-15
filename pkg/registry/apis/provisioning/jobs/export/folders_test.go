@@ -16,7 +16,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
 )
 
@@ -336,9 +338,24 @@ func TestExportFolders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeFolderClient := &mockDynamicInterface{
-				items: []unstructured.Unstructured{},
+			scheme := runtime.NewScheme()
+			listGVK := schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    "FolderList",
 			}
+			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+				Group:   resources.FolderResource.Group,
+				Version: resources.FolderResource.Version,
+				Kind:    resources.FolderResource.Resource,
+			}, &metav1.PartialObjectMetadata{})
+
+			fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+				resources.FolderResource: listGVK.Kind,
+			})
+			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
+			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 			tt.setupProgress(mockProgress)
 
