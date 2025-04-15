@@ -57,6 +57,42 @@ const noUntranslatedStrings = createRule({
           });
         }
       },
+      JSXExpressionContainer(node) {
+        const parent = node.parent;
+        const parentType = parent.type;
+
+        const isNotInAttributeOrElement =
+          parentType !== AST_NODE_TYPES.JSXAttribute && parentType !== AST_NODE_TYPES.JSXElement;
+        const isUnsupportedAttribute =
+          parentType === AST_NODE_TYPES.JSXAttribute && !propsToCheck.includes(String(parent.name.name));
+
+        if (isNotInAttributeOrElement || isUnsupportedAttribute) {
+          return;
+        }
+
+        const { expression } = node;
+
+        /**
+         * @param {Node} expr
+         */
+        const isExpressionUntranslated = (expr) => {
+          return expr.type === AST_NODE_TYPES.Literal && typeof expr.value === 'string' && Boolean(expr.value);
+        };
+
+        if (expression.type === AST_NODE_TYPES.ConditionalExpression) {
+          const alternateIsString = isExpressionUntranslated(expression.alternate);
+          const consequentIsString = isExpressionUntranslated(expression.consequent);
+
+          if (alternateIsString || consequentIsString) {
+            const messageId =
+              parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
+            context.report({
+              node: node,
+              messageId,
+            });
+          }
+        }
+      },
       /**
        * @param {JSXElement|JSXFragment} node
        */
