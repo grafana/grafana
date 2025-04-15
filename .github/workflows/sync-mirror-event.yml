@@ -1,6 +1,6 @@
 # Owned by grafana-delivery-squad
 # Intended to be dropped into the base repo, Ex: grafana/grafana
-name: Dispatch: Sync to mirror
+name: Dispatch sync to mirror
 run-name: dispatch-sync-to-mirror-${{ github.ref_name }}
 on:
   workflow_dispatch:
