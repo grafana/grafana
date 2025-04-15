@@ -1045,7 +1045,7 @@ var (
 		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
@@ -1790,7 +1790,7 @@ var (
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 		},
 	}
