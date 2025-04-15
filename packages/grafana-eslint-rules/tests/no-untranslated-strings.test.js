@@ -68,6 +68,18 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       name: 'Variable interpolation',
       code: `<div>{variable}</div>`,
     },
+    {
+      name: 'Entirely non-alphanumeric text (prop)',
+      code: `<div title="-" />`,
+    },
+    {
+      name: 'Entirely non-alphanumeric text',
+      code: `<div>-</div>`,
+    },
+    {
+      name: 'Non-alphanumeric siblings',
+      code: `<div>({variable})</div>`,
+    },
   ],
   invalid: [
     /**
@@ -416,12 +428,6 @@ const Foo = () => {
       ],
     },
 
-    {
-      name: 'Cannot fix entirely non-alphanumeric text',
-      code: `const Foo = () => <div>-</div>`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }],
-    },
     {
       name: 'Cannot fix text with expression sibling',
       code: `const Foo = () => <div>{name} Hello</div>`,

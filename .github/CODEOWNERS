@@ -73,6 +73,7 @@
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+/apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
@@ -823,8 +824,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
-/.github/workflows/e2e-suite-various.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/run-e2e-suite.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

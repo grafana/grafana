@@ -10,7 +10,8 @@ import (
 )
 
 func init() {
-	model.NameValidationScheme = model.UTF8Validation
+	// this is deprecated, we will fix that in a separate PR
+	model.NameValidationScheme = model.UTF8Validation //nolint:staticcheck
 }
 
 // ApplyFiltersAndGroupBy takes a raw promQL expression, converts the filters into PromQL matchers, and applies these matchers to the parsed expression. It also applies the group by clause to any aggregate expressions in the parsed expression.
