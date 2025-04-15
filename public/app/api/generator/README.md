@@ -24,7 +24,8 @@ The generator automates the following:
 2. Updates `generate-rtk-apis.ts` to include your API client
 3. Creates the `index.ts` file with proper exports
 4. Updates Redux reducers and middleware in the store
-5. Automatically runs `yarn generate-apis` to generate endpoints from the OpenAPI schema
+5. Formats all generated files using Prettier and ESLint
+6. Automatically runs `yarn generate-apis` to generate endpoints from the OpenAPI schema
 
 ## Example
 

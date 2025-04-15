@@ -8,6 +8,15 @@ module.exports = function (plop) {
   // Create project path helper with the base path
   const projectPath = createProjectPath(basePath);
 
+  // List of created or modified files
+  const getFilesToFormat = (groupName) => [
+    `public/app/api/clients/${groupName}/baseAPI.ts`,
+    `public/app/api/clients/${groupName}/index.ts`,
+    `scripts/generate-rtk-apis.ts`,
+    `public/app/core/reducers/root.ts`,
+    `public/app/store/configureStore.ts`,
+  ];
+
   plop.setActionType('runGenerateApis', function () {
     const { execSync } = require('child_process');
     try {
@@ -17,6 +26,37 @@ module.exports = function (plop) {
     } catch (error) {
       console.error('❌ Failed to generate API endpoints:', error.message);
       return '❌ Failed to generate API endpoints. See error above.';
+    }
+  });
+
+  // Custom action function for formatting files with prettier and eslint
+  plop.setActionType('formatFiles', function (_, config) {
+    const { execSync } = require('child_process');
+    const filesToFormat = config.files.map((file) => projectPath(file));
+
+    try {
+      console.log('🧹 Formatting files with Prettier...');
+      filesToFormat.forEach((file) => {
+        try {
+          execSync(`yarn prettier --write "${file}"`, { cwd: basePath });
+        } catch (error) {
+          console.warn(`⚠️ Warning: Could not format ${file} with prettier: ${error.message}`);
+        }
+      });
+
+      console.log('🧹 Running ESLint fix...');
+      filesToFormat.forEach((file) => {
+        try {
+          execSync(`yarn eslint --fix "${file}"`, { cwd: basePath });
+        } catch (error) {
+          console.warn(`⚠️ Warning: Could not lint ${file}: ${error.message}`);
+        }
+      });
+
+      return '✅ Files formatted successfully!';
+    } catch (error) {
+      console.error('⚠️ Warning: Some formatting operations failed:', error.message);
+      return '⚠️ Warning: Some formatting operations failed.';
     }
   });
 
@@ -73,6 +113,12 @@ module.exports = function (plop) {
         path: projectPath('public/app/store/configureStore.ts'),
         pattern: '// PLOP_INJECT_MIDDLEWARE',
         template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
+      },
+
+      // Format the generated files
+      {
+        type: 'formatFiles',
+        files: getFilesToFormat(groupName),
       },
 
       // Run yarn generate-apis to generate endpoints
