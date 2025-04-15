@@ -20,6 +20,8 @@ import {
   queryDirections,
   queryTypeOptions,
 } from '../../components/LokiOptionFields';
+import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from '../../datasource';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryDirection, LokiQueryType, QueryStats } from '../../types';
 
@@ -27,14 +29,15 @@ export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
-  maxLines: number;
   app?: CoreApp;
   queryStats: QueryStats | null;
+  datasource: LokiDatasource;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, queryStats }) => {
+  ({ app, query, onChange, onRunQuery, queryStats, datasource }) => {
     const [splitDurationValid, setSplitDurationValid] = useState(true);
+    const maxLines = datasource.maxLines;
 
     useEffect(() => {
       if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
@@ -119,7 +122,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [app, onQueryDirectionChange, query.direction]);
 
     let queryType = getLokiQueryType(query);
-    const isLogQuery = isLogsQuery(query.expr);
+    const interpolatedQueries = datasource.interpolateVariablesInQueries([query], placeHolderScopedVars);
+    const isLogQuery = isLogsQuery(interpolatedQueries[0]?.expr ?? '');
     const filteredQueryTypeOptions = isLogQuery
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
