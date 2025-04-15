@@ -1,4 +1,73 @@
+const path = require('path');
+
 module.exports = function (plop) {
+  // Get the base path (project root)
+  const basePath = path.resolve(__dirname, '../../../..');
+  
+  // Helper function to create paths relative to project root
+  const projectPath = (relativePath) => path.join(basePath, relativePath);
+  
+  // Helper function to generate actions for creating RTK API client
+  const generateRtkApiActions = (data) => {
+    const { group, version, reducerPath, operationIdArray, groupName, typeExports } = data;
+    
+    return [
+      // Create baseAPI.ts
+      {
+        type: 'add',
+        path: projectPath(`public/app/api/clients/${groupName}/baseAPI.ts`),
+        templateFile: './templates/baseAPI.ts.hbs',
+      },
+      
+      // Update generate-rtk-apis.ts - use a more specific pattern to add the entry right before the last key
+      {
+        type: 'modify',
+        path: projectPath('scripts/generate-rtk-apis.ts'),
+        pattern: /  },\n};/g,
+        templateFile: './templates/config-entry.hbs',
+      },
+      
+      // Create index.ts
+      {
+        type: 'add',
+        path: projectPath(`public/app/api/clients/${groupName}/index.ts`),
+        templateFile: './templates/index.ts.hbs',
+      },
+      
+      // Update reducers and middleware
+      {
+        type: 'append',
+        path: projectPath('public/app/core/reducers/root.ts'),
+        pattern: '// PLOP_INJECT_IMPORT',
+        template: `import { ${reducerPath} } from '../../api/clients/${groupName}';`,
+      },
+      {
+        type: 'append',
+        path: projectPath('public/app/core/reducers/root.ts'),
+        pattern: '// PLOP_INJECT_REDUCER',
+        template: `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,`,
+      },
+      {
+        type: 'append',
+        path: projectPath('public/app/store/configureStore.ts'),
+        pattern: '// PLOP_INJECT_IMPORT',
+        template: `import { ${reducerPath} } from '../api/clients/${groupName}';`,
+      },
+      {
+        type: 'append',
+        path: projectPath('public/app/store/configureStore.ts'),
+        pattern: '// PLOP_INJECT_MIDDLEWARE',
+        template: `        ${reducerPath}.middleware,`,
+      },
+      
+      // Print message to run generate-apis after the update
+      {
+        type: 'printMessage',
+        message: '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n'
+      }
+    ];
+  };
+  
   // Add input validation helpers
   plop.setHelper('validateGroup', (group) => {
     return group && group.includes('.grafana.app') 
@@ -10,6 +79,10 @@ module.exports = function (plop) {
     return version && /^v\d+[a-z]*\d+$/.test(version) 
       ? true 
       : 'Version should be in format: v0alpha1, v1beta2, etc.';
+  });
+
+  plop.setHelper('extractGroupName', (group) => {
+    return group.split('.')[0];
   });
 
   plop.setGenerator('rtk-api-client', {
@@ -25,6 +98,7 @@ module.exports = function (plop) {
         type: 'input',
         name: 'version',
         message: 'API version (e.g. v0alpha1):',
+        default: 'v0alpha1',
         validate: (input) => plop.getHelper('validateVersion')(input)
       },
       {
@@ -50,62 +124,10 @@ module.exports = function (plop) {
       data.typeExports = data.operationIdArray.map(op => {
         return op.charAt(0).toUpperCase() + op.slice(1);
       });
+      data.groupName = data.group.split('.')[0];
       
-      return [
-        // Create baseAPI.ts
-        {
-          type: 'add',
-          path: 'public/app/api/clients/{{camelCase group}}/baseAPI.ts',
-          templateFile: 'public/app/api/generator/templates/baseAPI.ts.hbs',
-        },
-        
-        // Update generate-rtk-apis.ts
-        {
-          type: 'modify',
-          path: 'scripts/generate-rtk-apis.ts',
-          pattern: /outputFiles: {/,
-          template: 'outputFiles: {\n    \'../public/app/api/clients/{{camelCase group}}/endpoints.gen.ts\': {\n      apiFile: \'../public/app/api/clients/{{camelCase group}}/baseAPI.ts\',\n      schemaFile: \'../data/openapi/{{group}}-{{version}}.json\',\n      filterEndpoints: [{{#each operationIdArray}}\'{{this}}\'{{#unless @last}}, {{/unless}}{{/each}}],\n      tag: true,\n    },',
-        },
-        
-        // Create index.ts
-        {
-          type: 'add',
-          path: 'public/app/api/clients/{{camelCase group}}/index.ts',
-          templateFile: 'public/app/api/generator/templates/index.ts.hbs',
-        },
-        
-        // Update reducers and middleware
-        {
-          type: 'append',
-          path: 'public/app/core/reducers/root.ts',
-          pattern: '// PLOP_INJECT_IMPORT',
-          template: 'import { {{camelCase reducerPath}} } from \'../../api/clients/{{camelCase group}}\';',
-        },
-        {
-          type: 'append',
-          path: 'public/app/core/reducers/root.ts',
-          pattern: '// PLOP_INJECT_REDUCER',
-          template: '  [{{camelCase reducerPath}}.reducerPath]: {{camelCase reducerPath}}.reducer,',
-        },
-        {
-          type: 'append',
-          path: 'public/app/store/configureStore.ts',
-          pattern: '// PLOP_INJECT_IMPORT',
-          template: 'import { {{camelCase reducerPath}} } from \'../api/clients/{{camelCase group}}\';',
-        },
-        {
-          type: 'append',
-          path: 'public/app/store/configureStore.ts',
-          pattern: '// PLOP_INJECT_MIDDLEWARE',
-          template: '        {{camelCase reducerPath}}.middleware,',
-        },
-        
-        // Automatically generate endpoints
-        {
-          type: 'runCommand',
-          command: 'yarn generate-apis'
-        }
-      ];
+      // Generate actions
+      return generateRtkApiActions(data);
     }
   });
 }; 
