@@ -544,7 +544,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeSyncButton.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -565,7 +566,9 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/InteractiveTable/Expander/index.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -649,7 +652,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/TableNG/Cells/RowExpander.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -699,7 +703,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/TableRT/RowExpander.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "packages/grafana-ui/src/components/Table/TableRT/Table.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -847,7 +852,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
     ],
     "public/app/core/components/PasswordField/PasswordField.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/core/components/RolePicker/RolePickerInput.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -970,10 +976,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/admin/AdminFeatureTogglesPage.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/admin/AdminFeatureTogglesTable.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/admin/UserSessions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1050,7 +1058,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/alert-groups/AlertDetails.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/alert-groups/AlertGroup.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1080,14 +1089,17 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/contact-points/ContactPointHeader.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/contact-points/components/GlobalConfigAlert.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/contact-points/components/Modals.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/export/FileExportPreview.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1107,7 +1119,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/notification-policies/Policy.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
     ],
     "public/app/features/alerting/unified/components/notification-policies/PromDurationDocs.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1195,7 +1209,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/PreviewRule.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1242,21 +1257,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/SimpleCondition.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/SmartAlertTypeDetector.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/rule-types/GrafanaManagedAlert.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1356,7 +1374,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/rule-list/RuleList.v1.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1398,13 +1417,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/auth-config/ProviderConfigForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/auth-config/ProviderConfigPage.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/auth-config/components/ProviderCard.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/auth-config/fields.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1503,7 +1525,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataAlertingTab.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1516,7 +1539,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/panel-edit/SaveLibraryVizPanelModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/dashboard-scene/saving/SaveProvisionedDashboardForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1782,7 +1806,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/PanelEditor/VisualizationButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
     "public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -1799,7 +1825,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/DashboardValidation.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1814,13 +1841,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveProvisionedDashboardForm.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -2053,7 +2082,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/datasources/components/useDataSourceInfo.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/datasources/state/actions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2132,7 +2162,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/explore/ContentOutline/ContentOutline.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/explore/CorrelationHelper.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2145,7 +2176,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/explore/ExploreRunQueryButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
@@ -2154,11 +2186,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/explore/LiveTailButton.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/explore/Logs/LiveLogs.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/explore/Logs/LogsSamplePanel.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2188,14 +2222,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use the t() function outside of a component or function", "0"]
     ],
     "public/app/features/explore/TimeSyncButton.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/explore/TraceView/TraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/Actions/TracePageActions.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/NextPrevResult.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2384,7 +2420,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch.tsx:5381": [
       [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -2394,7 +2431,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/live/centrifuge/LiveDataStream.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2410,7 +2448,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/logs/components/LogLabelStats.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/logs/components/LogLabels.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2527,7 +2566,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/admin/components/InstallControls/InstallControlsButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -2614,11 +2655,13 @@ exports[`better eslint`] = {
     "public/app/features/provisioning/File/FileStatusPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/provisioning/Repository/RepositoryOverview.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/provisioning/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2783,7 +2826,9 @@ exports[`better eslint`] = {
     "public/app/features/transformers/editors/CalculateFieldTransformerEditor/WindowOptionsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
     ],
     "public/app/features/transformers/editors/CalculateFieldTransformerEditor/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`CalculateFieldTransformerEditor\`)", "0"],
@@ -2807,7 +2852,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/transformers/editors/OrganizeFieldsTransformerEditor.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
