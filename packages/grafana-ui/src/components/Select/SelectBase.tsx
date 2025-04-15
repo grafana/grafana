@@ -162,6 +162,14 @@ export function SelectBase<T, Rest = {}>({
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
 
+  // Force a re-render when the value changes
+  // This key counter will change whenever the value changes, forcing React to re-render the component
+  const [renderKey, setRenderKey] = useState<number>(0);
+
+  useEffect(() => {
+    setRenderKey((prev) => prev + 1);
+  }, [value]);
+
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
   // We can remove this workaround when the bug in react-select is fixed: https://github.com/JedWatson/react-select/issues/4936
@@ -282,13 +290,7 @@ export function SelectBase<T, Rest = {}>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    // When the selectedValue is undefined, set it to null instead
-    // This forces react-select to show the placeholder
-    value: isMulti
-      ? selectedValue
-      : selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)
-        ? null
-        : selectedValue?.[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
     noMultiValueWrap,
   };
 
@@ -340,6 +342,7 @@ export function SelectBase<T, Rest = {}>({
   return (
     <>
       <ReactSelectComponent
+        key={renderKey}
         ref={reactSelectRef}
         components={{
           MenuList: SelectMenuComponent,
@@ -352,10 +355,6 @@ export function SelectBase<T, Rest = {}>({
           Option: SelectMenuOptions,
           ClearIndicator(props: ClearIndicatorProps) {
             const { clearValue } = props;
-            // Don't render clear indicator if selectedValue is undefined/empty
-            if (selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)) {
-              return null;
-            }
             return (
               <Icon
                 name="times"
@@ -388,12 +387,6 @@ export function SelectBase<T, Rest = {}>({
           },
           DropdownIndicator: DropdownIndicator,
           SingleValue(props: Props<T>) {
-            // Only render SingleValue if we actually have a value
-            // This fixes the issue when clearing programmatically but react-select
-            // component still has stale cached value data
-            if (selectedValue === undefined || (Array.isArray(selectedValue) && selectedValue.length === 0)) {
-              return null;
-            }
             return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
