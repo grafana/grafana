@@ -8,7 +8,6 @@ import (
 )
 
 func TestEncryptedValueQueries(t *testing.T) {
-
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
