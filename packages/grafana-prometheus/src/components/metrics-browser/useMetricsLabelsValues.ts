@@ -9,7 +9,6 @@ import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, MET
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
-  // const [initTrigger, setInitTrigger] = useState(Date.now());
 
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
@@ -38,7 +37,6 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
   //Handler for error processing - logs the error and updates UI state
   const handleError = useCallback((e: unknown, msg: string) => {
-    console.error(e);
     if (e instanceof Error) {
       setErr(`${msg}: ${e.message}`);
     } else {

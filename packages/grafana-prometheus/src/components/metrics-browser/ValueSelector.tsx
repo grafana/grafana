@@ -40,7 +40,6 @@ export function ValueSelector() {
                   loading={false}
                   active={true}
                   hidden={false}
-                  // If no facets, we want to show number of all label values
                   facets={lv.length}
                   onClick={onLabelKeyClick}
                 />
