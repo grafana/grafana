@@ -25,7 +25,6 @@
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
     "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",
     "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
-    "generate:api-client": "plop --plopfile public/app/api/generator/plopfile.js",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
@@ -66,7 +65,8 @@
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "generate-icons": "nx run grafana-icons:generate",
     "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
-    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
+    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
+    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types' plop --plopfile public/app/api/generator/plopfile.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
