@@ -119,7 +119,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Data: value,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
+		return fmt.Errorf("unmarshal unstructured: %w", err)
 	}
 
 	// clear anything so it will get written
@@ -177,7 +177,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	opts.OnlyCount = false // this time actually write
 	_, err = r.legacy.Migrate(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("error running legacy migrate (%s) %w", r.kind.Resource, err)
+		return fmt.Errorf("migrate legacy %s: %w", r.kind.Resource, err)
 	}
 
 	return nil
