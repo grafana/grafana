@@ -13,9 +13,10 @@ import {
   getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
+  toDataFrame,
   urlUtil,
 } from '@grafana/data';
-import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
   config,
@@ -79,10 +80,17 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     if (
       config.featureToggles.jaegerBackendMigration &&
       // No query type means that the query is a trace ID query
-      (!target.queryType ||  target.queryType === 'dependencyGraph') &&
-      !this.nodeGraph?.enabled
+      (!target.queryType ||  target.queryType === 'dependencyGraph')
     ) {
-      return super.query(options);
+      return super.query({...options, targets: [target]}).pipe(
+        map((response) => {
+          // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
+          if (this.nodeGraph?.enabled && !target.queryType) {
+            return addNodeGraphFramesToResponse(response);
+          }
+          return response;
+        })
+      )
     }
    
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
@@ -302,3 +310,16 @@ const emptyTraceDataFrame = new MutableDataFrame({
     },
   },
 });
+
+export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQueryResponse {
+  if (!response.data || response.data.length === 0) {
+    return response;
+  }
+
+  // Convert the first frame to a DataFrame for node graph processing
+  const frame = toDataFrame(response.data[0]);
+  return {
+    ...response,
+    data: [...response.data, ...createNodeGraphFrames(frame)]
+  };
+}
