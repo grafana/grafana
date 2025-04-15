@@ -13,11 +13,10 @@ import (
 )
 
 type JaegerClient struct {
-	logger             log.Logger
-	url                string
-	httpClient         *http.Client
-	settings           backend.DataSourceInstanceSettings
-	traceIdTimeEnabled bool
+	logger     log.Logger
+	url        string
+	httpClient *http.Client
+	settings   backend.DataSourceInstanceSettings
 }
 
 type ServicesResponse struct {
@@ -28,13 +27,18 @@ type ServicesResponse struct {
 	Total  int         `json:"total"`
 }
 
-func New(url string, hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings, traceIdTimeEnabled bool) (JaegerClient, error) {
+type SettingsJSONData struct {
+	TraceIdTimeParams struct {
+		Enabled bool `json:"enabled"`
+	} `json:"traceIdTimeParams"`
+}
+
+func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings) (JaegerClient, error) {
 	client := JaegerClient{
-		logger:             logger,
-		url:                url,
-		httpClient:         hc,
-		settings:           settings,
-		traceIdTimeEnabled: traceIdTimeEnabled,
+		logger:     logger,
+		url:        settings.URL,
+		httpClient: hc,
+		settings:   settings,
 	}
 	return client, nil
 }
@@ -185,8 +189,13 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
-	// Add time parameters if provided and traceIdTimeEnabled is true
-	if j.traceIdTimeEnabled {
+	var jsonData SettingsJSONData
+	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
+		return trace, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+	}
+
+	// Add time parameters if trace ID time is enabled and time range is provided
+	if jsonData.TraceIdTimeParams.Enabled {
 		if start > 0 || end > 0 {
 			parsedURL, err := url.Parse(traceUrl)
 			if err != nil {

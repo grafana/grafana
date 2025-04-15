@@ -61,7 +61,10 @@ func TestJaegerClient_Services(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, false)
+			settings := backend.DataSourceInstanceSettings{
+				URL: server.URL,
+			}
+			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
 			services, err := client.Services()
@@ -150,7 +153,10 @@ func TestJaegerClient_Operations(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, false)
+			settings := backend.DataSourceInstanceSettings{
+				URL: server.URL,
+			}
+			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
 			operations, err := client.Operations(tt.service)
@@ -190,7 +196,7 @@ func TestJaegerClient_Search(t *testing.T) {
 			},
 			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
 			mockStatusCode: http.StatusOK,
-			expectedURL:    "/api/traces?limit=10&maxDuration=5s&minDuration=1s&operation=test-operation&service=test-service&tags=error%3Dtrue",
+			expectedURL:    "/api/traces?limit=10&maxDuration=5s&minDuration=1s&operation=test-operation&service=test-service&tags=%7B%22error%22%3A%22true%22%7D",
 			expectError:    false,
 			expectedError:  nil,
 		},
@@ -228,7 +234,10 @@ func TestJaegerClient_Search(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, false)
+			settings := backend.DataSourceInstanceSettings{
+				URL: server.URL,
+			}
+			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 			traces, err := client.Search(tt.query)
 
@@ -248,82 +257,82 @@ func TestJaegerClient_Search(t *testing.T) {
 
 func TestJaegerClient_Trace(t *testing.T) {
 	tests := []struct {
-		name               string
-		traceId            string
-		traceIdTimeEnabled bool
-		start              int64
-		end                int64
-		mockResponse       string
-		mockStatusCode     int
-		mockStatus         string
-		expectedURL        string
-		expectError        bool
-		expectedError      error
+		name           string
+		traceId        string
+		jsonData       string
+		start          int64
+		end            int64
+		mockResponse   string
+		mockStatusCode int
+		mockStatus     string
+		expectedURL    string
+		expectError    bool
+		expectedError  error
 	}{
 		{
-			name:               "Successful response with time params enabled",
-			traceId:            "abc123",
-			traceIdTimeEnabled: true,
-			start:              1000,
-			end:                2000,
-			mockResponse:       `{"data":[{"traceID":"abc123"}]}`,
-			mockStatusCode:     http.StatusOK,
-			mockStatus:         "OK",
-			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
-			expectError:        false,
-			expectedError:      nil,
+			name:           "Successful response with time params enabled",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": true}}`,
+			start:          1000,
+			end:            2000,
+			mockResponse:   `{"data":[{"traceID":"abc123"}]}`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "/api/traces/abc123?end=2000&start=1000",
+			expectError:    false,
+			expectedError:  nil,
 		},
 		{
-			name:               "Successful response with time params disabled",
-			traceId:            "abc123",
-			traceIdTimeEnabled: false,
-			start:              1000,
-			end:                2000,
-			mockResponse:       `{"data":[{"traceID":"abc123"}]}`,
-			mockStatusCode:     http.StatusOK,
-			mockStatus:         "OK",
-			expectedURL:        "/api/traces/abc123",
-			expectError:        false,
-			expectedError:      nil,
+			name:           "Successful response with time params disabled",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": false}}`,
+			start:          1000,
+			end:            2000,
+			mockResponse:   `{"data":[{"traceID":"abc123"}]}`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "/api/traces/abc123",
+			expectError:    false,
+			expectedError:  nil,
 		},
 		{
-			name:               "Non-200 response",
-			traceId:            "abc123",
-			traceIdTimeEnabled: true,
-			start:              1000,
-			end:                2000,
-			mockResponse:       "",
-			mockStatusCode:     http.StatusInternalServerError,
-			mockStatus:         "Internal Server Error",
-			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
-			expectError:        true,
-			expectedError:      backend.PluginError(errors.New("Internal Server Error")),
+			name:           "Non-200 response",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": true}}`,
+			start:          1000,
+			end:            2000,
+			mockResponse:   "",
+			mockStatusCode: http.StatusInternalServerError,
+			mockStatus:     "Internal Server Error",
+			expectedURL:    "/api/traces/abc123?end=2000&start=1000",
+			expectError:    true,
+			expectedError:  backend.PluginError(errors.New("Internal Server Error")),
 		},
 		{
-			name:               "Invalid JSON response",
-			traceId:            "abc123",
-			traceIdTimeEnabled: true,
-			start:              1000,
-			end:                2000,
-			mockResponse:       `{invalid json`,
-			mockStatusCode:     http.StatusOK,
-			mockStatus:         "OK",
-			expectedURL:        "/api/traces/abc123?end=2000&start=1000",
-			expectError:        true,
-			expectedError:      &json.SyntaxError{},
+			name:           "Invalid JSON response",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": true}}`,
+			start:          1000,
+			end:            2000,
+			mockResponse:   `{invalid json`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "/api/traces/abc123?end=2000&start=1000",
+			expectError:    true,
+			expectedError:  &json.SyntaxError{},
 		},
 		{
-			name:               "Empty trace ID",
-			traceId:            "",
-			traceIdTimeEnabled: true,
-			start:              1000,
-			end:                2000,
-			mockResponse:       `{"data":[]}`,
-			mockStatusCode:     http.StatusOK,
-			mockStatus:         "OK",
-			expectedURL:        "",
-			expectError:        true,
-			expectedError:      backend.DownstreamError(errors.New("traceID is empty")),
+			name:           "Empty trace ID",
+			traceId:        "",
+			jsonData:       `{"traceIdTimeParams": {"enabled": true}}`,
+			start:          1000,
+			end:            2000,
+			mockResponse:   `{"data":[]}`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "",
+			expectError:    true,
+			expectedError:  backend.DownstreamError(errors.New("traceID is empty")),
 		},
 	}
 
@@ -337,7 +346,11 @@ func TestJaegerClient_Trace(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := New(server.URL, server.Client(), log.NewNullLogger(), backend.DataSourceInstanceSettings{}, tt.traceIdTimeEnabled)
+			settings := backend.DataSourceInstanceSettings{
+				URL:      server.URL,
+				JSONData: []byte(tt.jsonData),
+			}
+			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
 			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end)
