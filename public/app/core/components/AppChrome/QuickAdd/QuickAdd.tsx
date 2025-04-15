@@ -43,10 +43,9 @@ export const QuickAdd = ({}: Props) => {
     return (
       <Menu>
         {createActions.map((createAction, index) => (
-          <>
+          <div key={index}>
             {shouldRenderInviteUserButton && index === createActions.length - 1 && <Menu.Divider />}
             <Menu.Item
-              key={index}
               url={createAction.url}
               label={createAction.text}
               target={createAction.target}
@@ -55,7 +54,7 @@ export const QuickAdd = ({}: Props) => {
                 createAction.onClick?.();
               }}
             />
-          </>
+          </div>
         ))}
       </Menu>
     );
