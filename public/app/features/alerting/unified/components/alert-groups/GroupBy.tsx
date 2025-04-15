@@ -37,7 +37,7 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
         </Tooltip>
       </Label>
       <MultiSelect
-        aria-label={'group by label keys'}
+        aria-label={t('alerting.group-by.aria-label-group-by-label-keys', 'Group by label keys')}
         value={groupBy}
         placeholder={t('alerting.group-by.placeholder-group-by', 'Group by')}
         prefix={<Icon name={'tag-alt'} />}

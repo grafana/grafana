@@ -27,7 +27,14 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   });
 
   return (
-    <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
+    <NetworkGraphModal
+      show={false}
+      title={t('variabels.variable-usages-button.usage-title', 'Showing usages for: {{variableId}}', {
+        variableId: `$${id}`,
+      })}
+      nodes={nodes}
+      edges={network.edges}
+    >
       {({ showModal }) => {
         return (
           <IconButton

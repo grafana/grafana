@@ -52,11 +52,11 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return false, nil
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return false, err
 	}
@@ -97,14 +97,14 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	c.Req = c.Req.WithContext(ctx)
 
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(ctx, c.SignedInUser.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
 
 	// v2 is not supported in /api
 	if strings.HasPrefix(dash.APIVersion, "v2") {
-		url := fmt.Sprintf("/apis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", dash.APIVersion, hs.namespacer(c.SignedInUser.GetOrgID()), dash.UID)
+		url := fmt.Sprintf("/apis/dashboard.grafana.app/%s/namespaces/%s/dashboards/%s", dash.APIVersion, hs.namespacer(c.GetOrgID()), dash.UID)
 		return response.Error(http.StatusNotAcceptable, "dashboard api version not supported, use "+url+" instead", nil)
 	}
 
@@ -115,7 +115,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Cfg.PublicDashboardsEnabled {
-		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.SignedInUser.GetOrgID(), dash.UID)
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
@@ -205,7 +205,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// lookup folder title & url
 	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        c.SignedInUser.GetOrgID(),
+			OrgID:        c.GetOrgID(),
 			UID:          &dash.FolderUID,
 			SignedInUser: c.SignedInUser,
 		})
@@ -368,7 +368,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	uid := web.Params(c.Req)[":uid"]
 
 	var rsp response.Response
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -386,7 +386,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 			"error", err)
 	}
 
-	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.SignedInUser.GetOrgID())
+	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
 	if err != nil {
 		var dashboardErr dashboardaccess.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -404,7 +404,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	if hs.Live != nil {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.SignedInUser.GetOrgID(), c.SignedInUser, dash.UID)
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.GetOrgID(), c.SignedInUser, dash.UID)
 		if err != nil {
 			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.UID, "error", err)
 		}
@@ -458,11 +458,11 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	var err error
 
 	var userID int64
-	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
 		userID = id
 	}
 
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 	cmd.UserID = userID
 
 	dash := cmd.GetDashboardModel()
@@ -500,7 +500,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
-		OrgID:     c.SignedInUser.GetOrgID(),
+		OrgID:     c.GetOrgID(),
 		User:      c.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}
@@ -516,10 +516,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		// This will broadcast all save requests only if a `gitops` observer exists.
 		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(c.SignedInUser.GetOrgID(), c.SignedInUser, cmd.Message, dashboard, saveErr)
+		liveerr := channel.DashboardSaved(c.GetOrgID(), c.SignedInUser, cmd.Message, dashboard, saveErr)
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
-		if liveerr == nil && saveErr != nil && channel.HasGitOpsObserver(c.SignedInUser.GetOrgID()) {
+		if liveerr == nil && saveErr != nil && channel.HasGitOpsObserver(c.GetOrgID()) {
 			return response.JSON(http.StatusAccepted, util.DynMap{
 				"status":  "pending",
 				"message": "changes were broadcast to the gitops listener",
@@ -573,11 +573,11 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	c.Req = c.Req.WithContext(ctx)
 
 	var userID int64
-	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
 		userID = id
 	}
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
 	homePage := hs.Cfg.HomePage
 
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
@@ -620,7 +620,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	}()
 
 	dash := dtos.DashboardFullWithMeta{}
-	dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
+	dash.Meta.CanEdit = c.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = simplejson.New()
 
@@ -706,13 +706,13 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
 	query := dashver.ListDashboardVersionsQuery{
-		OrgID:         c.SignedInUser.GetOrgID(),
+		OrgID:         c.GetOrgID(),
 		DashboardID:   dash.ID,
 		DashboardUID:  dash.UID,
 		Limit:         c.QueryInt("limit"),
@@ -747,7 +747,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 			if found {
 				creator = login
 			} else {
-				creator = hs.getIdentityName(c.Req.Context(), c.SignedInUser.GetOrgID(), version.CreatedBy)
+				creator = hs.getIdentityName(c.Req.Context(), c.GetOrgID(), version.CreatedBy)
 				if creator != anonString {
 					loginMem[version.CreatedBy] = creator
 				}
@@ -817,7 +817,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -827,7 +827,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 		return response.Err(err)
 	}
 	query := dashver.GetDashboardVersionQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		DashboardID:  dash.ID,
 		DashboardUID: dash.UID,
 		Version:      version,
@@ -895,7 +895,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	}
 
 	options := dashdiffs.Options{
-		OrgId:    c.SignedInUser.GetOrgID(),
+		OrgId:    c.GetOrgID(),
 		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
 		Base: dashdiffs.DiffTarget{
 			DashboardId:      apiOptions.Base.DashboardId,
@@ -1001,12 +1001,12 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.SignedInUser.GetOrgID()}
+	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.GetOrgID()}
 	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
 	if err != nil {
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
@@ -1020,13 +1020,13 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	}
 
 	var userID int64
-	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
 		userID = id
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}
 	saveCmd.RestoredFrom = version.Version
-	saveCmd.OrgID = c.SignedInUser.GetOrgID()
+	saveCmd.OrgID = c.GetOrgID()
 	saveCmd.UserID = userID
 	saveCmd.Dashboard = version.Data
 	saveCmd.Dashboard.Set("version", dash.Version)
@@ -1065,7 +1065,7 @@ func (hs *HTTPServer) GetDashboardTags(c *contextmodel.ReqContext) {
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	query := dashboards.GetDashboardTagsQuery{OrgID: c.SignedInUser.GetOrgID()}
+	query := dashboards.GetDashboardTagsQuery{OrgID: c.GetOrgID()}
 	queryResult, err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)

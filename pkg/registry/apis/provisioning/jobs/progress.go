@@ -38,7 +38,6 @@ type JobResourceResult struct {
 type jobProgressRecorder struct {
 	started             time.Time
 	total               int
-	ref                 string
 	message             string
 	finalMessage        string
 	resultCount         int
@@ -94,14 +93,6 @@ func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
 func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	r.finalMessage = msg
 	logging.FromContext(ctx).Info("job final message", "message", msg)
-}
-
-func (r *jobProgressRecorder) SetRef(ref string) {
-	r.ref = ref
-}
-
-func (r *jobProgressRecorder) GetRef() string {
-	return r.ref
 }
 
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {

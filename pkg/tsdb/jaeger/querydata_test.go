@@ -7,6 +7,107 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 )
 
+func TestTransformSearchResponse(t *testing.T) {
+	t.Run("empty_response", func(t *testing.T) {
+		dsInfo := &datasourceInfo{
+			JaegerClient: JaegerClient{
+				settings: backend.DataSourceInstanceSettings{
+					UID:  "test-uid",
+					Name: "test-name",
+				},
+			},
+		}
+
+		frame := transformSearchResponse([]TraceResponse{}, dsInfo)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_empty_response.golden", frame, false)
+	})
+
+	t.Run("single_trace", func(t *testing.T) {
+		dsInfo := &datasourceInfo{
+			JaegerClient: JaegerClient{
+				settings: backend.DataSourceInstanceSettings{
+					UID:  "test-uid",
+					Name: "test-name",
+				},
+			},
+		}
+
+		response := []TraceResponse{
+			{
+				TraceID: "test-trace-id",
+				Spans: []Span{
+					{
+						TraceID:       "test-trace-id",
+						ProcessID:     "p1",
+						OperationName: "test-operation",
+						StartTime:     1605873894680409,
+						Duration:      1000,
+					},
+				},
+				Processes: map[string]TraceProcess{
+					"p1": {
+						ServiceName: "test-service",
+					},
+				},
+			},
+		}
+
+		frame := transformSearchResponse(response, dsInfo)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_single_response.golden", frame, false)
+	})
+
+	t.Run("multiple_traces", func(t *testing.T) {
+		dsInfo := &datasourceInfo{
+			JaegerClient: JaegerClient{
+				settings: backend.DataSourceInstanceSettings{
+					UID:  "test-uid",
+					Name: "test-name",
+				},
+			},
+		}
+
+		response := []TraceResponse{
+			{
+				TraceID: "trace-1",
+				Spans: []Span{
+					{
+						TraceID:       "trace-1",
+						ProcessID:     "p1",
+						OperationName: "op1",
+						StartTime:     1605873894680409,
+						Duration:      1000,
+					},
+				},
+				Processes: map[string]TraceProcess{
+					"p1": {
+						ServiceName: "service-1",
+					},
+				},
+			},
+			{
+				TraceID: "trace-2",
+				Spans: []Span{
+					{
+						TraceID:       "trace-2",
+						ProcessID:     "p2",
+						OperationName: "op2",
+						StartTime:     1605873894680409,
+						Duration:      2000,
+					},
+				},
+				Processes: map[string]TraceProcess{
+					"p2": {
+						ServiceName: "service-2",
+					},
+				},
+			},
+		}
+
+		frame := transformSearchResponse(response, dsInfo)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_multiple_response.golden", frame, false)
+	})
+}
+
 func TestTransformTraceResponse(t *testing.T) {
 	t.Run("simple_trace", func(t *testing.T) {
 		trace := TraceResponse{
@@ -186,103 +287,96 @@ func TestTransformTraceResponse(t *testing.T) {
 	})
 }
 
-func TestTransformSearchResponse(t *testing.T) {
-	t.Run("empty_response", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
+func TestTransformDependenciesResponse(t *testing.T) {
+	t.Run("simple_dependencies", func(t *testing.T) {
+		dependencies := DependenciesResponse{
+			Data: []ServiceDependency{
+				{
+					Parent:    "serviceA",
+					Child:     "serviceB",
+					CallCount: 1,
+				},
+				{
+					Parent:    "serviceA",
+					Child:     "serviceC",
+					CallCount: 2,
+				},
+				{
+					Parent:    "serviceB",
+					Child:     "serviceC",
+					CallCount: 3,
 				},
 			},
 		}
 
-		frame := transformSearchResponse([]TraceResponse{}, dsInfo)
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_empty_response.golden", frame, false)
+		frames := transformDependenciesResponse(dependencies, "test")
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_dependencies_nodes.golden", frames[0], false)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_dependencies_edges.golden", frames[1], false)
 	})
 
-	t.Run("single_trace", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
-				},
-			},
+	t.Run("empty_dependencies", func(t *testing.T) {
+		dependencies := DependenciesResponse{
+			Data: []ServiceDependency{},
 		}
 
-		response := []TraceResponse{
-			{
-				TraceID: "test-trace-id",
-				Spans: []Span{
-					{
-						TraceID:       "test-trace-id",
-						ProcessID:     "p1",
-						OperationName: "test-operation",
-						StartTime:     1605873894680409,
-						Duration:      1000,
-					},
-				},
-				Processes: map[string]TraceProcess{
-					"p1": {
-						ServiceName: "test-service",
-					},
-				},
-			},
-		}
-
-		frame := transformSearchResponse(response, dsInfo)
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_single_response.golden", frame, false)
+		frames := transformDependenciesResponse(dependencies, "test")
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "empty_dependencies_nodes.golden", frames[0], false)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "empty_dependencies_edges.golden", frames[1], false)
 	})
 
-	t.Run("multiple_traces", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
+	t.Run("complex_dependencies", func(t *testing.T) {
+		dependencies := DependenciesResponse{
+			Data: []ServiceDependency{
+				{
+					Parent:    "frontend",
+					Child:     "auth-service",
+					CallCount: 150,
+				},
+				{
+					Parent:    "frontend",
+					Child:     "api-gateway",
+					CallCount: 300,
+				},
+				{
+					Parent:    "api-gateway",
+					Child:     "user-service",
+					CallCount: 200,
+				},
+				{
+					Parent:    "api-gateway",
+					Child:     "order-service",
+					CallCount: 100,
+				},
+				{
+					Parent:    "order-service",
+					Child:     "payment-service",
+					CallCount: 80,
+				},
+				{
+					Parent:    "order-service",
+					Child:     "inventory-service",
+					CallCount: 90,
+				},
+				{
+					Parent:    "user-service",
+					Child:     "database",
+					CallCount: 500,
+				},
+				{
+					Parent:    "payment-service",
+					Child:     "database",
+					CallCount: 200,
+				},
+				{
+					Parent:    "inventory-service",
+					Child:     "database",
+					CallCount: 300,
 				},
 			},
 		}
 
-		response := []TraceResponse{
-			{
-				TraceID: "trace-1",
-				Spans: []Span{
-					{
-						TraceID:       "trace-1",
-						ProcessID:     "p1",
-						OperationName: "op1",
-						StartTime:     1605873894680409,
-						Duration:      1000,
-					},
-				},
-				Processes: map[string]TraceProcess{
-					"p1": {
-						ServiceName: "service-1",
-					},
-				},
-			},
-			{
-				TraceID: "trace-2",
-				Spans: []Span{
-					{
-						TraceID:       "trace-2",
-						ProcessID:     "p2",
-						OperationName: "op2",
-						StartTime:     1605873894680409,
-						Duration:      2000,
-					},
-				},
-				Processes: map[string]TraceProcess{
-					"p2": {
-						ServiceName: "service-2",
-					},
-				},
-			},
-		}
-
-		frame := transformSearchResponse(response, dsInfo)
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_multiple_response.golden", frame, false)
+		frames := transformDependenciesResponse(dependencies, "test")
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "complex_dependencies_nodes.golden", frames[0], false)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "complex_dependencies_edges.golden", frames[1], false)
 	})
 }

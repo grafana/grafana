@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -55,16 +54,12 @@ func ProvideTeamPermissions(
 				return err
 			}
 
-			existingTeam, err := teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			_, err = teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 				OrgID: orgID,
 				ID:    id,
 			})
 			if err != nil {
 				return err
-			}
-
-			if existingTeam.IsProvisioned {
-				return errors.New("team permissions cannot be updated for provisioned teams")
 			}
 
 			return nil

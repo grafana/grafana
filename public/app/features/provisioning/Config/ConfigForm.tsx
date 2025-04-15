@@ -4,67 +4,42 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import {
   Button,
+  Checkbox,
   Combobox,
-  ComboboxOption,
   ControlledCollapse,
   Field,
   Input,
-  MultiCombobox,
   RadioButtonGroup,
   SecretInput,
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository, RepositorySpec } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { RepositoryFormData, WorkflowOption } from '../types';
-import { dataToSpec, specToData } from '../utils/data';
+import { RepositoryFormData } from '../types';
+import { dataToSpec } from '../utils/data';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { getDefaultValues } from './defaults';
 
-export function getWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOption<WorkflowOption>> {
-  const opts: Array<ComboboxOption<WorkflowOption>> = [
-    {
-      label: t('provisioning.config-form.option-branch', 'Branch'),
-      value: 'branch',
-      description: t('provisioning.config-form.description-branch', 'Create a branch (and pull request) for changes'),
-    },
-    {
-      label: t('provisioning.config-form.option-write', 'Write'),
-      value: 'write',
-      description: t('provisioning.config-form.description-write', 'Allow writing updates to the remote repository'),
-    },
+// This needs to be a function for translations to work
+const getOptions = () => {
+  const typeOptions = [
+    { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
+    { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
   ];
-  if (type === 'github') {
-    return opts;
-  }
-  return opts.filter((opt) => opt.value === 'write'); // only write
-}
 
-export function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
-  if (!repository) {
-    return {
-      type: 'github',
-      title: 'Repository',
-      token: '',
-      url: '',
-      branch: 'main',
-      generateDashboardPreviews: true,
-      workflows: ['branch', 'write'],
-      path: 'grafana/',
-      sync: {
-        enabled: false,
-        target: 'folder',
-        intervalSeconds: 60,
-      },
-    };
-  }
-  return specToData(repository);
-}
+  const targetOptions = [
+    { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
+    { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
+  ];
+
+  return [typeOptions, targetOptions];
+};
 
 export interface ConfigFormProps {
   data?: Repository;
@@ -84,23 +59,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const isEdit = Boolean(data?.metadata?.name);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();
-  const type = watch('type');
-
-  const typeOptions = useMemo(
-    () => [
-      { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
-      { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
-    ],
-    []
-  );
-
-  const targetOptions = useMemo(
-    () => [
-      { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
-      { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
-    ],
-    []
-  );
+  const [type, readOnly] = watch(['type', 'readOnly']);
+  const [typeOptions, targetOptions] = useMemo(() => getOptions(), []);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -112,14 +73,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
-  const onSubmit = (form: RepositoryFormData) => {
+  const onSubmit = async (form: RepositoryFormData) => {
+    setIsLoading(true);
     const spec = dataToSpec(form);
     if (spec.github) {
       spec.github.token = form.token || data?.spec?.github?.token;
       // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
       spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
     }
-    submitData(spec);
+    await submitData(spec);
+    setIsLoading(false);
   };
 
   // NOTE: We do not want the lint option to be listed.
@@ -221,7 +184,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             label={t('provisioning.config-form.label-path', 'Path')}
             description={t('provisioning.config-form.description-path', 'Path to a subdirectory in the Git repository')}
           >
-            <Input {...register('path')} placeholder={t('provisioning.config-form.placeholder-path', 'grafana/')} />
+            <Input {...register('path')} />
           </Field>
         </>
       )}
@@ -241,38 +204,37 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       )}
 
-      <Field
-        label={t('provisioning.config-form.label-workflows', 'Workflows')}
-        required
-        error={errors?.workflows?.message}
-        invalid={!!errors?.workflows}
-        description={t(
-          'provisioning.config-form.description-workflows-makes-repository',
-          'No workflows makes the repository read only'
-        )}
-      >
-        <Controller
-          name={'workflows'}
-          control={control}
-          rules={{ required: t('provisioning.config-form.error-required', 'This field is required.') }}
-          render={({ field: { ref, onChange, ...field } }) => (
-            <MultiCombobox
-              options={getWorkflowOptions(type)}
-              placeholder={t('provisioning.config-form.placeholder-readonly-repository', 'Readonly repository')}
-              onChange={(val) => {
-                onChange(val.map((v) => v.value));
-              }}
-              {...field}
-            />
+      <Field>
+        <Checkbox
+          {...register('readOnly', {
+            onChange: (e) => {
+              if (e.target.checked) {
+                setValue('prWorkflow', false);
+              }
+            },
+          })}
+          label={t('provisioning.finish-step.label-read-only', 'Read only')}
+          description={t(
+            'provisioning.config-form.description-read-only',
+            "Resources can't be modified through Grafana."
           )}
         />
       </Field>
 
-      {type === 'github' && (
-        <ConfigFormGithubCollapse
-          previews={<Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />}
+      <Field>
+        <Checkbox
+          disabled={readOnly}
+          {...register('prWorkflow')}
+          label={t('provisioning.config-form.label-pr-workflow', 'Enable pull request option when saving')}
+          description={
+            <Trans i18nKey="provisioning.finish-step.description-webhooks-enable">
+              Allows users to choose whether to open a pull request when saving changes. If the repository does not
+              allow direct changes to the main branch, a pull request may still be required.
+            </Trans>
+          }
         />
-      )}
+      </Field>
+      {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 
       <ControlledCollapse
         label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}
@@ -319,8 +281,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </ControlledCollapse>
 
       <Stack gap={2}>
-        <Button type={'submit'} disabled={request.isLoading}>
-          {request.isLoading
+        <Button type={'submit'} disabled={isLoading}>
+          {isLoading
             ? t('provisioning.config-form.button-saving', 'Saving...')
             : t('provisioning.config-form.button-save', 'Save')}
         </Button>

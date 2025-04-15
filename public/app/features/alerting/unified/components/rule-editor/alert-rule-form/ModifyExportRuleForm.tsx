@@ -225,7 +225,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
 
   return (
     <GrafanaExportDrawer
-      title={'Export Group'}
+      title={t('alerting.grafana-rule-design-exporter.title-export-group', 'Export Group')}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}

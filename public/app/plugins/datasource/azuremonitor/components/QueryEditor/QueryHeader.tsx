@@ -64,6 +64,7 @@ export const QueryHeader = ({
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
           mode: LogsEditorMode.Builder,
+          dashboardTime: true,
         },
       };
       onQueryChange(updatedQuery);
@@ -97,6 +98,7 @@ export const QueryHeader = ({
         mode,
         query: '',
         builderQuery: mode === LogsEditorMode.Raw ? undefined : query.azureLogAnalytics?.builderQuery,
+        dashboardTime: mode === LogsEditorMode.Builder ? true : undefined,
       },
     };
     onQueryChange(updatedQuery);

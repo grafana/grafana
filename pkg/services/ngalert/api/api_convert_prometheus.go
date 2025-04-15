@@ -141,7 +141,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
-	folders, err := srv.ruleStore.GetNamespaceChildren(c.Req.Context(), workingFolderUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	folders, err := srv.ruleStore.GetNamespaceChildren(c.Req.Context(), workingFolderUID, c.GetOrgID(), c.SignedInUser)
 	if len(folders) == 0 || errors.Is(err, dashboards.ErrFolderNotFound) {
 		// If there is no such folder or no children, return empty response
 		// because mimirtool expects 200 OK response in this case.
@@ -184,7 +184,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
@@ -215,7 +215,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
@@ -243,7 +243,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
@@ -277,7 +277,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
@@ -419,7 +419,7 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	ns, err := srv.ruleStore.GetOrCreateNamespaceByTitle(
 		c.Req.Context(),
 		title,
-		c.SignedInUser.GetOrgID(),
+		c.GetOrgID(),
 		c.SignedInUser,
 		workingFolderUID,
 	)
@@ -486,7 +486,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		return nil, err
 	}
 
-	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespaceUID, group)
+	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.GetOrgID(), namespaceUID, group)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return nil, err
