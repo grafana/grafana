@@ -550,7 +550,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              p.UID,
 				CreationTimestamp: metav1.NewTime(p.Created),
-				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
 			},
 			Spec: dashboard.LibraryPanelSpec{},
 		}
@@ -610,7 +610,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	if query.UID == "" {
 		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
-			res.ResourceVersion = strconv.FormatInt(rv, 10)
+			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
 	}
 	return res, err
