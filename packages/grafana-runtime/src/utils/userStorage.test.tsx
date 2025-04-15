@@ -79,13 +79,16 @@ describe('userStorage', () => {
 
     it('creates a new user storage if it does not exist', async () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
       const storage = usePluginUserStorage();
       await storage.setItem('key', 'value');
-      expect(request).toHaveBeenCalledWith({
-        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
-        method: 'GET',
-        showErrorAlert: false,
-      });
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      );
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/',
@@ -98,6 +101,17 @@ describe('userStorage', () => {
           },
         })
       );
+      expect(localStorage.setItem).not.toHaveBeenCalled();
+    });
+
+    it('falls back to localStorage if the user storage fails to be created', async () => {
+      // Get fails with not found
+      request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
+      // Create fails with forbidden
+      request.mockReturnValueOnce(Promise.reject({ status: 403 } as FetchError));
+      const storage = usePluginUserStorage();
+      await storage.setItem('key', 'value');
+      expect(localStorage.setItem).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
 
     it('updates the user storage if it exists', async () => {
@@ -109,11 +123,13 @@ describe('userStorage', () => {
       );
       const storage = usePluginUserStorage();
       await storage.setItem('key', 'new-value');
-      expect(request).toHaveBeenCalledWith({
-        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
-        method: 'GET',
-        showErrorAlert: false,
-      });
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      );
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
