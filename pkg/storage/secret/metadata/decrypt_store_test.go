@@ -76,7 +76,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		allowList := map[string]struct{}{"allowed-group": {}}
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, allowList)
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is not in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
@@ -89,7 +89,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -109,7 +109,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		allowList := map[string]struct{}{"group1": {}}
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, allowList)
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
@@ -122,7 +122,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -153,7 +153,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -170,7 +170,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:read"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -183,7 +183,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -200,7 +200,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -213,7 +213,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -230,7 +230,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"wrong.group/securevalues/group1:decrypt"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, svStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -243,7 +243,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, svStorage, sv)
+		createSecureValue(authCtx, t, secureValueMetadataStorage, sv)
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
