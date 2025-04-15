@@ -2417,6 +2417,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "数据源",
       "empty-message": "未找到与您的查询匹配的结果",

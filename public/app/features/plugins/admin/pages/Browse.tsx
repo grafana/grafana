@@ -8,6 +8,7 @@ import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
 
@@ -94,6 +95,7 @@ export default function Browse() {
   return (
     <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
       <Page.Contents>
+        <AdvisorRedirectNotice />
         <HorizontalGroup wrap>
           <Field label={t('plugins.browse.label-search', 'Search')}>
             <SearchField value={keyword} onSearch={onSearch} />

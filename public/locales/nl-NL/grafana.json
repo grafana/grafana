@@ -2428,6 +2428,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "Gegevensbronnen",
       "empty-message": "Er zijn geen resultaten gevonden die overeenkomen met je query",

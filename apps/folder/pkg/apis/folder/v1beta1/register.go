@@ -1,4 +1,4 @@
-package v1
+package v1beta1
 
 import (
 	"fmt"
@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	GROUP         = "folder.grafana.app"
-	VERSION       = "v1"
+	GROUP         = Group
+	VERSION       = Version
 	RESOURCE      = "folders"
 	APIVERSION    = GROUP + "/" + VERSION
 	RESOURCEGROUP = RESOURCE + "." + GROUP

@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -18,8 +18,8 @@ import (
 
 func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstructured.Unstructured, error) {
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		Object: map[string]any{
+			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
 			},
@@ -53,9 +53,9 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 		},
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: v.Description,
+			Description: descr(v.Description),
 		},
 	}
 
@@ -91,4 +91,11 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
+}
+
+func descr(str string) *string {
+	if str == "" {
+		return nil
+	}
+	return &str
 }
