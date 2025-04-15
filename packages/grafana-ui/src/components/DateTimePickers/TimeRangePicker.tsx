@@ -16,6 +16,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { config } from '../../../../../public/app/core/config';
+import {formatDate} from '../../../../../public/app/core/internationalization/dates';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
@@ -241,16 +243,25 @@ const ZoomOutTooltip = () => (
   </>
 );
 
+const isLocaleFormatEnable = config.featureToggles.localeFormatPreference;
+
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
 
+  const from = dateTimeFormat(timeRange.from, { timeZone });
+  const to = dateTimeFormat(timeRange.to, { timeZone });
+  
+  const currentFrom = isLocaleFormatEnable ? formatDate(from, {dateStyle: "short", timeStyle: "medium"}) : from;
+  const currentTo = isLocaleFormatEnable ? formatDate(to, {dateStyle: "short", timeStyle: "medium"}) : to;
+
+
   return (
     <>
-      {dateTimeFormat(timeRange.from, { timeZone })}
+      {currentFrom}
       <div className="text-center">
         <Trans i18nKey="time-picker.range-picker.to">to</Trans>
       </div>
-      {dateTimeFormat(timeRange.to, { timeZone })}
+      {currentTo}
       <div className="text-center">
         <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
       </div>
@@ -282,7 +293,23 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
-  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
+  const describeTimeRange = rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
+  let formattedRange = describeTimeRange;
+  if(isLocaleFormatEnable) {
+    // Split the date using regex to get the "to" word, even translated, to get the "from" and "to" values
+    const regex = /([a-zA-Z]+)/g;
+    const timeRangeSplit = describeTimeRange.split(regex);
+    const from = timeRangeSplit[0];
+    const to = timeRangeSplit[2];
+    // If from and to are not empty, localise them using the formatDate function
+    if (from && to) {
+      const fromLocalised = formatDate(from, {dateStyle: "short", timeStyle: "medium"});
+      const toLocalised = formatDate(to, {dateStyle: "short", timeStyle: "medium"});
+      const separator = timeRangeSplit[1];
+      formattedRange = `${fromLocalised} ${separator} ${toLocalised}`;
+    }
+  }
+  return formattedRange;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
