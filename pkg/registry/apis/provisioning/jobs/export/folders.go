@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -23,9 +24,17 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 		if tree.Count() >= resources.MaxNumberOfFolders {
 			return errors.New("too many folders")
 		}
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return fmt.Errorf("extract meta accessor: %w", err)
+		}
 
-		// FIXME: repoName should be part of skip folder export
-		return tree.AddUnstructured(item, repoName)
+		manager, _ := meta.GetManagerProperties()
+		if manager.Identity == repoName {
+			return nil // skip it... already in tree?
+		}
+
+		return tree.AddUnstructured(item)
 	}); err != nil {
 		return fmt.Errorf("load folder tree: %w", err)
 	}

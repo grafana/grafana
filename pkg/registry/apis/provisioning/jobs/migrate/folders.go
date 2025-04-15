@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -16,36 +18,36 @@ import (
 
 const maxFolders = 10000
 
-var _ resource.BulkResourceWriter = (*legacyFolderReader)(nil)
-
-type legacyFolderReader struct {
-	tree           resources.FolderTree
-	repoName       string
-	legacyMigrator legacy.LegacyMigrator
-	namespace      string
+//go:generate mockery --name LegacyFoldersMigrator --structname MockLegacyFoldersMigrator --inpackage --filename mock_legacy_folders_migrator.go --with-expecter
+type LegacyFoldersMigrator interface {
+	resource.BulkResourceWriter
+	Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
 }
 
-func NewLegacyFolderReader(legacyMigrator legacy.LegacyMigrator, repoName, namespace string) *legacyFolderReader {
-	return &legacyFolderReader{
+type legacyFoldersMigrator struct {
+	tree           resources.FolderTree
+	legacyMigrator legacy.LegacyMigrator
+}
+
+func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) LegacyFoldersMigrator {
+	return &legacyFoldersMigrator{
 		legacyMigrator: legacyMigrator,
-		repoName:       repoName,
-		namespace:      namespace,
 		tree:           resources.NewEmptyFolderTree(),
 	}
 }
 
 // Close implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) Close() error {
+func (f *legacyFoldersMigrator) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) CloseWithResults() (*resource.BulkResponse, error) {
+func (f *legacyFoldersMigrator) CloseWithResults() (*resource.BulkResponse, error) {
 	return &resource.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWrite.
-func (f *legacyFolderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (f *legacyFoldersMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
@@ -56,18 +58,41 @@ func (f *legacyFolderReader) Write(ctx context.Context, key *resource.ResourceKe
 		return errors.New("too many folders")
 	}
 
-	return f.tree.AddUnstructured(item, f.repoName)
+	// TODO: should we check if managed already and abort migration?
+
+	return f.tree.AddUnstructured(item)
 }
 
-func (f *legacyFolderReader) Read(ctx context.Context, legacyMigrator legacy.LegacyMigrator, name, namespace string) error {
-	_, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	progress.SetMessage(ctx, "read folders from SQL")
+	if _, err := f.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: namespace,
 		Resources: []schema.GroupResource{resources.FolderResource.GroupResource()},
 		Store:     parquet.NewBulkResourceWriterClient(f),
-	})
-	return err
-}
+	}); err != nil {
+		return fmt.Errorf("read folders from SQL: %w", err)
+	}
 
-func (f *legacyFolderReader) Tree() resources.FolderTree {
-	return f.tree
+	progress.SetMessage(ctx, "export folders from SQL")
+	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.tree, func(folder resources.Folder, created bool, err error) error {
+		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
+			Name:     folder.ID,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
+		}
+
+		if !created {
+			result.Action = repository.FileActionIgnored
+		}
+
+		progress.Record(ctx, result)
+		return nil
+	}); err != nil {
+		return fmt.Errorf("export folders from SQL: %w", err)
+	}
+
+	return nil
 }
