@@ -122,8 +122,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [app, onQueryDirectionChange, query.direction]);
 
     let queryType = getLokiQueryType(query);
-    const interpolatedQuery = datasource.interpolateVariablesInQueries([query], placeHolderScopedVars);
-    const isLogQuery = isLogsQuery(interpolatedQuery[0]?.expr ?? '');
+    const interpolatedQueries = datasource.interpolateVariablesInQueries([query], placeHolderScopedVars);
+    const isLogQuery = isLogsQuery(interpolatedQueries[0]?.expr ?? '');
     const filteredQueryTypeOptions = isLogQuery
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
