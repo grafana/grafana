@@ -1,7 +1,6 @@
 package state
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -91,7 +90,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureTo
 	}
 
 	startsAt := strfmt.DateTime(alertState.StartsAt)
-	if featureToggles.IsEnabled(context.TODO(), featuremgmt.FlagAlertRuleUseFiredAtForStartsAt) {
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt) {
 		startsAt = strfmt.DateTime(alertState.FiredAt)
 	}
 
