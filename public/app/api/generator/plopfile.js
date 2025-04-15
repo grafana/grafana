@@ -5,7 +5,7 @@ module.exports = function (plop) {
   const basePath = path.resolve(__dirname, '../../../..');
 
   // Custom action function for displaying messages
-  plop.setActionType('logMessage', function(answers, config) {
+  plop.setActionType('logMessage', function (answers, config) {
     console.log(config.message);
     return '✅ Message logged successfully';
   });
@@ -69,7 +69,7 @@ module.exports = function (plop) {
       {
         type: 'modify',
         path: projectPath('scripts/generate-rtk-apis.ts'),
-        pattern: /  },\n  },/g,  // Match the end of the last entry and the end of outputFiles
+        pattern: /  },\n  },/g, // Match the end of the last entry and the end of outputFiles
         templateFile: './templates/config-entry.hbs',
       },
 
@@ -109,8 +109,9 @@ module.exports = function (plop) {
       // Display success message using the custom action type
       {
         type: 'logMessage',
-        message: '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n'
-      }
+        message:
+          '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
+      },
     ];
   };
 
