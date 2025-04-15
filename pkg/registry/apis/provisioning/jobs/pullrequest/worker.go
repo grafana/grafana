@@ -72,7 +72,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	prRepo, ok := repo.(PullRequestRepo)
 	if !ok {
-		return fmt.Errorf("repository is not a github repository")
+		return fmt.Errorf("repository is not a pull request repository")
 	}
 
 	reader, ok := repo.(repository.Reader)
