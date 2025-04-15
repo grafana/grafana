@@ -11,7 +11,7 @@ import (
 )
 
 type RepositoryResourcesOptions struct {
-	CommitWithOriginalAuthors bool
+	PreloadAllUserInfo bool
 }
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -78,7 +78,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 	}
 
 	signatures := map[string]repository.CommitSignature{}
-	if opts.CommitWithOriginalAuthors {
+	if opts.PreloadAllUserInfo {
 		userClient, err := clients.User()
 		if err != nil {
 			return nil, fmt.Errorf("create user client: %w", err)

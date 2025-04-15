@@ -51,7 +51,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	}
 
 	repoOpts := resources.RepositoryResourcesOptions{
-		CommitWithOriginalAuthors: opts.History,
+		PreloadAllUserInfo: opts.History,
 	}
 
 	repositoryResources, err := m.repositoryResources.Client(ctx, rw, repoOpts)
