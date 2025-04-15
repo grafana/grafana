@@ -112,8 +112,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 
 func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v0alpha1",
+		Group:    dashboardV1.GROUP,
+		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
@@ -184,8 +184,8 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 
 func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v1alpha1",
+		Group:    dashboardV1.GROUP,
+		Version:  dashboardV1.GROUP,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
@@ -350,7 +350,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		Path: "/api/dashboards/uid/test-v1",
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 200, rsp.Response.StatusCode)
-	require.Equal(t, "v1alpha1", rsp.Result.Meta.APIVersion)
+	require.Equal(t, dashboardV1.GROUP, rsp.Result.Meta.APIVersion)
 
 	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{
