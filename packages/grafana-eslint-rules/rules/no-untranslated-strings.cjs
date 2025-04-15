@@ -84,9 +84,11 @@ const noUntranslatedStrings = createRule({
           const consequentIsString = isExpressionUntranslated(expression.consequent);
 
           if (alternateIsString || consequentIsString) {
+            const messageId =
+              parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
             context.report({
               node: node,
-              messageId: 'noUntranslatedStrings',
+              messageId,
             });
           }
         }
