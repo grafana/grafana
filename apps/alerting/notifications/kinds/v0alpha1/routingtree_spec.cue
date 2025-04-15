@@ -14,7 +14,7 @@ RouteTreeSpec: {
 }
 
 #Matcher: {
-	type:  "=" | "!=" | "=~" | "!~" @cuetsy(kind="enum")
+	type:  "=" | "!=" | "=~" | "!~" @cuetsy(kind="enum",memberNames="Equal|NotEqual|EqualRegex|NotEqualRegex")
 	label: string
 	value: string
 }
