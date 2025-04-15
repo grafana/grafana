@@ -65,8 +65,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
-		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -116,7 +115,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{}
-			newRaw.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
@@ -132,7 +130,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-gcp-generate.yaml")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
@@ -184,8 +182,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
-		svWithValue := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
+		svWithValue := mustGenerateSecureValue(t, helper, genericUserEditor)
 
 		testData := svWithValue.DeepCopy()
 		testData.Object["spec"].(map[string]any)["value"] = nil
@@ -226,11 +223,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
-
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
-		testData.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 
 		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -269,11 +263,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
 		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "")
-		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "")
-
-		secureValueOrgA := mustGenerateSecureValue(t, helper, editorOrgA, keeperOrgA.GetName())
-		secureValueOrgB := mustGenerateSecureValue(t, helper, editorOrgB, keeperOrgB.GetName())
+		secureValueOrgA := mustGenerateSecureValue(t, helper, editorOrgA)
+		secureValueOrgB := mustGenerateSecureValue(t, helper, editorOrgB)
 
 		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrSecureValues})
 		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrSecureValues})
@@ -283,7 +274,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// OrgA creating a securevalue with the same name from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrgB.GetName())
-			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrgA.GetName()
 
 			raw, err := clientOrgA.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -292,7 +282,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// OrgB creating a securevalue with the same name from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrgA.GetName())
-			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrgB.GetName()
 
 			raw, err = clientOrgB.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -496,11 +485,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			GVR:  gvrSecureValues,
 		})
 
-		// Create an initial Keeper to be able to start creating SecureValues.
-		keeper := mustGenerateKeeper(t, helper, editorLimited, nil, "")
-		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
-		testSecureValueAnother.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
-
 		t.Run("CREATE", func(t *testing.T) {
 			// Create the SecureValue with the limited client.
 			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
@@ -660,7 +644,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-gcp-generate.yaml")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())

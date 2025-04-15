@@ -148,6 +148,8 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User, specType map[string]any, testFile string) *unstructured.Unstructured {
 	t.Helper()
 
+	require.NotEmpty(t, testFile, "testFile must not be empty")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -156,9 +158,6 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 		GVR:  gvrKeepers,
 	})
 
-	if testFile == "" {
-		testFile = "testdata/keeper-sql-generate.yaml"
-	}
 	testKeeper := helper.LoadYAMLOrJSONFile(testFile)
 	if specType != nil {
 		testKeeper.Object["spec"] = specType
