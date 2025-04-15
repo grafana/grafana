@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 			Resource: "dashboards",
 		})
 		require.NoError(t, err)
-		require.Equal(t, dashboardV1.APIVERSION, gvk.Version)
+		require.Equal(t, dashboardV1.VERSION, gvk.Version)
 		require.Equal(t, "Dashboard", gvk.Kind)
 
 		_, _, err = clients.ForKind(schema.GroupVersionKind{
