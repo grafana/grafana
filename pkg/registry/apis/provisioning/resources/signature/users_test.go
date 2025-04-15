@@ -1,4 +1,4 @@
-package resources
+package signature
 
 import (
 	"context"
@@ -180,7 +180,12 @@ func TestLoadUsers(t *testing.T) {
 				items: tt.items,
 			}
 
-			userInfo, err := loadUsers(context.Background(), client)
+			signer := NewLoadUsersOnceSigner(client)
+			// FIXME: test with the public interface
+			s, ok := signer.(*loadUsersOnceSigner)
+			require.True(t, ok)
+
+			userInfo, err := s.load(context.Background(), client)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)

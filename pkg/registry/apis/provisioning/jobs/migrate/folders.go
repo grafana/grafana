@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -27,6 +28,7 @@ type LegacyFoldersMigrator interface {
 type legacyFoldersMigrator struct {
 	tree           resources.FolderTree
 	legacyMigrator legacy.LegacyMigrator
+	signer         signature.Signer
 }
 
 func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) LegacyFoldersMigrator {
@@ -74,6 +76,7 @@ func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 	}
 
 	progress.SetMessage(ctx, "export folders from SQL")
+	// FIXME: we don't sign folders, not even with grafana user
 	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
