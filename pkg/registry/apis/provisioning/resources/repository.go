@@ -11,6 +11,8 @@ import (
 )
 
 type RepositoryResourcesOptions struct {
+	// FIXME: this is a temporary option to preload all user info
+	// we should remove this once we have a better way to handle user info and commit signatures
 	PreloadAllUserInfo bool
 }
 
