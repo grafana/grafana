@@ -3,7 +3,7 @@ INSERT INTO "secret_encrypted_value" (
   "namespace",
   "encrypted_data",
   "created",
-  "updated",
+  "updated"
 ) VALUES (
   'abc123',
   'ns',

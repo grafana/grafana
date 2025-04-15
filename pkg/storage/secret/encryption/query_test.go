@@ -12,7 +12,7 @@ func TestEncryptedValueQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			encryptedValueCreate: {
+			sqlEncryptedValueCreate: {
 				{
 					Name: "create",
 					Data: &createEncryptedValue{
@@ -27,7 +27,7 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
-			encryptedValueRead: {
+			sqlEncryptedValueRead: {
 				{
 					Name: "read",
 					Data: &readEncryptedValue{
@@ -37,7 +37,7 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
-			encryptedValueUpdate: {
+			sqlEncryptedValueUpdate: {
 				{
 					Name: "update",
 					Data: &updateEncryptedValue{
@@ -49,7 +49,7 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
-			encryptedValueDelete: {
+			sqlEncryptedValueDelete: {
 				{
 					Name: "delete",
 					Data: &deleteEncryptedValue{

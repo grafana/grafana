@@ -15,10 +15,10 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	encryptedValueCreate = mustTemplate("encrypted_value_create.sql")
-	encryptedValueRead   = mustTemplate("encrypted_value_read.sql")
-	encryptedValueUpdate = mustTemplate("encrypted_value_update.sql")
-	encryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueCreate = mustTemplate("encrypted_value_create.sql")
+	sqlEncryptedValueRead   = mustTemplate("encrypted_value_read.sql")
+	sqlEncryptedValueUpdate = mustTemplate("encrypted_value_update.sql")
+	sqlEncryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {

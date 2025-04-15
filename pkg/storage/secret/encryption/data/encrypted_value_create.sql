@@ -3,7 +3,7 @@ INSERT INTO {{ .Ident "secret_encrypted_value" }} (
   {{ .Ident "namespace" }},
   {{ .Ident "encrypted_data" }},
   {{ .Ident "created" }},
-  {{ .Ident "updated" }},
+  {{ .Ident "updated" }}
 ) VALUES (
   {{ .Arg .Row.UID }},
   {{ .Arg .Row.Namespace }},
