@@ -21,12 +21,12 @@ func NewSQLKeeper(
 	tracer tracing.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
-) (*SQLKeeper, error) {
+) *SQLKeeper {
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
-	}, nil
+	}
 }
 
 // TODO: parameter cfg is not being used

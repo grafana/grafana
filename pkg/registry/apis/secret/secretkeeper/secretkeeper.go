@@ -1,8 +1,6 @@
 package secretkeeper
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -34,12 +32,7 @@ func ProvideService(
 }
 
 func (ks OSSKeeperService) GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error) {
-	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
-	}
-
 	return map[contracts.KeeperType]contracts.Keeper{
-		contracts.SQLKeeperType: sqlKeeper,
+		contracts.SQLKeeperType: sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store),
 	}, nil
 }
