@@ -201,6 +201,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return false;
     }
 
+    // Scenes compatability
     if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
       const varName = this.getVariableName(target);
       if (!varName) {
