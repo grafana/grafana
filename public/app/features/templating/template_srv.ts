@@ -200,6 +200,16 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!target) {
       return false;
     }
+
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      const varName = this.getVariableName(target);
+      if (!varName) {
+        return false;
+      }
+
+      return !!sceneGraph.lookupVariable(varName, window.__grafanaSceneContext);
+    }
+
     const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;
