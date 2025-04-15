@@ -3,6 +3,7 @@ package migrate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -163,6 +164,45 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		progress.AssertExpectations(t)
 	})
 
+	t.Run("should fail when signer factory fails", func(t *testing.T) {
+		mockParserFactory := resources.NewMockParserFactory(t)
+		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
+			Return(resources.NewMockParser(t), nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+			Return(mockRepoResources, nil)
+
+		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
+			Namespace: "test-namespace",
+			History:   true,
+		}).Return(nil, fmt.Errorf("signer factory error"))
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		migrator := NewLegacyResourcesMigrator(
+			mockRepoResourcesFactory,
+			mockParserFactory,
+			nil,
+			mockFolderMigrator,
+			mockSignerFactory,
+		)
+
+		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
+			History: true,
+		}, progress)
+		require.Error(t, err)
+		require.EqualError(t, err, "get signer: signer factory error")
+
+		mockParserFactory.AssertExpectations(t)
+		mockRepoResourcesFactory.AssertExpectations(t)
+		mockFolderMigrator.AssertExpectations(t)
+		mockSignerFactory.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
 	t.Run("should successfully migrate all resources", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		mockParserFactory := resources.NewMockParserFactory(t)
@@ -177,6 +217,13 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
 		mockFolderMigrator.On("Migrate", mock.Anything, "test-namespace", mockRepoResources, mock.Anything).
 			Return(nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
+			Namespace: "test-namespace",
+			History:   true,
+		}).Return(mockSigner, nil)
 
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
@@ -200,20 +247,17 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "migrate resources from SQL").Return()
 		progress.On("SetMessage", mock.Anything, "migrate dashboards resource").Return()
 
-		signer := signature.NewMockSigner(t)
-		signerFactory := signature.NewMockSignerFactory(t)
-		signerFactory.On("New", mock.Anything, mock.Anything).
-			Return(signer, nil)
-
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			mockLegacyMigrator,
 			mockFolderMigrator,
-			signerFactory,
+			mockSignerFactory,
 		)
 
-		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
+		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
+			History: true,
+		}, progress)
 		require.NoError(t, err)
 
 		mockParserFactory.AssertExpectations(t)
