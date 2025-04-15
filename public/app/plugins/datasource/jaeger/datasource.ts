@@ -69,29 +69,22 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
-    // No query type means that the query is a trace ID query
-    // If all targets are trace ID queries, we can use the backend querying
-    const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
-    const allTargetsDependencyGraph = options.targets.every((target) => target.queryType === 'dependencyGraph');
-    // We have not migrated the node graph to the backend
-    // If the node graph is disabled, we can use the backend migration
-    const nodeGraphDisabled = !this.nodeGraph?.enabled;
-    if (
-      config.featureToggles.jaegerBackendMigration &&
-      (allTargetsTraceIdQuery || allTargetsDependencyGraph) &&
-      nodeGraphDisabled
-    ) {
-      return super.query(options);
-    }
-
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
-
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
     }
 
+    if (
+      config.featureToggles.jaegerBackendMigration &&
+      // No query type means that the query is a trace ID query
+      (!target.queryType ||  target.queryType === 'dependencyGraph') &&
+      !this.nodeGraph?.enabled
+    ) {
+      return super.query(options);
+    }
+   
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
     if (target.queryType === 'dependencyGraph') {
       const timeRange = options.range ?? getDefaultTimeRange();
