@@ -674,11 +674,11 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 
 func validateAlertRuleFields(rule *AlertRule) error {
 	if _, err := ErrStateFromString(string(rule.ExecErrState)); err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, err)
 	}
 
 	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, err)
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
