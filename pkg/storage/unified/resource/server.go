@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/user"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -1078,8 +1077,7 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 				return nil, err
 			}
 			client := ins.(*ringClient)
-			_ctx, _ := identity.WithServiceIdentity(user.InjectOrgID(ctx, "1"), 1)
-			res, err := client.client.Search(_ctx, req)
+			res, err := client.client.Search(user.InjectOrgID(ctx, "1"), req)
 			return res, err
 		}
 	}
