@@ -29,7 +29,7 @@ func ProvideDecryptStorage(
 
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
-		return nil, fmt.Errorf("getting map of keepers %+w", err)
+		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
 	return &decryptStorage{keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil

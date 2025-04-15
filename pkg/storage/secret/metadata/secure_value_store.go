@@ -39,7 +39,7 @@ func ProvideSecureValueMetadataStorage(
 
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
-		return nil, fmt.Errorf("getting map of keepers: %+w", err)
+		return nil, fmt.Errorf("getting keepers from keeper service: %+w", err)
 	}
 
 	return &secureValueMetadataStorage{
