@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -33,7 +35,7 @@ const (
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
-func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.PostableAlert {
+func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureToggles featuremgmt.FeatureToggles) *models.PostableAlert {
 	alertState := transition.State
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
@@ -88,9 +90,14 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
+	startsAt := strfmt.DateTime(alertState.StartsAt)
+	if featureToggles.IsEnabled(context.TODO(), featuremgmt.FlagAlertRuleUseFiredAtForStartsAt) {
+		startsAt = strfmt.DateTime(alertState.FiredAt)
+	}
+
 	return &models.PostableAlert{
 		Annotations: models.LabelSet(nA),
-		StartsAt:    strfmt.DateTime(alertState.StartsAt),
+		StartsAt:    startsAt,
 		EndsAt:      strfmt.DateTime(alertState.EndsAt),
 		Alert: models.Alert{
 			Labels:       models.LabelSet(nL),
@@ -141,14 +148,14 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 
 // FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
 // and converts them to models.PostableAlert with EndsAt set to time.Now
-func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock, featureToggles featuremgmt.FeatureToggles) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, transition := range firingStates {
 		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := StateToPostableAlert(transition, appURL)
+		postableAlert := StateToPostableAlert(transition, appURL, featureToggles)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
