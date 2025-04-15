@@ -3,16 +3,21 @@ const path = require('path');
 const { projectPath: createProjectPath, formatOperationIds, validateGroup, validateVersion } = require('./helpers');
 
 module.exports = function (plop) {
-  // Get the base path (project root)
+  // Grafana root path
   const basePath = path.resolve(__dirname, '../../../..');
-
   // Create project path helper with the base path
   const projectPath = createProjectPath(basePath);
 
-  // Custom action function for displaying messages
-  plop.setActionType('logMessage', function (answers, config) {
-    console.log(config.message);
-    return '✅ Message logged successfully';
+  plop.setActionType('runGenerateApis', function () {
+    const { execSync } = require('child_process');
+    try {
+      console.log('⏳ Running yarn generate-apis to generate endpoints...');
+      execSync('yarn generate-apis', { stdio: 'inherit', cwd: basePath });
+      return '✅ API endpoints generated successfully!';
+    } catch (error) {
+      console.error('❌ Failed to generate API endpoints:', error.message);
+      return '❌ Failed to generate API endpoints. See error above.';
+    }
   });
 
   // Register the helper used in templates
@@ -70,11 +75,9 @@ module.exports = function (plop) {
         template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
       },
 
-      // Display success message using the custom action type
+      // Run yarn generate-apis to generate endpoints
       {
-        type: 'logMessage',
-        message:
-          '✅ Files created and configuration updated!\n\nNext step: Run the following command to generate endpoints:\n\n  yarn generate-apis\n',
+        type: 'runGenerateApis',
       },
     ];
   };
