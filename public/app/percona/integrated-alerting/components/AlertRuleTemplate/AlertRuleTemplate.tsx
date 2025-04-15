@@ -47,7 +47,7 @@ export const AlertRuleTemplate: FC = () => {
   const getAlertRuleTemplates = useCallback(async () => {
     setPendingRequest(true);
     try {
-      const { templates, totals } = await AlertRuleTemplateService.list(
+      const { templates, total_items, total_pages } = await AlertRuleTemplateService.list(
         {
           page_params: {
             index: pageIndex,
@@ -57,8 +57,8 @@ export const AlertRuleTemplate: FC = () => {
         generateToken(GET_TEMPLATES_CANCEL_TOKEN)
       );
       setData(formatTemplates(templates));
-      setTotalItems(totals.total_items || 0);
-      setTotalPages(totals.total_pages || 0);
+      setTotalItems(total_items || 0);
+      setTotalPages(total_pages || 0);
     } catch (e) {
       if (isApiCancelError(e)) {
         return;

@@ -28,9 +28,10 @@ import { Messages } from './AllChecksTab.messages';
 import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
+import { useParams } from 'react-router-dom-v5-compat';
 
-export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({ queryParams }) => {
-  const category = String(queryParams.category);
+export const AllChecksTab: FC<GrafanaRouteComponentProps> = ({ queryParams }) => {
+  const { category } = useParams();
   const navModel = usePerconaNavModel(`advisors-${category}`);
   const [runChecksPending, setRunChecksPending] = useState(false);
   const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
@@ -38,7 +39,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   const styles = useStyles2(getStyles);
   const { loading: advisorsPending } = useSelector(getAdvisors);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
-  const advisors = categorizedAdvisors[category];
+  const advisors = category ? categorizedAdvisors[category] : {};
 
   if (navModel.main.id === 'not-found') {
     locationService.push('/advisors');
