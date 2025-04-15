@@ -125,11 +125,11 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
 
+   You can group and sort resources during and after the migration. Click **Name** to sort resources alphabetically, click **Type** to group and sort by resource type, and click **Status** to group and sort by resources uploaded to cloud successfully, resources pending upload, or resources that experienced errors.
+
    The Snapshot information also updates to inform the user of total resources, errors, and total number of successfully migrated resources.
 
    ![An updates list of resources with snapshots built after attempting to upload them to Grafana Cloud](/media/docs/grafana/screenshot-grafana-12-updated-snapshot-page.png)
-
-   You can also sort resources at this stage. Click **Name** to sort resources alphabetically, click **Type** to group and sort by resource type, and click **Status** to group and sort by resources uploaded to cloud successfully or that experienced errors.
 
 1. Review error details for any issues that need manual resolution.
 
