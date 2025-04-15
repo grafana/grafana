@@ -20,7 +20,7 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
 
   return (
     <GrafanaExportDrawer
-      title={`Export ${groupName} rules`}
+      title={t('alerting.grafana-rule-group-exporter.title-drawer', 'Export {{groupName}} rules', { groupName })}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}

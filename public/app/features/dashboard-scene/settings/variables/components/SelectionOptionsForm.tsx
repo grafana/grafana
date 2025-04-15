@@ -56,7 +56,7 @@ export function SelectionOptionsForm({
         name="Include All option"
         description={t(
           'dashboard-scene.selection-options-form.description-enables-option-include-variables',
-          'Enables an option to include all variables'
+          'Enables an option to include all values'
         )}
         onChange={onIncludeAllChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}

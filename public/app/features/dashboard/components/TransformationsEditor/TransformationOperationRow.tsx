@@ -194,7 +194,9 @@ export const TransformationOperationRow = ({
         {config.featureToggles.transformationsRedesign && (
           <ConfirmModal
             isOpen={showDeleteModal}
-            title={`Delete ${uiConfig.name}?`}
+            title={t('dashboard.transformation-operation-row.title-delete', 'Delete {{name}}?', {
+              name: uiConfig.name,
+            })}
             body="Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen."
             confirmText="Delete"
             onConfirm={() => {

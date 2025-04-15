@@ -31,7 +31,10 @@ export const CloudEvaluationBehavior = () => {
     >
       <Field
         label={t('alerting.cloud-evaluation-behavior.label-pending-period', 'Pending period')}
-        description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        description={t(
+          'alerting.cloud-evaluation-behavior.description-pending-period',
+          'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        )}
       >
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>

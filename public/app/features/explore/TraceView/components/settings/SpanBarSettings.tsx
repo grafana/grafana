@@ -61,7 +61,10 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           <InlineField
             label={t('explore.span-bar-settings.label-tag-key', 'Tag key')}
             labelWidth={26}
-            tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            tooltip={t(
+              'explore.span-bar-settings.tooltip-tag-key',
+              "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            )}
           >
             <Input
               type="text"
@@ -91,7 +94,10 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
       title={t('explore.span-bar-section.title-span-bar', 'Span bar')}
       description={
         <ConfigDescriptionLink
-          description="Add additional info next to the service and operation on a span bar row in the trace view."
+          description={t(
+            'explore.span-bar-section.description-link',
+            'Add additional info next to the service and operation on a span bar row in the trace view.'
+          )}
           suffix={suffix}
           feature="the span bar"
         />
