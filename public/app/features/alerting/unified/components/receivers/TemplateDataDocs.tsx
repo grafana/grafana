@@ -113,7 +113,9 @@ function KeyValueTemplateDataTable() {
 
   return (
     <div>
-      KeyValue is a set of key/value string pairs that represent labels and annotations.
+      <Trans i18nKey="alerting.key-value-template-data-table.description">
+        KeyValue is a set of key/value string pairs that represent labels and annotations.
+      </Trans>
       <pre>
         <code>{KeyValueCodeSnippet}</code>
       </pre>
