@@ -244,15 +244,22 @@ const ZoomOutTooltip = () => (
 );
 
 const isLocaleFormatEnable = config.featureToggles.localeFormatPreference;
-
+const localeOptions: Intl.DateTimeFormatOptions = { 
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+};
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
 
   const from = dateTimeFormat(timeRange.from, { timeZone });
   const to = dateTimeFormat(timeRange.to, { timeZone });
   
-  const currentFrom = isLocaleFormatEnable ? formatDate(from, {dateStyle: "short", timeStyle: "medium"}) : from;
-  const currentTo = isLocaleFormatEnable ? formatDate(to, {dateStyle: "short", timeStyle: "medium"}) : to;
+  const currentFrom = isLocaleFormatEnable ? formatDate(from,localeOptions) : from;
+  const currentTo = isLocaleFormatEnable ? formatDate(to, localeOptions) : to;
 
 
   return (
@@ -303,8 +310,8 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     const to = timeRangeSplit[2];
     // If from and to are not empty, localise them using the formatDate function
     if (from && to) {
-      const fromLocalised = formatDate(from, {dateStyle: "short", timeStyle: "medium"});
-      const toLocalised = formatDate(to, {dateStyle: "short", timeStyle: "medium"});
+      const fromLocalised = formatDate(from, localeOptions);
+      const toLocalised = formatDate(to, localeOptions);
       const separator = timeRangeSplit[1];
       formattedRange = `${fromLocalised} ${separator} ${toLocalised}`;
     }
