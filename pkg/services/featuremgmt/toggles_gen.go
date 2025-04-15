@@ -155,10 +155,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagFrontendSandboxMonitorOnly
-	// Enables monitor only in the plugin frontend sandbox (if enabled)
-	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
-
 	// FlagPluginsDetailsRightPanel
 	// Enables right panel for the plugins details page
 	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
@@ -258,10 +254,6 @@ const (
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
-
-	// FlagPluginsAPIMetrics
-	// Sends metrics of public grafana packages usage by plugins
-	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins

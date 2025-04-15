@@ -2428,6 +2428,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "Fontes de dados",
       "empty-message": "Nenhum resultado foi encontrado para a sua consulta",

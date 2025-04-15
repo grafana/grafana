@@ -178,10 +178,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables monitor only in the plugin frontend sandbox (if enabled)
-  */
-  frontendSandboxMonitorOnly?: boolean;
-  /**
   * Enables right panel for the plugins details page
   * @default true
   */
@@ -290,10 +286,6 @@ export interface FeatureToggles {
   * @default true
   */
   externalCorePlugins?: boolean;
-  /**
-  * Sends metrics of public grafana packages usage by plugins
-  */
-  pluginsAPIMetrics?: boolean;
   /**
   * Automatic service account and token setup for plugins
   */

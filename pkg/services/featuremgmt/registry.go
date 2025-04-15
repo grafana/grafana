@@ -284,13 +284,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "frontendSandboxMonitorOnly",
-			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStagePrivatePreview,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageGeneralAvailability,
@@ -480,13 +473,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:         "pluginsAPIMetrics",
-			Description:  "Sends metrics of public grafana packages usage by plugins",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:              "externalServiceAccounts",

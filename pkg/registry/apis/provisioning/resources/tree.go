@@ -7,8 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
@@ -22,7 +22,7 @@ type FolderTree interface {
 	In(folder string) bool
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
-	AddUnstructured(item *unstructured.Unstructured, skipRepo string) error
+	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
 }
@@ -116,15 +116,12 @@ func NewEmptyFolderTree() FolderTree {
 	}
 }
 
-func (t *folderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo string) error {
+func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return fmt.Errorf("extract meta accessor: %w", err)
 	}
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == skipRepo {
-		return nil // skip it... already in tree?
-	}
+
 	folder := Folder{
 		Title: meta.FindTitle(item.GetName()),
 		ID:    item.GetName(),

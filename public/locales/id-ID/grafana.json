@@ -2417,6 +2417,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "Sumber data",
       "empty-message": "Hasil yang cocok dengan kueri Anda tidak ditemukan",

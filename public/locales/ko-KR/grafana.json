@@ -2417,6 +2417,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "데이터 소스",
       "empty-message": "쿼리와 일치하는 결과를 찾을 수 없음",

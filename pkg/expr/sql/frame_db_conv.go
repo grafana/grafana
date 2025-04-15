@@ -42,7 +42,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		for i, val := range row {
 			// Run val through mysql.Type.Convert to normalize underlying value
 			// of the interface
-			nV, _, err := schema[i].Type.Convert(val)
+			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
 				return nil, err
 			}

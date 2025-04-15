@@ -1092,14 +1092,14 @@ github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 h1:u3PMzfF8RkKd3lB9pZ2bfn0qEG+1G
 github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2/go.mod h1:mIEZOHnFx4ZMQeawhw9rhsj+0zwQj7adVsnBX7t+eKY=
 github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad h1:66ZPawHszNu37VPQckdhX1BPPVzREsGgNxQeefnlm3g=
 github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad/go.mod h1:ylU4XjUpsMcvl/BKeRRMXSH7e7WBrPXdSLvnRJYrxEA=
-github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc h1:z/O49H5YUIe4Rl26IBFJR1BGPxuk8JwnDeWnocp1pyc=
-github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc/go.mod h1:lt1xwT52nowkmcVWaFpLShNUrScQV8EQ1aNNGGMduRE=
+github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e h1:7pAttAqWaudUAsM9iHASi/4eFBK+qn4qeaNto7g8bK4=
+github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e/go.mod h1:KZyoO3jngyZCLyCf100FEQTrwAHj33AIMj4Zv4u3MNE=
 github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 h1:bMGS25NWAGTEtT5tOBsCuCrlYnLRKpbJVJkDbrTRhwQ=
 github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71/go.mod h1:2/2zjLQ/JOOSbbSboojeg+cAwcRV0fDLzIiWch/lhqI=
 github.com/dolthub/maphash v0.1.0 h1:bsQ7JsF4FkkWyrP3oCnFJgrCUAFbFf3kOl4L/QxPDyQ=
 github.com/dolthub/maphash v0.1.0/go.mod h1:gkg4Ch4CdCDu5h6PMriVLawB7koZ+5ijb9puGMV50a4=
-github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3 h1:euU+adNAYw46Zcp1HnoaSDWhqjfaL8s/1SPU+i16gYM=
-github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
+github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 h1:LGTt2LtYX8vaai32d+c9L0sMcP+Dg9w1kO6+lbsxxYg=
+github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
@@ -1607,6 +1607,8 @@ github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:dHhFF484qs1cmdIShKCB3kl+tMJyc4yuwgTQ3Afz37o=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 h1:wdJy5x6M7auWDjUIubqhfZuZvphUMyjD7hxB3RqV4aE=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043/go.mod h1:jwYig4wlnLLq4HQKDpS95nDeZi4+DmcD17KYYS1gMJg=
+github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b h1:n571OboxBgEnhAFnnc/soawXRsTsQYOaFC6Mn+iWPyI=
+github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b/go.mod h1:l7SqBgPw4c9iLCq/tVDAbrbsBdAHPIDF8xk0CdGHD/s=
 github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 h1:jRcI2fE/u0tHfCmPLIt21M3DYOt3L6BmZcu/LeV2sRw=
 github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:ygFcJP2McdSeMJVj/3YrKafZMc/lZBsp54HO51MtJYw=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 h1:h3HsylGnuZiBgT5Q/N6bH+LazY3+nA98R76Xwcd0zXg=
@@ -1615,8 +1617,6 @@ github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 h1:
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8/go.mod h1:deLQ/ywLvpVGbncRGUA4UDGt8a5Ei9sivOP+x6AQ2ko=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0 h1:/MtKK3BUWqLJVkoFQViNvD5BmblGlVwpOScEtLLpexU=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0/go.mod h1:uju5OyW1BopywSF1jjIHei0L0/QIi4vn/EQ1ys+E6aI=
-github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9 h1:kJWonBYechx35NbOUVf1ulufKyjH1UlDJDXlk8bdGn0=
-github.com/grafana/grafana/pkg/apis/folder v0.0.0-20250402082028-6781612335d9/go.mod h1:QdqsZpdCtg+3TEzXX3mUakjq79LFblZ8xliHmqZj3oA=
 github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a h1:dMllTcE0R1qvV4rWDehQzxNiHaale1yCzXsVkub07D0=
 github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a/go.mod h1:K/fP4kODJmABug5b90PhACUZD6Xh/veEz2b1VRKNyuA=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a h1:NN0j9zdqYpfliR0P+au/PAJ5lqP7IZPNe8tAX5eaQNE=

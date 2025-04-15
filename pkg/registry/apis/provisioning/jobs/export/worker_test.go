@@ -96,6 +96,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "this repository is read only")
 }
+
 func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
@@ -248,7 +249,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResources.On("Client", context.Background(), mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
+	mockRepoResources.On("Client", context.Background(), mockRepo, resources.RepositoryResourcesOptions{}).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	mockCloneFn := NewMockWrapWithCloneFn(t)
@@ -291,7 +292,7 @@ func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
-	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -342,7 +343,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
-	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+	mockRepoResources.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
