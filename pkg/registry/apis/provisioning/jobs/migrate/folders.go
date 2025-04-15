@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -28,7 +27,6 @@ type LegacyFoldersMigrator interface {
 type legacyFoldersMigrator struct {
 	tree           resources.FolderTree
 	legacyMigrator legacy.LegacyMigrator
-	signer         signature.Signer
 }
 
 func NewLegacyFoldersMigrator(legacyMigrator legacy.LegacyMigrator) LegacyFoldersMigrator {

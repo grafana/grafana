@@ -59,6 +59,8 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 		return fmt.Errorf("get repository resources: %w", err)
 	}
 
+	// FIXME: signature is only relevant for repositories which support signature
+	// Not all repositories support history
 	signer, err := m.signerFactory.New(ctx, signature.SignOptions{
 		Namespace: namespace,
 		History:   opts.History,
