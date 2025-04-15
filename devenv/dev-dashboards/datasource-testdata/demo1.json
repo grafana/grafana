@@ -191,7 +191,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "alias": "memory",
@@ -344,7 +344,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "alias": "logins",
@@ -436,7 +436,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -513,7 +513,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -592,7 +592,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -669,7 +669,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -824,7 +824,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "alias": "web_server_01",
@@ -932,7 +932,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1009,7 +1009,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1086,7 +1086,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1165,7 +1165,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1305,7 +1305,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0-pre",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
