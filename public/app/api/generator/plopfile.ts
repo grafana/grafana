@@ -9,7 +9,8 @@ import {
   getFilesToFormat,
   runGenerateApis,
   formatFiles,
-  // The file extension is necessary to make the imports work with the --experimental-strip-types flag
+  // The file extension is necessary to make the imports
+  // work with the '--experimental-strip-types' flag
   // @ts-ignore
 } from './helpers.ts';
 
@@ -22,12 +23,11 @@ interface PlopData {
   operationIdArray: string[];
 }
 
-// Simple type guard to check if an object has required PlopData properties
 function isPlopData(data: unknown): data is Partial<PlopData> {
   return typeof data === 'object' && data !== null;
 }
 
-export default function plopGenerator(plop: NodePlopAPI): void {
+export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
   const basePath = path.resolve(import.meta.dirname, '../../../..');
   // Create project path helper with the base path

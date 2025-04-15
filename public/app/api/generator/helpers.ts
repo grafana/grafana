@@ -8,11 +8,11 @@ export type PlopActionFunction = (
 ) => string | Promise<string>;
 
 // Helper function to create paths relative to project root
-export const projectPath = (basePath: string) => (relativePath: string): string => 
+export const projectPath = (basePath: string) => (relativePath: string) => 
   path.join(basePath, relativePath);
 
 // Helper to remove quotes from operation IDs
-export const removeQuotes = (str: string | unknown): string | unknown => {
+export const removeQuotes = (str: string | unknown) => {
   if (typeof str !== 'string') {
     return str;
   }
@@ -20,7 +20,7 @@ export const removeQuotes = (str: string | unknown): string | unknown => {
 };
 
 // Helper to format operation IDs for filter endpoints
-export const formatOperationIds = () => (operationArray: string[]): string => {
+export const formatOperationIds = () => (operationArray: string[]) => {
   if (!Array.isArray(operationArray)) {
     return '';
   }
@@ -28,7 +28,7 @@ export const formatOperationIds = () => (operationArray: string[]): string => {
 };
 
 // List of created or modified files
-export const getFilesToFormat = (groupName: string): string[] => [
+export const getFilesToFormat = (groupName: string) => [
   `public/app/api/clients/${groupName}/baseAPI.ts`,
   `public/app/api/clients/${groupName}/index.ts`,
   `scripts/generate-rtk-apis.ts`,
@@ -93,10 +93,10 @@ export const formatFiles = (
 };
 
 // Validation helpers
-export const validateGroup = (group: string): boolean | string => {
+export const validateGroup = (group: string) => {
   return group && group.includes('.grafana.app') ? true : 'Group should be in format: name.grafana.app';
 };
 
-export const validateVersion = (version: string): boolean | string => {
+export const validateVersion = (version: string) => {
   return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
 }; 
