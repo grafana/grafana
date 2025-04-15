@@ -47,10 +47,10 @@ export const updatesSlice = createSlice({
 
 export const checkUpdatesAction = createAsyncThunk('percona/checkUpdates', async (): Promise<CheckUpdatesPayload> => {
   try {
-    const res = await UpdatesService.getCurrentVersion({ force: true });
+    const res = await UpdatesService.getCurrentVersion({ force: false });
     return responseToPayload(res);
   } catch (error) {
-    const res = await UpdatesService.getCurrentVersion({ force: true, only_installed_version: true });
+    const res = await UpdatesService.getCurrentVersion({ force: false, only_installed_version: true });
     return responseToPayload(res);
   }
 });
