@@ -2,14 +2,6 @@
 
 To show the steps to follow, we are going to work on adding an API client to create a new dashboard. Just adapt the following guide to your use case.
 
-> **NEW:** You can now use our automated generator to create API clients:
->
-> ```bash
-> yarn generate:api-client
-> ```
->
-> See [API Client Generator](./generator/README.md) for details.
-
 ### 1. Generate an OpenAPI snapshot
 
 First, check if the `group` and the `version` are already present in [openapi_test.go](/pkg/tests/apis/openapi_test.go). If so, move on to the next step.
@@ -29,6 +21,14 @@ Afterwards, you need to run the `TestIntegrationOpenAPIs` test. Note that it wil
 > Note: You don’t need to follow these two steps if the `group` you’re working with is already in the `openapi_test.go` file.
 
 <br/>
+
+> You can now use a generator to create API clients to automate steps 2-6:
+>
+> ```bash
+> yarn generate:api-client
+> ```
+>
+> See [API Client Generator](./generator/README.md) for details.
 
 ### 2. Create the API definition
 
