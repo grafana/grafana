@@ -10,6 +10,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
+import { RecentScopes } from './RecentScopes';
 import { ScopesInput } from './ScopesInput';
 import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
@@ -78,25 +79,13 @@ export const ScopesSelector = () => {
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <>
-                  <fieldset>
-                    <legend>
-                      <Text variant="h6">Recent scopes</Text>
-                    </legend>
-                    <Stack direction="column" gap={1}>
-                      {recentScopes.map((recentScopeSet) => (
-                        <button
-                          className={styles.recentScopeButton}
-                          key={recentScopeSet.map((s) => s.scope.metadata.name).join(',')}
-                          onClick={() => {
-                            scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
-                            scopesSelectorService.closeAndApply();
-                          }}
-                        >
-                          <Text>{recentScopeSet.map((s) => s.scope.spec.title).join(',')}</Text>
-                        </button>
-                      ))}
-                    </Stack>
-                  </fieldset>
+                  <RecentScopes
+                    recentScopes={recentScopes}
+                    onSelect={(recentScopeSet) => {
+                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
+                      scopesSelectorService.closeAndApply();
+                    }}
+                  />
                   <ScopesTree
                     nodes={nodes}
                     nodePath={['']}
@@ -156,16 +145,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
       display: 'flex',
       gap: theme.spacing(1),
       marginTop: theme.spacing(8),
-    }),
-    recentScopeButton: css({
-      textAlign: 'left',
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
     }),
   };
 };

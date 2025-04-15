@@ -12,6 +12,7 @@ import useExtensionActions from './useExtensionActions';
 export default function useActions(searchQuery: string) {
   const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
+  const [recentScopesActions, setRecentScopesActions] = useState<CommandPaletteAction[]>([]);
   const extensionActions = useExtensionActions();
 
   const navBarTree = useSelector((state) => state.navBarTree);
@@ -33,7 +34,9 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  const recentScopesActions = getRecentScopesActions();
+  useEffect(() => {
+    setRecentScopesActions(getRecentScopesActions());
+  }, []);
 
   return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions, ...recentScopesActions];
 }
