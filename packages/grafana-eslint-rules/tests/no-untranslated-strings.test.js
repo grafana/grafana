@@ -508,13 +508,13 @@ const Foo = () => {
       name: 'Invalid when ternary with string literals',
       code: `const Foo = () => <div>{isAThing ? 'Foo' : 'Bar'}</div>`,
       filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }],
+      errors: [{ messageId: 'noUntranslatedStrings' }, { messageId: 'noUntranslatedStrings' }],
     },
     {
       name: 'Invalid when ternary with string literals - prop',
       code: `const Foo = () => <div title={isAThing ? 'Foo' : 'Bar'} />`,
       filename,
-      errors: [{ messageId: 'noUntranslatedStringsProp' }],
+      errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
   ],
 });
