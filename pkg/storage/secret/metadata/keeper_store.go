@@ -396,12 +396,18 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	keeperSecureValues := make(map[string][]string, 0)
 
 	for _, svRow := range secureValueRows {
+		// Using the system keeper (null).
 		if svRow.Keeper == nil {
 			continue
 		}
 
 		keeperNames = append(keeperNames, *svRow.Keeper)
 		keeperSecureValues[*svRow.Keeper] = append(keeperSecureValues[*svRow.Keeper], svRow.Name)
+	}
+
+	// We didn't find any secure values that reference third-party keepers.
+	if len(keeperNames) == 0 {
+		return nil
 	}
 
 	reqKeeper := listByNameKeeper{
