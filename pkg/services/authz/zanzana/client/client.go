@@ -50,33 +50,6 @@ func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.L
 	return c.authzlibclient.Compile(ctx, id, req)
 }
 
-func newItemChecker(res *authzv1.ListResponse) authlib.ItemChecker {
-	// if we can see all resource of this type we can just return a function that always return true
-	if res.GetAll() {
-		return func(_, _ string) bool { return true }
-	}
-
-	folders := make(map[string]struct{}, len(res.Folders))
-	for _, f := range res.Folders {
-		folders[f] = struct{}{}
-	}
-
-	items := make(map[string]struct{}, len(res.Items))
-	for _, i := range res.Items {
-		items[i] = struct{}{}
-	}
-
-	return func(name, folder string) bool {
-		if _, ok := items[name]; ok {
-			return true
-		}
-		if _, ok := folders[folder]; ok {
-			return true
-		}
-		return false
-	}
-}
-
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Read")
 	defer span.End()
