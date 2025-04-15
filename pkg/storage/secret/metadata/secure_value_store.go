@@ -2,14 +2,9 @@ package metadata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/VividCortex/mysqlerr"
-	"github.com/go-sql-driver/mysql"
 	claims "github.com/grafana/authlib/types"
-	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -362,43 +357,4 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 			return nil
 		})
 	})
-}
-
-func isUniqueConstraintError(err error) bool {
-	return isMySQLUniqueConstraintError(err) ||
-		isPostgresUniqueConstraintError(err) ||
-		isSQliteUniqueConstraintError(err)
-}
-
-func isMySQLUniqueConstraintError(err error) bool {
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
-		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isPostgresUniqueConstraintError(err error) bool {
-	var driverErr *pq.Error
-	if errors.As(err, &driverErr) {
-		if string(driverErr.Code) == "23505" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isSQliteUniqueConstraintError(err error) bool {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == int(sqlite3.ErrConstraintUnique) {
-			return true
-		}
-	}
-
-	return false
 }
