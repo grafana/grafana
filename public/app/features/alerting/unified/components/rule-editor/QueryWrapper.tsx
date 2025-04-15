@@ -256,7 +256,10 @@ export function MaxDataPointsOption({
     <InlineField
       labelWidth={24}
       label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
-      tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+      tooltip={t(
+        'alerting.max-data-points-option.tooltip-max-data-points',
+        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.'
+      )}
     >
       <Input
         type="number"

@@ -398,7 +398,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                     isOpen: true,
                   });
                 }}
-                title="Disconnects this panel from the library panel so that you can edit it regularly."
+                title={t(
+                  'dashboard.panel-editor-unconnected.title-unlink',
+                  'Disconnects this panel from the library panel so that you can edit it regularly.'
+                )}
                 key="unlink"
               >
                 <Trans i18nKey="dashboard.panel-editor-unconnected.unlink">Unlink</Trans>

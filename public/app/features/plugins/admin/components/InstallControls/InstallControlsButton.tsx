@@ -9,6 +9,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
+import { t } from '../../../../../core/internationalization';
 import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
@@ -134,7 +135,9 @@ export function InstallControlsButton({
     <>
       <ConfirmModal
         isOpen={isConfirmModalVisible}
-        title={`Uninstall ${plugin.name}`}
+        title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
+          plugin: plugin.name,
+        })}
         body="Are you sure you want to uninstall this plugin?"
         confirmText="Confirm"
         icon="exclamation-triangle"

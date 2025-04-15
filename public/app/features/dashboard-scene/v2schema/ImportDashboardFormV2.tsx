@@ -72,7 +72,7 @@ export const ImportDashboardFormV2 = ({
           data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
-      <Field label="Folder">
+      <Field label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')}>
         <Controller<any>
           render={({ field: { ref, value, onChange, ...field } }) => (
             <FolderPicker
@@ -144,7 +144,7 @@ export const ImportDashboardFormV2 = ({
           {getButtonText(errors)}
         </Button>
         <Button type="reset" variant="secondary" onClick={onCancel}>
-          Cancel
+          <Trans i18nKey="dashboard-scene.import-dashboard-form-v2.cancel">Cancel</Trans>
         </Button>
       </Stack>
     </>

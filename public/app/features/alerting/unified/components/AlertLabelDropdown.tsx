@@ -5,6 +5,8 @@ import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 import { SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../../../core/internationalization';
+
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
   onOpenMenu?: () => void;
@@ -42,7 +44,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
       <div ref={ref}>
         <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
           <Select<string>
-            placeholder={`Choose ${type}`}
+            placeholder={t('alerting.alert-label-dropdown.placeholder-select', 'Choose {{type}}', { type })}
             width={29}
             className="ds-picker select-container"
             backspaceRemovesValue={false}

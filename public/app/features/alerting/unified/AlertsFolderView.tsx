@@ -80,7 +80,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
             options={sortOptions}
             width={25}
             aria-label={t('alerting.alerts-folder-view.aria-label-sort', 'Sort')}
-            placeholder={`Sort (Default A-Z)`}
+            placeholder={t('alerting.alerts-folder-view.placeholder-sort-default-az', 'Sort (Default A-Z)')}
             prefix={<Icon name={sortOrder === SortOrder.Ascending ? 'sort-amount-up' : 'sort-amount-down'} />}
           />
           <FilterInput

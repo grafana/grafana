@@ -90,13 +90,30 @@ const ExistingSilenceEditor = () => {
     isFetchError(errorGettingExistingSilence) && errorGettingExistingSilence.status === 404;
 
   if (existingSilenceNotFound) {
-    return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.existing-silence-editor.title-silence-not-found',
+          'Existing silence "{{silenceId}}" not found',
+          { silenceId }
+        )}
+        severity="warning"
+      />
+    );
   }
 
   const canEditSilence = isGrafanaAlertManager ? silence?.accessControl?.write : true;
 
   if (!canEditSilence) {
-    return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.existing-silence-editor.title-permission-editrecreate-silence',
+          'You do not have permission to edit/recreate this silence'
+        )}
+        severity="error"
+      />
+    );
   }
 
   return (

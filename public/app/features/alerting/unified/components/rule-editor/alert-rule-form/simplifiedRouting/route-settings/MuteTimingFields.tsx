@@ -21,7 +21,10 @@ export function MuteTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
     <Field
       label={t('alerting.mute-timing-fields.am-mute-timing-select-label-mute-timings', 'Mute timings')}
       data-testid="am-mute-timing-select"
-      description="Select a mute timing to define when not to send notifications for this alert rule"
+      description={t(
+        'alerting.mute-timing-fields.am-mute-timing-select-description-mute-timings',
+        'Select a mute timing to define when not to send notifications for this alert rule'
+      )}
       className={styles.muteTimingField}
       invalid={!!errors.contactPoints?.[alertmanager]?.muteTimeIntervals}
     >

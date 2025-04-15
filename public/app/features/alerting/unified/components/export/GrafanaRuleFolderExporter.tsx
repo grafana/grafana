@@ -20,7 +20,9 @@ export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolder
 
   return (
     <GrafanaExportDrawer
-      title={`Export ${folder.title} rules`}
+      title={t('alerting.grafana-rule-folder-exporter.title-drawer', 'Export {{folderName}} rules', {
+        folderName: folder.title,
+      })}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}

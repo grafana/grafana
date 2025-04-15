@@ -130,7 +130,11 @@ export const CorrelationTransformationAddModal = ({
   return (
     <Modal
       isOpen={true}
-      title={`${transformationToEdit ? 'Edit' : 'Add'} transformation`}
+      title={
+        transformationToEdit
+          ? t('explore.correlation-transformation-add-modal.title-edit', 'Edit transformation')
+          : t('explore.correlation-transformation-add-modal.title-add', 'Add transformation')
+      }
       onDismiss={onCancel}
       className={css({ width: '700px' })}
     >

@@ -6,6 +6,7 @@ import { useToggle, useWindowSize } from 'react-use';
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
@@ -91,7 +92,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <PanelChrome
-      title={`Node graph`}
+      title={t('explore.unconnected-node-graph-container.title-node-graph', 'Node graph')}
       titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}

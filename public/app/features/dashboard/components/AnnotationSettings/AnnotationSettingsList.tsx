@@ -111,7 +111,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
                       <DeleteButton
                         size="sm"
                         onConfirm={() => onDelete(idx)}
-                        aria-label={`Delete query with title "${annotation.name}"`}
+                        aria-label={t(
+                          'dashboard.annotation-settings-list.aria-label-delete',
+                          'Delete query with title "{{title}}"',
+                          { title: annotation.name }
+                        )}
                       />
                     )}
                   </td>

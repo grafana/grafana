@@ -163,7 +163,12 @@ const SilencesTable = () => {
             dataTestId="not-expired-table"
           />
           {itemsExpired.length > 0 && (
-            <CollapsableSection label={`Expired silences (${itemsExpired.length})`} isOpen={showExpiredFromUrl}>
+            <CollapsableSection
+              label={t('alerting.silences-table.label-section-expired', 'Expired silences ({{numExpired}})', {
+                numExpired: itemsExpired.length,
+              })}
+              isOpen={showExpiredFromUrl}
+            >
               <div className={styles.callout}>
                 <Icon className={styles.calloutIcon} name="info-circle" />
                 <span>

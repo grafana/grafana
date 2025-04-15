@@ -85,7 +85,9 @@ export function PluginUsage({ plugin }: Props) {
 
   return (
     <EmptyListCTA
-      title={`${plugin.name} is not used in any dashboards yet`}
+      title={t('plugins.plugin-usage.title-not-used-yet', '{{pluginName}} is not used in any dashboards yet', {
+        pluginName: plugin.name,
+      })}
       buttonIcon="plus"
       buttonTitle="Create Dashboard"
       buttonLink={`dashboard/new?panelType=${plugin.id}&editPanel=1`}

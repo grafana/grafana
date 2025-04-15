@@ -388,7 +388,7 @@ const Header: FC<HeaderProps> = ({
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip={`Remove expression "${refId}"`}
+          tooltip={t('alerting.header.tooltip-remove', 'Remove expression "{{refId}}"', { refId })}
         />
       </Stack>
     </header>

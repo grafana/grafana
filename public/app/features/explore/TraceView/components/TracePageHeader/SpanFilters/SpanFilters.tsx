@@ -195,7 +195,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           <InlineField
             label={t('explore.span-filters.label-duration', 'Duration')}
             labelWidth={16}
-            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+            tooltip={t('explore.span-filters.tooltip-duration', 'Filter by duration. Accepted units are {{units}}', {
+              units: 'ns, us, ms, s, m, h',
+            })}
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select
@@ -239,7 +241,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           <InlineField
             label={t('explore.span-filters.label-tags', 'Tags')}
             labelWidth={16}
-            tooltip="Filter by tags, process tags or log fields in your spans."
+            tooltip={t(
+              'explore.span-filters.tooltip-tags',
+              'Filter by tags, process tags or log fields in your spans.'
+            )}
           >
             <SpanFiltersTags
               search={search}
