@@ -1,6 +1,6 @@
 # Owned by grafana-delivery-squad
 # Intended to be dropped into the base repo Ex: grafana/grafana
-name: Dispatch: Check for patch conflicts
+name: Dispatch check for patch conflicts
 run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
   pull_request:
