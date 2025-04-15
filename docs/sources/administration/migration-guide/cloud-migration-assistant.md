@@ -11,7 +11,7 @@ weight: 400
 
 # Grafana Cloud Migration Assistant
 
-The Grafana Cloud Migration Assistant, generally available from Grafana v12.0, automatically migrates resources from your Grafana OSS/Enterprise instance to Grafana Cloud. It provides the following functionalities:
+The Grafana Cloud Migration Assistant, generally available from Grafana v12.0, automatically migrates resources from your Grafana OSS/Enterprise instance to Grafana Cloud. It provides the following functionality:
 
 - Securely connect your self-managed instance to a Grafana Cloud instance.
 - Seamlessly migrate resources such as dashboards, data sources, and folders to your cloud instance in a few easy steps.
