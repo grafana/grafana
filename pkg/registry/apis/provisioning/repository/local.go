@@ -171,18 +171,7 @@ func (r *localRepository) validateRequest(ref string) error {
 	if ref != "" {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
-	if r.path == "" {
-		_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
-		if err != nil {
-			return err
-		}
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
-	}
+
 	return nil
 }
 
