@@ -126,26 +126,28 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
               }
               title={
                 <Stack gap={1} direction="row">
-                  <Icon name="book-open" /> Math operator
+                  <Icon name="book-open" /> <Trans i18nKey="expressions.math.tooltip-title">Math operator</Trans>
                 </Stack>
               }
               footer={
                 <div>
-                  See our additional documentation on{' '}
-                  <TextLink
-                    external
-                    href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
-                  >
-                    Math expressions
-                  </TextLink>
-                  .
+                  <Trans i18nKey="expressions.math.tooltip-footer">
+                    See our additional documentation on{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
+                    >
+                      Math expressions
+                    </TextLink>
+                    .
+                  </Trans>
                 </div>
               }
               closeButton={true}
               placement="bottom-start"
             >
               <div className={styles.info}>
-                Expression <Icon name="info-circle" />
+                <Trans i18nKey="expressions.math.tooltip-trigger">Expression</Trans> <Icon name="info-circle" />
               </div>
             </Toggletip>
           </InlineLabel>

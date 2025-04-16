@@ -1,6 +1,7 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
   "{{pageStart}} - {{pageEnd}} of {{numPages}}": "{{pageStart}} - {{pageEnd}} of {{numPages}}",
+  "{{url}} or {{target}} or {{path}}": "{{url}} or {{target}} or {{path}}",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "Built-in role picker",
@@ -4355,6 +4356,7 @@
     },
     "button-row": {
       "delete": "Delete",
+      "save-and-test": "Save & test",
       "test": "Test"
     },
     "cloud-info-box": {
@@ -4377,6 +4379,9 @@
     },
     "data-source-picker": {
       "aria-label-select-a-data-source": "Select a data source"
+    },
+    "data-source-plugin-config-page": {
+      "page-not-found": "Page not found: {{page}}"
     },
     "data-source-plugin-state": {
       "plugin-state": "Plugin state"
@@ -4514,8 +4519,12 @@
     }
   },
   "explore": {
+    "accordian-logs": {
+      "footer": "Event timestamps are relative to the start time of the full trace."
+    },
     "accordian-references": {
-      "references": "References"
+      "references": "References",
+      "view-linked-span": "View Linked Span"
     },
     "add-to-dashboard": "Add to dashboard",
     "basic-extensions": {
@@ -4524,6 +4533,7 @@
     "clear": "Clear",
     "confirm-navigation-modal": {
       "cancel": "Cancel",
+      "new-tab": "Do you want to proceed in the current tab or open a new tab?",
       "open": "Open",
       "open-in-new-tab": "Open in new tab"
     },
@@ -4572,10 +4582,13 @@
       "title-unsaved-changes-to-correlation": "Unsaved changes to correlation"
     },
     "draggable-manager-demo": {
+      "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
       "click-horizontally-somewhere-colored-below": "Click and drag horizontally somewhere in the colored area, below.",
+      "drag-value": "Value: {{dragValue}}",
       "draggable-manager-demo": "DraggableManager demo",
       "dragging-a-divider": "Dragging a divider",
-      "dragging-a-sub-region": "Dragging a sub-region"
+      "dragging-a-sub-region": "Dragging a sub-region",
+      "value": "Value: {{ dividerPos }}"
     },
     "drilldownInfo": {
       "action": "Go to Grafana Drilldown",
@@ -4606,6 +4619,10 @@
       "outline": "Outline",
       "tooltip-content-outline": "Content outline"
     },
+    "feature-toggle-page": {
+      "description-explore-disabled": "To enable Explore, enable it in the Grafana config:",
+      "title-explore-disabled": "Explore is disabled"
+    },
     "get-matches-metadata": {
       "matches": "0 matches"
     },
@@ -4616,10 +4633,15 @@
     },
     "live-logs": {
       "clear-logs": "Clear logs",
-      "exit-live-mode": "Exit live mode"
+      "exit-live-mode": "Exit live mode",
+      "last-line-received": "Last line received: <elapsedTime /> ago",
+      "pause": "Pause",
+      "resume": "Resume"
     },
     "live-tail-button": {
+      "live": "Live",
       "pause-the-live-stream": "Pause the live stream",
+      "paused": "Paused",
       "start-live-stream-your-logs": "Start live stream your logs",
       "stop-and-exit-the-live-stream": "Stop and exit the live stream"
     },
@@ -4648,12 +4670,14 @@
       "show-original-line": "Show original line"
     },
     "logs-sample-panel": {
+      "label": "Logs sample",
       "logs-sample-is-loading": "Logs sample is loading...",
       "no-logs-sample-data": "No logs sample data.",
       "open-in-split-view-button": {
         "open-logs-in-split-view": "Open logs in split view"
       },
-      "title-failed-sample-query": "Failed to load logs sample for this query"
+      "title-failed-sample-query": "Failed to load logs sample for this query",
+      "tooltip": "Show log lines that contributed to visualized metrics"
     },
     "logs-table-available-fields": {
       "title-label-percentage": "{{labelName}} appears in {{percentage}}% of log lines"
@@ -4662,7 +4686,9 @@
       "no-fields": "No fields"
     },
     "logs-table-multi-select": {
-      "fields": "Fields"
+      "fields": "Fields",
+      "reset": "Reset",
+      "selected-fields": "Selected fields"
     },
     "logs-table-nav-field": {
       "aria-label-drag-and-drop-icon": "Drag and drop icon",
@@ -4680,6 +4706,9 @@
       "title-no-logs-volume-available": "No logs volume available",
       "title-showing-partial-data": "Showing partial data",
       "title-unable-to-show-log-volume": "Unable to show log volume"
+    },
+    "logs-volumne-panel-list": {
+      "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "make-datasource-setup": {
       "aria-label-query": "query"
@@ -4703,6 +4732,7 @@
       "aria-label-go-queryless": "Go queryless"
     },
     "raw-list-container": {
+      "item-count": "Result series: {{numItems}}",
       "label-expand-results": "Expand results"
     },
     "raw-list-item": {
@@ -4834,6 +4864,9 @@
     },
     "show-critical-path-only": "Show critical path only",
     "show-matches-only": "Show matches only",
+    "span-bar": {
+      "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
+    },
     "span-bar-section": {
       "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
       "title-span-bar": "Span bar"
@@ -4860,6 +4893,7 @@
       "aria-label-select-service-name-operator": "Select service name operator",
       "aria-label-select-span-name": "Select span name",
       "aria-label-select-span-name-operator": "Select span name operator",
+      "label-collapse": "Span Filters",
       "label-duration": "Duration",
       "label-service-name": "Service name",
       "label-span-name": "Span name",
@@ -4902,6 +4936,9 @@
       "tooltip-collapse-all": "Collapse all",
       "tooltip-expand": "Expand +1",
       "tooltip-expand-all": "Expand all"
+    },
+    "timeline-header-row": {
+      "title": "Service & Operation"
     },
     "toolbar": {
       "add-to-extensions": "Add",
@@ -4946,6 +4983,7 @@
       "title-trace": "Trace"
     },
     "unconnected-node-graph-container": {
+      "count-warning": "({{numNodes}} nodes, can be slow to load)",
       "title-node-graph": "Node graph"
     },
     "unthemed-logs": {
@@ -4999,11 +5037,19 @@
     "classic-conditions": {
       "label-conditions": "Conditions"
     },
+    "condition": {
+      "of": "OF",
+      "to": "TO",
+      "when": "WHEN"
+    },
     "expression-query-editor": {
       "label-operation": "Operation"
     },
     "math": {
-      "available-math-functions": "Available math functions"
+      "available-math-functions": "Available math functions",
+      "tooltip-footer": "See our additional documentation on <2>Math expressions</2>.",
+      "tooltip-title": "Math operator",
+      "tooltip-trigger": "Expression"
     },
     "reduce": {
       "label-function": "Function",

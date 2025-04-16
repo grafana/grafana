@@ -299,6 +299,7 @@ export function makeDatasourceSetup({
                   props.onChange({ ...props.query, expr: event.target.value });
                 }}
               />
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               {name} Editor input: {props.query.expr}
             </div>
           );
