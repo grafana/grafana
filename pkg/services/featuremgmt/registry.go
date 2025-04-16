@@ -284,13 +284,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "frontendSandboxMonitorOnly",
-			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStagePrivatePreview,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1781,6 +1774,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
+		},
+		{
+
+			Name:         "pluginsAutoUpdate",
+			Description:  "Enables auto-updating of users installed plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

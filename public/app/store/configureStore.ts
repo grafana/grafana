@@ -11,6 +11,7 @@ import { StoreState } from 'app/types/store';
 import { advisorAPI } from '../api/clients/advisor';
 import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
+import { playlistAPI } from '../api/clients/playlist';
 import { provisioningAPI } from '../api/clients/provisioning';
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
@@ -46,6 +47,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
         iamAPI.middleware,
+        playlistAPI.middleware,
         provisioningAPI.middleware,
         folderAPI.middleware,
         advisorAPI.middleware,

@@ -43,8 +43,8 @@ require (
 	github.com/centrifugal/centrifuge v0.34.4 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
-	github.com/dolthub/go-mysql-server v0.19.1-0.20250327192031-fead86387efc // @grafana/grafana-datasources-core-services
-	github.com/dolthub/vitess v0.0.0-20250325024605-8131be3ca6d3 // @grafana/grafana-datasources-core-services
+	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
+	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // @grafana/grafana-datasources-core-services
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
@@ -203,7 +203,6 @@ require (
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
-	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
 )
 
@@ -580,6 +579,7 @@ require (
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/onsi/gomega v1.36.2 // indirect
+	xorm.io/core v0.7.3 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
