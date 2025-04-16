@@ -184,7 +184,7 @@ func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseUR
 }
 
 func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange) (fileChangeInfo, error) {
-	// TODO -- read the old and verify
+	// TODO: read the old and verify
 	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
 }
 
