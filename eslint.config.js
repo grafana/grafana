@@ -278,12 +278,7 @@ module.exports = [
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     ignores: ['**/*.{spec,test}.tsx'],
     rules: {
-      '@grafana/no-untranslated-strings': [
-        'error',
-        {
-          forceFix: ['public/app/features/alerting'],
-        },
-      ],
+      '@grafana/no-untranslated-strings': 'error',
     },
   },
   {
