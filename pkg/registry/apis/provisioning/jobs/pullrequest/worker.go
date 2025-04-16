@@ -70,14 +70,14 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("expecting github configuration")
 	}
 
-	prRepo, ok := repo.(PullRequestRepo)
-	if !ok {
-		return fmt.Errorf("repository is not a pull request repository")
-	}
-
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
+	}
+
+	prRepo, ok := repo.(PullRequestRepo)
+	if !ok {
+		return fmt.Errorf("repository is not a pull request repository")
 	}
 
 	logger := logging.FromContext(ctx).With("pr", opts.PR)
@@ -122,6 +122,8 @@ func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repositor
 			ret = append(ret, file)
 			continue
 		}
+
+		// FIXME: not sure about this logic. I think it's actually a bug
 		if file.PreviousPath != "" {
 			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
 				ret = append(ret, file)
