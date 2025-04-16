@@ -139,9 +139,11 @@ export function TableCellNG(props: TableCellNGProps) {
   }
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
     const div = divWidthRef.current;
     const tableCellDiv = div?.parentElement;
+    div?.style.setProperty('background', `unset`);
+
+    setIsHovered(true);
     // Always set the background color to the hover color regardless of shouldTextOverflow
     tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
 
@@ -156,9 +158,11 @@ export function TableCellNG(props: TableCellNGProps) {
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
     const div = divWidthRef.current;
     const tableCellDiv = div?.parentElement;
+    div?.style.removeProperty('background');
+
+    setIsHovered(false);
     tableCellDiv?.style.removeProperty('background');
 
     if (shouldTextOverflow()) {
