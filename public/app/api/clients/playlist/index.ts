@@ -1,12 +1,24 @@
+import { getBackendSrv } from '@grafana/runtime';
+
 import { notifyApp } from '../../../core/actions';
 import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { contextSrv } from '../../../core/services/context_srv';
 import { handleError } from '../../utils';
 
-import { generatedAPI } from './endpoints.gen';
+import { generatedAPI, PlaylistSpec } from './endpoints.gen';
 
 export const playlistAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
+    getPlaylist: (endpointDefinition) => {
+      endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
+        try {
+          const playlist = await queryFulfilled;
+          await migrateInternalIDs(playlist.data.spec);
+        } catch (e) {
+          handleError(e, dispatch, 'Unable to get playlist');
+        }
+      };
+    },
     createPlaylist: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
       if (originalQuery) {
@@ -51,6 +63,22 @@ export const playlistAPI = generatedAPI.enhanceEndpoints({
     },
   },
 });
+
+/** @deprecated -- this migrates playlists saved with internal ids to uid  */
+async function migrateInternalIDs(playlist: PlaylistSpec) {
+  if (playlist?.items) {
+    for (const item of playlist.items) {
+      if (item.type === 'dashboard_by_id') {
+        item.type = 'dashboard_by_uid';
+        const uids = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
+        if (uids?.length) {
+          item.value = uids[0];
+        }
+      }
+    }
+  }
+}
+
 export const {
   useCreatePlaylistMutation,
   useDeletePlaylistMutation,
