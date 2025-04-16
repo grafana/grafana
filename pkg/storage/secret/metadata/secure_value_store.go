@@ -55,6 +55,7 @@ type secureValueMetadataStorage struct {
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
+// TODO LND Implement this
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
@@ -226,6 +227,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	return secureValue, nil
 }
 
+// TODO LND Implement this
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 
 	// Delete from the keeper.
@@ -301,6 +303,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return secureValues, nil
 }
 
+// TODO LND Implement this
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
 	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -322,6 +325,7 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	})
 }
 
+// TODO LND Implement this
 func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
 	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
