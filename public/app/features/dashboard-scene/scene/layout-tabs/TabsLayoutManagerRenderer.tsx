@@ -57,7 +57,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
                 {hasCopiedTab && (
-                  <Button icon="plus" variant="primary" fill="text" onClick={() => model.pasteTab()}>
+                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteTab()}>
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                   </Button>
                 )}
@@ -67,12 +67,20 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
         </DragDropContext>
       </TabsBar>
 
-      <div className={conditionalRenderingClass}>
+      {isEditing && (
+        <div className={conditionalRenderingClass}>
+          <TabContent className={styles.tabContentContainer}>
+            {currentTab && <layout.Component model={layout} />}
+          </TabContent>
+          {conditionalRenderingOverlay}
+        </div>
+      )}
+
+      {!isEditing && (
         <TabContent className={styles.tabContentContainer}>
           {currentTab && <layout.Component model={layout} />}
         </TabContent>
-        {isEditing && conditionalRenderingOverlay}
-      </div>
+      )}
     </div>
   );
 }

@@ -84,7 +84,7 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 			collectorEnabled = collector.EnabledFn()
 		}
 
-		if !(lookup[collector.UID] || collector.IncludedByDefault) || !collectorEnabled {
+		if (!lookup[collector.UID] && !collector.IncludedByDefault) || !collectorEnabled {
 			continue
 		}
 

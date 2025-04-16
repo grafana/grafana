@@ -42,7 +42,7 @@ func afterCreatePermissionCreator(ctx context.Context,
 	}
 
 	idtype := auth.GetIdentityType()
-	if !(idtype == authtypes.TypeUser || idtype == authtypes.TypeServiceAccount) {
+	if idtype != authtypes.TypeUser && idtype != authtypes.TypeServiceAccount {
 		return nil, fmt.Errorf("only users or service accounts may grant themselves permissions using an annotation")
 	}
 

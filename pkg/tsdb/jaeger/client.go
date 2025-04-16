@@ -26,6 +26,20 @@ type ServicesResponse struct {
 	Total  int         `json:"total"`
 }
 
+type DependenciesResponse struct {
+	Data   []ServiceDependency `json:"data"`
+	Errors []struct {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+	} `json:"errors"`
+}
+
+type ServiceDependency struct {
+	Parent    string `json:"parent"`
+	Child     string `json:"child"`
+	CallCount int    `json:"callCount"`
+}
+
 func New(url string, hc *http.Client, logger log.Logger, traceIdTimeEnabled bool) (JaegerClient, error) {
 	client := JaegerClient{
 		logger:             logger,
@@ -157,4 +171,60 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	// this is how it was implemented in the frontend before
 	trace = response.Data[0]
 	return trace, err
+}
+
+func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (DependenciesResponse, error) {
+	logger := j.logger.FromContext(ctx)
+	var dependencies DependenciesResponse
+
+	u, err := url.JoinPath(j.url, "/api/dependencies")
+	if err != nil {
+		return dependencies, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+	}
+
+	// Add time parameters
+	parsedURL, err := url.Parse(u)
+	if err != nil {
+		return dependencies, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+	}
+
+	query := parsedURL.Query()
+	if end > 0 {
+		query.Set("endTs", fmt.Sprintf("%d", end))
+	}
+	if start > 0 {
+		lookback := end - start
+		query.Set("lookback", fmt.Sprintf("%d", lookback))
+	}
+
+	parsedURL.RawQuery = query.Encode()
+	u = parsedURL.String()
+
+	res, err := j.httpClient.Get(u)
+	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return dependencies, backend.DownstreamError(err)
+		}
+		return dependencies, err
+	}
+
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res != nil && res.StatusCode/100 != 2 {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return dependencies, backend.DownstreamError(err)
+		}
+		return dependencies, err
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&dependencies); err != nil {
+		return dependencies, err
+	}
+
+	return dependencies, nil
 }

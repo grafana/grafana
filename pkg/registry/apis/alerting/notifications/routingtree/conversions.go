@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func convertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
 	spec := model.Spec{
 		Defaults: model.RouteDefaults{
 			GroupBy:        r.GroupByStr,

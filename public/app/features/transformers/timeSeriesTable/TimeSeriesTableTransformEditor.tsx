@@ -91,7 +91,10 @@ export function TimeSeriesTableTransformEditor({
         </InlineField>
         <InlineField
           label={t('transformers.time-series-table-transform-editor.label-time-field', 'Time field')}
-          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-time-field',
+            'The time field that will be used for the time series. If not selected the first found will be used.'
+          )}
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}

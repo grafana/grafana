@@ -470,7 +470,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
-		groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKey := models.GenerateGroupKey(rc.OrgID)
 		groupKey.NamespaceUID = fldr.UID
 		groupKey.RuleGroup = "test-group"
 		rule := models.RuleGen.
@@ -482,7 +482,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Create a rule in another group
-		groupKeyNotFromProm := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKeyNotFromProm := models.GenerateGroupKey(rc.OrgID)
 		groupKeyNotFromProm.NamespaceUID = fldr.UID
 		groupKeyNotFromProm.RuleGroup = "test-group-2"
 		ruleInOtherFolder := models.RuleGen.
@@ -568,7 +568,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -655,7 +655,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		rootFolderUID := ""
 		if withCustomFolderHeader {
 			rootFolderUID = unknownFolderUID
-			rc.Context.Req.Header.Set(folderUIDHeader, unknownFolderUID)
+			rc.Req.Header.Set(folderUIDHeader, unknownFolderUID)
 		}
 
 		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
@@ -696,7 +696,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -1038,7 +1038,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1085,7 +1085,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1110,7 +1110,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1135,7 +1135,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1166,7 +1166,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 
 		require.NoError(t, err)

@@ -121,7 +121,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
+	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
 	out, err := s.service.CreateTemplate(ctx, info.OrgID, convertToDomainModel(p))

@@ -396,7 +396,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
-					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					Time:         transition.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
 				if i > 0 {

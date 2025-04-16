@@ -176,7 +176,7 @@ func (f *FuncNode) Check(t *Tree) error {
 		// 	argType = TypeNumberSet
 		// }
 		if funcType == TypeVariantSet {
-			if !(argType == TypeNumberSet || argType == TypeSeriesSet || argType == TypeScalar) {
+			if argType != TypeNumberSet && argType != TypeSeriesSet && argType != TypeScalar {
 				return fmt.Errorf("parse: expected %v or %v for argument %v, got %v", TypeNumberSet, TypeSeriesSet, i, argType)
 			}
 		} else if funcType != argType {

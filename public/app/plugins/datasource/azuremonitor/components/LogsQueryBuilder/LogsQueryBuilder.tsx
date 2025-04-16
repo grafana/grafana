@@ -42,10 +42,11 @@ interface LogsQueryBuilderProps {
   templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
+  isLoadingSchema: boolean;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { query, onQueryChange, schema, datasource, timeRange } = props;
+  const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
@@ -70,6 +71,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       orderBy,
       columns,
       from,
+      basicLogsQuery,
     }: {
       limit?: number;
       reduce?: BuilderQueryEditorReduceExpression[];
@@ -79,6 +81,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       orderBy?: BuilderQueryEditorOrderByExpression[];
       columns?: string[];
       from?: BuilderQueryEditorPropertyExpression;
+      basicLogsQuery?: boolean;
     }) => {
       const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 
@@ -122,6 +125,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           ...query.azureLogAnalytics,
           builderQuery: updatedBuilderQuery,
           query: updatedQueryString,
+          basicLogsQuery: from ? basicLogsQuery : query.azureLogAnalytics?.basicLogsQuery,
         },
       });
     },
@@ -134,7 +138,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         {schema && tables.length === 0 && (
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
-        <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
+        <TableSection
+          {...props}
+          tables={tables}
+          allColumns={allColumns}
+          buildAndUpdateQuery={buildAndUpdateQuery}
+          isLoadingSchema={isLoadingSchema}
+        />
         <FilterSection
           {...props}
           allColumns={allColumns}

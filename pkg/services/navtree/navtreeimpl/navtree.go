@@ -139,7 +139,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,
@@ -148,7 +147,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -156,7 +154,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
-	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
+	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if uaVisibleForOrg {
@@ -283,10 +281,10 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.GetLogin() != c.SignedInUser.GetName() {
-		login = c.SignedInUser.GetLogin()
+	if c.GetLogin() != c.GetName() {
+		login = c.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -306,7 +304,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.GetName(),
+		Text:       c.GetName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -320,7 +318,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -338,7 +336,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
 			DashboardUIDs: uids,
 			Type:          searchstore.TypeDashboard,
-			OrgId:         c.SignedInUser.GetOrgID(),
+			OrgId:         c.GetOrgID(),
 			SignedInUser:  c.SignedInUser,
 		})
 		if err != nil {
@@ -370,7 +368,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.SignedInUser.HasRole(org.RoleViewer) {
+		if c.HasRole(org.RoleViewer) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
@@ -431,20 +429,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
-	}
 
-	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
-	// alerting API to maintain backwards compatibility.
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
-		contactPointsPerms = append(contactPointsPerms,
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
 
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
-		)
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
@@ -488,7 +480,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
-	if c.SignedInUser.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text:     "Recently deleted",
 			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -497,7 +489,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
@@ -571,18 +563,4 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
-}
-
-func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	drilldownChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
-			Text:     "Metrics",
-			SubTitle: "Queryless exploration of your metrics",
-			Id:       "explore/metrics",
-			Url:      s.cfg.AppSubURL + "/explore/metrics",
-			Icon:     "code-branch",
-		})
-	}
-	return drilldownChildNavs
 }

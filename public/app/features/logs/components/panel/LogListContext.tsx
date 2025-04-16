@@ -28,9 +28,11 @@ import { GetRowContextQueryFn } from './LogLineMenu';
 export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
+  hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
@@ -47,9 +49,11 @@ export const LogListContext = createContext<LogListContextData>({
   displayedFields: [],
   downloadLogs: () => {},
   filterLevels: [],
+  hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
   setFilterLevels: () => {},
+  setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
@@ -82,7 +86,9 @@ export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
   | 'displayedFields'
+  | 'forceEscape'
   | 'filterLevels'
+  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -98,6 +104,8 @@ export interface Props {
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   filterLevels?: LogLevel[];
+  forceEscape?: boolean;
+  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
@@ -125,11 +133,13 @@ export const LogListContextProvider = ({
   children,
   dedupStrategy,
   displayedFields,
+  filterLevels,
+  forceEscape = false,
+  hasUnescapedContent,
   getRowContextQuery,
   logs,
   logsMeta,
   logOptionsStorageKey,
-  filterLevels,
   logSupportsContext,
   onLogOptionsChange,
   onLogLineHover,
@@ -152,6 +162,8 @@ export const LogListContextProvider = ({
     displayedFields,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
+    forceEscape,
+    hasUnescapedContent,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -205,6 +217,12 @@ export const LogListContextProvider = ({
     }
   }, [filterLevels, logListState]);
 
+  useEffect(() => {
+    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
+      setLogListState({ ...logListState, hasUnescapedContent });
+    }
+  }, [hasUnescapedContent, logListState]);
+
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
@@ -219,6 +237,13 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('displayedFields', displayedFields);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setForceEscape = useCallback(
+    (forceEscape: boolean) => {
+      setLogListState({ ...logListState, forceEscape });
+    },
+    [logListState]
   );
 
   const setFilterLevels = useCallback(
@@ -322,6 +347,8 @@ export const LogListContextProvider = ({
         displayedFields: logListState.displayedFields,
         downloadLogs,
         filterLevels: logListState.filterLevels,
+        forceEscape: logListState.forceEscape,
+        hasUnescapedContent: logListState.hasUnescapedContent,
         getRowContextQuery,
         logSupportsContext,
         onLogLineHover,
@@ -335,6 +362,7 @@ export const LogListContextProvider = ({
         setDedupStrategy,
         setDisplayedFields,
         setFilterLevels,
+        setForceEscape,
         setLogListState,
         setPinnedLogs,
         setPrettifyJSON,
