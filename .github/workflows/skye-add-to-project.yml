@@ -1,13 +1,13 @@
-name: Add new issues/PRs to project
+name: Add issues and PRs to Skye project board
 on:
   issues:
     types: [opened]
   pull_request:
     types: [opened]
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write
 
 env:
   ORGANIZATION: grafana
