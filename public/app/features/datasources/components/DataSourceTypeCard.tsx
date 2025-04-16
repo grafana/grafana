@@ -4,6 +4,8 @@ import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../../core/internationalization';
+
 export type Props = {
   dataSourcePlugin: DataSourcePluginMeta;
   onClick: () => void;
@@ -45,7 +47,11 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       <Card.Actions className={styles.actions}>
         {learnMoreLink && (
           <LinkButton
-            aria-label={`${dataSourcePlugin.name}, learn more.`}
+            aria-label={t(
+              'datasources.data-source-type-card.aria-label-learn-more',
+              '{{dataSourcePluginName}}, learn more.',
+              { dataSourcePluginName: dataSourcePlugin.name }
+            )}
             href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             onClick={(e) => e.stopPropagation()}
             rel="noopener"

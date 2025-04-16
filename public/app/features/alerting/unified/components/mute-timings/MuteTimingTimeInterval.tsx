@@ -30,10 +30,12 @@ export const MuteTimingTimeInterval = () => {
     <FieldSet label={t('alerting.mute-timing-time-interval.label-time-intervals', 'Time intervals')}>
       <>
         <p>
-          A time interval is a definition for a moment in time. All fields are lists, and at least one list element must
-          be satisfied to match the field. If a field is left blank, any moment of time will match the field. For an
-          instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple
-          time intervals.
+          <Trans i18nKey="alerting.mute-timing-time-interval.description">
+            A time interval is a definition for a moment in time. All fields are lists, and at least one list element
+            must be satisfied to match the field. If a field is left blank, any moment of time will match the field. For
+            an instant of time to match a complete time interval, all fields must match. A mute timing can contain
+            multiple time intervals.
+          </Trans>
         </p>
         <Stack direction="column" gap={2}>
           {timeIntervals.map((timeInterval, timeIntervalIndex) => {
