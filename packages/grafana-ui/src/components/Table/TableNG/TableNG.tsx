@@ -498,7 +498,10 @@ export function TableNG(props: TableNGProps) {
         return 0;
       } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
-        return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
+
+        // Ensure we have a minimum height for the nested table even if data is empty
+        const rowCount = row.data?.length ?? 0;
+        return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
       }
       return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
     },
