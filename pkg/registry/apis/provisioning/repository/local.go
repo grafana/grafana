@@ -112,35 +112,34 @@ func (r *localRepository) Config() *provisioning.Repository {
 }
 
 // Validate implements provisioning.Repository.
-func (r *localRepository) Validate() (fields field.ErrorList) {
+func (r *localRepository) Validate() field.ErrorList {
 	cfg := r.config.Spec.Local
 	if cfg == nil {
-		fields = append(fields, &field.Error{
+		return field.ErrorList{&field.Error{
 			Type:  field.ErrorTypeRequired,
 			Field: "spec.local",
-		})
-		return fields
+		}}
 	}
 
 	// The path value must be set for local provisioning
 	if cfg.Path == "" {
-		fields = append(fields, field.Required(field.NewPath("spec", "local", "path"),
-			"must enter a path to local file"))
+		return field.ErrorList{field.Required(field.NewPath("spec", "local", "path"),
+			"must enter a path to local file")}
+	}
+
+	if err := safepath.IsSafe(cfg.Path); err != nil {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error())}
 	}
 
 	// Check if it is valid
 	_, err := r.resolver.LocalPath(cfg.Path)
 	if err != nil {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error()))
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error())}
 	}
 
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error()))
-	}
-
-	return fields
+	return nil
 }
 
 // Test implements provisioning.Repository.
