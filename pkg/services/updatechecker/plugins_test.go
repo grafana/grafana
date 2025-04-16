@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -205,6 +206,43 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 		require.Empty(t, update)
 
 		require.Empty(t, svc.availableUpdates["test-core-panel"])
+	})
+}
+func TestPluginUpdateChecker_updateAll(t *testing.T) {
+	t.Run("update is available", func(t *testing.T) {
+
+		pluginsFakeStore := map[string]string{}
+		availableUpdates := map[string]string{
+			"test-app-0": "1.0.0",
+			"test-app-1": "1.0.0",
+			"test-app-2": "1.0.0",
+		}
+
+		svc := PluginsService{
+			availableUpdates: availableUpdates,
+			log:              log.NewNopLogger(),
+			tracer:           tracing.InitializeTracerForTest(),
+			pluginInstaller: &fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
+					pluginsFakeStore[pluginID] = version
+					return nil
+				},
+				RemoveFunc: func(ctx context.Context, pluginID, version string) error {
+					delete(pluginsFakeStore, pluginID)
+					return nil
+				},
+			},
+		}
+
+		svc.updateAll(context.Background())
+
+		require.Equal(t, 0, len(svc.availableUpdates))
+		require.Equal(t, len(availableUpdates), len(pluginsFakeStore))
+
+		for pluginID, version := range availableUpdates {
+			require.Equal(t, version, pluginsFakeStore[pluginID])
+		}
+
 	})
 }
 
