@@ -1,20 +1,23 @@
+import { countBy, isEmpty } from 'lodash';
+
 import { ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver } from '../api.gen';
 
 // type aliases – we should centralise th
 type ContactPoint = ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 
-export function getContactPointDescription(contactPoint: ContactPoint) {
-  const integrationCounts = new Map<string, number>();
+export function getContactPointDescription(contactPoint: ContactPoint): string {
+  if (isEmpty(contactPoint.spec.integrations)) {
+    return '<empty contact point>';
+  }
 
   // Count the occurrences of each integration type
-  contactPoint.spec.integrations?.forEach((integration) => {
-    const type = integration.type;
-    integrationCounts.set(type, (integrationCounts.get(type) || 0) + 1);
-  });
+  const integrationCounts = countBy(contactPoint.spec.integrations, (integration) => integration.type);
 
-  // Format the description string
-  const description = Array.from(integrationCounts.entries())
-    .map(([type, count]) => (count > 1 ? `${type} (${count})` : type))
+  const description = Object.entries(integrationCounts)
+    .map(([type, count]) => {
+      // either "email" or "email (2)" but not "email (1)"
+      return count > 1 ? `${type} (${count})` : type;
+    })
     .join(', ');
 
   return description;
