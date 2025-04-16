@@ -30,6 +30,11 @@ The generator automates the following:
 5. Formats all generated files using Prettier and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
 
+## Limitations
+
+- The generator is optimized for Kubernetes-style APIs, as it requires Kubernetes resource details. For legacy APIs, manual adjustments may be needed.
+- It expects processed OpenAPI specifications to exist in the `openapi_snapshots` directory
+
 ## Troubleshooting
 
 ### Missing OpenAPI Schema
