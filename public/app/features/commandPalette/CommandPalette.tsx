@@ -3,15 +3,13 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, EmptyState, Icon, LoadingBar, Text, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-
-import { getModKey } from '../../core/utils/browser';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -26,6 +24,15 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
+  useRegisterStaticActions();
+  return (
+    <KBarPortal>
+      <CommandPaletteContents />
+    </KBarPortal>
+  );
+}
+
+function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
@@ -36,10 +43,12 @@ export function CommandPalette() {
     actions: state.actions,
   }));
 
-  useRegisterStaticActions();
   useRegisterRecentDashboardsActions(searchQuery);
-  const { applyChanges } = useRegisterScopesActions(searchQuery, currentRootActionId);
 
+  const queryToggle = useCallback(() => query.toggle(), [query]);
+  const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+
+  // Dashboards and folders
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -52,64 +61,44 @@ export function CommandPalette() {
 
   // Report interaction when opened
   useEffect(() => {
-    showing && reportInteraction('command_palette_opened');
-  }, [showing]);
+    reportInteraction('command_palette_opened');
+  }, []);
 
+  // To show breadcrumbs of actions selected if they are nested
   const ancestorActions = currentRootActionId
     ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
     : [];
 
-  useEffect(() => {
-    function handler(event: KeyboardEvent) {
-      if (applyChanges && event.key === 'Enter' && event.metaKey) {
-        event.preventDefault();
-        applyChanges();
-        query.toggle();
-      }
-    }
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [applyChanges, query]);
-
-  // console.log('ancestorActions', ancestorActions);
   return (
-    <KBarPortal>
-      <KBarPositioner className={styles.positioner}>
-        <KBarAnimator className={styles.animator}>
-          <FocusScope contain autoFocus restoreFocus>
-            <div {...overlayProps} {...dialogProps}>
-              <div className={styles.searchContainer}>
-                <Icon name="search" size="md" />
-                {ancestorActions.map((action) => {
-                  return <span className={styles.ancestorsPills}>{action.name}</span>;
-                })}
-                <KBarSearch
-                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
-                  className={styles.search}
-                />
-                {applyChanges && (
-                  <Button
-                    onClick={() => {
-                      applyChanges();
-                      query.toggle();
-                    }}
-                  >
-                    Apply&nbsp;
-                    <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
-                  </Button>
-                )}
-                <div className={styles.loadingBarContainer}>
-                  {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
-                </div>
-              </div>
-              <div className={styles.resultsContainer}>
-                <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+    <KBarPositioner className={styles.positioner}>
+      <KBarAnimator className={styles.animator}>
+        <FocusScope contain autoFocus restoreFocus>
+          <div {...overlayProps} {...dialogProps}>
+            <div className={styles.searchContainer}>
+              <Icon name="search" size="md" className={styles.searchIcon} />
+              {ancestorActions.length > 0 && (
+                <span className={styles.breadcrumbs}>
+                  {ancestorActions.map((action, index) => (
+                    <React.Fragment key={action.id || index}>{action.name} / </React.Fragment>
+                  ))}
+                </span>
+              )}
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
+                className={styles.search}
+              />
+              <div className={styles.loadingBarContainer}>
+                {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
             </div>
-          </FocusScope>
-        </KBarAnimator>
-      </KBarPositioner>
-    </KBarPortal>
+            {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
+            <div className={styles.resultsContainer}>
+              <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+            </div>
+          </div>
+        </FocusScope>
+      </KBarAnimator>
+    </KBarPositioner>
   );
 }
 
@@ -237,9 +226,9 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       background: theme.components.input.background,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
       position: 'relative',
+      justifyContent: 'space-between',
     }),
     search: css({
       fontSize: theme.typography.fontSize,
@@ -268,19 +257,40 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       borderTop: 'none',
       marginTop: 0,
     }),
-    ancestorsPills: css({
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(0, 1),
+    breadcrumbs: css({
+      label: 'breadcrumbs',
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
+      whiteSpace: 'nowrap',
+    }),
+    scopesText: css({
+      label: 'scopesText',
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    searchIcon: css({
+      marginRight: theme.spacing(1),
+    }),
+    selectedScope: css({
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0, 0.5),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      alignItems: 'center',
       position: 'relative',
       border: `1px solid ${theme.colors.background.secondary}`,
       whiteSpace: 'nowrap',
+      marginRight: theme.spacing(0.5),
     }),
   };
 };

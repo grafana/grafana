@@ -1471,6 +1471,10 @@ exports[`better eslint`] = {
     "public/app/features/commandPalette/CommandPalette.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
+    "public/app/features/commandPalette/ScopesRow.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
     "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],

@@ -1,14 +1,13 @@
 import { useRegisterActions } from 'kbar';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
-
-import { Icon } from '@grafana/ui';
 
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { NodesMap, Node, TreeScope } from '../../scopes/selector/types';
+import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
@@ -16,6 +15,9 @@ import { getRecentDashboardActions } from './dashboardActions';
 import { useStaticActions } from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
+/**
+ * Register navigation actions to different parts of grafana or some preferences stuff like themes.
+ */
 export function useRegisterStaticActions() {
   const extensionActions = useExtensionActions();
   const staticActions = useStaticActions();
@@ -29,7 +31,6 @@ export function useRegisterStaticActions() {
 
 export function useRegisterRecentDashboardsActions(searchQuery: string) {
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
-  // Load recent dashboards - we don't want them to reload when the nav tree changes
   useEffect(() => {
     if (!searchQuery) {
       getRecentDashboardActions()
@@ -43,7 +44,15 @@ export function useRegisterRecentDashboardsActions(searchQuery: string) {
   useRegisterActions(recentDashboardActions, [recentDashboardActions]);
 }
 
-export function useRegisterScopesActions(searchQuery: string, parentId?: string | null) {
+/**
+ * Special actions for scopes. Scopes are already hierarchical and loaded dynamically so we create actions based on
+ * them as we load them. This also returns an additional component to be shown with selected actions and a button to
+ * apply the selection.
+ * @param searchQuery
+ * @param onApply
+ * @param parentId
+ */
+export function useRegisterScopesActions(searchQuery: string, onApply: () => void, parentId?: string | null) {
   const services = useScopesServices();
 
   // Conditional hooks, but this should only change if feature toggles changes.
@@ -51,12 +60,15 @@ export function useRegisterScopesActions(searchQuery: string, parentId?: string 
     return { applyChanges: undefined };
   }
 
-  const { updateNode, toggleNodeSelect, apply } = services.scopesSelectorService;
+  const { updateNode, toggleNodeSelect, apply, resetSelection } = services.scopesSelectorService;
 
-  // Initialize the scopes first time this runs.
+  // Initialize the scopes first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
     updateNode([''], true, '');
-  }, [updateNode]);
+    return () => {
+      resetSelection();
+    };
+  }, [updateNode, resetSelection]);
 
   useEffect(() => {
     updateNode(getScopePathFromActionId(parentId), true, searchQuery);
@@ -71,8 +83,8 @@ export function useRegisterScopesActions(searchQuery: string, parentId?: string 
   const nodesActions = mapScopeNodesToActions(nodes, treeScopes, toggleNodeSelect);
 
   // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
-  // scopes tree though is loaded on demand, and it would be a deep check to see if something changes so the current
-  // parentId and searchQuery are good proxy to when the nodes and thus action would change.
+  // scopes tree though is loaded on demand, and it would be a deep check to see if something changes these deps are
+  // approximation of when the actions really change.
   useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes]);
 
   // TODO would probably make sense to have this on the selectorService itself
@@ -86,16 +98,34 @@ export function useRegisterScopesActions(searchQuery: string, parentId?: string 
       .sort()
       .join('');
 
+  const finalApply = useCallback(() => {
+    apply();
+    onApply();
+  }, [apply, onApply]);
+
+  // Add keyboard shortcut to apply the selection.
+  useEffect(() => {
+    function handler(event: KeyboardEvent) {
+      if (isDirty && event.key === 'Enter' && event.metaKey) {
+        event.preventDefault();
+        finalApply();
+      }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isDirty, finalApply]);
+
   return {
-    applyChanges: isDirty
-      ? () => {
-          apply();
-        }
-      : undefined,
+    scopesRow:
+      isDirty || treeScopes?.length ? <ScopesRow treeScopes={treeScopes} apply={finalApply} isDirty={isDirty} /> : null,
   };
 }
 
-function mapScopeNodesToActions(nodes: NodesMap, treeScopes: TreeScope[], toggleNodeSelect: (path: string[]) => void) {
+function mapScopeNodesToActions(
+  nodes: NodesMap,
+  selectedScopes: TreeScope[],
+  toggleNodeSelect: (path: string[]) => void
+) {
   const actions: CommandPaletteAction[] = [
     {
       id: 'scopes',
@@ -113,6 +143,14 @@ function mapScopeNodesToActions(nodes: NodesMap, treeScopes: TreeScope[], toggle
     }
     for (const key of Object.keys(node.nodes)) {
       const child = node.nodes[key];
+
+      // Selected scopes are not shown in the list but in separate section
+      if (child.nodeType === 'leaf') {
+        if (selectedScopes.map((s) => s.scopeName).includes(child.linkId!)) {
+          continue;
+        }
+      }
+
       const action: CommandPaletteAction = {
         id: `${parentId}/${child.name}`,
         name: child.title,
@@ -122,10 +160,6 @@ function mapScopeNodesToActions(nodes: NodesMap, treeScopes: TreeScope[], toggle
       };
 
       if (child.nodeType === 'leaf') {
-        if (treeScopes.map((s) => s.scopeName).includes(child.linkId!)) {
-          action.icon = <Icon name={'check-circle'} />;
-          action.priority = 100;
-        }
         action.perform = () => {
           toggleNodeSelect(getScopePathFromActionId(action.id));
         };

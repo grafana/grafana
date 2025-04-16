@@ -23,6 +23,7 @@ export interface SelectedScope {
 }
 
 export interface TreeScope {
+  title: string;
   scopeName: string;
   path: string[];
 }

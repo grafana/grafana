@@ -135,7 +135,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     const nodeName = path[path.length - 1];
-    const { linkId } = parentNode.nodes[nodeName];
+    const { linkId, title } = parentNode.nodes[nodeName];
 
     const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
@@ -148,9 +148,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         treeScopes.length === 0 ||
         Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
-      const treeScope = {
+      const treeScope: TreeScope = {
         scopeName: linkId!,
         path,
+        title,
       };
 
       this.updateState({
@@ -163,7 +164,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  changeScopes = (scopeNames: string[]) => this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
+  changeScopes = (scopeNames: string[]) => {
+    this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [], title: scopeName })));
+  };
 
   /**
    * Apply the selected scopes. Apart from setting the scopes it also fetches the scope metadata and also loads the
@@ -188,7 +191,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
-    this.updateState({ selectedScopes, loading: false });
+
+    // Make sure the treeScopes also have the right title as we use it to display the selection in the UI while to set
+    // the scopes you just need the name/id.
+    const updatedTreeScopes = treeScopes.map((treeScope) => {
+      const matchingSelectedScope = selectedScopes.find(
+        (selectedScope) => selectedScope.scope.metadata.name === treeScope.scopeName
+      );
+      return {
+        ...treeScope,
+        title: matchingSelectedScope?.scope.spec.title || treeScope.title,
+      };
+    });
+
+    this.updateState({ selectedScopes, treeScopes: updatedTreeScopes, loading: false });
   };
 
   public removeAllScopes = () => this.setNewScopes([]);
@@ -229,6 +245,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   public apply = () => {
     this.setNewScopes();
   };
+
+  public resetSelection = () => {
+    this.updateState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
+  };
 }
 
 /**
@@ -251,6 +271,7 @@ function getTreeScopesFromSelectedScopes(scopes: SelectedScope[]): TreeScope[] {
   return scopes.map(({ scope, path }) => ({
     scopeName: scope.metadata.name,
     path,
+    title: scope.spec.title,
   }));
 }
 
