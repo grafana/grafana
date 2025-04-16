@@ -21,12 +21,12 @@ import (
 
 func TestCalculateChanges(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupMocks    func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
-		changes       []repository.VersionedFileChange
-		expectedInfo  changeInfo
-		expectedURLs  map[string]string
-		expectedError string
+		name           string
+		setupMocks     func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
+		changes        []repository.VersionedFileChange
+		expectedInfo   changeInfo
+		expectedError  string
+		grafanaBaseURL string
 	}{
 		{
 			name: "with screenshot",
@@ -87,11 +87,18 @@ func TestCalculateChanges(t *testing.T) {
 				Path:   "path/to/file.json",
 				Ref:    "ref",
 			}},
-			expectedURLs: map[string]string{
-				"Grafana":         "http://host/d/the-uid/hello-world",
-				"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
-				"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-				"PreviewSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+					PreviewScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+				}},
 			},
 		},
 		{
@@ -151,11 +158,18 @@ func TestCalculateChanges(t *testing.T) {
 				Path:   "path/to/file.json",
 				Ref:    "ref",
 			}},
-			expectedURLs: map[string]string{
-				"Grafana":         "http://host/d/the-uid/hello-world",
-				"GrafanaSnapshot": "",
-				"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-				"PreviewSnapshot": "",
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "",
+					PreviewScreenshotURL: "",
+				}},
 			},
 		},
 		{
@@ -223,6 +237,21 @@ func TestCalculateChanges(t *testing.T) {
 			}(),
 			expectedInfo: changeInfo{
 				SkippedFiles: 5,
+				Changes: func() []fileChangeInfo {
+					changes := []fileChangeInfo{}
+					for range 10 {
+						changes = append(changes, fileChangeInfo{
+							Change: repository.VersionedFileChange{
+								Action: repository.FileActionCreated,
+								Path:   "path/to/file.json",
+								Ref:    "ref",
+							},
+							GrafanaURL: "http://host/d/the-uid/hello-world",
+							PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+						})
+					}
+					return changes
+				}(),
 			},
 		},
 		{
@@ -640,7 +669,8 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "malformed grafana url",
+			name:           "malformed grafana url",
+			grafanaBaseURL: "ht tp://bad url/",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
@@ -723,6 +753,10 @@ func TestCalculateChanges(t *testing.T) {
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
 			evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+				if tt.grafanaBaseURL != "" {
+					return tt.grafanaBaseURL
+				}
+
 				return "http://host/"
 			})
 
@@ -739,22 +773,15 @@ func TestCalculateChanges(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			if tt.expectedURLs != nil {
-				require.Equal(t, tt.expectedURLs, map[string]string{
-					"Grafana":         info.Changes[0].GrafanaURL,
-					"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
-					"Preview":         info.Changes[0].PreviewURL,
-					"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
-				})
-			}
+			require.Equal(t, len(tt.expectedInfo.Changes), len(info.Changes))
+			require.Equal(t, tt.expectedInfo.SkippedFiles, info.SkippedFiles)
 
-			if tt.name == "process first 10 files" {
-				require.Equal(t, 10, len(info.Changes))
-				require.Equal(t, tt.expectedInfo.SkippedFiles, info.SkippedFiles)
-				for _, change := range info.Changes {
-					require.NotEmpty(t, change.GrafanaURL)
-					require.Empty(t, change.GrafanaScreenshotURL)
-				}
+			// compare change URLs
+			for i, change := range info.Changes {
+				require.Equal(t, tt.expectedInfo.Changes[i].GrafanaURL, change.GrafanaURL)
+				require.Equal(t, tt.expectedInfo.Changes[i].PreviewURL, change.PreviewURL)
+				require.Equal(t, tt.expectedInfo.Changes[i].GrafanaScreenshotURL, change.GrafanaScreenshotURL)
+				require.Equal(t, tt.expectedInfo.Changes[i].PreviewScreenshotURL, change.PreviewScreenshotURL)
 			}
 		})
 	}
