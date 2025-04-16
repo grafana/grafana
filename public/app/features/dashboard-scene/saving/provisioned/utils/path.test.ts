@@ -46,7 +46,7 @@ describe('generatePath', () => {
       folderPath: 'folder/path',
     });
 
-    expect(result).toBe('folder/path/my-dashboard.json');
+    expect(result).toBe('folder/path/my-dashboard.yaml');
   });
 
   it('should use pathFromAnnotation when both are provided', () => {
