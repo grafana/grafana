@@ -4,13 +4,12 @@ import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, IconButton, Spinner, useStyles2, Text, Stack } from '@grafana/ui';
+import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
-import { RecentScopes } from './RecentScopes';
 import { ScopesInput } from './ScopesInput';
 import { ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
@@ -79,13 +78,6 @@ export const ScopesSelector = () => {
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <>
-                  <RecentScopes
-                    recentScopes={recentScopes}
-                    onSelect={(recentScopeSet) => {
-                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
-                      scopesSelectorService.closeAndApply();
-                    }}
-                  />
                   <ScopesTree
                     nodes={nodes}
                     nodePath={['']}
@@ -93,6 +85,11 @@ export const ScopesSelector = () => {
                     scopes={treeScopes}
                     onNodeUpdate={updateNode}
                     onNodeSelectToggle={toggleNodeSelect}
+                    recentScopes={recentScopes}
+                    onRecentScopesSelect={(recentScopeSet) => {
+                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
+                      scopesSelectorService.closeAndApply();
+                    }}
                   />
                 </>
               )}

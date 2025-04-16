@@ -10,12 +10,12 @@ export interface ScopesTreeHeadlineProps {
   anyChildExpanded: boolean;
   query: string;
   resultsNodes: Node[];
+  isRootNode: boolean;
 }
 
-export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {
+export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes, isRootNode }: ScopesTreeHeadlineProps) {
   const styles = useStyles2(getStyles);
-
-  if (anyChildExpanded) {
+  if (anyChildExpanded || (resultsNodes.some((n) => n.nodeType === 'container') && !query)) {
     return null;
   }
 
