@@ -183,11 +183,11 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log:                log.NewNopLogger(),
-			tracer:             tracing.InitializeTracerForTest(),
-			updateCheckURL:     updateCheckURL,
-			managedPlugins:     &managedplugins.Noop{},
-			provisionedPlugins: &provisionedplugins.Noop{},
+			log:                       log.NewNopLogger(),
+			tracer:                    tracing.InitializeTracerForTest(),
+			updateCheckURL:            updateCheckURL,
+			managedPluginsManager:     &managedplugins.Noop{},
+			provisionedPluginsManager: &provisionedplugins.Noop{},
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())

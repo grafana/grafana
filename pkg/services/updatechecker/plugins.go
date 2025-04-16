@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -28,19 +29,20 @@ import (
 )
 
 type PluginsService struct {
-	availableUpdates map[string]string
+	availableUpdates   map[string]string
+	provisionedPlugins []string
 
-	enabled            bool
-	grafanaVersion     string
-	pluginStore        pluginstore.Store
-	httpClient         httpClient
-	mutex              sync.RWMutex
-	log                log.Logger
-	tracer             tracing.Tracer
-	updateCheckURL     *url.URL
-	pluginInstaller    plugins.Installer
-	managedPlugins     managedplugins.Manager
-	provisionedPlugins provisionedplugins.Manager
+	enabled                   bool
+	grafanaVersion            string
+	pluginStore               pluginstore.Store
+	httpClient                httpClient
+	mutex                     sync.RWMutex
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	updateCheckURL            *url.URL
+	pluginInstaller           plugins.Installer
+	managedPluginsManager     managedplugins.Manager
+	provisionedPluginsManager provisionedplugins.Manager
 
 	features featuremgmt.FeatureToggles
 }
@@ -74,18 +76,18 @@ func ProvidePluginsService(cfg *setting.Cfg,
 	}
 
 	return &PluginsService{
-		enabled:            cfg.CheckForPluginUpdates,
-		grafanaVersion:     cfg.BuildVersion,
-		httpClient:         cl,
-		log:                logger,
-		tracer:             tracer,
-		pluginStore:        pluginStore,
-		availableUpdates:   make(map[string]string),
-		updateCheckURL:     parsedUpdateCheckURL,
-		pluginInstaller:    pluginInstaller,
-		features:           features,
-		managedPlugins:     managedPlugins,
-		provisionedPlugins: provisionedPlugins,
+		enabled:                   cfg.CheckForPluginUpdates,
+		grafanaVersion:            cfg.BuildVersion,
+		httpClient:                cl,
+		log:                       logger,
+		tracer:                    tracer,
+		pluginStore:               pluginStore,
+		availableUpdates:          make(map[string]string),
+		updateCheckURL:            parsedUpdateCheckURL,
+		pluginInstaller:           pluginInstaller,
+		features:                  features,
+		managedPluginsManager:     managedPlugins,
+		provisionedPluginsManager: provisionedPlugins,
 	}, nil
 }
 
@@ -230,7 +232,7 @@ func (s *PluginsService) isPluginUpdatable(ctx context.Context, plugin pluginsto
 }
 
 func (s *PluginsService) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.managedPlugins.ManagedPlugins(ctx) {
+	for _, managedPlugin := range s.managedPluginsManager.ManagedPlugins(ctx) {
 		if managedPlugin == pluginID {
 			return true
 		}
@@ -239,16 +241,14 @@ func (s *PluginsService) isManaged(ctx context.Context, pluginID string) bool {
 }
 
 func (s *PluginsService) isProvisioned(ctx context.Context, pluginID string) bool {
-	provisionedPlugins, err := s.provisionedPlugins.ProvisionedPlugins(ctx)
-	if err != nil {
-		return false
-	}
-	for _, provisionedPlugin := range provisionedPlugins {
-		if provisionedPlugin == pluginID {
-			return true
+	if s.provisionedPlugins == nil {
+		var err error
+		s.provisionedPlugins, err = s.provisionedPluginsManager.ProvisionedPlugins(ctx)
+		if err != nil {
+			return false
 		}
 	}
-	return false
+	return slices.Contains(s.provisionedPlugins, pluginID)
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {
