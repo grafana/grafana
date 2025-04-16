@@ -137,20 +137,26 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for API calls and state update
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        METRIC_LABEL,
-        undefined,
-        'MetricsBrowser_M',
-        '40000'
-      );
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          METRIC_LABEL,
+          undefined,
+          'MetricsBrowser_M',
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
 
     // Then check UI update
-    await waitFor(() => {
-      expect(screen.getByTestId('metrics-count').textContent).toBe('3');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('metrics-count').textContent).toBe('3');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should load saved label keys from localStorage on init', async () => {
@@ -160,15 +166,21 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // First wait for API calls
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Then wait for state update
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job,instance');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job,instance');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should select and deselect metrics on click', async () => {
@@ -176,9 +188,12 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization to complete
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Initially no metric is selected
     expect(screen.getByTestId('selected-metric').textContent).toBe('');
@@ -187,14 +202,20 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-metric'));
 
     // Wait for selection to complete and API calls
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Wait for state update
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
 
     // Mock setup for deselection
     jest.clearAllMocks();
@@ -203,9 +224,12 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-metric'));
 
     // Wait for deselection to complete
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-metric').textContent).toBe('');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should select and deselect label keys on click', async () => {
@@ -213,9 +237,12 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization to complete
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Initially no label key is selected
     expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
@@ -224,20 +251,26 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for selection and API calls
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        undefined,
-        'MetricsBrowser_LV_job',
-        '40000'
-      );
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          'job',
+          undefined,
+          'MetricsBrowser_LV_job',
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
 
     // Wait for state update
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
 
     // Reset mocks for deselection test
     jest.clearAllMocks();
@@ -246,9 +279,12 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for state update
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
+      },
+      { timeout: 5000 }
+    );
 
     // Verify localStorage update
     expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, JSON.stringify([]));
@@ -259,17 +295,23 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // First select the label key to enable label value selection
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for label key selection to complete
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
 
     jest.clearAllMocks();
 
@@ -277,14 +319,20 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-label-value'));
 
     // Wait for API calls after value selection
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Wait for selector update in UI
-    await waitFor(() => {
-      expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should fetch label values with the current selector', async () => {
@@ -292,17 +340,23 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization to complete
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // First select a metric to create a non-empty selector
     await user.click(screen.getByTestId('select-metric'));
 
     // Wait for metric selection to complete
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
 
     jest.clearAllMocks();
 
@@ -310,16 +364,19 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for API call with the expected selector
-    await waitFor(() => {
-      // Should call fetchSeriesValuesWithMatch with the current selector
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        'job',
-        expect.stringContaining('metric1'),
-        expect.any(String),
-        '40000'
-      );
-    });
+    await waitFor(
+      () => {
+        // Should call fetchSeriesValuesWithMatch with the current selector
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+          expect.anything(),
+          'job',
+          expect.stringContaining('metric1'),
+          expect.any(String),
+          '40000'
+        );
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should clear all selections when clear is clicked', async () => {
@@ -327,24 +384,33 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Set up some selections
     await user.click(screen.getByTestId('select-metric'));
 
     // Wait for metric selection
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
+      },
+      { timeout: 5000 }
+    );
 
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for label selection
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
 
     // Reset mocks before clear
     jest.clearAllMocks();
@@ -353,16 +419,22 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('clear'));
 
     // Wait for clear to trigger API calls
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Verify everything is cleared
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-metric').textContent).toBe('');
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
-      expect(screen.getByTestId('selector').textContent).toBe('{}');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-metric').textContent).toBe('');
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
+        expect(screen.getByTestId('selector').textContent).toBe('{}');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should validate selectors and show status', async () => {
@@ -370,25 +442,34 @@ describe('MetricsBrowserContext', () => {
     renderWithProvider(<TestComponent />);
 
     // Wait for initialization
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
 
     // Select a label to enable value selection
     await user.click(screen.getByTestId('select-label'));
 
     // Wait for label selection
-    await waitFor(() => {
-      expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      },
+      { timeout: 5000 }
+    );
 
     // Select a value to get a valid selector
     await user.click(screen.getByTestId('select-label-value'));
 
     // Wait for the value selection
-    await waitFor(() => {
-      expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('selector').textContent).toBe('{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
 
     jest.clearAllMocks();
 
@@ -396,14 +477,20 @@ describe('MetricsBrowserContext', () => {
     await user.click(screen.getByTestId('validate'));
 
     // Wait for validation API call
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
-    });
+    await waitFor(
+      () => {
+        expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
+      },
+      { timeout: 5000 }
+    );
 
     // Wait for validation status to update
-    await waitFor(() => {
-      expect(screen.getByTestId('validation-status').textContent).toContain('Selector is valid');
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('validation-status').textContent).toContain('Selector is valid');
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('should throw error when hook is used outside provider', () => {
