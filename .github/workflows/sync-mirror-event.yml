@@ -34,8 +34,9 @@ jobs:
                 workflow_id: 'mirror-branch-and-apply-patches-event.yml',
                 ref: 'main',
                 inputs: {
-                  ref: "${{ github.ref_name }}",
+                  src_ref: "${{ github.ref_name }}",
                   src_repo: "${{ github.repository }}",
+                  src_sha: "${{ github.sha }}",
                   dest_repo: "${{ github.repository }}-security-mirror",
                   patch_repo: "${{ github.repository }}-security-patches"
                 }
