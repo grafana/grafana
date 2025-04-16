@@ -132,6 +132,24 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 		require.EqualError(t, err, "render error")
 	})
 
+	t.Run("should fail when the rendered file does not exist", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		render := rendering.NewMockService(ctrl)
+		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+			Return(&rendering.RenderResult{
+				FilePath: "/non/existent/file.png",
+			}, nil)
+
+		blobstore := NewMockBlobStoreClient(t)
+
+		renderer := NewScreenshotRenderer(render, blobstore)
+		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "test", nil)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no such file or directory")
+	})
+
 	t.Run("should fail when blobstore fails", func(t *testing.T) {
 		tmpFile, cleanup := setupTempFile(t)
 		defer cleanup()
