@@ -23,7 +23,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
         size="sm"
         onClick={() => setShowConfirm(true)}
         {...buttonProps}
-        style={{ width: 'fit-content' }}
+        style={{ width: 'fit-content', backgroundColor: action.style?.backgroundColor }}
       >
         {action.title}
       </Button>

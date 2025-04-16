@@ -63,6 +63,9 @@ export const getActions = (
         buildActionOnClick(action, boundReplaceVariables);
       },
       oneClick: action.oneClick ?? false,
+      style: {
+        backgroundColor: action.style?.backgroundColor,
+      },
     };
 
     return actionModel;

@@ -2,7 +2,16 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-import { Switch, Field, InlineField, InlineFieldRow, RadioButtonGroup, JSONFormatter, useStyles2 } from '@grafana/ui';
+import {
+  Switch,
+  Field,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  JSONFormatter,
+  useStyles2,
+  ColorPickerInput,
+} from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
@@ -80,6 +89,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       fetch: {
         ...value.fetch,
         headers,
+      },
+    });
+  };
+
+  const onBackgroundColorChange = (backgroundColor: string) => {
+    onChange(index, {
+      ...value,
+      style: {
+        ...value.style,
+        backgroundColor,
       },
     });
   };
@@ -204,6 +223,18 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           {renderJSON(value?.fetch.body)}
         </>
       )}
+
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
+        <InlineFieldRow>
+          <InlineField
+            label={t('actions.action-editor.button.style.background-color', 'Color')}
+            labelWidth={LABEL_WIDTH}
+            grow={true}
+          >
+            <ColorPickerInput value={value?.style?.backgroundColor} onChange={onBackgroundColorChange} />
+          </InlineField>
+        </InlineFieldRow>
+      </Field>
     </div>
   );
 });
