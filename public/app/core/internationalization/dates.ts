@@ -4,7 +4,11 @@ import memoize from 'micro-memoize';
 
 import { config } from 'app/core/config';
 
+import { getI18next } from './index';
+
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
+
+const isLocaleEnabled = config.featureToggles.localeFormatPreference;
 
 const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
   return new Intl.DateTimeFormat(locale, options);
@@ -20,17 +24,20 @@ export const formatDate = deepMemoize(
       return formatDate(new Date(value), format);
     }
 
-    const locale = config.locale;
-    const dateFormatter = createDateTimeFormatter(locale, format);
+    const i18n = getI18next();
+    const currentLocale = isLocaleEnabled ? config.locale : i18n.language;
+
+    const dateFormatter = createDateTimeFormatter(currentLocale, format);
     return dateFormatter.format(value);
   }
 );
 
 export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const locale = config.locale;
+    const i18n = getI18next();
+    const currentLocale = isLocaleEnabled ? config.locale : i18n.language;
 
-    const dateFormatter = createDurationFormatter(locale, options);
+    const dateFormatter = createDurationFormatter(currentLocale, options);
     return dateFormatter.format(duration);
   }
 );
