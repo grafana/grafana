@@ -82,192 +82,212 @@ func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 }
 
 func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
-	t.Run("should fail when path contains protocol", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+	type testCase struct {
+		name           string
+		path           string
+		queryParams    url.Values
+		repoInfo       provisioning.ResourceRepositoryInfo
+		setupRender    func(ctrl *gomock.Controller) rendering.Service
+		setupBlobstore func(t *testing.T) BlobStoreClient
+		expectedURL    string
+		expectedError  string
+	}
 
-		render := rendering.NewMockService(ctrl)
-		blobstore := NewMockBlobStoreClient(t)
+	tests := []testCase{
+		{
+			name: "should fail when path contains protocol",
+			path: "http://test",
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				return rendering.NewMockService(ctrl)
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				return NewMockBlobStoreClient(t)
+			},
+			expectedError: "path should be relative",
+		},
+		{
+			name: "should fail when path starts with slash",
+			path: "/test",
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				return rendering.NewMockService(ctrl)
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				return NewMockBlobStoreClient(t)
+			},
+			expectedError: "path should not start with slash",
+		},
+		{
+			name: "should fail when render service fails",
+			path: "test",
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
+						require.Equal(t, "test?kiosk", opts.Path)
+						require.Equal(t, int64(1), opts.OrgID)
+						require.Equal(t, int64(1), opts.UserID)
+						require.Equal(t, 1024, opts.Width)
+						require.Equal(t, -1, opts.Height)
+						require.Equal(t, models.ThemeDark, opts.Theme)
+						return nil, errors.New("render error")
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				return NewMockBlobStoreClient(t)
+			},
+			expectedError: "render error",
+		},
+		{
+			name: "should fail when the rendered file does not exist",
+			path: "test",
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					Return(&rendering.RenderResult{
+						FilePath: "/non/existent/file.png",
+					}, nil)
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				return NewMockBlobStoreClient(t)
+			},
+			expectedError: "no such file or directory",
+		},
+		{
+			name: "should fail when blobstore fails",
+			path: "test",
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					Return(&rendering.RenderResult{
+						FilePath: tmpFile,
+					}, nil)
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.MatchedBy(func(req *resource.PutBlobRequest) bool {
+					return req.Resource.Group == provisioning.GROUP &&
+						req.Resource.Resource == provisioning.RepositoryResourceInfo.GroupResource().Resource &&
+						req.Method == resource.PutBlobRequest_GRPC &&
+						req.ContentType == "image/png"
+				})).Return(nil, errors.New("blobstore error"))
+				return blobstore
+			},
+			expectedError: "blobstore error",
+		},
+		{
+			name: "should return URL when blobstore provides one",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "test-ns",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					Return(&rendering.RenderResult{
+						FilePath: tmpFile,
+					}, nil)
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resource.PutBlobResponse{
+						Url: "https://example.com/test.png",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "https://example.com/test.png",
+		},
+		{
+			name: "should return API path when blobstore provides UID",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "test-ns",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					Return(&rendering.RenderResult{
+						FilePath: tmpFile,
+					}, nil)
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resource.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/test-ns/repositories/test-repo/render/test-uid",
+		},
+		{
+			name: "should append query parameters correctly",
+			path: "test",
+			queryParams: url.Values{
+				"param1": []string{"value1"},
+				"param2": []string{"value2"},
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
+						require.Equal(t, "test?param1=value1&param2=value2&kiosk", opts.Path)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resource.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+		},
+	}
 
-		renderer := NewScreenshotRenderer(render, blobstore)
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "http://test", nil)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "path should be relative")
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	t.Run("should fail when path starts with slash", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+			render := tc.setupRender(ctrl)
+			blobstore := tc.setupBlobstore(t)
 
-		render := rendering.NewMockService(ctrl)
-		blobstore := NewMockBlobStoreClient(t)
+			renderer := NewScreenshotRenderer(render, blobstore)
+			url, err := renderer.RenderScreenshot(context.Background(), tc.repoInfo, tc.path, tc.queryParams)
 
-		renderer := NewScreenshotRenderer(render, blobstore)
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "/test", nil)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "path should not start with slash")
-	})
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				if tc.expectedURL != "" {
+					require.Equal(t, tc.expectedURL, url)
+				}
+			}
 
-	t.Run("should fail when render service fails", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
-				require.Equal(t, "test?kiosk", opts.Path)
-				require.Equal(t, int64(1), opts.OrgID)
-				require.Equal(t, int64(1), opts.UserID)
-				require.Equal(t, 1024, opts.Width)
-				require.Equal(t, -1, opts.Height)
-				require.Equal(t, models.ThemeDark, opts.Theme)
-				return nil, errors.New("render error")
-			})
-
-		blobstore := NewMockBlobStoreClient(t)
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "test", nil)
-		require.Error(t, err)
-		require.EqualError(t, err, "render error")
-	})
-
-	t.Run("should fail when the rendered file does not exist", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			Return(&rendering.RenderResult{
-				FilePath: "/non/existent/file.png",
-			}, nil)
-
-		blobstore := NewMockBlobStoreClient(t)
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "test", nil)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "no such file or directory")
-	})
-
-	t.Run("should fail when blobstore fails", func(t *testing.T) {
-		tmpFile, cleanup := setupTempFile(t)
-		defer cleanup()
-
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			Return(&rendering.RenderResult{
-				FilePath: tmpFile,
-			}, nil)
-
-		blobstore := NewMockBlobStoreClient(t)
-		blobstore.On("PutBlob", mock.Anything, mock.MatchedBy(func(req *resource.PutBlobRequest) bool {
-			return req.Resource.Group == provisioning.GROUP &&
-				req.Resource.Resource == provisioning.RepositoryResourceInfo.GroupResource().Resource &&
-				req.Method == resource.PutBlobRequest_GRPC &&
-				req.ContentType == "image/png"
-		})).Return(nil, errors.New("blobstore error"))
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "test", nil)
-		require.Error(t, err)
-		require.EqualError(t, err, "blobstore error")
-
-		blobstore.AssertExpectations(t)
-	})
-
-	t.Run("should return URL when blobstore provides one", func(t *testing.T) {
-		tmpFile, cleanup := setupTempFile(t)
-		defer cleanup()
-
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			Return(&rendering.RenderResult{
-				FilePath: tmpFile,
-			}, nil)
-
-		blobstore := NewMockBlobStoreClient(t)
-		blobstore.On("PutBlob", mock.Anything, mock.Anything).
-			Return(&resource.PutBlobResponse{
-				Url: "https://example.com/test.png",
-			}, nil)
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		url, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{
-			Name:      "test-repo",
-			Namespace: "test-ns",
-		}, "test", nil)
-		require.NoError(t, err)
-		require.Equal(t, "https://example.com/test.png", url)
-
-		blobstore.AssertExpectations(t)
-	})
-
-	t.Run("should return API path when blobstore provides UID", func(t *testing.T) {
-		tmpFile, cleanup := setupTempFile(t)
-		defer cleanup()
-
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			Return(&rendering.RenderResult{
-				FilePath: tmpFile,
-			}, nil)
-
-		blobstore := NewMockBlobStoreClient(t)
-		blobstore.On("PutBlob", mock.Anything, mock.Anything).
-			Return(&resource.PutBlobResponse{
-				Uid: "test-uid",
-			}, nil)
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		url, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{
-			Name:      "test-repo",
-			Namespace: "test-ns",
-		}, "test", nil)
-		require.NoError(t, err)
-		require.Equal(t, "apis/provisioning.grafana.app/v0alpha1/namespaces/test-ns/repositories/test-repo/render/test-uid", url)
-
-		blobstore.AssertExpectations(t)
-	})
-
-	t.Run("should append query parameters correctly", func(t *testing.T) {
-		tmpFile, cleanup := setupTempFile(t)
-		defer cleanup()
-
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		render := rendering.NewMockService(ctrl)
-		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
-				require.Equal(t, "test?param1=value1&param2=value2&kiosk", opts.Path)
-				return &rendering.RenderResult{
-					FilePath: tmpFile,
-				}, nil
-			})
-
-		blobstore := NewMockBlobStoreClient(t)
-		blobstore.On("PutBlob", mock.Anything, mock.Anything).
-			Return(&resource.PutBlobResponse{
-				Uid: "test-uid",
-			}, nil)
-
-		renderer := NewScreenshotRenderer(render, blobstore)
-		values := url.Values{}
-		values.Add("param1", "value1")
-		values.Add("param2", "value2")
-		_, err := renderer.RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{}, "test", values)
-		require.NoError(t, err)
-
-		blobstore.AssertExpectations(t)
-	})
+			if mock, ok := blobstore.(*MockBlobStoreClient); ok {
+				mock.AssertExpectations(t)
+			}
+		})
+	}
 }
