@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -824,4 +825,90 @@ func getDummyRenderedURL(url string) string {
 		idx = int(v) % len(dummy)
 	}
 	return dummy[idx]
+}
+
+// FIXME: test these cases from the public interface once the component is refactored
+func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
+	tests := []struct {
+		name       string
+		baseURL    string
+		grafanaURL string
+		setupMock  func(renderer *MockScreenshotRenderer)
+		wantSnap   string
+		wantErr    string
+	}{
+		{
+			name:       "invalid grafana url",
+			baseURL:    "http://host/",
+			grafanaURL: "ht tp://host/d/uid/dashboard",
+			setupMock:  func(renderer *MockScreenshotRenderer) {},
+			wantErr:    `parse "ht tp://host/d/uid/dashboard": first path segment in URL cannot contain colon`,
+		},
+		{
+			name:       "invalid base url",
+			baseURL:    "ht tp://bad host/",
+			grafanaURL: "http://host/d/uid/dashboard",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/uid/dashboard", mock.Anything).Return("screenshot.png", nil)
+			},
+			wantErr: `parse "ht tp://bad host/": first path segment in URL cannot contain colon`,
+		},
+		{
+			name:       "render error",
+			baseURL:    "http://host/",
+			grafanaURL: "http://host/d/uid/dashboard",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/uid/dashboard", mock.Anything).Return("", fmt.Errorf("render failed"))
+			},
+			wantErr: "error rendering screenshot: render failed",
+		},
+		{
+			name:       "cdn url returned",
+			baseURL:    "http://host/",
+			grafanaURL: "http://host/d/uid/dashboard",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/uid/dashboard", mock.Anything).Return("https://cdn.example.com/screenshot.png", nil)
+			},
+			wantSnap: "https://cdn.example.com/screenshot.png",
+		},
+		{
+			name:       "successful render with relative path",
+			baseURL:    "http://host/",
+			grafanaURL: "http://host/d/uid/dashboard",
+			setupMock: func(renderer *MockScreenshotRenderer) {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "test" && repo.Name == "repo"
+				}), "d/uid/dashboard", mock.Anything).Return("screenshots/123.png", nil)
+			},
+			wantSnap: "http://host/screenshots/123.png",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			renderer := NewMockScreenshotRenderer(t)
+			tt.setupMock(renderer)
+
+			repo := provisioning.ResourceRepositoryInfo{
+				Namespace: "test",
+				Name:      "repo",
+			}
+
+			got, err := renderScreenshotFromGrafanaURL(context.Background(), tt.baseURL, renderer, repo, tt.grafanaURL)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSnap, got)
+		})
+	}
 }
