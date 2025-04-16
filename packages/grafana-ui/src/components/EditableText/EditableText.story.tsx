@@ -1,8 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { Switch } from '../Switch/Switch';
-
 import { EditableText } from './EditableText';
 import mdx from './EditableText.mdx';
 
@@ -16,25 +14,18 @@ const meta: Meta<typeof EditableText> = {
   },
   args: {
     width: 30,
-    text: 'Something Default',
+    value: 'Something Default',
   },
 };
 
 export const Basic: StoryFn<typeof EditableText> = (args) => {
-  const handleTextChange = (text: string) => {
-    console.log('Changed text:', text);
+  const [text, setText] = useState(args.value);
+  const handleTextChange = (inputEvent: React.ChangeEvent<HTMLInputElement>) => {
+    setText(inputEvent.currentTarget.value);
+    console.log('Changed text:', inputEvent.currentTarget.value);
   };
 
-  const [editable, setEditable] = useState(false);
-
-  return (
-    <div>
-      <span>Editable: </span>
-      <Switch label="Editable" value={editable} onChange={() => setEditable(!editable)} />
-      <br />
-      <EditableText {...args} editable={editable} textChangeHandler={handleTextChange} />
-    </div>
-  );
+  return <EditableText {...args} value={text} onChange={handleTextChange} />;
 };
 
 export default meta;
