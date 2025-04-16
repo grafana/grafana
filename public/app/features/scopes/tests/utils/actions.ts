@@ -12,6 +12,7 @@ import {
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilterClear,
+  getPersistedApplicationsGrafanaSelect,
   getPersistedApplicationsMimirSelect,
   getRecentScopeSet,
   getRecentScopesSection,
@@ -54,6 +55,7 @@ export const expandResultCloud = async () => click(getResultCloudExpand);
 export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
 export const selectResultApplicationsGrafana = async () => click(getResultApplicationsGrafanaSelect);
 export const selectPersistedApplicationsMimir = async () => click(getPersistedApplicationsMimirSelect);
+export const selectPersistedApplicationsGrafana = async () => click(getPersistedApplicationsGrafanaSelect);
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
