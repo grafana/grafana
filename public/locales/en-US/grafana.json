@@ -5128,6 +5128,12 @@
     },
     "essentials": {
       "title-essentials": "Essentials"
+    },
+    "progress-bar": {
+      "steps-status": "<0>{{stepsDone}}</0> of {{totalStepsToDo}}"
+    },
+    "progress-status": {
+      "your-progress": "Your progress"
     }
   },
   "grafana": {
@@ -5519,6 +5525,7 @@
   },
   "inspector": {
     "inspect-data-tab": {
+      "loading": "Loading",
       "no-data": "No data"
     },
     "inspect-jsontab": {
@@ -5547,6 +5554,7 @@
       "name": "Name"
     },
     "signup-invited-page": {
+      "complete-following": "Please complete the following and choose a password to accept your invitation and continue:",
       "label-email": "Email",
       "label-name": "Name",
       "label-password": "Password",
@@ -5798,6 +5806,7 @@
   "live": {
     "dashboard-changed-modal": {
       "continue-editing": "Continue editing",
+      "description": "The dashboard has been updated by another session. Do you want to continue editing or discard your local changes?",
       "discard-local-changes": "Discard local changes",
       "title-dashboard-changed": "Dashboard changed"
     },
@@ -5993,6 +6002,7 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
+      "importing-from": "Importing dashboard from <2>Grafana.com</2>",
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
@@ -6052,6 +6062,9 @@
       "button": "Migrate this instance to Cloud",
       "header": "Let us manage your Grafana stack"
     },
+    "dashboard-info": {
+      "dashboard": "Dashboard {{dashboardUID}}"
+    },
     "delete-migration-token-confirm": {
       "body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "confirm-button": "Delete token",
@@ -6067,6 +6080,7 @@
       "title": "Disconnect from cloud stack"
     },
     "folder-info": {
+      "folder": "Folder {{folderUid}}",
       "unable-to-load-folder": "Unable to load folder"
     },
     "get-started": {
@@ -6685,6 +6699,7 @@
   "org": {
     "new-org-page": {
       "create": "Create",
+      "description": "Each organization contains their own dashboards, data sources, and configuration, which cannot be shared shared between organizations. While users might belong to more than one organization, multiple organizations are most frequently used in multi-tenant deployments.",
       "label-organization-name": "Organization name",
       "placeholder-org-name": "Org name"
     },
@@ -6693,6 +6708,9 @@
       "label-organization-profile": "Organization profile",
       "update-organization-name": "Update organization name"
     },
+    "select-org-page": {
+      "description": "You have been invited to another organization! Please select which organization that you want to use right now. You can change this later at any time."
+    },
     "user-invite-form": {
       "back": "Back",
       "label-email-or-username": "Email or username",
@@ -6700,7 +6718,11 @@
       "label-send-invite-email": "Send invite email",
       "placeholder-optional": "(optional)",
       "role": "Role",
-      "submit": "Submit"
+      "submit": "Submit",
+      "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
+    },
+    "user-invite-page": {
+      "sub-title": "Send invitation or add existing Grafana user to the organization.<1> {{orgName}}</1>"
     }
   },
   "org-picker": {

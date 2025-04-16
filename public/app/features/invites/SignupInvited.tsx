@@ -72,7 +72,9 @@ export const SignupInvitedPage = () => {
           <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
           <span className="highlight-word">{initFormModel.orgName}</span>
           <br />
-          Please complete the following and choose a password to accept your invitation and continue:
+          <Trans i18nKey="invites.signup-invited-page.complete-following">
+            Please complete the following and choose a password to accept your invitation and continue:
+          </Trans>
         </div>
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
