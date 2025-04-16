@@ -204,8 +204,12 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
               <PopupCard
                 content={
                   <>
-                    Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
-                    filter instances
+                    <Trans i18nKey="alerting.search-field-input.filter-instances-tooltip">
+                      Use label matcher expression or click on an instance label to filter instances, for example:
+                    </Trans>
+                    <div>
+                      <code>{'{foo=bar}'}</code>
+                    </div>
                   </>
                 }
               >

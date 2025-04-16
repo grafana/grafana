@@ -29,6 +29,8 @@ export const QueryOptions = ({
 
   const timeRange = query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined;
 
+  const separator = <span>, </span>;
+
   return (
     <>
       <Toggletip
@@ -57,8 +59,26 @@ export const QueryOptions = ({
 
       <div className={styles.staticValues}>
         <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
-        {queryOptions.maxDataPoints && <span>, MD = {queryOptions.maxDataPoints}</span>}
-        {queryOptions.minInterval && <span>, Min. Interval = {queryOptions.minInterval}</span>}
+
+        {queryOptions.maxDataPoints && (
+          <>
+            {separator}
+            <Trans
+              i18nKey="alerting.query-options.max-data-points"
+              values={{ maxDataPoints: queryOptions.maxDataPoints }}
+            >
+              MD = {'{{maxDataPoints}}'}
+            </Trans>
+          </>
+        )}
+        {queryOptions.minInterval && (
+          <>
+            {separator}
+            <Trans i18nKey="alerting.query-options.min-interval" values={{ minInterval: queryOptions.minInterval }}>
+              Min. Interval = {'{{minInterval}}'}
+            </Trans>
+          </>
+        )}
       </div>
     </>
   );

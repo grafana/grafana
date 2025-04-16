@@ -53,12 +53,17 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
       </div>
     );
   }
+
   return (
     <div className={styles.container}>
-      <span>
-        Preview based on the result of running the query, for this moment.{' '}
-        {ruleType === RuleFormType.grafana ? 'Configuration for `no data` and `error handling` is not applied.' : null}
-      </span>
+      <Trans i18nKey="alerting.preview-rule-result.preview-based-on-query-result">
+        Preview based on the result of running the query, for this moment.
+      </Trans>
+      {ruleType === RuleFormType.grafana && (
+        <Trans i18nKey="alerting.preview-rule-result.no-data-error-handling-not-applied">
+          Configuration for `no data` and `error handling` is not applied.
+        </Trans>
+      )}
       <div className={styles.table}>
         <AutoSizer>
           {({ width, height }) => (

@@ -54,6 +54,8 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     }
   }, [overrideGrouping, setValue, alertManager, groupByCount]);
 
+  const separator = <span>, </span>;
+
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
@@ -159,9 +161,17 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </InlineField>
         {!overrideTimings && (
           <Text variant="body" color="secondary">
-            Group wait: <strong>{groupWaitValue}, </strong>
-            Group interval: <strong>{groupIntervalValue}, </strong>
-            Repeat interval: <strong>{repeatIntervalValue}</strong>
+            <Trans i18nKey="alerting.routing-settings.group-wait" values={{ groupWaitValue }}>
+              Group wait: <strong>{'{{groupWaitValue}}'}</strong>
+            </Trans>
+            {separator}
+            <Trans i18nKey="alerting.routing-settings.group-interval" values={{ groupIntervalValue }}>
+              Group interval: <strong>{'{{groupIntervalValue}}'}</strong>
+            </Trans>
+            {separator}
+            <Trans i18nKey="alerting.routing-settings.repeat-interval" values={{ repeatIntervalValue }}>
+              Repeat interval: <strong>{'{{repeatIntervalValue}}'}</strong>
+            </Trans>
           </Text>
         )}
       </Stack>

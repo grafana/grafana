@@ -583,6 +583,10 @@
       "tooltip-remove-matcher": "Remove matcher"
     },
     "annotations": {
+      "dashboard-annotation-field": {
+        "dashboard": "Dashboard {{dashboardUid}}",
+        "panel": "Panel {{panelId}}"
+      },
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
     },
@@ -801,6 +805,9 @@
     },
     "dashboard-picker": {
       "confirm": "Confirm",
+      "current-selection-dashboard": "Dashboard: {{dashboardTitle}} ({{ dashboardUid }}) in folder {{ folderTitle }}",
+      "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
+      "fallback-dashboards-string": "Dashboards",
       "placeholder-search-dashboard": "Search dashboard",
       "placeholder-search-panel": "Search panel",
       "select-dashboard-available-panels": "Select a dashboard to get a list of available panels",
@@ -893,9 +900,6 @@
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
-    },
-    "error-summary-button": {
-      "error": "1 error"
     },
     "evaluation-behavior-summary": {
       "evaluate": "Every {{every}}",
@@ -1232,6 +1236,11 @@
         "label": "Target folder"
       }
     },
+    "insights": {
+      "monitor-status-of-system": "Monitor the status of your system",
+      "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
+      "monitor-status-system-tooltip-identify": "You can identify patterns in why things go wrong and discover trends in alerting performance within your organization."
+    },
     "insights-menu-button-renderer": {
       "aria-label-rate-this-panel": "Rate this panel",
       "help-us": "Help us improve this page by telling us whether this panel is useful to you!",
@@ -1348,8 +1357,12 @@
       "title": "Manage permissions"
     },
     "matcher-filter": {
+      "filter-alerts-using-label-querying-without-braces": "Filter alerts using label querying without braces, ex:",
+      "filter-alerts-using-label-querying-without-spaces": "Filter alerts using label querying without spaces, ex:",
+      "invalid-use-of-spaces": "Invalid use of spaces:",
       "search-by-label": "Search by label",
-      "search-query-input-placeholder-search": "Search"
+      "search-query-input-placeholder-search": "Search",
+      "valid-use-of-spaces": "Valid use of spaces:"
     },
     "matchers-field": {
       "add-matcher": "Add matcher",
@@ -1520,6 +1533,7 @@
     "notification-route-details-modal": {
       "alert-instances-routed-follows": "Your alert instances are routed as follows.",
       "close": "Close",
+      "contact-point": "Contact point",
       "default-policy": "Default policy",
       "notification-policy-path": "Notification policy path",
       "see-details-link": "See details",
@@ -1665,6 +1679,8 @@
     },
     "preview-rule-result": {
       "loading-preview": "Loading preview...",
+      "no-data-error-handling-not-applied": "Configuration for `no data` and `error handling` is not applied.",
+      "preview-based-on-query-result": "Preview based on the result of running the query, for this moment.",
       "preview-failed": "Failed to preview alert rule"
     },
     "preview-summary": {
@@ -1706,7 +1722,9 @@
     },
     "query-options": {
       "button-options": "Options",
-      "label-time-range": "Time Range"
+      "label-time-range": "Time Range",
+      "max-data-points": "MD = {{maxDataPoints}}",
+      "min-interval": "Min. Interval = {{minInterval}}"
     },
     "query-preview": {
       "relative-time-range": "{{from}} to now"
@@ -1757,6 +1775,8 @@
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
     },
     "redirect-to-rule-viewer": {
+      "no-rules-found": "No rules in <1>{{sourceName}}</1> matched the name <4>{{name}}</4>",
+      "several-rules-found": "Several rules in <1>{{sourceName}}</1> matched the name <4>{{name}}</4>, please select the rule you want to view.",
       "text-loading-rule": "Loading rule...",
       "title-could-not-view-rule": "Could not view rule",
       "title-failed-to-load": "Failed to load rules from {{sourceName}}"
@@ -1785,10 +1805,13 @@
     "routing-settings": {
       "aria-label-group-by": "Group by",
       "description-group-by": "Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.",
+      "group-interval": "Group interval: <1>{{groupIntervalValue}}</1>",
+      "group-wait": "Group wait: <1>{{groupWaitValue}}</1>",
       "grouping": "Grouping: <1>{{fields}}</1>",
       "label-group-by": "Group by",
       "label-override-grouping": "Override grouping",
-      "label-override-timings": "Override timings"
+      "label-override-timings": "Override timings",
+      "repeat-interval": "Repeat interval: <1>{{repeatIntervalValue}}</1>"
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
@@ -1982,7 +2005,16 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules"
+      "button-errors_one": "{{count}} error",
+      "button-errors_other": "{{count}} errors",
+      "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
+      "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
+      "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
+      "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
+      "more-errors_one": "{{count}} more error",
+      "more-errors_other": "{{count}} more errors",
+      "unknown-error": "Unknown error."
     },
     "rule-list-v1": {
       "collapse-all": "Collapse all",
@@ -1998,6 +2030,7 @@
     "rule-state": {
       "creating": "Creating",
       "deleting": "Deleting",
+      "for": "for {{duration}}",
       "na": "n/a",
       "paused": "Paused",
       "recording-rule": "Recording rule"
@@ -2073,6 +2106,7 @@
       "view-as": "View as"
     },
     "rules-group": {
+      "deleting": "Deleting",
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
@@ -2095,6 +2129,7 @@
     "search-field-input": {
       "clear": "Clear",
       "filter-instances": "Filter instances",
+      "filter-instances-tooltip": "Use label matcher expression or click on an instance label to filter instances, for example:",
       "instancesSearchInput-placeholder-filter-instances": "Filter instances"
     },
     "search-query-help": {
@@ -2160,6 +2195,7 @@
       "saving": "Saving..."
     },
     "silences-filter": {
+      "search-by-matchers-tooltip": "Filter silences by using a comma separated list of matchers, e.g.",
       "search-query-input-placeholder-search": "Search"
     },
     "silences-table": {
@@ -2191,6 +2227,7 @@
     },
     "state-history": {
       "filter-group": "Filter group",
+      "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
       "text-loading-history": "Loading history...",
       "title-failed-to-fetch-alert-state-history": "Failed to fetch alert state history"
@@ -2209,6 +2246,14 @@
     },
     "template-content-and-preview": {
       "label-template-content": "Template content"
+    },
+    "template-data-docs": {
+      "alert-template-data-table": {
+        "alert-template-data": "Alert template data",
+        "only-in-alert": "Available only when in the context of an Alert (e.g. inside .Alerts loop)"
+      },
+      "available-context-notification": "Available in the context of a notification.",
+      "notification-template-data": "Notification template data"
     },
     "template-data-table": {
       "name": "Name",
