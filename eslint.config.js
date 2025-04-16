@@ -266,6 +266,7 @@ module.exports = [
       'react/self-closing-comp': 'error',
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   {
