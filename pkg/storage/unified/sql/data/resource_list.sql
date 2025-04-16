@@ -1,6 +1,9 @@
 SELECT
+    {{ .Ident "guid" }},
     {{ .Ident "resource_version" }},
     {{ .Ident "namespace" }},
+    {{ .Ident "resource" }},
+    {{ .Ident "group" }},
     {{ .Ident "name" }},
     {{ .Ident "folder" }},
     {{ .Ident "value" }}
