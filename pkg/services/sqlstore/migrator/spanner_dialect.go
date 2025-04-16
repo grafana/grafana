@@ -15,8 +15,8 @@ import (
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
 
 	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"

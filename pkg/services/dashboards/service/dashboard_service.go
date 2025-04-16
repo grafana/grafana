@@ -28,9 +28,9 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -95,6 +95,7 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
+	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -146,6 +147,12 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	defer span.End()
 
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		return nil
+	}
+
+	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
+	if readingFromLegacy {
+		// Legacy does its own cleanup
 		return nil
 	}
 
@@ -393,6 +400,7 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
+		dual:                      dual,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)

@@ -3,14 +3,12 @@ import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
 import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
 import { isReactClassComponent, logWarning, unboxNearMembraneProxies } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
-const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');
@@ -37,9 +35,7 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
       param: nodeName,
     });
 
-    if (!monitorOnly) {
-      throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
-    }
+    throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
   }
 
   // allow elements inside the sandbox or the sandbox body
@@ -51,15 +47,11 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
     return element;
   }
 
-  if (!monitorOnly) {
-    // any other element gets a mock
-    const mockElement = document.createElement(nodeName);
-    mockElement.dataset.grafanaPluginSandboxElement = 'true';
-    // we are not logging this because a high number of warnings can be generated
-    return mockElement;
-  } else {
-    return element;
-  }
+  // any other element gets a mock
+  const mockElement = document.createElement(nodeName);
+  mockElement.dataset.grafanaPluginSandboxElement = 'true';
+  // we are not logging this because a high number of warnings can be generated
+  return mockElement;
 }
 
 export function isDomElement(obj: unknown): obj is Element {
