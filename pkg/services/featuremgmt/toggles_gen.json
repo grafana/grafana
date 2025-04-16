@@ -2451,6 +2451,18 @@
     },
     {
       "metadata": {
+        "name": "pluginsAutoUpdate",
+        "resourceVersion": "1744729584489",
+        "creationTimestamp": "2025-04-15T15:06:24Z"
+      },
+      "spec": {
+        "description": "Enables auto-updating of users installed plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-07T10:07:08Z"
