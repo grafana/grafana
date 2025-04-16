@@ -75,7 +75,6 @@ export function ScopesTree({
           anyChildExpanded={anyChildExpanded}
           query={node.query}
           resultsNodes={groupedNodes[NodeReason.Result] ?? []}
-          isRootNode={nodePath.length === 1 && nodePath[0] === ''}
         />
 
         <ScopesTreeItem
