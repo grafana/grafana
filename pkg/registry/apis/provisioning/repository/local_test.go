@@ -2,6 +2,9 @@ package repository
 
 import (
 	"context"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestLocalResolver(t *testing.T) {
@@ -132,6 +136,81 @@ func TestLocal(t *testing.T) {
 					assert.FailNow(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
 				}
 			}
+		})
+	}
+}
+
+func TestLocalRepository_Test(t *testing.T) {
+	// Test cases for the Test method
+	testCases := []struct {
+		name           string
+		path           string
+		pathExists     bool
+		expectedCode   int
+		expectedResult bool
+	}{
+		{
+			name:           "valid path that exists",
+			path:           "valid/path/",
+			pathExists:     true,
+			expectedCode:   http.StatusOK,
+			expectedResult: true,
+		},
+		{
+			name:           "valid path that doesn't exist",
+			path:           "/valid/nonexistent",
+			pathExists:     false,
+			expectedCode:   http.StatusBadRequest,
+			expectedResult: false,
+		},
+		{
+			name:           "empty path",
+			path:           "",
+			pathExists:     false,
+			expectedCode:   http.StatusBadRequest,
+			expectedResult: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a temporary directory for testing
+			tempDir := t.TempDir()
+
+			// Setup the test directory if needed
+			testPath := filepath.Join(tempDir, tc.path)
+			if tc.pathExists {
+				err := os.MkdirAll(testPath, 0755)
+				require.NoError(t, err, "Failed to create test directory")
+			}
+
+			// Create a resolver that permits the temp directory
+			resolver := &LocalFolderResolver{
+				PermittedPrefixes: []string{tempDir},
+				HomePath:          tempDir,
+			}
+
+			// Create the repository with the test path
+			repo := NewLocal(&provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: tc.path,
+					},
+				},
+			}, resolver)
+
+			// If we're testing a valid path, set it to our test path
+			if tc.path != "" {
+				repo.path = testPath
+			}
+
+			// Call the Test method
+			results, err := repo.Test(context.Background())
+
+			// Verify results
+			require.NoError(t, err, "Test method should not return an error")
+			assert.Equal(t, tc.expectedResult, results.Success, "Success flag should match expected")
+			assert.Equal(t, tc.expectedCode, results.Code, "Status code should match expected")
 		})
 	}
 }
