@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -110,14 +110,9 @@ export function NotificationRouteDetailsModal({
             </Stack>
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
-                <a
-                  href={createContactPointSearchLink(receiver.name, alertManagerSourceName)}
-                  className={styles.link}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  See details <Icon name="external-link-alt" />
-                </a>
+                <TextLink href={createContactPointSearchLink(receiver.name, alertManagerSourceName)} external>
+                  <Trans i18nKey="alerting.notification-route-details-modal.see-details-link">See details</Trans>
+                </TextLink>
               </Stack>
             </Authorize>
           </div>

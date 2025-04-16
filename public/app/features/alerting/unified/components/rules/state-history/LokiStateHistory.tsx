@@ -92,7 +92,9 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         )}
         severity="error"
       >
-        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+        {error instanceof Error
+          ? error.message
+          : t('alerting.loki-state-history.error-unable-to-fetch', 'Unable to fetch alert state history')}
       </Alert>
     );
   }

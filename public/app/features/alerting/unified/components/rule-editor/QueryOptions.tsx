@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
@@ -50,7 +50,8 @@ export const QueryOptions = ({
         placement="bottom-start"
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
-          Options {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
+          <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
+          {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
         </button>
       </Toggletip>
 

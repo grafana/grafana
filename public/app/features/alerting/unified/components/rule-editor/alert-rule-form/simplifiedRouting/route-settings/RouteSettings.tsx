@@ -6,7 +6,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -66,7 +66,12 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </InlineField>
         {!overrideGrouping && (
           <Text variant="body" color="secondary">
-            Grouping: <strong>{REQUIRED_FIELDS_IN_GROUPBY.join(', ')}</strong>
+            <Trans
+              i18nKey="alerting.routing-settings.grouping"
+              values={{ fields: REQUIRED_FIELDS_IN_GROUPBY.join(', ') }}
+            >
+              Grouping: <strong>{'{{fields}}'}</strong>
+            </Trans>
           </Text>
         )}
       </Stack>
