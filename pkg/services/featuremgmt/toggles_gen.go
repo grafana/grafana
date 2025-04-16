@@ -595,10 +595,6 @@ const (
 	// Enables the scopes usage in Metrics Explore
 	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
 
-	// FlagAlertingApiServer
-	// Register Alerting APIs with the K8s API server
-	FlagAlertingApiServer = "alertingApiServer"
-
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
