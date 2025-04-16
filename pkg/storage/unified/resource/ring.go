@@ -3,9 +3,9 @@ package resource
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
 	"github.com/go-kit/log"
 	"github.com/grafana/dskit/dns"
 	"github.com/grafana/dskit/flagext"
@@ -98,7 +98,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		InstanceID:             cfg.MemberlistBindAddr,
 		ListenPort:             cfg.RingListenPort,
 		InstancePort:           cfg.RingListenPort,
-		NumTokens: 128,
+		NumTokens:              128,
 	}
 
 	memberlistKVcfg := &memberlist.KVConfig{}
@@ -193,7 +193,7 @@ func (c *ringClient) RemoteAddress() string {
 	return c.conn.Target()
 }
 
-func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus.Registerer) *client.Pool {
+func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer, tracer trace.Tracer) *client.Pool {
 	poolCfg := client.PoolConfig{
 		CheckInterval:      10 * time.Second,
 		HealthCheckEnabled: true,
@@ -203,10 +203,6 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 		Name: "resource_server_clients",
 		Help: "The current number of resource server clients in the pool.",
 	})
-	log.Info("ring client pool",
-		"grcp.MaxSendMsgSize", clientCfg.MaxSendMsgSize,
-		"grpc.MaxRecvMsgSize", clientCfg.MaxRecvMsgSize)
-
 	factoryRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "resource_server_client_request_duration_seconds",
 		Help:    "Time spent executing requests to resource server.",
@@ -234,5 +230,5 @@ func newClientPool(clientCfg grpcclient.Config, log *slog.Logger, reg prometheus
 		}, nil
 	})
 
-	return client.NewPool(ringName, poolCfg, nil, factory, clientsCount, nil /* TODO add logger here*/)
+	return client.NewPool(ringName, poolCfg, nil, factory, clientsCount, log)
 }

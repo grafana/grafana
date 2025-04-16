@@ -363,9 +363,10 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 	ctx := context.Background()
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg, s.log, s.reg)
+	log := log.New("resource-server-ring")
+	pool := newClientPool(*grpcclientcfg, log, s.reg, s.tracer)
 
-	ringsvc, lfcsvc, err := initRing(cfg, log.New("resource-server-ring"), s.reg)
+	ringsvc, lfcsvc, err := initRing(cfg, log, s.reg)
 
 	if err != nil {
 		return err
