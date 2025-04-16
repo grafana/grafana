@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // Update records, bean's non-empty fields are updated contents,
