@@ -19,7 +19,6 @@ env:
   ORGANIZATION: grafana
   REPO: grafana
   PROJECT_ID: "PVT_kwDOAG3Mbc4AxfcI" # Retrieved manually from GitHub GraphQL Explorer
-  ITEM_NUMBER: ${{ github.event.number || github.event.inputs.manual_issue_number }}
 
 concurrency:
   group: skye-add-to-project-${{ github.event.number }}
@@ -81,7 +80,7 @@ jobs:
           variables: |
             owner: ${{ env.ORGANIZATION }}
             repo: ${{ env.REPO }}
-            number: ${{ env.ITEM_NUMBER }}
+            number: ${{ github.event.number || github.event.inputs.manual_issue_number }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
