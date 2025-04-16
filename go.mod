@@ -203,7 +203,6 @@ require (
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
-	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
 )
 
@@ -580,6 +579,7 @@ require (
 require (
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/onsi/gomega v1.36.2 // indirect
+	xorm.io/core v0.7.3 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
