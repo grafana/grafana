@@ -60,6 +60,9 @@ type StorageOptions struct {
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
+	// Route provisioning CRUD to the provisioning client
+	ProvisioningClient ProvisioningClient
+
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
 }
@@ -173,7 +176,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	req := &resource.CreateRequest{}
 	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_ADDED, key, obj, out)
 	}
 
 	req.Key, err = s.getKey(key)
@@ -280,7 +283,7 @@ func (s *Storage) Delete(
 		return fmt.Errorf("unable to read object %w", err)
 	}
 	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_DELETED, key, out, out)
 	}
 
 	rsp, err := s.store.Delete(ctx, cmd)
@@ -580,7 +583,7 @@ func (s *Storage) GuaranteedUpdate(
 
 	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
 	var rv uint64
@@ -655,4 +658,35 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
 	}
 	return nil
+}
+
+func (s *Storage) handleManagedResourceRouting(ctx context.Context,
+	err error,
+	action resource.WatchEvent_Type,
+	key string,
+	obj runtime.Object,
+	rsp runtime.Object,
+) error {
+	if !errors.Is(err, errResourceIsManagedInRepository) || s.opts.ProvisioningClient == nil {
+		return err
+	}
+
+	switch action {
+	case resource.WatchEvent_ADDED:
+		if err = s.opts.ProvisioningClient.Create(ctx, obj); err != nil {
+			return err
+		}
+	case resource.WatchEvent_MODIFIED:
+		if err = s.opts.ProvisioningClient.Update(ctx, obj); err != nil {
+			return err
+		}
+	case resource.WatchEvent_DELETED:
+		return s.opts.ProvisioningClient.Delete(ctx, obj)
+
+	default:
+		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
+	}
+
+	// return the updated value
+	return s.Get(ctx, key, storage.GetOptions{}, rsp)
 }

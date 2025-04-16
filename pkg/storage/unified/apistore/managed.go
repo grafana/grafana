@@ -1,14 +1,26 @@
 package apistore
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+
+// The object must be provisioned in a repository
+type ProvisioningClient interface {
+	Create(ctx context.Context, obj runtime.Object) error
+	Update(ctx context.Context, obj runtime.Object) error
+	Delete(ctx context.Context, obj runtime.Object) error
+}
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	return enforceManagerProperties(auth, obj)
@@ -65,12 +77,8 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		if auth.GetUID() == "access-policy:provisioning" {
 			return nil // OK!
 		}
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "Provisioned resources must be manaaged by the provisioning service account",
-		}}
+		// This can fallback to writing the value with a provisioning client
+		return errResourceIsManagedInRepository
 
 	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
