@@ -303,6 +303,20 @@ func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []
 	return g.Write(ctx, path, ref, data, message)
 }
 
+// Rename implements Writer.
+func (r *GoGitRepo) Rename(ctx context.Context, oldPath string, newPath string, ref string, comment string) error {
+	current, err := r.Read(ctx, oldPath, ref)
+	if err != nil {
+		return err
+	}
+
+	if err = r.Delete(ctx, oldPath, ref, comment); err != nil {
+		return err
+	}
+
+	return r.Write(ctx, newPath, ref, current.Data, comment)
+}
+
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
 	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)

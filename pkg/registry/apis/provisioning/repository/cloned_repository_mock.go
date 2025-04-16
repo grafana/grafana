@@ -104,6 +104,11 @@ func (_e *MockClonedRepository_Expecter) Create(ctx interface{}, path interface{
 	return &MockClonedRepository_Create_Call{Call: _e.mock.On("Create", ctx, path, ref, data, message)}
 }
 
+// Rename implements Writer.
+func (_e *MockClonedRepository) Rename(ctx context.Context, oldPath string, newPath string, ref string, comment string) error {
+	return nil
+}
+
 func (_c *MockClonedRepository_Create_Call) Run(run func(ctx context.Context, path string, ref string, data []byte, message string)) *MockClonedRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]byte), args[4].(string))

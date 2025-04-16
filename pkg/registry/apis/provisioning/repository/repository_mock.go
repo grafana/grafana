@@ -56,6 +56,11 @@ func (_m *MockRepository) Create(ctx context.Context, path string, ref string, d
 	return r0
 }
 
+// Create provides a mock function with given fields: ctx, path, ref, data, message
+func (_m *MockRepository) Rename(ctx context.Context, oldPath string, newPath string, ref string, comment string) error {
+	return nil // XXXX
+}
+
 // Delete provides a mock function with given fields: ctx, path, ref, message
 func (_m *MockRepository) Delete(ctx context.Context, path string, ref string, message string) error {
 	ret := _m.Called(ctx, path, ref, message)

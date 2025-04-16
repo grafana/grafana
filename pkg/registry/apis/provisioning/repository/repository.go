@@ -138,6 +138,9 @@ type Writer interface {
 	// Functionally the same as Read then Create or Update, but more efficient depending on the backend
 	Write(ctx context.Context, path, ref string, data []byte, message string) error
 
+	// Rename an existing file path
+	Rename(ctx context.Context, path, newPaath, ref string, message string) error
+
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
 }

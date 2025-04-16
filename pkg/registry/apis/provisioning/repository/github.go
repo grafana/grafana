@@ -343,6 +343,20 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 	return writeWithReadThenCreateOrUpdate(ctx, r, finalPath, ref, data, message)
 }
 
+// Rename implements Writer.
+func (r *githubRepository) Rename(ctx context.Context, oldPath string, newPath string, ref string, comment string) error {
+	current, err := r.Read(ctx, oldPath, ref)
+	if err != nil {
+		return err
+	}
+
+	if err = r.Delete(ctx, oldPath, ref, comment); err != nil {
+		return err
+	}
+
+	return r.Write(ctx, newPath, ref, current.Data, comment)
+}
+
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch

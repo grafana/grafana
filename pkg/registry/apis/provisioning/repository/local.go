@@ -362,6 +362,19 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 	return os.WriteFile(fpath, data, 0600)
 }
 
+// Rename implements Writer.
+func (r *localRepository) Rename(ctx context.Context, oldPath string, newPath string, ref string, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
+	}
+	oldPath = safepath.Join(r.path, oldPath)
+	newPath = safepath.Join(r.path, newPath)
+	if err := os.MkdirAll(path.Dir(newPath), 0700); err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
+	}
+	return os.Rename(oldPath, newPath)
+}
+
 func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
