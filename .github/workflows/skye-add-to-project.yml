@@ -1,18 +1,25 @@
-name: Add new issues/PRs to project
+name: Add issues and PRs to Skye project board
 on:
+  workflow_dispatch:
+    inputs:
+      manual_issue_number:
+        description: 'Issue number to add to project'
+        required: false
+        type: number
   issues:
     types: [opened]
   pull_request:
     types: [opened]
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write
 
 env:
   ORGANIZATION: grafana
   REPO: grafana
   PROJECT_ID: "PVT_kwDOAG3Mbc4AxfcI" # Retrieved manually from GitHub GraphQL Explorer
+  ITEM_NUMBER: ${{ github.event.number || github.event.inputs.manual_issue_number }}
 
 concurrency:
   group: skye-add-to-project-${{ github.event.number }}
@@ -57,19 +64,39 @@ jobs:
           done
           echo "user_allowed=false" >> $GITHUB_OUTPUT
 
+      - name: Get node ID for item
+        if: steps.check_user.outputs.user_allowed == 'true'
+        id: get_node_id
+        uses: octokit/graphql-action@v2.x
+        with:
+          query: |
+            query getNodeId($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                issueOrPullRequest(number: $number) {
+                  ... on Issue { id }
+                  ... on PullRequest { id }
+                }
+              }
+            }
+          variables: |
+            owner: ${{ env.ORGANIZATION }}
+            repo: ${{ env.REPO }}
+            number: ${{ env.ITEM_NUMBER }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
         uses: octokit/graphql-action@v2.x
         with:
-          projectid: ${{ env.PROJECT_ID }}
-          itemid: ${{ env.PULL_REQUEST_ID }}
           query: |
-            mutation addPullRequestToProject($projectid: ID!, $itemid: ID!){
+            mutation addItem($projectid: ID!, $itemid: ID!) {
               addProjectV2ItemById(input: {projectId: $projectid, contentId: $itemid}) {
-                item {
-                  id
-                }
+                item { id }
               }
             }
+          variables: |
+            projectid: ${{ env.PROJECT_ID }}
+            itemid: ${{ steps.get_node_id.outputs.data.repository.issueOrPullRequest.id }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
