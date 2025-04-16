@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,9 +28,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
-	"github.com/bwmarrin/snowflake"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -60,9 +60,6 @@ type StorageOptions struct {
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
-	// Route provisioning CRUD to the provisioning client
-	Provisioning ProvisionedObjectStorage
-
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
 }
@@ -78,9 +75,10 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store     resource.ResourceClient
-	getKey    func(string) (*resource.ResourceKey, error)
-	snowflake *snowflake.Node // used to enforce internal ids
+	store          resource.ResourceClient
+	getKey         func(string) (*resource.ResourceKey, error)
+	snowflake      *snowflake.Node    // used to enforce internal ids
+	configProvider RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -94,6 +92,10 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*clientrest.Config, error)
+}
+
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
@@ -105,6 +107,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	configProvider RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
@@ -658,35 +661,4 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
 	}
 	return nil
-}
-
-func (s *Storage) handleManagedResourceRouting(ctx context.Context,
-	err error,
-	action resource.WatchEvent_Type,
-	key string,
-	obj runtime.Object,
-	rsp runtime.Object,
-) error {
-	if !errors.Is(err, errResourceIsManagedInRepository) || s.opts.Provisioning == nil {
-		return err
-	}
-
-	switch action {
-	case resource.WatchEvent_ADDED:
-		if err = s.opts.Provisioning.CreateProvisionedObject(ctx, obj); err != nil {
-			return err
-		}
-	case resource.WatchEvent_MODIFIED:
-		if err = s.opts.Provisioning.UpdateProvisionedObject(ctx, obj); err != nil {
-			return err
-		}
-	case resource.WatchEvent_DELETED:
-		return s.opts.Provisioning.DeleteProvisionedObject(ctx, obj)
-
-	default:
-		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
-	}
-
-	// return the updated value
-	return s.Get(ctx, key, storage.GetOptions{}, rsp)
 }
