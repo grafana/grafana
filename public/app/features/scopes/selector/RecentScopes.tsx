@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { SelectedScope } from './types';
 
@@ -26,7 +27,9 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
           onClick={() => setExpanded(!expanded)}
         >
           <Icon name={expanded ? 'angle-down' : 'angle-right'} />
-          <Text variant="body">Recent scopes</Text>
+          <Text variant="body">
+            <Trans i18nKey="command-palette.section.recent-scopes" />
+          </Text>
         </button>
       </legend>
       <Box paddingLeft={3} paddingTop={expanded ? 1 : 0} paddingBottom={expanded ? 1 : 0}>
