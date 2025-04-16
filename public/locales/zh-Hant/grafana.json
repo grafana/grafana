@@ -194,8 +194,13 @@
     },
     "service-info": {
       "title-critical-sla-hours": "",
+      "title-email": "",
       "title-enterprise-plugins": "",
-      "title-unlimited-expert-support": ""
+      "title-handinhand-support-in-the-upgrade-process": "",
+      "title-phone": "",
+      "title-private-slack-channel": "",
+      "title-unlimited-expert-support": "",
+      "year-round-support": ""
     },
     "settings": {
       "info-description": "這些系統設定在 grafana.ini 或 custom.ini 中定義（或在 ENV 變數中覆寫）。若要變更這些設定，您目前需要重新啟動 Grafana。"
@@ -332,6 +337,11 @@
       "title-error-loading-notifications": "",
       "title-grafana-alerts-delivered-alertmanager": ""
     },
+    "alert-groups-summary": {
+      "text-firing_other": "",
+      "text-suppressed_other": "",
+      "text-unprocessed_other": ""
+    },
     "alert-instance-details": {
       "label-value": ""
     },
@@ -351,6 +361,9 @@
     },
     "alert-label": {
       "tooltip-remove-label": ""
+    },
+    "alert-label-dropdown": {
+      "placeholder-select": ""
     },
     "alert-labels": {
       "aria-label-labels": ""
@@ -382,9 +395,13 @@
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
+      "description-section": "",
       "label-metric": "",
       "label-name": "",
-      "metric-aria-label-metric": ""
+      "metric-aria-label-metric": "",
+      "metric-placeholder-recorded-metric": "",
+      "placeholder-name": "",
+      "title-section": ""
     },
     "alert-rules": {
       "firing-for": "已觸發達",
@@ -451,7 +468,8 @@
       "aria-label-sort": "",
       "label-filter-placeholder-search-alerts-by-labels": "",
       "name-filter-placeholder-search-alert-rules-by-name": "",
-      "no-alert-rules-found": ""
+      "no-alert-rules-found": "",
+      "placeholder-sort-default-az": ""
     },
     "alertVersionHistory": {
       "alerting": "警報",
@@ -496,9 +514,13 @@
       "warning-restore-manually-title": "手動還原規則"
     },
     "am-root-route-form": {
+      "am-group-description-label": "",
+      "am-group-interval-description": "",
       "am-group-interval-label-group-interval": "",
+      "am-group-select-description-group-by": "",
       "am-group-select-label-group-by": "",
       "am-group-wait-label-group-wait": "",
+      "am-repeat-interval-description": "",
       "am-repeat-interval-label-repeat-interval": "",
       "aria-label-group-by": "",
       "aria-label-group-interval": "",
@@ -515,6 +537,8 @@
       "am-mute-timing-select-label-mute-timings": "",
       "aria-label-group-by": "",
       "aria-label-operator": "",
+      "badge-no-matchers": "",
+      "description-group-by": "",
       "label-contact-point": "",
       "label-continue-matching-subsequent-sibling-nodes": "",
       "label-group-by": "",
@@ -589,6 +613,7 @@
       "duplicate": "",
       "label-integration": "",
       "label-notification-settings": "",
+      "label-section": "",
       "test": ""
     },
     "classic-condition-viewer": {
@@ -613,6 +638,7 @@
       "label-send-resolved": ""
     },
     "cloud-evaluation-behavior": {
+      "description-pending-period": "",
       "label-pending-period": "",
       "title-set-evaluation-behavior": ""
     },
@@ -638,6 +664,7 @@
       "return": ""
     },
     "contact-point-header": {
+      "aria-label-more-actions": "",
       "export-label-export": "",
       "label-delete": "",
       "label-manage-permissions": ""
@@ -801,6 +828,10 @@
       "text-loading-notification-template": "",
       "title-error-loading-notification-template": ""
     },
+    "dynamic-table": {
+      "tooltip-collapse-row": "",
+      "tooltip-expand-row": ""
+    },
     "edit-contact-point": {
       "text-loading": "",
       "title-failed-to-fetch-contact-point": "",
@@ -832,6 +863,7 @@
       "text-provisioned": ""
     },
     "evaluation-group-creation-modal": {
+      "description-group-name": "",
       "description-often-rules-group-evaluated": "",
       "placeholder-enter-a-name": "",
       "title-new-evaluation-group": ""
@@ -851,7 +883,9 @@
       "title-rule-not-found": ""
     },
     "existing-silence-editor": {
-      "text-loading-existing-silence-information": ""
+      "text-loading-existing-silence-information": "",
+      "title-permission-editrecreate-silence": "",
+      "title-silence-not-found": ""
     },
     "export": {
       "subtitle": {
@@ -903,6 +937,9 @@
         }
       }
     },
+    "for-input": {
+      "description-pending": ""
+    },
     "generate-alert-data-modal": {
       "add-alert-data": "",
       "add-alert-data-to-payload": "",
@@ -912,10 +949,19 @@
     "get-preview-results": {
       "title-error": ""
     },
+    "getting-stared": {
+      "learn-more": ""
+    },
     "getting-started": {
       "condition-breached-alert-instance-fires": "",
+      "create-alert-rule": "",
+      "firing-instances-routed-notification-policies": "",
       "get-started": "",
-      "how-it-works": ""
+      "how-it-works": "",
+      "monitor-alert-rules": "",
+      "notification-policies-contact-points": "",
+      "periodically-queries-data-sources": "",
+      "route-alert-notifications": ""
     },
     "global-config": {
       "title-failed-to-fetch-notification-template": ""
@@ -933,6 +979,7 @@
       "title-you-have-additional-alertmanagers-to-configure": ""
     },
     "grafana-common-channel-settings": {
+      "description-disable-resolved-message": "",
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
@@ -979,8 +1026,14 @@
     "grafana-rule-folder-export-preview": {
       "text-loading": ""
     },
+    "grafana-rule-folder-exporter": {
+      "title-drawer": ""
+    },
     "grafana-rule-group-export-preview": {
       "text-loading": ""
+    },
+    "grafana-rule-group-exporter": {
+      "title-drawer": ""
     },
     "grafana-rules": {
       "export-all-grafana-rules-aria-label-export-all-grafana-rules": "",
@@ -1049,6 +1102,9 @@
     },
     "group-loader": {
       "group-load-failed": ""
+    },
+    "header": {
+      "tooltip-remove": ""
     },
     "home": {
       "label-get-started": "",
@@ -1144,6 +1200,9 @@
       "notes": "",
       "returns": ""
     },
+    "label-picker": {
+      "no-options-message": ""
+    },
     "labels-editor-modal": {
       "title-edit-labels": ""
     },
@@ -1159,6 +1218,7 @@
       "title-labels": ""
     },
     "labels-sub-form": {
+      "description": "",
       "save": ""
     },
     "labels-with-suggestions": {
@@ -1231,7 +1291,8 @@
       "input": ""
     },
     "max-data-points-option": {
-      "label-max-data-points": ""
+      "label-max-data-points": "",
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": ""
@@ -1255,6 +1316,7 @@
       "title-delete-mute-timing": ""
     },
     "mute-timing-fields": {
+      "am-mute-timing-select-description-mute-timings": "",
       "am-mute-timing-select-label-mute-timings": ""
     },
     "mute-timing-form": {
@@ -1265,6 +1327,8 @@
     },
     "mute-timing-time-interval": {
       "add-another-time-interval": "",
+      "description-dats-of-the-month": "",
+      "description-months": "",
       "label-days-of-the-month": "",
       "label-days-of-the-week": "",
       "label-disable": "",
@@ -1279,6 +1343,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
       "label-time-range": "",
@@ -1502,7 +1567,9 @@
     },
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
-      "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯"
+      "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
+      "body-provisioned": "",
+      "title-provisioned": ""
     },
     "provisioning-badge": {
       "badge": {
@@ -1557,7 +1624,8 @@
     },
     "redirect-to-rule-viewer": {
       "text-loading-rule": "",
-      "title-could-not-view-rule": ""
+      "title-could-not-view-rule": "",
+      "title-failed-to-load": ""
     },
     "reduce-condition-viewer": {
       "function": "",
@@ -1578,6 +1646,7 @@
     },
     "routing-settings": {
       "aria-label-group-by": "",
+      "description-group-by": "",
       "label-group-by": "",
       "label-override-grouping": "",
       "label-override-timings": ""
@@ -1928,6 +1997,7 @@
       "search-query-input-placeholder-search": ""
     },
     "silences-table": {
+      "label-section-expired": "",
       "text-loading-silences": "",
       "title-error-loading-silences": "",
       "title-the-selected-alertmanager-has-no-configuration": ""
@@ -1995,7 +2065,8 @@
       "error-loading-templates": "",
       "existing-templates-selector-aria-label-choose-notification-template": "",
       "existing-templates-selector-placeholder-choose-notification-template": "",
-      "loading": ""
+      "loading": "",
+      "tooltip-copy": ""
     },
     "templates": {
       "editor": {
@@ -2009,6 +2080,11 @@
       "misconfigured-badge-text": "設定錯誤",
       "misconfigured-warning": "此範本設定錯誤。",
       "misconfigured-warning-details": "必須在警報管理設定的<1></1>和<4></4>兩個部分中定義範本。"
+    },
+    "templates-picker": {
+      "button-edit": "",
+      "title-drawer": "",
+      "tooltip-edit": ""
     },
     "templates-table": {
       "actions": "",
@@ -2045,7 +2121,8 @@
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "",
-      "text-unused": ""
+      "text-unused": "",
+      "tooltip-unused": ""
     },
     "use-add-policy-modal": {
       "modal-element": {
@@ -2097,6 +2174,7 @@
       "table": ""
     },
     "welcome-header": {
+      "description-alert-rules": "",
       "description-configure-firing-alert-instances-routed-contact": "",
       "description-configure-receives-notifications": "",
       "title-alert-rules": "",
@@ -2604,6 +2682,7 @@
       "delete": "",
       "description-color-annotation-event-markers": "",
       "description-enabled-annotation-query-issued-every-dashboard": "",
+      "description-hidden": "",
       "label-color": "",
       "label-data-source": "",
       "label-enabled": "",
@@ -2616,6 +2695,7 @@
       "title-annotation-support-source": ""
     },
     "annotation-settings-list": {
+      "aria-label-delete": "",
       "data-source": "",
       "new-query": "",
       "query-name": "",
@@ -2835,6 +2915,30 @@
           "title": "行標題"
         }
       },
+      "variable": {
+        "custom-options": {
+          "values": "",
+          "values-placeholder": ""
+        },
+        "description": "",
+        "description-placeholder": "",
+        "label": "",
+        "label-description": "",
+        "name": "",
+        "open-editor": "",
+        "open-editor-tooltip": "",
+        "selection-options": {
+          "allow-custom-values": "",
+          "allow-custom-values-description": "",
+          "category": "",
+          "custom-all-value": "",
+          "custom-all-value-description": "",
+          "include-all": "",
+          "include-all-description": "",
+          "multi-value": ""
+        },
+        "type-category": ""
+      },
       "variables": {
         "add-variable": "",
         "select-variable": ""
@@ -2864,13 +2968,17 @@
     },
     "help-wizard": {
       "copy-to-clipboard": "",
+      "description-obfuscate-data": "",
+      "download-snapshot": "",
       "label-obfuscate-data": "",
       "label-support-snapshot": "",
       "label-template": "",
       "randomize-field-names-label-field-names": "",
       "randomize-labels-label-labels": "",
       "randomize-string-values-label-string-values": "",
-      "title-complete-git-hub-comment-clipboard": ""
+      "title-complete-git-hub-comment-clipboard": "",
+      "title-get-help-with-this-panel": "",
+      "troubleshooting-docs": ""
     },
     "inspect": {
       "data-tab": "資料",
@@ -2994,6 +3102,7 @@
         "title-undo-all-changes": ""
       },
       "table-view-label-table-view": "",
+      "title-unlink": "",
       "unlink": ""
     },
     "panel-links": {
@@ -3098,7 +3207,8 @@
       "save-json-to-file": ""
     },
     "solo-panel": {
-      "loading-initializing-dashboard": ""
+      "loading-initializing-dashboard": "",
+      "title-not-found": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": ""
@@ -3269,7 +3379,8 @@
         "title-filter": "",
         "title-remove": "",
         "title-show-transform-help": ""
-      }
+      },
+      "title-delete": ""
     },
     "transformation-picker": {
       "placeholder-search-for-transformation": "",
@@ -3310,6 +3421,7 @@
       "label-view-json-diff": ""
     },
     "version-history-table": {
+      "aria-label-toggle-selection": "",
       "date": "",
       "notes": "",
       "restore": "",
@@ -3497,6 +3609,10 @@
       "title-get-help-with-this-panel": "",
       "troubleshooting-docs": "",
       "troubleshooting-request-help": ""
+    },
+    "import-dashboard-form-v2": {
+      "cancel": "",
+      "label-folder": ""
     },
     "inspect-data-tab": {
       "no-data-found": ""
@@ -3699,19 +3815,13 @@
       "aria-label-variable-editor-form": "",
       "back-to-list": "",
       "delete": "",
-      "description": "",
       "description-optional-display-name": "",
       "description-template-variable-characters": "",
       "general": "",
-      "label": "",
-      "name": "",
-      "open-editor": "",
-      "open-editor-tooltip": "",
       "placeholder-descriptive-text": "",
       "placeholder-label-name": "",
       "placeholder-variable-name": "",
-      "text-running-query": "",
-      "type": ""
+      "text-running-query": ""
     },
     "variable-editor-list": {
       "definition": "",
@@ -3891,9 +4001,16 @@
     }
   },
   "datasources": {
+    "alert-success-message": {
+      "aria-label-create-a-dashboard": "",
+      "aria-label-explore-data": ""
+    },
     "alerting-enabled": {
       "text-alerting-not-supported": "",
       "text-alerting-supported": ""
+    },
+    "basic-serttings": {
+      "tooltip-name": ""
     },
     "basic-settings": {
       "aria-label-datasource-settings-page-basic": "",
@@ -3938,6 +4055,9 @@
     "edit-data-source-actions": {
       "build-a-dashboard": "",
       "explore-data": ""
+    },
+    "error-details-link": {
+      "aria-label-more-details-about-the-error": ""
     },
     "footer": {
       "add-csv-or-spreadsheet": ""
@@ -4084,12 +4204,15 @@
       "label-expression": "",
       "label-field": "",
       "label-type": "",
-      "label-variable-name": ""
+      "label-variable-name": "",
+      "title-add": "",
+      "title-edit": ""
     },
     "correlation-unsaved-changes-modal": {
       "cancel": "",
       "continue-without-saving": "",
-      "save-correlation": ""
+      "save-correlation": "",
+      "title-unsaved-changes-to-correlation": ""
     },
     "draggable-manager-demo": {
       "click-horizontally-somewhere-colored-below": "",
@@ -4160,6 +4283,9 @@
     "logs-container": {
       "label-logs": ""
     },
+    "logs-feedback": {
+      "give-feedback": ""
+    },
     "logs-meta-row": {
       "download": "",
       "show-original-line": ""
@@ -4199,6 +4325,10 @@
       "aria-label-query": ""
     },
     "next": "",
+    "next-prev-result": {
+      "aria-label-next": "",
+      "aria-label-prev": ""
+    },
     "no-data-source-call-to-action": {
       "cta-element": {
         "add-data-source": ""
@@ -4211,6 +4341,9 @@
     "prev": "",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": ""
+    },
+    "raw-list-container": {
+      "label-expand-results": ""
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": ""
@@ -4342,6 +4475,7 @@
     "show-critical-path-only": "",
     "show-matches-only": "",
     "span-bar-section": {
+      "description-link": "",
       "title-span-bar": ""
     },
     "span-bar-settings": {
@@ -4350,7 +4484,8 @@
       "label-tag-key": "",
       "placeholder-duration": "",
       "placeholder-enter-tag-key": "",
-      "tooltip-default-duration": ""
+      "tooltip-default-duration": "",
+      "tooltip-tag-key": ""
     },
     "span-detail": {
       "label-resource-attributes": "",
@@ -4370,7 +4505,9 @@
       "label-span-name": "",
       "label-tags": "",
       "placeholder-all-service-names": "",
-      "placeholder-all-span-names": ""
+      "placeholder-all-span-names": "",
+      "tooltip-duration": "",
+      "tooltip-tags": ""
     },
     "span-filters-tags": {
       "aria-label-add-tag": "",
@@ -4431,11 +4568,19 @@
     "trace-page-header": {
       "text-partial-trace": ""
     },
+    "trace-page-search-bar": {
+      "aria-label-clear-filters": "",
+      "label-show-matches": "",
+      "label-show-paths": ""
+    },
     "trace-view": {
       "no-data": ""
     },
     "trace-view-container": {
       "title-trace": ""
+    },
+    "unconnected-node-graph-container": {
+      "title-node-graph": ""
     },
     "unthemed-logs": {
       "label-deduplication": "",
@@ -4468,6 +4613,20 @@
     "menu": {
       "export-as-json-label": "匯出",
       "export-as-json-tooltip": "匯出"
+    }
+  },
+  "expression": {
+    "math": {
+      "description-abs": "",
+      "description-ceil": "",
+      "description-floor": "",
+      "description-inf-nan-null": "",
+      "description-is-inf": "",
+      "description-is-nan": "",
+      "description-is-null": "",
+      "description-is-number": "",
+      "description-log": "",
+      "description-round": ""
     }
   },
   "expressions": {
@@ -4914,7 +5073,7 @@
     "title": "捷徑"
   },
   "help-wizard": {
-    "download-snapshot": "下載快照集",
+    "download-snapshot": "",
     "github-comment": "複製 Github 評論",
     "support-bundle": "您也可以在<1>支援套件部分</1>中擷取支援套件，其中包含有關 Grafana 執行個體和設定資料來源的資訊。",
     "troubleshooting-help": "若要請求疑難排解協助，請將此面板的快照傳送至 Grafana Labs 技術支援。快照包含查詢回應資料和面板設定。"
@@ -5375,11 +5534,17 @@
       "tooltip-hide-adhoc-statistics": ""
     }
   },
+  "manage-dashbaords": {
+    "import-dashboard-form": {
+      "description-existing-library-panels": ""
+    }
+  },
   "manage-dashboards": {
     "import-dashboard-form": {
       "cancel": "",
       "change-uid": "",
       "description-library-panels-imported": "",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "",
       "label-folder": "",
       "label-name": "",
@@ -6050,7 +6215,8 @@
     },
     "starred-dashboard": "儀表板已加星號",
     "stored-notifications": {
-      "dismiss-notifications": ""
+      "dismiss-notifications": "",
+      "title-alert": ""
     },
     "unstarred-dashboard": "儀表板已取消加星號"
   },
@@ -6320,10 +6486,16 @@
     "get-started-with-data-source": {
       "add-new-data-source": ""
     },
+    "install-controls-button": {
+      "title-uninstall-modal": ""
+    },
     "install-controls-warning": {
+      "body-not-published": "",
       "learn-more": "",
       "no-valid-grafana-enterprise-license-detected": "",
+      "title-dev-alert": "",
       "title-plugin-doesnt-support-version-grafana": "",
+      "title-remote-plugins-unavailable": "",
       "title-renderer-plugins-cannot-managed-plugin-catalog": ""
     },
     "log-view-filters": {
@@ -6378,7 +6550,13 @@
       "update-available": ""
     },
     "plugin-usage": {
-      "title-missing-feature-toggle-panel-title-search": ""
+      "title-missing-feature-toggle-panel-title-search": "",
+      "title-not-used-yet": ""
+    },
+    "plugins-errors-info": {
+      "disabled-list": "",
+      "read-more-about-plugin-signing": "",
+      "title-unsigned-plugins": ""
     },
     "search-field": {
       "placeholder-search-grafana-plugins": ""
