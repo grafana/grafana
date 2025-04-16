@@ -1,28 +1,18 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Input, Label, BrowserLabel as PromLabel } from '@grafana/ui';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
-import { SelectableLabel, LIST_ITEM_SIZE } from './types';
+import { useMetricsBrowser } from './MetricsBrowserContext';
+import { getStylesValueSelector } from './styles';
+import { LIST_ITEM_SIZE } from './types';
 
-interface ValueSelectorProps {
-  selectedLabels: SelectableLabel[];
-  valueSearchTerm: string;
-  onChangeValueSearch: (event: ChangeEvent<HTMLInputElement>) => void;
-  onClickValue: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
-  onClickLabel: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
-  styles: Record<string, string>;
-}
+export function ValueSelector() {
+  const styles = useStyles2(getStylesValueSelector);
+  const [valueSearchTerm, setValueSearchTerm] = useState('');
+  const { labelValues, selectedLabelValues, onLabelValueClick, onLabelKeyClick } = useMetricsBrowser();
 
-export function ValueSelector({
-  selectedLabels,
-  valueSearchTerm,
-  onChangeValueSearch,
-  onClickValue,
-  onClickLabel,
-  styles,
-}: ValueSelectorProps) {
   return (
     <div className={styles.section}>
       <Label description="Use the search field to find values across selected labels.">
@@ -30,54 +20,57 @@ export function ValueSelector({
       </Label>
       <div>
         <Input
-          onChange={onChangeValueSearch}
+          onChange={(e) => setValueSearchTerm(e.currentTarget.value)}
           aria-label="Filter expression for label values"
           value={valueSearchTerm}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelValuesFilter}
         />
       </div>
       <div className={styles.valueListArea}>
-        {selectedLabels.map((label) => (
-          <div role="list" key={label.name} aria-label={`Values for ${label.name}`} className={styles.valueListWrapper}>
-            <div className={styles.valueTitle}>
-              <PromLabel
-                name={label.name}
-                loading={label.loading}
-                active={label.selected}
-                hidden={label.hidden}
-                // If no facets, we want to show number of all label values
-                facets={label.facets || label.values?.length}
-                onClick={onClickLabel}
-              />
+        {Object.entries(labelValues).map(([lk, lv]) => {
+          if (!lk || !lv) {
+            console.error('label values are empty:', { lk, lv });
+            return null;
+          }
+          return (
+            <div role="list" key={lk} aria-label={`Values for ${lk}`} className={styles.valueListWrapper}>
+              <div className={styles.valueTitle}>
+                <PromLabel
+                  name={lk}
+                  loading={false}
+                  active={true}
+                  hidden={false}
+                  facets={lv.length}
+                  onClick={onLabelKeyClick}
+                />
+              </div>
+              <FixedSizeList
+                height={Math.min(200, LIST_ITEM_SIZE * (lv.length || 0))}
+                itemCount={lv.length || 0}
+                itemSize={28}
+                itemKey={(i) => lv[i]}
+                width={200}
+                className={styles.valueList}
+              >
+                {({ index, style }) => {
+                  const value = lv[index];
+                  const isSelected = selectedLabelValues[lk]?.includes(value);
+                  return (
+                    <div style={style}>
+                      <PromLabel
+                        name={value}
+                        value={value}
+                        active={isSelected}
+                        onClick={(name) => onLabelValueClick(lk, name, !isSelected)}
+                        searchTerm={valueSearchTerm}
+                      />
+                    </div>
+                  );
+                }}
+              </FixedSizeList>
             </div>
-            <FixedSizeList
-              height={Math.min(200, LIST_ITEM_SIZE * (label.values?.length || 0))}
-              itemCount={label.values?.length || 0}
-              itemSize={28}
-              itemKey={(i) => label.values![i].name}
-              width={200}
-              className={styles.valueList}
-            >
-              {({ index, style }) => {
-                const value = label.values?.[index];
-                if (!value) {
-                  return null;
-                }
-                return (
-                  <div style={style}>
-                    <PromLabel
-                      name={label.name}
-                      value={value?.name}
-                      active={value?.selected}
-                      onClick={onClickValue}
-                      searchTerm={valueSearchTerm}
-                    />
-                  </div>
-                );
-              }}
-            </FixedSizeList>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

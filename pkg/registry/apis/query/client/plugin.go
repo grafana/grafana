@@ -19,9 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -90,6 +92,23 @@ func (d *pluginClient) CanQueryDataSource(ctx context.Context, uid string) (bool
 	return d.ac.Evaluate(ctx, user, evaluate)
 }
 
+// this handles the special `--grafana--` data source
+func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInstanceSettings, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ds := grafanads.DataSourceModel(user.GetOrgID())
+
+	decryptFunc := func(ds *datasources.DataSource) (map[string]string, error) {
+		// we do not need to handle any secrets
+		return nil, nil
+	}
+
+	return adapters.ModelToInstanceSettings(ds, decryptFunc)
+}
+
 // ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
@@ -109,8 +128,16 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 		return nil, k8sForbiddenError
 	}
 
-	// NOTE: this depends on uid unique across datasources
-	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
+	var settings *backend.DataSourceInstanceSettings
+
+	// we need to special-case the "--grafana--" data source
+	if dsRef.UID == grafanads.DatasourceUID {
+		settings, err = getGrafanaDataSourceSettings(ctx)
+	} else {
+		// NOTE: this depends on uid unique across datasources
+		settings, err = d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
+	}
+
 	if err != nil {
 		// there is no better way to differentiate between plugin-not-found and other-error
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {

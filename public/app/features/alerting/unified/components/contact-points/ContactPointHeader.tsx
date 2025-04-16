@@ -221,7 +221,6 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
-          aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
@@ -229,7 +228,13 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton aria-label={`More actions for contact point "${contactPoint.name}"`} />
+            <MoreButton
+              aria-label={t(
+                'alerting.contact-point-header.aria-label-more-actions',
+                'More actions for contact point "{{contactPointName}}"',
+                { contactPointName: contactPoint.name }
+              )}
+            />
           </Dropdown>
         )}
       </Stack>

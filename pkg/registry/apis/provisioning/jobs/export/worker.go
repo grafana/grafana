@@ -97,7 +97,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 		}
 
-		repositoryResources, err := r.repositoryResources.Client(ctx, rw)
+		repositoryResources, err := r.repositoryResources.Client(ctx, rw, resources.RepositoryResourcesOptions{})
 		if err != nil {
 			return fmt.Errorf("create repository resource client: %w", err)
 		}

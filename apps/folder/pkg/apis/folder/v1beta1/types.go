@@ -1,4 +1,4 @@
-package v1
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -6,32 +6,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Folder struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec Spec `json:"spec,omitempty"`
-}
-
-type Spec struct {
-	// Describe the feature toggle
-	Title string `json:"title"`
-
-	// Describe the feature toggle
-	Description string `json:"description,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FolderList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Folder `json:"items,omitempty"`
-}
-
 // FolderInfoList returns a list of folder references (parents or children)
 // Unlike FolderList, each item is not a full k8s object
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FolderInfoList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -62,6 +39,7 @@ type FolderInfo struct {
 }
 
 // Access control information for the current user
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FolderAccessInfo struct {
 	metav1.TypeMeta `json:",inline"`
@@ -72,6 +50,7 @@ type FolderAccessInfo struct {
 	CanDelete bool `json:"canDelete"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DescendantCounts struct {
 	metav1.TypeMeta `json:",inline"`
@@ -90,3 +69,6 @@ func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*Descendant
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &res)
 	return &res, err
 }
+
+// Empty stub
+type FolderStatus struct{}
