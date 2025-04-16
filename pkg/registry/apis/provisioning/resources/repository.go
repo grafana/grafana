@@ -10,9 +10,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+type RepositoryResourcesOptions struct {
+	// FIXME: this is a temporary option to preload all user info
+	// we should remove this once we have a better way to handle user info and commit signatures
+	PreloadAllUserInfo bool
+}
+
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
 type RepositoryResourcesFactory interface {
-	Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error)
+	Client(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions) (RepositoryResources, error)
 }
 
 //go:generate mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
@@ -33,7 +39,7 @@ type RepositoryResources interface {
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
-type repositoryResourcesFactor struct {
+type repositoryResourcesFactory struct {
 	parsers ParserFactory
 	clients ClientFactory
 	lister  ResourceLister
@@ -55,10 +61,10 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactor{parsers, clients, lister}
+	return &repositoryResourcesFactory{parsers, clients, lister}
 }
 
-func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions) (RepositoryResources, error) {
 	clients, err := r.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients: %w", err)
@@ -73,8 +79,21 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 		return nil, fmt.Errorf("create parser: %w", err)
 	}
 
+	signatures := map[string]repository.CommitSignature{}
+	if opts.PreloadAllUserInfo {
+		userClient, err := clients.User()
+		if err != nil {
+			return nil, fmt.Errorf("create user client: %w", err)
+		}
+
+		signatures, err = loadUsers(ctx, userClient)
+		if err != nil {
+			return nil, fmt.Errorf("load users: %w", err)
+		}
+	}
+
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
-	resources := NewResourcesManager(repo, folders, parser, clients, map[string]repository.CommitSignature{})
+	resources := NewResourcesManager(repo, folders, parser, clients, signatures)
 
 	return &repositoryResources{
 		FolderManager:    folders,

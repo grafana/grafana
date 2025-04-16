@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	v2 "github.com/prometheus/alertmanager/api/v2"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
@@ -30,13 +31,17 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 			},
 		})
 	}
-	var alert *alertingNotify.TestReceiversConfigAlertParams
+	a := &alertingNotify.PostableAlert{}
 	if c.Alert != nil {
-		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		a.Annotations = v2.ModelLabelSetToAPILabelSet(c.Alert.Annotations)
+		a.Labels = v2.ModelLabelSetToAPILabelSet(c.Alert.Labels)
 	}
-
+	AddDefaultLabelsAndAnnotations(a)
 	return am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
-		Alert:     alert,
+		Alert: &alertingNotify.TestReceiversConfigAlertParams{
+			Annotations: v2.APILabelSetToModelLabelSet(a.Annotations),
+			Labels:      v2.APILabelSetToModelLabelSet(a.Labels),
+		},
 		Receivers: receivers,
 	})
 }
