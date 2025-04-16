@@ -59,7 +59,7 @@ function NotificationRouteHeader({
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
-            Notification policy
+            <Trans i18nKey="alerting.notification-route-header.notification-policy">Notification policy</Trans>
             <NotificationPolicyMatchers
               route={route}
               matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}

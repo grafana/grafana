@@ -248,7 +248,11 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   if (interval) {
     metadata.push({
       label: 'Evaluation interval',
-      value: <Text color="primary">Every {interval}</Text>,
+      value: (
+        <Text color="primary">
+          <Trans i18nKey="alerting.rule-viewer.evaluation-interval">Every {{ interval }}</Trans>
+        </Text>
+      ),
     });
   }
 

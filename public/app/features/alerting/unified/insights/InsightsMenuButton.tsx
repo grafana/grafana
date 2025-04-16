@@ -85,7 +85,11 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
       className={styles.container}
     >
       <div>
-        <p>Help us improve this page by telling us whether this panel is useful to you!</p>
+        <p>
+          <Trans i18nKey="alerting.insights-menu-button-renderer.help-us">
+            Help us improve this page by telling us whether this panel is useful to you!
+          </Trans>
+        </p>
         <div className={styles.buttonsContainer}>
           <Button variant="secondary" className={styles.buttonContainer} onClick={() => onButtonClick(false)}>
             <div className={styles.button}>

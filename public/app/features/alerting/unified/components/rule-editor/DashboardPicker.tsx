@@ -166,6 +166,8 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     );
   };
 
+  const fallbackDashboardsString = t('alerting.dashboard-picker.fallback-dashboards-string', 'Dashboards');
+
   return (
     <Modal
       title={t('alerting.dashboard-picker.title-select-dashboard-and-panel', 'Select dashboard and panel')}
@@ -185,12 +187,25 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           className={styles.modalAlert}
         >
           <div>
-            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
-            {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
+            <Trans
+              i18nKey="alerting.dashboard-picker.current-selection-dashboard"
+              values={{
+                dashboardTitle: dashboardModel.title,
+                dashboardUid: dashboardModel.uid,
+                folderTitle: dashboardModel.meta?.folderTitle ?? fallbackDashboardsString,
+              }}
+            >
+              Dashboard: {'{{dashboardTitle}}'} ({'{{ dashboardUid }}'}) in folder {'{{ folderTitle }}'}
+            </Trans>
           </div>
           {currentPanel && (
             <div>
-              Panel: {currentPanel.title} ({currentPanel.id})
+              <Trans
+                i18nKey="alerting.dashboard-picker.current-selection-panel"
+                values={{ panelTitle: currentPanel.title, panelId: currentPanel.id }}
+              >
+                Panel: {'{{ panelTitle }}'} ({'{{ panelId }}'})
+              </Trans>
             </div>
           )}
         </Alert>

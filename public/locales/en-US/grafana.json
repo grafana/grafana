@@ -410,7 +410,9 @@
     "alert-rule-form": {
       "action-buttons": {
         "delete": "Delete",
-        "edit-yaml": "Edit YAML"
+        "edit-yaml": "Edit YAML",
+        "save": "Save rule",
+        "save-exit": "Save rule and exit"
       },
       "title-delete-rule": "Delete rule"
     },
@@ -442,6 +444,9 @@
       "notification-state": "Notification state",
       "suppressed-the-alert-has-been-silenced": "Suppressed: The alert has been silenced.",
       "unprocessed-the-alert-is-received": "Unprocessed: The alert is received but its notification has not been processed yet."
+    },
+    "alert-state-tag": {
+      "paused": "Paused"
     },
     "alert-warning": {
       "to-rule-list": "To rule list"
@@ -578,6 +583,10 @@
       "tooltip-remove-matcher": "Remove matcher"
     },
     "annotations": {
+      "dashboard-annotation-field": {
+        "dashboard": "Dashboard {{dashboardUid}}",
+        "panel": "Panel {{panelId}}"
+      },
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
     },
@@ -796,6 +805,9 @@
     },
     "dashboard-picker": {
       "confirm": "Confirm",
+      "current-selection-dashboard": "Dashboard: {{dashboardTitle}} ({{ dashboardUid }}) in folder {{ folderTitle }}",
+      "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
+      "fallback-dashboards-string": "Dashboards",
       "placeholder-search-dashboard": "Search dashboard",
       "placeholder-search-panel": "Search panel",
       "select-dashboard-available-panels": "Select a dashboard to get a list of available panels",
@@ -810,6 +822,7 @@
       "import-to-grafana": "Import to Grafana rules"
     },
     "datasource-not-found": {
+      "card-description": "The datasource for this query was not found, it was either removed or is not installed correctly.",
       "remove-query": "Remove query",
       "show-details": "Show details",
       "this-datasource-has-been-removed": "This datasource has been removed",
@@ -888,9 +901,6 @@
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
     },
-    "error-summary-button": {
-      "error": "1 error"
-    },
     "evaluation-behavior-summary": {
       "evaluate": "Every {{every}}",
       "label-evaluate": "Evaluate",
@@ -962,8 +972,14 @@
       "no-data": "No data"
     },
     "federated-rule-warning": {
+      "experimental": "Federated rule groups are currently an experimental feature.",
       "read-documentation": "Read documentation",
       "title-federated-group": "This rule is part of a federated rule group."
+    },
+    "file-export-inline-documentation": {
+      "api-provisioning": "{{name}} format is only valid for API Provisioning. <3>Read more in the docs.</3>",
+      "file-provisioning": "{{name}} format is only valid for File Provisioning. <3>Read more in the docs.</3>",
+      "terraform-provisioning": "{{name}} format is only valid for Terraform Provisioning. <3>Read more in the docs.</3>"
     },
     "file-export-preview": {
       "copy-code": "Copy code",
@@ -1046,6 +1062,9 @@
     },
     "grafana-folder-and-labels-step": {
       "title-add-folder-and-labels": "Add folder and labels"
+    },
+    "grafana-managed-rule-type": {
+      "description": "Supports multiple data sources of any kind.<1></1>Transform data with expressions."
     },
     "grafana-modify-export": {
       "body-invalid-rule-id": "The rule UID in the page URL is invalid. Please check the URL and try again.",
@@ -1217,8 +1236,14 @@
         "label": "Target folder"
       }
     },
+    "insights": {
+      "monitor-status-of-system": "Monitor the status of your system",
+      "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
+      "monitor-status-system-tooltip-identify": "You can identify patterns in why things go wrong and discover trends in alerting performance within your organization."
+    },
     "insights-menu-button-renderer": {
       "aria-label-rate-this-panel": "Rate this panel",
+      "help-us": "Help us improve this page by telling us whether this panel is useful to you!",
       "menu": {
         "label-explore": "Explore",
         "label-rate-this-panel": "Rate this panel"
@@ -1323,6 +1348,7 @@
     "loki-state-history": {
       "clear-filters": "Clear filters",
       "common-labels": "Common labels",
+      "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
       "title-error-fetching-the-state-history": "Error fetching the state history"
     },
@@ -1331,8 +1357,12 @@
       "title": "Manage permissions"
     },
     "matcher-filter": {
+      "filter-alerts-using-label-querying-without-braces": "Filter alerts using label querying without braces, ex:",
+      "filter-alerts-using-label-querying-without-spaces": "Filter alerts using label querying without spaces, ex:",
+      "invalid-use-of-spaces": "Invalid use of spaces:",
       "search-by-label": "Search by label",
-      "search-query-input-placeholder-search": "Search"
+      "search-query-input-placeholder-search": "Search",
+      "valid-use-of-spaces": "Valid use of spaces:"
     },
     "matchers-field": {
       "add-matcher": "Add matcher",
@@ -1358,8 +1388,12 @@
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
     },
+    "mimir-flavored-type": {
+      "description": "Use a Mimir, Loki or Cortex datasource.<1></1>Expressions are not supported."
+    },
     "min-interval-option": {
-      "label-interval": "Interval"
+      "label-interval": "Interval",
+      "tooltip-interval": "Interval sent to the data source. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -1499,13 +1533,16 @@
     "notification-route-details-modal": {
       "alert-instances-routed-follows": "Your alert instances are routed as follows.",
       "close": "Close",
+      "contact-point": "Contact point",
       "default-policy": "Default policy",
       "notification-policy-path": "Notification policy path",
+      "see-details-link": "See details",
       "title-routing-details": "Routing details"
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expand policy route",
       "delivered-to": "@ Delivered to",
+      "notification-policy": "Notification policy",
       "see-details": "See details"
     },
     "notification-templates": {
@@ -1548,12 +1585,18 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
+    "paused-badge": {
+      "paused": "Paused"
+    },
     "payload-editor": {
       "edit-payload": "Edit payload",
       "label-add-custom-alert-instance": "Add custom alert instance",
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Use existing alert instances",
       "reference": "Reference"
+    },
+    "plugin-integrations": {
+      "tailored-apps": "Speed up your alerts creation now by using one of our tailored apps"
     },
     "policies": {
       "aria-label-collapse": "Collapse",
@@ -1635,7 +1678,10 @@
       "title-preview-is-not-available": "Preview is not available"
     },
     "preview-rule-result": {
-      "loading-preview": "Loading preview..."
+      "loading-preview": "Loading preview...",
+      "no-data-error-handling-not-applied": "Configuration for `no data` and `error handling` is not applied.",
+      "preview-based-on-query-result": "Preview based on the result of running the query, for this moment.",
+      "preview-failed": "Failed to preview alert rule"
     },
     "preview-summary": {
       "no-series": "No series"
@@ -1664,6 +1710,7 @@
     },
     "query-and-expressions-step": {
       "add-query": "Add query",
+      "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
       "expressions": "Expressions",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
       "title-deactivate-advanced-options": "Deactivate advanced options",
@@ -1674,7 +1721,10 @@
       "view-in-explore": "View in Explore"
     },
     "query-options": {
-      "label-time-range": "Time Range"
+      "button-options": "Options",
+      "label-time-range": "Time Range",
+      "max-data-points": "MD = {{maxDataPoints}}",
+      "min-interval": "Min. Interval = {{minInterval}}"
     },
     "query-preview": {
       "relative-time-range": "{{from}} to now"
@@ -1705,6 +1755,12 @@
         "label-export-all": "Export all"
       }
     },
+    "recording-rule-editor": {
+      "error-no-query-editor": "Could not load query editor due to: {{errorMessage}}"
+    },
+    "recording-rule-type": {
+      "description": "Precompute expressions.<1></1>Should be combined with an alert rule."
+    },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source"
@@ -1714,9 +1770,13 @@
       "title-add-namespace-and-group": "Add namespace and group"
     },
     "redirect-to-clone-rule": {
+      "body-evaluation-group": "You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.",
+      "body-not-provisioned": "The new rule will <1>not</1> be marked as a provisioned rule.",
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
     },
     "redirect-to-rule-viewer": {
+      "no-rules-found": "No rules in <1>{{sourceName}}</1> matched the name <4>{{name}}</4>",
+      "several-rules-found": "Several rules in <1>{{sourceName}}</1> matched the name <4>{{name}}</4>, please select the rule you want to view.",
       "text-loading-rule": "Loading rule...",
       "title-could-not-view-rule": "Could not view rule",
       "title-failed-to-load": "Failed to load rules from {{sourceName}}"
@@ -1745,13 +1805,20 @@
     "routing-settings": {
       "aria-label-group-by": "Group by",
       "description-group-by": "Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.",
+      "group-interval": "Group interval: <1>{{groupIntervalValue}}</1>",
+      "group-wait": "Group wait: <1>{{groupWaitValue}}</1>",
+      "grouping": "Grouping: <1>{{fields}}</1>",
       "label-group-by": "Group by",
       "label-override-grouping": "Override grouping",
-      "label-override-timings": "Override timings"
+      "label-override-timings": "Override timings",
+      "repeat-interval": "Repeat interval: <1>{{repeatIntervalValue}}</1>"
     },
     "rule-actions-buttons": {
       "title-edit": "Edit",
       "title-view": "View"
+    },
+    "rule-config-status": {
+      "tooltip-min-interval": "A minimum evaluation interval of <1>{{minInterval}}</1> has been configured in Grafana and will be used instead of the {{ruleInterval}} interval configured for the Rule Group."
     },
     "rule-details": {
       "keep-firing-for": "Keep firing for",
@@ -1774,6 +1841,11 @@
     },
     "rule-details-federated-sources": {
       "label-tenant-sources": "Tenant sources"
+    },
+    "rule-details-matching-instances": {
+      "button-show-all_one": "Show all {{totalItems}} alert instances",
+      "button-show-all_other": "Show all {{totalItems}} alert instances",
+      "showing-count": "Showing {{visibleItems}} out of {{totalItems}} instances"
     },
     "rule-editor": {
       "get-content": {
@@ -1933,7 +2005,20 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules"
+      "button-errors_one": "{{count}} error",
+      "button-errors_other": "{{count}} errors",
+      "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
+      "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
+      "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
+      "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
+      "more-errors_one": "{{count}} more error",
+      "more-errors_other": "{{count}} more errors",
+      "unknown-error": "Unknown error."
+    },
+    "rule-list-v1": {
+      "collapse-all": "Collapse all",
+      "expand-all": "Expand all"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -1945,6 +2030,7 @@
     "rule-state": {
       "creating": "Creating",
       "deleting": "Deleting",
+      "for": "for {{duration}}",
       "na": "n/a",
       "paused": "Paused",
       "recording-rule": "Recording rule"
@@ -1960,6 +2046,9 @@
       "recording": "{{recordingStats}} recording",
       "recovering": "{{recoveringStats}} recovering"
     },
+    "rule-type-picker": {
+      "grafana-managed": "Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API enabled."
+    },
     "rule-view": {
       "query": {
         "datasources-na": {
@@ -1970,6 +2059,7 @@
     },
     "rule-viewer": {
       "error-loading": "Something went wrong loading the rule",
+      "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
@@ -1995,6 +2085,7 @@
     },
     "rules-filter": {
       "clear-filters": "Clear filters",
+      "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
@@ -2003,6 +2094,7 @@
         "label-saved-searches": "Saved searches"
       },
       "health": "Health",
+      "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
       "placeholder-all-data-sources": "All data sources",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
@@ -2014,6 +2106,7 @@
       "view-as": "View as"
     },
     "rules-group": {
+      "deleting": "Deleting",
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
@@ -2036,11 +2129,13 @@
     "search-field-input": {
       "clear": "Clear",
       "filter-instances": "Filter instances",
+      "filter-instances-tooltip": "Use label matcher expression or click on an instance label to filter instances, for example:",
       "instancesSearchInput-placeholder-filter-instances": "Filter instances"
     },
     "search-query-help": {
       "expression": "Expression",
       "filter-type": "Filter type",
+      "search-syntax": "Search syntax allows to query alert rules by the parameters defined below.",
       "title-contact-point": "Contact point",
       "title-dashboard-uid": "Dashboard UID",
       "title-datasources": "Datasources",
@@ -2051,6 +2146,9 @@
       "title-rule": "Rule",
       "title-state": "State",
       "title-type": "Type"
+    },
+    "selecting-data-source-tooltip": {
+      "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
     "settings-content": {
       "add-new-alertmanager": "Add new Alertmanager",
@@ -2072,7 +2170,11 @@
       "label-silence-start-and-end": "Silence start and end",
       "placeholder-select-time-range": "Select time range"
     },
+    "silenced-alerts-table-row": {
+      "silenced-for": "for {{duration}}"
+    },
     "silenced-instances-preview": {
+      "error-generating-preview": "Error occurred when generating preview of affected alerts. Are your matchers valid?",
       "no-firing-alert-instances-found": "No firing alert instances found",
       "text-loading-affected-alert-rule-instances": "Loading affected alert rule instances...",
       "title-preview-not-available": "Preview not available",
@@ -2093,6 +2195,7 @@
       "saving": "Saving..."
     },
     "silences-filter": {
+      "search-by-matchers-tooltip": "Filter silences by using a comma separated list of matchers, e.g.",
       "search-query-input-placeholder-search": "Search"
     },
     "silences-table": {
@@ -2111,13 +2214,20 @@
     },
     "smart-alert-type-detector": {
       "data-sourcemanaged-alert-rules": "Data source-managed alert rules",
+      "data-sourcemanaged-alert-rules-description": "Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation. The use of expressions or multiple queries is not supported.",
       "grafanamanaged-alert-rules": "Grafana-managed alert rules",
+      "grafanamanaged-alert-rules-description": "Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.",
       "rule-type": "Rule type",
+      "rule-type-cannot-be-changed": "The alert rule type cannot be changed for an existing rule.",
+      "rule-type-grafana-managed": "Based on the selected data sources this alert rule will be Grafana-managed.",
       "select-where-alert-managed": "Select where the alert rule will be managed.",
+      "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
+      "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
     },
     "state-history": {
       "filter-group": "Filter group",
+      "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
       "text-loading-history": "Loading history...",
       "title-failed-to-fetch-alert-state-history": "Failed to fetch alert state history"
@@ -2136,6 +2246,14 @@
     },
     "template-content-and-preview": {
       "label-template-content": "Template content"
+    },
+    "template-data-docs": {
+      "alert-template-data-table": {
+        "alert-template-data": "Alert template data",
+        "only-in-alert": "Available only when in the context of an Alert (e.g. inside .Alerts loop)"
+      },
+      "available-context-notification": "Available in the context of a notification.",
+      "notification-template-data": "Notification template data"
     },
     "template-data-table": {
       "name": "Name",
@@ -2212,12 +2330,18 @@
       "timestamp": "Timestamp",
       "value": "Value"
     },
+    "timestamp": {
+      "time-ago": "({{time}} ago)"
+    },
     "to-gma": {
       "confirm-modal": {
         "body": "The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
         "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
+    },
+    "type-selector-button": {
+      "add-expression": "Add expression"
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Unknown rule type"
@@ -2285,6 +2409,9 @@
       "title-alert-rules": "Alert rules",
       "title-contact-points": "Contact points",
       "title-notification-policies": "Notification policies"
+    },
+    "yaml-content-info": {
+      "body": "The YAML content in the editor only contains alert rule configuration <1></1>To configure Prometheus, you need to provide the rest of the <4>configuration file content.</4>"
     }
   },
   "annotations": {

@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
@@ -132,15 +132,13 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
 function YamlContentInfo() {
   return (
     <div>
-      The YAML content in the editor only contains alert rule configuration <br />
-      To configure Prometheus, you need to provide the rest of the{' '}
-      <a
-        href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/"
-        target="_blank"
-        rel="noreferrer"
-      >
-        configuration file content.
-      </a>
+      <Trans i18nKey="alerting.yaml-content-info.body">
+        The YAML content in the editor only contains alert rule configuration <br />
+        To configure Prometheus, you need to provide the rest of the{' '}
+        <TextLink href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" external>
+          configuration file content.
+        </TextLink>
+      </Trans>
     </div>
   );
 }

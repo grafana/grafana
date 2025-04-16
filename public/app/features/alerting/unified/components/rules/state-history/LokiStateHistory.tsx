@@ -92,7 +92,9 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         )}
         severity="error"
       >
-        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+        {error instanceof Error
+          ? error.message
+          : t('alerting.loki-state-history.error-unable-to-fetch', 'Unable to fetch alert state history')}
       </Alert>
     );
   }
@@ -202,8 +204,12 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
               <PopupCard
                 content={
                   <>
-                    Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
-                    filter instances
+                    <Trans i18nKey="alerting.search-field-input.filter-instances-tooltip">
+                      Use label matcher expression or click on an instance label to filter instances, for example:
+                    </Trans>
+                    <div>
+                      <code>{'{foo=bar}'}</code>
+                    </div>
                   </>
                 }
               >

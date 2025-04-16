@@ -661,7 +661,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 )}
                 severity="warning"
               >
-                Create at least one query or expression to be alerted on
+                <Trans i18nKey="alerting.query-and-expressions-step.body-queries-expressions-configured">
+                  Create at least one query or expression to be alerted on
+                </Trans>
               </Alert>
             )}
           </Stack>
@@ -716,7 +718,7 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
   return (
     <Dropdown overlay={newMenu}>
       <Button variant="secondary" data-testid={'add-expression-button'}>
-        Add expression
+        <Trans i18nKey="alerting.type-selector-button.add-expression">Add expression</Trans>
         <Icon name="angle-down" />
       </Button>
     </Dropdown>

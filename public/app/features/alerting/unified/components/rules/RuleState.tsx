@@ -50,14 +50,20 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
       if (firstActiveAt) {
         return (
           <span title={String(firstActiveAt)} className={style.for}>
-            for{' '}
-            {intervalToAbbreviatedDurationString(
-              {
-                start: firstActiveAt,
-                end: new Date(),
-              },
-              false
-            )}
+            <Trans
+              i18nKey="alerting.rule-state.for"
+              values={{
+                duration: intervalToAbbreviatedDurationString(
+                  {
+                    start: firstActiveAt,
+                    end: new Date(),
+                  },
+                  false
+                ),
+              }}
+            >
+              for {'{{duration}}'}
+            </Trans>{' '}
           </span>
         );
       }
