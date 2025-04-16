@@ -14,7 +14,7 @@ exclude k8s.io/client-go v12.0.0+incompatible
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
+	github.com/grafana/authlib/types v0.0.0-20250409135412-c2890bcf1217
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250416173722-ec17e0e4ce03
@@ -221,7 +221,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-aws-sdk v0.38.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // indirect
 	github.com/grafana/grafana/apps/folder v0.0.0-20250416173722-ec17e0e4ce03 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250416173722-ec17e0e4ce03 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
