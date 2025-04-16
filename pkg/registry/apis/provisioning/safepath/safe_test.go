@@ -19,6 +19,11 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "character space",
+			path:    "path/to/my file.json",
+			wantErr: nil,
+		},
+		{
 			name:    "valid path with extension",
 			path:    "path/to/file.json",
 			wantErr: nil,
@@ -63,11 +68,6 @@ func TestIsSafe(t *testing.T) {
 		{
 			name:    "invalid special character hash",
 			path:    "path/to/file#.json",
-			wantErr: ErrInvalidCharacters,
-		},
-		{
-			name:    "invalid character space",
-			path:    "path/to/my file.json",
 			wantErr: ErrInvalidCharacters,
 		},
 		{
