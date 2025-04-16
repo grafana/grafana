@@ -101,6 +101,6 @@ jobs:
             }
           variables: |
             projectid: ${{ env.PROJECT_ID }}
-            itemid: ${{ steps.get_node_id.outputs.data.repository.issueOrPullRequest.id }}
+            itemid: ${{ fromJSON(steps.get_node_id.outputs.data).repository.issueOrPullRequest.id }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
