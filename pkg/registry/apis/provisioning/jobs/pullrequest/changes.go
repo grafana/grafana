@@ -133,6 +133,8 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 	// Dashboards get special handling
 	if info.Parsed.GVK.Kind == dashboardKind {
+		// FIXME: extract the logic out of a dashboard URL builder/injector or similar
+		// for testability and decoupling
 		if info.Parsed.Existing != nil {
 			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(),
 				slugify.Slugify(info.Title))
