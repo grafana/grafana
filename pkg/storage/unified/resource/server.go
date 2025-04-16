@@ -1156,6 +1156,7 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 		}
 	}
 
+	s.log.Info("handling Search")
 	return s.search.Search(ctx, req)
 }
 
@@ -1172,6 +1173,7 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 		}
 	}
 
+	s.log.Info("handling GetStats")
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
 		srv, ok := s.backend.(ResourceIndexServer)
