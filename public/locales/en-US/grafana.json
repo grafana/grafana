@@ -3076,6 +3076,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
+      "body-plugin-dashboard": "Your changes will be lost when you update the plugin.<1></1><2>Use <1>Save As</1> to create custom version.</2>",
       "cancel": "Cancel",
       "overwrite": "Overwrite",
       "title-plugin-dashboard": "Plugin dashboard"
@@ -3098,6 +3099,7 @@
       }
     },
     "dashboard-validation": {
+      "body-dashboard-failed-schema-validation": "Validation is provided for development purposes and should be safe to ignore. If you are a Grafana developer, consider checking and updating the dashboard schema",
       "title-checking-dashboard-validity": "Checking dashboard validity",
       "title-dashboard-failed-schema-validation": "Dashboard failed schema validation",
       "title-error-checking-dashboard-validity": "Error checking dashboard validity"
@@ -3455,6 +3457,8 @@
       "description": "Description",
       "label-copy-tags": "Copy tags",
       "label-folder": "Folder",
+      "save": "Save",
+      "saving": "Saving...",
       "title": "Title"
     },
     "save-dashboard-button": {
@@ -3471,19 +3475,30 @@
       "label-details": "Details"
     },
     "save-dashboard-error-proxy": {
-      "title-conflict": "Conflict"
+      "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
+      "body-version-mismatch": "Someone else has updated this dashboard<1></1><2>Would you still like to save this dashboard?</2>",
+      "title-name-exists": "Conflict",
+      "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
       "cancel": "Cancel",
       "label-current-range-dashboard-default": "Save current time range as dashboard default",
       "label-current-variable-values-dashboard-default": "Save current variable values as dashboard default",
       "no-changes-to-save": "No changes to save",
-      "placeholder-describe-changes": "Add a note to describe your changes."
+      "placeholder-describe-changes": "Add a note to describe your changes.",
+      "save": "Save",
+      "saving": "Saving..."
     },
     "save-provisioned-dashboard-form": {
       "cancel": "Cancel",
+      "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
-      "save-json-to-file": "Save JSON to file"
+      "file-path": "<0>File path:</0> {{filePath}}",
+      "save-json-to-file": "Save JSON to file",
+      "see-docs": "See <2>documentation</2> for more information about provisioning."
+    },
+    "share-public-dashboard-loader": {
+      "loading-configuration": "Loading configuration"
     },
     "solo-panel": {
       "loading-initializing-dashboard": "Loading & initializing dashboard",
@@ -3662,6 +3677,9 @@
       "title-delete": "Delete {{name}}?"
     },
     "transformation-picker": {
+      "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
+      "info-graph-not-suitable": "Many transforms are not suitable if you're using the Graph visualization, as it currently only supports time series data.",
+      "info-switch-to-table": "It can help to switch to the Table visualization to understand what a transformation is doing. ",
       "placeholder-search-for-transformation": "Search for transformation",
       "read-more": "Read more",
       "title-transformations": "Transformations"
