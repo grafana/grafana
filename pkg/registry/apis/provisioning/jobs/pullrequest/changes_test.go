@@ -51,7 +51,6 @@ func TestCalculateChanges(t *testing.T) {
 				meta, _ := utils.MetaAccessor(obj)
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
-				progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 				reader.On("Config").Return(&v0alpha1.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -411,7 +410,6 @@ func TestCalculateChanges(t *testing.T) {
 
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
-				progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 				reader.On("Config").Return(&v0alpha1.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -589,8 +587,11 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo v0alpha1.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "x" && repo.Name == "y"
 				}), "d/the:uid/hello-world", mock.Anything).Return("", fmt.Errorf("invalid URL"))
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo v0alpha1.ResourceRepositoryInfo) bool {
+					return repo.Namespace == "x" && repo.Name == "y"
+				}), "admin/provisioning/y/dashboard/preview/path/to/file.json", mock.Anything).Return("", fmt.Errorf("invalid preview URL"))
+
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
-				progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 				reader.On("Config").Return(&v0alpha1.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -632,7 +633,7 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error:      "Error running image rendering",
+					Error:      "invalid preview URL",
 					GrafanaURL: "http://host/d/the:uid/hello-world", // Invalid URL
 					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 				}},

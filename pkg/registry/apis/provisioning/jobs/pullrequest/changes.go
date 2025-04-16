@@ -28,7 +28,6 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
-	HasScreenshot        bool
 }
 
 type fileChangeInfo struct {
@@ -72,52 +71,26 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		return changeInfo{}, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	baseURL := e.urlProvider(cfg.Namespace)
+	rendererAvailable := e.render.IsAvailable(ctx)
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
-		GrafanaBaseURL: baseURL,
-	}
-
-	var shouldRender bool
-	switch {
-	case e.render == nil:
-		shouldRender = false
-	case !e.render.IsAvailable(ctx):
-		info.MissingImageRenderer = true
-		shouldRender = false
-	case len(changes) > 1 || !cfg.Spec.GitHub.GenerateDashboardPreviews:
-		// Only render images when there is just one change
-		shouldRender = false
-	default:
-		shouldRender = true
+		GrafanaBaseURL:       e.urlProvider(cfg.Namespace),
+		MissingImageRenderer: !rendererAvailable,
 	}
 
 	logger := logging.FromContext(ctx)
+
 	for i, change := range changes {
 		// process maximum 10 files
 		if i >= 10 {
 			info.SkippedFiles = len(changes) - i
+			logger.Info("skipping remaining files", "count", info.SkippedFiles)
 			break
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-
-		v := calculateFileChangeInfo(ctx, repo, info.GrafanaBaseURL, change, opts, parser)
-		if shouldRender && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
-			progress.SetMessage(ctx, fmt.Sprintf("render screenshots %s", change.Path))
-			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, e.render); err != nil {
-				info.MissingImageRenderer = true
-				if v.Error == "" {
-					v.Error = "Error running image rendering"
-				}
-
-				if v.GrafanaScreenshotURL != "" || v.PreviewScreenshotURL != "" {
-					info.HasScreenshot = true
-				}
-			}
-		}
-
-		info.Changes = append(info.Changes, v)
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
@@ -125,9 +98,10 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser) fileChangeInfo {
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		return calculateFileDeleteInfo(ctx, baseURL, change)
+		// TODO: read the old and verify
+		return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
 	}
 
 	info := fileChangeInfo{Change: change}
@@ -174,31 +148,24 @@ func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseUR
 			query.Set("pull_request_url", url.QueryEscape(opts.URL))
 		}
 		info.PreviewURL += "?" + query.Encode()
+		if shouldRender {
+			if info.GrafanaURL != "" {
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL)
+				if err != nil {
+					info.Error = err.Error()
+				}
+			}
+
+			if info.PreviewURL != "" {
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL)
+				if err != nil {
+					info.Error = err.Error()
+				}
+			}
+		}
 	}
 
 	return info
-}
-
-func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange) fileChangeInfo {
-	// TODO: read the old and verify
-	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
-}
-
-// This will update render the linked screenshots and update the screenshotURLs
-func (f *fileChangeInfo) renderScreenshots(ctx context.Context, baseURL string, renderer ScreenshotRenderer) (err error) {
-	if f.GrafanaURL != "" {
-		f.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.GrafanaURL)
-		if err != nil {
-			return err
-		}
-	}
-	if f.PreviewURL != "" {
-		f.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.PreviewURL)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func renderScreenshotFromGrafanaURL(ctx context.Context,
