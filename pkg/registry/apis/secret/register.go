@@ -718,17 +718,15 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 	return nil
 }
 
-// TODO: use this for starting the outbox queue async process?
 func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	return map[string]genericapiserver.PostStartHookFunc{
-		"start-outbox-queue-workers": func(hookCtx genericapiserver.PostStartHookContext) error {
-			go func() {
-				if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
-					if !errors.Is(err, context.Canceled) {
-						b.log.Error("secrets worker exited control loop with error: %+v", err)
-					}
+		"start-outbox-queue-worker": func(hookCtx genericapiserver.PostStartHookContext) error {
+			if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
+				if !errors.Is(err, context.Canceled) {
+					b.log.Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
+					return err
 				}
-			}()
+			}
 
 			return nil
 		},
