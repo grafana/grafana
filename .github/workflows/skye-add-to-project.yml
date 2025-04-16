@@ -62,7 +62,7 @@ jobs:
         uses: octokit/graphql-action@v2.x
         with:
           projectid: ${{ env.PROJECT_ID }}
-          itemid: ${{ env.PULL_REQUEST_ID }}
+          itemid: ${{ github.event.number }}
           query: |
             mutation addPullRequestToProject($projectid: ID!, $itemid: ID!){
               addProjectV2ItemById(input: {projectId: $projectid, contentId: $itemid}) {
