@@ -2,6 +2,9 @@ package pyroscope
 
 import (
 	"context"
+	"encoding/json"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
+	"strings"
 	"testing"
 	"time"
 
@@ -153,8 +156,8 @@ func Test_levelsToTree(t *testing.T) {
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{
 					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-						{Start: 0, Value: 15, Level: 2, Name: "func1:func3"},
-					},
+					{Start: 0, Value: 15, Level: 2, Name: "func1:func3"},
+				},
 				},
 				{Start: 40, Value: 30, Level: 1, Name: "func2"},
 			},
@@ -173,14 +176,14 @@ func Test_levelsToTree(t *testing.T) {
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{
 					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-						{Start: 0, Value: 20, Level: 2, Name: "func1:func4"},
-					},
+					{Start: 0, Value: 20, Level: 2, Name: "func1:func4"},
+				},
 				},
 				{Start: 40, Value: 30, Level: 1, Name: "func2"},
 				{
 					Start: 70, Value: 30, Level: 1, Name: "func3", Nodes: []*ProfileTree{
-						{Start: 70, Value: 10, Level: 2, Name: "func3:func5"},
-					},
+					{Start: 70, Value: 10, Level: 2, Name: "func3:func5"},
+				},
 				},
 			},
 		}, tree)
@@ -226,6 +229,87 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 	})
 }
 
+func Test_seriesToDataFrameAnnotations(t *testing.T) {
+	t.Run("annotations field is not added when no annotations are present", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Labels: []*LabelPair{},
+					Points: []*Point{
+						{
+							Timestamp: int64(1000),
+							Value:     30,
+						},
+						{
+							Timestamp: int64(2000),
+							Value:     20,
+						},
+						{
+							Timestamp: int64(3000),
+							Value:     10,
+						},
+					},
+				},
+			},
+			Units: "short",
+			Label: "samples",
+		}
+
+		frames, err := seriesToDataFrames(series)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+		require.Equal(t, 2, len(frames[0].Fields))
+	})
+
+	t.Run("annotations are correctly serialized", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Labels: []*LabelPair{},
+					Points: []*Point{
+						{
+							Timestamp: int64(1000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: "key1", Value: "value1"},
+								{Key: "key2", Value: "value2"},
+							},
+						},
+						{
+							Timestamp: int64(2000),
+							Value:     20,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: "key3", Value: "value3"},
+							},
+						},
+					},
+				},
+			},
+			Units: "short",
+			Label: "samples",
+		}
+
+		frames, err := seriesToDataFrames(series)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+		require.Equal(t, 3, len(frames[0].Fields))
+		annotationsField := frames[0].Fields[2]
+		require.Equal(t, "annotations", annotationsField.Name)
+
+		require.Equal(t, 2, annotationsField.Len())
+
+		firstPointAnnotations := annotationsField.At(0).(json.RawMessage)
+		require.True(t, strings.Contains(string(firstPointAnnotations), "key1"))
+		require.True(t, strings.Contains(string(firstPointAnnotations), "key2"))
+		require.True(t, strings.Contains(string(firstPointAnnotations), "value1"))
+		require.True(t, strings.Contains(string(firstPointAnnotations), "value2"))
+
+		secondPointAnnotations := annotationsField.At(1).(json.RawMessage)
+		require.True(t, strings.Contains(string(secondPointAnnotations), "key3"))
+		require.True(t, strings.Contains(string(secondPointAnnotations), "value3"))
+	})
+}
+
 func Test_seriesToDataFrame(t *testing.T) {
 	t.Run("single series", func(t *testing.T) {
 		series := &SeriesResponse{
@@ -235,7 +319,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series)
+		require.NoError(t, err)
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, data.NewField("time", nil, []time.Time{time.UnixMilli(1000), time.UnixMilli(2000)}), frames[0].Fields[0])
 		require.Equal(t, data.NewField("samples", map[string]string{}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
@@ -249,7 +334,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames = seriesToDataFrames(series)
+		frames, err = seriesToDataFrames(series)
+		require.NoError(t, err)
 		require.Equal(t, data.NewField("samples", map[string]string{"app": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 	})
 
@@ -262,7 +348,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames := seriesToDataFrames(resp)
+		frames, err := seriesToDataFrames(resp)
+		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, 2, len(frames[1].Fields))

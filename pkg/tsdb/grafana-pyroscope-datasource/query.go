@@ -418,10 +418,6 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-type ProfileAnnotations struct {
-	Bodies []string `json:"bodies"`
-}
-
 func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
 
@@ -441,24 +437,30 @@ func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 
 		valueField := data.NewField(resp.Label, labels, []float64{})
 		valueField.Config = &data.FieldConfig{Unit: resp.Units}
+		fields = append(fields, valueField)
 
 		annotationsField := data.NewField("annotations", nil, []json.RawMessage{})
+		hasAnnotations := false
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
-			annotations := ProfileAnnotations{Bodies: make([]string, 0, len(point.Annotations))}
-			for _, annotation := range point.Annotations {
-				annotations.Bodies = append(annotations.Bodies, annotation.Value)
+			if len(point.Annotations) > 0 {
+				hasAnnotations = true
+				annotationsJson, err := json.Marshal(point.Annotations)
+				if err != nil {
+					return nil, err
+				}
+				annotationsField.Append(json.RawMessage(annotationsJson))
+			} else {
+				annotationsField.Append(json.RawMessage(nil))
 			}
-			encoded, err := json.Marshal(annotations)
-			if err != nil {
-				return nil, err
-			}
-			annotationsField.Append(json.RawMessage(encoded))
 		}
 
-		fields = append(fields, valueField, annotationsField)
+		if hasAnnotations {
+			fields = append(fields, annotationsField)
+		}
+
 		frame.Fields = fields
 		frames = append(frames, frame)
 	}
