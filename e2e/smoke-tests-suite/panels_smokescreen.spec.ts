@@ -2,7 +2,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 
 import { e2e } from '../utils';
 
-describe.skip('Panels smokescreen', () => {
+describe('Panels smokescreen', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
   });
