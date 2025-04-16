@@ -226,6 +226,343 @@ func TestCalculateChanges(t *testing.T) {
 				SkippedFiles: 5,
 			},
 		},
+		{
+			name: "parser factory error",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("parser factory error"))
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedError: "failed to get parser for test-repo: parser factory error",
+		},
+		{
+			name: "file read error",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(nil, fmt.Errorf("read error"))
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Error: "read error",
+				}},
+			},
+		},
+		{
+			name: "parse error",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("invalid json"),
+				}
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				parser.On("Parse", mock.Anything, finfo).Return(nil, fmt.Errorf("parse error"))
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Error: "parse error",
+				}},
+			},
+		},
+		{
+			name: "dry run error",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				parsed := &resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:      obj,
+					Existing: obj,
+					Meta:     meta,
+				}
+				parser.On("Parse", mock.Anything, finfo).Return(parsed, nil)
+				parsed.DryRunResponse = nil // This will cause a dry run error
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Error: "dry run failed",
+					Title: "hello world",
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "path/to/file.json",
+							Ref:  "ref",
+							Data: []byte("xxxx"),
+						},
+						GVK: schema.GroupVersionKind{
+							Kind: dashboardKind,
+						},
+					},
+				}},
+			},
+		},
+		{
+			name: "screenshot render error",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("", fmt.Errorf("render error"))
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				MissingImageRenderer: true,
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Error:      "Error running image rendering",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+				}},
+			},
+		},
+		{
+			name: "non-dashboard resource",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "test/v1",
+						"kind":       "TestResource",
+						"metadata": map[string]interface{}{
+							"name": "test-resource",
+						},
+						"spec": map[string]interface{}{
+							"title": "Test Resource",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: "TestResource",
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Title: "Test Resource",
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "path/to/file.json",
+							Ref:  "ref",
+							Data: []byte("xxxx"),
+						},
+						GVK: schema.GroupVersionKind{
+							Kind: "TestResource",
+						},
+					},
+				}},
+			},
+		},
+		{
+			name: "deleted file",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionDeleted,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionDeleted,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					Error: "delete feedback not yet implemented",
+				}},
+			},
+		},
 	}
 
 	for _, tt := range tests {
