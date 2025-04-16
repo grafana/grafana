@@ -1,8 +1,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-// Custom type for plop action functions
-export type PlopActionFunction = (
+type PlopActionFunction = (
   answers: Record<string, unknown>,
   config?: Record<string, unknown>
 ) => string | Promise<string>;

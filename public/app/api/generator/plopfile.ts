@@ -13,19 +13,8 @@ import {
   // work with the '--experimental-strip-types' flag
   // @ts-ignore
 } from './helpers.ts';
-
-interface PlopData {
-  groupName: string;
-  group: string;
-  version: string;
-  reducerPath: string;
-  endpoints: string;
-  isEnterprise: boolean;
-}
-
-function isPlopData(data: unknown): data is Partial<PlopData> {
-  return typeof data === 'object' && data !== null;
-}
+// @ts-ignore
+import { type ActionConfig, type PlopData, isPlopData } from './types.ts';
 
 export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
@@ -43,23 +32,21 @@ export default function plopGenerator(plop: NodePlopAPI) {
   const generateRtkApiActions = (data: PlopData) => {
     const { reducerPath, groupName, isEnterprise } = data;
 
-    // Set the appropriate paths based on whether this is an OSS or Enterprise API
     const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
     const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
 
     // Using app path, so the imports work on any file level
     const clientImportPath = isEnterprise ? '../extensions/api/clients' : 'app/api/clients';
 
-    // Path prefixes for the config entry template
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../public/app/api/clients';
 
-    // Template data with all path information
     const templateData = {
       ...data,
       apiPathPrefix,
     };
 
-    return [
+    // Base actions that are always added
+    const actions: ActionConfig[] = [
       {
         type: 'add',
         path: projectPath(`${apiClientBasePath}/${groupName}/baseAPI.ts`),
@@ -77,40 +64,51 @@ export default function plopGenerator(plop: NodePlopAPI) {
         path: projectPath(`${apiClientBasePath}/${groupName}/index.ts`),
         templateFile: './templates/index.ts.hbs',
       },
-      {
-        type: 'modify',
-        path: projectPath('public/app/core/reducers/root.ts'),
-        pattern: '// PLOP_INJECT_IMPORT',
-        template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
-      },
-      {
-        type: 'modify',
-        path: projectPath('public/app/core/reducers/root.ts'),
-        pattern: '// PLOP_INJECT_REDUCER',
-        template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
-      },
-      {
-        type: 'modify',
-        path: projectPath('public/app/store/configureStore.ts'),
-        pattern: '// PLOP_INJECT_IMPORT',
-        template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
-      },
-      {
-        type: 'modify',
-        path: projectPath('public/app/store/configureStore.ts'),
-        pattern: '// PLOP_INJECT_MIDDLEWARE',
-        template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
-      },
+    ];
+
+    // Only add redux reducer and middleware for OSS clients
+    if (!isEnterprise) {
+      actions.push(
+        {
+          type: 'modify',
+          path: projectPath('public/app/core/reducers/root.ts'),
+          pattern: '// PLOP_INJECT_IMPORT',
+          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
+        },
+        {
+          type: 'modify',
+          path: projectPath('public/app/core/reducers/root.ts'),
+          pattern: '// PLOP_INJECT_REDUCER',
+          template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
+        },
+        {
+          type: 'modify',
+          path: projectPath('public/app/store/configureStore.ts'),
+          pattern: '// PLOP_INJECT_IMPORT',
+          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
+        },
+        {
+          type: 'modify',
+          path: projectPath('public/app/store/configureStore.ts'),
+          pattern: '// PLOP_INJECT_MIDDLEWARE',
+          template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
+        }
+      );
+    }
+
+    // Add formatting and generation actions
+    actions.push(
       {
         type: 'formatFiles',
         files: getFilesToFormat(groupName, isEnterprise),
       },
-      // Run yarn generate-apis to generate endpoints
       {
         type: 'runGenerateApis',
         isEnterprise,
-      },
-    ];
+      }
+    );
+
+    return actions;
   };
 
   const generator: PlopGeneratorConfig = {
@@ -126,7 +124,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
         type: 'input',
         name: 'groupName',
         message: 'API group name (e.g. dashboard):',
-        validate: (input: string) => input?.trim() || 'Group name is required',
+        validate: (input: string) => (input?.trim() ? true : 'Group name is required'),
       },
       {
         type: 'input',
@@ -147,7 +145,8 @@ export default function plopGenerator(plop: NodePlopAPI) {
         name: 'reducerPath',
         message: 'Reducer path (e.g. dashboardAPI):',
         default: (answers: { groupName?: string }) => `${answers.groupName}API`,
-        validate: (input: string) => input?.endsWith('API') || 'Reducer path should end with "API" (e.g. dashboardAPI)',
+        validate: (input: string) =>
+          input?.endsWith('API') ? true : 'Reducer path should end with "API" (e.g. dashboardAPI)',
       },
       {
         type: 'input',

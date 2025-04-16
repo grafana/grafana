@@ -26,7 +26,7 @@ The generator automates the following:
    - `scripts/generate-rtk-apis.ts` for OSS APIs
    - `local/generate-enterprise-apis.ts` for Enterprise APIs
 3. Creates the `index.ts` file with proper exports
-4. Updates Redux reducers and middleware in the store
+4. For OSS APIs only: Updates Redux reducers and middleware in the store
 5. Formats all generated files using Prettier and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
 
@@ -38,11 +38,13 @@ Depending on the selection at the start:
 - Client path: `public/app/api/clients/<group-name>/`
 - Generation script: `scripts/generate-rtk-apis.ts`
 - Build command: `yarn generate-apis`
+- Redux: Adds imports, reducer, and middleware to store
 
 ### Enterprise APIs
 - Client path: `public/app/extensions/api/clients/<group-name>/`
 - Generation script: `local/generate-enterprise-apis.ts`
 - Build command: `yarn process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts`
+- Redux: Does not add to the store (must be done manually if needed)
 
 ## Example
 
@@ -63,7 +65,7 @@ This will generate:
 - `public/app/api/clients/dashboard/endpoints.gen.ts` (automatically generated)
 - `public/app/api/clients/dashboard/index.ts`
 
-And update:
+And update (for OSS APIs only):
 
 - `scripts/generate-rtk-apis.ts`
 - `public/app/core/reducers/root.ts`
