@@ -1277,8 +1277,7 @@ github.com/grafana/alerting v0.0.0-20250411135245-cad0d384d430 h1:qT0D7AIV0GRu8J
 github.com/grafana/alerting v0.0.0-20250411135245-cad0d384d430/go.mod h1:3ER/8BhIEhvrddcztLQSc5ez1f1jNHIPdquc1F+DzOw=
 github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d h1:TDVZemfYeJHPyXeYCnqL7BQqsa+mpaZYth/Qm3TKaT8=
 github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
-github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
-github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
+github.com/grafana/authlib/types v0.0.0-20250409135412-c2890bcf1217 h1:ttMDucQ4j7hvzkbRkYC3IH3XpI72DpYH66ML+gYqxF8=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
 github.com/grafana/dataplane/examples v0.0.1/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
@@ -1292,8 +1291,7 @@ github.com/grafana/grafana-app-sdk/logging v0.35.1/go.mod h1:Y/bvbDhBiV/tkIle9RW
 github.com/grafana/grafana-aws-sdk v0.38.0 h1:OALlZ3FvmzKHICQe0C1cuAMdyhSFkVYxHdxJsleotwc=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
-github.com/grafana/grafana-plugin-sdk-go v0.275.0 h1:icGmZG91lVqIo79w/pSki6N44d3IjOjTfsfQPfu4THU=
-github.com/grafana/grafana-plugin-sdk-go v0.275.0/go.mod h1:mO9LJqdXDh5JpO/xIdPAeg5LdThgQ06Y/SLpXDWKw2c=
+github.com/grafana/grafana-plugin-sdk-go v0.277.0 h1:VDU2F4Y5NeRS//ejctdZtsAshrGaEdbtW33FsK0EQss=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03 h1:FcDY3CP8AAUQHIE6pdX3PfLIvxTP8tNtWhLokxpAt7E=
 github.com/grafana/grafana/apps/folder v0.0.0-20250416173722-ec17e0e4ce03 h1:iOOt+DVLOPz/FRqdK5m+4Wd47i8Q+ZtABKYkUgaeH1w=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250416173722-ec17e0e4ce03 h1:TgNj6jB0c9+ti9xf9NONWCB15SMdNEfpd+zDk7V8gQI=

@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
+	github.com/grafana/authlib/types v0.0.0-20250409135412-c2890bcf1217
 	github.com/grafana/grafana-app-sdk/logging v0.35.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.21.1
