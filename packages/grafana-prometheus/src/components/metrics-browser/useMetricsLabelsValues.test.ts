@@ -901,4 +901,125 @@ describe('useMetricsLabelsValues', () => {
       });
     });
   });
+
+  describe('handleValidation', () => {
+    it('should validate a selector against the language provider', async () => {
+      // Mock fetchLabelsWithMatch to return valid results
+      mockLanguageProvider.fetchLabelsWithMatch = jest.fn().mockResolvedValue({
+        job: ['grafana', 'prometheus'],
+        instance: ['instance1', 'instance2'],
+      });
+
+      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+
+      // Set up initial state - we'll directly select a metric through the handler
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+
+      // Call validation
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+
+      // Verify API was called with the correct selector
+      expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalled();
+
+      // Verify validationStatus was updated
+      expect(result.current.validationStatus).toContain('Selector is valid');
+      expect(result.current.validationStatus).toContain('2 labels found');
+    });
+
+    it('should handle errors during validation', async () => {
+      // Mock fetchLabelsWithMatch to throw an error
+      mockLanguageProvider.fetchLabelsWithMatch = jest.fn().mockRejectedValue(new Error('Validation error'));
+
+      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+
+      // Call validation
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+
+      // Verify error was handled
+      expect(result.current.err).toContain('Validation failed');
+      expect(result.current.validationStatus).toBe('');
+    });
+  });
+
+  describe('handleClear', () => {
+    it('should reset state and localStorage when called', async () => {
+      // Setup initial state with selections
+      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
+
+      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+
+      // Wait for initialization
+      await waitFor(() => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
+
+      // Select a metric and label value
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+
+      // Verify we have state to clear
+      expect(result.current.selectedMetric).toBe('metric1');
+      expect(result.current.selectedLabelValues).toHaveProperty('job');
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Call clear
+      await act(async () => {
+        result.current.handleClear();
+      });
+
+      // Verify state was reset
+      expect(result.current.selectedMetric).toBe('');
+      expect(result.current.selectedLabelKeys).toEqual([]);
+      expect(result.current.selectedLabelValues).toEqual({});
+      expect(result.current.err).toBe('');
+      expect(result.current.status).toBe('Ready');
+      expect(result.current.validationStatus).toBe('');
+
+      // Verify localStorage was cleared
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, '[]');
+
+      // Verify initialize was called
+      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('seriesLimit updates', () => {
+    it('should refetch data when seriesLimit changes', async () => {
+      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+
+      // Wait for initialization
+      await waitFor(() => {
+        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Change series limit - casting to the correct type
+      await act(async () => {
+        result.current.setSeriesLimit(1000 as unknown as typeof DEFAULT_SERIES_LIMIT);
+      });
+
+      // Wait for debounce to finish
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      // Verify data was refetched with new limit
+      await waitFor(() => {
+        const matchCalls = (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+        // Find calls with the new limit
+        const callWithNewLimit = matchCalls.find((call) => call[4] === 1000);
+        expect(callWithNewLimit).toBeTruthy();
+      });
+    });
+  });
 });
