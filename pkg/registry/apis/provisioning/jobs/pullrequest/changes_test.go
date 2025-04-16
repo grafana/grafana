@@ -20,154 +20,260 @@ import (
 )
 
 func TestCalculateChanges(t *testing.T) {
-	parser := resources.NewMockParser(t)
-	reader := repository.NewMockReader(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	tests := []struct {
+		name          string
+		setupMocks    func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
+		changes       []repository.VersionedFileChange
+		expectedInfo  changeInfo
+		expectedURLs  map[string]string
+		expectedError string
+	}{
+		{
+			name: "with screenshot",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
 
-	finfo := &repository.FileInfo{
-		Path: "path/to/file.json",
-		Ref:  "ref",
-		Data: []byte("xxxx"), // not a valid JSON!
-	}
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": resources.DashboardResource.GroupVersion().String(),
-			"kind":       dashboardKind, // will trigger creating a URL
-			"metadata": map[string]interface{}{
-				"name": "the-uid",
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(getDummyRenderedURL("x"), nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 			},
-			"spec": map[string]interface{}{
-				"title": "hello world", // has spaces
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedURLs: map[string]string{
+				"Grafana":         "http://host/d/the-uid/hello-world",
+				"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
+				"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+				"PreviewSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
+			},
+		},
+		{
+			name: "without screenshot",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedURLs: map[string]string{
+				"Grafana":         "http://host/d/the-uid/hello-world",
+				"GrafanaSnapshot": "",
+				"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+				"PreviewSnapshot": "",
+			},
+		},
+		{
+			name: "process first 10 files",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Config").Return(&v0alpha1.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: v0alpha1.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: func() []repository.VersionedFileChange {
+				changes := []repository.VersionedFileChange{}
+				for range 15 {
+					changes = append(changes, repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					})
+				}
+				return changes
+			}(),
+			expectedInfo: changeInfo{
+				SkippedFiles: 5,
 			},
 		},
 	}
-	meta, _ := utils.MetaAccessor(obj)
 
-	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
-	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-	reader.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "x",
-		},
-		Spec: v0alpha1.RepositorySpec{
-			GitHub: &v0alpha1.GitHubRepositoryConfig{
-				GenerateDashboardPreviews: true,
-			},
-		},
-	})
-	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
-		Info: finfo,
-		Repo: v0alpha1.ResourceRepositoryInfo{
-			Namespace: "x",
-			Name:      "y",
-		},
-		GVK: schema.GroupVersionKind{
-			Kind: dashboardKind,
-		},
-		Obj:            obj,
-		Existing:       obj,
-		Meta:           meta,
-		DryRunResponse: obj, // avoid hitting the client
-	}, nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := resources.NewMockParser(t)
+			reader := repository.NewMockReader(t)
+			progress := jobs.NewMockJobProgressRecorder(t)
+			renderer := NewMockScreenshotRenderer(t)
+			parserFactory := resources.NewMockParserFactory(t)
 
-	pullRequest := v0alpha1.PullRequestJobOptions{
-		Ref: "ref",
-		PR:  123,
-		URL: "http://github.com/pr/",
+			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
+
+			evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+				return "http://host/"
+			})
+
+			pullRequest := v0alpha1.PullRequestJobOptions{
+				Ref: "ref",
+				PR:  123,
+				URL: "http://github.com/pr/",
+			}
+
+			info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, tt.changes, progress)
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.expectedURLs != nil {
+				require.Equal(t, tt.expectedURLs, map[string]string{
+					"Grafana":         info.Changes[0].GrafanaURL,
+					"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
+					"Preview":         info.Changes[0].PreviewURL,
+					"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
+				})
+			}
+
+			if tt.name == "process first 10 files" {
+				require.Equal(t, 10, len(info.Changes))
+				require.Equal(t, tt.expectedInfo.SkippedFiles, info.SkippedFiles)
+				for _, change := range info.Changes {
+					require.NotEmpty(t, change.GrafanaURL)
+					require.Empty(t, change.GrafanaScreenshotURL)
+				}
+			}
+		})
 	}
-	createdFileChange := repository.VersionedFileChange{
-		Action: repository.FileActionCreated,
-		Path:   "path/to/file.json",
-		Ref:    "ref",
-	}
-
-	t.Run("with-screenshot", func(t *testing.T) {
-		renderer := NewMockScreenshotRenderer(t)
-		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
-		renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(getDummyRenderedURL("x"), nil)
-		changes := []repository.VersionedFileChange{createdFileChange}
-		progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
-
-		parserFactory := resources.NewMockParserFactory(t)
-		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
-		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
-			return "http://host/"
-		})
-
-		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
-		require.NoError(t, err)
-
-		require.False(t, info.MissingImageRenderer)
-		require.Equal(t, map[string]string{
-			"Grafana":         "http://host/d/the-uid/hello-world",
-			"GrafanaSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
-			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-			"PreviewSnapshot": "https://cdn2.thecatapi.com/images/9e2.jpg",
-		}, map[string]string{
-			"Grafana":         info.Changes[0].GrafanaURL,
-			"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
-			"Preview":         info.Changes[0].PreviewURL,
-			"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
-		})
-	})
-
-	t.Run("without-screenshot", func(t *testing.T) {
-		renderer := NewMockScreenshotRenderer(t)
-		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
-		changes := []repository.VersionedFileChange{createdFileChange}
-		parserFactory := resources.NewMockParserFactory(t)
-		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
-		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
-			return "http://host/"
-		})
-
-		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
-		require.NoError(t, err)
-
-		require.True(t, info.MissingImageRenderer)
-		require.Equal(t, map[string]string{
-			"Grafana":         "http://host/d/the-uid/hello-world",
-			"GrafanaSnapshot": "",
-			"Preview":         "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
-			"PreviewSnapshot": "",
-		}, map[string]string{
-			"Grafana":         info.Changes[0].GrafanaURL,
-			"GrafanaSnapshot": info.Changes[0].GrafanaScreenshotURL,
-			"Preview":         info.Changes[0].PreviewURL,
-			"PreviewSnapshot": info.Changes[0].PreviewScreenshotURL,
-		})
-	})
-
-	t.Run("process first 10 files", func(t *testing.T) {
-		renderer := NewMockScreenshotRenderer(t)
-		renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
-
-		changes := []repository.VersionedFileChange{}
-		for range 15 {
-			changes = append(changes, createdFileChange)
-		}
-
-		parserFactory := resources.NewMockParserFactory(t)
-		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
-		evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
-			return "http://host/"
-		})
-
-		info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, changes, progress)
-		require.NoError(t, err)
-
-		require.False(t, info.MissingImageRenderer)
-		require.Equal(t, 10, len(info.Changes))
-		require.Equal(t, 5, info.SkippedFiles)
-
-		// Make sure we linked a URL, but no screenshot for each item
-		for _, change := range info.Changes {
-			require.NotEmpty(t, change.GrafanaURL)
-			require.Empty(t, change.GrafanaScreenshotURL)
-		}
-	})
 }
 
 func TestDummyImageURL(t *testing.T) {
