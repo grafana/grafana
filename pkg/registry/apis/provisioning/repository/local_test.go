@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -724,6 +726,378 @@ func TestLocalRepository_Update(t *testing.T) {
 				updatedContent, readErr := os.ReadFile(filepath.Join(repo.path, tc.path))
 				require.NoError(t, readErr)
 				assert.Equal(t, tc.data, updatedContent, "File content should be updated")
+			}
+		})
+	}
+}
+
+func TestLocalRepository_Write(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		path        string
+		ref         string
+		data        []byte
+		comment     string
+		expectedErr error
+	}{
+		{
+			name: "write new file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "new-file.txt",
+			data:    []byte("new content"),
+			comment: "test write new file",
+		},
+		{
+			name: "overwrite existing file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file to be overwritten
+				existingFilePath := filepath.Join(tempDir, "existing-file.txt")
+				require.NoError(t, os.WriteFile(existingFilePath, []byte("original content"), 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "existing-file.txt",
+			data:    []byte("updated content"),
+			comment: "test overwrite existing file",
+		},
+		{
+			name: "create directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "new-dir/",
+			data:    nil,
+			comment: "test create directory",
+		},
+		{
+			name: "create file in nested directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "nested/dir/file.txt",
+			data:    []byte("nested file content"),
+			comment: "test create file in nested directory",
+		},
+		{
+			name: "write with ref should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-file.txt",
+			ref:         "main",
+			data:        []byte("content with ref"),
+			comment:     "test write with ref",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the write operation
+			err := repo.Write(context.Background(), tc.path, tc.ref, tc.data, tc.comment)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+
+				// Verify the file or directory was created
+				targetPath := filepath.Join(repo.path, tc.path)
+
+				// Check if it's a directory
+				if strings.HasSuffix(tc.path, "/") || tc.data == nil {
+					info, statErr := os.Stat(targetPath)
+					require.NoError(t, statErr)
+					assert.True(t, info.IsDir(), "Path should be a directory")
+				} else {
+					// Verify file content
+					content, readErr := os.ReadFile(targetPath)
+					require.NoError(t, readErr)
+					assert.Equal(t, tc.data, content, "File content should match written data")
+				}
+			}
+		})
+	}
+}
+
+func TestLocalRepository_Create(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		path        string
+		ref         string
+		data        []byte
+		comment     string
+		expectedErr error
+	}{
+		{
+			name: "create new file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "new-file.txt",
+			data:    []byte("new content"),
+			comment: "test create new file",
+		},
+		{
+			name: "create file in nested directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "nested/dir/new-file.txt",
+			data:    []byte("nested content"),
+			comment: "test create file in nested directory",
+		},
+		{
+			name: "create directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:    "new-dir/",
+			data:    nil,
+			comment: "test create directory",
+		},
+		{
+			name: "create file that already exists",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file that will conflict
+				existingFilePath := filepath.Join(tempDir, "existing-file.txt")
+				require.NoError(t, os.WriteFile(existingFilePath, []byte("original content"), 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "existing-file.txt",
+			data:        []byte("new content"),
+			comment:     "test create existing file",
+			expectedErr: apierrors.NewAlreadyExists(schema.GroupResource{}, "existing-file.txt"),
+		},
+		{
+			name: "create directory with data",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "invalid-dir/",
+			data:        []byte("directory with data"),
+			comment:     "test create directory with data",
+			expectedErr: apierrors.NewBadRequest("data cannot be provided for a directory"),
+		},
+		{
+			name: "create with ref",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "file-with-ref.txt",
+			ref:         "main",
+			data:        []byte("content with ref"),
+			comment:     "test create with ref",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the create operation
+			err := repo.Create(context.Background(), tc.path, tc.ref, tc.data, tc.comment)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+
+				// Verify the file or directory was created
+				targetPath := filepath.Join(repo.path, tc.path)
+
+				// Check if it's a directory
+				if strings.HasSuffix(tc.path, "/") || tc.data == nil {
+					info, statErr := os.Stat(targetPath)
+					require.NoError(t, statErr)
+					assert.True(t, info.IsDir(), "Path should be a directory")
+				} else {
+					// Verify file content
+					content, readErr := os.ReadFile(targetPath)
+					require.NoError(t, readErr)
+					assert.Equal(t, tc.data, content, "File content should match written data")
+				}
 			}
 		})
 	}
