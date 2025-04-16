@@ -132,6 +132,15 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueList: {
+				{
+					Name: "list",
+					Data: &listSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
 		},
 	})
 }

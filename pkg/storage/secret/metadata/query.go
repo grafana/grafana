@@ -33,6 +33,7 @@ var (
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
 	sqlSecureValueRead = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList = mustTemplate("secure_value_list.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -41,6 +42,11 @@ func mustTemplate(filename string) *template.Template {
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
+
+// TODO LND Should we create a query.go file for each storage?
+/************************/
+/**-- Keeper Queries --**/
+/************************/
 
 // Create
 type createKeeper struct {
@@ -125,6 +131,10 @@ func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
 
+/******************************/
+/**-- Secure Value Queries --**/
+/******************************/
+
 type readSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
@@ -133,5 +143,15 @@ type readSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type listSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listSecureValue) Validate() error {
 	return nil // TODO
 }
