@@ -171,7 +171,7 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
-          const pathPrefix = `items.${index}.`;
+          const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
@@ -181,6 +181,7 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               initialValues={initialItem}
               key={field.__id}
+              integrationIndex={index}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
@@ -196,7 +197,6 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
