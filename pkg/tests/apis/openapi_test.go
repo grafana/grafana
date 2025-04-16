@@ -33,6 +33,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 		},
 	})
 
