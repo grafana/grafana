@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,17 +28,20 @@ import (
 type PluginsService struct {
 	availableUpdates map[string]string
 
-	enabled        bool
-	grafanaVersion string
-	pluginStore    pluginstore.Store
-	httpClient     httpClient
-	mutex          sync.RWMutex
-	log            log.Logger
-	tracer         tracing.Tracer
-	updateCheckURL *url.URL
+	enabled         bool
+	grafanaVersion  string
+	pluginStore     pluginstore.Store
+	httpClient      httpClient
+	mutex           sync.RWMutex
+	log             log.Logger
+	tracer          tracing.Tracer
+	updateCheckURL  *url.URL
+	pluginInstaller plugins.Installer
+
+	features featuremgmt.FeatureToggles
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, tracer tracing.Tracer) (*PluginsService, error) {
+func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
@@ -65,6 +71,8 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
 		updateCheckURL:   parsedUpdateCheckURL,
+		pluginInstaller:  pluginInstaller,
+		features:         features,
 	}, nil
 }
 
@@ -74,6 +82,9 @@ func (s *PluginsService) IsDisabled() bool {
 
 func (s *PluginsService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
+	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+		s.updateAll(ctx)
+	}
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -82,6 +93,9 @@ func (s *PluginsService) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			s.instrumentedCheckForUpdates(ctx)
+			if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+				s.updateAll(ctx)
+			}
 		case <-ctx.Done():
 			run = false
 		}
@@ -214,4 +228,27 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 	}
 
 	return result
+}
+func (s *PluginsService) updateAll(ctx context.Context) {
+	ctxLogger := s.log.FromContext(ctx)
+
+	availableUpdates := map[string]string{}
+
+	for pluginID, updateVersion := range s.availableUpdates {
+		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
+
+		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "version", updateVersion)
+
+		err := s.pluginInstaller.Add(ctx, pluginID, updateVersion, compatOpts)
+		if err != nil {
+			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "error", err)
+			availableUpdates[pluginID] = updateVersion
+		}
+	}
+
+	if len(availableUpdates) != len(s.availableUpdates) {
+		s.mutex.Lock()
+		s.availableUpdates = availableUpdates
+		s.mutex.Unlock()
+	}
 }
