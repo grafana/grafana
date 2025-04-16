@@ -160,16 +160,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
         throw new Error('Invalid data format received from prompts');
       }
 
-      const typedData: PlopData = {
-        groupName: data.groupName ?? '',
-        group: data.group ?? '',
-        version: data.version ?? '',
-        reducerPath: data.reducerPath ?? '',
-        endpoints: data.endpoints ?? '',
-        isEnterprise: data.isEnterprise ?? false,
-      };
-
-      return generateRtkApiActions(typedData);
+      return generateRtkApiActions(data);
     },
   };
 

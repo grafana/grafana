@@ -18,7 +18,7 @@ export interface RunGenerateApisActionConfig {
 }
 
 // Union type of all possible action configs
-export type ActionConfig = 
+export type ActionConfig =
   | { type: 'add'; path: string; templateFile: string; data?: Record<string, unknown> }
   | ModifyActionConfig
   | FormatFilesActionConfig
@@ -33,6 +33,6 @@ export interface PlopData {
   isEnterprise: boolean;
 }
 
-export function isPlopData(data: unknown): data is Partial<PlopData> {
+export function isPlopData(data: unknown): data is PlopData {
   return typeof data === 'object' && data !== null;
-} 
+}
