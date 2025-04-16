@@ -9,7 +9,7 @@ describe('generatePath', () => {
       slug: 'my-dashboard',
     });
 
-    expect(result).toBe('my-dashboard.json');
+    expect(result).toBe('my-dashboard.yaml');
   });
 
   it('should use default slug with timestamp when neither pathFromAnnotation nor slug is provided', () => {
@@ -66,6 +66,6 @@ describe('generatePath', () => {
       folderPath: '',
     });
 
-    expect(result).toBe('my-dashboard.json');
+    expect(result).toBe('my-dashboard.yaml');
   });
 });
