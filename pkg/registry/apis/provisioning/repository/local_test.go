@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -337,6 +339,204 @@ func TestLocalRepository_Validate(t *testing.T) {
 					assert.Equal(t, expectedErr.Detail, errors[i].Detail, "Error detail should match")
 					assert.Equal(t, expectedErr.BadValue, errors[i].BadValue, "Error bad value should match")
 				}
+			}
+		})
+	}
+}
+
+func TestInvalidLocalFolderError(t *testing.T) {
+	testCases := []struct {
+		name           string
+		path           string
+		additionalInfo string
+		expectedMsg    string
+		expectedStatus metav1.Status
+	}{
+		{
+			name:           "basic error",
+			path:           "/invalid/path",
+			additionalInfo: "not allowed",
+			expectedMsg:    "the path given ('/invalid/path') is invalid for a local repository (not allowed)",
+			expectedStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  metav1.StatusReasonBadRequest,
+				Message: "the path given ('/invalid/path') is invalid for a local repository (not allowed)",
+			},
+		},
+		{
+			name:           "empty path",
+			path:           "",
+			additionalInfo: "path cannot be empty",
+			expectedMsg:    "the path given ('') is invalid for a local repository (path cannot be empty)",
+			expectedStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  metav1.StatusReasonBadRequest,
+				Message: "the path given ('') is invalid for a local repository (path cannot be empty)",
+			},
+		},
+		{
+			name:           "no permitted prefixes",
+			path:           "/some/path",
+			additionalInfo: "no permitted prefixes were configured",
+			expectedMsg:    "the path given ('/some/path') is invalid for a local repository (no permitted prefixes were configured)",
+			expectedStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  metav1.StatusReasonBadRequest,
+				Message: "the path given ('/some/path') is invalid for a local repository (no permitted prefixes were configured)",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create the error
+			err := &InvalidLocalFolderError{
+				Path:           tc.path,
+				AdditionalInfo: tc.additionalInfo,
+			}
+
+			// Test Error() method
+			assert.Equal(t, tc.expectedMsg, err.Error(), "Error message should match expected")
+
+			// Test Status() method
+			status := err.Status()
+			assert.Equal(t, tc.expectedStatus.Status, status.Status, "Status should match")
+			assert.Equal(t, tc.expectedStatus.Code, status.Code, "Status code should match")
+			assert.Equal(t, tc.expectedStatus.Reason, status.Reason, "Status reason should match")
+			assert.Equal(t, tc.expectedStatus.Message, status.Message, "Status message should match")
+
+			// Verify it implements the expected interfaces
+			var apiStatus apierrors.APIStatus
+			assert.True(t, errors.As(err, &apiStatus), "Should implement APIStatus interface")
+		})
+	}
+}
+
+func TestLocalRepository_Delete(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		path        string
+		ref         string
+		comment     string
+		expectedErr error
+	}{
+		{
+			name: "delete existing file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				// Create a temporary directory for testing
+				tempDir := t.TempDir()
+
+				// Create a test file
+				testFilePath := filepath.Join(tempDir, "test-file.txt")
+				err := os.WriteFile(testFilePath, []byte("test content"), 0600)
+				require.NoError(t, err)
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-file.txt",
+			ref:         "",
+			comment:     "test delete",
+			expectedErr: nil,
+		},
+		{
+			name: "delete non-existent file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				// Create a temporary directory for testing
+				tempDir := t.TempDir()
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "non-existent-file.txt",
+			ref:         "",
+			comment:     "test delete non-existent",
+			expectedErr: os.ErrNotExist,
+		},
+		{
+			name: "delete with ref not supported",
+			setup: func(t *testing.T) (string, *localRepository) {
+				// Create a temporary directory for testing
+				tempDir := t.TempDir()
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-file.txt",
+			ref:         "main",
+			comment:     "test delete with ref",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the delete operation
+			err := repo.Delete(context.Background(), tc.path, tc.ref, tc.comment)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				if errors.Is(tc.expectedErr, os.ErrNotExist) {
+					assert.True(t, errors.Is(err, os.ErrNotExist), "Expected os.ErrNotExist error")
+				} else {
+					assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+				}
+			} else {
+				require.NoError(t, err)
+
+				// Verify the file was actually deleted
+				_, statErr := os.Stat(filepath.Join(repo.path, tc.path))
+				assert.True(t, errors.Is(statErr, os.ErrNotExist), "File should be deleted")
 			}
 		})
 	}
