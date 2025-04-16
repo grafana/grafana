@@ -134,7 +134,6 @@ func (s *SecureValueRest) Create(
 	var object runtime.Object
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		// TODO: return err when secret already exists
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
