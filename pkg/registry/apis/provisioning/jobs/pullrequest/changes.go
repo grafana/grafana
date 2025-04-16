@@ -182,7 +182,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
-		return "", fmt.Errorf("error rendering screenshot %w", err)
+		return "", fmt.Errorf("error rendering screenshot: %w", err)
 	}
 	if strings.Contains(snap, "://") {
 		return snap, nil // it is a full URL already (can happen when the blob storage returns CDN urls)

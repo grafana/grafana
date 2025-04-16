@@ -400,7 +400,7 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error: "dry run failed",
+					Error: "no client configured",
 					Title: "hello world",
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
@@ -483,7 +483,7 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error:      "Error running image rendering",
+					Error:      "error rendering screenshot: render error",
 					GrafanaURL: "http://host/d/the-uid/hello-world",
 					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 				}},
@@ -662,7 +662,7 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error:      "invalid preview URL",
+					Error:      "error rendering screenshot: invalid preview URL",
 					GrafanaURL: "http://host/d/the:uid/hello-world", // Invalid URL
 					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 				}},
@@ -782,6 +782,7 @@ func TestCalculateChanges(t *testing.T) {
 				require.Equal(t, tt.expectedInfo.Changes[i].PreviewURL, change.PreviewURL)
 				require.Equal(t, tt.expectedInfo.Changes[i].GrafanaScreenshotURL, change.GrafanaScreenshotURL)
 				require.Equal(t, tt.expectedInfo.Changes[i].PreviewScreenshotURL, change.PreviewScreenshotURL)
+				require.Equal(t, tt.expectedInfo.Changes[i].Error, change.Error)
 			}
 		})
 	}
