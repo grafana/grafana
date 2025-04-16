@@ -111,15 +111,16 @@ func NewStorage(
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
+		store:          store,
+		gr:             config.GroupResource,
+		codec:          config.Codec,
+		keyFunc:        keyFunc,
+		newFunc:        newFunc,
+		newListFunc:    newListFunc,
+		getAttrsFunc:   getAttrsFunc,
+		trigger:        trigger,
+		indexers:       indexers,
+		configProvider: configProvider,
 
 		getKey: keyParser,
 

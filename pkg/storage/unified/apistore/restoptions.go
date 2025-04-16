@@ -37,9 +37,10 @@ type RESTOptionsGetter struct {
 
 func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, configProvider RestConfigProvider) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:   client,
-		original: original,
-		options:  make(map[string]StorageOptions),
+		client:         client,
+		original:       original,
+		options:        make(map[string]StorageOptions),
+		configProvider: configProvider,
 	}
 }
 

@@ -152,8 +152,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 
 	// Execute the change
 	result := req.Namespace(obj.GetNamespace()).
+		Resource("repositories").
 		Name(repo.Identity).
-		Suffix("file", src.Path).
+		Suffix("files", src.Path).
 		Body(orig).Do(ctx)
 	err = result.Error()
 	if err != nil {
