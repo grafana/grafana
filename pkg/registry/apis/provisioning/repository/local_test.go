@@ -158,7 +158,21 @@ func TestLocalRepository_Test(t *testing.T) {
 		},
 		{
 			name:           "valid path that doesn't exist",
-			path:           "/valid/nonexistent",
+			path:           "valid/nonexistent",
+			pathExists:     false,
+			expectedCode:   http.StatusBadRequest,
+			expectedResult: false,
+		},
+		{
+			name:           "invalid path with path traversal",
+			path:           "../../../etc/passwd",
+			pathExists:     false,
+			expectedCode:   http.StatusBadRequest,
+			expectedResult: false,
+		},
+		{
+			name:           "invalid path with special characters",
+			path:           "path/with/*/wildcards",
 			pathExists:     false,
 			expectedCode:   http.StatusBadRequest,
 			expectedResult: false,
