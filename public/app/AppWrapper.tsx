@@ -20,6 +20,7 @@ import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
+import { loadAndInitAngularIfEnabled } from './legacy';
 import { RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -56,6 +57,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   async componentDidMount() {
+    await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
     $('.preloader').remove();
 
