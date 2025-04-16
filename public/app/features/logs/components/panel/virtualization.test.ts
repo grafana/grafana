@@ -109,8 +109,8 @@ describe('Virtualization', () => {
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
-    test.only('Adds an extra line for the expand/collapse controls if present', () => {
-      jest.spyOn(log, 'updateCollapsedState').mockImplementation(() => {});
+    test('Adds an extra line for the expand/collapse controls if present', () => {
+      jest.spyOn(log, 'updateCollapsedState').mockImplementation(() => undefined);
       log.collapsed = false;
       const size = getLogLineSize([log], container, [], { wrap: true, showControls: false, showTime: false }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
