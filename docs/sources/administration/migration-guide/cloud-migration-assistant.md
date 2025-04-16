@@ -125,7 +125,11 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
 
-   You can group and sort resources during and after the migration. Click **Name** to sort resources alphabetically, click **Type** to group and sort by resource type, and click **Status** to group and sort by resources uploaded to cloud successfully, resources pending upload, or resources that experienced errors.
+   You can group and sort resources during and after the migration:
+
+   - Click **Name** to sort resources alphabetically.
+   - Click **Type** to group and sort by resource type.
+   - Click **Status** to group and sort by upload status (pending upload, uploaded successfully, or experienced errors).
 
    The Snapshot information also updates to inform the user of total resources, errors, and total number of successfully migrated resources.
 
