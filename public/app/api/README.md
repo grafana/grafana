@@ -7,7 +7,7 @@ To show the steps to follow, we are going to work on adding an API client to cre
 First, check if the `group` and the `version` are already present in [openapi_test.go](/pkg/tests/apis/openapi_test.go). If so, move on to the next step.
 <br/> If you need to add a new block, you can check for the right `group` and `version` in the backend API call that you want to replicate in the frontend.
 
-```jsx
+```go
 {
   Group:   "dashboard.grafana.app",
   Version: "v0alpha1",
@@ -34,7 +34,7 @@ Afterwards, you need to run the `TestIntegrationOpenAPIs` test. Note that it wil
 
 In the [`/public/app/api/clients`](/public/app/api/clients) folder, create a new folder and `baseAPI.ts` file for your group. This file should have the following content:
 
-```jsx
+```js
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { createBaseQuery } from 'app/api/createBaseQuery';
@@ -71,7 +71,7 @@ Open [generate-rtk-apis.ts](/scripts/generate-rtk-apis.ts) and add the following
 
 In our example, the information added will be:
 
-```jsx
+```js
 '../public/app/api/clients/dashboard/endpoints.gen.ts': {
     apiFile: '../public/app/api/clients/dashboard/baseAPI.ts',
     schemaFile: '../data/openapi/dashboard.grafana.app-v0alpha1.json',
@@ -84,7 +84,7 @@ In our example, the information added will be:
 
 Then, we are ready to run the script to create the API client:
 
-```jsx
+```bash
 yarn generate-apis
 ```
 
@@ -96,19 +96,18 @@ In the same `api` folder where the `endpoints.gen.ts` file has been saved, you h
 
 In our case, the dashboard index will be like:
 
-```jsx
+```ts
 import { generatedAPI } from './endpoints.gen';
 
 export const dashboardAPI = generatedAPI;
-export const { useCreateDashboardMutation, useUpdateDashboardMutation} = dashboardAPI;
+export const { useCreateDashboardMutation, useUpdateDashboardMutation } = dashboardAPI;
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { type Dashboard } from './endpoints.gen';
-
 ```
 
 There are some use cases where the hook will not work out of the box, and that is a clue to see if it needs to be modified. The hooks can be tweaked by using `enhanceEndpoints`.
 
-```jsx
+```js
 export const dashboardsAPI = generatedApi.enhanceEndpoints({
   endpoints: {
     // Need to mutate the generated query to set the Content-Type header correctly
@@ -143,7 +142,7 @@ In Grafana, the reducers are added to [`root.ts`](/public/app/core/reducers/root
 
 And the middleware is added to [`configureStore.ts`](/public/app/store/configureStore.ts):
 
-```jsx
+```ts
 import { dashboardAPI } from '<pathToYourAPI>';
 export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore({
