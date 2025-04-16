@@ -256,6 +256,7 @@ module.exports = [
     plugins: {
       unicorn: unicornPlugin,
       react: reactPlugin,
+      '@grafana': grafanaPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -266,6 +267,12 @@ module.exports = [
       'react/self-closing-comp': 'error',
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      '@grafana/no-untranslated-strings': [
+        'error',
+        {
+          forceFix: ['public/app/features/alerting'],
+        },
+      ],
     },
   },
   {
