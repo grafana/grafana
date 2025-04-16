@@ -3,6 +3,7 @@ export * from './dataSourceSrv';
 export * from './LocationSrv';
 export * from './EchoSrv';
 export * from './templateSrv';
+export * from './legacyAngularInjector'; // Will be removed in 12.x
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
