@@ -54,7 +54,7 @@ export const formatRange = ( range: string, options: Intl.DurationFormatOptions 
     const fromLocalised = formatDate(from, options);
     const toLocalised = formatDate(to, options);
     const separator = timeRangeSplit[1];
-    return `${fromLocalised} ${separator} ${toLocalised}`;
+    range = `${fromLocalised} ${separator} ${toLocalised}`;
   }
   return range;
 }

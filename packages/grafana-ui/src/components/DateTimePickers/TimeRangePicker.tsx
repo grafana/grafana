@@ -17,7 +17,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { config } from '../../../../../public/app/core/config';
-import {formatDate} from '../../../../../public/app/core/internationalization/dates';
+import {formatDate, formatRange} from '../../../../../public/app/core/internationalization/dates';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
@@ -301,7 +301,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
   const describeTimeRange = rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
-  const formattedRange = isLocaleFormatEnable ? formatDate(describeTimeRange, localeOptions) : describeTimeRange;
+  const formattedRange = isLocaleFormatEnable ? formatRange(describeTimeRange, localeOptions) : describeTimeRange;
   return formattedRange;
 };
 
