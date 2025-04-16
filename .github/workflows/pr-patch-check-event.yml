@@ -40,7 +40,9 @@ jobs:
                 inputs: {
                   src_repo: "${{ github.repository }}",
                   src_ref: "${{ github.head_ref }}",
+                  src_sha: "${{ github.sha }}",
                   patch_repo: "${{ github.repository }}-security-patches",
-                  patch_ref: "${{ github.base_ref }}"
+                  patch_ref: "${{ github.base_ref }}",
+                  triggering_github_handle: "${{ github.event.sender.login }}"
                 }
             })
