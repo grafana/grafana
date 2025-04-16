@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,6 +17,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func setupTempFile(t *testing.T) (string, func()) {
+	t.Helper()
+
+	// Create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "screenshot-renderer-test-*")
+	require.NoError(t, err)
+
+	// Create a temporary file
+	tmpFile := filepath.Join(tmpDir, "test.png")
+	err = os.WriteFile(tmpFile, []byte("test"), 0644)
+	require.NoError(t, err)
+
+	// Return cleanup function
+	cleanup := func() {
+		os.RemoveAll(tmpDir)
+	}
+
+	return tmpFile, cleanup
+}
 
 func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 	t.Run("should return false when render service is nil", func(t *testing.T) {
@@ -94,8 +116,8 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
 			DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
 				require.Equal(t, "test?kiosk", opts.Path)
-				require.Equal(t, 1, opts.OrgID)
-				require.Equal(t, 1, opts.UserID)
+				require.Equal(t, int64(1), opts.OrgID)
+				require.Equal(t, int64(1), opts.UserID)
 				require.Equal(t, 1024, opts.Width)
 				require.Equal(t, -1, opts.Height)
 				require.Equal(t, models.ThemeDark, opts.Theme)
@@ -111,13 +133,16 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 	})
 
 	t.Run("should fail when blobstore fails", func(t *testing.T) {
+		tmpFile, cleanup := setupTempFile(t)
+		defer cleanup()
+
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		render := rendering.NewMockService(ctrl)
 		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
 			Return(&rendering.RenderResult{
-				FilePath: "test.png",
+				FilePath: tmpFile,
 			}, nil)
 
 		blobstore := NewMockBlobStoreClient(t)
@@ -137,13 +162,16 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 	})
 
 	t.Run("should return URL when blobstore provides one", func(t *testing.T) {
+		tmpFile, cleanup := setupTempFile(t)
+		defer cleanup()
+
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		render := rendering.NewMockService(ctrl)
 		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
 			Return(&rendering.RenderResult{
-				FilePath: "test.png",
+				FilePath: tmpFile,
 			}, nil)
 
 		blobstore := NewMockBlobStoreClient(t)
@@ -164,13 +192,16 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 	})
 
 	t.Run("should return API path when blobstore provides UID", func(t *testing.T) {
+		tmpFile, cleanup := setupTempFile(t)
+		defer cleanup()
+
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		render := rendering.NewMockService(ctrl)
 		render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any(), gomock.Any()).
 			Return(&rendering.RenderResult{
-				FilePath: "test.png",
+				FilePath: tmpFile,
 			}, nil)
 
 		blobstore := NewMockBlobStoreClient(t)
@@ -191,6 +222,9 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 	})
 
 	t.Run("should append query parameters correctly", func(t *testing.T) {
+		tmpFile, cleanup := setupTempFile(t)
+		defer cleanup()
+
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -199,7 +233,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.AuthOpts) (*rendering.RenderResult, error) {
 				require.Equal(t, "test?param1=value1&param2=value2&kiosk", opts.Path)
 				return &rendering.RenderResult{
-					FilePath: "test.png",
+					FilePath: tmpFile,
 				}, nil
 			})
 
