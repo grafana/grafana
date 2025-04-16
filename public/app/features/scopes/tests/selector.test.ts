@@ -1,10 +1,23 @@
+import { setUncaughtExceptionCaptureCallback } from 'node:process';
+
 import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
 
-import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
-import { expectScopesSelectorValue } from './utils/assertions';
+import {
+  applyScopes,
+  cancelScopes,
+  selectResultApplicationsMimir,
+  selectResultApplicationsGrafana,
+  openSelector,
+  selectResultCloud,
+  updateScopes,
+  expandRecentScopes,
+  expandResultApplications,
+  selectRecentScope,
+} from './utils/actions';
+import { expectRecentScope, expectRecentScopesSection, expectScopesSelectorValue } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
@@ -64,5 +77,34 @@ describe('Selector', () => {
   it('Does not reload the dashboard on scope change', async () => {
     await updateScopes(scopesService, ['grafana']);
     expect(dashboardReloadSpy).not.toHaveBeenCalled();
+  });
+
+  describe('Recent scopes', () => {
+    it('Recent scopes should appear after selecting a second set of scopes', async () => {
+      await openSelector();
+      await expandResultApplications();
+      await selectResultApplicationsGrafana();
+      await applyScopes();
+
+      await openSelector();
+      await selectResultApplicationsMimir();
+      await applyScopes();
+
+      // Grafana,Mimir currently selected. Grafana is the first recent scope.
+      await openSelector();
+      expectRecentScopesSection();
+      await expandRecentScopes();
+      expectRecentScope('Grafana');
+      await selectRecentScope('Grafana');
+
+      expectScopesSelectorValue('Grafana');
+
+      await openSelector();
+      await expandRecentScopes();
+      expectRecentScope('Grafana, Mimir');
+      await selectRecentScope('Grafana, Mimir');
+
+      expectScopesSelectorValue('Grafana, Mimir');
+    });
   });
 });

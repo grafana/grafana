@@ -5,6 +5,7 @@ import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
 
 const selectors = {
   tree: {
+    recentScopesSection: 'scopes-selector-recent-scopes-section',
     search: 'scopes-tree-search',
     headline: 'scopes-tree-headline',
     select: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-checkbox`,
@@ -37,6 +38,8 @@ export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selec
 export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
 export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
+export const getRecentScopesSection = () => screen.getByTestId(selectors.tree.recentScopesSection);
+export const getRecentScopeSet = (scope: string) => screen.getByRole('button', { name: scope });
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);

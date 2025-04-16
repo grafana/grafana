@@ -13,6 +13,8 @@ import {
   getDashboardsSearch,
   getNotFoundForFilterClear,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudDevSelect,
   getResultApplicationsCloudExpand,
   getResultApplicationsCloudSelect,
@@ -45,9 +47,11 @@ export const applyScopes = async () => {
 export const cancelScopes = async () => click(getSelectorCancel);
 export const searchScopes = async (value: string) => type(getTreeSearch, value);
 export const clearScopesSearch = async () => type(getTreeSearch, '');
+export const expandRecentScopes = async () => click(getRecentScopesSection);
 export const expandResultApplications = async () => click(getResultApplicationsExpand);
 export const expandResultApplicationsCloud = async () => click(getResultApplicationsCloudExpand);
 export const expandResultCloud = async () => click(getResultCloudExpand);
+export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
 export const selectResultApplicationsGrafana = async () => click(getResultApplicationsGrafanaSelect);
 export const selectPersistedApplicationsMimir = async () => click(getPersistedApplicationsMimirSelect);
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);

@@ -9,6 +9,8 @@ import {
   getNotFoundForScope,
   getNotFoundNoScopes,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
@@ -40,6 +42,8 @@ const expectValue = (selector: () => HTMLInputElement, value: string) => expect(
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
 
+export const expectRecentScope = (scope: string) => expectInDocument(() => getRecentScopeSet(scope));
+export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
 export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
 export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);

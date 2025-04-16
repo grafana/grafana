@@ -25,6 +25,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => setExpanded(!expanded)}
+          data-testid="scopes-selector-recent-scopes-section"
         >
           <Icon name={expanded ? 'angle-down' : 'angle-right'} />
           <Text variant="body">
@@ -43,7 +44,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
                   onSelect(recentScopeSet);
                 }}
               >
-                <Text>{recentScopeSet.map((s) => s.scope.spec.title).join(',')}</Text>
+                <Text>{recentScopeSet.map((s) => s.scope.spec.title).join(', ')}</Text>
               </button>
             ))}
         </Stack>
