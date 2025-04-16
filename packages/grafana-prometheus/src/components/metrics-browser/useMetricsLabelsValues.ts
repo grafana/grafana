@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
@@ -25,6 +25,9 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+
+  // Memoize the effective series limit to use the default when seriesLimit is empty
+  const effectiveLimit = useMemo(() => seriesLimit || DEFAULT_SERIES_LIMIT, [seriesLimit]);
 
   // We don't want to trigger fetching for small amount of time changes.
   // When MetricsBrowser re-renders for any reason we might receive a new timerange.
@@ -91,7 +94,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
           METRIC_LABEL,
           safeSelector,
           'MetricsBrowser_M',
-          seriesLimit
+          effectiveLimit
         );
         return fetchedMetrics.map((m) => ({
           name: m,
@@ -102,7 +105,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
         return [];
       }
     },
-    [getMetricDetails, handleError, languageProvider, seriesLimit]
+    [getMetricDetails, handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches label keys based on an optional selector
@@ -112,17 +115,17 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       try {
         if (safeSelector) {
           return Object.keys(
-            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, seriesLimit)
+            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, effectiveLimit)
           );
         } else {
-          return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, seriesLimit)) || [];
+          return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, effectiveLimit)) || [];
         }
       } catch (e) {
         handleError(e, 'Error fetching labels');
         return [];
       }
     },
-    [handleError, languageProvider, seriesLimit]
+    [handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches values for multiple label keys and also prepares selected values
@@ -137,7 +140,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
             lk,
             safeSelector,
             `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
           transformedLabelValues[lk] = values;
           if (selectedLabelValues[lk]) {
@@ -149,7 +152,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       }
       return [transformedLabelValues, newSelectedLabelValues];
     },
-    [handleError, languageProvider, selectedLabelValues, seriesLimit]
+    [handleError, languageProvider, selectedLabelValues, effectiveLimit]
   );
 
   // Initial set up of the Metrics Browser
@@ -296,7 +299,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
             lk,
             safeSelector,
             `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
 
           // We don't want to discard values from last selected list.
@@ -349,7 +352,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setErr('');
 
     try {
-      const results = await languageProvider.fetchLabelsWithMatch(timeRangeRef.current, selector);
+      const results = await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, selector, effectiveLimit);
       setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
     } catch (e) {
       handleError(e, 'Validation failed');
