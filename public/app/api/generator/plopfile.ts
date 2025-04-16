@@ -3,7 +3,7 @@ import type { NodePlopAPI, PlopGeneratorConfig } from 'plop';
 
 import {
   projectPath as createProjectPath,
-  formatOperationIds,
+  formatEndpoints,
   validateGroup,
   validateVersion,
   getFilesToFormat,
@@ -19,8 +19,7 @@ interface PlopData {
   group: string;
   version: string;
   reducerPath: string;
-  operationIds: string;
-  operationIdArray: string[];
+  endpoints: string;
   isEnterprise: boolean;
 }
 
@@ -38,8 +37,8 @@ export default function plopGenerator(plop: NodePlopAPI) {
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));
   plop.setActionType('formatFiles', formatFiles(basePath, projectPath));
 
-  // Used in templates to format operation IDs
-  plop.setHelper('formatOperationIds', formatOperationIds());
+  // Used in templates to format endpoints
+  plop.setHelper('formatEndpoints', formatEndpoints());
 
   const generateRtkApiActions = (data: PlopData) => {
     const { reducerPath, groupName, isEnterprise } = data;
@@ -48,7 +47,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
     const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
     const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
 
-    // Using app path, so the import works on any file level
+    // Using app path, so the imports work on any file level
     const clientImportPath = isEnterprise ? '../extensions/api/clients' : 'app/api/clients';
 
     // Path prefixes for the config entry template
@@ -61,13 +60,11 @@ export default function plopGenerator(plop: NodePlopAPI) {
     };
 
     return [
-      // Create baseAPI.ts
       {
         type: 'add',
         path: projectPath(`${apiClientBasePath}/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
-
       {
         type: 'modify',
         path: projectPath(generateScriptPath),
@@ -75,15 +72,11 @@ export default function plopGenerator(plop: NodePlopAPI) {
         templateFile: './templates/config-entry.hbs',
         data: templateData,
       },
-
-      // Create index.ts
       {
         type: 'add',
         path: projectPath(`${apiClientBasePath}/${groupName}/index.ts`),
         templateFile: './templates/index.ts.hbs',
       },
-
-      // Update reducers and middleware
       {
         type: 'modify',
         path: projectPath('public/app/core/reducers/root.ts'),
@@ -108,13 +101,10 @@ export default function plopGenerator(plop: NodePlopAPI) {
         pattern: '// PLOP_INJECT_MIDDLEWARE',
         template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
       },
-
-      // Format the generated files
       {
         type: 'formatFiles',
         files: getFilesToFormat(groupName, isEnterprise),
       },
-
       // Run yarn generate-apis to generate endpoints
       {
         type: 'runGenerateApis',
@@ -162,8 +152,8 @@ export default function plopGenerator(plop: NodePlopAPI) {
       },
       {
         type: 'input',
-        name: 'operationIds',
-        message: 'Operation IDs to include (comma-separated, optional):',
+        name: 'endpoints',
+        message: 'Endpoints to include (comma-separated, optional):',
         validate: () => true,
       },
     ],
@@ -177,18 +167,9 @@ export default function plopGenerator(plop: NodePlopAPI) {
         group: data.group ?? '',
         version: data.version ?? '',
         reducerPath: data.reducerPath ?? '',
-        operationIds: data.operationIds ?? '',
-        operationIdArray: [],
+        endpoints: data.endpoints ?? '',
         isEnterprise: data.isEnterprise ?? false,
       };
-
-      // Format data for templates
-      typedData.operationIdArray = typedData.operationIds
-        ? typedData.operationIds
-            .split(',')
-            .map((id) => id.trim())
-            .filter(Boolean)
-        : [];
 
       return generateRtkApiActions(typedData);
     },

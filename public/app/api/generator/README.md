@@ -1,6 +1,6 @@
 # RTK Query API Client Generator
 
-This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the main API documentation.
+This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the [main API documentation](../README.md).
 
 ## Usage
 
@@ -8,35 +8,53 @@ This generator automates the process of creating RTK Query API clients for Grafa
 yarn generate:api-client
 ```
 
-This will prompt you for:
+The CLI will prompt for:
 
-1. **API group name** - The basic name for your API (e.g., `dashboard`)
-2. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
-3. **API version** - The API version (e.g., `v0alpha1`)
-4. **Reducer path** - The Redux reducer path (defaults to `<group-name>API`)
-5. **Operation IDs** - Optional comma-separated list of operation IDs to include (e.g., `createDashboard,updateDashboard`). If not provided, all operations will be included.
+1. **Enterprise or OSS API** - Whether this is an Enterprise or OSS API. This affects paths and build commands.
+2. **API group name** - The basic name for the API (e.g., `dashboard`)
+3. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
+4. **API version** - The API version (e.g., `v0alpha1`)
+5. **Reducer path** - The Redux reducer path (defaults to `<group-name>API`). This will also be used as the API's named export.
+6. **Endpoints** - Optional comma-separated list of endpoints to include (e.g., `createDashboard,updateDashboard`). If not provided, all endpoints will be included.
 
 ## What It Does
 
 The generator automates the following:
 
-1. Creates the `baseAPI.ts` file for your API group
-2. Updates `generate-rtk-apis.ts` to include your API client
+1. Creates the `baseAPI.ts` file for the API group
+2. Updates the appropriate generate script to include the API client
+   - `scripts/generate-rtk-apis.ts` for OSS APIs
+   - `local/generate-enterprise-apis.ts` for Enterprise APIs
 3. Creates the `index.ts` file with proper exports
 4. Updates Redux reducers and middleware in the store
 5. Formats all generated files using Prettier and ESLint
-6. Automatically runs `yarn generate-apis` to generate endpoints from the OpenAPI schema
+6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
+
+## Path Differences
+
+Depending on the selection at the start:
+
+### OSS APIs
+- Client path: `public/app/api/clients/<group-name>/`
+- Generation script: `scripts/generate-rtk-apis.ts`
+- Build command: `yarn generate-apis`
+
+### Enterprise APIs
+- Client path: `public/app/extensions/api/clients/<group-name>/`
+- Generation script: `local/generate-enterprise-apis.ts`
+- Build command: `yarn process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts`
 
 ## Example
 
 ```bash
 $ yarn generate:api-client
 
+? Is this an Enterprise API? No
 ? API group name (e.g. dashboard): dashboard
 ? API group (e.g. dashboard.grafana.app): dashboard.grafana.app
 ? API version (e.g. v0alpha1): v0alpha1
 ? Reducer path (e.g. dashboardAPI): dashboardAPI
-? Operation IDs to include (comma-separated): createDashboard,updateDashboard
+? Endpoints to include (comma-separated): createDashboard,updateDashboard
 ```
 
 This will generate:
@@ -55,10 +73,10 @@ And update:
 
 ### Missing OpenAPI Schema
 
-If you see an error about a missing OpenAPI schema, make sure:
+If an error about a missing OpenAPI schema appears, check that:
 
 1. The API group and version exist in the backend
-2. You've run `TestIntegrationOpenAPIs` test to generate the schema
+2. The `TestIntegrationOpenAPIs` test has been run to generate the schema
 3. The schema file exists at `data/openapi/<group>-<version>.json`
 
 ### Validation Errors
