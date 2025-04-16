@@ -15,11 +15,15 @@ import (
 
 var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
 
+type ProvisioningSupplier interface {
+	GetProvisionedObjectStorage() ProvisionedObjectStorage
+}
+
 // The object must be provisioned in a repository
-type ProvisioningClient interface {
-	Create(ctx context.Context, obj runtime.Object) error
-	Update(ctx context.Context, obj runtime.Object) error
-	Delete(ctx context.Context, obj runtime.Object) error
+type ProvisionedObjectStorage interface {
+	CreateProvisionedObject(ctx context.Context, obj runtime.Object) error
+	UpdateProvisionedObject(ctx context.Context, obj runtime.Object) error
+	DeleteProvisionedObject(ctx context.Context, obj runtime.Object) error
 }
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {

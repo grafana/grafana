@@ -58,6 +58,7 @@ import (
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -70,6 +71,9 @@ var (
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
+
+	// Direct access for provisioning
+	_ apistore.ProvisionedObjectStorage = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
@@ -189,6 +193,7 @@ func RegisterAPIService(
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
+	instance = builder // WIRE/HACK >> avoid circular dependencies for the storage setup
 	return builder, nil
 }
 

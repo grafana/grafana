@@ -33,10 +33,14 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	notifications.RegisterAPIService,
 	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
+	provisioning.RegisterAPIService,
+
+	// Connect the provisionign supplier to the unified storage client
+	// This provider hack avoids a circular dependency
+	provisioning.NewSupplierHack,
 )

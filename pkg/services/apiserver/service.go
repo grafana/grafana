@@ -100,6 +100,7 @@ type service struct {
 	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
+	provisioning    apistore.ProvisioningSupplier
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
@@ -118,6 +119,7 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	provisioning apistore.ProvisioningSupplier,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
@@ -144,6 +146,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		provisioning:                      provisioning,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
@@ -301,7 +304,14 @@ func (s *service) start(ctx context.Context) error {
 		}
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
-		optsregister = getter.RegisterOptions
+
+		provisioning := s.provisioning.GetProvisionedObjectStorage()
+		optsregister = func(gr schema.GroupResource, opts apistore.StorageOptions) {
+			if opts.Provisioning == nil {
+				opts.Provisioning = provisioning
+			}
+			getter.RegisterOptions(gr, opts) // ?? what happens when we do not set options ??
+		}
 
 		// Use unified storage client
 		serverConfig.RESTOptionsGetter = getter

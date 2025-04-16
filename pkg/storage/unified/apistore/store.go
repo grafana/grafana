@@ -61,7 +61,7 @@ type StorageOptions struct {
 	RequireDeprecatedInternalID bool
 
 	// Route provisioning CRUD to the provisioning client
-	ProvisioningClient ProvisioningClient
+	Provisioning ProvisionedObjectStorage
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
@@ -667,21 +667,21 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	obj runtime.Object,
 	rsp runtime.Object,
 ) error {
-	if !errors.Is(err, errResourceIsManagedInRepository) || s.opts.ProvisioningClient == nil {
+	if !errors.Is(err, errResourceIsManagedInRepository) || s.opts.Provisioning == nil {
 		return err
 	}
 
 	switch action {
 	case resource.WatchEvent_ADDED:
-		if err = s.opts.ProvisioningClient.Create(ctx, obj); err != nil {
+		if err = s.opts.Provisioning.CreateProvisionedObject(ctx, obj); err != nil {
 			return err
 		}
 	case resource.WatchEvent_MODIFIED:
-		if err = s.opts.ProvisioningClient.Update(ctx, obj); err != nil {
+		if err = s.opts.Provisioning.UpdateProvisionedObject(ctx, obj); err != nil {
 			return err
 		}
 	case resource.WatchEvent_DELETED:
-		return s.opts.ProvisioningClient.Delete(ctx, obj)
+		return s.opts.Provisioning.DeleteProvisionedObject(ctx, obj)
 
 	default:
 		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
