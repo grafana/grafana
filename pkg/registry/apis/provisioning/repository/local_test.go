@@ -1417,3 +1417,40 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalRepository_Config(t *testing.T) {
+	testCases := []struct {
+		name   string
+		config *provisioning.Repository
+	}{
+		{
+			name: "returns the same config that was provided",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "/some/path",
+					},
+				},
+			},
+		},
+		{
+			name:   "returns nil config",
+			config: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create repository with the test config
+			repo := &localRepository{
+				config: tc.config,
+			}
+
+			// Call the Config method
+			result := repo.Config()
+
+			// Verify the result is the same as the input config
+			assert.Equal(t, tc.config, result, "Config() should return the same config that was provided")
+		})
+	}
+}
