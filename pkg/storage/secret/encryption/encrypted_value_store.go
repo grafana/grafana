@@ -107,14 +107,11 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 	}
 
 	rows, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
+
+	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
 		return nil, ErrEncryptedValueNotFound
