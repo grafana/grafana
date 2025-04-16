@@ -87,7 +87,7 @@ describe('TimePicker', () => {
     expect(syncButtons.length).toBe(2);
     await userEvent.click(syncButtons[0]);
     expect(onChange2).toBeCalledWith(value1);
-    const unsyncButtons = screen.getAllByLabelText('Un sync times');
+    const unsyncButtons = screen.getAllByLabelText('Unsync times');
     expect(unsyncButtons.length).toBe(2);
   });
 });

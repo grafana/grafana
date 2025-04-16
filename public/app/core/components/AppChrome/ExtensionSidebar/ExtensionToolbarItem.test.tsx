@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { EventBusSrv, store } from '@grafana/data';
+import { config, setAppEvents } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -73,6 +73,11 @@ describe('ExtensionToolbarItem', () => {
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
     jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
+    setAppEvents(new EventBusSrv());
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should not render when feature toggle is disabled', () => {

@@ -16,7 +16,7 @@ import (
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"

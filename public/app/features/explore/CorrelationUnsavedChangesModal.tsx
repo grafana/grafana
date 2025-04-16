@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Button, Modal } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 interface UnsavedChangesModalProps {
   message: string;
@@ -14,7 +14,10 @@ export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel, me
   return (
     <Modal
       isOpen={true}
-      title={`Unsaved changes to correlation`}
+      title={t(
+        'explore.correlation-unsaved-changes-modal.title-unsaved-changes-to-correlation',
+        'Unsaved changes to correlation'
+      )}
       onDismiss={onCancel}
       icon="exclamation-triangle"
       className={css({ width: '600px' })}
