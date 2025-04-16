@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Text, Icon } from '@grafana/ui';
+import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
 import { SelectedScope } from './types';
 
@@ -18,7 +18,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
   const contentId = useId();
   return (
     <fieldset>
-      <legend>
+      <legend className={styles.legend}>
         <button
           className={styles.expandButton}
           aria-expanded={expanded}
@@ -29,7 +29,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
           <Text variant="body">Recent scopes</Text>
         </button>
       </legend>
-      <div className={styles.content}>
+      <Box paddingLeft={3} paddingTop={expanded ? 1 : 0} paddingBottom={expanded ? 1 : 0}>
         <Stack direction="column" gap={1} id={contentId}>
           {expanded &&
             recentScopes.map((recentScopeSet) => (
@@ -44,7 +44,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
               </button>
             ))}
         </Stack>
-      </div>
+      </Box>
     </fieldset>
   );
 };
@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0,
     cursor: 'pointer',
   }),
-  content: css({
-    paddingLeft: theme.spacing(3),
+  legend: css({
+    marginBottom: 0,
   }),
 });

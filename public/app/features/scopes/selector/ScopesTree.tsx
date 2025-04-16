@@ -51,6 +51,7 @@ export function ScopesTree({
         nodePath[0] === '' &&
         !anyChildExpanded &&
         recentScopes &&
+        recentScopes.length > 0 &&
         onRecentScopesSelect &&
         !node.query && <RecentScopes recentScopes={recentScopes} onSelect={onRecentScopesSelect} />}
 
