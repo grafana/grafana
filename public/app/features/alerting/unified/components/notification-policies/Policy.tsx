@@ -230,7 +230,11 @@ const Policy = (props: PolicyComponentProps) => {
                   <IconButton
                     name={showPolicyChildren ? 'angle-down' : 'angle-right'}
                     onClick={togglePolicyChildren}
-                    aria-label={showPolicyChildren ? 'Collapse' : 'Expand'}
+                    aria-label={
+                      showPolicyChildren
+                        ? t('alerting.policies.aria-label-collapse', 'Collapse')
+                        : t('alerting.policies.aria-label-expand', 'Expand')
+                    }
                   />
                 ) : null}
                 {isImmutablePolicy ? (
@@ -305,7 +309,11 @@ const Policy = (props: PolicyComponentProps) => {
                   {dropdownMenuActions.length > 0 && (
                     <Dropdown overlay={<Menu>{dropdownMenuActions}</Menu>}>
                       <MoreButton
-                        aria-label={isDefaultPolicy ? 'more actions for default policy' : 'more actions for policy'}
+                        aria-label={
+                          isDefaultPolicy
+                            ? t('alerting.policies.aria-label-more-default', 'more actions for default policy')
+                            : t('alerting.policies.aria-label-more', 'more actions for policy')
+                        }
                         data-testid="more-actions"
                       />
                     </Dropdown>
@@ -894,7 +902,9 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
         <Label
           icon="at"
           key={uniqueId()}
-          label={`Contact Point › ${status.name}`}
+          label={t('alerting.contact-point-errors.label-contact-point', 'Contact Point › {{name}}', {
+            name: status.name,
+          })}
           value={status.lastNotifyAttemptError}
         />
       ));
