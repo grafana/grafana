@@ -7467,7 +7467,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/tooltip.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/heatmap/HeatmapPanel.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
