@@ -119,6 +119,10 @@ func TestKeeperQueries(t *testing.T) {
 }
 
 func TestSecureValueQueries(t *testing.T) {
+	//svMessage := "message"
+	//svDecrypters := "decrypters"
+	//svRef := "ref_id"
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -138,6 +142,32 @@ func TestSecureValueQueries(t *testing.T) {
 					Data: &listSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
+					},
+				},
+			},
+			sqlSecureValueCreate: {
+				{
+					Name: "create",
+					Data: &createSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Phase:       "creating",
+							Message:     nil,
+							Title:       "title",
+							Keeper:      "keeper",
+							Decrypters:  nil,
+							Ref:         nil,
+							ExternalID:  "extId",
+						},
 					},
 				},
 			},

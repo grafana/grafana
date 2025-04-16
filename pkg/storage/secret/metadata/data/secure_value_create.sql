@@ -1,0 +1,35 @@
+INSERT INTO {{ .Ident "secret_secure_value" }} (
+  {{ .Ident "guid" }},
+  {{ .Ident "name" }},
+  {{ .Ident "namespace" }},
+  {{ .Ident "annotations" }},
+  {{ .Ident "labels" }},
+  {{ .Ident "created" }},
+  {{ .Ident "created_by" }},
+  {{ .Ident "updated" }},
+  {{ .Ident "updated_by" }},
+  {{ .Ident "status_phase" }},
+  {{ .Ident "status_message" }},
+  {{ .Ident "title" }},
+  {{ .Ident "keeper" }},
+  {{ .Ident "decrypters" }}
+  {{ .Ident "ref" }}
+  {{ .Ident "external_id" }}
+) VALUES (
+  {{ .Arg .Row.GUID }},
+  {{ .Arg .Row.Name }},
+  {{ .Arg .Row.Namespace }},
+  {{ .Arg .Row.Annotations }},
+  {{ .Arg .Row.Labels }},
+  {{ .Arg .Row.Created }},
+  {{ .Arg .Row.CreatedBy }},
+  {{ .Arg .Row.Updated }},
+  {{ .Arg .Row.UpdatedBy }},
+  {{ .Arg .Row.Phase }},
+  {{ .Arg .Row.Message }},
+  {{ .Arg .Row.Title }},
+  {{ .Arg .Row.Keeper }},
+  {{ .Arg .Row.Decrypters }},
+  {{ .Arg .Row.Ref }},
+  {{ .Arg .Row.ExternalID }},
+);

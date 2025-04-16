@@ -32,8 +32,9 @@ var (
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
-	sqlSecureValueRead = mustTemplate("secure_value_read.sql")
-	sqlSecureValueList = mustTemplate("secure_value_list.sql")
+	sqlSecureValueRead   = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList   = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate = mustTemplate("secure_value_create.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -153,5 +154,15 @@ type listSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type createSecureValue struct {
+	sqltemplate.SQLTemplate
+	Row *secureValueDB
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r createSecureValue) Validate() error {
 	return nil // TODO
 }
