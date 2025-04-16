@@ -32,7 +32,7 @@ const createMockDatasource = () => {
       fetchSeries: jest.fn().mockResolvedValue([{ label1: 'value1' }]),
       fetchSeriesValuesWithMatch: jest.fn().mockResolvedValue(['value1', 'value2']),
       getLabelValues: jest.fn().mockResolvedValue(['value1', 'value2']),
-      getSeries: jest.fn().mockResolvedValue({ '__name__': ['metric1', 'metric2'] }),
+      getSeries: jest.fn().mockResolvedValue({ __name__: ['metric1', 'metric2'] }),
       loadMetricsMetadata: jest.fn().mockResolvedValue({}),
       metricsMetadata: { metric1: { type: 'counter', help: 'help text' } },
     },
@@ -65,10 +65,10 @@ describe('MetricsLabelsSection', () => {
     const datasource = createMockDatasource();
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
@@ -84,10 +84,10 @@ describe('MetricsLabelsSection', () => {
     const { MetricCombobox } = require('./MetricCombobox');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         onBlur={onBlur}
         timeRange={defaultTimeRange}
       />
@@ -114,10 +114,10 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
@@ -139,17 +139,17 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onChangeLabels callback
     const onChangeLabelsCallback = LabelFilters.mock.calls[0][0].onChange;
-    
+
     // Call it with new labels
     const newLabels = [{ label: 'newLabel', op: '=', value: 'newValue' }];
     onChangeLabelsCallback(newLabels);
@@ -167,23 +167,23 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelNames callback
     const onGetLabelNamesCallback = LabelFilters.mock.calls[0][0].onGetLabelNames;
-    
+
     // Prepare a test label filter
     const forLabel = { label: 'test', op: '=', value: '' };
-    
+
     // Call it
     const result = await onGetLabelNamesCallback(forLabel);
-    
+
     // Check that variables were included in the result
     expect(result).toContainEqual(expect.objectContaining({ label: '$var1', value: '$var1' }));
     expect(result).toContainEqual(expect.objectContaining({ label: '$var2', value: '$var2' }));
@@ -196,20 +196,20 @@ describe('MetricsLabelsSection', () => {
     const queryWithoutMetric = { ...defaultQuery, metric: '' };
 
     render(
-      <MetricsLabelsSection 
-        query={queryWithoutMetric} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={queryWithoutMetric}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelNames callback
     const onGetLabelNamesCallback = LabelFilters.mock.calls[0][0].onGetLabelNames;
-    
+
     // Call it
     await onGetLabelNamesCallback({});
-    
+
     // Check that fetchLabels was called
     expect(datasource.languageProvider.fetchLabels).toHaveBeenCalledWith(defaultTimeRange);
     // Check that getLabelKeys was called
@@ -222,20 +222,20 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelNames callback
     const onGetLabelNamesCallback = LabelFilters.mock.calls[0][0].onGetLabelNames;
-    
+
     // Call it
     await onGetLabelNamesCallback({});
-    
+
     // Check that fetchLabelsWithMatch was called
     expect(datasource.languageProvider.fetchLabelsWithMatch).toHaveBeenCalled();
   });
@@ -246,20 +246,20 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the getLabelValuesAutofillSuggestions callback
     const getLabelValuesCallback = LabelFilters.mock.calls[0][0].getLabelValuesAutofillSuggestions;
-    
+
     // Call it
     await getLabelValuesCallback('val', 'label1');
-    
+
     // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
     expect(datasource.languageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
   });
@@ -271,20 +271,20 @@ describe('MetricsLabelsSection', () => {
     const queryWithoutMetric = { ...defaultQuery, metric: '' };
 
     render(
-      <MetricsLabelsSection 
-        query={queryWithoutMetric} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={queryWithoutMetric}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelValues callback
     const onGetLabelValuesCallback = LabelFilters.mock.calls[0][0].onGetLabelValues;
-    
+
     // Call it
     await onGetLabelValuesCallback({ label: 'label1' });
-    
+
     // Check that getLabelValues was called
     expect(datasource.languageProvider.getLabelValues).toHaveBeenCalledWith(defaultTimeRange, 'label1');
   });
@@ -295,20 +295,20 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelValues callback
     const onGetLabelValuesCallback = LabelFilters.mock.calls[0][0].onGetLabelValues;
-    
+
     // Call it
     await onGetLabelValuesCallback({ label: 'label1' });
-    
+
     // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
     expect(datasource.languageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
   });
@@ -319,20 +319,20 @@ describe('MetricsLabelsSection', () => {
     const { LabelFilters } = require('./LabelFilters');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetLabelValues callback
     const onGetLabelValuesCallback = LabelFilters.mock.calls[0][0].onGetLabelValues;
-    
+
     // Call it with no label
     const result = await onGetLabelValuesCallback({});
-    
+
     // In reality, the component has already added the template variables to the result
     // Let's check that the result includes the template variables
     expect(result).toContainEqual(expect.objectContaining({ label: '$var1', value: '$var1' }));
@@ -345,20 +345,20 @@ describe('MetricsLabelsSection', () => {
     const { MetricCombobox } = require('./MetricCombobox');
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     // Extract the onGetMetrics callback
     const onGetMetricsCallback = MetricCombobox.mock.calls[0][0].onGetMetrics;
-    
+
     // Call it
     const result = await onGetMetricsCallback();
-    
+
     // Check that we get back variables and metrics
     expect(result).toContainEqual(expect.objectContaining({ label: '$var1', value: '$var1' }));
     expect(result).toContainEqual(expect.objectContaining({ label: '$var2', value: '$var2' }));
@@ -371,21 +371,21 @@ describe('MetricsLabelsSection', () => {
     datasource.languageProvider.metricsMetadata = undefined;
 
     render(
-      <MetricsLabelsSection 
-        query={defaultQuery} 
-        datasource={datasource} 
-        onChange={onChange} 
+      <MetricsLabelsSection
+        query={defaultQuery}
+        datasource={datasource}
+        onChange={onChange}
         timeRange={defaultTimeRange}
       />
     );
 
     const { MetricCombobox } = require('./MetricCombobox');
     const onGetMetricsCallback = MetricCombobox.mock.calls[0][0].onGetMetrics;
-    
+
     // Call it
     await onGetMetricsCallback();
-    
+
     // loadMetricsMetadata should be called
     expect(datasource.languageProvider.loadMetricsMetadata).toHaveBeenCalled();
   });
-}); 
+});

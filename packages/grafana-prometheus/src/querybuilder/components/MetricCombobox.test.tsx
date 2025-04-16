@@ -146,7 +146,7 @@ describe('MetricCombobox', () => {
         }}
       />
     );
-    
+
     // The Combobox should display the default metric value
     const combobox = screen.getByPlaceholderText('Select metric');
     expect(combobox).toHaveValue('default_metric_value');

@@ -167,12 +167,12 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    
+
     // We need to trigger the option selection to show the hint
     // Just press Enter to select the current option (which should be our metric)
     const input = screen.getByTestId('data-testid metric select');
     await userEvent.type(input, '{enter}');
-    
+
     // Now check for the hint
     await waitFor(() => {
       expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument();
@@ -186,12 +186,12 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    
+
     // We need to trigger the option selection to show the hint
     // Just press Enter to select the current option (which should be our metric)
     const input = screen.getByTestId('data-testid metric select');
     await userEvent.type(input, '{enter}');
-    
+
     // Now check for the hint
     await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
@@ -214,12 +214,12 @@ describe('PromQueryBuilder', () => {
       data
     );
     await openMetricSelect(container);
-    
+
     // We need to trigger the option selection to show the hint
     // Just press Enter to select the current option (which should be our metric)
     const input = screen.getByTestId('data-testid metric select');
     await userEvent.type(input, '{enter}');
-    
+
     // Now check for the hints - should be multiple in this case
     await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
