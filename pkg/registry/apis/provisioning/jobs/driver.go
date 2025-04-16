@@ -15,6 +15,8 @@ import (
 
 // Store is an abstraction for the storage API.
 // This exists to allow for unit testing.
+//
+//go:generate mockery --name Store --structname MockStore --inpackage --filename store_mock.go --with-expecter
 type Store interface {
 	// Claim takes a job from storage, marks it as ours, and returns it.
 	//

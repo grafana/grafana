@@ -3,7 +3,7 @@ import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -92,7 +92,7 @@ const NotificationPoliciesFilter = ({
         <Input
           ref={searchInputRef}
           data-testid="search-query-input"
-          placeholder="Search"
+          placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
@@ -102,7 +102,10 @@ const NotificationPoliciesFilter = ({
         />
       </Field>
       {contactPointsSupported && canSeeContactPoints && (
-        <Field label="Search by contact point" style={{ marginBottom: 0 }}>
+        <Field
+          label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Search by contact point')}
+          style={{ marginBottom: 0 }}
+        >
           <ContactPointSelector
             selectProps={{
               id: 'receiver',

@@ -8,6 +8,7 @@ import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
+import { advisorAPI } from '../api/clients/advisor';
 import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
 import { provisioningAPI } from '../api/clients/provisioning';
@@ -45,6 +46,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         iamAPI.middleware,
         provisioningAPI.middleware,
         folderAPI.middleware,
+        advisorAPI.middleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

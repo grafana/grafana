@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FieldConfigSource, FieldMatcherID, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType } from '../../types/rule-form';
@@ -36,7 +37,9 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   if (data.state === LoadingState.Loading) {
     return (
       <div className={styles.container}>
-        <span>Loading preview...</span>
+        <span>
+          <Trans i18nKey="alerting.preview-rule-result.loading-preview">Loading preview...</Trans>
+        </span>
       </div>
     );
   }

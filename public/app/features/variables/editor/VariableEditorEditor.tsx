@@ -37,7 +37,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
     ...bindActionCreators({ variableEditorMount, variableEditorUnMount, changeVariableName, updateOptions }, dispatch),
-    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
+    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: unknown) =>
       dispatch(
         toKeyedAction(
           identifier.rootStateKey,

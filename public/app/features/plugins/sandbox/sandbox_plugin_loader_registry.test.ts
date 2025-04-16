@@ -61,11 +61,6 @@ describe('Sandbox eligibility checks', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  test('shouldLoadPluginInFrontendSandbox returns false for Angular plugins', async () => {
-    const result = await shouldLoadPluginInFrontendSandbox({ isAngular: true, pluginId: 'test-plugin' });
-    expect(result).toBe(false);
-  });
-
   test('isPluginFrontendSandboxEligible returns false for unsigned users', async () => {
     mockContextSrv.isSignedIn = false;
     const isEligible = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });

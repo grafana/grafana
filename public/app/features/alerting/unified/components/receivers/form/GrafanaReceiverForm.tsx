@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
@@ -142,7 +143,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
-    return <LoadingPlaceholder text="Loading notifiers..." />;
+    return (
+      <LoadingPlaceholder text={t('alerting.grafana-receiver-form.text-loading-notifiers', 'Loading notifiers...')} />
+    );
   }
 
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
@@ -158,7 +161,13 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   return (
     <>
       {hasOnCallError && (
-        <Alert severity="error" title="Loading OnCall integration failed">
+        <Alert
+          severity="error"
+          title={t(
+            'alerting.grafana-receiver-form.title-loading-on-call-integration-failed',
+            'Loading OnCall integration failed'
+          )}
+        >
           Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
           plugin configuration
         </Alert>

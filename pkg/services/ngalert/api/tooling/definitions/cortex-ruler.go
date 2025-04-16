@@ -425,7 +425,7 @@ func (n *PostableExtendedRuleNode) validate() error {
 	}
 
 	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+		if n.ApiRuleNode != nil && (n.Expr != "" || n.Record != "") {
 			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
 		}
 	}
@@ -461,7 +461,7 @@ func (n *GettableExtendedRuleNode) validate() error {
 	}
 
 	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+		if n.ApiRuleNode != nil && (n.Expr != "" || n.Record != "") {
 			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
 		}
 	}

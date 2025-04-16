@@ -54,7 +54,9 @@ export function useSearch(spans?: TraceSpan[], initialFilters?: SearchProps) {
 
   useEffect(() => {
     if (initialFilters) {
-      setSearch(merge(cloneDeep(defaultFilters), initialFilters));
+      setSearch((prev) => {
+        return merge(cloneDeep(prev), initialFilters);
+      });
     }
   }, [initialFilters]);
 

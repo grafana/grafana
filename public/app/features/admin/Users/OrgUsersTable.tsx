@@ -241,7 +241,9 @@ export const OrgUsersTable = ({
                   setUserToRemove(original);
                 }}
                 icon="times"
-                aria-label={`Delete user ${original.name}`}
+                aria-label={t('admin.org-users-table.delete-aria-label', 'Delete user: {{name}}', {
+                  name: original.name,
+                })}
               />
             )
           );

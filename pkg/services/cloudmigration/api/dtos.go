@@ -269,6 +269,14 @@ type CreateSnapshotRequest struct {
 	// UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// in:body
+	// required:true
+	Body CreateSnapshotRequestDTO `json:"body"`
+}
+
+type CreateSnapshotRequestDTO struct {
+	ResourceTypes []MigrateDataType `json:"resourceTypes"`
 }
 
 // swagger:response createSnapshotResponse
@@ -394,4 +402,21 @@ type CancelSnapshotParams struct {
 	// UID of a snapshot
 	// in: path
 	SnapshotUID string `json:"snapshotUid"`
+}
+
+// swagger:response resourceDependenciesResponse
+type ResourceDependenciesResponse struct {
+	// in: body
+	Body ResourceDependenciesResponseDTO
+}
+
+// swagger:model ResourceDependenciesResponseDTO
+type ResourceDependenciesResponseDTO struct {
+	ResourceDependencies []ResourceDependencyDTO `json:"resourceDependencies"`
+}
+
+// swagger:model ResourceDependencyDTO
+type ResourceDependencyDTO struct {
+	ResourceType MigrateDataType   `json:"resourceType"`
+	Dependencies []MigrateDataType `json:"dependencies"`
 }

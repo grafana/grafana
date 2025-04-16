@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -91,7 +92,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              Add labels to help you better manage your recording rules.
+              <Trans i18nKey="alerting.notifications-step.labels-better-manage-recording-rules">
+                Add labels to help you better manage your recording rules.
+              </Trans>
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (
@@ -118,7 +121,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Recipient</Text>
+          <Text element="h5">
+            <Trans i18nKey="alerting.notifications-step.recipient">Recipient</Trans>
+          </Text>
         </div>
       )}
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
@@ -258,7 +263,7 @@ function NeedHelpInfoForNotificationPolicy() {
           </Stack>
         </Stack>
       }
-      title="Notification routing"
+      title={t('alerting.need-help-info-for-notification-policy.title-notification-routing', 'Notification routing')}
     />
   );
 }
@@ -279,7 +284,10 @@ function NeedHelpInfoForContactpoint() {
       }
       externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
       linkText="Read more about notifications"
-      title="Notify by selecting a contact point"
+      title={t(
+        'alerting.need-help-info-for-contactpoint.title-notify-by-selecting-a-contact-point',
+        'Notify by selecting a contact point'
+      )}
     />
   );
 }

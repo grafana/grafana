@@ -1,7 +1,5 @@
 import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
@@ -98,10 +96,5 @@ function cleanupDOM() {
   for (let i = 0; i < tooltipsByClass.length; i++) {
     const tooltip = tooltipsByClass[i];
     tooltip.parentElement?.removeChild(tooltip);
-  }
-
-  // cleanup tether-drop
-  for (const drop of Drop.drops) {
-    drop.destroy();
   }
 }

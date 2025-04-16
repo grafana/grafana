@@ -32,6 +32,11 @@ import (
 	_ "golang.org/x/time/rate"
 	_ "xorm.io/builder"
 
+	_ "github.com/grafana/authlib/authn"
+	_ "github.com/grafana/authlib/authz"
+	_ "github.com/grafana/authlib/cache"
+	_ "github.com/grafana/authlib/grpcutils"
+	_ "github.com/grafana/authlib/types"
 	_ "github.com/grafana/dskit/backoff"
 	_ "github.com/grafana/dskit/flagext"
 	_ "github.com/grafana/e2e"

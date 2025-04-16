@@ -166,10 +166,16 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
             body={
               <div>
                 <p>
-                  Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary
-                  Beta phase, available for early adoption.
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-1">
+                    Some features are stable (GA) and enabled by default, whereas some are currently in their
+                    preliminary Beta phase, available for early adoption.
+                  </Trans>
                 </p>
-                <p>We advise understanding the implications of each feature change before making modifications.</p>
+                <p>
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-2">
+                    We advise understanding the implications of each feature change before making modifications.
+                  </Trans>
+                </p>
               </div>
             }
             confirmText="Save changes"

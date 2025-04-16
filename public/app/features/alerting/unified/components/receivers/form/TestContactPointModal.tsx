@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
@@ -65,9 +66,15 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
   };
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Test contact point'}>
+    <Modal
+      onDismiss={onDismiss}
+      isOpen={isOpen}
+      title={t('alerting.test-contact-point-modal.title-test-contact-point', 'Test contact point')}
+    >
       <div className={styles.section}>
-        <Label>Notification message</Label>
+        <Label>
+          <Trans i18nKey="alerting.test-contact-point-modal.notification-message">Notification message</Trans>
+        </Label>
         <RadioButtonGroup
           options={notificationOptions}
           value={notificationType}
@@ -99,7 +106,9 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
           )}
 
           <Modal.ButtonRow>
-            <Button type="submit">Send test notification</Button>
+            <Button type="submit">
+              <Trans i18nKey="alerting.test-contact-point-modal.send-test-notification">Send test notification</Trans>
+            </Button>
           </Modal.ButtonRow>
         </form>
       </FormProvider>

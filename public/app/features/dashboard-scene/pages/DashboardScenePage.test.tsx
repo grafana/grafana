@@ -8,13 +8,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  LocationServiceProvider,
-  config,
-  getPluginLinkExtensions,
-  locationService,
-  setPluginImportUtils,
-} from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -32,7 +26,6 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
   useChromeHeaderHeight: jest.fn().mockReturnValue(80),
   getBackendSrv: () => {
     return {
@@ -55,7 +48,11 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
+jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
+  createPluginExtensionsGetter: () => getPluginExtensionsMock,
+}));
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
@@ -156,8 +153,8 @@ describe('DashboardScenePage', () => {
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    getPluginExtensionsMock.mockRestore();
+    getPluginExtensionsMock.mockReturnValue({ extensions: [] });
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
 

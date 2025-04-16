@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -68,11 +67,9 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
             {dataSourcesLoading.length ? (
               <LoadingPlaceholder
                 className={styles.loader}
-                text={t(
-                  'alerting.list-view.section.loading-rules',
-                  'Loading rules from {{numberOfSources}} {{sources}}',
-                  { numberOfSource: dataSourcesLoading.length, sources: pluralize('source', dataSourcesLoading.length) }
-                )}
+                text={t('alerting.list-view.section.loading-rules', 'Loading rules from {{count}} sources', {
+                  count: dataSourcesLoading.length,
+                })}
               />
             ) : (
               <div />
@@ -178,7 +175,7 @@ function MigrateToGMAButton() {
         <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
         <Badge
           text={t('alerting.rule-list.import-to-gma.new-badge', 'New!')}
-          aria-label="new"
+          aria-label={t('alerting.migrate-to-gmabutton.aria-label-new', 'new')}
           color="blue"
           icon="rocket"
         />

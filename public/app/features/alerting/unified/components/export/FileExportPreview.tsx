@@ -63,10 +63,10 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
           <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <ClipboardButton icon="copy" getText={() => textDefinition}>
-          Copy code
+          <Trans i18nKey="alerting.file-export-preview.copy-code">Copy code</Trans>
         </ClipboardButton>
         <Button icon="download-alt" onClick={onDownload}>
-          Download
+          <Trans i18nKey="alerting.file-export-preview.download">Download</Trans>
         </Button>
       </div>
     </div>

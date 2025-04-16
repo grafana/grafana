@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -99,9 +100,22 @@ func (gr *SQLCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathExprResult mathexp.Results, resultError error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
-	defer span.End()
+	start := time.Now()
+	tc := int64(0)
+
+	defer func() {
+		span.End()
+		statusLabel := "ok"
+		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		if resultError != nil {
+			statusLabel = "error"
+			metrics.SqlCommandErrorCount.WithLabelValues().Inc()
+		}
+		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
+		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
+	}()
 
 	allFrames := []*data.Frame{}
 	for _, ref := range gr.varsToQuery {
@@ -114,14 +128,15 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
-	totalCells := totalCells(allFrames)
+	tc = totalCells(allFrames)
+
 	// limit of 0 or less means no limit (following convention)
-	if gr.limit > 0 && totalCells > gr.limit {
+	if gr.limit > 0 && tc > gr.limit {
 		return mathexp.Results{},
 			fmt.Errorf(
 				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
 				gr.limit,
-				totalCells,
+				tc,
 			)
 	}
 
@@ -182,6 +197,20 @@ func totalCells(frames []*data.Frame) (total int64) {
 	return
 }
 
+// extractNumberSetFromSQLForAlerting converts a data frame produced by a SQL expression
+// into a slice of mathexp.Number values for use in alerting.
+//
+// This function enforces strict semantics: each row must have exactly one numeric value
+// and a unique label set. If any label set appears more than once, an error is returned.
+//
+// It is the responsibility of the SQL query to ensure uniqueness — for example, by
+// applying GROUP BY or aggregation clauses. This function will not deduplicate rows;
+// it will reject the entire input if any duplicates are present.
+//
+// Returns an error if:
+//   - No numeric field is found.
+//   - More than one numeric field exists.
+//   - Any label set appears more than once.
 func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, error) {
 	var (
 		numericField   *data.Field
@@ -202,7 +231,13 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 		return nil, fmt.Errorf("no numeric field found in frame")
 	}
 
-	numbers := make([]mathexp.Number, frame.Rows())
+	type row struct {
+		value  float64
+		labels data.Labels
+	}
+	rows := make([]row, 0, frame.Rows())
+	counts := map[data.Fingerprint]int{}
+	labelMap := map[data.Fingerprint]string{}
 
 	for i := 0; i < frame.Rows(); i++ {
 		val, err := numericField.FloatAt(i)
@@ -227,10 +262,32 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 			}
 		}
 
-		n := mathexp.NewNumber(numericField.Name, labels)
+		fp := labels.Fingerprint()
+		counts[fp]++
+		labelMap[fp] = labels.String()
+
+		rows = append(rows, row{value: val, labels: labels})
+	}
+
+	// Check for any duplicates
+	duplicates := make([]string, 0)
+	for fp, count := range counts {
+		if count > 1 {
+			duplicates = append(duplicates, labelMap[fp])
+		}
+	}
+
+	if len(duplicates) > 0 {
+		return nil, makeDuplicateStringColumnError(duplicates)
+	}
+
+	// Build final result
+	numbers := make([]mathexp.Number, 0, len(rows))
+	for _, r := range rows {
+		n := mathexp.NewNumber(numericField.Name, r.labels)
 		n.Frame.Fields[0].Config = numericField.Config
-		n.SetValue(&val)
-		numbers[i] = n
+		n.SetValue(&r.value)
+		numbers = append(numbers, n)
 	}
 
 	return numbers, nil

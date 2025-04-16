@@ -59,7 +59,10 @@ export function IntervalVariableForm({
       <VariableCheckboxField
         value={autoEnabled}
         name="Auto option"
-        description="Dynamically calculates interval by dividing time range by the count specified"
+        description={t(
+          'dashbaord-scene.interval-variable-form.description-auto-option',
+          'Dynamically calculates interval by dividing time range by the count specified'
+        )}
         onChange={onAutoEnabledChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.autoEnabledCheckbox}
       />
@@ -67,7 +70,10 @@ export function IntervalVariableForm({
         <div className={styles.autoFields}>
           <VariableSelectField
             name="Step count"
-            description="How many times the current time range should be divided to calculate the value"
+            description={t(
+              'dashboard-scene.interval-variable-form.description-step-count',
+              'How many times the current time range should be divided to calculate the value'
+            )}
             value={stepCount}
             options={STEP_OPTIONS}
             onChange={onAutoCountChanged}

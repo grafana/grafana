@@ -93,7 +93,7 @@ export const extractFieldsTransformerEditor = ({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label={'Source'} labelWidth={16}>
+        <InlineField label={t('transformers.extract-fields-transformer-editor.label-source', 'Source')} labelWidth={16}>
           <FieldNamePicker
             context={{ data: input }}
             value={options.source ?? ''}
@@ -103,20 +103,31 @@ export const extractFieldsTransformerEditor = ({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Format'} labelWidth={16}>
+        <InlineField label={t('transformers.extract-fields-transformer-editor.label-format', 'Format')} labelWidth={16}>
           <Select
             value={format.current[0] as any}
             options={format.options as any}
             onChange={onFormatChange}
             width={24}
-            placeholder={'Auto'}
+            placeholder={t('transformers.extract-fields-transformer-editor.placeholder-auto', 'Auto')}
           />
         </InlineField>
       </InlineFieldRow>
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
-          <InlineField label="RegExp" labelWidth={16} interactive={true} tooltip="Example: /(?<NewField>.*)/">
-            <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
+          <InlineField
+            // eslint-disable-next-line @grafana/no-untranslated-strings
+            label="RegExp"
+            labelWidth={16}
+            interactive={true}
+            tooltip="Example: /(?<NewField>.*)/"
+          >
+            <Input
+              // eslint-disable-next-line @grafana/no-untranslated-strings
+              placeholder="/(?<NewField>.*)/"
+              value={options.regExp}
+              onChange={onRegexpChange}
+            />
           </InlineField>
         </InlineFieldRow>
       )}
@@ -143,13 +154,19 @@ export const extractFieldsTransformerEditor = ({
         </InlineFieldRow>
       )}
       <InlineFieldRow>
-        <InlineField label={'Replace all fields'} labelWidth={16}>
+        <InlineField
+          label={t('transformers.extract-fields-transformer-editor.label-replace-all-fields', 'Replace all fields')}
+          labelWidth={16}
+        >
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
         </InlineField>
       </InlineFieldRow>
       {options.replace && (
         <InlineFieldRow>
-          <InlineField label={'Keep time'} labelWidth={16}>
+          <InlineField
+            label={t('transformers.extract-fields-transformer-editor.label-keep-time', 'Keep time')}
+            labelWidth={16}
+          >
             <InlineSwitch value={options.keepTime ?? false} onChange={onToggleKeepTime} />
           </InlineField>
         </InlineFieldRow>
