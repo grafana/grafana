@@ -66,11 +66,8 @@ export const runGenerateApis =
       execSync(command, { stdio: 'inherit', cwd: basePath });
       return '✅ API endpoints generated successfully!';
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('❌ Failed to generate API endpoints:', error.message);
-      } else {
-        console.error('❌ Failed to generate API endpoints:', String(error));
-      }
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ Failed to generate API endpoints:', errorMessage);
       return '❌ Failed to generate API endpoints. See error above.';
     }
   };
@@ -78,7 +75,6 @@ export const runGenerateApis =
 export const formatFiles =
   (basePath: string, createProjectPath: ReturnType<typeof projectPath>): PlopActionFunction =>
   (_, config) => {
-    // Ensure config is present and has the expected shape
     if (!config || !Array.isArray(config.files)) {
       console.error('Invalid config passed to formatFiles action');
       return '❌ Formatting failed: Invalid configuration';
@@ -99,7 +95,8 @@ export const formatFiles =
 
       console.log('🧹 Running Prettier on generated/modified files...');
       try {
-        execSync(`yarn prettier --write ${filesList}`, { cwd: basePath });
+        // '--ignore-path' is necessary so the gitignored files ('local/' folder) can still be formatted
+        execSync(`yarn prettier --write ${filesList} --ignore-path=./.prettierignore`, { cwd: basePath });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn(`⚠️ Warning: Prettier encountered issues: ${errorMessage}`);
