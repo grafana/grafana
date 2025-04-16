@@ -183,8 +183,10 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
               severity="error"
             >
               <p>
-                Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom
-                version.
+                <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.body-plugin-dashboard">
+                  Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+                  version.
+                </Trans>
               </p>
               <Box paddingTop={2}>
                 <Stack alignItems="center">{saveButton(true)}</Stack>

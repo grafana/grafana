@@ -195,7 +195,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           <InlineField
             label={t('explore.span-filters.label-duration', 'Duration')}
             labelWidth={16}
-            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+            tooltip={t('explore.span-filters.tooltip-duration', 'Filter by duration. Accepted units are {{units}}', {
+              units: 'ns, us, ms, s, m, h',
+            })}
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select
@@ -209,6 +211,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                   ariaLabel="Select min span duration"
                   onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
                   isInvalidError="Invalid duration"
+                  // eslint-disable-next-line @grafana/no-untranslated-strings
                   placeholder="e.g. 100ms, 1.2s"
                   width={18}
                   value={search.from || ''}
@@ -225,6 +228,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 ariaLabel="Select max span duration"
                 onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
                 isInvalidError="Invalid duration"
+                // eslint-disable-next-line @grafana/no-untranslated-strings
                 placeholder="e.g. 100ms, 1.2s"
                 width={18}
                 value={search.to || ''}
@@ -237,7 +241,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           <InlineField
             label={t('explore.span-filters.label-tags', 'Tags')}
             labelWidth={16}
-            tooltip="Filter by tags, process tags or log fields in your spans."
+            tooltip={t(
+              'explore.span-filters.tooltip-tags',
+              'Filter by tags, process tags or log fields in your spans.'
+            )}
           >
             <SpanFiltersTags
               search={search}

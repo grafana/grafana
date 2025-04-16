@@ -56,17 +56,19 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
-			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
+			SubTitle: "Copy resources from your self-managed installation to a cloud stack",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+		provisioningNode := &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
-		})
+		}
+
+		configNodes = append(configNodes, provisioningNode)
 	}
 
 	generalNode := &navtree.NavLink{
@@ -151,7 +153,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
+	disabled, err := s.apiKeyService.IsDisabled(ctx, c.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +209,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.SignedInUser.GetOrgName(),
+		SubTitle:   "Organization: " + c.GetOrgName(),
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,

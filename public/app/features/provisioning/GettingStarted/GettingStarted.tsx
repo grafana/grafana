@@ -17,7 +17,6 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-unifiedStorageSearch = true
 kubernetesClientDashboardsFolders = true
 kubernetesDashboards = true ; use k8s from browser
 
@@ -122,9 +121,9 @@ interface Props {
 }
 
 export default function GettingStarted({ items }: Props) {
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const legacyStorage = settingsQuery.data?.legacyStorage;
-
+  const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
@@ -172,7 +171,7 @@ export default function GettingStarted({ items }: Props) {
             </Text>
           </div>
         </Stack>
-        {(!hasPublicAccess || !hasImageRenderer) && (
+        {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
           <EnhancedFeatures
             hasPublicAccess={hasPublicAccess}
             hasImageRenderer={hasImageRenderer}

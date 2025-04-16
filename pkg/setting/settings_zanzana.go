@@ -63,6 +63,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zc.Token = clientSec.Key("token").MustString("")
 	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
+	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
 
 	cfg.ZanzanaClient = zc
 

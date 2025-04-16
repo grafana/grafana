@@ -9,5 +9,26 @@
  * and be subject to the standard policies
  */
 
-// This is a dummy export so typescript doesn't error importing an "empty module"
-export { DEFAULT_LANGUAGE, LANGUAGES } from './utils/i18n';
+export {
+  DEFAULT_LANGUAGE,
+  LANGUAGES,
+  BRAZILIAN_PORTUGUESE,
+  CHINESE_SIMPLIFIED,
+  CHINESE_TRADITIONAL,
+  CZECH_CZECHIA,
+  DUTCH_NETHERLANDS,
+  ENGLISH_US,
+  FRENCH_FRANCE,
+  GERMAN_GERMANY,
+  HUNGARIAN_HUNGARY,
+  INDONESIAN_INDONESIA,
+  ITALIAN_ITALY,
+  JAPANESE_JAPAN,
+  KOREAN_KOREA,
+  POLISH_POLAND,
+  PORTUGUESE_PORTUGAL,
+  RUSSIAN_RUSSIA,
+  SPANISH_SPAIN,
+  SWEDISH_SWEDEN,
+  TURKISH_TURKEY,
+} from './utils/i18n';

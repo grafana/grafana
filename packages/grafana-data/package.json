@@ -62,7 +62,7 @@
     "@types/systemjs": "6.15.1",
     "d3-interpolate": "3.0.1",
     "date-fns": "4.1.0",
-    "dompurify": "3.2.4",
+    "dompurify": "3.2.5",
     "eventemitter3": "5.0.1",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",

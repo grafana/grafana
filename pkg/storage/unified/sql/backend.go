@@ -20,8 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -76,7 +75,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
-		log:                     log.New("sql-resource-server"),
+		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
 		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
@@ -123,7 +122,7 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log            log.Logger
+	log            logging.Logger
 	tracer         trace.Tracer
 	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
@@ -343,7 +342,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			GUID:        guid,
 		}); err != nil {
 			if isRowAlreadyExistsError(err) {
-				return guid, unifiedbackend.ErrResourceAlreadyExists
+				return guid, resource.ErrResourceAlreadyExists
 			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
 		}

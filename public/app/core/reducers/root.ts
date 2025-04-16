@@ -27,6 +27,7 @@ import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
+import { advisorAPI } from '../../api/clients/advisor';
 import { folderAPI } from '../../api/clients/folder';
 import { iamAPI } from '../../api/clients/iam';
 import { provisioningAPI } from '../../api/clients/provisioning';
@@ -65,6 +66,7 @@ const rootReducers = {
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
   [provisioningAPI.reducerPath]: provisioningAPI.reducer,
   [folderAPI.reducerPath]: folderAPI.reducer,
+  [advisorAPI.reducerPath]: advisorAPI.reducer,
 };
 
 const addedReducers = {};

@@ -1,22 +1,22 @@
-const ENGLISH_US = 'en-US';
-const FRENCH_FRANCE = 'fr-FR';
-const SPANISH_SPAIN = 'es-ES';
-const GERMAN_GERMANY = 'de-DE';
-const BRAZILIAN_PORTUGUESE = 'pt-BR';
-const CHINESE_SIMPLIFIED = 'zh-Hans';
-const ITALIAN_ITALY = 'it-IT';
-const JAPANESE_JAPAN = 'ja-JP';
-const INDONESIAN_INDONESIA = 'id-ID';
-const KOREAN_KOREA = 'ko-KR';
-const RUSSIAN_RUSSIA = 'ru-RU';
-const CZECH_CZECHIA = 'cs-CZ';
-const DUTCH_NETHERLANDS = 'nl-NL';
-const HUNGARIAN_HUNGARY = 'hu-HU';
-const PORTUGUESE_PORTUGAL = 'pt-PT';
-const POLISH_POLAND = 'pl-PL';
-const SWEDISH_SWEDEN = 'sv-SE';
-const TURKISH_TURKEY = 'tr-TR';
-const CHINESE_TRADITIONAL = 'zh-Hant';
+export const ENGLISH_US = 'en-US';
+export const FRENCH_FRANCE = 'fr-FR';
+export const SPANISH_SPAIN = 'es-ES';
+export const GERMAN_GERMANY = 'de-DE';
+export const BRAZILIAN_PORTUGUESE = 'pt-BR';
+export const CHINESE_SIMPLIFIED = 'zh-Hans';
+export const ITALIAN_ITALY = 'it-IT';
+export const JAPANESE_JAPAN = 'ja-JP';
+export const INDONESIAN_INDONESIA = 'id-ID';
+export const KOREAN_KOREA = 'ko-KR';
+export const RUSSIAN_RUSSIA = 'ru-RU';
+export const CZECH_CZECHIA = 'cs-CZ';
+export const DUTCH_NETHERLANDS = 'nl-NL';
+export const HUNGARIAN_HUNGARY = 'hu-HU';
+export const PORTUGUESE_PORTUGAL = 'pt-PT';
+export const POLISH_POLAND = 'pl-PL';
+export const SWEDISH_SWEDEN = 'sv-SE';
+export const TURKISH_TURKEY = 'tr-TR';
+export const CHINESE_TRADITIONAL = 'zh-Hant';
 
 /**
  * Default language.

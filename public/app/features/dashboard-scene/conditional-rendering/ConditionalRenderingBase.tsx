@@ -100,7 +100,7 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
         )}
       </Stack>
 
-      <Stack direction="row" gap={1} justifyContent="stretch" alignItems="baseline">
+      <Stack direction="row" gap={1} justifyContent="stretch" alignItems="center">
         <Stack flex={1} direction="column" gap={1}>
           {comp}
           {!model.isItemSupported() && (

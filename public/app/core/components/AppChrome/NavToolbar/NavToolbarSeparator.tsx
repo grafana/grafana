@@ -30,6 +30,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 24,
       flexShrink: 0,
       flexGrow: 0,
+      [theme.breakpoints.down('sm')]: {
+        display: 'none',
+      },
     }),
   };
 };

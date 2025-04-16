@@ -5,6 +5,7 @@ import {
   DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
+  isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
@@ -142,6 +143,15 @@ export class DatasourceSrv implements DataSourceService {
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
+      // type exists, but not the other properties
+      if (isDatasourceRef(ref)) {
+        const settings = this.getList({ type: ref.type });
+        if (!settings?.length) {
+          return Promise.reject('no datasource of type');
+        }
+        const ds = settings.find((v) => v.isDefault) ?? settings[0];
+        return this.get(ds.uid);
+      }
       return this.get(this.defaultName);
     }
 
@@ -384,6 +394,13 @@ export function variableInterpolation<T>(value: T | T[]) {
   }
   return value;
 }
+
+const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is DataSourceRef => {
+  if (ref && isObject(ref) && 'type' in ref) {
+    return true;
+  }
+  return false;
+};
 
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
