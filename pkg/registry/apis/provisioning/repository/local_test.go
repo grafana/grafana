@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -1253,6 +1254,165 @@ func TestLocalRepository_Read(t *testing.T) {
 				assert.Equal(t, tc.expected.Data, data.Data, "Data should match expected")
 				assert.Equal(t, tc.expected.Hash, data.Hash, "Hash should match expected")
 				assert.Empty(t, data.Ref, "Ref should be empty")
+			}
+		})
+	}
+}
+
+func TestLocalRepository_ReadTree(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		ref         string
+		expectedErr error
+		expected    []FileTreeEntry
+	}{
+		{
+			name: "read empty directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			expected:    []FileTreeEntry{},
+			expectedErr: nil,
+		},
+		{
+			name: "read directory with files",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file structure
+				require.NoError(t, os.WriteFile(filepath.Join(tempDir, "file1.txt"), []byte("content1"), 0600))
+				require.NoError(t, os.WriteFile(filepath.Join(tempDir, "file2.txt"), []byte("content2"), 0600))
+				require.NoError(t, os.MkdirAll(filepath.Join(tempDir, "subdir"), 0700))
+				require.NoError(t, os.WriteFile(filepath.Join(tempDir, "subdir", "file3.txt"), []byte("content3"), 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			expected: []FileTreeEntry{
+				{Path: "file1.txt", Blob: true, Size: 8},
+				{Path: "file2.txt", Blob: true, Size: 8},
+				{Path: "subdir", Blob: false},
+				{Path: "subdir/file3.txt", Blob: true, Size: 8},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "read with ref",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			ref:         "main",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+		{
+			name: "read non-existent directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				nonExistentDir := filepath.Join(tempDir, "non-existent")
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: nonExistentDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: nonExistentDir,
+				}
+
+				return tempDir, repo
+			},
+			expected:    []FileTreeEntry{},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the readTree operation
+			entries, err := repo.ReadTree(context.Background(), tc.ref)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+
+				if len(tc.expected) == 0 {
+					assert.Empty(t, entries, "Expected empty entries")
+				} else {
+					// Sort both expected and actual entries by path for comparison
+					sort.Slice(entries, func(i, j int) bool {
+						return entries[i].Path < entries[j].Path
+					})
+
+					// We need to verify each entry individually since hash values will be different
+					assert.Equal(t, len(tc.expected), len(entries), "Number of entries should match")
+
+					for i, expected := range tc.expected {
+						if i < len(entries) {
+							assert.Equal(t, expected.Path, entries[i].Path, "Path should match")
+							assert.Equal(t, expected.Blob, entries[i].Blob, "Blob flag should match")
+
+							if expected.Blob {
+								assert.Equal(t, expected.Size, entries[i].Size, "Size should match")
+								assert.NotEmpty(t, entries[i].Hash, "Hash should not be empty for files")
+							}
+						}
+					}
+				}
 			}
 		})
 	}
