@@ -28,10 +28,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
 			Return(nil, errors.New("parser factory error"))
 
-		signer := signature.NewMockSigner(t)
 		signerFactory := signature.NewMockSignerFactory(t)
-		signerFactory.On("New", mock.Anything, mock.Anything).
-			Return(signer, nil)
 
 		migrator := NewLegacyResourcesMigrator(
 			nil,
@@ -56,11 +53,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("repo resources factory error"))
-
-		signer := signature.NewMockSigner(t)
 		signerFactory := signature.NewMockSignerFactory(t)
-		signerFactory.On("New", mock.Anything, mock.Anything).
-			Return(signer, nil)
 
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
