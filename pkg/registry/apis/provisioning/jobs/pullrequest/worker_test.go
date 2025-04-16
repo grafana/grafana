@@ -401,7 +401,6 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			}
 
 			err := worker.Process(context.Background(), repo, job, progress)
-
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {

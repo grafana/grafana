@@ -114,22 +114,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 // Remove files we should not try to process
 func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
 	for _, file := range files {
-		if file.Action == repository.FileActionIgnored {
+		if file.Action == repository.FileActionIgnored || resources.IsPathSupported(file.Path) != nil {
 			continue
 		}
-
-		if err := resources.IsPathSupported(file.Path); err == nil {
-			ret = append(ret, file)
-			continue
-		}
-
-		// FIXME: not sure about this logic. I think it's actually a bug
-		if file.PreviousPath != "" {
-			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
-				ret = append(ret, file)
-				continue
-			}
-		}
+		ret = append(ret, file)
 	}
+
 	return
 }
