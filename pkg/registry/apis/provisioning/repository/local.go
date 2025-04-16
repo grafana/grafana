@@ -260,7 +260,7 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			entry.Blob = true
 			entry.Hash, _, err = r.calculateFileHash(path)
 			if err != nil {
-				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
+				return fmt.Errorf("read and calculate hash of path %s: %w", path, err)
 			}
 		}
 		// TODO: do folders have a trailing slash?
@@ -281,7 +281,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	//nolint:gosec
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("open file: %w", err)
 	}
 
 	// TODO: Define what hashing algorithm we want to use for the entire repository. Maybe a config option?
@@ -289,7 +289,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	// TODO: context-aware io.Copy? Is that even possible with a reasonable impl?
 	size, err := io.Copy(hasher, file)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("copy file: %w", err)
 	}
 	// NOTE: EncodeToString (& hex.Encode for that matter) return lower-case hex.
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil

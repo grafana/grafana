@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1098,6 +1099,160 @@ func TestLocalRepository_Create(t *testing.T) {
 					require.NoError(t, readErr)
 					assert.Equal(t, tc.data, content, "File content should match written data")
 				}
+			}
+		})
+	}
+}
+
+func TestLocalRepository_Read(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		path        string
+		ref         string
+		expectedErr error
+		expected    *FileInfo
+	}{
+		{
+			name: "read existing file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file to read
+				filePath := filepath.Join(tempDir, "test-file.txt")
+				fileContent := []byte("test content")
+				require.NoError(t, os.WriteFile(filePath, fileContent, 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path: "test-file.txt",
+			expected: &FileInfo{
+				Path:     "test-file.txt",
+				Modified: &metav1.Time{Time: time.Now()},
+				Data:     []byte("test content"),
+				Hash:     "1eebdf4fdc9fc7bf283031b93f9aef3338de9052",
+			},
+		},
+		{
+			name: "read non-existent file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "non-existent-file.txt",
+			expectedErr: ErrFileNotFound,
+		},
+		{
+			name: "read with ref should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file to read
+				filePath := filepath.Join(tempDir, "test-file.txt")
+				fileContent := []byte("test content")
+				require.NoError(t, os.WriteFile(filePath, fileContent, 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-file.txt",
+			ref:         "main",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+		{
+			name: "read existing directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a directory to read
+				dirPath := filepath.Join(tempDir, "test-dir")
+				require.NoError(t, os.Mkdir(dirPath, 0755))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path: "test-dir",
+			expected: &FileInfo{
+				Path:     "test-dir",
+				Modified: &metav1.Time{Time: time.Now()},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the read operation
+			data, err := repo.Read(context.Background(), tc.path, tc.ref)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected.Path, data.Path, "Path should match expected")
+				assert.NotNil(t, data.Modified, "Modified time should not be nil")
+				assert.Equal(t, tc.expected.Data, data.Data, "Data should match expected")
+				assert.Equal(t, tc.expected.Hash, data.Hash, "Hash should match expected")
+				assert.Empty(t, data.Ref, "Ref should be empty")
 			}
 		})
 	}
