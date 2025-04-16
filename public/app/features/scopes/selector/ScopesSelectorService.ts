@@ -190,6 +190,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
+    if (selectedScopes.length > 0) {
+      this.addRecentScopes(selectedScopes);
+    }
     this.updateState({ selectedScopes, loading: false });
   };
 
@@ -252,9 +255,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public closeAndApply = () => {
     this.updateState({ opened: false });
-    this.setNewScopes().then(() => {
-      this.addRecentScopes(this.state.selectedScopes);
-    });
+    this.setNewScopes();
   };
 }
 
