@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"xorm.io/core"
 )
 
 var (
@@ -161,12 +159,12 @@ var (
 )
 
 type mysql struct {
-	core.Base
+	coreBase
 	rowFormat string
 }
 
-func (db *mysql) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
-	return db.Base.Init(d, db, uri, drivername, dataSourceName)
+func (db *mysql) Init(d *coreDB, uri *coreUri, drivername, dataSourceName string) error {
+	return db.coreBase.Init(d, db, uri, drivername, dataSourceName)
 }
 
 func (db *mysql) SetParams(params map[string]string) {
@@ -188,29 +186,29 @@ func (db *mysql) SetParams(params map[string]string) {
 	}
 }
 
-func (db *mysql) SqlType(c *core.Column) string {
+func (db *mysql) SqlType(c *coreColumn) string {
 	var res string
 	switch t := c.SQLType.Name; t {
-	case core.Bool:
-		res = core.TinyInt
+	case Bool:
+		res = TinyInt
 		c.Length = 1
-	case core.Serial:
+	case Serial:
 		c.IsAutoIncrement = true
 		c.IsPrimaryKey = true
 		c.Nullable = false
-		res = core.Int
-	case core.BigSerial:
+		res = Int
+	case BigSerial:
 		c.IsAutoIncrement = true
 		c.IsPrimaryKey = true
 		c.Nullable = false
-		res = core.BigInt
-	case core.Bytea:
-		res = core.Blob
-	case core.TimeStampz:
-		res = core.Char
+		res = BigInt
+	case Bytea:
+		res = Blob
+	case TimeStampz:
+		res = Char
 		c.Length = 64
-	case core.Enum: // mysql enum
-		res = core.Enum
+	case Enum: // mysql enum
+		res = Enum
 		res += "("
 		opts := ""
 		for v := range c.EnumOptions {
@@ -218,8 +216,8 @@ func (db *mysql) SqlType(c *core.Column) string {
 		}
 		res += strings.TrimLeft(opts, ",")
 		res += ")"
-	case core.Set: // mysql set
-		res = core.Set
+	case Set: // mysql set
+		res = Set
 		res += "("
 		opts := ""
 		for v := range c.SetOptions {
@@ -227,13 +225,13 @@ func (db *mysql) SqlType(c *core.Column) string {
 		}
 		res += strings.TrimLeft(opts, ",")
 		res += ")"
-	case core.NVarchar:
-		res = core.Varchar
-	case core.Uuid:
-		res = core.Varchar
+	case NVarchar:
+		res = Varchar
+	case Uuid:
+		res = Varchar
 		c.Length = 40
-	case core.Json:
-		res = core.Text
+	case Json:
+		res = Text
 	default:
 		res = t
 	}
@@ -241,7 +239,7 @@ func (db *mysql) SqlType(c *core.Column) string {
 	hasLen1 := (c.Length > 0)
 	hasLen2 := (c.Length2 > 0)
 
-	if res == core.BigInt && !hasLen1 && !hasLen2 {
+	if res == BigInt && !hasLen1 && !hasLen2 {
 		c.Length = 20
 		hasLen1 = true
 	}
@@ -302,7 +300,7 @@ func (db *mysql) TableCheckSql(tableName string) (string, []any) {
 	return sql, args
 }
 
-func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+func (db *mysql) GetColumns(tableName string) ([]string, map[string]*coreColumn, error) {
 	args := []any{db.DbName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
 		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
@@ -315,10 +313,10 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	}
 	defer rows.Close()
 
-	cols := make(map[string]*core.Column)
+	cols := make(map[string]*coreColumn)
 	colSeq := make([]string, 0)
 	for rows.Next() {
-		col := new(core.Column)
+		col := new(coreColumn)
 		col.Indexes = make(map[string]int)
 
 		var columnName, isNullable, colType, colKey, extra, comment string
@@ -346,7 +344,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		var len1, len2 int
 		if len(cts) == 2 {
 			idx := strings.Index(cts[1], ")")
-			if colType == core.Enum && cts[1][0] == '\'' { // enum
+			if colType == Enum && cts[1][0] == '\'' { // enum
 				options := strings.Split(cts[1][0:idx], ",")
 				col.EnumOptions = make(map[string]int)
 				for k, v := range options {
@@ -354,7 +352,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 					v = strings.Trim(v, "'")
 					col.EnumOptions[v] = k
 				}
-			} else if colType == core.Set && cts[1][0] == '\'' {
+			} else if colType == Set && cts[1][0] == '\'' {
 				options := strings.Split(cts[1][0:idx], ",")
 				col.SetOptions = make(map[string]int)
 				for k, v := range options {
@@ -384,8 +382,8 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		}
 		col.Length = len1
 		col.Length2 = len2
-		if _, ok := core.SqlTypes[colType]; ok {
-			col.SQLType = core.SQLType{Name: colType, DefaultLength: len1, DefaultLength2: len2}
+		if _, ok := SqlTypes[colType]; ok {
+			col.SQLType = coreSQLType{Name: colType, DefaultLength: len1, DefaultLength2: len2}
 		} else {
 			return nil, nil, fmt.Errorf("unknown colType %v", colType)
 		}
@@ -411,7 +409,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	return colSeq, cols, nil
 }
 
-func (db *mysql) GetTables() ([]*core.Table, error) {
+func (db *mysql) GetTables() ([]*coreTable, error) {
 	args := []any{db.DbName}
 	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
 		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
@@ -423,9 +421,9 @@ func (db *mysql) GetTables() ([]*core.Table, error) {
 	}
 	defer rows.Close()
 
-	tables := make([]*core.Table, 0)
+	tables := make([]*coreTable, 0)
 	for rows.Next() {
-		table := core.NewEmptyTable()
+		table := NewEmptyTable()
 		var name, engine, tableRows, comment string
 		var autoIncr *string
 		err = rows.Scan(&name, &engine, &tableRows, &autoIncr, &comment)
@@ -441,7 +439,7 @@ func (db *mysql) GetTables() ([]*core.Table, error) {
 	return tables, nil
 }
 
-func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
+func (db *mysql) GetIndexes(tableName string) (map[string]*coreIndex, error) {
 	args := []any{db.DbName, tableName}
 	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? ORDER BY `INDEX_NAME`, `SEQ_IN_INDEX`"
 	db.LogSQL(s, args)
@@ -452,7 +450,7 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	}
 	defer rows.Close()
 
-	indexes := make(map[string]*core.Index, 0)
+	indexes := make(map[string]*coreIndex, 0)
 	for rows.Next() {
 		var indexType int
 		var indexName, colName, nonUnique string
@@ -466,9 +464,9 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 		}
 
 		if nonUnique == "YES" || nonUnique == "1" {
-			indexType = core.IndexType
+			indexType = IndexType
 		} else {
-			indexType = core.UniqueType
+			indexType = UniqueType
 		}
 
 		colName = strings.Trim(colName, "` ")
@@ -478,10 +476,10 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 			isRegular = true
 		}
 
-		var index *core.Index
+		var index *coreIndex
 		var ok bool
 		if index, ok = indexes[indexName]; !ok {
-			index = new(core.Index)
+			index = new(coreIndex)
 			index.IsRegular = isRegular
 			index.Type = indexType
 			index.Name = indexName
@@ -492,7 +490,7 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	return indexes, nil
 }
 
-func (db *mysql) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
+func (db *mysql) CreateTableSql(table *coreTable, tableName, storeEngine, charset string) string {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
@@ -546,15 +544,15 @@ func (db *mysql) CreateTableSql(table *core.Table, tableName, storeEngine, chars
 	return sql
 }
 
-func (db *mysql) Filters() []core.Filter {
-	return []core.Filter{&core.IdFilter{}}
+func (db *mysql) Filters() []coreFilter {
+	return []coreFilter{&coreIdFilter{}}
 }
 
 type mymysqlDriver struct {
 }
 
-func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	db := &core.Uri{DbType: core.MYSQL}
+func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*coreUri, error) {
+	db := &coreUri{DbType: MYSQL}
 
 	pd := strings.SplitN(dataSourceName, "*", 2)
 	if len(pd) == 2 {
@@ -605,7 +603,7 @@ func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, err
 type mysqlDriver struct {
 }
 
-func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*coreUri, error) {
 	dsnPattern := regexp.MustCompile(
 		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
 			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
@@ -614,7 +612,7 @@ func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error
 	matches := dsnPattern.FindStringSubmatch(dataSourceName)
 	names := dsnPattern.SubexpNames()
 
-	uri := &core.Uri{DbType: core.MYSQL}
+	uri := &coreUri{DbType: MYSQL}
 
 	for i, match := range matches {
 		switch names[i] {

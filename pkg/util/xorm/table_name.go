@@ -6,11 +6,9 @@ package xorm
 
 import (
 	"reflect"
-
-	"xorm.io/core"
 )
 
-func getTableName(mapper core.IMapper, v reflect.Value) string {
+func getTableName(mapper coreIMapper, v reflect.Value) string {
 	if t, ok := v.Interface().(TableName); ok {
 		return t.TableName()
 	}

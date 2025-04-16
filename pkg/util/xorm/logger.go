@@ -8,20 +8,18 @@ import (
 	"fmt"
 	"io"
 	"log"
-
-	"xorm.io/core"
 )
 
 // default log options
 const (
 	DEFAULT_LOG_PREFIX = "[xorm]"
 	DEFAULT_LOG_FLAG   = log.Ldate | log.Lmicroseconds
-	DEFAULT_LOG_LEVEL  = core.LOG_DEBUG
+	DEFAULT_LOG_LEVEL  = LOG_DEBUG
 )
 
-var _ core.ILogger = DiscardLogger{}
+var _ coreILogger = DiscardLogger{}
 
-// DiscardLogger don't log implementation for core.ILogger
+// DiscardLogger don't log implementation for coreILogger
 type DiscardLogger struct{}
 
 // Debug empty implementation
@@ -49,12 +47,12 @@ func (DiscardLogger) Warn(v ...any) {}
 func (DiscardLogger) Warnf(format string, v ...any) {}
 
 // Level empty implementation
-func (DiscardLogger) Level() core.LogLevel {
-	return core.LOG_UNKNOWN
+func (DiscardLogger) Level() coreLogLevel {
+	return LOG_UNKNOWN
 }
 
 // SetLevel empty implementation
-func (DiscardLogger) SetLevel(l core.LogLevel) {}
+func (DiscardLogger) SetLevel(l coreLogLevel) {}
 
 // ShowSQL empty implementation
 func (DiscardLogger) ShowSQL(show ...bool) {}
@@ -64,17 +62,17 @@ func (DiscardLogger) IsShowSQL() bool {
 	return false
 }
 
-// SimpleLogger is the default implment of core.ILogger
+// SimpleLogger is the default implment of coreILogger
 type SimpleLogger struct {
 	DEBUG   *log.Logger
 	ERR     *log.Logger
 	INFO    *log.Logger
 	WARN    *log.Logger
-	level   core.LogLevel
+	level   coreLogLevel
 	showSQL bool
 }
 
-var _ core.ILogger = &SimpleLogger{}
+var _ coreILogger = &SimpleLogger{}
 
 // NewSimpleLogger use a special io.Writer as logger output
 func NewSimpleLogger(out io.Writer) *SimpleLogger {
@@ -87,73 +85,73 @@ func NewSimpleLogger(out io.Writer) *SimpleLogger {
 	}
 }
 
-// Error implement core.ILogger
+// Error implement coreILogger
 func (s *SimpleLogger) Error(v ...any) {
-	if s.level <= core.LOG_ERR {
+	if s.level <= LOG_ERR {
 		s.ERR.Output(2, fmt.Sprint(v...))
 	}
 }
 
-// Errorf implement core.ILogger
+// Errorf implement coreILogger
 func (s *SimpleLogger) Errorf(format string, v ...any) {
-	if s.level <= core.LOG_ERR {
+	if s.level <= LOG_ERR {
 		s.ERR.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Debug implement core.ILogger
+// Debug implement coreILogger
 func (s *SimpleLogger) Debug(v ...any) {
-	if s.level <= core.LOG_DEBUG {
+	if s.level <= LOG_DEBUG {
 		s.DEBUG.Output(2, fmt.Sprint(v...))
 	}
 }
 
-// Debugf implement core.ILogger
+// Debugf implement coreILogger
 func (s *SimpleLogger) Debugf(format string, v ...any) {
-	if s.level <= core.LOG_DEBUG {
+	if s.level <= LOG_DEBUG {
 		s.DEBUG.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Info implement core.ILogger
+// Info implement coreILogger
 func (s *SimpleLogger) Info(v ...any) {
-	if s.level <= core.LOG_INFO {
+	if s.level <= LOG_INFO {
 		s.INFO.Output(2, fmt.Sprint(v...))
 	}
 }
 
-// Infof implement core.ILogger
+// Infof implement coreILogger
 func (s *SimpleLogger) Infof(format string, v ...any) {
-	if s.level <= core.LOG_INFO {
+	if s.level <= LOG_INFO {
 		s.INFO.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Warn implement core.ILogger
+// Warn implement coreILogger
 func (s *SimpleLogger) Warn(v ...any) {
-	if s.level <= core.LOG_WARNING {
+	if s.level <= LOG_WARNING {
 		s.WARN.Output(2, fmt.Sprint(v...))
 	}
 }
 
-// Warnf implement core.ILogger
+// Warnf implement coreILogger
 func (s *SimpleLogger) Warnf(format string, v ...any) {
-	if s.level <= core.LOG_WARNING {
+	if s.level <= LOG_WARNING {
 		s.WARN.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Level implement core.ILogger
-func (s *SimpleLogger) Level() core.LogLevel {
+// Level implement coreILogger
+func (s *SimpleLogger) Level() coreLogLevel {
 	return s.level
 }
 
-// SetLevel implement core.ILogger
-func (s *SimpleLogger) SetLevel(l core.LogLevel) {
+// SetLevel implement coreILogger
+func (s *SimpleLogger) SetLevel(l coreLogLevel) {
 	s.level = l
 }
 
-// ShowSQL implement core.ILogger
+// ShowSQL implement coreILogger
 func (s *SimpleLogger) ShowSQL(show ...bool) {
 	if len(show) == 0 {
 		s.showSQL = true
@@ -162,7 +160,7 @@ func (s *SimpleLogger) ShowSQL(show ...bool) {
 	s.showSQL = show[0]
 }
 
-// IsShowSQL implement core.ILogger
+// IsShowSQL implement coreILogger
 func (s *SimpleLogger) IsShowSQL() bool {
 	return s.showSQL
 }

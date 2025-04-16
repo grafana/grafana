@@ -8,8 +8,6 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
-
-	"xorm.io/core"
 )
 
 // Get retrieve one record from database, bean's non-empty fields
@@ -69,7 +67,7 @@ func (session *Session) get(bean any) (bool, error) {
 	return true, nil
 }
 
-func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bean any, sqlStr string, args ...any) (bool, error) {
+func (session *Session) nocacheGet(beanKind reflect.Kind, table *coreTable, bean any, sqlStr string, args ...any) (bool, error) {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return false, err
@@ -222,8 +220,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 		return true, session.executeProcessors()
 	case reflect.Slice:
 		err = rows.ScanSlice(bean)
-	case reflect.Map:
-		err = rows.ScanMap(bean)
+	// case reflect.Map: err = rows.ScanMap(bean)
 	case reflect.String, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		err = rows.Scan(bean)
