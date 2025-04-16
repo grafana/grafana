@@ -99,17 +99,12 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 			break
 		}
 
-		progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
+		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
 
-		v, err := calculateFileChangeInfo(ctx, repo, info.GrafanaBaseURL, change, opts, parser)
-		if err != nil {
-			return info, fmt.Errorf("error calculating changes %w", err)
-		}
-
-		// If everything applied OK, then render screenshots
+		v := calculateFileChangeInfo(ctx, repo, info.GrafanaBaseURL, change, opts, parser)
 		if shouldRender && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
-			progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
+			progress.SetMessage(ctx, fmt.Sprintf("render screenshots %s", change.Path))
 			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, e.render); err != nil {
 				info.MissingImageRenderer = true
 				if v.Error == "" {
@@ -124,12 +119,13 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		info.Changes = append(info.Changes, v)
 	}
+
 	return info, nil
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser) (fileChangeInfo, error) {
+func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
 		return calculateFileDeleteInfo(ctx, baseURL, change)
 	}
@@ -139,14 +135,14 @@ func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseUR
 	if err != nil {
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Read the file as a resource
 	info.Parsed, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Find a name within the file
@@ -158,7 +154,7 @@ func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseUR
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Dashboards get special handling
@@ -180,12 +176,12 @@ func calculateFileChangeInfo(ctx context.Context, repo repository.Reader, baseUR
 		info.PreviewURL += "?" + query.Encode()
 	}
 
-	return info, nil
+	return info
 }
 
-func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange) (fileChangeInfo, error) {
+func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange) fileChangeInfo {
 	// TODO: read the old and verify
-	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
+	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
 }
 
 // This will update render the linked screenshots and update the screenshotURLs

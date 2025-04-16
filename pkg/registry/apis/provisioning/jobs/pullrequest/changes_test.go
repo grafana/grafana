@@ -43,7 +43,7 @@ func TestCalculateChanges(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
-	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 	reader.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -88,6 +88,7 @@ func TestCalculateChanges(t *testing.T) {
 		renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(getDummyRenderedURL("x"), nil)
 		changes := []repository.VersionedFileChange{createdFileChange}
+		progress.On("SetMessage", mock.Anything, "render screenshots path/to/file.json").Return()
 
 		parserFactory := resources.NewMockParserFactory(t)
 		parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
