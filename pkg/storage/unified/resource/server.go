@@ -416,7 +416,14 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 			}
 			mux := http.NewServeMux()
 			mux.Handle("/ring", lfcsvc)
-			err = http.Serve(listener, mux)
+			server := http.Server{
+				Handler:           mux,
+				ReadTimeout:       15 * time.Second,
+				WriteTimeout:      15 * time.Second,
+				IdleTimeout:       60 * time.Second,
+				ReadHeaderTimeout: 5 * time.Second,
+			}
+			err = server.Serve(listener)
 			if err != nil {
 				s.log.Error("could not start debug ring server", "err", err)
 			}
