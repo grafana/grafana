@@ -247,7 +247,11 @@ export function AlertInstanceModalSelector({
           <div className={styles.column}>
             {!selectedRule && !loading && (
               <div className={styles.selectedRulePlaceholder}>
-                <div>Select an alert rule to get a list of available firing instances</div>
+                <div>
+                  <Trans i18nKey="alerting.alert-instance-modal-selector.select-alert-rule">
+                    Select an alert rule to get a list of available firing instances
+                  </Trans>
+                </div>
               </div>
             )}
             {loading && (

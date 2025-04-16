@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -60,7 +60,9 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-            {isGrafanaSource ? 'See alert rule' : 'See source'}
+            {isGrafanaSource
+              ? t('alerting.alert-details.button-see-rule', 'See alert rule')
+              : t('alerting.alert-details.button-see-source', 'See source')}
           </LinkButton>
         )}
       </div>
@@ -68,11 +70,17 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         <AnnotationDetailsField key={annotationKey} annotationKey={annotationKey} value={annotationValue} />
       ))}
       <div className={styles.receivers}>
-        Receivers:{' '}
-        {alert.receivers
-          .map(({ name }) => name)
-          .filter((name) => !!name)
-          .join(', ')}
+        <Trans
+          i18nKey="alerting.alert-details.receivers-list"
+          values={{
+            receivers: alert.receivers
+              .map(({ name }) => name)
+              .filter((name) => !!name)
+              .join(', '),
+          }}
+        >
+          Receivers: {'{{receivers}}'}
+        </Trans>
       </div>
     </>
   );

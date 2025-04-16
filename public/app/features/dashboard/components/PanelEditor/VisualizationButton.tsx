@@ -53,12 +53,20 @@ export const VisualizationButton = ({ panel }: Props) => {
           {plugin.meta.name}
         </ToolbarButton>
         <ToolbarButton
-          tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
+          tooltip={
+            isPanelOptionsVisible
+              ? t('dashboard.visualization-button.tooltip-close', 'Close options pane')
+              : t('dashboard.visualization-button.tooltip-show', 'Show options pane')
+          }
           icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
           onClick={onToggleOptionsPane}
           variant="canvas"
           data-testid={selectors.components.PanelEditor.toggleVizOptions}
-          aria-label={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
+          aria-label={
+            isPanelOptionsVisible
+              ? t('dashboard.visualization-button.aria-label-close', 'Close options pane')
+              : t('dashboard.visualization-button.aria-label-show', 'Show options pane')
+          }
         />
       </ButtonGroup>
     </div>

@@ -72,7 +72,9 @@ export const useDeleteContactPointModal = (
 
         <Modal.ButtonRow>
           <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? 'Deleting...' : 'Yes, delete contact point'}
+            {isLoading
+              ? t('alerting.use-delete-contact-point-modal.deleting', 'Deleting...')
+              : t('alerting.use-delete-contact-point-modal.delete-confirm', 'Yes, delete contact point')}
           </Button>
           <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
             <Trans i18nKey="alerting.common.cancel">Cancel</Trans>

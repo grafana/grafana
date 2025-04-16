@@ -4,7 +4,7 @@ import * as React from 'react';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { ROUTES } from 'app/features/connections/constants';
 import { addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
@@ -39,7 +39,12 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
       onClick={onAddDataSource}
       disabled={disabledButton}
       title={
-        disabledButton ? "The plugin isn't usable yet, it may take some time to complete the installation." : undefined
+        disabledButton
+          ? t(
+              'plugins.get-started-with-data-source.title-button-disabled',
+              "The plugin isn't usable yet, it may take some time to complete the installation."
+            )
+          : undefined
       }
     >
       <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>

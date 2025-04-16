@@ -180,7 +180,9 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
           <Field
             label={t('dashboard.help-wizard.label-support-snapshot', 'Support snapshot')}
-            description={`Panel: ${panelTitle}`}
+            description={t('dashboard.help-wizard.description-support-snapshot', 'Panel: {{panelTitle}}', {
+              panelTitle,
+            })}
           >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>

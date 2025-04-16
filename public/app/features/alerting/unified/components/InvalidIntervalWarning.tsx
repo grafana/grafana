@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 const EvaluationIntervalLimitExceeded = () => (
   <Alert
@@ -10,10 +10,14 @@ const EvaluationIntervalLimitExceeded = () => (
       'Global evaluation interval limit exceeded'
     )}
   >
-    A minimum evaluation interval of <strong>{config.unifiedAlerting.minInterval}</strong> has been configured in
-    Grafana.
-    <br />
-    Please contact the administrator to configure a lower interval.
+    <Trans
+      i18nKey="alerting.evaluation-interval-limit-exceeded.body-minimum-interval"
+      values={{ minInterval: config.unifiedAlerting.minInterval }}
+    >
+      A minimum evaluation interval of <strong>{'{{minInterval}}'}</strong> has been configured in Grafana.
+      <br />
+      Please contact the administrator to configure a lower interval.
+    </Trans>
   </Alert>
 );
 

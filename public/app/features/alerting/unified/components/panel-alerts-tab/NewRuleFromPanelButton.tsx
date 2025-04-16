@@ -47,7 +47,9 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
           'No alerting capable query found'
         )}
       >
-        Cannot create alerts from this panel because no query to an alerting capable datasource is found.
+        <Trans i18nKey="alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found">
+          Cannot create alerts from this panel because no query to an alerting capable datasource is found.
+        </Trans>
       </Alert>
     );
   }

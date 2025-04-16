@@ -1,6 +1,7 @@
 import { isIconName } from '@grafana/data';
 import { Badge, Card, Icon } from '@grafana/ui';
 
+import { t } from '../../../core/internationalization';
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
 
@@ -26,7 +27,14 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
         </Card.Figure>
       )}
       <Card.Actions>
-        <Badge text={enabled ? 'Enabled' : 'Not enabled'} color={enabled ? 'green' : 'blue'} />
+        <Badge
+          text={
+            enabled
+              ? t('auth-config.provider-card.text-badge-enabled', 'Enabled')
+              : t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')
+          }
+          color={enabled ? 'green' : 'blue'}
+        />
       </Card.Actions>
     </Card>
   );

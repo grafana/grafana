@@ -120,7 +120,9 @@ export const extractFieldsTransformerEditor = ({
             label="RegExp"
             labelWidth={16}
             interactive={true}
-            tooltip="Example: /(?<NewField>.*)/"
+            tooltip={t('transformers.extract-fields-transformer-editor.tooltip-regexp', 'Example: {{regexExample}}', {
+              regexExample: '/(?<NewField>.*)/',
+            })}
           >
             <Input
               // eslint-disable-next-line @grafana/no-untranslated-strings

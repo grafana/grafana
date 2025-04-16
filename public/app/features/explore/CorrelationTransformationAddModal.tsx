@@ -139,8 +139,10 @@ export const CorrelationTransformationAddModal = ({
       className={css({ width: '700px' })}
     >
       <p>
-        A transformation extracts variables out of a single field. These variables will be available along with your
-        field variables.
+        <Trans i18nKey="explore.correlation-transformation-add-modal.body">
+          A transformation extracts variables out of a single field. These variables will be available along with your
+          field variables.
+        </Trans>
       </p>
       <Field label={t('explore.correlation-transformation-add-modal.label-field', 'Field')}>
         <Controller
@@ -203,7 +205,7 @@ export const CorrelationTransformationAddModal = ({
                     tooltipText={formFieldsVis.expressionDetails.helpText}
                   />
                 ) : (
-                  'Expression'
+                  t('explore.correlation-transformation-add-modal.label-expression-without-tooltip', 'Expression')
                 )
               }
               htmlFor={`${id}-expression`}
@@ -221,7 +223,7 @@ export const CorrelationTransformationAddModal = ({
                     tooltipText={formFieldsVis.mapValueDetails.helpText}
                   />
                 ) : (
-                  'Variable name'
+                  t('explore.correlation-transformation-add-modal.label-variable-name-without-tooltip', 'Variable name')
                 )
               }
               htmlFor={`${id}-mapValue`}
@@ -231,7 +233,9 @@ export const CorrelationTransformationAddModal = ({
           )}
           {Object.entries(transformationVars).length > 0 && (
             <>
-              This transformation will add the following variables:
+              <Trans i18nKey="explore.correlation-transformation-add-modal.added-variables">
+                This transformation will add the following variables:
+              </Trans>
               <pre>
                 {Object.entries(transformationVars).map((entry) => {
                   return `\$\{${entry[0]}\} = ${entry[1]?.value}\n`;
@@ -246,7 +250,9 @@ export const CorrelationTransformationAddModal = ({
           <Trans i18nKey="explore.correlation-transformation-add-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="primary" onClick={() => onSave(getValues())} disabled={!validToSave}>
-          {transformationToEdit ? 'Edit transformation' : 'Add transformation to correlation'}
+          {transformationToEdit
+            ? t('explore.correlation-transformation-add-modal.edit-transformation', 'Edit transformation')
+            : t('explore.correlation-transformation-add-modal.add-transformation', 'Add transformation to correlation')}
         </Button>
       </Modal.ButtonRow>
     </Modal>

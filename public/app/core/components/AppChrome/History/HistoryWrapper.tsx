@@ -135,7 +135,11 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
               <div>
                 {breadcrumbs.map((breadcrumb, index) => (
                   <Text key={index}>
-                    {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
+                    {breadcrumb.text}{' '}
+                    {index !== breadcrumbs.length - 1
+                      ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                        '> '
+                      : ''}
                   </Text>
                 ))}
               </div>

@@ -10,6 +10,7 @@ import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
+import { t } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -275,7 +276,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}

@@ -10,9 +10,13 @@ export function PromDurationDocs() {
   const styles = useStyles2(getPromDurationStyles);
   return (
     <div>
-      Prometheus duration format consist of a number followed by a time unit.
+      <Trans i18nKey="alerting.prom-duration-docs.explanation">
+        Prometheus duration format consist of a number followed by a time unit.
+      </Trans>
       <br />
-      Different units can be combined for more granularity.
+      <Trans i18nKey="alerting.prom-duration-docs.different-units">
+        Different units can be combined for more granularity.
+      </Trans>
       <hr />
       <div className={styles.list}>
         <div className={styles.header}>

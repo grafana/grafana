@@ -19,21 +19,29 @@ export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) =>
   return (
     <div>
       <Label>
-        <span>Notification state&nbsp;</span>
+        <span>
+          <Trans i18nKey="alerting.alert-state-filter.notification-state">Notification state</Trans>&nbsp;
+        </span>
         <Tooltip
           content={
             <div>
               <ul>
                 <li>
-                  Active: The alert notification has been handled. The alert is still firing and continues to be
-                  managed.
+                  <Trans i18nKey="alerting.alert-state-filter.active-the-alert-is-firing">
+                    Active: The alert notification has been handled. The alert is still firing and continues to be
+                    managed.
+                  </Trans>
                 </li>
                 <li>
                   <Trans i18nKey="alerting.alert-state-filter.suppressed-the-alert-has-been-silenced">
                     Suppressed: The alert has been silenced.
                   </Trans>
                 </li>
-                <li>Unprocessed: The alert is received but its notification has not been processed yet.</li>
+                <li>
+                  <Trans i18nKey="alerting.alert-state-filter.unprocessed-the-alert-is-received">
+                    Unprocessed: The alert is received but its notification has not been processed yet.
+                  </Trans>
+                </li>
               </ul>
             </div>
           }

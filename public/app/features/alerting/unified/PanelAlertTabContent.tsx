@@ -36,7 +36,14 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
       severity="error"
     >
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
+        <div key={index}>
+          <Trans
+            i18nKey="alerting.panel-alert-tab-content.failed-to-load-error"
+            values={{ error: stringifyErrorLike(error) }}
+          >
+            Failed to load Grafana rules state: {'{{error}}'}
+          </Trans>
+        </div>
       ))}
     </Alert>
   ) : null;

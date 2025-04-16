@@ -123,7 +123,12 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        {rangeUtil.secondsToHms(relativeTimeRange.from)} to now
+        <Trans
+          i18nKey="alerting.query-preview.relative-time-range"
+          values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
+        >
+          {'{{from}}'} to now
+        </Trans>
       </Text>
     );
   }
@@ -229,7 +234,11 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
-        return <>Expression not supported: {model.type}</>;
+        return (
+          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: model.type }}>
+            Expression not supported: {'{{type}}'}
+          </Trans>
+        );
     }
   }
 
@@ -344,7 +353,9 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
         return (
           <React.Fragment key={index}>
             <div className={styles.blue}>
-              {index === 0 ? 'WHEN' : !!operator?.type && evalOperators[operator?.type]?.text}
+              {index === 0
+                ? t('alerting.classic-condition-viewer.when', 'WHEN')
+                : !!operator?.type && evalOperators[operator?.type]?.text}
             </div>
             <div className={styles.bold}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
             <div className={styles.blue}>

@@ -86,15 +86,19 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
         <form onSubmit={formMethods.handleSubmit(onSubmit)}>
           {notificationType === NotificationType.predefined && (
             <div className={styles.section}>
-              You will send a test notification that uses a predefined alert. If you have defined a custom template or
-              message, for better results switch to <strong>custom</strong> notification message, from above.
+              <Trans i18nKey="alerting.test-contact-point-modal.predefined-notification-message">
+                You will send a test notification that uses a predefined alert. If you have defined a custom template or
+                message, for better results switch to <strong>custom</strong> notification message, from above.
+              </Trans>
             </div>
           )}
           {notificationType === NotificationType.custom && (
             <>
               <div className={styles.section}>
-                You will send a test notification that uses the annotations defined below. This is a good option if you
-                use custom templates and messages.
+                <Trans i18nKey="alerting.test-contact-point-modal.custom-notification-message">
+                  You will send a test notification that uses the annotations defined below. This is a good option if
+                  you use custom templates and messages.
+                </Trans>
               </div>
               <div className={styles.section}>
                 <AnnotationsStep />
