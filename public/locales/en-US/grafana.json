@@ -972,7 +972,7 @@
       "read-documentation": "Read documentation",
       "title-federated-group": "This rule is part of a federated rule group."
     },
-    "file-export-inline-documnetation": {
+    "file-export-inline-documentation": {
       "api-provisioning": "{{name}} format is only valid for API Provisioning. <3>Read more in the docs.</3>",
       "file-provisioning": "{{name}} format is only valid for File Provisioning. <3>Read more in the docs.</3>",
       "terraform-provisioning": "{{name}} format is only valid for Terraform Provisioning. <3>Read more in the docs.</3>"
@@ -1795,7 +1795,7 @@
       "title-view": "View"
     },
     "rule-config-status": {
-      "tooltip-min-interval": "A minimum evaluation interval of <2>{{minInterval}}</2> has been configured in Grafana and will be used instead of the {{ruleInterval}} interval configured for the Rule Group."
+      "tooltip-min-interval": "A minimum evaluation interval of <1>{{minInterval}}</1> has been configured in Grafana and will be used instead of the {{ruleInterval}} interval configured for the Rule Group."
     },
     "rule-details": {
       "keep-firing-for": "Keep firing for",

@@ -98,7 +98,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
     file: {
       title: 'File-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documnetation.file-provisioning">
+        <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
           {{ name }} format is only valid for File Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
@@ -112,7 +112,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
     api: {
       title: 'API-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documnetation.api-provisioning">
+        <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
           {{ name }} format is only valid for API Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
@@ -126,7 +126,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
     terraform: {
       title: 'Terraform-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documnetation.terraform-provisioning">
+        <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
           {{ name }} format is only valid for Terraform Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
