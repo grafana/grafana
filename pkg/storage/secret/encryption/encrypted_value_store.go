@@ -120,7 +120,6 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 		return nil, fmt.Errorf("execute template %q: %w", sqlEncryptedValueRead.Name(), err)
 	}
 
-	var encryptedValue *EncryptedValue
 	res, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
@@ -128,20 +127,17 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 
 	defer func() { _ = res.Close() }()
 
-	if res.Next() {
-		row := &EncryptedValue{}
-		err := res.Scan(&row.UID, &row.Namespace, &row.EncryptedData, &row.Created, &row.Updated)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
-		}
-		encryptedValue = row
+	if !res.Next() {
+		return nil, ErrEncryptedValueNotFound
 	}
 
+	encryptedValue := &EncryptedValue{}
+	err = res.Scan(&encryptedValue.UID, &encryptedValue.Namespace, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
+	}
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-	if encryptedValue == nil {
-		return nil, ErrEncryptedValueNotFound
 	}
 
 	return &contracts.EncryptedValue{
