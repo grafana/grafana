@@ -21,27 +21,38 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginsService struct {
 	availableUpdates map[string]string
 
-	enabled         bool
-	grafanaVersion  string
-	pluginStore     pluginstore.Store
-	httpClient      httpClient
-	mutex           sync.RWMutex
-	log             log.Logger
-	tracer          tracing.Tracer
-	updateCheckURL  *url.URL
-	pluginInstaller plugins.Installer
+	enabled            bool
+	grafanaVersion     string
+	pluginStore        pluginstore.Store
+	httpClient         httpClient
+	mutex              sync.RWMutex
+	log                log.Logger
+	tracer             tracing.Tracer
+	updateCheckURL     *url.URL
+	pluginInstaller    plugins.Installer
+	managedPlugins     managedplugins.Manager
+	provisionedPlugins provisionedplugins.Manager
 
 	features featuremgmt.FeatureToggles
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*PluginsService, error) {
+func ProvidePluginsService(cfg *setting.Cfg,
+	pluginStore pluginstore.Store,
+	pluginInstaller plugins.Installer,
+	managedPlugins managedplugins.Manager,
+	provisionedPlugins provisionedplugins.Manager,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
@@ -63,16 +74,18 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, plug
 	}
 
 	return &PluginsService{
-		enabled:          cfg.CheckForPluginUpdates,
-		grafanaVersion:   cfg.BuildVersion,
-		httpClient:       cl,
-		log:              logger,
-		tracer:           tracer,
-		pluginStore:      pluginStore,
-		availableUpdates: make(map[string]string),
-		updateCheckURL:   parsedUpdateCheckURL,
-		pluginInstaller:  pluginInstaller,
-		features:         features,
+		enabled:            cfg.CheckForPluginUpdates,
+		grafanaVersion:     cfg.BuildVersion,
+		httpClient:         cl,
+		log:                logger,
+		tracer:             tracer,
+		pluginStore:        pluginStore,
+		availableUpdates:   make(map[string]string),
+		updateCheckURL:     parsedUpdateCheckURL,
+		pluginInstaller:    pluginInstaller,
+		features:           features,
+		managedPlugins:     managedPlugins,
+		provisionedPlugins: provisionedPlugins,
 	}, nil
 }
 
@@ -181,7 +194,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	availableUpdates := map[string]string{}
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
-			if canUpdate(localP.Info.Version, gcomP.Version) {
+			if s.isPluginUpdatable(ctx, localP) && canUpdate(localP.Info.Version, gcomP.Version) {
 				availableUpdates[localP.ID] = gcomP.Version
 			}
 		}
@@ -207,6 +220,35 @@ func canUpdate(v1, v2 string) bool {
 	}
 
 	return ver1.LessThan(ver2)
+}
+
+func (s *PluginsService) isPluginUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool {
+	if plugin.IsCorePlugin() || s.isManaged(ctx, plugin.ID) || s.isProvisioned(ctx, plugin.ID) {
+		return false
+	}
+	return true
+}
+
+func (s *PluginsService) isManaged(ctx context.Context, pluginID string) bool {
+	for _, managedPlugin := range s.managedPlugins.ManagedPlugins(ctx) {
+		if managedPlugin == pluginID {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *PluginsService) isProvisioned(ctx context.Context, pluginID string) bool {
+	provisionedPlugins, err := s.provisionedPlugins.ProvisionedPlugins(ctx)
+	if err != nil {
+		return false
+	}
+	for _, provisionedPlugin := range provisionedPlugins {
+		if provisionedPlugin == pluginID {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {

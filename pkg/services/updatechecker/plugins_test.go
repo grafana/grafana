@@ -14,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
@@ -181,9 +183,11 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log:            log.NewNopLogger(),
-			tracer:         tracing.InitializeTracerForTest(),
-			updateCheckURL: updateCheckURL,
+			log:                log.NewNopLogger(),
+			tracer:             tracing.InitializeTracerForTest(),
+			updateCheckURL:     updateCheckURL,
+			managedPlugins:     &managedplugins.Noop{},
+			provisionedPlugins: &provisionedplugins.Noop{},
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())
