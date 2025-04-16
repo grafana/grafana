@@ -54,16 +54,19 @@ type Service struct {
 	sf *singleflight.Group
 
 	// Cache for user permissions, user team memberships and user basic roles
-	idCache         *cacheWrap[store.UserIdentifiers]
-	permCache       *cacheWrap[map[string]bool]
-	permDenialCache *cacheWrap[bool]
-	teamCache       *cacheWrap[[]int64]
-	basicRoleCache  *cacheWrap[store.BasicRole]
-	folderCache     *cacheWrap[folderTree]
+	idCache         cacheWrap[store.UserIdentifiers]
+	permCache       cacheWrap[map[string]bool]
+	permDenialCache cacheWrap[bool]
+	teamCache       cacheWrap[[]int64]
+	basicRoleCache  cacheWrap[store.BasicRole]
+	folderCache     cacheWrap[folderTree]
 }
 
 type Settings struct {
 	AnonOrgRole string
+	// CacheTTL is the time to live for the permission cache entries.
+	// Set to 0 to disable caching.
+	CacheTTL time.Duration
 }
 
 func NewService(
@@ -91,11 +94,11 @@ func NewService(
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }

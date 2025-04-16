@@ -6,6 +6,8 @@ import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/d
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
 
+import { t, Trans } from '../../../core/internationalization';
+
 interface Props {
   title: string;
   text?: ReactNode;
@@ -36,12 +38,17 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
   const LoadError = class LoadError extends PureComponent<PanelProps> {
     render() {
       const text = (
-        <>
+        <Trans i18nKey="panel.panel-plugin-error.text-load-error">
           Check the server startup logs for more information. <br />
           If this plugin was loaded from Git, then make sure it was compiled.
-        </>
+        </Trans>
       );
-      return <PanelPluginError title={`Error loading: ${meta.id}`} text={text} />;
+      return (
+        <PanelPluginError
+          title={t('panel.panel-plugin-error.title-load-error', 'Error loading: {{panelId}}', { panelId: meta.id })}
+          text={text}
+        />
+      );
     }
   };
   const plugin = new PanelPlugin(LoadError);
@@ -53,7 +60,11 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
 export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
   const NotFound = class NotFound extends PureComponent<PanelProps> {
     render() {
-      return <PanelPluginError title={`Panel plugin not found: ${id}`} />;
+      return (
+        <PanelPluginError
+          title={t('panel.panel-plugin-error.title-not-found', 'Panel plugin not found: {{id}}', { id })}
+        />
+      );
     }
   };
 

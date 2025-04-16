@@ -321,38 +321,6 @@
           }
         }
       },
-      "post": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "sets an Alerting config",
-        "operationId": "RoutePostGrafanaAlertingConfig",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
       "delete": {
         "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/spanner"
@@ -15,7 +16,7 @@ import (
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"
@@ -44,6 +45,18 @@ func NewSpannerDialect() Dialect {
 func (s *SpannerDialect) AutoIncrStr() string      { return s.d.AutoIncrStr() }
 func (s *SpannerDialect) Quote(name string) string { return s.d.Quote(name) }
 func (s *SpannerDialect) SupportEngine() bool      { return s.d.SupportEngine() }
+
+func (s *SpannerDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := strings.ToLower(pattern)
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("LOWER(%s) LIKE ?", column), param
+}
+
 func (s *SpannerDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return s.d.IndexCheckSql(tableName, indexName)
 }
