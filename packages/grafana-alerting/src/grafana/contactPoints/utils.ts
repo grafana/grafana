@@ -1,9 +1,6 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver } from '../api.gen';
-
-// type aliases – we should centralise th
-type ContactPoint = ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
+import { ContactPoint } from './types';
 
 export function getContactPointDescription(contactPoint: ContactPoint): string {
   if (isEmpty(contactPoint.spec.integrations)) {

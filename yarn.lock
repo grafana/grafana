@@ -3018,6 +3018,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.2.0"
+    type-fest: "npm:^4.40.0"
     typescript: "npm:^5.8.2"
   peerDependencies:
     react: ^18.0.0
@@ -30147,6 +30148,13 @@ __metadata:
   version: 4.26.1
   resolution: "type-fest@npm:4.26.1"
   checksum: 10/b82676194f80af228cb852e320d2ea8381c89d667d2e4d9f2bdfc8f254bccc039c7741a90c53617a4de0c9fdca8265ed18eb0888cd628f391c5c381c33a9f94b
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.40.0":
+  version: 4.40.0
+  resolution: "type-fest@npm:4.40.0"
+  checksum: 10/dbca20979d18c6b8c87ca28cd999d9ae6b34e0c54c3a87ac65530a32f7a178d38d3788044a589f47c9fde3f3c81422e7b021ec1455f7242b724a2d9c642ce8b8
   languageName: node
   linkType: hard
 
