@@ -76,7 +76,7 @@ export const TimeRangeContent = (props: Props) => {
     const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
     setFrom(fromValue);
     setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone], fiscalYearStartMonth);
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -146,7 +146,7 @@ export const TimeRangeContent = (props: Props) => {
 
   const fyTooltip = (
     <div className={style.tooltip}>
-      {rangeUtil.isFiscal(value) ? (
+      {rangeUtil.isFiscal(value, timeZone, fiscalYearStartMonth) ? (
         <Tooltip
           content={t('time-picker.range-content.fiscal-year', 'Fiscal year: {{from}} - {{to}}', {
             from: fiscalYear.from.format('MMM-DD'),
