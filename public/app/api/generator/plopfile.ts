@@ -119,14 +119,14 @@ export default function plopGenerator(plop: NodePlopAPI) {
       {
         type: 'confirm',
         name: 'isEnterprise',
-        message: 'Is this an Enterprise API?',
+        message: 'Is this a Grafana Enterprise API?',
         default: false,
       },
       {
         type: 'input',
         name: 'groupName',
         message: 'API group name (e.g. dashboard):',
-        validate: (input: string) => (input && input.trim() ? true : 'Group name is required'),
+        validate: (input: string) => input?.trim() || 'Group name is required',
       },
       {
         type: 'input',
@@ -147,8 +147,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
         name: 'reducerPath',
         message: 'Reducer path (e.g. dashboardAPI):',
         default: (answers: { groupName?: string }) => `${answers.groupName}API`,
-        validate: (input: string) =>
-          input && input.endsWith('API') ? true : 'Reducer path should end with "API" (e.g. dashboardAPI)',
+        validate: (input: string) => input?.endsWith('API') || 'Reducer path should end with "API" (e.g. dashboardAPI)',
       },
       {
         type: 'input',
