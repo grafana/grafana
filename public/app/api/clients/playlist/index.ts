@@ -5,19 +5,15 @@ import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { contextSrv } from '../../../core/services/context_srv';
 import { handleError } from '../../utils';
 
-import { generatedAPI, PlaylistSpec } from './endpoints.gen';
+import { generatedAPI, Playlist, PlaylistSpec } from './endpoints.gen';
 
 export const playlistAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
-    getPlaylist: (endpointDefinition) => {
-      endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
-        try {
-          const playlist = await queryFulfilled;
-          await migrateInternalIDs(playlist.data.spec);
-        } catch (e) {
-          handleError(e, dispatch, 'Unable to get playlist');
-        }
-      };
+    getPlaylist: {
+      transformResponse: async (response: Playlist) => {
+        await migrateInternalIDs(response.spec);
+        return response;
+      },
     },
     createPlaylist: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
