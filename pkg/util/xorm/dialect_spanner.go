@@ -12,7 +12,7 @@ import (
 	_ "github.com/googleapis/go-sql-spanner"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 func init() {
