@@ -301,21 +301,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
   const describeTimeRange = rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
-  let formattedRange = describeTimeRange;
-  if(isLocaleFormatEnable) {
-    // Split the date using regex to get the "to" word, even translated, to get the "from" and "to" values
-    const regex = /([a-zA-Z]+)/g;
-    const timeRangeSplit = describeTimeRange.split(regex);
-    const from = timeRangeSplit[0];
-    const to = timeRangeSplit[2];
-    // If from and to are not empty, localise them using the formatDate function
-    if (from && to) {
-      const fromLocalised = formatDate(from, localeOptions);
-      const toLocalised = formatDate(to, localeOptions);
-      const separator = timeRangeSplit[1];
-      formattedRange = `${fromLocalised} ${separator} ${toLocalised}`;
-    }
-  }
+  const formattedRange = isLocaleFormatEnable ? formatDate(describeTimeRange, localeOptions) : describeTimeRange;
   return formattedRange;
 };
 

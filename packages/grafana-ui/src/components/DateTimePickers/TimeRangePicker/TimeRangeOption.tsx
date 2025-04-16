@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
 
-import { formatDate } from '../../../../../../public/app/core/internationalization/dates';
+import { formatRange } from '../../../../../../public/app/core/internationalization/dates';
 import { config } from '../../../../../grafana-runtime'
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
@@ -75,21 +75,8 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
     minute: '2-digit',
     second: '2-digit',
   };
-  let formattedRange = value.display;
-    if(isLocaleFormatEnable) {
-      // Split the date using regex to get the "to" word, even translated, to get the "from" and "to" values
-      const regex = /([a-zA-Z]+)/g;
-      const timeRangeSplit = value.display.split(regex);
-      const from = timeRangeSplit[0];
-      const to = timeRangeSplit[2];
-      // If from and to are not empty, localise them using the formatDate function
-      if (from && to) {
-        const fromLocalised = formatDate(from, localeOptions);
-        const toLocalised = formatDate(to, localeOptions);
-        const separator = timeRangeSplit[1];
-        formattedRange = `${fromLocalised} ${separator} ${toLocalised}`;
-      }
-    }  
+  const formattedRange = isLocaleFormatEnable ? formatRange(value.display, localeOptions) : value.display;
+
   return (
     <li className={styles.container}>
       <input

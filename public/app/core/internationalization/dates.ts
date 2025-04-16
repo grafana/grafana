@@ -41,3 +41,20 @@ export const formatDuration = deepMemoize(
     return dateFormatter.format(duration);
   }
 );
+
+
+export const formatRange = ( range: string, options: Intl.DurationFormatOptions = {}): string => {
+  // Split the date using regex to get the "to" word, even translated, to get the "from" and "to" values
+  const regex = /([a-zA-Z]+)/g;
+  const timeRangeSplit = range.split(regex);
+  const from = timeRangeSplit[0];
+  const to = timeRangeSplit[2];
+  // If from and to are not empty, localise them using the formatDate function
+  if (from && to) {
+    const fromLocalised = formatDate(from, options);
+    const toLocalised = formatDate(to, options);
+    const separator = timeRangeSplit[1];
+    return `${fromLocalised} ${separator} ${toLocalised}`;
+  }
+  return range;
+}
