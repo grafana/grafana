@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSelector } from 'app/types';
 
@@ -12,10 +12,10 @@ import useExtensionActions from './useExtensionActions';
 export default function useActions(searchQuery: string) {
   const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
-  const [recentScopesActions, setRecentScopesActions] = useState<CommandPaletteAction[]>([]);
   const extensionActions = useExtensionActions();
 
   const navBarTree = useSelector((state) => state.navBarTree);
+  const recentScopesActions = getRecentScopesActions();
 
   // Load standard static actions
   useEffect(() => {
@@ -33,10 +33,6 @@ export default function useActions(searchQuery: string) {
         });
     }
   }, [searchQuery]);
-
-  useEffect(() => {
-    setRecentScopesActions(getRecentScopesActions());
-  }, []);
 
   return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions, ...recentScopesActions];
 }
