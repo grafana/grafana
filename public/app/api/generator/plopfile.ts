@@ -2,7 +2,6 @@ import path from 'path';
 import type { NodePlopAPI, PlopGeneratorConfig } from 'plop';
 
 import {
-  projectPath as createProjectPath,
   formatEndpoints,
   validateGroup,
   validateVersion,
@@ -19,12 +18,10 @@ import { type ActionConfig, type PlopData, isPlopData } from './types.ts';
 export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
   const basePath = path.resolve(import.meta.dirname, '../../../..');
-  // Create project path helper with the base path
-  const projectPath = createProjectPath(basePath);
 
   // Register custom action types
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));
-  plop.setActionType('formatFiles', formatFiles(basePath, projectPath));
+  plop.setActionType('formatFiles', formatFiles(basePath));
 
   // Used in templates to format endpoints
   plop.setHelper('formatEndpoints', formatEndpoints());
@@ -49,19 +46,19 @@ export default function plopGenerator(plop: NodePlopAPI) {
     const actions: ActionConfig[] = [
       {
         type: 'add',
-        path: projectPath(`${apiClientBasePath}/${groupName}/baseAPI.ts`),
+        path: path.join(basePath, `${apiClientBasePath}/${groupName}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
       {
         type: 'modify',
-        path: projectPath(generateScriptPath),
+        path: path.join(basePath, generateScriptPath),
         pattern: '// PLOP_INJECT_API_CLIENT',
         templateFile: './templates/config-entry.hbs',
         data: templateData,
       },
       {
         type: 'add',
-        path: projectPath(`${apiClientBasePath}/${groupName}/index.ts`),
+        path: path.join(basePath, `${apiClientBasePath}/${groupName}/index.ts`),
         templateFile: './templates/index.ts.hbs',
       },
     ];
@@ -71,25 +68,25 @@ export default function plopGenerator(plop: NodePlopAPI) {
       actions.push(
         {
           type: 'modify',
-          path: projectPath('public/app/core/reducers/root.ts'),
+          path: path.join(basePath, 'public/app/core/reducers/root.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
           template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
-          path: projectPath('public/app/core/reducers/root.ts'),
+          path: path.join(basePath, 'public/app/core/reducers/root.ts'),
           pattern: '// PLOP_INJECT_REDUCER',
           template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
         },
         {
           type: 'modify',
-          path: projectPath('public/app/store/configureStore.ts'),
+          path: path.join(basePath, 'public/app/store/configureStore.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
           template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
-          path: projectPath('public/app/store/configureStore.ts'),
+          path: path.join(basePath, 'public/app/store/configureStore.ts'),
           pattern: '// PLOP_INJECT_MIDDLEWARE',
           template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
         }

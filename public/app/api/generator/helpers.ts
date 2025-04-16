@@ -6,9 +6,6 @@ type PlopActionFunction = (
   config?: Record<string, unknown>
 ) => string | Promise<string>;
 
-// Helper function to create paths relative to project root
-export const projectPath = (basePath: string) => (relativePath: string) => path.join(basePath, relativePath);
-
 // Helper to remove quotes from operation IDs
 export const removeQuotes = (str: string | unknown) => {
   if (typeof str !== 'string') {
@@ -73,14 +70,14 @@ export const runGenerateApis =
   };
 
 export const formatFiles =
-  (basePath: string, createProjectPath: ReturnType<typeof projectPath>): PlopActionFunction =>
+  (basePath: string): PlopActionFunction =>
   (_, config) => {
     if (!config || !Array.isArray(config.files)) {
       console.error('Invalid config passed to formatFiles action');
       return '❌ Formatting failed: Invalid configuration';
     }
 
-    const filesToFormat = config.files.map((file: string) => createProjectPath(file));
+    const filesToFormat = config.files.map((file: string) => path.join(basePath, file));
 
     try {
       const filesList = filesToFormat.map((file: string) => `"${file}"`).join(' ');
