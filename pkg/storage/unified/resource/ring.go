@@ -27,7 +27,6 @@ type resourceRingConfig struct {
 	HeartbeatTimeout time.Duration `yaml:"heartbeat_timeout" category:"advanced"`
 
 	// Instance details
-	InstanceID             string   `yaml:"instance_id" doc:"default=<hostname>" category:"advanced"`
 	InstanceInterfaceNames []string `yaml:"instance_interface_names" doc:"default=[<private network interfaces>]"`
 	InstancePort           int      `yaml:"instance_port" category:"advanced"`
 	InstanceAddr           string   `yaml:"instance_addr" category:"advanced"`
@@ -107,7 +106,6 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		HeartbeatPeriod:  15 * time.Second,
 		HeartbeatTimeout: time.Minute,
 		InstanceAddr:     cfg.MemberlistBindAddr,
-		InstanceID:       cfg.MemberlistBindAddr,
 		ListenPort:       cfg.RingListenPort,
 		InstancePort:     cfg.RingListenPort,
 		NumTokens:        128,
