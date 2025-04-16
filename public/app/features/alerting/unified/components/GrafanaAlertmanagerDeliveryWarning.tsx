@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -47,11 +47,15 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
           'Grafana alerts are not delivered to Grafana Alertmanager'
         )}
       >
-        Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
-        will not affect delivery of your alerts.
+        <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.configuration-changes-external">
+          Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager
+          configuration will not affect delivery of your alerts.
+        </Trans>
         <div className={styles.adminHint}>
-          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
-          Administrator.
+          <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.admin-hint-external">
+            To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+            Administrator.
+          </Trans>
         </div>
       </Alert>
     );
@@ -66,11 +70,15 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
         )}
         severity="warning"
       >
-        Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
-        will not affect the others.
+        <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.configuration-changes-all">
+          Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
+          will not affect the others.
+        </Trans>
         <div className={styles.adminHint}>
-          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
-          Administrator.
+          <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.admin-hint-all">
+            To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+            Administrator.
+          </Trans>
         </div>
       </Alert>
     );
