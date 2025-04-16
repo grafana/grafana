@@ -790,9 +790,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-patch-check-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/remove-milestone.yml @grafana/grafana-developer-enablement-squad
