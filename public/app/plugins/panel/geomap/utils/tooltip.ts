@@ -105,10 +105,12 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
             const source = layer.getSource() as VectorSource;
             let addedFeatures = false;
             source.forEachFeature((otherFeature: FeatureLike) => {
-              if (otherFeature !== feature) {
+              // Ignore duplicates
+              if (otherFeature !== feature && !h.features.some((f) => f === otherFeature)) {
                 const otherGeom = otherFeature.getGeometry();
                 if (otherGeom instanceof Point) {
                   const otherCoords = otherGeom.getCoordinates();
+                  // Check for matching coordinates
                   if (otherCoords[0] === featureCoords[0] && otherCoords[1] === featureCoords[1]) {
                     h.features.push(otherFeature);
                     addedFeatures = true;
