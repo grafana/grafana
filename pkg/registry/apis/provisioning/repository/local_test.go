@@ -541,3 +541,190 @@ func TestLocalRepository_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalRepository_Update(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		path        string
+		ref         string
+		data        []byte
+		comment     string
+		expectedErr error
+	}{
+		{
+			name: "update existing file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file to update
+				filePath := filepath.Join(tempDir, "existing-file.txt")
+				require.NoError(t, os.WriteFile(filePath, []byte("initial content"), 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "existing-file.txt",
+			ref:         "",
+			data:        []byte("updated content"),
+			comment:     "",
+			expectedErr: nil,
+		},
+		{
+			name: "update existing directory as a file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a directory
+				dirPath := filepath.Join(tempDir, "existing-dir")
+				require.NoError(t, os.MkdirAll(dirPath, 0700))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "existing-dir",
+			ref:         "",
+			data:        []byte("file content"),
+			comment:     "",
+			expectedErr: apierrors.NewBadRequest("path exists but it is a directory"),
+		},
+		{
+			name: "update non-existent file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "non-existent-file.txt",
+			ref:         "",
+			data:        []byte("content"),
+			comment:     "",
+			expectedErr: ErrFileNotFound,
+		},
+		{
+			name: "update directory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a directory
+				dirPath := filepath.Join(tempDir, "test-dir")
+				require.NoError(t, os.MkdirAll(dirPath, 0700))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-dir/",
+			ref:         "",
+			data:        []byte("content"),
+			comment:     "",
+			expectedErr: apierrors.NewBadRequest("cannot update a directory"),
+		},
+		{
+			name: "update with ref",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create a file to update
+				filePath := filepath.Join(tempDir, "test-file.txt")
+				require.NoError(t, os.WriteFile(filePath, []byte("initial content"), 0600))
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "test-file.txt",
+			ref:         "main",
+			data:        []byte("updated content"),
+			comment:     "test update with ref",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			_, repo := tc.setup(t)
+
+			// Execute the update operation
+			err := repo.Update(context.Background(), tc.path, tc.ref, tc.data, tc.comment)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+
+				// Verify the file was actually updated
+				updatedContent, readErr := os.ReadFile(filepath.Join(repo.path, tc.path))
+				require.NoError(t, readErr)
+				assert.Equal(t, tc.data, updatedContent, "File content should be updated")
+			}
+		})
+	}
+}

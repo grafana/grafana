@@ -338,9 +338,14 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+	f, err := os.Stat(path)
+	if err != nil && errors.Is(err, os.ErrNotExist) {
 		return ErrFileNotFound
 	}
+	if f.IsDir() {
+		return apierrors.NewBadRequest("path exists but it is a directory")
+	}
+
 	return os.WriteFile(path, data, 0600)
 }
 
