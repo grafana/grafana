@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel/trace"
 	"github.com/go-kit/log"
 	"github.com/grafana/dskit/dns"
 	"github.com/grafana/dskit/flagext"
@@ -13,12 +12,12 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/kv/codec"
 	"github.com/grafana/dskit/kv/memberlist"
-	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -84,6 +83,21 @@ func (cfg *resourceRingConfig) toRingConfig() ring.Config {
 	return rc
 }
 
+func (cfg *resourceRingConfig) toMemberlistConfig(memberlistJoinMember string) *memberlist.KVConfig {
+	memberlistKVcfg := &memberlist.KVConfig{}
+	flagext.DefaultValues(memberlistKVcfg)
+	memberlistKVcfg.MetricsNamespace = ringName
+	memberlistKVcfg.Codecs = []codec.Codec{
+		ring.GetCodec(),
+	}
+	memberlistKVcfg.AdvertiseAddr = cfg.InstanceAddr
+	memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.InstanceAddr}
+	memberlistKVcfg.NodeName = cfg.InstanceAddr
+	memberlistKVcfg.JoinMembers = []string{memberlistJoinMember}
+
+	return memberlistKVcfg
+}
+
 func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
 	if cfg.MemberlistJoinMember == "" {
 		return nil, nil, fmt.Errorf("bad sharding configuration. Missing Join Member")
@@ -93,24 +107,12 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		KVStore:                kv.Config{Store: "memberlist"},
 		HeartbeatPeriod:        15 * time.Second,
 		HeartbeatTimeout:       time.Minute,
-		InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, log.NewNopLogger()),
 		InstanceAddr:           cfg.MemberlistBindAddr,
 		InstanceID:             cfg.MemberlistBindAddr,
 		ListenPort:             cfg.RingListenPort,
 		InstancePort:           cfg.RingListenPort,
 		NumTokens:              128,
 	}
-
-	memberlistKVcfg := &memberlist.KVConfig{}
-	flagext.DefaultValues(memberlistKVcfg)
-	memberlistKVcfg.MetricsNamespace = ringName
-	memberlistKVcfg.Codecs = []codec.Codec{
-		ring.GetCodec(),
-	}
-	memberlistKVcfg.AdvertiseAddr = cfg.MemberlistBindAddr
-	memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
-	memberlistKVcfg.NodeName = cfg.MemberlistBindAddr
-	memberlistKVcfg.JoinMembers = []string{cfg.MemberlistJoinMember}
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
 		metricsPrefix,
@@ -121,6 +123,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 	)
 	dnsProvider := dns.NewProvider(logger, dnsProviderReg, dns.GolangResolverType)
 
+	memberlistKVcfg := resourceRingConfig.toMemberlistConfig(cfg.MemberlistJoinMember)
 	memberlistKVsvc := memberlist.NewKVInitService(memberlistKVcfg, logger, dnsProvider, registerer)
 	memberlistKVsvc.StartAsync(context.Background())
 	resourceRingConfig.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV

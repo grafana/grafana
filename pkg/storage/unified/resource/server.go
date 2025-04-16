@@ -435,7 +435,7 @@ func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
 	}
 
 	if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
-		s.log.Info("distributing request to ", "instanceId", rs.Instances[0].Id)
+		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
 
 		ins, err := s.pool.GetClientForInstance(rs.Instances[0])
 		if err != nil {
