@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/metricwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -347,6 +348,12 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
+	alertMetricsWriter, err := configureAlertStateMetricsWriter(ng.Cfg.UnifiedAlerting.AlertStateMetricSettings, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
+	if err != nil {
+		ng.Log.Error("Failed to configure alert state metrics writer", "error", err)
+		return err
+	}
+
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
@@ -357,6 +364,7 @@ func (ng *AlertNG) init() error {
 		Images:                     ng.ImageService,
 		Clock:                      clk,
 		Historian:                  history,
+		AlertStateMetricsWriter:    alertMetricsWriter,
 		MaxStateSaveConcurrency:    ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		StatePeriodicSaveBatchSize: ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
 		RulesPerRuleGroupLimit:     ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
@@ -671,4 +679,35 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 	}
 
 	return writer.NoopWriter{}, nil
+}
+
+func configureAlertStateMetricsWriter(s setting.AlertStateMetricSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (state.AlertStateMetricsWriter, error) {
+	if !s.Enabled {
+		return metricwriter.NoopWriter{}, nil
+	}
+
+	logger := log.New("ngalert.alert_state_metricwriter")
+	if logger == nil {
+		return metricwriter.NoopWriter{}, fmt.Errorf("failed to create alert state metrics writer logger")
+	}
+
+	logger.Info("Alert state metrics writer enabled", "datasource_uid", s.DatasourceUID, "timeout", s.Timeout)
+
+	writerCfg := writer.DatasourceWriterConfig{
+		Timeout: s.Timeout,
+	}
+	w := writer.NewDatasourceWriter(writerCfg, datasourceService, httpClientProvider, clock, logger, m)
+	if w == nil {
+		return metricwriter.NoopWriter{}, fmt.Errorf("failed to create alert state metrics writer")
+	}
+
+	cfg := metricwriter.Config{
+		DatasourceUID: s.DatasourceUID,
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return metricwriter.NoopWriter{}, fmt.Errorf("invalid alert state metrics writer config: %w", err)
+	}
+
+	return metricwriter.NewWriter(cfg, w, logger)
 }

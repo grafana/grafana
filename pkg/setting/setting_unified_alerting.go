@@ -114,6 +114,7 @@ type UnifiedAlertingSettings struct {
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
 	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
+	AlertStateMetricSettings      AlertStateMetricSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency    int
@@ -144,6 +145,12 @@ type RecordingRuleSettings struct {
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
+}
+
+type AlertStateMetricSettings struct {
+	Enabled       bool
+	Timeout       time.Duration
+	DatasourceUID string
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -471,6 +478,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaCfg.RecordingRules = uaCfgRecordingRules
+
+	uaCfgAlertStateMetric := iniFile.Section("unified_alerting.alert_state_metrics")
+	uaCfg.AlertStateMetricSettings = AlertStateMetricSettings{
+		Enabled:       uaCfgAlertStateMetric.Key("enabled").MustBool(false),
+		DatasourceUID: uaCfgAlertStateMetric.Key("datasource_uid").MustString(""),
+		Timeout:       uaCfgAlertStateMetric.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+	}
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 

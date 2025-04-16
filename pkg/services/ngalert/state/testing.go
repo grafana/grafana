@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	state_metric_model "github.com/grafana/grafana/pkg/services/ngalert/state/metricwriter/model"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
@@ -147,4 +148,29 @@ func NewFailingCountingImageService(err error) *CountingImageService {
 		Called: 0,
 		Err:    err,
 	}
+}
+
+// FakeAlertStateMetricsWriter is a fake implementation of the AlertStateMetricsWriter interface
+type FakeAlertStateMetricsWriter struct {
+	Calls []AlertStateMetricsWriterCall
+	Err   error
+}
+
+type AlertStateMetricsWriterCall struct {
+	RuleMeta state_metric_model.RuleMeta
+	States   StateTransitions
+}
+
+func (f *FakeAlertStateMetricsWriter) Write(ctx context.Context, ruleMeta state_metric_model.RuleMeta, states StateTransitions) <-chan error {
+	f.Calls = append(f.Calls, AlertStateMetricsWriterCall{
+		RuleMeta: ruleMeta,
+		States:   states,
+	})
+
+	errCh := make(chan error, 1)
+	if f.Err != nil {
+		errCh <- f.Err
+	}
+	close(errCh)
+	return errCh
 }
