@@ -2843,6 +2843,8 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "select-type": "Choose variable type",
+        "select-type-card-tooltip": "Click to select type",
         "select-variable": "Select"
       }
     },
