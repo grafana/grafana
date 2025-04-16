@@ -3,13 +3,13 @@ package pyroscope
 import (
 	"context"
 	"encoding/json"
-	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -156,8 +156,8 @@ func Test_levelsToTree(t *testing.T) {
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{
 					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-					{Start: 0, Value: 15, Level: 2, Name: "func1:func3"},
-				},
+						{Start: 0, Value: 15, Level: 2, Name: "func1:func3"},
+					},
 				},
 				{Start: 40, Value: 30, Level: 1, Name: "func2"},
 			},
@@ -176,14 +176,14 @@ func Test_levelsToTree(t *testing.T) {
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{
 					Start: 0, Value: 40, Level: 1, Name: "func1", Nodes: []*ProfileTree{
-					{Start: 0, Value: 20, Level: 2, Name: "func1:func4"},
-				},
+						{Start: 0, Value: 20, Level: 2, Name: "func1:func4"},
+					},
 				},
 				{Start: 40, Value: 30, Level: 1, Name: "func2"},
 				{
 					Start: 70, Value: 30, Level: 1, Name: "func3", Nodes: []*ProfileTree{
-					{Start: 70, Value: 10, Level: 2, Name: "func3:func5"},
-				},
+						{Start: 70, Value: 10, Level: 2, Name: "func3:func5"},
+					},
 				},
 			},
 		}, tree)
