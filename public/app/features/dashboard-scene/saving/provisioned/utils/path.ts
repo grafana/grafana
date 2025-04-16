@@ -23,7 +23,7 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   }
 
   const pathSlug = slug || `new-dashboard-${timestamp}`;
-  path = `${pathSlug}.json`;
+  path = `${pathSlug}.yaml`;
 
   // Add folder path if it exists
   if (folderPath) {

@@ -115,7 +115,7 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
 	}
 
-	fileName := slugify.Slugify(title) + ".json"
+	fileName := slugify.Slugify(title) + ".yaml"
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
