@@ -63,6 +63,11 @@ jobs:
           done
           echo "user_allowed=false" >> $GITHUB_OUTPUT
 
+      - name: Set issue/PR number
+        id: set_number
+        run: |
+          echo "number=${{ github.event.number || github.event.inputs.manual_issue_number }}" >> "$GITHUB_OUTPUT"
+
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
@@ -80,7 +85,7 @@ jobs:
           variables: |
             owner: ${{ env.ORGANIZATION }}
             repo: ${{ env.REPO }}
-            number: ${{ github.event.number || github.event.inputs.manual_issue_number }}
+            number: ${{ steps.set_number.outputs.number }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
