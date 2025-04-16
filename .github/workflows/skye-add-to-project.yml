@@ -65,6 +65,7 @@ jobs:
           echo "user_allowed=false" >> $GITHUB_OUTPUT
 
       - name: Get node ID for item
+        if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
         uses: octokit/graphql-action@v2.x
         with:
