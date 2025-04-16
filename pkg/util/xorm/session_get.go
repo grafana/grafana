@@ -9,7 +9,7 @@ import (
 	"errors"
 	"reflect"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // Get retrieve one record from database, bean's non-empty fields
