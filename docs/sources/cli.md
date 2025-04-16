@@ -11,7 +11,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Grafana Server CLI
+title: Grafana server CLI
 weight: 400
 ---
 
