@@ -66,6 +66,12 @@ const config: ConfigFile = {
       filterEndpoints: ['createCheck', 'getCheck', 'listCheck', 'deleteCheck', 'updateCheck', 'listCheckType'],
       tag: true,
     },
+    '../public/app/api/clients/playlist/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/playlist/baseAPI.ts',
+      schemaFile: '../data/openapi/playlist.grafana.app-v0alpha1.json',
+      filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
+      tag: true,
+    },
   },
 };
 

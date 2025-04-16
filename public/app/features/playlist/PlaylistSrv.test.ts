@@ -4,24 +4,14 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
+import { Playlist } from '../../api/clients/playlist';
 import { DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
-import { Playlist, PlaylistItem } from './types';
+import { PlaylistItemUI } from './types';
 
-jest.mock('./api', () => ({
-  getPlaylistAPI: () => ({
-    getPlaylist: jest.fn().mockReturnValue({
-      interval: '1s',
-      uid: 'xyz',
-      name: 'The display',
-      items: [
-        { type: 'dashboard_by_uid', value: 'aaa' },
-        { type: 'dashboard_by_uid', value: 'bbb' },
-      ],
-    } as Playlist),
-  }),
-  loadDashboards: (items: PlaylistItem[]) => {
+jest.mock('./utils', () => ({
+  loadDashboards: (items: PlaylistItemUI[]) => {
     return Promise.resolve(
       items.map((v) => ({
         ...v, // same item with dashboard URLs filled in
@@ -30,6 +20,21 @@ jest.mock('./api', () => ({
     );
   },
 }));
+
+const mockPlaylist: Playlist = {
+  spec: {
+    interval: '1s',
+    title: 'The display',
+    items: [
+      { type: 'dashboard_by_uid', value: 'aaa' },
+      { type: 'dashboard_by_uid', value: 'bbb' },
+    ],
+  },
+  metadata: {
+    name: 'xyz',
+  },
+  status: {},
+};
 
 const mockStore = configureMockStore();
 
@@ -88,7 +93,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('runs all dashboards in cycle and reloads page after 3 cycles', async () => {
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     for (let i = 0; i < 6; i++) {
       srv.next();
@@ -99,7 +104,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('keeps the refresh counter value after restarting', async () => {
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     // 1 complete loop
     for (let i = 0; i < 3; i++) {
@@ -107,7 +112,7 @@ describe('PlaylistSrv', () => {
     }
 
     srv.stop();
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     // Another 2 loops
     for (let i = 0; i < 4; i++) {
@@ -119,7 +124,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('Should stop playlist when navigating away', async () => {
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     locationService.push('/datasources');
 
@@ -127,7 +132,7 @@ describe('PlaylistSrv', () => {
   });
 
   it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     // eslint-disable-next-line
     expect((srv as any).validPlaylistUrl).toBe('/url/to/aaa');
@@ -147,7 +152,7 @@ describe('PlaylistSrv', () => {
     locationService.push('/playlists/play/foo');
 
     // Start the playlist
-    await srv.start('foo');
+    await srv.start(mockPlaylist);
 
     // Get history entries
     const history = locationService.getHistory();
