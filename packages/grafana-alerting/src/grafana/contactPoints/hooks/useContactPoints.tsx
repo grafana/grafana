@@ -11,7 +11,7 @@ const { namespace } = config;
  * Enhanced hook that returns ContactPoints query result
  * with properly typed data.items as ContactPoint[]
  */
-function useGetContactPoints() {
+function useListContactPoints() {
   const result = alertingAPI.endpoints.listReceiver.useQuery({
     namespace,
   });
@@ -26,4 +26,4 @@ function useGetContactPoints() {
   >;
 }
 
-export { useGetContactPoints };
+export { useListContactPoints };
