@@ -3,6 +3,7 @@ package migrate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -26,11 +28,14 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
 			Return(nil, errors.New("parser factory error"))
 
+		signerFactory := signature.NewMockSignerFactory(t)
+
 		migrator := NewLegacyResourcesMigrator(
 			nil,
 			mockParserFactory,
 			nil,
 			nil,
+			signerFactory,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -48,12 +53,14 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("repo resources factory error"))
+		signerFactory := signature.NewMockSignerFactory(t)
 
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
 			nil,
+			signerFactory,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -81,11 +88,17 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
+		signer := signature.NewMockSigner(t)
+		signerFactory := signature.NewMockSignerFactory(t)
+		signerFactory.On("New", mock.Anything, mock.Anything).
+			Return(signer, nil)
+
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
 			mockFolderMigrator,
+			signerFactory,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
@@ -120,11 +133,17 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
+		signer := signature.NewMockSigner(t)
+		signerFactory := signature.NewMockSignerFactory(t)
+		signerFactory.On("New", mock.Anything, mock.Anything).
+			Return(signer, nil)
+
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			mockLegacyMigrator,
 			mockFolderMigrator,
+			signerFactory,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
@@ -135,6 +154,45 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory.AssertExpectations(t)
 		mockFolderMigrator.AssertExpectations(t)
 		mockLegacyMigrator.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should fail when signer factory fails", func(t *testing.T) {
+		mockParserFactory := resources.NewMockParserFactory(t)
+		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
+			Return(resources.NewMockParser(t), nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+			Return(mockRepoResources, nil)
+
+		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
+			Namespace: "test-namespace",
+			History:   true,
+		}).Return(nil, fmt.Errorf("signer factory error"))
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		migrator := NewLegacyResourcesMigrator(
+			mockRepoResourcesFactory,
+			mockParserFactory,
+			nil,
+			mockFolderMigrator,
+			mockSignerFactory,
+		)
+
+		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
+			History: true,
+		}, progress)
+		require.Error(t, err)
+		require.EqualError(t, err, "get signer: signer factory error")
+
+		mockParserFactory.AssertExpectations(t)
+		mockRepoResourcesFactory.AssertExpectations(t)
+		mockFolderMigrator.AssertExpectations(t)
+		mockSignerFactory.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 
@@ -152,6 +210,13 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
 		mockFolderMigrator.On("Migrate", mock.Anything, "test-namespace", mockRepoResources, mock.Anything).
 			Return(nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
+			Namespace: "test-namespace",
+			History:   true,
+		}).Return(mockSigner, nil)
 
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
@@ -180,9 +245,12 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockParserFactory,
 			mockLegacyMigrator,
 			mockFolderMigrator,
+			mockSignerFactory,
 		)
 
-		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
+		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
+			History: true,
+		}, progress)
 		require.NoError(t, err)
 
 		mockParserFactory.AssertExpectations(t)
@@ -209,6 +277,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
@@ -257,12 +326,115 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
 		require.NoError(t, err) // Error is recorded but not returned
 
 		mockParser.AssertExpectations(t)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should fail when signer fails", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSigner.On("Sign", mock.Anything, meta).
+			Return(nil, errors.New("signing error"))
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			nil,
+			progress,
+			provisioning.MigrateJobOptions{},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			mockSigner,
+		)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		require.Error(t, err)
+		require.EqualError(t, err, "add author signature: signing error")
+
+		mockParser.AssertExpectations(t)
+		mockSigner.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should successfully add author signature", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		signedCtx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "test-user",
+			Email: "test@example.com",
+		})
+		mockSigner.On("Sign", mock.Anything, meta).
+			Return(signedCtx, nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResources.On("CreateResourceFileFromObject", signedCtx, mock.Anything, mock.Anything).
+			Return("test/path", nil)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionCreated &&
+				result.Name == "test" &&
+				result.Error == nil &&
+				result.Path == "test/path"
+		})).Return()
+		progress.On("TooManyErrors").Return(nil)
+
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			mockRepoResources,
+			progress,
+			provisioning.MigrateJobOptions{},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			mockSigner,
+		)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		require.NoError(t, err)
+
+		mockParser.AssertExpectations(t)
+		mockSigner.AssertExpectations(t)
 		mockRepoResources.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
@@ -338,6 +510,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
@@ -382,6 +555,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
@@ -411,6 +585,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
@@ -441,6 +616,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "test-resources"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
@@ -471,6 +647,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
@@ -509,6 +686,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
 		)
 
 		err := migrator.Migrate(context.Background())
@@ -538,6 +716,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 		progress.On("SetTotal", mock.Anything, 200).Return()
+		signer := signature.NewMockSigner(t)
 
 		migrator := NewLegacyResourceMigrator(
 			mockLegacyMigrator,
@@ -547,6 +726,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 			provisioning.MigrateJobOptions{},
 			"test-namespace",
 			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signer,
 		)
 
 		err := migrator.Migrate(context.Background())

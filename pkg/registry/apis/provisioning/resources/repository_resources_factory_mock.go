@@ -22,9 +22,9 @@ func (_m *MockRepositoryResourcesFactory) EXPECT() *MockRepositoryResourcesFacto
 	return &MockRepositoryResourcesFactory_Expecter{mock: &_m.Mock}
 }
 
-// Client provides a mock function with given fields: ctx, repo, opts
-func (_m *MockRepositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions) (RepositoryResources, error) {
-	ret := _m.Called(ctx, repo, opts)
+// Client provides a mock function with given fields: ctx, repo
+func (_m *MockRepositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+	ret := _m.Called(ctx, repo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Client")
@@ -32,19 +32,19 @@ func (_m *MockRepositoryResourcesFactory) Client(ctx context.Context, repo repos
 
 	var r0 RepositoryResources
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, RepositoryResourcesOptions) (RepositoryResources, error)); ok {
-		return rf(ctx, repo, opts)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter) (RepositoryResources, error)); ok {
+		return rf(ctx, repo)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, RepositoryResourcesOptions) RepositoryResources); ok {
-		r0 = rf(ctx, repo, opts)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter) RepositoryResources); ok {
+		r0 = rf(ctx, repo)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(RepositoryResources)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, RepositoryResourcesOptions) error); ok {
-		r1 = rf(ctx, repo, opts)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter) error); ok {
+		r1 = rf(ctx, repo)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,14 +60,13 @@ type MockRepositoryResourcesFactory_Client_Call struct {
 // Client is a helper method to define mock.On call
 //   - ctx context.Context
 //   - repo repository.ReaderWriter
-//   - opts RepositoryResourcesOptions
-func (_e *MockRepositoryResourcesFactory_Expecter) Client(ctx interface{}, repo interface{}, opts interface{}) *MockRepositoryResourcesFactory_Client_Call {
-	return &MockRepositoryResourcesFactory_Client_Call{Call: _e.mock.On("Client", ctx, repo, opts)}
+func (_e *MockRepositoryResourcesFactory_Expecter) Client(ctx interface{}, repo interface{}) *MockRepositoryResourcesFactory_Client_Call {
+	return &MockRepositoryResourcesFactory_Client_Call{Call: _e.mock.On("Client", ctx, repo)}
 }
 
-func (_c *MockRepositoryResourcesFactory_Client_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter, opts RepositoryResourcesOptions)) *MockRepositoryResourcesFactory_Client_Call {
+func (_c *MockRepositoryResourcesFactory_Client_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter)) *MockRepositoryResourcesFactory_Client_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(RepositoryResourcesOptions))
+		run(args[0].(context.Context), args[1].(repository.ReaderWriter))
 	})
 	return _c
 }
@@ -77,7 +76,7 @@ func (_c *MockRepositoryResourcesFactory_Client_Call) Return(_a0 RepositoryResou
 	return _c
 }
 
-func (_c *MockRepositoryResourcesFactory_Client_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, RepositoryResourcesOptions) (RepositoryResources, error)) *MockRepositoryResourcesFactory_Client_Call {
+func (_c *MockRepositoryResourcesFactory_Client_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter) (RepositoryResources, error)) *MockRepositoryResourcesFactory_Client_Call {
 	_c.Call.Return(run)
 	return _c
 }

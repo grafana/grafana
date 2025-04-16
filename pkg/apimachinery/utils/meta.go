@@ -76,6 +76,8 @@ const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects
+//
+//go:generate mockery --name GrafanaMetaAccessor --structname MockGrafanaMetaAccessor --inpackage --filename meta_mock.go --with-expecter
 type GrafanaMetaAccessor interface {
 	metav1.Object
 

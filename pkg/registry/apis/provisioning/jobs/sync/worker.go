@@ -86,7 +86,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
-	repositoryResources, err := r.repositoryResources.Client(ctx, rw, resources.RepositoryResourcesOptions{})
+	repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("create repository resources client: %w", err)
 	}

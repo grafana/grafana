@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -28,6 +29,7 @@ type legacyResourcesMigrator struct {
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
 	folderMigrator      LegacyFoldersMigrator
+	signerFactory       signature.SignerFactory
 }
 
 func NewLegacyResourcesMigrator(
@@ -35,12 +37,14 @@ func NewLegacyResourcesMigrator(
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	folderMigrator LegacyFoldersMigrator,
+	signerFactory signature.SignerFactory,
 ) LegacyResourcesMigrator {
 	return &legacyResourcesMigrator{
 		repositoryResources: repositoryResources,
 		parsers:             parsers,
 		legacyMigrator:      legacyMigrator,
 		folderMigrator:      folderMigrator,
+		signerFactory:       signerFactory,
 	}
 }
 
@@ -50,13 +54,19 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 		return fmt.Errorf("get parser: %w", err)
 	}
 
-	repoOpts := resources.RepositoryResourcesOptions{
-		PreloadAllUserInfo: opts.History,
-	}
-
-	repositoryResources, err := m.repositoryResources.Client(ctx, rw, repoOpts)
+	repositoryResources, err := m.repositoryResources.Client(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("get repository resources: %w", err)
+	}
+
+	// FIXME: signature is only relevant for repositories which support signature
+	// Not all repositories support history
+	signer, err := m.signerFactory.New(ctx, signature.SignOptions{
+		Namespace: namespace,
+		History:   opts.History,
+	})
+	if err != nil {
+		return fmt.Errorf("get signer: %w", err)
 	}
 
 	progress.SetMessage(ctx, "migrate folders from SQL")
@@ -70,7 +80,17 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 			continue
 		}
 
-		reader := NewLegacyResourceMigrator(m.legacyMigrator, parser, repositoryResources, progress, opts, namespace, kind.GroupResource())
+		reader := NewLegacyResourceMigrator(
+			m.legacyMigrator,
+			parser,
+			repositoryResources,
+			progress,
+			opts,
+			namespace,
+			kind.GroupResource(),
+			signer,
+		)
+
 		if err := reader.Migrate(ctx); err != nil {
 			return fmt.Errorf("migrate resource %s: %w", kind, err)
 		}
@@ -87,9 +107,19 @@ type legacyResourceResourceMigrator struct {
 	kind      schema.GroupResource
 	options   provisioning.MigrateJobOptions
 	resources resources.RepositoryResources
+	signer    signature.Signer
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources resources.RepositoryResources, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(
+	legacy legacy.LegacyMigrator,
+	parser resources.Parser,
+	resources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	options provisioning.MigrateJobOptions,
+	namespace string,
+	kind schema.GroupResource,
+	signer signature.Signer,
+) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,
@@ -98,6 +128,7 @@ func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Pa
 		namespace: namespace,
 		kind:      kind,
 		resources: resources,
+		signer:    signer,
 	}
 }
 
@@ -125,6 +156,12 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 	// clear anything so it will get written
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{})
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
+
+	// Add author signature to the context
+	ctx, err = r.signer.Sign(ctx, parsed.Meta)
+	if err != nil {
+		return fmt.Errorf("add author signature: %w", err)
+	}
 
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here

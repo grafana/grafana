@@ -41,17 +41,15 @@ type ResourcesManager struct {
 	folders         *FolderManager
 	parser          Parser
 	clients         ResourceClients
-	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
 		parser:          parser,
 		clients:         clients,
-		userInfo:        userInfo,
 		resourcesLookup: map[resourceID]string{},
 	}
 }
@@ -77,8 +75,6 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 			commitMessage = "exported from grafana"
 		}
 	}
-
-	ctx = r.withAuthorSignature(ctx, meta)
 
 	name := meta.GetName()
 	if name == "" {
@@ -232,27 +228,4 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	}
 
 	return objName, schema.GroupVersionKind{}, nil
-}
-
-func (r *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	id := item.GetUpdatedBy()
-	if id == "" {
-		id = item.GetCreatedBy()
-	}
-	if id == "" {
-		id = "grafana"
-	}
-
-	sig := r.userInfo[id] // lookup
-	if sig.Name == "" && sig.Email == "" {
-		sig.Name = id
-	}
-	t, err := item.GetUpdatedTimestamp()
-	if err == nil && t != nil {
-		sig.When = *t
-	} else {
-		sig.When = item.GetCreationTimestamp().Time
-	}
-
-	return repository.WithAuthorSignature(ctx, sig)
 }

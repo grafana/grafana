@@ -157,7 +157,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
 
 				// Repository resources creation fails
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(nil, errors.New("failed to create repository resources client"))
+				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -189,7 +189,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
 
 				// Repository resources creation succeeds
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(&resources.MockRepositoryResources{}, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
@@ -222,7 +222,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -277,7 +277,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
@@ -321,7 +321,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errors.New("stats error"))
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
@@ -347,7 +347,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify only sync status is patched
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
@@ -391,7 +391,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 				}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify both sync status and stats are patched
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
@@ -463,7 +463,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 				}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Verify only sync status is patched (multiple stats should be ignored)
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch []map[string]interface{}) bool {
@@ -497,7 +497,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, resources.RepositoryResourcesOptions{}).Return(mockRepoResources, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
