@@ -416,7 +416,10 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 			}
 			mux := http.NewServeMux()
 			mux.Handle("/ring", lfcsvc)
-			http.Serve(listener, mux)
+			err = http.Serve(listener, mux)
+			if err != nil {
+				s.log.Error("could not start debug ring server", "err", err)
+			}
 			// mux.Handle("/kv", memberlistsvc)
 		}()
 	}
@@ -426,7 +429,12 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 
 func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
 	ringHasher := fnv.New32a()
-	ringHasher.Write([]byte(namespace))
+	_, err := ringHasher.Write([]byte(namespace))
+	if err != nil {
+		s.log.Error("Error hashing namespace. Will not distribute request", "err", err)
+		return nil
+	}
+
 	rs, err := s.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
 
 	if err != nil {

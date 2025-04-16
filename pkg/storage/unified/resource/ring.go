@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/dskit/kv/memberlist"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/trace"
@@ -125,7 +124,10 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 
 	memberlistKVcfg := resourceRingConfig.toMemberlistConfig(cfg.MemberlistJoinMember)
 	memberlistKVsvc := memberlist.NewKVInitService(memberlistKVcfg, logger, dnsProvider, registerer)
-	memberlistKVsvc.StartAsync(context.Background())
+	err := memberlistKVsvc.StartAsync(context.Background())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to start memberlist service: %s", err)
+	}
 	resourceRingConfig.KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
 
 	ringStore, err := kv.NewClient(
@@ -135,12 +137,12 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		logger,
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to create KV store client")
+		return nil, nil, fmt.Errorf("failed to create KV store client: %s", err)
 	}
 
 	lifecyclerCfg, err := resourceRingConfig.toLifecyclerConfig(logger)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to initialize ruler's lifecycler config")
+		return nil, nil, fmt.Errorf("failed to initialize ruler's lifecycler config: %s", err)
 	}
 
 	// Define lifecycler delegates in reverse order (last to be called defined first because they're
@@ -159,7 +161,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		prometheus.WrapRegistererWithPrefix(metricsPrefix, registerer),
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to initialize ruler's lifecycler")
+		return nil, nil, fmt.Errorf("failed to initialize ruler's lifecycler: %s", err)
 	}
 
 	rulerRing, err := ring.NewWithStoreClientAndStrategy(
@@ -172,7 +174,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		logger,
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to initialize ruler's ring")
+		return nil, nil, fmt.Errorf("failed to initialize ruler's ring: %s", err)
 	}
 
 	return rulerRing, lifecycler, nil
@@ -220,7 +222,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 
 		conn, err := grpc.NewClient(inst.Addr, opts...)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to dial resource server %s %s", inst.Id, inst.Addr)
+			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
 		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled

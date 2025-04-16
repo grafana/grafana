@@ -70,11 +70,6 @@ type bleveBackend struct {
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
-
-	// sharding things
-	pool       *ringclient.Pool
-	ring       *ring.Ring
-	lifecycler *ring.BasicLifecycler
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
