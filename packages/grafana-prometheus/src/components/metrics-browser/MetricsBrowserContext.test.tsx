@@ -479,7 +479,11 @@ describe('MetricsBrowserContext', () => {
     // Wait for validation API call
     await waitFor(
       () => {
-        expect(mockLanguageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(expect.anything(), '{job="grafana"}');
+          expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith(
+            expect.anything(),
+            '{job="grafana"}',
+            '40000'
+          );
       },
       { timeout: 5000 }
     );
