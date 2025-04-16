@@ -5,5 +5,4 @@ generate:
 		--gogenpath=./pkg/apis \
 		--source=./kinds/ \
 		--defencoding=none \
-		--noschemasinmanifest \
-		--postprocess
+		--noschemasinmanifest
