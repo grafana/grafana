@@ -32,7 +32,8 @@ func setupTempFile(t *testing.T) (string, func()) {
 
 	// Return cleanup function
 	cleanup := func() {
-		os.RemoveAll(tmpDir)
+		err := os.RemoveAll(tmpDir)
+		require.NoError(t, err)
 	}
 
 	return tmpFile, cleanup
