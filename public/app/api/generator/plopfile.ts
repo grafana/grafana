@@ -43,21 +43,21 @@ export default function plopGenerator(plop: NodePlopAPI) {
 
   const generateRtkApiActions = (data: PlopData) => {
     const { reducerPath, groupName, isEnterprise } = data;
-    
+
     // Set the appropriate paths based on whether this is an OSS or Enterprise API
     const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
     const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
-    
-    // Get the relative import path for the client in the reducer/middleware files
-    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '../../api/clients';
-    
+
+    // Using app path, so the import works on any file level
+    const clientImportPath = isEnterprise ? '../extensions/api/clients' : 'app/api/clients';
+
     // Path prefixes for the config entry template
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../public/app/api/clients';
 
     // Template data with all path information
     const templateData = {
       ...data,
-      apiPathPrefix
+      apiPathPrefix,
     };
 
     return [
@@ -73,7 +73,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
         path: projectPath(generateScriptPath),
         pattern: '// PLOP_INJECT_API_CLIENT',
         templateFile: './templates/config-entry.hbs',
-        data: templateData
+        data: templateData,
       },
 
       // Create index.ts
@@ -172,7 +172,6 @@ export default function plopGenerator(plop: NodePlopAPI) {
         throw new Error('Invalid data format received from prompts');
       }
 
-      // Create a complete PlopData object with default values
       const typedData: PlopData = {
         groupName: data.groupName ?? '',
         group: data.group ?? '',
@@ -191,7 +190,6 @@ export default function plopGenerator(plop: NodePlopAPI) {
             .filter(Boolean)
         : [];
 
-      // Generate actions
       return generateRtkApiActions(typedData);
     },
   };
