@@ -97,7 +97,7 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 
   // Get the correct cell type
-  const cell = useMemo(() => {
+  const renderedCell = useMemo(() => {
     let cell: ReactNode = null;
     switch (cellType) {
       case TableCellDisplayMode.Sparkline:
@@ -191,7 +191,7 @@ export function TableCellNG(props: TableCellNGProps) {
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
-      {cell}
+      {renderedCell}
       {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
           {cellInspect && (
