@@ -16,10 +16,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250414114055-2b279efe15bf
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250416173722-ec17e0e4ce03
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250416173722-ec17e0e4ce03
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250416173722-ec17e0e4ce03
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
@@ -41,6 +41,7 @@ require (
 	cloud.google.com/go/monitoring v1.23.0 // indirect
 	cloud.google.com/go/spanner v1.75.0 // indirect
 	cloud.google.com/go/storage v1.50.0 // indirect
+	cuelang.org/go v0.11.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
@@ -135,6 +136,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20241223141626-cff3c89139a3 // indirect
+	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
@@ -220,10 +222,10 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // indirect
-	github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b // indirect
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
+	github.com/grafana/grafana/apps/folder v0.0.0-20250416173722-ec17e0e4ce03 // indirect
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250416173722-ec17e0e4ce03 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250416173722-ec17e0e4ce03 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
