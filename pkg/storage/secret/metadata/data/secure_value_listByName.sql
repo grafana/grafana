@@ -1,22 +1,8 @@
 {{/* this query is used to validate the keeper update or creation */}}
 
 SELECT
-  {{ .Ident "guid" }},
   {{ .Ident "name" }},
-  {{ .Ident "namespace" }},
-  {{ .Ident "annotations" }},
-  {{ .Ident "labels" }},
-  {{ .Ident "created" }},
-  {{ .Ident "created_by" }},
-  {{ .Ident "updated" }},
-  {{ .Ident "updated_by" }},
-  {{ .Ident "status_phase" }},
-  {{ .Ident "status_message" }},
-  {{ .Ident "title" }},
-  {{ .Ident "keeper" }},
-  {{ .Ident "decrypters" }},
-  {{ .Ident "ref" }},
-  {{ .Ident "external_id" }}
+  {{ .Ident "keeper" }}
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 1 = 1 AND

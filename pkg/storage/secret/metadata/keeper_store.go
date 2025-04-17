@@ -340,18 +340,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		_ = rows.Close()
 	}()
 
-	// TODO Only fetch the values we need
 	secureValueRows := make([]*secureValueDB, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 		err = rows.Scan(
-			&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations, &row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Phase, &row.Message,
-			&row.Title, &row.Keeper,
-			&row.Decrypters, &row.Ref, &row.ExternalID,
+			&row.Name, &row.Keeper,
 		)
 		if err != nil {
 			return fmt.Errorf("error reading secret value row: %w", err)
@@ -390,10 +383,9 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}
 
 	reqKeeper := listByNameKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   keeper.Namespace,
-		KeeperNames: keeperNames,
-		// TODO add comment Why do we do this
+		SQLTemplate:      sqltemplate.New(s.dialect),
+		Namespace:        keeper.Namespace,
+		KeeperNames:      keeperNames,
 		ExcludeSQLKeeper: string(contracts.SQLKeeperType),
 	}
 
@@ -411,17 +403,10 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		_ = keepersRows.Close()
 	}()
 
-	// TODO Only fetch the values we need?
 	thirdPartyKeepers := make([]*keeperDB, 0)
 	for rows.Next() {
 		row := keeperDB{}
-		err = keepersRows.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Title, &row.Type, &row.Payload,
-		)
+		err = keepersRows.Scan(&row.Name)
 		if err != nil {
 			return fmt.Errorf("error reading keeper row: %w", err)
 		}
