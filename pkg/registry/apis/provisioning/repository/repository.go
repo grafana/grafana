@@ -15,6 +15,10 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+// FIXME: the name of the mock is different because there is another generated mock for Repository
+// I don't know how it got generated.
+//
+//go:generate mockery --name Repository --structname MockConfigRepository --inpackage --filename config_repository_mock.go --with-expecter
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
