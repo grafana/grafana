@@ -1,4 +1,5 @@
 import { FilterInput, InlineField } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 interface Props {
   searchQuery: string;
@@ -10,7 +11,11 @@ export const ApiKeysActionBar = ({ searchQuery, disabled, onSearchChange }: Prop
   return (
     <div className="page-action-bar">
       <InlineField grow>
-        <FilterInput placeholder="Search keys" value={searchQuery} onChange={onSearchChange} />
+        <FilterInput
+          placeholder={t('api-keys.api-keys-action-bar.placeholder-search-keys', 'Search keys')}
+          value={searchQuery}
+          onChange={onSearchChange}
+        />
       </InlineField>
     </div>
   );

@@ -41,7 +41,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		statusCode == http.StatusServiceUnavailable:
 
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-		r := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
+		r := converter.ReadPrometheusStyleResult(iter, converter.Options{})
 		r.Status = backend.Status(res.StatusCode)
 
 		// Add frame to attach metadata

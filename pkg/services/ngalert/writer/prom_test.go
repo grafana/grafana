@@ -191,7 +191,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("ignores client error when status code is 400 and message contains duplicate timestamp error", func(t *testing.T) {
-		for _, msg := range DuplicateTimestampErrors {
+		for _, msg := range IgnoredErrors {
 			t.Run(msg, func(t *testing.T) {
 				clientErr := testClientWriteError{
 					statusCode: http.StatusBadRequest,
@@ -208,7 +208,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("bad labels fit under the client error category", func(t *testing.T) {
-		msg := MimirInvalidLabelError
+		msg := MimirSeriesInvalidLabelError
 		clientErr := testClientWriteError{
 			statusCode: http.StatusBadRequest,
 			msg:        &msg,

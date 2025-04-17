@@ -165,7 +165,7 @@ describe('ArgQueryEditor', () => {
     );
     expect(await waitFor(() => screen.findByText('foo'))).toBeInTheDocument();
 
-    const clear = screen.getByLabelText('select-clear-value');
+    const clear = screen.getByLabelText('Clear value');
     await userEvent.click(clear);
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: [] }));

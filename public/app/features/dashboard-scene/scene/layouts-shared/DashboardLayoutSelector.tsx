@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { Select } from '@grafana/ui';
+import { RadioButtonGroup, Box } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,70 +10,89 @@ import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
-import { findParentLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
 }
 
 export function DashboardLayoutSelector({ layoutManager }: Props) {
-  const options = useMemo(() => {
-    const parentLayout = findParentLayout(layoutManager);
-    const parentLayoutId = parentLayout?.descriptor.id;
+  const isGridLayout = layoutManager.descriptor.isGridLayout;
+  const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
 
-    return layoutRegistry
-      .list()
-      .filter((layout) => layout.id !== parentLayoutId)
-      .map((layout) => ({
-        label: layout.name,
-        value: layout,
-      }));
-  }, [layoutManager]);
+  const onChangeLayout = useCallback(
+    (newLayout: LayoutRegistryItem) => {
+      const layoutParent = layoutManager.parent;
 
-  const currentLayoutId = layoutManager.descriptor.id;
-  const currentOption = options.find((option) => option.value.id === currentLayoutId);
+      if (layoutParent && isLayoutParent(layoutParent)) {
+        layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
+      }
+    },
+    [layoutManager]
+  );
+
+  const radioOptions = options.map((opt) => ({
+    value: opt,
+    label: opt.name,
+    icon: opt.icon,
+    description: opt.description,
+  }));
 
   return (
-    <Select
-      options={options}
-      value={currentOption}
-      onChange={(option) => {
-        if (option.value?.id !== currentOption?.value.id) {
-          changeLayoutTo(layoutManager, option.value!);
-        }
-      }}
-    />
+    <Box paddingBottom={2} display="flex" grow={1} alignItems="center">
+      <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
+    </Box>
   );
 }
-
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    const layoutCategory = new OptionsPaneCategoryDescriptor({
-      title: 'Layout',
-      id: 'layout-options',
-      isOpenDefault: true,
+    const isGridLayout = layoutManager.descriptor.isGridLayout;
+
+    const groupLayout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.group-layout', 'Group layout'),
+      id: 'group-layout-category',
+      isOpenDefault: false,
     });
 
-    layoutCategory.addItem(
+    const gridLayout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
+      id: 'grid-layout-category',
+      isOpenDefault: false,
+    });
+
+    gridLayout.addItem(
       new OptionsPaneItemDescriptor({
-        title: t('dashboard.layout.common.layout', 'Layout'),
+        title: '',
+        skipField: true,
         render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
     );
 
+    if (isGridLayout) {
+      groupLayout.props.disabledText = t(
+        'dashboard.layout.common.group-layout-disabled',
+        'No groups exists on this level'
+      );
+    } else {
+      groupLayout.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          skipField: true,
+          render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
+        })
+      );
+
+      gridLayout.props.disabledText = t(
+        'dashboard.layout.common.panel-layout-disabled',
+        'Select a row or tab to change panel layout options'
+      );
+    }
+
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
-        layoutCategory.addItem(option);
+        gridLayout.addItem(option);
       }
     }
 
-    return layoutCategory;
+    return [groupLayout, gridLayout];
   }, [layoutManager]);
-}
-
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
-  const layoutParent = currentLayout.parent;
-  if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
-  }
 }

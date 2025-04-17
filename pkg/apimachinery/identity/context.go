@@ -62,7 +62,7 @@ func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Req
 	return WithRequester(ctx, r), r
 }
 
-func WithProvisioningIdentitiy(ctx context.Context, namespace string) (context.Context, Requester, error) {
+func WithProvisioningIdentity(ctx context.Context, namespace string) (context.Context, Requester, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, nil, err

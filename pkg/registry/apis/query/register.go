@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,8 +14,10 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	claims "github.com/grafana/authlib/types"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -38,8 +41,10 @@ type QueryAPIBuilder struct {
 	userFacingDefaultError string
 	features               featuremgmt.FeatureToggles
 
+	authorizer authorizer.Authorizer
+
 	tracer     tracing.Tracer
-	metrics    *queryMetrics
+	metrics    *metrics.ExprMetrics
 	parser     *queryParser
 	client     clientapi.DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
@@ -49,6 +54,7 @@ type QueryAPIBuilder struct {
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	client clientapi.DataSourceClientSupplier,
+	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -75,9 +81,10 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		client:               client,
+		authorizer:           ar,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
-		metrics:              newQueryMetrics(registerer),
+		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
@@ -105,11 +112,25 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
+	ar := authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			// we only verify that we have a valid user.
+			// the "real" check will happen when the specific
+			// data sources are loaded.
+			_, ok := claims.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "valid user is required", nil
+			}
+
+			return authorizer.DecisionAllow, "", nil
+		})
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		&CommonDataSourceClientSupplier{
-			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider, accessControl),
 		},
+		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		legacy, registerer, tracer,
 	)
@@ -167,7 +188,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default is OK
+	return b.authorizer
 }
 
 func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {

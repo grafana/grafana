@@ -14,6 +14,7 @@
     "logos": {
       "small": "img/icn-debug.svg",
       "large": "img/icn-debug.svg"
-    }
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   }
 }

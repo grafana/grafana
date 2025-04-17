@@ -3,28 +3,32 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/go-jose/go-jose/v3/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
+	ManagedObjectIndexClient
 	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
@@ -34,33 +38,34 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
-	RepositoryIndexClient
+	ManagedObjectIndexClient
 	BulkStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
 
-func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
+	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
-	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
+	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
-		&RepositoryIndex_ServiceDesc,
+		&ManagedObjectIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
 		&BulkStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
@@ -68,26 +73,26 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		channel.RegisterService(
 			grpchan.InterceptServer(
 				desc,
-				grpcAuth.UnaryServerInterceptor(grpcAuthInt.Authenticate),
-				grpcAuth.StreamServerInterceptor(grpcAuthInt.Authenticate),
+				grpcAuth.UnaryServerInterceptor(grpcAuthInt),
+				grpcAuth.StreamServerInterceptor(grpcAuthInt),
 			),
 			server,
 		)
 	}
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
-		grpcutils.ProvideInProcExchanger(),
+		ProvideInProcExchanger(),
 		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}
 }
 
@@ -99,7 +104,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
@@ -124,12 +129,12 @@ func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg R
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		BulkStoreClient:       NewBulkStoreClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
+		ResourceStoreClient:      NewResourceStoreClient(cc),
+		ResourceIndexClient:      NewResourceIndexClient(cc),
+		BlobStoreClient:          NewBlobStoreClient(cc),
+		BulkStoreClient:          NewBulkStoreClient(cc),
+		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        NewDiagnosticsClient(cc),
 	}, nil
 }
 
@@ -158,4 +163,43 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
+}
+
+func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
+	token, err := createInProcToken()
+	if err != nil {
+		panic(err)
+	}
+
+	return authnlib.NewStaticTokenExchanger(token)
+}
+
+func createInProcToken() (string, error) {
+	claims := authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Issuer:   "grafana",
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
+			Audience: []string{"resourceStore"},
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "*",
+			Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
+			DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
+		},
+	}
+
+	header, err := json.Marshal(map[string]string{
+		"alg": "none",
+		"typ": authnlib.TokenTypeAccess,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + ".", nil
 }

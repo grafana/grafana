@@ -6,6 +6,7 @@ import {
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { resourceTypes } from '../azureMetadata';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
@@ -22,18 +23,24 @@ jest.mock('@grafana/runtime', () => ({
 
 const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean) => {
   const instanceSettings = createMockInstanceSetttings();
-  const mockDatasource = createMockDatasource();
+  const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+  const postResource = jest.fn();
+  responses.forEach((res) => {
+    postResource.mockResolvedValueOnce(res);
+  });
+  azureResourceGraphDatasource.postResource = postResource;
+  const mockDatasource = createMockDatasource({ azureResourceGraphDatasource: azureResourceGraphDatasource });
   mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
     .fn()
     .mockResolvedValueOnce(
       noNamespaces ? [] : [{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]
     );
-  const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
-  const postResource = jest.fn();
-  responses.forEach((res) => {
-    postResource.mockResolvedValueOnce(res);
-  });
-  resourcePickerData.postResource = postResource;
+
+  const resourcePickerData = new ResourcePickerData(
+    instanceSettings,
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
+  );
   return { resourcePickerData, postResource, mockDatasource };
 };
 
@@ -299,32 +306,6 @@ describe('AzureMonitor resourcePickerData', () => {
         typeLabel: 'Microsoft.Compute/virtualMachines',
         uri: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
       });
-    });
-
-    it('throws an error if it recieves data with a malformed uri', async () => {
-      const mockResponse = {
-        data: [
-          {
-            id: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
-            name: 'web-server',
-            type: 'Microsoft.Compute/virtualMachines',
-            resourceGroup: 'dev',
-            subscriptionId: 'def-456',
-            location: 'northeurope',
-          },
-        ],
-      };
-      const { resourcePickerData } = createResourcePickerData([mockResponse]);
-      try {
-        await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
-        throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
-      } catch (err) {
-        if (err instanceof Error) {
-          expect(err.message).toEqual('unable to fetch resource details');
-        } else {
-          throw err;
-        }
-      }
     });
 
     it('should filter metrics resources', async () => {

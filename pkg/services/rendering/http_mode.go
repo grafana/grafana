@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var netTransport = &http.Transport{
@@ -25,7 +27,7 @@ var netTransport = &http.Transport{
 }
 
 var netClient = &http.Client{
-	Transport: netTransport,
+	Transport: otelhttp.NewTransport(netTransport),
 }
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
@@ -69,7 +71,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 }
 
 func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts Opts, renderKey string) (*url.URL, error) {
-	rendererUrl := rs.Cfg.RendererUrl
+	rendererUrl := rs.Cfg.RendererServerUrl
 	if renderType == RenderCSV {
 		rendererUrl += "/csv"
 	}
@@ -240,7 +242,7 @@ func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string
 }
 
 func (rs *RenderingService) getRemotePluginVersion() (string, error) {
-	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/version")
+	rendererURL, err := url.Parse(rs.Cfg.RendererServerUrl + "/version")
 	if err != nil {
 		return "", err
 	}

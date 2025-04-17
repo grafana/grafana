@@ -14,8 +14,9 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { closePopover } from '@grafana/ui/src/utils/closePopover';
+import { closePopover } from '@grafana/ui/internal';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { Trans } from 'app/core/internationalization';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
@@ -71,7 +72,7 @@ export const ResourcePicker = (props: Props) => {
     } else {
       return (
         <LinkButton variant="primary" fill="text" size="sm">
-          Set icon
+          <Trans i18nKey="dimensions.resource-picker.render-small-resource-picker.set-icon">Set icon</Trans>
         </LinkButton>
       );
     }

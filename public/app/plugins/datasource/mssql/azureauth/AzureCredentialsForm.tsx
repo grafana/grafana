@@ -2,7 +2,7 @@ import { ChangeEvent } from 'react';
 
 import { AzureCredentials, AzureAuthType } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
-import { Button, Field, Select, Input } from '@grafana/ui/src/components';
+import { Button, Field, Select, Input } from '@grafana/ui';
 
 export interface Props {
   managedIdentityEnabled: boolean;

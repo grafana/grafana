@@ -1,3 +1,4 @@
+import { t } from 'app/core/internationalization';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { DetailsField } from '../DetailsField';
@@ -10,7 +11,7 @@ const RuleDetailsFederatedSources = ({ group }: Props) => {
   const sourceTenants = group.source_tenants ?? [];
 
   return (
-    <DetailsField label="Tenant sources">
+    <DetailsField label={t('alerting.rule-details-federated-sources.label-tenant-sources', 'Tenant sources')}>
       <>
         {sourceTenants.map((tenant) => (
           <div key={tenant}>{tenant}</div>

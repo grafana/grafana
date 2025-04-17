@@ -1,4 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/index.ts
+import { TimeRange } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { CompletionType, getCompletions } from './completions';
@@ -48,7 +49,8 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
 
 export function getCompletionProvider(
   monaco: Monaco,
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): monacoTypes.languages.CompletionItemProvider {
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
@@ -84,7 +86,8 @@ export function getCompletionProvider(
 
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
-    const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
+    const completionsPromise =
+      situation != null ? getCompletions(situation, dataProvider, timeRange) : Promise.resolve([]);
 
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.

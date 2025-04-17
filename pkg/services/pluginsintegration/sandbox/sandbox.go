@@ -1,9 +1,13 @@
 package sandbox
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 type Sandbox interface {
-	Plugins() ([]string, error)
+	Plugins(ctx context.Context) ([]string, error)
 }
 
 type Service struct {
@@ -16,6 +20,6 @@ func ProvideService(cfg *setting.Cfg) *Service {
 	}
 }
 
-func (s *Service) Plugins() ([]string, error) {
+func (s *Service) Plugins(ctx context.Context) ([]string, error) {
 	return s.cfg.EnableFrontendSandboxForPlugins, nil
 }

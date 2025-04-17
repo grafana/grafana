@@ -5,6 +5,7 @@ import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 
 import { createOrganization } from './state/actions';
 
@@ -46,16 +47,22 @@ export const NewOrgPage = ({ createOrganization }: Props) => {
             return (
               <>
                 <FieldSet>
-                  <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
+                  <Field
+                    label={t('org.new-org-page.label-organization-name', 'Organization name')}
+                    invalid={!!errors.name}
+                    error={errors.name && errors.name.message}
+                  >
                     <Input
-                      placeholder="Org name"
+                      placeholder={t('org.new-org-page.placeholder-org-name', 'Org name')}
                       {...register('name', {
                         required: 'Organization name is required',
                       })}
                     />
                   </Field>
                 </FieldSet>
-                <Button type="submit">Create</Button>
+                <Button type="submit">
+                  <Trans i18nKey="org.new-org-page.create">Create</Trans>
+                </Button>
               </>
             );
           }}

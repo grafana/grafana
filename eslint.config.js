@@ -73,6 +73,7 @@ module.exports = [
       'jsx-a11y': jsxA11yPlugin,
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
+      unicorn: unicornPlugin,
     },
 
     settings: {
@@ -129,6 +130,7 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
+      'unicorn/no-empty-file': 'error',
     },
   },
   {
@@ -254,6 +256,7 @@ module.exports = [
     plugins: {
       unicorn: unicornPlugin,
       react: reactPlugin,
+      '@grafana': grafanaPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -262,7 +265,20 @@ module.exports = [
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
       'react/self-closing-comp': 'error',
+      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+    },
+  },
+  {
+    // Sections of codebase that have all translation markup issues fixed
+    name: 'grafana/i18n-overrides',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    ignores: ['**/*.{spec,test}.tsx'],
+    rules: {
+      '@grafana/no-untranslated-strings': 'error',
     },
   },
   {

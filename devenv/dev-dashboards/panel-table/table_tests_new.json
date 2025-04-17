@@ -18,14 +18,11 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 89,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -33,15 +30,7 @@
         "y": 0
       },
       "id": 7,
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "refId": "A"
-        }
-      ],
+      "panels": [],
       "title": "Cell styles",
       "type": "row"
     },
@@ -164,7 +153,7 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -286,6 +275,7 @@
       },
       "id": 2,
       "options": {
+        "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -303,7 +293,7 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -376,7 +366,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "rate"
+              "options": "Trend #A"
             },
             "properties": [
               {
@@ -448,7 +438,7 @@
         "showRowNums": false,
         "sortBy": []
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -625,7 +615,7 @@
         "showHeader": true,
         "showRowNums": false
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -683,10 +673,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -694,15 +681,7 @@
         "y": 24
       },
       "id": 9,
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "refId": "A"
-        }
-      ],
+      "panels": [],
       "title": "Data links",
       "type": "row"
     },
@@ -752,18 +731,19 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Time"
+              "options": "time"
             },
             "properties": [
               {
-                "id": "custom.align"
+                "id": "custom.align",
+                "value": "center"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "{name=\"S1\", server=\"A\"}"
+              "options": "S1 A"
             },
             "properties": [
               {
@@ -799,7 +779,7 @@
         "showHeader": true,
         "showRowNums": false
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "alias": "S1",
@@ -916,7 +896,7 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1005,7 +985,7 @@
         "showHeader": true,
         "showRowNums": false
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "11.6.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1019,9 +999,9 @@
       "type": "table"
     }
   ],
+  "preload": false,
   "refresh": "",
-  "revision": 1,
-  "schemaVersion": 38,
+  "schemaVersion": 41,
   "tags": [
     "gdev",
     "panel-tests"
@@ -1049,6 +1029,5 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 7,
-  "weekStart": ""
+  "version": 17
 }

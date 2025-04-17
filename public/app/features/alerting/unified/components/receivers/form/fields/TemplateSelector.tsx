@@ -16,7 +16,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -54,16 +54,24 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
+        tooltip={t('alerting.templates-picker.tooltip-edit', 'Edit {{name}} using existing notification templates.', {
+          name: option.label.toLowerCase(),
+        })}
         onClick={onClick}
         variant="secondary"
         size="sm"
       >
-        {`Edit ${option.label}`}
+        <Trans i18nKey="alerting.templates-picker.button-edit" values={{ name: option.label }}>
+          Edit {'{{name}}'}
+        </Trans>
       </Button>
 
       {showTemplates && (
-        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
+        <Drawer
+          title={t('alerting.templates-picker.title-drawer', 'Edit {{name}}', { name: option.label })}
+          size="md"
+          onClose={handleClose}
+        >
           <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
         </Drawer>
       )}
@@ -173,11 +181,19 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   }, [options, valueInForm]);
 
   if (error) {
-    return <div>Error loading templates</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.error-loading-templates">Error loading templates</Trans>
+      </div>
+    );
   }
 
   if (isLoading || !data || !defaultTemplates) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   return (
@@ -195,8 +211,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
                 data-testid="existing-templates-selector"
-                placeholder="Choose notification template"
-                aria-label="Choose notification template"
+                placeholder={t(
+                  'alerting.template-selector.existing-templates-selector-placeholder-choose-notification-template',
+                  'Choose notification template'
+                )}
+                aria-label={t(
+                  'alerting.template-selector.existing-templates-selector-aria-label-choose-notification-template',
+                  'Choose notification template'
+                )}
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
                 }}
@@ -205,10 +227,11 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
-                onClick={() =>
-                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
-                }
+                tooltip={t(
+                  'alerting.template-selector.tooltip-copy',
+                  'Copy selected notification template to clipboard. You can use it in the custom tab.'
+                )}
+                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />
             </Stack>
@@ -272,7 +295,7 @@ function OptionCustomfield({
       </Label>
       <TextArea
         id={id}
-        label="Custom template"
+        label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
         placeholder={option.placeholder}
         onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
         defaultValue={initialValue}

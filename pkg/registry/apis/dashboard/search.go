@@ -21,9 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
+	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,7 +43,7 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dual, dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -53,8 +53,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
+	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -265,7 +265,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+			federate, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
 		}
 	case 1:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
@@ -369,6 +369,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if result != nil {
+		s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
+	}
+
 	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -378,8 +382,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if len(searchRequest.SortBy) == 0 {
 		// default sort by resource descending ( folders then dashboards ) then title
 		sort.Slice(parsedResults.Hits, func(i, j int) bool {
-			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
-				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+			// Just sorting by resource for now. The rest should be sorted by search score already
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource
 		})
 	}
 
@@ -403,6 +407,7 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
 		return []string{}, nil
 	}
 
@@ -455,7 +460,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	if folderUidIdx == -1 {
-		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
 	// populate list of unique folder UIDs in the list of dashboards user has read permissions
@@ -468,7 +473,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
 	}

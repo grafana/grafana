@@ -1,20 +1,17 @@
-import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef } from '@grafana/scenes';
 import { ElementSelectionContextItem } from '@grafana/ui';
 
 import { isBulkActionElement } from '../scene/types/BulkActionElement';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
-import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
-import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { getEditableElementFor } from './shared';
 
 export class ElementSelection {
-  private selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
+  private selectedObjects: Map<string, SceneObjectRef<SceneObject>>;
   private sameType?: boolean;
-
   private _isMultiSelection: boolean;
+  private _isNewElement = false;
 
   constructor(values: Array<[string, SceneObjectRef<SceneObject>]>) {
     this.selectedObjects = new Map(values);
@@ -25,16 +22,24 @@ export class ElementSelection {
     }
   }
 
+  public markAsNewElement() {
+    this._isNewElement = true;
+  }
+
+  public isNewElement() {
+    return this._isNewElement;
+  }
+
   private checkSameType() {
-    const values = this.selectedObjects?.values();
-    const firstType = values?.next().value?.resolve()?.constructor.name;
+    const values = this.selectedObjects.values();
+    const firstType = values.next().value?.resolve().constructor.name;
 
     if (!firstType) {
       return false;
     }
 
     for (let obj of values ?? []) {
-      if (obj.resolve()?.constructor.name !== firstType) {
+      if (obj.resolve().constructor.name !== firstType) {
         return false;
       }
     }
@@ -43,13 +48,13 @@ export class ElementSelection {
   }
 
   public hasValue(id: string) {
-    return this.selectedObjects?.has(id);
+    return this.selectedObjects.has(id);
   }
 
   public removeValue(id: string) {
-    this.selectedObjects?.delete(id);
+    this.selectedObjects.delete(id);
 
-    if (this.selectedObjects && this.selectedObjects.size < 2) {
+    if (this.selectedObjects.size < 2) {
       this.sameType = undefined;
       this._isMultiSelection = false;
     }
@@ -95,11 +100,11 @@ export class ElementSelection {
   }
 
   public getSelectionEntries(): Array<[string, SceneObjectRef<SceneObject>]> {
-    return Array.from(this.selectedObjects?.entries() ?? []);
+    return Array.from(this.selectedObjects.entries());
   }
 
   public getFirstObject(): SceneObject | undefined {
-    return this.selectedObjects?.values().next().value?.resolve();
+    return this.selectedObjects.values().next().value?.resolve();
   }
 
   public get isMultiSelection(): boolean {
@@ -107,51 +112,38 @@ export class ElementSelection {
   }
 
   private getSceneObjects(): SceneObject[] {
-    return Array.from(this.selectedObjects?.values() ?? []).map((obj) => obj.resolve());
+    return Array.from(this.selectedObjects.values() ?? []).map((obj) => obj.resolve());
   }
 
-  public createSelectionElement() {
-    if (this.isMultiSelection) {
-      return this.createMultiSelectedElement();
-    }
-
-    return this.createSingleSelectedElement();
-  }
-
-  private createSingleSelectedElement(): EditableDashboardElement | undefined {
-    const sceneObj = this.selectedObjects?.values().next().value?.resolve();
-    return getEditableElementFor(sceneObj);
-  }
-
-  private createMultiSelectedElement(): MultiSelectedEditableDashboardElement | undefined {
-    if (!this.isMultiSelection) {
-      return;
-    }
-
+  public createSelectionElement(): EditableDashboardElement | undefined {
     const sceneObjects = this.getSceneObjects();
 
-    if (this.sameType) {
-      const firstObj = this.selectedObjects?.values().next().value?.resolve();
+    if (sceneObjects.length === 0) {
+      return undefined;
+    }
 
-      if (firstObj instanceof VizPanel) {
-        return new MultiSelectedVizPanelsEditableElement(sceneObjects.filter((obj) => obj instanceof VizPanel));
-      }
+    const firstElement = getEditableElementFor(sceneObjects[0]);
 
-      if (isEditableDashboardElement(firstObj!)) {
-        return firstObj.createMultiSelectedElement?.(sceneObjects);
-      }
+    if (!firstElement) {
+      return undefined;
+    }
+
+    if (sceneObjects.length === 1) {
+      return firstElement;
+    }
+
+    if (this.sameType && firstElement.createMultiSelectedElement) {
+      const elements = sceneObjects.map((obj) => getEditableElementFor(obj)!);
+      return firstElement.createMultiSelectedElement(elements);
     }
 
     const bulkActionElements = [];
 
     for (const sceneObject of sceneObjects) {
-      if (sceneObject instanceof VizPanel) {
-        const editableElement = new VizPanelEditableElement(sceneObject);
-        bulkActionElements.push(editableElement);
-      }
+      const element = getEditableElementFor(sceneObject);
 
-      if (isBulkActionElement(sceneObject)) {
-        bulkActionElements.push(sceneObject);
+      if (element && isBulkActionElement(element)) {
+        bulkActionElements.push(element);
       }
     }
 

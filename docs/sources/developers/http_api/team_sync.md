@@ -23,9 +23,9 @@ title: Team Sync HTTP API
 
 # Team Sync API
 
-> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise](/docs/grafana/latest/introduction/grafana-enterprise/).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Get External Groups
 
@@ -33,7 +33,7 @@ title: Team Sync HTTP API
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -75,7 +75,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -117,7 +117,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |

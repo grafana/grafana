@@ -10,6 +10,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { Counter } from './Counter';
 
@@ -24,10 +25,15 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
+  truncate?: boolean;
+  tooltip?: string;
 }
 
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
+  (
+    { label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, tooltip, ...otherProps },
+    ref
+  ) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
 
@@ -40,7 +46,12 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       </>
     );
 
-    const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
+    const linkClass = cx(
+      clearStyles,
+      tabsStyles.link,
+      active ? tabsStyles.activeStyle : tabsStyles.notActive,
+      truncate && tabsStyles.linkTruncate
+    );
 
     const commonProps = {
       className: linkClass,
@@ -49,11 +60,14 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       onClick: onChangeTab,
       role: 'tab',
       'aria-selected': active,
+      title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
+    let tab = null;
+
     if (href) {
-      return (
-        <div className={cx(tabsStyles.item, className)}>
+      tab = (
+        <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
           <a
             {...commonProps}
             href={href}
@@ -65,21 +79,27 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           </a>
         </div>
       );
+    } else {
+      tab = (
+        <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
+          <button
+            {...commonProps}
+            type="button"
+            // don't think we can avoid the type assertion here :(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          >
+            {content()}
+          </button>
+        </div>
+      );
     }
 
-    return (
-      <div className={cx(tabsStyles.item, className)}>
-        <button
-          {...commonProps}
-          type="button"
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        >
-          {content()}
-        </button>
-      </div>
-    );
+    if (tooltip) {
+      return <Tooltip content={tooltip}>{tab}</Tooltip>;
+    }
+
+    return tab;
   }
 );
 
@@ -92,11 +112,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
+    }),
+    itemTruncate: css({
+      maxWidth: theme.spacing(40),
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 0.5),
+      padding: theme.spacing(1, 1.5, 1),
       borderRadius: theme.shape.radius.default,
 
       display: 'block',
@@ -114,10 +137,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         position: 'absolute',
         left: 0,
         right: 0,
-        height: '4px',
+        height: '2px',
         borderRadius: theme.shape.radius.default,
         bottom: 0,
       },
+    }),
+    linkTruncate: css({
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      wordBreak: 'break-word',
+      overflow: 'hidden',
     }),
     notActive: css({
       'a:hover, &:hover, &:focus': {

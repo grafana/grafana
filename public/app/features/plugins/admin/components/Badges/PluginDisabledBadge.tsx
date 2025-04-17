@@ -2,12 +2,20 @@ import * as React from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
 import { Badge } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 type Props = { error?: PluginErrorCode };
 
 export function PluginDisabledBadge({ error }: Props): React.ReactElement {
   const tooltip = errorCodeToTooltip(error);
-  return <Badge icon="exclamation-triangle" text="Disabled" color="red" tooltip={tooltip} />;
+  return (
+    <Badge
+      icon="exclamation-triangle"
+      text={t('plugins.plugin-disabled-badge.text-disabled', 'Disabled')}
+      color="red"
+      tooltip={tooltip}
+    />
+  );
 }
 
 function errorCodeToTooltip(error?: PluginErrorCode): string | undefined {

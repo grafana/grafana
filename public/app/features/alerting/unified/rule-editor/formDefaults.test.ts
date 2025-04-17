@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { mockAlertQuery, mockDataSource, reduceExpression, thresholdExpression } from '../mocks';
+import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
@@ -10,7 +10,10 @@ import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
 import { formValuesFromQueryParams, getDefaultFormValues, getDefautManualRouting } from './formDefaults';
 import { isAlertQueryOfAlertData } from './formProcessing';
 
-jest.mock('../utils/datasource');
+jest.mock('../utils/datasource', () => ({
+  ...jest.requireActual('../utils/datasource'),
+  getDefaultOrFirstCompatibleDataSource: jest.fn(),
+}));
 
 const mocks = {
   getDefaultOrFirstCompatibleDataSource: jest.mocked(getDefaultOrFirstCompatibleDataSource),
@@ -73,7 +76,11 @@ describe('formValuesFromQueryParams', () => {
     it('should enable simplified query editor if queries are transformable to simple condition', () => {
       const result = formValuesFromQueryParams(
         JSON.stringify({
-          queries: [mockAlertQuery(), reduceExpression, thresholdExpression],
+          queries: [
+            mockAlertQuery(),
+            mockReduceExpression({ expression: 'A' }),
+            mockThresholdExpression({ expression: 'B' }),
+          ],
         }),
         RuleFormType.grafana
       );
@@ -85,7 +92,7 @@ describe('formValuesFromQueryParams', () => {
     it('should disable simplified query editor if queries are not transformable to simple condition', () => {
       const result = formValuesFromQueryParams(
         JSON.stringify({
-          queries: [mockAlertQuery(), mockAlertQuery(), thresholdExpression],
+          queries: [mockAlertQuery(), mockAlertQuery(), mockThresholdExpression({ expression: 'B' })],
         }),
         RuleFormType.grafana
       );

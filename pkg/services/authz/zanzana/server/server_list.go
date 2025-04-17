@@ -56,6 +56,31 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		return &authzv1.ListResponse{}, nil
 	}
 
+	var (
+		subresourceRelation = common.SubresourceRelation(relation)
+		resourceCtx         = resource.Context()
+	)
+
+	var items []string
+	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
+		// List requested subresources
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 resource.Type(),
+			Relation:             subresourceRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
+	}
+
 	// List all resources user has access too
 	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
@@ -68,21 +93,22 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	if err != nil {
 		return nil, err
 	}
+	items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 
 	return &authzv1.ListResponse{
-		Items: typedObjects(resource.Type(), res.GetObjects()),
+		Items: items,
 	}, nil
 }
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
 	var (
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 		resourceCtx    = resource.Context()
 	)
 
 	// 1. List all folders subject has access to resource type in
 	var folders []string
-	if common.IsFolderResourceRelation(folderRelation) {
+	if common.IsSubresourceRelation(folderRelation) {
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,

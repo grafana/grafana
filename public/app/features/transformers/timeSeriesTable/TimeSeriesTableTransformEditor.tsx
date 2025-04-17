@@ -12,6 +12,7 @@ import {
   isTimeSeriesField,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -89,8 +90,11 @@ export function TimeSeriesTableTransformEditor({
           <InlineLabel>{`Trend #${refId}`}</InlineLabel>
         </InlineField>
         <InlineField
-          label="Time field"
-          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
+          label={t('transformers.time-series-table-transform-editor.label-time-field', 'Time field')}
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-time-field',
+            'The time field that will be used for the time series. If not selected the first found will be used.'
+          )}
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
@@ -99,7 +103,13 @@ export function TimeSeriesTableTransformEditor({
             isClearable={true}
           />
         </InlineField>
-        <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
+        <InlineField
+          label={t('transformers.time-series-table-transform-editor.label-stat', 'Stat')}
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-statistic-should-calculated-series',
+            'The statistic that should be calculated for this time series.'
+          )}
+        >
           <StatsPicker
             stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
             onChange={onSelectStat.bind(null, refId)}

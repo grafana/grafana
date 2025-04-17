@@ -63,7 +63,7 @@ func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Result
 
 func (e *Expr) executeState(s *State) (r Results, err error) {
 	defer errRecover(&err, s)
-	r, err = s.walk(e.Tree.Root)
+	r, err = s.walk(e.Root)
 	s.addDropNotices(&r)
 	return
 }

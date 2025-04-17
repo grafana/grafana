@@ -36,6 +36,7 @@ func TestServerLock(t *testing.T) {
 
 	first, err := sl.getOrCreate(context.Background(), operationUID)
 	require.NoError(t, err)
+	require.NotZero(t, first.Id)
 
 	t.Run("trying to create three new row locks", func(t *testing.T) {
 		expectedLastExecution := first.LastExecution
@@ -44,8 +45,8 @@ func TestServerLock(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			latest, err = sl.getOrCreate(context.Background(), operationUID)
 			require.NoError(t, err)
-			assert.Equal(t, operationUID, first.OperationUID)
-			assert.Equal(t, int64(1), first.Id)
+			assert.Equal(t, first.OperationUID, operationUID)
+			assert.Equal(t, first.Id, latest.Id)
 		}
 
 		assert.Equal(t,
@@ -114,7 +115,7 @@ func TestLockAndRelease(t *testing.T) {
 			affectedRows, err := sess.Insert(&lock)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), affectedRows)
-			require.Equal(t, int64(1), lock.Id)
+			require.NotZero(t, lock.Id)
 			return nil
 		})
 		require.NoError(t, err)

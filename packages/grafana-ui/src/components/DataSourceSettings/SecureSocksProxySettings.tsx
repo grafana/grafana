@@ -16,7 +16,7 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
   onOptionsChange,
 }: Props<T>): JSX.Element {
   return (
-    <>
+    <div>
       <h3 className="page-heading">
         <Trans i18nKey="grafana-ui.data-source-settings.secure-socks-heading">Secure Socks Proxy</Trans>
       </h3>
@@ -44,6 +44,6 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

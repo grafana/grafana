@@ -42,6 +42,7 @@ __debug_bin*
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
 /devenv/docker/blocks/spanner_tests
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
@@ -68,6 +69,8 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+
 .eslintcache
 .stylelintcache
 
@@ -94,6 +97,9 @@ conf/custom.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
+
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
 
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml

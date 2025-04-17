@@ -1,33 +1,40 @@
 import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardWithAccessInfo } from './types';
 
-export const GRID_ROW_HEIGHT = 1;
-
-export function getDashboardsApiVersion() {
+export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
+  const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
+  const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
-  // if dashboard scene is disabled, use legacy API response for the old architecture
-  if (!config.featureToggles.dashboardScene || forcingOldDashboardArch) {
-    // for old architecture, use v1 API for k8s dashboards
-    if (config.featureToggles.kubernetesDashboards) {
-      return 'v1';
+  // Force legacy API when dashboard scene is disabled or explicitly forced
+  if (!isDashboardSceneEnabled || forcingOldDashboardArch) {
+    if (responseFormat === 'v2') {
+      throw new Error('v2 is not supported for legacy architecture');
     }
 
-    return 'legacy';
+    return isKubernetesDashboardsEnabled ? 'v1' : 'legacy';
   }
 
-  if (config.featureToggles.useV2DashboardsAPI) {
-    return 'v2';
+  // Unified manages redirection between v1 and v2, but when responseFormat is undefined we get the unified API
+  if (isKubernetesDashboardsEnabled) {
+    if (responseFormat === 'v1') {
+      return 'v1';
+    }
+    if (responseFormat === 'v2') {
+      return 'v2';
+    }
+    return 'unified';
   }
 
-  if (config.featureToggles.kubernetesDashboards) {
-    return 'v1';
+  // Handle non-kubernetes case
+  if (responseFormat === 'v2') {
+    throw new Error('v2 is not supported if kubernetes dashboards are disabled');
   }
 
   return 'legacy';

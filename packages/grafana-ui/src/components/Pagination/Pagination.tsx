@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -97,12 +98,15 @@ export const Pagination = ({
     return null;
   }
 
+  const previousPageLabel = t('grafana-ui.pagination.previous-page', 'previous page');
+  const nextPageLabel = t('grafana-ui.pagination.next-page', 'next page');
+
   return (
     <div className={cx(styles.container, className)}>
       <ol>
         <li className={styles.item}>
           <Button
-            aria-label={`previous page`}
+            aria-label={previousPageLabel}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage - 1)}
@@ -114,7 +118,7 @@ export const Pagination = ({
         {pageButtons}
         <li className={styles.item}>
           <Button
-            aria-label={`next page`}
+            aria-label={nextPageLabel}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}

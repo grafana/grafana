@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -100,16 +101,28 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
 	}
 
-	cmdOrg := org.GetOrgIDForNewUserCommand{
-		Email:        cmd.Email,
-		Login:        cmd.Login,
-		OrgID:        cmd.OrgID,
-		OrgName:      cmd.OrgName,
-		SkipOrgSetup: cmd.SkipOrgSetup,
-	}
-	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	if err != nil {
-		return nil, err
+	// if the user is provisioned, use the org ID from the requester
+	var orgID int64
+	var err error
+	if cmd.IsProvisioned {
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		orgID = requester.GetOrgID()
+	} else {
+		cmdOrg := org.GetOrgIDForNewUserCommand{
+			Email:        cmd.Email,
+			Login:        cmd.Login,
+			OrgID:        cmd.OrgID,
+			OrgName:      cmd.OrgName,
+			SkipOrgSetup: cmd.SkipOrgSetup,
+		}
+		orgID, err = s.orgService.GetIDForNewUser(ctx, cmdOrg)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
@@ -220,6 +233,19 @@ func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (
 	defer span.End()
 
 	return s.store.GetByUID(ctx, query.UID)
+}
+
+func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	if len(uids) == 0 && len(ids) == 0 {
+		return []*user.User{}, nil
+	}
+	ctx, span := s.tracer.Start(ctx, "user.ListByIdOrUID", trace.WithAttributes(
+		attribute.StringSlice("userUIDs", uids),
+		attribute.Int64Slice("userIDs", ids),
+	))
+	defer span.End()
+
+	return s.store.ListByIdOrUID(ctx, uids, ids)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {

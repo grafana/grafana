@@ -12,12 +12,14 @@ export enum PromAlertingRuleState {
   Firing = 'firing',
   Inactive = 'inactive',
   Pending = 'pending',
+  Recovering = 'recovering',
 }
 
 export enum GrafanaAlertState {
   Normal = 'Normal',
   Alerting = 'Alerting',
   Pending = 'Pending',
+  Recovering = 'Recovering',
   NoData = 'NoData',
   Error = 'Error',
 }
@@ -124,6 +126,12 @@ interface PromRuleDTOBase {
   lastError?: string;
 }
 
+interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
+  uid: string;
+  folderUid: string;
+  queriedDatasourceUIDs?: string[];
+}
+
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts?: Array<{
     labels: Labels;
@@ -159,15 +167,10 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   lastEvaluation?: string;
 }
 
-export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
-  uid: string;
-  folderUid: string;
-}
+export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {}
 
-export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
-  uid: string;
-  folderUid: string;
-}
+export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRuleDTOBase, PromRecordingRuleDTO {}
+
 export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 
 export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
@@ -182,11 +185,14 @@ export interface PromResponse<T> {
   warnings?: string[];
 }
 
-export type PromRulesResponse = PromResponse<{
-  groups: PromRuleGroupDTO[];
-  groupNextToken?: string;
-  totals?: AlertGroupTotals;
-}>;
+export interface PromRulesResponse extends PromResponse<{ groups: PromRuleGroupDTO[]; groupNextToken?: string }> {}
+
+export interface GrafanaPromRulesResponse
+  extends PromResponse<{
+    groups: GrafanaPromRuleGroupDTO[];
+    groupNextToken?: string;
+    totals?: AlertGroupTotals;
+  }> {}
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {
@@ -262,12 +268,15 @@ export interface PostableGrafanaRuleDefinition {
   record?: {
     metric: string;
     from: string;
+    target_datasource_uid?: string;
   };
   intervalSeconds?: number;
+  missing_series_evals_to_resolve?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
+  guid?: string;
   namespace_uid: string;
   rule_group: string;
   provenance?: string;
@@ -278,9 +287,16 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   version?: number;
 }
 
+// types for Grafana-managed recording and alerting rules
+export type GrafanaAlertingRuleDefinition = Omit<GrafanaRuleDefinition, 'record'>;
+export type GrafanaRecordingRuleDefinition = GrafanaRuleDefinition & {
+  record: GrafanaRuleDefinition['record'];
+};
+
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
   for?: string;
+  keep_firing_for?: string;
   annotations: Annotations;
   labels: Labels;
 }
@@ -304,4 +320,8 @@ export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
 
 export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
+export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
+
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
+
+export type RulerGrafanaRulesConfigDTO = { [namespace: string]: RulerGrafanaRuleGroupDTO[] };

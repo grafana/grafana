@@ -4,6 +4,7 @@ import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 type EnumMappingRowProps = {
   transformIndex: number;
@@ -116,8 +117,11 @@ const EnumMappingRow = ({
                 name="trash-alt"
                 onClick={onRemoveButtonClick}
                 data-testid="remove-enum-row"
-                aria-label="Delete enum row"
-                tooltip="Delete"
+                aria-label={t(
+                  'transformers.enum-mapping-row.remove-enum-row-aria-label-delete-enum-row',
+                  'Delete enum row'
+                )}
+                tooltip={t('transformers.enum-mapping-row.remove-enum-row-tooltip-delete', 'Delete')}
               />
             </HorizontalGroup>
           </td>

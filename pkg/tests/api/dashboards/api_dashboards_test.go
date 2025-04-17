@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -35,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 func TestMain(m *testing.M) {
@@ -46,14 +46,25 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	testDashboardQuota(t, []string{})
+}
 
+func TestIntegrationDashboardQuotaK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	testDashboardQuota(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testDashboardQuota(t *testing.T, featureToggles []string) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:  true,
-		EnableQuota:       true,
-		DashboardOrgQuota: &dashboardQuota,
+		DisableAnonymous:     true,
+		EnableQuota:          true,
+		DashboardOrgQuota:    &dashboardQuota,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -140,9 +151,23 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	testUpdatingProvisionionedDashboards(t, []string{})
+}
+
+func TestIntegrationUpdatingProvisionionedDashboardsK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	// will be the default in g12
+	testUpdatingProvisionionedDashboards(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testUpdatingProvisionionedDashboards(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
@@ -184,34 +209,23 @@ providers:
 		title := "Grafana Dev Overview & Home"
 		dashboardList := &model.HitList{}
 
-		retry := 0
-		retries := 5
-		// retry until the provisioned dashboard is ready
-		err := retryer.Retry(func() (retryer.RetrySignal, error) {
-			retry++
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			u := fmt.Sprintf("http://admin:admin@%s/api/search?query=%s", grafanaListedAddr, url.QueryEscape(title))
 			// nolint:gosec
 			resp, err := http.Get(u)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
+
 			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
 			err = json.Unmarshal(b, dashboardList)
 			require.NoError(t, err)
-			if dashboardList.Len() == 0 {
-				if retry >= retries {
-					return retryer.FuncError, fmt.Errorf("max retries exceeded")
-				}
-				t.Log("Dashboard is not ready", "retry", retry)
-				return retryer.FuncFailure, nil
-			}
-			return retryer.FuncComplete, nil
-		}, retries, time.Millisecond*time.Duration(10), time.Second)
-		require.NoError(t, err)
+
+			assert.Greater(collect, dashboardList.Len(), 0, "Dashboard should be ready")
+		}, 10*time.Second, 25*time.Millisecond)
 
 		var dashboardUID string
 		var dashboardID int64
@@ -315,9 +329,22 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	testCreate(t, []string{})
+}
+
+func TestIntegrationCreateK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testCreate(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testCreate(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)

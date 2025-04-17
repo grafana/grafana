@@ -136,12 +136,14 @@ If multiple label keys are sanitized to the same value, the duplicates have a sh
 
 Annotations add additional information to alert instances, helping responders identify and address potential issues.
 
+Create clear and self-explanatory annotations so that first responders can investigate without needing deeper knowledge of the alert setup.
+
 Annotations are displayed in Grafana and are included by default in notifications. Grafana provides several optional annotations that you can edit:
 
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `dashboardUId` and `panelId`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
+- `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
 
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 

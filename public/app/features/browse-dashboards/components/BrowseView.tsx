@@ -144,7 +144,13 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
             )}
           </EmptyState>
         ) : (
-          <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
+          <CallToActionCard
+            callToActionElement={
+              <span>
+                <Trans i18nKey="browse-dashboards.browse-view.this-folder-is-empty">This folder is empty</Trans>
+              </span>
+            }
+          />
         )}
       </div>
     );

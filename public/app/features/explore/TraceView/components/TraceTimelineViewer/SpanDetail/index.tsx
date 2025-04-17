@@ -15,29 +15,27 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import * as React from 'react';
 
 import {
+  CoreApp,
   DataFrame,
   dateTimeFormat,
   GrafanaTheme2,
-  IconName,
   LinkModel,
+  TimeRange,
   TraceKeyValuePair,
   TraceLog,
 } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
-import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
@@ -46,6 +44,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -168,6 +167,8 @@ export type SpanDetailProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -193,6 +194,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     setTraceFlameGraphs,
     traceToProfilesOptions,
     setRedrawListView,
+    timeRange,
+    app,
   } = props;
   const {
     isTagsOpen,
@@ -289,62 +292,14 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
-    return (
-      <DataLinkButton
-        link={{
-          ...link,
-          title: title,
-          target: '_blank',
-          origin: link.field,
-          onClick: (event: React.MouseEvent) => {
-            // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-            // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-            // this interaction will not be tracked with link right clicks
-            reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-              datasourceType: datasourceType,
-              grafana_version: config.buildInfo.version,
-              type,
-              location: 'spanDetails',
-            });
-
-            if (link.onClick) {
-              link.onClick?.(event);
-            } else {
-              locationService.push(link.href);
-            }
-          },
-        }}
-        buttonProps={{ icon }}
-      />
-    );
-  };
-
-  let logLinkButton: JSX.Element | null = null;
-  let profileLinkButton: JSX.Element | null = null;
-  let sessionLinkButton: JSX.Element | null = null;
-  if (createSpanLink) {
-    const links = createSpanLink(span);
-    const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
-    if (links && logsLink && logsLink.length > 0) {
-      logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
-    }
-    const profilesLink = links?.filter(
-      (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
-    );
-    if (links && profilesLink && profilesLink.length > 0) {
-      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
-    }
-    const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
-    if (links && sessionLink && sessionLink.length > 0) {
-      sessionLinkButton = createLinkButton(
-        sessionLink[0],
-        SpanLinkType.Session,
-        'Session for this span',
-        'frontend-observability'
-      );
-    }
-  }
+  const linksComponent = getSpanDetailLinkButtons({
+    span,
+    createSpanLink,
+    datasourceType,
+    traceToProfilesOptions,
+    timeRange,
+    app,
+  });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
@@ -357,17 +312,13 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <div className={styles.linkList}>
-        {logLinkButton}
-        {profileLinkButton}
-        {sessionLinkButton}
-      </div>
+      <div className={styles.linkList}>{linksComponent}</div>
       <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues
             data={tags}
-            label="Span Attributes"
+            label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
             linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
@@ -376,7 +327,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             <AccordianKeyValues
               className={styles.AccordianKeyValuesItem}
               data={process.tags}
-              label="Resource Attributes"
+              label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
@@ -398,7 +349,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <AccordianText
             className={styles.AccordianWarnings}
             headerClassName={styles.AccordianWarningsHeader}
-            label={<span className={styles.AccordianWarningsLabel}>Warnings</span>}
+            label={
+              <span className={styles.AccordianWarningsLabel}>
+                <Trans i18nKey="explore.span-detail.warnings">Warnings</Trans>
+              </span>
+            }
             data={warnings}
             isOpen={isWarningsOpen}
             onToggle={() => warningsToggle(spanID)}
@@ -406,7 +361,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {stackTraces?.length ? (
           <AccordianText
-            label="Stack trace"
+            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
             data={stackTraces}
             isOpen={isStackTracesOpen}
             TextComponent={(textComponentProps) => {

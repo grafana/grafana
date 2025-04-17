@@ -10,6 +10,7 @@ import {
   useFocus,
   useHover,
   useInteractions,
+  safePolygon,
 } from '@floating-ui/react';
 import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
 
@@ -67,9 +68,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const tooltipId = useId();
 
     const hover = useHover(context, {
-      delay: {
-        close: interactive ? 100 : 0,
-      },
+      handleClose: interactive ? safePolygon() : undefined,
       move: false,
     });
     const focus = useFocus(context);

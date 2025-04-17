@@ -2,12 +2,14 @@ import { ReactNode } from 'react';
 
 import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
-import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
+import {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  getContentItems,
+  VizTooltipItem,
+} from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';

@@ -374,7 +374,7 @@ func (ng *AlertNG) init() error {
 		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
 		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
 	}
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -398,9 +398,6 @@ func (ng *AlertNG) init() error {
 		RecordingWriter:      ng.RecordingWriter,
 	}
 
-	// There are a set of feature toggles available that act as short-circuits for common configurations.
-	// If any are set, override the config accordingly.
-	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))
 	if err != nil {
 		return err
@@ -409,20 +406,19 @@ func (ng *AlertNG) init() error {
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
-		Metrics:                        ng.Metrics.GetStateMetrics(),
-		ExternalURL:                    appUrl,
-		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:                  ng.InstanceStore,
-		Images:                         ng.ImageService,
-		Clock:                          clk,
-		Historian:                      history,
-		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
-		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
-		Tracer:                         ng.tracer,
-		Log:                            log.New("ngalert.state.manager"),
-		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		Metrics:                    ng.Metrics.GetStateMetrics(),
+		ExternalURL:                appUrl,
+		DisableExecution:           !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		InstanceStore:              ng.InstanceStore,
+		Images:                     ng.ImageService,
+		Clock:                      clk,
+		Historian:                  history,
+		MaxStateSaveConcurrency:    ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize: ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
+		RulesPerRuleGroupLimit:     ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
+		Tracer:                     ng.tracer,
+		Log:                        log.New("ngalert.state.manager"),
+		ResolvedRetention:          ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)
@@ -705,60 +701,28 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-// ApplyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
-func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
-	backend, _ := historian.ParseBackendType(cfg.Backend)
-	// These feature toggles represent specific, common backend configurations.
-	// If all toggles are enabled, we listen to the state history config as written.
-	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
-	// If multiple toggles are disabled, we go with the most "restrictive" one.
-	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
-		// If we cannot even treat Loki as a secondary, we must use annotations only.
-		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
-			logger.Info("Forcing Annotation backend due to state history feature toggles")
-			cfg.Backend = historian.BackendTypeAnnotations.String()
-			cfg.MultiPrimary = ""
-			cfg.MultiSecondaries = make([]string, 0)
-		}
-		return
-	}
-	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
-		// If we're using multiple backends, Loki must be the secondary.
-		if backend == historian.BackendTypeMultiple {
-			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
-			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
-			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
-		}
-		// If we're using loki, we are only allowed to use it as a secondary. Dual write to it, plus annotations.
-		if backend == historian.BackendTypeLoki {
-			logger.Info("Coercing Loki to dual writes with a secondary backend due to state history feature toggles")
-			cfg.Backend = historian.BackendTypeMultiple.String()
-			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
-			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
-		}
-		return
-	}
-	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly) {
-		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
-		if backend == historian.BackendTypeLoki {
-			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
-			cfg.Backend = historian.BackendTypeMultiple.String()
-			cfg.MultiPrimary = historian.BackendTypeLoki.String()
-			cfg.MultiSecondaries = []string{historian.BackendTypeAnnotations.String()}
-		}
-		return
-	}
-}
-
 func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
-		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
+			cfg := writer.DatasourceWriterConfig{
+				Timeout:              settings.Timeout,
+				DefaultDatasourceUID: settings.DefaultDatasourceUID,
+			}
+
+			logger.Info("Setting up remote write using data sources",
+				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
+
+			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
+		} else {
+			logger.Info("Setting up remote write using static configuration")
+			return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
+		}
 	}
 
 	return writer.NoopWriter{}, nil

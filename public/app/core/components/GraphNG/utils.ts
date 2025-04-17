@@ -1,7 +1,5 @@
-import { DataFrame, Field, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
-import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
-import { nullToUndefThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullToUndefThreshold';
+import { DataFrame, Field, FieldType, outerJoinDataFrames, TimeRange, applyNullInsertThreshold } from '@grafana/data';
+import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN, nullToUndefThreshold } from '@grafana/data/internal';
 import { GraphDrawStyle } from '@grafana/schema';
 
 import { XYFieldMatchers } from './types';

@@ -96,12 +96,15 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
    ```yaml
    ports:
-     - containerPort: 3000
-       name: http-grafana
+     - name: grafana
+       containerPort: 3000
        protocol: TCP
-     - containerPort: 9094
-       name: grafana-alert
+     - name: gossip-tcp
+       containerPort: 9094
        protocol: TCP
+     - name: gossip-udp
+       containerPort: 9094
+       protocol: UDP
    ```
 
 1. Add the environment variables to the Grafana deployment:

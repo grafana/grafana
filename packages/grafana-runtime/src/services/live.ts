@@ -42,6 +42,20 @@ export interface LiveQueryDataOptions {
 /**
  * @alpha -- experimental
  */
+export interface LivePublishOptions {
+  /**
+   * Publish the data over the websocket instead of the HTTP API.
+   *
+   * This is not recommended for most use cases.
+   *
+   * @experimental
+   */
+  useSocket?: boolean;
+}
+
+/**
+ * @alpha -- experimental
+ */
 export interface GrafanaLiveSrv {
   /**
    * Listen for changes to the main service
@@ -59,15 +73,6 @@ export interface GrafanaLiveSrv {
   getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
 
   /**
-   * Execute a query over the live websocket and potentiall subscribe to a live channel.
-   *
-   * Since the initial request and subscription are on the same socket, this will support HA setups
-   *
-   * @alpha -- this function requires the feature toggle `queryOverLive` to be set
-   */
-  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
-
-  /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
@@ -79,7 +84,7 @@ export interface GrafanaLiveSrv {
    *
    * @alpha -- experimental
    */
-  publish(address: LiveChannelAddress, data: unknown): Promise<unknown>;
+  publish(address: LiveChannelAddress, data: unknown, options?: LivePublishOptions): Promise<unknown>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

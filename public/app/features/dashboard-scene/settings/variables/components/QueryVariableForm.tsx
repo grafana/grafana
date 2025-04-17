@@ -7,6 +7,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
 import { Field } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -81,8 +82,13 @@ export function QueryVariableEditorForm({
 
   return (
     <>
-      <VariableLegend>Query options</VariableLegend>
-      <Field label="Data source" htmlFor="data-source-picker">
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.query-variable-editor-form.query-options">Query options</Trans>
+      </VariableLegend>
+      <Field
+        label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+      >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
@@ -115,6 +121,7 @@ export function QueryVariableEditorForm({
             ).
           </div>
         }
+        // eslint-disable-next-line @grafana/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
@@ -133,7 +140,9 @@ export function QueryVariableEditorForm({
         refresh={refresh}
       />
 
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.query-variable-editor-form.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={!!isMulti}
         includeAll={!!includeAll}

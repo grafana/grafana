@@ -43,9 +43,6 @@ export interface ThemeComponents {
   sidemenu: {
     width: number;
   };
-  menuTabs: {
-    height: number;
-  };
   horizontalDrawer: {
     defaultHeight: number;
   };
@@ -91,11 +88,12 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       padding: 1,
     },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',
     },
     sidemenu: {
       width: 57,
     },
+    // @ts-expect-error (added here to not crash plugins that might use it)
     menuTabs: {
       height: 5,
     },

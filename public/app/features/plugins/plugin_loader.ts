@@ -6,9 +6,12 @@ import {
   DataSourcePluginMeta,
   PluginLoadingStrategy,
   PluginMeta,
+  throwIfAngular,
 } from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/data/unstable';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { getI18next } from 'app/core/internationalization';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -80,8 +83,8 @@ type PluginImportInfo = {
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
   version?: string;
-  isAngular?: boolean;
   moduleHash?: string;
+  translations?: Record<string, string>;
 };
 
 export async function importPluginModule({
@@ -89,11 +92,21 @@ export async function importPluginModule({
   pluginId,
   loadingStrategy,
   version,
-  isAngular,
   moduleHash,
+  translations,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
+  }
+
+  // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
+  if (config.featureToggles.localizationForPlugins && translations) {
+    await addTranslationsToI18n({
+      resolvedLanguage: getI18next().resolvedLanguage ?? DEFAULT_LANGUAGE,
+      fallbackLanguage: DEFAULT_LANGUAGE,
+      pluginId,
+      translations,
+    });
   }
 
   const builtIn = builtInPlugins[path];
@@ -123,7 +136,7 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (await shouldLoadPluginInFrontendSandbox({ isAngular, pluginId })) {
+  if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
@@ -143,15 +156,16 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  const isAngular = meta.angular?.detected ?? meta.angularDetected;
+  throwIfAngular(meta);
+
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
+    translations: meta.translations,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
@@ -183,13 +197,15 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     return importedAppPlugins[pluginId];
   }
 
+  throwIfAngular(meta);
+
   const pluginExports = await importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     pluginId: meta.id,
-    isAngular: meta.angular?.detected ?? meta.angularDetected,
     loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
+    translations: meta.translations,
   });
 
   const { plugin = new AppPlugin() } = pluginExports;
@@ -217,4 +233,50 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   importedAppPlugins[pluginId] = plugin;
 
   return plugin;
+}
+
+interface AddTranslationsToI18nOptions {
+  resolvedLanguage: string;
+  fallbackLanguage: string;
+  pluginId: string;
+  translations: Record<string, string>;
+}
+
+// exported for testing purposes only
+export async function addTranslationsToI18n({
+  resolvedLanguage,
+  fallbackLanguage,
+  pluginId,
+  translations,
+}: AddTranslationsToI18nOptions): Promise<void> {
+  const resolvedPath = translations[resolvedLanguage];
+  const fallbackPath = translations[fallbackLanguage];
+  const path = resolvedPath ?? fallbackPath;
+
+  if (!path) {
+    console.warn(`Could not find any translation for plugin ${pluginId}`, { resolvedLanguage, fallbackLanguage });
+    return;
+  }
+
+  try {
+    const module = await SystemJS.import(resolveModulePath(path));
+    if (!module.default) {
+      console.warn(`Could not find default export for plugin ${pluginId}`, {
+        resolvedLanguage,
+        fallbackLanguage,
+        path,
+      });
+      return;
+    }
+
+    const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
+    getI18next().addResourceBundle(language, pluginId, module.default, undefined, true);
+  } catch (error) {
+    console.warn(`Could not load translation for plugin ${pluginId}`, {
+      resolvedLanguage,
+      fallbackLanguage,
+      error,
+      path,
+    });
+  }
 }
