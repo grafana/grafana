@@ -110,7 +110,6 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
-
 	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
