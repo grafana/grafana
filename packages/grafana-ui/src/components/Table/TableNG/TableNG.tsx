@@ -55,7 +55,6 @@ import {
   getTextAlign,
   handleSort,
   MapFrameToGridOptions,
-  shouldTextOverflow,
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
@@ -436,19 +435,16 @@ export function TableNG(props: TableNGProps) {
         frame: props.data,
         calcsRef,
         options: {
-          columnTypes,
           textWraps,
           columnWidth,
           crossFilterOrder,
           crossFilterRows,
-          defaultLineHeight,
           defaultRowHeight,
           expandedRows,
           filter,
           headerCellRefs,
           isCountRowsSet,
           onCellFilterAdded,
-          ctx,
           onSortByChange,
           rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
@@ -644,18 +640,15 @@ export function mapFrameToDataGrid({
   availableWidth: number;
 }): TableColumn[] {
   const {
-    columnTypes,
     textWraps,
     crossFilterOrder,
     crossFilterRows,
-    defaultLineHeight,
     defaultRowHeight,
     expandedRows,
     filter,
     headerCellRefs,
     isCountRowsSet,
     onCellFilterAdded,
-    ctx,
     onSortByChange,
     rows,
     sortedRows,
@@ -782,7 +775,6 @@ export function mapFrameToDataGrid({
       cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
-        const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
         return (
@@ -796,21 +788,6 @@ export function mapFrameToDataGrid({
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
             rowIdx={sortedRows[rowIdx].__index}
-            shouldTextOverflow={() =>
-              shouldTextOverflow(
-                key,
-                row,
-                columnTypes,
-                headerCellRefs,
-                ctx,
-                defaultLineHeight,
-                defaultRowHeight,
-                TABLE.CELL_PADDING,
-                textWraps[field.name],
-                field,
-                cellType
-              )
-            }
             setIsInspecting={setIsInspecting}
             setContextMenuProps={setContextMenuProps}
             getActions={getActions}

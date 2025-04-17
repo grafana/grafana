@@ -182,30 +182,6 @@ export function isTextCell(key: string, columnTypes: Record<string, string>): bo
   return columnTypes[key] === FieldType.string;
 }
 
-export function shouldTextOverflow(
-  key: string,
-  row: TableRow,
-  columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding: number,
-  textWrap: boolean,
-  field: Field,
-  cellType: TableCellDisplayMode
-): boolean {
-  const cellInspect = field.config?.custom?.inspect ?? false;
-
-  // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-  // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
-    return false;
-  }
-
-  return true;
-}
-
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
@@ -489,17 +465,14 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 };
 
 export interface MapFrameToGridOptions extends TableNGProps {
-  columnTypes: ColumnTypes;
   columnWidth: number | string;
   crossFilterOrder: React.MutableRefObject<string[]>;
   crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
-  defaultLineHeight: number;
   defaultRowHeight: number;
   expandedRows: number[];
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   isCountRowsSet: boolean;
-  ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
   sortedRows: TableRow[];

@@ -9,7 +9,6 @@ import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
-// import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import {
   CellColors,
@@ -39,7 +38,6 @@ export function TableCellNG(props: TableCellNGProps) {
     height,
     rowIdx,
     justifyContent,
-    shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
     getActions,
@@ -64,7 +62,7 @@ export function TableCellNG(props: TableCellNGProps) {
   } else {
     colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
   }
-  const styles = useStyles2(getStyles, isRightAligned, colors);
+  const styles = useStyles2(getStyles, isRightAligned, colors, height);
 
   // TODO
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
@@ -147,36 +145,6 @@ export function TableCellNG(props: TableCellNGProps) {
     return cell;
   }, [cellType, commonProps, theme, timeRange, divWidth, height, cellOptions, field, rowIdx, actions, value, frame]);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
-      tableCellDiv?.style.setProperty('white-space', 'pre-line');
-      tableCellDiv?.style.setProperty('min-height', `100%`);
-      tableCellDiv?.style.setProperty('height', `fit-content`);
-      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
-      tableCellDiv?.style.setProperty('min-width', 'min-content');
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.removeProperty('z-index');
-      tableCellDiv?.style.removeProperty('white-space');
-      tableCellDiv?.style.removeProperty('min-height');
-      tableCellDiv?.style.removeProperty('height');
-      tableCellDiv?.style.removeProperty('background');
-      tableCellDiv?.style.removeProperty('min-width');
-    }
-  };
-
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
       onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
@@ -190,7 +158,12 @@ export function TableCellNG(props: TableCellNGProps) {
   }, [field.name, onCellFilterAdded, value]);
 
   return (
-    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
+    <div
+      ref={divWidthRef}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={styles.cell}
+    >
       {renderedCell}
       {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
@@ -240,7 +213,7 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
+const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors, height: number) => ({
   cell: css({
     height: '100%',
     alignContent: 'center',
@@ -248,7 +221,24 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
-    '&:hover': { background: color.bgHoverColor },
+
+    // We need to unset the background color and set the min height to the cell height
+    // to allow the parent .rdg-cell element to take on the hover styles.
+    '&:hover': {
+      background: 'unset',
+    },
+
+    '[role="gridcell"]:has(&:hover)': {
+      backgroundColor: color.bgHoverColor || 'none',
+      height: 'fit-content',
+      minHeight: '100%',
+      // The background color overrides the border, so we need to subtract 1px from the width
+      // if the background color is set.
+      minWidth: color.bgColor ? 'calc(100% - 1px)' : '100%',
+      whiteSpace: 'pre-line',
+      width: 'fit-content',
+      zIndex: theme.zIndex.tooltip,
+    },
   }),
   cellActions: css({
     display: 'flex',
