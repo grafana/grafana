@@ -200,7 +200,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   changeScopes = (scopeNames: string[]) => {
-    this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [], title: scopeName })));
+    return this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [], title: scopeName })));
   };
 
   /**
@@ -225,7 +225,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Fetches both dashboards and scope navigations
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
-    selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
+    if (treeScopes.length > 0) {
+      selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
+    }
 
     // Make sure the treeScopes also have the right title as we use it to display the selection in the UI while to set
     // the scopes you just need the name/id.
@@ -274,11 +276,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public closeAndApply = () => {
     this.updateState({ opened: false });
-    this.setNewScopes();
+    return this.setNewScopes();
   };
 
   public apply = () => {
-    this.setNewScopes();
+    return this.setNewScopes();
   };
 
   public resetSelection = () => {
