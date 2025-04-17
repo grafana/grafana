@@ -26,9 +26,12 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   GrafanaAlertingRuleDefinition,
+  GrafanaPromAlertingRuleDTO,
+  GrafanaPromRecordingRuleDTO,
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
+  PromRuleDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
@@ -97,6 +100,14 @@ function isRecordingRule(rule?: Rule): rule is RecordingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Recording;
 }
 
+function isGrafanaPromAlertingRule(rule?: Rule): rule is GrafanaPromAlertingRuleDTO {
+  return isAlertingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
+function isGrafanaPromRecordingRule(rule?: Rule): rule is GrafanaPromRecordingRuleDTO {
+  return isRecordingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
 export const rulerRuleType = {
   grafana: {
     rule: isGrafanaRulerRule,
@@ -118,6 +129,11 @@ export const prometheusRuleType = {
   rule: (rule?: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
   alertingRule: isAlertingRule,
   recordingRule: isRecordingRule,
+  grafana: {
+    rule: (rule?: Rule) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
+    alertingRule: isGrafanaPromAlertingRule,
+    recordingRule: isGrafanaPromRecordingRule,
+  },
 };
 
 export function alertInstanceKey(alert: Alert): string {
@@ -212,7 +228,7 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -245,7 +261,7 @@ export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
   return group.rules.some((rule) => isPluginProvidedRule(rule));
 }
 
-export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
+export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 
@@ -277,7 +293,13 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
         if (rule.promRule && isAlertingRule(rule.promRule)) {
-          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
+          acc.push({
+            dataSourceName: getRulesSourceName(rulesSource),
+            namespaceName,
+            groupName,
+            ...rule,
+            namespace: { ...rule.namespace, uid: rule.promRule.folderUid },
+          });
         }
       });
     });

@@ -473,13 +473,6 @@ export function logSeriesToLogsModel(
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
-  if (size(commonLabels) > 0) {
-    meta.push({
-      label: COMMON_LABELS,
-      value: commonLabels,
-      kind: LogsMetaKind.LabelsMap,
-    });
-  }
   // Data sources that set up searchWords on backend use meta.custom.limit.
   // Data sources that set up searchWords through frontend can use meta.limit.
   const limits = logSeries.filter((series) => series?.meta?.custom?.limit ?? series?.meta?.limit);
@@ -535,6 +528,14 @@ export function logSeriesToLogsModel(
       label: 'Total bytes processed',
       value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
+    });
+  }
+
+  if (size(commonLabels) > 0) {
+    meta.push({
+      label: COMMON_LABELS,
+      value: commonLabels,
+      kind: LogsMetaKind.LabelsMap,
     });
   }
 

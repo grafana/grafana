@@ -4,25 +4,24 @@ package migrator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/spanner"
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
-
-	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"
 
-	_ "embed"
-
-	database "cloud.google.com/go/spanner/admin/database/apiv1"
+	"github.com/grafana/dskit/concurrency"
+	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 type SpannerDialect struct {
@@ -44,6 +43,18 @@ func NewSpannerDialect() Dialect {
 func (s *SpannerDialect) AutoIncrStr() string      { return s.d.AutoIncrStr() }
 func (s *SpannerDialect) Quote(name string) string { return s.d.Quote(name) }
 func (s *SpannerDialect) SupportEngine() bool      { return s.d.SupportEngine() }
+
+func (s *SpannerDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := strings.ToLower(pattern)
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("LOWER(%s) LIKE ?", column), param
+}
+
 func (s *SpannerDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return s.d.IndexCheckSql(tableName, indexName)
 }

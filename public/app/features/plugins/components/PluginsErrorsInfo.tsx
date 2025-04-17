@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Icon, List, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, List, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
+import { t } from '../../../core/internationalization';
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 
 type PluginsErrorInfoProps = {
@@ -21,11 +23,18 @@ export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps)
 
   return (
     <Alert
-      title="Unsigned plugins were found during plugin initialization. Grafana Labs cannot guarantee the integrity of these plugins. We recommend only using signed plugins."
+      title={t(
+        'plugins.plugins-errors-info.title-unsigned-plugins',
+        'Unsigned plugins were found during plugin initialization. Grafana Labs cannot guarantee the integrity of these plugins. We recommend only using signed plugins.'
+      )}
       data-testid={selectors.pages.PluginsList.signatureErrorNotice}
       severity="warning"
     >
-      <p>The following plugins are disabled and not shown in the list below:</p>
+      <p>
+        <Trans i18nKey="plugins.plugins-errors-info.disabled-list">
+          The following plugins are disabled and not shown in the list below:
+        </Trans>
+      </p>
       <List
         items={errors}
         className={styles.list}
@@ -41,14 +50,15 @@ export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps)
           </div>
         )}
       />
-      <a
+      <TextLink
         href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+        external
         className={styles.docsLink}
-        target="_blank"
-        rel="noreferrer"
       >
-        <Icon name="book" /> Read more about plugin signing
-      </a>
+        <Trans i18nKey="plugins.plugins-errors-info.read-more-about-plugin-signing">
+          Read more about plugin signing
+        </Trans>
+      </TextLink>
     </Alert>
   );
 }
@@ -79,7 +89,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     docsLink: css({
       display: 'inline-block',
-      color: theme.colors.text.link,
       marginTop: theme.spacing(2),
     }),
   };

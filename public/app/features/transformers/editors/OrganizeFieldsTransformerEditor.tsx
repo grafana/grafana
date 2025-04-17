@@ -182,7 +182,11 @@ const DraggableFieldName = ({
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
                 onClick={() => onToggleVisibility(fieldName, visible)}
-                tooltip={visible ? 'Disable' : 'Enable'}
+                tooltip={
+                  visible
+                    ? t('transformers.draggable-field-name.tooltip-disable', 'Disable')
+                    : t('transformers.draggable-field-name.tooltip-enable', 'Enable')
+                }
               />
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
                 {fieldName}

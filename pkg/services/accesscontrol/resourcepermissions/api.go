@@ -461,7 +461,7 @@ func (a *api) validateTeamResource(c *contextmodel.ReqContext, resourceID string
 	}
 
 	existingTeam, err := a.service.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		ID:           teamID,
 		SignedInUser: c.SignedInUser,
 	})

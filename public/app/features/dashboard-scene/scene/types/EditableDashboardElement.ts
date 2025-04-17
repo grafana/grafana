@@ -64,6 +64,11 @@ export interface EditableDashboardElement {
    * Used to sync row collapsed state with outline
    */
   setCollapsedState?(collapsed: boolean): void;
+
+  /**
+   * Used to change name from outline
+   */
+  onChangeName?(name: string): { errorMessage?: string } | void;
 }
 
 export interface EditableDashboardElementInfo {

@@ -59,10 +59,10 @@ export const MigrationStepsPane = () => {
           </ol>
         </Stack>
       </InfoItem>
-      <TextLink href="/connections/private-data-source-connections">
+      <TextLink href="/connections/private-data-source-connections" external>
         {t('migrate-to-cloud.get-started.configure-pdc-link', 'Configure PDC for this stack')}
       </TextLink>
-      <TextLink href="/a/grafana-selfservetutorials-app/migrate-oss">
+      <TextLink href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide" external>
         {t('migrate-to-cloud.migrate-to-this-stack.link-title', 'View the full migration guide')}
       </TextLink>
     </Box>
