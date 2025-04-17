@@ -101,8 +101,8 @@ func (cfg *resourceRingConfig) toMemberlistConfig(memberlistJoinMember string) *
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
-	memberlistKVcfg.AdvertiseAddr = cfg.InstanceAddr
-	memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.InstanceAddr}
+	// memberlistKVcfg.AdvertiseAddr = cfg.InstanceAddr
+	// memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.InstanceAddr}
 	memberlistKVcfg.NodeName = cfg.InstanceAddr
 	memberlistKVcfg.JoinMembers = []string{memberlistJoinMember}
 
