@@ -284,13 +284,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "frontendSandboxMonitorOnly",
-			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStagePrivatePreview,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageGeneralAvailability,
@@ -480,13 +473,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:         "pluginsAPIMetrics",
-			Description:  "Sends metrics of public grafana packages usage by plugins",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -1596,12 +1582,21 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-			HideFromDocs: true,
+			Name:              "useScopesNavigationEndpoint",
+			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "scopeSearchAllLevels",
+			Description:       "Enable scope search to include all levels of the scope node tree",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "alertingRuleVersionHistoryRestore",
@@ -1779,6 +1774,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
+		},
+		{
+
+			Name:         "pluginsAutoUpdate",
+			Description:  "Enables auto-updating of users installed plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

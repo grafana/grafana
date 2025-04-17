@@ -155,10 +155,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagFrontendSandboxMonitorOnly
-	// Enables monitor only in the plugin frontend sandbox (if enabled)
-	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
-
 	// FlagPluginsDetailsRightPanel
 	// Enables right panel for the plugins details page
 	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
@@ -258,10 +254,6 @@ const (
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
-
-	// FlagPluginsAPIMetrics
-	// Sends metrics of public grafana packages usage by plugins
-	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
@@ -855,6 +847,10 @@ const (
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
 
+	// FlagScopeSearchAllLevels
+	// Enable scope search to include all levels of the scope node tree
+	FlagScopeSearchAllLevels = "scopeSearchAllLevels"
+
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
 	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
@@ -942,4 +938,8 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagPluginsAutoUpdate
+	// Enables auto-updating of users installed plugins
+	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 )

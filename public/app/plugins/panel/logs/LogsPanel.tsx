@@ -13,7 +13,6 @@ import {
   DataQueryResponse,
   DataSourceApi,
   dateTimeForTimeZone,
-  Field,
   GrafanaTheme2,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
@@ -45,6 +44,7 @@ import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
 import {
+  GetFieldLinksFn,
   isIsFilterLabelActive,
   isOnClickFilterLabel,
   isOnClickFilterOutLabel,
@@ -303,9 +303,15 @@ export const LogsPanel = ({
     }
   }, [panelData.request?.app, isAscending, scrollElement, logRows]);
 
-  const getFieldLinks = useCallback(
-    (field: Field, rowIndex: number) => {
-      return getFieldLinksForExplore({ field, rowIndex, range: panelData.timeRange });
+  const getFieldLinks: GetFieldLinksFn = useCallback(
+    (field, rowIndex, dataFrame, vars) => {
+      return getFieldLinksForExplore({
+        field,
+        rowIndex,
+        range: panelData.timeRange,
+        dataFrame: dataFrame,
+        vars,
+      });
     },
     [panelData]
   );
