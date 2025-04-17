@@ -277,10 +277,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	if opts.ShardingConfig != nil && opts.ShardingConfig.Enabled {
-		err := s.enableSharding(*opts.ShardingConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error sharding: %s", err)
-		}
+		go s.enableSharding(*opts.ShardingConfig)
+		// err := s.enableSharding(*opts.ShardingConfig)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("error sharding: %s", err)
+		// }
 	}
 
 	if opts.Search.Resources != nil {
@@ -362,7 +363,7 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-func (s *server) enableSharding(cfg ShardingConfig) error {
+func (s *server) enableSharding(cfg ShardingConfig) {
 	ctx := context.Background()
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
@@ -372,38 +373,47 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 	ringsvc, lfcsvc, err := initRing(cfg, log, s.reg)
 
 	if err != nil {
-		return err
+		log.Error("Error instantiating the ring: ", err)
+		return
 	}
 
 	err = ringsvc.StartAsync(ctx)
 	if err != nil {
-		return err
+		log.Error("Error instantiating the ring: ", err)
+		return
 	}
 	err = lfcsvc.StartAsync(ctx)
 	if err != nil {
-		return err
+		log.Error("Error instantiating the ring: ", err)
+		return
 	}
+
+	log.Info("ring and lifecycle service started successfully ", lfcsvc.GetInstanceID())
 
 	s.log.Info("waiting until resource server is JOINING in the ring")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	if err := ring.WaitInstanceState(ctx, ringsvc, lfcsvc.GetInstanceID(), ring.JOINING); err != nil {
-		return err
+		log.Error("Error switching to JOINING in the ring: ", err)
+		return
 	}
 	s.log.Info("resource server is JOINING in the ring")
 
 	if err := lfcsvc.ChangeState(context.Background(), ring.ACTIVE); err != nil {
-		return fmt.Errorf("switch instance to %s in the ring: %w", ring.ACTIVE, err)
+		log.Error("Error switching to ACTIVE in the ring: ", err)
+		return
 	}
 
 	s.log.Info("waiting until resource server is ACTIVE in the ring")
 	if err := ring.WaitInstanceState(context.Background(), ringsvc, lfcsvc.GetInstanceID(), ring.ACTIVE); err != nil {
-		return err
+		log.Error("Error switching to ACTIVE in the ring: ", err)
+		return
 	}
 	s.log.Info("resource server is ACTIVE in the ring")
 
 	if err := pool.StartAsync(context.Background()); err != nil {
-		return fmt.Errorf("failed to create pool client: %w", err)
+		log.Error("Error creating pool client: ", err)
+		return
 	}
 
 	s.pool = pool
@@ -434,7 +444,7 @@ func (s *server) enableSharding(cfg ShardingConfig) error {
 		}()
 	}
 
-	return nil
+	return
 }
 
 func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
