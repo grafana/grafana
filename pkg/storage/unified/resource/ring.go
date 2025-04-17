@@ -117,7 +117,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		KVStore:          kv.Config{Store: "memberlist"},
 		HeartbeatPeriod:  15 * time.Second,
 		HeartbeatTimeout: time.Minute,
-		InstanceID:        cfg.InstanceID,
+		InstanceID:       cfg.InstanceID,
 		InstanceAddr:     cfg.MemberlistBindAddr,
 		ListenPort:       cfg.RingListenPort,
 		InstancePort:     cfg.RingListenPort,
