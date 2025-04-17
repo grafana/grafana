@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -11,6 +12,7 @@ import (
 
 type OpenFeatureService struct {
 	cfg      *setting.Cfg
+	log      log.Logger
 	provider openfeature.FeatureProvider
 	Client   openfeature.IClient
 }
@@ -37,14 +39,16 @@ func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
 	client := openfeature.NewClient("grafana-openfeature-client")
 	return &OpenFeatureService{
 		cfg:      cfg,
+		log:      log.New("openfeatureservice"),
 		provider: provider,
 		Client:   client,
 	}, nil
 }
 
 func (s *OpenFeatureService) EvalFlagWithStaticProvider(ctx context.Context, flagKey string) (openfeature.BooleanEvaluationDetails, error) {
-	if s.cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		return openfeature.BooleanEvaluationDetails{}, fmt.Errorf("request must be sent to open feature service for %s provider", setting.GOFFProviderType)
+	_, ok := s.provider.(*inMemoryBulkProvider)
+	if !ok {
+		return openfeature.BooleanEvaluationDetails{}, fmt.Errorf("not a static provider, request must be sent to open feature service")
 	}
 
 	result, err := s.Client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
@@ -56,13 +60,34 @@ func (s *OpenFeatureService) EvalFlagWithStaticProvider(ctx context.Context, fla
 }
 
 func (s *OpenFeatureService) EvalAllFlagsWithStaticProvider(ctx context.Context) (AllFlagsGOFFResp, error) {
-	if s.cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		return AllFlagsGOFFResp{}, fmt.Errorf("request must be sent to open feature service for %s provider", setting.GOFFProviderType)
+	p, ok := s.provider.(*inMemoryBulkProvider)
+	if !ok {
+		return AllFlagsGOFFResp{}, fmt.Errorf("not a static provider, request must be sent to open feature service")
 	}
 
-	// TODO: implement this
+	flags, err := p.ListFlags()
+	if err != nil {
+		return AllFlagsGOFFResp{}, fmt.Errorf("static provider failed to list all flags: %w", err)
+	}
 
-	return AllFlagsGOFFResp{}, nil
+	allFlags := make(map[string]*FlagGOFF, len(flags))
+	for _, flagKey := range flags {
+		result, err := s.Client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
+		if err != nil {
+			s.log.Error("failed to evaluate flag during bulk evaluation", "flagKey", flagKey, "error", err)
+			continue
+		}
+
+		// TODO: see if this needs to be changed so the open feature client understands the response
+		allFlags[flagKey] = &FlagGOFF{
+			VariationType: "boolean",
+			Value:         result.Value,
+		}
+	}
+
+	return AllFlagsGOFFResp{
+		Flags: allFlags,
+	}, nil
 }
 
 type AllFlagsGOFFResp struct {

@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +50,7 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 				_, ok := p.provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 			} else {
-				_, ok := p.provider.(memprovider.InMemoryProvider)
+				_, ok := p.provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})
