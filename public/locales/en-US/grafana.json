@@ -5557,8 +5557,7 @@
       "no-data": "No data"
     },
     "inspect-error-tab": {
-      "error-message-message": "Message: {{msg}}",
-      "error-status-message": "Status: {{errorStatus}}.",
+      "error-status-message": "Status: {{errorStatus}}. Message:",
       "error-status-no-message": "Status: {{errorStatus}}",
       "error-trace-message": "(Trace ID: {{errorTrace}})"
     },
@@ -5595,7 +5594,7 @@
       "complete-following": "Please complete the following and choose a password to accept your invitation and continue:",
       "custom-has-invited-you": "<0>{{invitedBy}}</0> has invited you to join Grafana and the organization <3>{{orgName}}</3>",
       "default-has-invited-you": "<0>Someone</0> has invited you to join Grafana and the organization <3>{{orgName}}</3>",
-      "greeting-custom": "Hello {{greeting}}",
+      "greeting-custom": "Hello {{greeting}}.",
       "greeting-default": "Hello there.",
       "label-email": "Email",
       "label-name": "Name",

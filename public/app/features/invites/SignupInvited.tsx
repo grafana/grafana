@@ -68,7 +68,7 @@ export const SignupInvitedPage = () => {
       <Page.Contents>
         <h3 className="page-sub-heading">
           {greeting
-            ? t('invites.signup-invited-page.greeting-custom', 'Hello {{greeting}}', { greeting })
+            ? t('invites.signup-invited-page.greeting-custom', 'Hello {{greeting}}.', { greeting })
             : t('invites.signup-invited-page.greeting-default', 'Hello there.')}
         </h3>
 

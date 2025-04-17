@@ -36,10 +36,10 @@ function renderError(error: DataQueryError) {
         <>
           {error.status && (
             <Trans i18nKey="inspector.inspect-error-tab.error-status-message" values={{ errorStatus: error.status }}>
-              Status: {'{{errorStatus}}'}.
+              Status: {'{{errorStatus}}'}. Message:
             </Trans>
           )}{' '}
-          <Trans i18nKey="inspector.inspect-error-tab.error-message-message">Message: {{ msg }}</Trans>
+          {msg}
           {error.traceId != null && (
             <>
               <br />
