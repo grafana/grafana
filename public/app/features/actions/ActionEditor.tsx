@@ -227,7 +227,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
         <InlineFieldRow>
           <InlineField
-            label={t('actions.action-editor.button.style.background-color', 'Color')}
+            label={t('actions.action-editor.button.style.background-color', 'Background color')}
             labelWidth={LABEL_WIDTH}
             grow={true}
           >
