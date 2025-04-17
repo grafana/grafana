@@ -1,4 +1,4 @@
-import { api } from '/Users/gilles/grafana/grafana/packages/grafana-alerting/src/grafana/api';
+import { api } from './api';
 export const addTagTypes = ['API Discovery', 'Receiver', 'RoutingTree', 'TemplateGroup', 'TimeInterval'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({

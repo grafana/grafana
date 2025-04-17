@@ -8,12 +8,14 @@ import { type ConfigFile } from '@rtk-query/codegen-openapi';
 import { resolve } from 'node:path';
 
 // make sure to run the Grafana server before running this script since it will download the OpenAPI schema from the server
-const OPENAPI_SCHEMA_LOCATION = 'http://localhost:3000/openapi/v3/apis/notifications.alerting.grafana.app/v0alpha1';
+const OPENAPI_SCHEMA_LOCATION = resolve(
+  '../../../pkg/tests/apis/openapi_snapshots/notifications.alerting.grafana.app-v0alpha1.json'
+);
 
 export default {
   exportName: 'alertingAPI',
   schemaFile: OPENAPI_SCHEMA_LOCATION,
-  apiFile: resolve('../src/grafana/api.ts'),
+  apiFile: '../src/grafana/api.ts',
   outputFile: resolve('../src/grafana/api.gen.ts'),
   tag: true,
 } satisfies ConfigFile;
