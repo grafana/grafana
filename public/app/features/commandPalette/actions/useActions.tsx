@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, Node, TreeScope } from '../../scopes/selector/types';
+import { NodesMap, Node, TreeScope, ToggleNode } from '../../scopes/selector/types';
 import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
@@ -117,14 +117,16 @@ export function useRegisterScopesActions(searchQuery: string, onApply: () => voi
 
   return {
     scopesRow:
-      isDirty || treeScopes?.length ? <ScopesRow treeScopes={treeScopes} apply={finalApply} isDirty={isDirty} /> : null,
+      isDirty || treeScopes?.length ? (
+        <ScopesRow toggleNode={toggleNodeSelect} treeScopes={treeScopes} apply={finalApply} isDirty={isDirty} />
+      ) : null,
   };
 }
 
 function mapScopeNodesToActions(
   nodes: NodesMap,
   selectedScopes: TreeScope[],
-  toggleNodeSelect: (path: string[]) => void
+  toggleNodeSelect: (node: ToggleNode) => void
 ) {
   const actions: CommandPaletteAction[] = [
     {
@@ -161,7 +163,7 @@ function mapScopeNodesToActions(
 
       if (child.nodeType === 'leaf') {
         action.perform = () => {
-          toggleNodeSelect(getScopePathFromActionId(action.id));
+          toggleNodeSelect({ scopeName: child.name, path: getScopePathFromActionId(action.id) });
         };
       }
 

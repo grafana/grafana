@@ -28,5 +28,8 @@ export interface TreeScope {
   path: string[];
 }
 
+// Sort of partial treeScope that is used as a way to say which node should be toggled.
+export type ToggleNode = { scopeName: string; path?: string[] } | { path: string[]; scopeName?: string };
+
 export type OnNodeUpdate = (path: string[], expanded: boolean, query: string) => void;
-export type OnNodeSelectToggle = (path: string[]) => void;
+export type OnNodeSelectToggle = (node: ToggleNode) => void;
