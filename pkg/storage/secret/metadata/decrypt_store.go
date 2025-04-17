@@ -86,6 +86,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptFailed
 	}
 
+	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
 	s.log.Info("Audit log:", "operation", "decrypt_secret", "namespace", namespace, "secret_name", name, "decrypter_identity", identity)
 
 	return exposedValue, nil
