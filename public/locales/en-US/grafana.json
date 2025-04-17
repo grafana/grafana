@@ -2964,7 +2964,9 @@
     },
     "annotation-settings-list": {
       "aria-label-delete": "Delete query with title \"{{title}}\"",
+      "built-in": "{{name}} (Built-in)",
       "data-source": "Data source",
+      "disabled": "(Disabled) {{name}}",
       "new-query": "New query",
       "query-name": "Query name",
       "tooltip-move-down": "Move down",
@@ -3330,6 +3332,9 @@
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
     },
+    "new-dashboard-with-ds": {
+      "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
+    },
     "new-panel": {
       "configure-button": "Configure",
       "configure-button-menu": "Toggle menu",
@@ -3397,6 +3402,7 @@
       "try-again-later": "Try again later"
     },
     "revert-dashboard-modal": {
+      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "title-restore-version": "Restore version"
     },
     "row-options-button": {
@@ -3719,7 +3725,10 @@
       "tags-expected-strings": "tags expected array of strings"
     },
     "version-history-comparison": {
-      "label-view-json-diff": "View JSON diff"
+      "button-restore": "Restore to version {{version}}",
+      "label-view-json-diff": "View JSON diff",
+      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
@@ -3818,8 +3827,10 @@
       "title-annotation-support-source": "No annotation support for this data source"
     },
     "annotation-settings-list": {
+      "built-in": "{{annoName}} (Built-in)",
       "data-source": "Data source",
       "delete-aria-label": "Delete query with title \"{{title}}\"",
+      "disabled": "(Disabled) {{annoName}}",
       "new-query": "New query",
       "query-name": "Query name",
       "tooltip-move-down": "Move down",
@@ -3946,6 +3957,7 @@
       "save-and-overwrite": "'Save and overwrite'"
     },
     "library-viz-panel-info": {
+      "last-edited": "{{timeAgo}} by<person />",
       "usage-count_one": "Used on {{count}} dashboard",
       "usage-count_other": "Used on {{count}} dashboards"
     },
@@ -4176,8 +4188,15 @@
       "preview-of-values": "Preview of values",
       "show-more": "Show more"
     },
+    "version-history": {
+      "comparison": {
+        "button-restore": "Restore to version {{version}}"
+      }
+    },
     "version-history-comparison": {
-      "label-view-json-diff": "View JSON diff"
+      "label-view-json-diff": "View JSON diff",
+      "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
+      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",
@@ -4554,9 +4573,14 @@
       "add-transformation": "Add transformation",
       "aria-label-delete-transformation": "Delete transformation",
       "aria-label-edit-transformation": "Edit transformation",
+      "body-correlation-details": "The correlation link will appear by the <1>{{resultField}}</1> field. You can use the following variables to set up your correlations:",
+      "expression": "Expression: <1>{{expression}}</1>",
       "label-description": "Description",
+      "label-description-header": "Label / Description",
       "label-label": "Label",
-      "title-correlation-details": "Correlation details"
+      "title-correlation-details": "Correlation details",
+      "tooltip-transformations": "A transformation extracts one or more variables out of a single field.",
+      "transformations": "Transformations"
     },
     "correlation-transformation-add-modal": {
       "add-transformation": "Add transformation to correlation",
@@ -4716,7 +4740,11 @@
     "next": "Next",
     "next-prev-result": {
       "aria-label-next": "Next result button",
-      "aria-label-prev": "Prev result button"
+      "aria-label-prev": "Prev result button",
+      "depth": "Depth: {{depth}}",
+      "depth-span-filter-matches": "Depth: {{depth}}",
+      "services": "Services: {{services}}",
+      "services-span-filter-matches": "Services: {{total}}/{{services}}"
     },
     "no-data-source-call-to-action": {
       "cta-element": {
@@ -5541,6 +5569,10 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
+      "count-frames_one": "{{count}} frame, ",
+      "count-frames_other": "{{count}} frames, ",
+      "count-rows_one": "{{count}} row",
+      "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
       "text-loading-query-inspector": "Loading query inspector..."
     }
@@ -5555,6 +5587,10 @@
     },
     "signup-invited-page": {
       "complete-following": "Please complete the following and choose a password to accept your invitation and continue:",
+      "custom-has-invited-you": "<0>{{invitedBy}}</0> has invited you to join Grafana and the organization <3>{{orgName}}</3>",
+      "default-has-invited-you": "<0>Someone</0> has invited you to join Grafana and the organization <3>{{orgName}}</3>",
+      "greeting-custom": "Hello {{greeting}}",
+      "greeting-default": "Hello there.",
       "label-email": "Email",
       "label-name": "Name",
       "label-password": "Password",
@@ -5749,6 +5785,11 @@
     },
     "has-connected-dashboards": {
       "dashboard-name": "Dashboard name"
+    },
+    "library-panel-info": {
+      "last-edited": "Last edited on {{timeAgo}} by<person />",
+      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
       "placeholder-search-by-name-or-description": "Search by name or description"
@@ -7689,10 +7730,12 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
+      "collapsed-interval": "Interval = {intervalDesc}",
+      "collapsed-max-data-points": "MD = {mdDesc}",
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
-      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <6>{{variable}}</6>.",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
         "cache-timeout": "Cache timeout"
       },
@@ -7712,7 +7755,7 @@
         "cache-ttl": "Cache TTL"
       },
       "time-shift": "Time shift",
-      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <5>{{variable}}</5>."
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>."
     },
     "query-group-top-section": {
       "data-source": "Data source",
@@ -7837,6 +7880,13 @@
     "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
+  },
+  "Run math operations on one or more queries": {
+    " You reference the query by {{refExample}} ie": {
+      " {{ref1}}, {{ref2}}, {{ref3}}etc": {
+        "<9></9>Example: <11>{{example}}</11>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<9></9>Example: <11>{{example}}</11>"
+      }
+    }
   },
   "sandbox": {
     "test-stuff-page": {

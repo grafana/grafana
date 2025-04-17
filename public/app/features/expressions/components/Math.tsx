@@ -42,10 +42,22 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
               content={
                 <div className={styles.documentationContainer}>
                   <div>
-                    Run math operations on one or more queries. You reference the query by {'${refId}'} ie. $A, $B, $C
-                    etc.
-                    <br />
-                    Example: <code>$A + $B</code>
+                    <Trans
+                      i18nKey=""
+                      values={{
+                        refExample: '${refId}',
+                        ref1: '$A',
+                        ref2: '$B',
+                        ref3: '$C',
+                        example: '$A + $B',
+                      }}
+                    >
+                      Run math operations on one or more queries. You reference the query by {'{{refExample}}'} ie.{' '}
+                      {'{{ref1}}'}, {'{{ref2}}'}, {'{{ref3}}'}
+                      etc.
+                      <br />
+                      Example: <code>{'{{example}}'}</code>
+                    </Trans>
                   </div>
                   <header className={styles.documentationHeader}>
                     <Trans i18nKey="expressions.math.available-math-functions">Available math functions</Trans>

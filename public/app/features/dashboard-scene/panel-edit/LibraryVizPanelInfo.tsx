@@ -28,11 +28,27 @@ export const LibraryVizPanelInfo = ({ libraryPanel }: Props) => {
         </Trans>
       </div>
       <div className={styles.libraryPanelInfo}>
-        {dateTimeFormat(meta.updated, { format: 'L', timeZone: tz })} by
-        {meta.updatedBy.avatarUrl && (
-          <img className={styles.userAvatar} src={meta.updatedBy.avatarUrl} alt={`Avatar for ${meta.updatedBy.name}`} />
-        )}
-        {meta.updatedBy.name}
+        <Trans
+          i18nKey="dashboard-scene.library-viz-panel-info.last-edited"
+          values={{ timeAgo: dateTimeFormat(meta.updated, { format: 'L', timeZone: tz }) }}
+          components={{
+            person: (
+              <>
+                {meta.updatedBy.avatarUrl && (
+                  <img
+                    className={styles.userAvatar}
+                    src={meta.updatedBy.avatarUrl}
+                    alt={`Avatar for ${meta.updatedBy.name}`}
+                  />
+                )}
+                {meta.updatedBy.name}
+              </>
+            ),
+          }}
+        >
+          {'{{timeAgo}}'} by
+          {'<person />'}
+        </Trans>
       </div>
     </div>
   );

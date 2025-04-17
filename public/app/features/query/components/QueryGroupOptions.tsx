@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { relative } from 'path';
 import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
@@ -309,8 +308,16 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
     return (
       <>
-        {<span className={styles.collapsedText}>MD = {mdDesc}</span>}
-        {<span className={styles.collapsedText}>Interval = {intervalDesc}</span>}
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {mdDesc}</Trans>
+          </span>
+        }
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {intervalDesc}</Trans>
+          </span>
+        }
       </>
     );
   };

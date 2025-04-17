@@ -5,6 +5,7 @@ import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { useDispatch } from 'app/types';
 
+import { Trans } from '../../../core/internationalization';
 import { setInitialDatasource } from '../state/reducers';
 
 export default function NewDashboardWithDS() {
@@ -28,7 +29,11 @@ export default function NewDashboardWithDS() {
     return (
       <Page navId="dashboards">
         <Page.Contents>
-          <div>Data source with UID &quot;{datasourceUid}&quot; not found.</div>
+          <div>
+            <Trans i18nKey="dashboard.new-dashboard-with-ds.not-found">
+              Data source with UID &quot;{{ datasourceUid }}&quot; not found.
+            </Trans>
+          </div>
         </Page.Contents>
       </Page>
     );
