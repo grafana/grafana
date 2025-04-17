@@ -214,7 +214,6 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 }
 func TestPluginUpdateChecker_updateAll(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
-
 		pluginsFakeStore := map[string]string{}
 		availableUpdates := map[string]string{
 			"test-app-0": "1.0.0",
@@ -246,7 +245,6 @@ func TestPluginUpdateChecker_updateAll(t *testing.T) {
 		for pluginID, version := range availableUpdates {
 			require.Equal(t, version, pluginsFakeStore[pluginID])
 		}
-
 	})
 }
 

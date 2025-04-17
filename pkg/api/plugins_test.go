@@ -48,6 +48,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -644,7 +646,15 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				hs.managedPluginsService = managedplugins.NewNoop()
 				var err error
-				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					nil, // plugins.Installer
+					hs.managedPluginsService,
+					provisionedplugins.NewNoop(),
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+				)
 				require.NoError(t, err)
 			})
 
@@ -836,7 +846,15 @@ func Test_PluginsSettings(t *testing.T) {
 				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error
-				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					&fakes.FakePluginInstaller{},
+					hs.managedPluginsService,
+					provisionedplugins.NewNoop(),
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+				)
 				require.NoError(t, err)
 			})
 
