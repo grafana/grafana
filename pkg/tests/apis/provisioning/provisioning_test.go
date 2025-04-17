@@ -285,6 +285,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
+	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "can list values")
+		require.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
+	}, time.Second*10, time.Millisecond*10, "Expected dashboards to be deleted")
+
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
 			name   string
