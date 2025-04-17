@@ -86,8 +86,11 @@ export function SmartAlertTypeDetector({
   const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
 
   const options = [
-    { label: 'Grafana-managed', value: RuleFormType.grafana },
-    { label: 'Data source-managed', value: RuleFormType.cloudAlerting },
+    { label: t('alerting.smart-alert-type-detector.grafana-managed', 'Grafana-managed'), value: RuleFormType.grafana },
+    {
+      label: t('alerting.smart-alert-type-detector.data-source-managed', 'Data source-managed'),
+      value: RuleFormType.cloudAlerting,
+    },
   ];
 
   // if we can't switch to data-source managed, disable it
