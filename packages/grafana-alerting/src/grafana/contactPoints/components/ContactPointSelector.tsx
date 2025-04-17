@@ -3,12 +3,13 @@ import { chain } from 'lodash';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { useListContactPoints } from '../hooks/useContactPoints';
+import { ContactPoint } from '../types';
 import { getContactPointDescription } from '../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
 type ContactPointSelectorProps = {
-  onChange: (option: ComboboxOption<string>) => void;
+  onChange: (contactPoint: ContactPoint) => void;
 };
 
 /**
@@ -18,18 +19,32 @@ type ContactPointSelectorProps = {
 function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
   const { currentData: contactPoints, isLoading } = useListContactPoints();
 
-  // create the options for the combobox, make sure we sort them by label
-  const options = chain(contactPoints?.items)
+  // Create a mapping of options with their corresponding contact points
+  const contactPointOptions = chain(contactPoints?.items)
     .toArray()
     .map((contactPoint) => ({
-      label: contactPoint.spec.title,
-      value: contactPoint.metadata.uid ?? contactPoint.spec.title,
-      description: getContactPointDescription(contactPoint),
+      option: {
+        label: contactPoint.spec.title,
+        value: contactPoint.metadata.uid ?? contactPoint.spec.title,
+        description: getContactPointDescription(contactPoint),
+      },
+      contactPoint,
     }))
     .value()
-    .sort((a, b) => collator.compare(a.label, b.label));
+    .sort((a, b) => collator.compare(a.option.label, b.option.label));
 
-  return <Combobox loading={isLoading} onChange={onChange} options={options} />;
+  const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
+
+  const handleChange = ({ value }: ComboboxOption<string>) => {
+    const selectedItem = contactPointOptions.find(({ option }) => option.value === value);
+    if (!selectedItem) {
+      return;
+    }
+
+    onChange(selectedItem.contactPoint);
+  };
+
+  return <Combobox loading={isLoading} onChange={handleChange} options={options} />;
 }
 
 export { ContactPointSelector };
