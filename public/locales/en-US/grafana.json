@@ -6938,6 +6938,9 @@
     }
   },
   "provisioning": {
+    "banner": {
+      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
