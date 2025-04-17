@@ -39,6 +39,13 @@ describe('setLocalStorageFeatureToggle', () => {
     expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=true,alertingCentralAlertHistory=true');
   });
 
+  it('should not set undefined when no feature toggles are set', () => {
+    storage.set(featureTogglesKey, '');
+
+    setLocalStorageFeatureToggle('alertingPrometheusRulesPrimary', undefined);
+    expect(storage.get(featureTogglesKey)).toBe('');
+  });
+
   it('should update only one feature toggle when multiple feature toggles are set', () => {
     storage.set(
       featureTogglesKey,
