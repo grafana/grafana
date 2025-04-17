@@ -44,10 +44,10 @@ The following resources are supported by the migration assistant:
 
 To use the Grafana migration assistant, you need:
 
-- Grafana v11.2 or above with the `onPremToCloudMigrations` feature toggle enabled. In Grafana 11.5, this is enabled by default. For more information on how to enable a feature toggle, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/#configure-feature-toggles).
+- Grafana v11.2 or above with the `onPremToCloudMigrations` feature toggle enabled. In Grafana 11.5, this is enabled by default. For more information on how to enable a feature toggle, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#configure-feature-toggles).
 - A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) you intend to migrate your resources to.
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
-- [Grafana server administrator](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
+- [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
 - Internet access from your existing Grafana OSS/Enterprise instance.
 
 ## Access the migration assistant
@@ -59,7 +59,7 @@ In Grafana Enterprise, the server administrator has access to the migration assi
 ### Grant access in Grafana Enterprise
 
 {{< admonition type="important">}}
-You must [configure RBAC](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/configure-rbac/) before you can grant other administrators access to the Grafana Migration Assistant.
+You must [configure RBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/configure-rbac/) before you can grant other administrators access to the Grafana Migration Assistant.
 {{< /admonition >}}
 
 To grant other Admins access to the migration assistant in Grafana Enterprise:
@@ -139,11 +139,11 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 ## Snapshots created by the migration assistant
 
-The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://wwww.grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#supported-resources) for more details.
+The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#supported-resources) for more details.
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
-Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://wwww.grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
+Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
 
 ## Resource migration details
 
@@ -206,7 +206,7 @@ Because the migration assistant does not yet migrate teams or RBAC permissions, 
 
 ## Migrate multiple organizations
 
-If you are using the [organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/#about-organizations) feature on your Grafana Instance and intend to migrate to Grafana Cloud, you need to plan this aspect of the migration carefully.
+If you are using the [organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/#about-organizations) feature on your Grafana Instance and intend to migrate to Grafana Cloud, you need to plan this aspect of the migration carefully.
 
 The organizations feature is not supported in Grafana Cloud, but folders and RBAC can be used to protect and grant permissions to resources instead. The recommended path is to migrate multiple organizations to a single cloud stack. This is the simplest option and provides the best user experience.
 
@@ -218,4 +218,4 @@ The Grafana server administrator is granted access to the migration assistant by
 
 The main driver for setting up organizations in the first place is resource isolation. In order to achieve this in Grafana Cloud, you can organize resources into folders and set up teams and permissions that correspond to your organizations.
 
-For more information about configuring teams and permissions, refer to [Configure Grafana Teams](https://grafana.com/docs/grafana/latest/administration/team-management/configure-grafana-teams/).
+For more information about configuring teams and permissions, refer to [Configure Grafana Teams](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/team-management/configure-grafana-teams/).
