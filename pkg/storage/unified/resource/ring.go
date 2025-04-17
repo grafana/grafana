@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-kit/log"
@@ -27,6 +28,7 @@ type resourceRingConfig struct {
 	HeartbeatTimeout time.Duration `yaml:"heartbeat_timeout" category:"advanced"`
 
 	// Instance details
+	InstanceID             string   `yaml:"instance_id" doc:"default=<hostname>" category:"advanced"`
 	InstanceInterfaceNames []string `yaml:"instance_interface_names" doc:"default=[<private network interfaces>]"`
 	InstancePort           int      `yaml:"instance_port" category:"advanced"`
 	InstanceAddr           string   `yaml:"instance_addr" category:"advanced"`
@@ -58,8 +60,19 @@ func (cfg *resourceRingConfig) toLifecyclerConfig(logger log.Logger) (ring.Basic
 
 	instancePort := ring.GetInstancePort(cfg.InstancePort, cfg.ListenPort)
 
+	instanceId := cfg.InstanceID
+	if instanceId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return ring.BasicLifecyclerConfig{}, err
+		}
+
+		instanceId = hostname
+	}
+
 	return ring.BasicLifecyclerConfig{
 		Addr:                fmt.Sprintf("%s:%d", instanceAddr, instancePort),
+		ID:                  instanceId,
 		HeartbeatPeriod:     cfg.HeartbeatPeriod,
 		HeartbeatTimeout:    cfg.HeartbeatTimeout,
 		TokensObservePeriod: 0,
@@ -104,6 +117,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		KVStore:          kv.Config{Store: "memberlist"},
 		HeartbeatPeriod:  15 * time.Second,
 		HeartbeatTimeout: time.Minute,
+		InstanceID:        cfg.InstanceID,
 		InstanceAddr:     cfg.MemberlistBindAddr,
 		ListenPort:       cfg.RingListenPort,
 		InstancePort:     cfg.RingListenPort,

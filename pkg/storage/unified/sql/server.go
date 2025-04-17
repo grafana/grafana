@@ -74,6 +74,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		MemberlistJoinMember: cfg.MemberlistJoinMember,
 		RingDebugServerPort:  cfg.RingDebugServerPort,
 		RingListenPort:       cfg.RingListenPort,
+		InstanceID:           cfg.InstanceID,
 	}
 
 	rs, err := resource.NewResourceServer(opts)

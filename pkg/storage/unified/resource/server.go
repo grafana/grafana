@@ -168,6 +168,7 @@ type ShardingConfig struct {
 	MemberlistBindAddr   string
 	MemberlistJoinMember string
 	RingListenPort       int
+	InstanceID           string
 }
 
 type ResourceServerOptions struct {

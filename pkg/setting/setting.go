@@ -552,6 +552,7 @@ type Cfg struct {
 	RingListenPort              int
 	MemberlistBindAddr          string
 	MemberlistJoinMember        string
+	InstanceID                  string
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int
 	CACertPath                  string
