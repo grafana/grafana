@@ -33,7 +33,7 @@ type RepositoryResources interface {
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
-type repositoryResourcesFactor struct {
+type repositoryResourcesFactory struct {
 	parsers ParserFactory
 	clients ClientFactory
 	lister  ResourceLister
@@ -55,10 +55,10 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactor{parsers, clients, lister}
+	return &repositoryResourcesFactory{parsers, clients, lister}
 }
 
-func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
 	clients, err := r.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients: %w", err)
@@ -74,7 +74,7 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 	}
 
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
-	resources := NewResourcesManager(repo, folders, parser, clients, map[string]repository.CommitSignature{})
+	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{
 		FolderManager:    folders,

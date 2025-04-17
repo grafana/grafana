@@ -178,10 +178,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables monitor only in the plugin frontend sandbox (if enabled)
-  */
-  frontendSandboxMonitorOnly?: boolean;
-  /**
   * Enables right panel for the plugins details page
   * @default true
   */
@@ -1036,4 +1032,8 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables auto-updating of users installed plugins
+  */
+  pluginsAutoUpdate?: boolean;
 }

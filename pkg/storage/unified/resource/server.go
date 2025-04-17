@@ -1,7 +1,7 @@
 package resource
 
 import (
-	context "context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -71,6 +71,8 @@ type BackendReadResponse struct {
 	Key    *ResourceKey
 	Folder string
 
+	// GUID that is used internally
+	GUID string
 	// The new resource version
 	ResourceVersion int64
 	// The properties

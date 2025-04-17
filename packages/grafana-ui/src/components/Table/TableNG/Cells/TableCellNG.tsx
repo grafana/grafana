@@ -9,6 +9,7 @@ import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
+// import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import {
   CellColors,
@@ -73,7 +74,10 @@ export function TableCellNG(props: TableCellNGProps) {
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const actions = getActions ? getActions(frame, field, rowIdx) : [];
+  const actions = useMemo(
+    () => (getActions ? getActions(frame, field, rowIdx) : []),
+    [getActions, frame, field, rowIdx]
+  );
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
@@ -82,69 +86,75 @@ export function TableCellNG(props: TableCellNGProps) {
   }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Common props for all cells
-  const commonProps = {
-    value,
-    field,
-    rowIdx,
-    justifyContent,
-  };
+  const commonProps = useMemo(
+    () => ({
+      value,
+      field,
+      rowIdx,
+      justifyContent,
+    }),
+    [value, field, rowIdx, justifyContent]
+  );
 
   // Get the correct cell type
-  let cell: ReactNode = null;
-  switch (cellType) {
-    case TableCellDisplayMode.Sparkline:
-      cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
-      break;
-    case TableCellDisplayMode.Gauge:
-    case TableCellDisplayMode.BasicGauge:
-    case TableCellDisplayMode.GradientGauge:
-    case TableCellDisplayMode.LcdGauge:
-      cell = (
-        <BarGaugeCell
-          {...commonProps}
-          theme={theme}
-          timeRange={timeRange}
-          height={height}
-          width={divWidth}
-          actions={actions}
-        />
-      );
-      break;
-    case TableCellDisplayMode.Image:
-      cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
-      break;
-    case TableCellDisplayMode.JSONView:
-      cell = <JSONCell {...commonProps} actions={actions} />;
-      break;
-    case TableCellDisplayMode.DataLinks:
-      cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
-      break;
-    case TableCellDisplayMode.Actions:
-      cell = <ActionsCell actions={actions} />;
-      break;
-    case TableCellDisplayMode.Custom:
-      const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-      cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
-      break;
-    case TableCellDisplayMode.Auto:
-    default:
-      // Handle auto cell type detection
-      if (field.type === FieldType.geo) {
-        cell = <GeoCell {...commonProps} height={height} />;
-      } else if (field.type === FieldType.frame) {
-        const firstValue = field.values[0];
-        if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-          cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
-        } else {
-          cell = <JSONCell {...commonProps} actions={actions} />;
-        }
-      } else if (field.type === FieldType.other) {
+  const renderedCell = useMemo(() => {
+    let cell: ReactNode = null;
+    switch (cellType) {
+      case TableCellDisplayMode.Sparkline:
+        cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+        break;
+      case TableCellDisplayMode.Gauge:
+      case TableCellDisplayMode.BasicGauge:
+      case TableCellDisplayMode.GradientGauge:
+      case TableCellDisplayMode.LcdGauge:
+        cell = (
+          <BarGaugeCell
+            {...commonProps}
+            theme={theme}
+            timeRange={timeRange}
+            height={height}
+            width={divWidth}
+            actions={actions}
+          />
+        );
+        break;
+      case TableCellDisplayMode.Image:
+        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
+        break;
+      case TableCellDisplayMode.JSONView:
         cell = <JSONCell {...commonProps} actions={actions} />;
-      } else {
-        cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
-      }
-      break;
-  }
+        break;
+      case TableCellDisplayMode.DataLinks:
+        cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
+        break;
+      case TableCellDisplayMode.Actions:
+        cell = <ActionsCell actions={actions} />;
+        break;
+      case TableCellDisplayMode.Custom:
+        const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+        cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
+        break;
+      case TableCellDisplayMode.Auto:
+      default:
+        // Handle auto cell type detection
+        if (field.type === FieldType.geo) {
+          cell = <GeoCell {...commonProps} height={height} />;
+        } else if (field.type === FieldType.frame) {
+          const firstValue = field.values[0];
+          if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+            cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+          } else {
+            cell = <JSONCell {...commonProps} actions={actions} />;
+          }
+        } else if (field.type === FieldType.other) {
+          cell = <JSONCell {...commonProps} actions={actions} />;
+        } else {
+          cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+        }
+        break;
+    }
+    return cell;
+  }, [cellType, commonProps, theme, timeRange, divWidth, height, cellOptions, field, rowIdx, actions, value, frame]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -190,7 +200,7 @@ export function TableCellNG(props: TableCellNGProps) {
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
-      {cell}
+      {renderedCell}
       {isHovered && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
           {cellInspect && (
