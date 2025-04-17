@@ -712,7 +712,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
-            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
+            availableWidth,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -724,7 +724,7 @@ export function mapFrameToDataGrid({
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
             className={styles.dataGrid}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
+            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
           />
         );
