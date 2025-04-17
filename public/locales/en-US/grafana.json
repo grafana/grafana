@@ -5776,10 +5776,13 @@
       "success": "Library panel saved"
     },
     "save-library-panel-modal": {
+      "affected-dashboards": "The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
+      "num-affected_one": "This update will affect <1>{{count}} dashboard.</1>",
+      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     }
@@ -5885,6 +5888,9 @@
       "collapse": "Collapse labels",
       "expand": "Expand labels"
     },
+    "log-labels-list": {
+      "log-line": "log line"
+    },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",
@@ -5981,6 +5987,10 @@
       },
       "tooltip-adhoc-statistics": "Ad-hoc statistics",
       "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
+    },
+    "un-themed-log-label-stats": {
+      "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
+      "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
     }
   },
   "manage-dashbaords": {
@@ -6765,7 +6775,9 @@
       "title-not-found": "Panel plugin not found: {{id}}"
     },
     "panel-renderer": {
+      "failed-to-load-plugin": "Failed to load plugin: {{error}}",
       "loading-plugin-panel": "Loading plugin panel...",
+      "no-panel-component": "Seems like the plugin you are trying to load does not have a panel component.",
       "no-panel-data": "No panel data"
     },
     "panel-type-card": {
@@ -6792,7 +6804,14 @@
     "select-placeholder": "Filter by type"
   },
   "playlist": {
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "multiple-dashboards-found": "Multiple items found: {{items}}",
+      "no-dashboards-found": "No dashboards found",
+      "not-found": "Not found: {{items}}"
+    },
     "start-modal": {
+      "button-start": "Start {{title}}",
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
       "label-autofit": "Autofit",
@@ -6850,6 +6869,11 @@
   "playlists": {
     "empty-state": {
       "message": "No playlists found"
+    }
+  },
+  "plugin": {
+    "plugin-details-deprecated-warning": {
+      "body-deprecated": "This {{pluginType}} plugin is <4>deprecated</4> and has been removed from the catalog."
     }
   },
   "plugins": {
@@ -6955,6 +6979,12 @@
       "add-new-data-source": "Add new data source",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
+    "install-controls": {
+      "install": "Install",
+      "installing": "Installing",
+      "update": "Update",
+      "updating": "Updating"
+    },
     "install-controls-button": {
       "title-uninstall-modal": "Uninstall {{plugin}}"
     },
@@ -6973,6 +7003,7 @@
       "label-severity": "Severity"
     },
     "not-found-plugin": {
+      "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <1></1>go to the <3>plugin catalog</3>.",
       "title-plugin-not-found": "Plugin not found"
     },
     "plugin-actions": {
@@ -6987,12 +7018,17 @@
       "tooltip-plugin-deprecated-longer-receives-updates": "This plugin is deprecated and no longer receives updates."
     },
     "plugin-details-body": {
+      "needs-service-account": "The {{pluginName}} plugin needs a service account to be able to query Grafana. The following list contains the permissions available to the service account:",
       "page-not-found": "Page not found."
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Deprecated"
     },
+    "plugin-details-header-dependencies": {
+      "grafana-dependency": "Grafana {{grafanaDependency}}"
+    },
     "plugin-details-signature": {
+      "body-invalid-plugin-signature": "Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification is part of our security measures to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.",
       "read-more-about-plugins-signing": "Read more about plugins signing.",
       "title-invalid-plugin-signature": "Invalid plugin signature"
     },
@@ -7023,6 +7059,8 @@
       "update-available": "Update available!"
     },
     "plugin-usage": {
+      "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
+      "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
       "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
@@ -7039,7 +7077,9 @@
     },
     "version-list": {
       "grafana-dependency": "Grafana dependency",
+      "installed-version": "{{versionNumber}} (installed version)",
       "last-updated": "Last updated",
+      "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }
@@ -7062,6 +7102,12 @@
     },
     "change-theme": "Change theme",
     "enable-kiosk-mode": "Enable kiosk mode",
+    "feature-toggle-page": {
+      "profile-not-enabled": "Profile is not enabled."
+    },
+    "feature-toggles-age": {
+      "enable-in-config": "Enable profile in the Grafana config file."
+    },
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
     },
@@ -7206,6 +7252,8 @@
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
     },
     "file-status-page": {
+      "save": "Save",
+      "saving": "Saving",
       "title-error-loading-file": "Error loading file"
     },
     "files-view": {
@@ -7332,13 +7380,16 @@
       "checked": "Checked:",
       "finished": "Finished:",
       "health": "Health",
+      "healthy": "Healthy",
       "job-id": "Job ID:",
       "last-ref": "Last Ref:",
       "messages": "Messages:",
+      "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
       "started": "Started:",
       "status": "Status:",
+      "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
       "webhook": "Webhook",
       "webhook-events": "Events:",
@@ -7629,6 +7680,9 @@
       "hidden": "Hidden",
       "query-name-div-title-edit-query-name": "Edit query name"
     },
+    "query-error-alert": {
+      "trace-id": "(Trace ID: {{traceId}})"
+    },
     "query-group": {
       "add-query": "Add query",
       "expression": "Expression",
@@ -7638,22 +7692,27 @@
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
         "cache-timeout": "Cache timeout"
       },
       "render-interval-option": {
         "interval": "Interval",
+        "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <4>$__interval_ms</4>. This value is not exactly equal to <6>Time range / max data points</6>, it will approximate a series of magic number.",
         "min-interval": "Min interval",
+        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
         "time-range-max-data-points": "Time range / max data points"
       },
       "render-max-data-points-option": {
         "max-data-points": "Max data points",
+        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.",
         "width-of-panel": "Width of panel"
       },
       "render-query-caching-ttloption": {
         "cache-ttl": "Cache TTL"
       },
-      "time-shift": "Time shift"
+      "time-shift": "Time shift",
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <5>{{variable}}</5>."
     },
     "query-group-top-section": {
       "data-source": "Data source",
@@ -7835,6 +7894,9 @@
     }
   },
   "search": {
+    "action-row": {
+      "panel-type": "Panel: {{panel}}"
+    },
     "actions": {
       "include-panels": "Include panels",
       "remove-datasource-filter": "Datasource: {{datasource}}",
@@ -7957,6 +8019,9 @@
       "label-numerical-identifier": "Numerical identifier",
       "label-roles": "Roles",
       "used-by": "Used by"
+    },
+    "service-account-profile-row": {
+      "edit": "Edit"
     },
     "service-account-role-row": {
       "aria-label-role": "Role"
@@ -8482,6 +8547,7 @@
       "generate-enum-values-from-data": "Generate enum values from data"
     },
     "enum-mapping-row": {
+      "click-to-edit": "Click to edit",
       "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
       "remove-enum-row-tooltip-delete": "Delete"
     },
@@ -8536,10 +8602,13 @@
       "label-format": "Format",
       "label-set-timezone": "Set timezone",
       "label-time-field": "Time field",
+      "tooltip-format": "The output format for the field specified as a <2>Moment.js format string</2>.",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
     },
     "get-tooltips": {
-      "json-value": "JSON Value:"
+      "description": "A valid path of an json object.",
+      "json-value": "JSON Value:",
+      "valid-paths": "Valid Paths:"
     },
     "group-by-field-configuration": {
       "placeholder-ignored": "Ignored",
@@ -8850,7 +8919,8 @@
       "general": "General",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
-      "placeholder-variable-name": "Variable name"
+      "placeholder-variable-name": "Variable name",
+      "run-query": "Run query"
     },
     "variable-editor-list": {
       "definition": "Definition",
@@ -8885,5 +8955,6 @@
     "data-hover-view": {
       "link": "Link"
     }
-  }
+  },
+  "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account."
 }
