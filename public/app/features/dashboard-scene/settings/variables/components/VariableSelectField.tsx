@@ -7,7 +7,7 @@ import { Field, Select, useStyles2 } from '@grafana/ui';
 
 interface VariableSelectFieldProps<T> {
   name: string;
-  value: SelectableValue<T>;
+  value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (option: SelectableValue<T>) => void;
   testId?: string;

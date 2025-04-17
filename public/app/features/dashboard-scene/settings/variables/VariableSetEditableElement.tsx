@@ -83,7 +83,7 @@ function VariableList({ set }: { set: SceneVariableSet }) {
           </Stack>
         </div>
       ))}
-      <Box paddingBottom={1} display={'flex'}>
+      <Box paddingY={1} display={'flex'}>
         <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
           <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
         </Button>
